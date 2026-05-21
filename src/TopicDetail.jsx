@@ -4,6 +4,7 @@ import {
   HomeOutlined,
   PlusOutlined,
   FolderOutlined,
+  FolderOpenOutlined,
   FileTextOutlined,
   FilePdfOutlined,
   EditOutlined,
@@ -18,6 +19,8 @@ import {
   SendOutlined,
   SwapOutlined,
   CheckCircleOutlined,
+  CaretDownOutlined,
+  CaretRightOutlined,
 } from '@ant-design/icons';
 import AddResourceModal from './AddResourceModal';
 import {
@@ -58,6 +61,11 @@ function TopicDetail({ topicTitle, onBack }) {
   const [versionData, setVersionData] = useState(() => loadFromStorage());
   const [editingKey, setEditingKey] = useState(null);
   const [editingName, setEditingName] = useState('');
+  // 文件夹相关状态
+  const [expandedFolders, setExpandedFolders] = useState(new Set());
+  const [selectedFolderKey, setSelectedFolderKey] = useState(null);
+  const [creatingFolder, setCreatingFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
 
   const currentVersion = getCurrentVersion(versionData);
   const versions = getVersions(versionData);
@@ -65,6 +73,14 @@ function TopicDetail({ topicTitle, onBack }) {
   const isDraft = currentVersion?.status === 'draft';
   const isActive = currentVersion?.status === 'active';
   const resources = currentVersion?.resources || [];
+
+  // 文件夹计算
+  const rootItems = resources.filter((r) => r.parentKey === null);
+  const getChildren = (folderKey) => resources.filter((r) => r.parentKey === folderKey);
+  const selectedFolder = selectedFolderKey ? resources.find((r) => r.key === selectedFolderKey && r.isFolder) : null;
+  const folderChildren = selectedFolder ? getChildren(selectedFolderKey) : [];
+  const folderCount = resources.filter((r) => r.isFolder).length;
+  const fileCount = resources.filter((r) => !r.isFolder).length;
 
   const tabs = [
     { key: 'knowledge', label: '知识模式' },
@@ -78,7 +94,10 @@ function TopicDetail({ topicTitle, onBack }) {
       message.warning('当前版本已发布，请新建版本后再添加资料');
       return;
     }
-    const newData = addResource(versionData, currentVersion.id, resource);
+    const newData = addResource(versionData, currentVersion.id, {
+      ...resource,
+      parentKey: selectedFolderKey || null,
+    });
     setVersionData(newData);
     message.success('资料添加成功');
   };
@@ -87,6 +106,7 @@ function TopicDetail({ topicTitle, onBack }) {
   const handleDeleteResource = (resourceKey) => {
     const newData = deleteResource(versionData, currentVersion.id, resourceKey);
     setVersionData(newData);
+    if (resourceKey === selectedFolderKey) setSelectedFolderKey(null);
     message.success('资料已删除');
   };
 
@@ -146,6 +166,44 @@ function TopicDetail({ topicTitle, onBack }) {
     message.success('已回退到指定版本，该版本现已生效');
   };
 
+  // 文件夹操作
+  const toggleFolder = (folderKey) => {
+    setExpandedFolders((prev) => {
+      const next = new Set(prev);
+      if (next.has(folderKey)) next.delete(folderKey);
+      else next.add(folderKey);
+      return next;
+    });
+  };
+
+  const handleSelectFolder = (folderKey) => {
+    setSelectedFolderKey(folderKey);
+    setExpandedFolders((prev) => {
+      const next = new Set(prev);
+      next.add(folderKey);
+      return next;
+    });
+  };
+
+  const handleCreateFolder = () => {
+    if (!isDraft) { message.warning('当前版本不可编辑'); return; }
+    setCreatingFolder(true);
+    setNewFolderName('');
+  };
+
+  const handleSaveNewFolder = () => {
+    const name = newFolderName.trim();
+    if (!name) { message.warning('文件夹名称不能为空'); return; }
+    const newData = addResource(versionData, currentVersion.id, {
+      name,
+      isFolder: true,
+      parentKey: null,
+    });
+    setVersionData(newData);
+    setCreatingFolder(false);
+    message.success('文件夹创建成功');
+  };
+
   // 表格列定义
   const columns = [
     {
@@ -156,7 +214,7 @@ function TopicDetail({ topicTitle, onBack }) {
         if (editingKey === record.key) {
           return (
             <div className="file-name-cell">
-              <span className="file-icon">{getResourceIcon(record.type)}</span>
+              <span className="file-icon">{record.isFolder ? <FolderOutlined style={{ color: '#4facfe' }} /> : getResourceIcon(record.type)}</span>
               <Input
                 value={editingName}
                 onChange={(e) => setEditingName(e.target.value)}
@@ -171,9 +229,10 @@ function TopicDetail({ topicTitle, onBack }) {
           );
         }
         return (
-          <div className="file-name-cell">
-            <span className="file-icon">{getResourceIcon(record.type)}</span>
-            <span className="file-name-text">{text}</span>
+          <div className="file-name-cell" style={record.isFolder ? { cursor: 'pointer' } : {}}
+            onClick={record.isFolder ? () => handleSelectFolder(record.key) : undefined}>
+            <span className="file-icon">{record.isFolder ? <FolderOutlined style={{ color: '#4facfe' }} /> : getResourceIcon(record.type)}</span>
+            <span className="file-name-text" style={record.isFolder ? { color: '#1677ff' } : {}}>{text}</span>
           </div>
         );
       },
@@ -207,7 +266,7 @@ function TopicDetail({ topicTitle, onBack }) {
                   编辑
                 </Button>
                 <Popconfirm
-                  title="确认删除该资料？"
+                  title={record.isFolder ? '删除文件夹将同时删除其下所有内容，确认？' : '确认删除该资料？'}
                   onConfirm={() => handleDeleteResource(record.key)}
                   okText="确认"
                   cancelText="取消"
@@ -222,6 +281,45 @@ function TopicDetail({ topicTitle, onBack }) {
         ]
       : []),
   ];
+
+  // 递归渲染左侧树形目录项
+  const renderTreeItem = (item, depth) => {
+    if (item.isFolder) {
+      const isExpanded = expandedFolders.has(item.key);
+      const isSelected = selectedFolderKey === item.key;
+      const children = getChildren(item.key);
+      return (
+        <div key={item.key} className="tree-folder-group">
+          <div
+            className={`project-item project-item-folder ${isSelected ? 'project-item-selected' : ''}`}
+            onClick={() => handleSelectFolder(item.key)}
+          >
+            <span className="project-item-arrow" onClick={(e) => { e.stopPropagation(); toggleFolder(item.key); }}>
+              {isExpanded ? <CaretDownOutlined /> : <CaretRightOutlined />}
+            </span>
+            <span className="project-item-icon">
+              {isExpanded
+                ? <FolderOpenOutlined style={{ color: '#4facfe' }} />
+                : <FolderOutlined style={{ color: '#4facfe' }} />}
+            </span>
+            <span className="project-item-title">{item.name}</span>
+          </div>
+          {isExpanded && (
+            <div className="tree-children">
+              {children.map((child) => renderTreeItem(child, depth + 1))}
+            </div>
+          )}
+        </div>
+      );
+    }
+    // 普通文件
+    return (
+      <div key={item.key} className="project-item project-item-child">
+        <span className="project-item-icon">{getResourceIcon(item.type)}</span>
+        <span className="project-item-title">{item.name}</span>
+      </div>
+    );
+  };
 
   return (
     <div className="topic-detail">
@@ -361,22 +459,38 @@ function TopicDetail({ topicTitle, onBack }) {
             </div>
           </div>
 
-          {/* 项目列表 - 从当前版本资料动态渲染 */}
+          {/* 项目列表 - 树形目录 */}
           <div className="project-section">
             <div className="project-header">
               <span className="project-title">项目</span>
-              <MoreOutlined className="project-more-icon" />
+              <Dropdown menu={{ items: [
+                { key: 'new-folder', icon: <FolderOutlined />, label: '新建文件夹', onClick: handleCreateFolder, disabled: !isDraft },
+              ] }} trigger={['click']}>
+                <MoreOutlined className="project-more-icon" />
+              </Dropdown>
             </div>
+
+            {/* 新建文件夹表单 */}
+            {creatingFolder && (
+              <div className="new-folder-form">
+                <div className="new-folder-row">
+                  <FolderOutlined style={{ color: '#4facfe', fontSize: 14 }} />
+                  <Input size="small" placeholder="输入文件夹名称" value={newFolderName}
+                    onChange={(e) => setNewFolderName(e.target.value)}
+                    onPressEnter={handleSaveNewFolder} autoFocus style={{ flex: 1 }} />
+                </div>
+                <div className="new-folder-actions">
+                  <Button size="small" onClick={() => setCreatingFolder(false)}>取消</Button>
+                  <Button size="small" type="primary" onClick={handleSaveNewFolder}>创建</Button>
+                </div>
+              </div>
+            )}
+
             <div className="project-list">
-              {resources.length === 0 ? (
+              {rootItems.length === 0 && !creatingFolder ? (
                 <div className="project-empty">暂无资料</div>
               ) : (
-                resources.map((item) => (
-                  <div key={item.key} className="project-item">
-                    <span className="project-item-icon">{getResourceIcon(item.type)}</span>
-                    <span className="project-item-title">{item.name}</span>
-                  </div>
-                ))
+                rootItems.map((item) => renderTreeItem(item, 0))
               )}
             </div>
           </div>
@@ -384,36 +498,47 @@ function TopicDetail({ topicTitle, onBack }) {
 
         {/* Right Panel - 文件表格 */}
         <div className="detail-right-panel">
-          {/* Folder Info Header */}
-          <div className="folder-info">
-            <div className="folder-info-left">
-              <div className="folder-big-icon">
-                <FolderOutlined />
+          {selectedFolder ? (
+            <>
+              {/* 选中了文件夹 */}
+              <div className="folder-info">
+                <div className="folder-info-left">
+                  <div className="folder-big-icon"><FolderOutlined /></div>
+                  <div className="folder-meta">
+                    <div className="folder-name">{selectedFolder.name}</div>
+                    <div className="folder-desc">
+                      {folderChildren.filter(c => !c.isFolder).length} 个文件 {folderChildren.filter(c => c.isFolder).length} 个文件夹
+                    </div>
+                  </div>
+                </div>
+                <div className="folder-info-right">
+                  <Button size="small" onClick={() => setSelectedFolderKey(null)}>返回概览</Button>
+                  <Button icon={<PlusOutlined />} disabled={!isDraft} onClick={() => setModalOpen(true)}>添加资料</Button>
+                </div>
               </div>
-              <div className="folder-meta">
-                <div className="folder-name">{currentVersion?.name || '资料'}</div>
-                <div className="folder-desc">{resources.length} 个文件 0 个文件夹</div>
+              <Table columns={columns} dataSource={folderChildren} pagination={false}
+                className="file-table" size="middle" locale={{ emptyText: '文件夹为空，点击“添加资料”按钮添加' }}
+                rowClassName={(record) => record.isFolder ? 'folder-row' : ''} />
+            </>
+          ) : (
+            <>
+              {/* 概览 */}
+              <div className="folder-info">
+                <div className="folder-info-left">
+                  <div className="folder-big-icon"><FolderOutlined /></div>
+                  <div className="folder-meta">
+                    <div className="folder-name">{currentVersion?.name || '资料'}</div>
+                    <div className="folder-desc">{fileCount} 个文件 {folderCount} 个文件夹</div>
+                  </div>
+                </div>
+                <Button className="add-resource-btn" icon={<PlusOutlined />} disabled={!isDraft}
+                  onClick={() => setModalOpen(true)}>添加资料</Button>
               </div>
-            </div>
-            <Button
-              className="add-resource-btn"
-              icon={<PlusOutlined />}
-              disabled={!isDraft}
-              onClick={() => setModalOpen(true)}
-            >
-              添加资料
-            </Button>
-          </div>
-
-          {/* File Table */}
-          <Table
-            columns={columns}
-            dataSource={resources}
-            pagination={false}
-            className="file-table"
-            size="middle"
-            locale={{ emptyText: '暂无资料，点击"添加资料"按钮添加' }}
-          />
+              <Table columns={columns} dataSource={resources.filter(r => r.parentKey === null && !r.isFolder)}
+                pagination={false} className="file-table" size="middle"
+                locale={{ emptyText: '暂无资料，点击“添加资料”按钮添加' }} />
+            </>
+          )}
         </div>
       </div>
 

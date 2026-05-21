@@ -317,6 +317,69 @@
   flex: 1;
 }
 
+/* 树形目录 */
+.tree-folder-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.tree-children {
+  padding-left: 20px;
+}
+
+.project-item-child {
+  padding-left: 4px;
+}
+
+.project-item-arrow {
+  font-size: 8px;
+  color: #999;
+  width: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.project-item-folder {
+  font-weight: 500;
+}
+
+.project-item-selected {
+  background: #e8f4ff !important;
+}
+
+/* 新建文件夹表单 */
+.new-folder-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  margin-bottom: 8px;
+  background: #f8faff;
+  border: 1px solid #e0ecff;
+  border-radius: 8px;
+}
+
+.new-folder-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.new-folder-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+/* 文件夹详情右侧按钮 */
+.folder-info-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* ====== Right Panel ====== */
 .detail-right-panel {
   flex: 1;
