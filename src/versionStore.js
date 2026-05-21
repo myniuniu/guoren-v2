@@ -1,5 +1,5 @@
 const STORAGE_KEY = 'guoren_version_data';
-const DATA_VERSION = 3; // 增加版本号，当默认数据结构变化时递增，自动重置本地存储
+const DATA_VERSION = 4; // 增加版本号，当默认数据结构变化时递增，自动重置本地存储
 
 // 默认初始数据
 const defaultData = {
@@ -65,6 +65,23 @@ const defaultData = {
         { key: 'm3a3r1', name: '综合项目答辩', type: 'exam', isFolder: false, parentKey: 'm3a3', owner: 'wangwu', lastEdit: '2026-05-02 10:30:00' },
         { key: 'm3a3r2', name: '个人技术报告提交', type: 'file', isFolder: false, parentKey: 'm3a3', owner: 'wangwu', lastEdit: '2026-05-02 15:00:00' },
       ],
+      assessment: {
+        totalHours: 15,
+        passScore: 60,
+        certificate: true,
+        rules: [
+          { key: 'ar1', activityKey: 'm1a1', activityName: '精讲视频课', stageName: '第一阶段 · AI基础入门', weight: 20, passCondition: '完成率>=80%', required: true },
+          { key: 'ar2', activityKey: 'm1a2', activityName: '直播课', stageName: '第一阶段 · AI基础入门', weight: 10, passCondition: '出勤率>=90%', required: true },
+          { key: 'ar3', activityKey: 'm1a3', activityName: '课后作业', stageName: '第一阶段 · AI基础入门', weight: 5, passCondition: '提交率100%', required: false },
+          { key: 'ar4', activityKey: 'm2a1', activityName: '精讲视频课', stageName: '第二阶段 · 编程实践', weight: 15, passCondition: '完成率>=80%', required: true },
+          { key: 'ar5', activityKey: 'm2a2', activityName: '阶段考试', stageName: '第二阶段 · 编程实践', weight: 15, passCondition: '分数>=60分', required: true },
+          { key: 'ar6', activityKey: 'm2a3', activityName: '线下集训', stageName: '第二阶段 · 编程实践', weight: 5, passCondition: '出勤率>=80%', required: false },
+          { key: 'ar7', activityKey: 'm3a1', activityName: '直播课', stageName: '第三阶段 · 项目实战', weight: 5, passCondition: '出勤率>=90%', required: true },
+          { key: 'ar8', activityKey: 'm3a2', activityName: '课题研讨', stageName: '第三阶段 · 项目实战', weight: 5, passCondition: '提交率100%', required: false },
+          { key: 'ar9', activityKey: 'm3a3', activityName: '结业考核', stageName: '第三阶段 · 项目实战', weight: 20, passCondition: '分数>=60分', required: true },
+        ],
+      },
+      assessmentChat: [],
     },
   ],
   currentVersionId: 'v1',
@@ -134,6 +151,10 @@ export function createNewVersion(data) {
     createdAt: new Date().toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\//g, '-'),
     publishedAt: null,
     resources: inheritedResources,
+    assessment: activeVersion?.assessment
+      ? JSON.parse(JSON.stringify(activeVersion.assessment))
+      : { totalHours: 0, passScore: 60, certificate: false, rules: [] },
+    assessmentChat: [],
   };
 
   const newData = {
@@ -243,6 +264,30 @@ export function deleteResource(data, versionId, resourceKey) {
 // 切换当前版本
 export function switchVersion(data, versionId) {
   const newData = { ...data, currentVersionId: versionId };
+  saveToStorage(newData);
+  return newData;
+}
+
+// 更新考核方案
+export function updateAssessment(data, versionId, assessment) {
+  const newData = {
+    ...data,
+    versions: data.versions.map((v) =>
+      v.id === versionId ? { ...v, assessment } : v
+    ),
+  };
+  saveToStorage(newData);
+  return newData;
+}
+
+// 更新考核对话记录
+export function updateAssessmentChat(data, versionId, chat) {
+  const newData = {
+    ...data,
+    versions: data.versions.map((v) =>
+      v.id === versionId ? { ...v, assessmentChat: chat } : v
+    ),
+  };
   saveToStorage(newData);
   return newData;
 }

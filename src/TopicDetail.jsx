@@ -23,6 +23,7 @@ import {
   CaretRightOutlined,
 } from '@ant-design/icons';
 import AddResourceModal from './AddResourceModal';
+import AssessmentConfig from './AssessmentConfig';
 import {
   loadFromStorage,
   getCurrentVersion,
@@ -35,6 +36,8 @@ import {
   deleteResource,
   switchVersion,
   rollbackVersion,
+  updateAssessment,
+  updateAssessmentChat,
 } from './versionStore';
 import './TopicDetail.css';
 
@@ -57,6 +60,7 @@ function getResourceIcon(type) {
 
 function TopicDetail({ topicTitle, onBack }) {
   const [activeTab, setActiveTab] = useState('knowledge');
+  const [showAssessment, setShowAssessment] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [versionData, setVersionData] = useState(() => loadFromStorage());
   const [editingKey, setEditingKey] = useState(null);
@@ -87,6 +91,16 @@ function TopicDetail({ topicTitle, onBack }) {
     { key: 'ai', label: 'AI模式' },
     { key: 'practice', label: '实训模式' },
   ];
+
+  // 考核相关回调
+  const handleUpdateAssessment = (assessment) => {
+    const newData = updateAssessment(versionData, currentVersion.id, assessment);
+    setVersionData(newData);
+  };
+  const handleUpdateAssessmentChat = (chat) => {
+    const newData = updateAssessmentChat(versionData, currentVersion.id, chat);
+    setVersionData(newData);
+  };
 
   // 添加资料
   const handleAddResource = (resource) => {
@@ -423,13 +437,30 @@ function TopicDetail({ topicTitle, onBack }) {
               </Tag>
             </Button>
           </Dropdown>
-          <FileTextOutlined className="header-icon" />
+          <div
+            className={`header-icon-btn ${showAssessment ? 'header-icon-btn-active' : ''}`}
+            onClick={() => setShowAssessment(!showAssessment)}
+            title="考核设置"
+          >
+            <FileTextOutlined />
+            <span className="header-icon-btn-label">考核</span>
+          </div>
           <UserOutlined className="header-icon" />
           <CommentOutlined className="header-icon" />
         </div>
       </div>
 
       {/* Main Body */}
+      {showAssessment ? (
+        <AssessmentConfig
+          assessment={currentVersion?.assessment}
+          assessmentChat={currentVersion?.assessmentChat}
+          resources={resources}
+          isDraft={isDraft}
+          onUpdateAssessment={handleUpdateAssessment}
+          onUpdateChat={handleUpdateAssessmentChat}
+        />
+      ) : (
       <div className="detail-body">
         {/* Left Panel - 资料 */}
         <div className="detail-left-panel">
@@ -541,6 +572,8 @@ function TopicDetail({ topicTitle, onBack }) {
           )}
         </div>
       </div>
+
+      )}
 
       {/* Add Resource Modal */}
       <AddResourceModal

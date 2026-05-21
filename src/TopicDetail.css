@@ -132,6 +132,35 @@
   color: #1677ff;
 }
 
+.header-icon-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+
+.header-icon-btn:hover {
+  color: #1677ff;
+  background: #f0f5ff;
+}
+
+.header-icon-btn-active {
+  color: #1677ff;
+  background: #e8f4ff;
+  border-color: #1677ff;
+}
+
+.header-icon-btn-label {
+  font-size: 12px;
+  font-weight: 500;
+}
+
 /* ====== Detail Body ====== */
 .detail-body {
   display: flex;
