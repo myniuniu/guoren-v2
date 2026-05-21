@@ -1,0 +1,421 @@
+/* ====== Layout ====== */
+.app-layout {
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: row;
+}
+
+/* ====== Far-left Icon Bar ====== */
+.icon-bar {
+  width: 64px;
+  min-width: 64px;
+  background: #fff;
+  border-right: 1px solid #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: 100vh;
+}
+
+.icon-bar::-webkit-scrollbar {
+  width: 0;
+}
+
+.icon-bar-avatar {
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.avatar-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #4facfe);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.icon-bar-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+}
+
+.icon-bar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 8px 4px;
+  width: 56px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+
+.icon-bar-item:hover {
+  background: #f5f5f5;
+}
+
+.icon-bar-item-active {
+  background: #f0f5ff;
+}
+
+.icon-bar-item-active .icon-bar-icon {
+  color: #1677ff;
+}
+
+.icon-bar-item-active .icon-bar-label {
+  color: #1677ff;
+}
+
+.icon-bar-icon {
+  font-size: 18px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.icon-bar-label {
+  font-size: 10px;
+  color: #666;
+  text-align: center;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 52px;
+}
+
+/* ====== Scene Sidebar ====== */
+.app-sider {
+  background: #fff !important;
+  border-right: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.app-sider .ant-layout-sider-children {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.sider-top {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding-top: 8px;
+}
+
+/* Sidebar Menu Styles */
+.sider-menu {
+  border-right: none !important;
+  background: transparent !important;
+}
+
+.sider-menu .ant-menu-item {
+  height: 40px;
+  line-height: 40px;
+  margin: 2px 8px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.sider-menu .ant-menu-item .anticon {
+  font-size: 15px;
+}
+
+.sider-menu .ant-menu-item-selected {
+  background: #f0f5ff !important;
+  color: #1677ff !important;
+  font-weight: 500;
+}
+
+.sider-menu .ant-menu-item-selected .anticon {
+  color: #1677ff;
+}
+
+.sider-menu .ant-menu-item-selected::after {
+  display: none;
+}
+
+.new-scene-item {
+  color: #1677ff !important;
+  font-weight: 500;
+}
+
+.new-scene-item.ant-menu-item-selected {
+  background: transparent !important;
+  color: #1677ff !important;
+}
+
+/* Menu Group Styles */
+.sider-menu .ant-menu-item-group-title {
+  font-size: 12px;
+  color: #aaa;
+  padding: 14px 20px 4px;
+  letter-spacing: 0.5px;
+  text-transform: none;
+}
+
+/* ====== Header ====== */
+.app-header {
+  background: #fff !important;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  height: 56px;
+  line-height: 56px;
+}
+
+.header-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #1a1a1a;
+  white-space: nowrap;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.search-input {
+  width: 220px;
+}
+
+.search-input .ant-input {
+  border-radius: 8px;
+  font-size: 13px;
+  height: 34px;
+  background: #f7f8fa;
+  border-color: #e8e8e8;
+}
+
+.search-input .ant-input:focus {
+  background: #fff;
+  border-color: #1677ff;
+}
+
+.search-input .ant-input-prefix {
+  color: #bbb;
+  margin-right: 6px;
+}
+
+.new-topic-btn {
+  border-radius: 8px;
+  font-size: 13px;
+  height: 34px;
+  padding: 0 16px;
+  box-shadow: none;
+}
+
+/* ====== Content ====== */
+.app-content {
+  background: #f7f8fa;
+  padding: 24px 28px;
+  overflow-y: auto;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 18px;
+}
+
+/* ====== Scene Card ====== */
+.scene-card {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #e8e8e8 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.25s, transform 0.2s;
+  cursor: pointer;
+  background: #fff;
+}
+
+.scene-card:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.scene-card .ant-card-body {
+  padding: 0 !important;
+}
+
+/* Card Cover with Wave Background */
+.card-cover {
+  position: relative;
+  height: 110px;
+  overflow: hidden;
+}
+
+.wave-bg {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #4facfe 40%, #00f2fe 100%);
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+}
+
+.wave-svg {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 60%;
+}
+
+.card-more-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: #fff !important;
+  background: rgba(0, 0, 0, 0.15) !important;
+  border: none !important;
+  border-radius: 50% !important;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  z-index: 2;
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.scene-card:hover .card-more-btn {
+  opacity: 1;
+}
+
+.card-more-btn:hover {
+  background: rgba(0, 0, 0, 0.3) !important;
+}
+
+.card-more-btn .anticon {
+  font-size: 14px;
+}
+
+/* Card Body */
+.card-body {
+  padding: 14px 16px 16px;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.5;
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-subtitle {
+  font-size: 12px;
+  color: #aaa;
+  line-height: 1.5;
+  margin-bottom: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.visibility-tag {
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: #f5f5f5;
+  border: 1px solid #e8e8e8;
+  color: #888;
+  margin: 0;
+}
+
+.card-count {
+  font-size: 12px;
+  color: #bbb;
+}
+
+/* ====== Responsive ====== */
+@media (max-width: 1400px) {
+  .card-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 1100px) {
+  .card-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ====== Ant Design Overrides ====== */
+.ant-menu-inline .ant-menu-item::after {
+  display: none !important;
+}
+
+.ant-layout-sider-trigger {
+  display: none;
+}
+
+/* Custom scrollbar */
+.app-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.app-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.app-content::-webkit-scrollbar-thumb {
+  background: #d9d9d9;
+  border-radius: 3px;
+}
+
+.app-content::-webkit-scrollbar-thumb:hover {
+  background: #bbb;
+}
+
+.app-sider::-webkit-scrollbar {
+  width: 0;
+}
+
+/* Ant Design v5 Menu overrides */
+.sider-menu .ant-menu-item-group .ant-menu-item {
+  height: 38px;
+  line-height: 38px;
+  margin: 1px 8px;
+  font-size: 13px;
+}

@@ -1,0 +1,402 @@
+/* ====== Topic Detail Layout ====== */
+.topic-detail {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #fff;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ====== Detail Header ====== */
+.detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 48px;
+  min-height: 48px;
+  padding: 0 20px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fff;
+}
+
+.detail-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.detail-home-icon {
+  font-size: 16px;
+  color: #666;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.2s;
+}
+
+.detail-home-icon:hover {
+  color: #1677ff;
+}
+
+.detail-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.detail-header-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.detail-tabs {
+  display: flex;
+  align-items: center;
+  background: #f5f5f5;
+  border-radius: 6px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.detail-tab {
+  padding: 5px 16px;
+  font-size: 13px;
+  color: #666;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.detail-tab:hover {
+  color: #333;
+}
+
+.detail-tab-active {
+  background: #fff;
+  color: #1a1a1a;
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.detail-header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-icon {
+  font-size: 16px;
+  color: #666;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.header-icon:hover {
+  color: #1677ff;
+}
+
+/* ====== Detail Body ====== */
+.detail-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ====== Left Panel ====== */
+.detail-left-panel {
+  width: 280px;
+  min-width: 280px;
+  border-right: 1px solid #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow-y: auto;
+  background: #fff;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.panel-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.panel-more-icon {
+  font-size: 14px;
+  color: #999;
+  cursor: pointer;
+}
+
+/* AI 问答 */
+.ai-qa-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.ai-qa-box:hover {
+  border-color: #1677ff;
+}
+
+.ai-qa-text {
+  font-size: 13px;
+  color: #666;
+}
+
+/* 操作按钮 */
+.panel-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.panel-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.panel-action-btn:hover {
+  border-color: #1677ff;
+  color: #1677ff;
+}
+
+/* 项目区域 */
+.project-section {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.project-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.project-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+}
+
+.project-more-icon {
+  font-size: 13px;
+  color: #ccc;
+  cursor: pointer;
+}
+
+.project-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.project-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.project-item:hover {
+  background: #f5f5f5;
+}
+
+.project-item-selected {
+  background: #e8f4ff !important;
+}
+
+.project-item-folder {
+  font-weight: 500;
+}
+
+.project-item-arrow {
+  font-size: 8px;
+  color: #999;
+  width: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.project-item-icon {
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+}
+
+.project-item-title {
+  font-size: 13px;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+/* ====== Right Panel ====== */
+.detail-right-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 32px;
+  overflow-y: auto;
+  background: #fafbfc;
+}
+
+/* Folder Info */
+.folder-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.folder-info-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.folder-big-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: #e8f4ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: #4facfe;
+}
+
+.folder-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.folder-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.folder-desc {
+  font-size: 12px;
+  color: #999;
+}
+
+.add-resource-btn {
+  border-radius: 6px;
+  font-size: 13px;
+  height: 32px;
+  color: #666;
+  border-color: #d9d9d9;
+}
+
+.add-resource-btn:hover {
+  color: #1677ff !important;
+  border-color: #1677ff !important;
+}
+
+/* File Table */
+.file-table {
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+}
+
+.file-table .ant-table-thead > tr > th {
+  background: #fafbfc !important;
+  font-size: 12px;
+  color: #999 !important;
+  font-weight: 500;
+  border-bottom: 1px solid #f0f0f0;
+  padding: 10px 16px;
+}
+
+.file-table .ant-table-tbody > tr > td {
+  padding: 12px 16px;
+  font-size: 13px;
+  color: #333;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.file-table .ant-table-tbody > tr:hover > td {
+  background: #f9fbff !important;
+}
+
+.file-table .ant-table-tbody > tr:last-child > td {
+  border-bottom: none;
+}
+
+.file-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.file-icon {
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.file-name-text {
+  color: #333;
+}
+
+/* Left panel scrollbar */
+.detail-left-panel::-webkit-scrollbar {
+  width: 4px;
+}
+
+.detail-left-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.detail-left-panel::-webkit-scrollbar-thumb {
+  background: #e0e0e0;
+  border-radius: 2px;
+}
+
+/* Right panel scrollbar */
+.detail-right-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.detail-right-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.detail-right-panel::-webkit-scrollbar-thumb {
+  background: #d9d9d9;
+  border-radius: 3px;
+}
