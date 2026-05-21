@@ -60,7 +60,6 @@ function getResourceIcon(type) {
 
 function TopicDetail({ topicTitle, onBack }) {
   const [activeTab, setActiveTab] = useState('knowledge');
-  const [showAssessment, setShowAssessment] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [versionData, setVersionData] = useState(() => loadFromStorage());
   const [editingKey, setEditingKey] = useState(null);
@@ -90,6 +89,7 @@ function TopicDetail({ topicTitle, onBack }) {
     { key: 'knowledge', label: '知识模式' },
     { key: 'ai', label: 'AI模式' },
     { key: 'practice', label: '实训模式' },
+    { key: 'assessment', label: '考核配置模式' },
   ];
 
   // 考核相关回调
@@ -437,21 +437,13 @@ function TopicDetail({ topicTitle, onBack }) {
               </Tag>
             </Button>
           </Dropdown>
-          <div
-            className={`header-icon-btn ${showAssessment ? 'header-icon-btn-active' : ''}`}
-            onClick={() => setShowAssessment(!showAssessment)}
-            title="考核设置"
-          >
-            <FileTextOutlined />
-            <span className="header-icon-btn-label">考核</span>
-          </div>
           <UserOutlined className="header-icon" />
           <CommentOutlined className="header-icon" />
         </div>
       </div>
 
       {/* Main Body */}
-      {showAssessment ? (
+      {activeTab === 'assessment' ? (
         <AssessmentConfig
           assessment={currentVersion?.assessment}
           assessmentChat={currentVersion?.assessmentChat}
@@ -459,6 +451,11 @@ function TopicDetail({ topicTitle, onBack }) {
           isDraft={isDraft}
           onUpdateAssessment={handleUpdateAssessment}
           onUpdateChat={handleUpdateAssessmentChat}
+          onOpenAddModal={() => setModalOpen(true)}
+          onCreateFolder={(name) => {
+            const newData = addResource(versionData, currentVersion.id, { name, isFolder: true, parentKey: null });
+            setVersionData(newData);
+          }}
         />
       ) : (
       <div className="detail-body">

@@ -1,5 +1,5 @@
 const STORAGE_KEY = 'guoren_version_data';
-const DATA_VERSION = 4; // 增加版本号，当默认数据结构变化时递增，自动重置本地存储
+const DATA_VERSION = 8; // 增加版本号，当默认数据结构变化时递增，自动重置本地存储
 
 // 默认初始数据
 const defaultData = {
@@ -70,15 +70,15 @@ const defaultData = {
         passScore: 60,
         certificate: true,
         rules: [
-          { key: 'ar1', activityKey: 'm1a1', activityName: '精讲视频课', stageName: '第一阶段 · AI基础入门', weight: 20, passCondition: '完成率>=80%', required: true },
-          { key: 'ar2', activityKey: 'm1a2', activityName: '直播课', stageName: '第一阶段 · AI基础入门', weight: 10, passCondition: '出勤率>=90%', required: true },
-          { key: 'ar3', activityKey: 'm1a3', activityName: '课后作业', stageName: '第一阶段 · AI基础入门', weight: 5, passCondition: '提交率100%', required: false },
-          { key: 'ar4', activityKey: 'm2a1', activityName: '精讲视频课', stageName: '第二阶段 · 编程实践', weight: 15, passCondition: '完成率>=80%', required: true },
-          { key: 'ar5', activityKey: 'm2a2', activityName: '阶段考试', stageName: '第二阶段 · 编程实践', weight: 15, passCondition: '分数>=60分', required: true },
-          { key: 'ar6', activityKey: 'm2a3', activityName: '线下集训', stageName: '第二阶段 · 编程实践', weight: 5, passCondition: '出勤率>=80%', required: false },
-          { key: 'ar7', activityKey: 'm3a1', activityName: '直播课', stageName: '第三阶段 · 项目实战', weight: 5, passCondition: '出勤率>=90%', required: true },
-          { key: 'ar8', activityKey: 'm3a2', activityName: '课题研讨', stageName: '第三阶段 · 项目实战', weight: 5, passCondition: '提交率100%', required: false },
-          { key: 'ar9', activityKey: 'm3a3', activityName: '结业考核', stageName: '第三阶段 · 项目实战', weight: 20, passCondition: '分数>=60分', required: true },
+          { key: 'ar1', folderKey: 'm1a1', folderName: '第一阶段 · AI基础入门 / 精讲视频课', activityType: 'video', weight: 20, passCondition: { metric: '完成率', op: '>=', value: 80 }, required: true },
+          { key: 'ar2', folderKey: 'm1a2', folderName: '第一阶段 · AI基础入门 / 直播课', activityType: 'live', weight: 10, passCondition: { metric: '出勤率', op: '>=', value: 90 }, required: true },
+          { key: 'ar3', folderKey: 'm1a3', folderName: '第一阶段 · AI基础入门 / 课后作业', activityType: 'other', weight: 5, passCondition: { metric: '提交率', op: '=', value: 100 }, required: false },
+          { key: 'ar4', folderKey: 'm2a1', folderName: '第二阶段 · 编程实践 / 精讲视频课', activityType: 'video', weight: 15, passCondition: { metric: '完成率', op: '>=', value: 80 }, required: true },
+          { key: 'ar5', folderKey: 'm2a2', folderName: '第二阶段 · 编程实践 / 阶段考试', activityType: 'exam', weight: 15, passCondition: { metric: '分数', op: '>=', value: 60 }, required: true },
+          { key: 'ar6', folderKey: 'm2a3', folderName: '第二阶段 · 编程实践 / 线下集训', activityType: 'offline', weight: 5, passCondition: { metric: '出勤率', op: '>=', value: 80 }, required: false },
+          { key: 'ar7', folderKey: 'm3a1', folderName: '第三阶段 · 项目实战 / 直播课', activityType: 'live', weight: 5, passCondition: { metric: '出勤率', op: '>=', value: 90 }, required: true },
+          { key: 'ar8', folderKey: 'm3a2', folderName: '第三阶段 · 项目实战 / 课题研讨', activityType: 'other', weight: 5, passCondition: { metric: '提交率', op: '=', value: 100 }, required: false },
+          { key: 'ar9', folderKey: 'm3a3', folderName: '第三阶段 · 项目实战 / 结业考核', activityType: 'exam', weight: 20, passCondition: { metric: '分数', op: '>=', value: 60 }, required: true },
         ],
       },
       assessmentChat: [],
