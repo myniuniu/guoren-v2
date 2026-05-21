@@ -118,6 +118,10 @@ function TopicDetail({ topicTitle, onBack }) {
   // 新建版本
   const handleCreateVersion = () => {
     const newData = createNewVersion(versionData);
+    if (newData.error) {
+      message.warning(newData.error);
+      return;
+    }
     setVersionData(newData);
     message.success('新版本已创建，已继承上一版本的资料');
   };

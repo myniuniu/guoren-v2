@@ -56,8 +56,15 @@ export function getActiveVersion(data) {
   return data.versions.find((v) => v.status === 'active') || null;
 }
 
+// 最大版本数量
+const MAX_VERSIONS = 5;
+
 // 新建版本（继承当前生效版本的资料）
 export function createNewVersion(data) {
+  if (data.versions.length >= MAX_VERSIONS) {
+    return { ...data, error: `最多支持 ${MAX_VERSIONS} 个版本，请删除旧版本后再创建` };
+  }
+
   const activeVersion = data.versions.find((v) => v.status === 'active');
   const inheritedResources = activeVersion
     ? activeVersion.resources.map((r) => ({ ...r, key: `r_${Date.now()}_${Math.random().toString(36).slice(2, 8)}` }))
