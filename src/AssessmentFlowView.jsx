@@ -11,17 +11,17 @@ import ReactFlow, {
   MarkerType,
 } from 'reactflow';
 import { InputNumber, Select, Tooltip, Modal, Input, Button, Radio, message, Popconfirm, Divider } from 'antd';
-import { FolderOutlined, AppstoreOutlined, DeleteOutlined, ClearOutlined, CloseOutlined, EditOutlined } from '@ant-design/icons';
+import { FolderOutlined, AppstoreOutlined, DeleteOutlined, ClearOutlined, CloseOutlined, EditOutlined, FileOutlined } from '@ant-design/icons';
 import 'reactflow/dist/style.css';
 import './AssessmentFlowView.css';
 
 const activityTypeColor = { video: '#1677ff', live: '#13c2c2', exam: '#ff4d4f', offline: '#faad14', other: '#8c8c8c', '': '#bfbfbf' };
 
 // 阶段节点（顶级文件夹） - 容器式，包含活动子节点
-function StageNode({ data }) {
+function StageNode({ data, selected }) {
   const stop = (e) => e.stopPropagation();
   return (
-    <div className={`flow-stage-container ${data.isDropTarget ? 'is-drop-target' : ''}`}>
+    <div className={`flow-stage-container ${data.isDropTarget ? 'is-drop-target' : ''} ${selected ? 'is-selected' : ''}`}>
       <Handle type="target" position={Position.Left} style={{ background: '#1677ff' }} />
       <div className="flow-stage-header">
         <FolderOutlined style={{ color: '#1677ff' }} />
@@ -47,12 +47,15 @@ function StageNode({ data }) {
 }
 
 // 活动节点（子文件夹）
-function ActivityNode({ data }) {
+function ActivityNode({ data, selected }) {
   const color = activityTypeColor[data.activityType ?? ''] || activityTypeColor.other;
   const stop = (e) => e.stopPropagation();
   return (
-    <div className="flow-activity-node" style={{ borderColor: color }}>
-      <Handle type="target" position={Position.Left} style={{ background: color }} />
+    <div
+      className={`flow-activity-node ${selected ? 'is-selected' : ''}`}
+      style={selected ? { borderColor: '#1677ff', borderWidth: 2 } : undefined}
+    >
+      <Handle type="target" position={Position.Top} style={{ background: color }} />
       {data.isDraft && data.onDelete && (
         <div
           className="flow-node-delete-badge nodrag nopan"
@@ -73,7 +76,7 @@ function ActivityNode({ data }) {
           <Select
             className="nodrag nopan"
             size="small"
-            style={{ width: 100 }}
+            style={{ width: 90 }}
             value={data.activityType ?? ''}
             disabled={!data.isDraft}
             onChange={(v) => data.onChange(data.folderKey, 'activityType', v)}
@@ -95,7 +98,7 @@ function ActivityNode({ data }) {
           <InputNumber
             className="nodrag nopan"
             size="small"
-            style={{ width: 80 }}
+            style={{ width: 72 }}
             min={0}
             max={100}
             value={data.weight ?? 0}
@@ -111,7 +114,7 @@ function ActivityNode({ data }) {
           <Select
             className="nodrag nopan"
             size="small"
-            style={{ width: 80 }}
+            style={{ width: 72 }}
             value={data.required ? 'yes' : 'no'}
             disabled={!data.isDraft}
             onChange={(v) => data.onChange(data.folderKey, 'required', v === 'yes')}
@@ -122,7 +125,24 @@ function ActivityNode({ data }) {
           />
         </div>
       </div>
-      <Handle type="source" position={Position.Right} style={{ background: color }} />
+      {data.isCustomActivity && (
+        <div className="flow-activity-binding">
+          <div className="flow-activity-binding-title">已绑定资料 · {data.boundResources?.length || 0}</div>
+          {(!data.boundResources || data.boundResources.length === 0) ? (
+            <div className="flow-activity-binding-empty">拖入资料以绑定</div>
+          ) : (
+            <div className="flow-activity-binding-list nodrag nopan" onMouseDown={stop} onWheelCapture={stop}>
+              {data.boundResources.map((b) => (
+                <div key={b.key} className="flow-activity-binding-item" title={b.name}>
+                  {b.isFolder ? <FolderOutlined /> : <FileOutlined />}
+                  <span className="flow-activity-binding-item-name">{b.name}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+      <Handle type="source" position={Position.Bottom} style={{ background: color }} />
     </div>
   );
 }
@@ -173,6 +193,21 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
       .map((cs) => ({ key: cs.key, name: cs.name, isFolder: true, parentKey: null, isCustom: true }));
     const stages = [...builtinStages, ...promotedStages, ...customStages];
     const stageKeySet = new Set(stages.map((s) => s.key));
+    // custom activity = 工具栏拖拽创建的空活动容器（可绑定资料）
+    const customActivities = (assessment.customActivities || [])
+      .filter((ca) => !deletedNodeSet.has(ca.key))
+      .map((ca) => ({
+        key: ca.key,
+        name: ca.name,
+        isFolder: true,
+        parentKey: ca.parentKey,
+        isCustomActivity: true,
+        boundResources: ca.boundResources || [],
+      }));
+    const customActivityKeys = customActivities.map((ca) => ca.key);
+    void customActivityKeys; // 预留：后续资料绑定逻辑可能需要
+    // 查找资源（含自定义活动）
+    const findResource = (key) => resources.find((r) => r.key === key) || customActivities.find((c) => c.key === key);
     const nodes = [];
     const edges = [];
 
@@ -193,11 +228,19 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
       if (promotedSet.has(actKey)) return; // 被提升为 stage 的不能同时当活动
       if (stageKeySet.has(actKey)) return; // 本身就是 stage 的不能当活动
       if (deletedNodeSet.has(actKey)) return;
-      const r = resources.find((rr) => rr.key === actKey);
+      const r = findResource(actKey);
       if (!r || !r.isFolder) return;
       if (!stageKeySet.has(stageKey)) return;
       if (deletedNodeSet.has(stageKey)) return;
       activityParentMap.set(actKey, stageKey);
+    });
+    // 3) 自定义活动容器：依靠 parentKey 归属到对应阶段（overrides 优先）
+    customActivities.forEach((ca) => {
+      if (activityParentMap.has(ca.key)) return;
+      const target = ca.parentKey;
+      if (!stageKeySet.has(target)) return;
+      if (deletedNodeSet.has(target)) return;
+      activityParentMap.set(ca.key, target);
     });
 
     const decorate = (edge) => {
@@ -206,6 +249,8 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
       const hasRule = !!label;
       return {
         ...edge,
+        // 加宽边的点击命中区域（默认 stroke-width 只有 2px 难以点中）
+        interactionWidth: 12,
         label: hasRule ? label : undefined,
         labelStyle: hasRule ? { fill: '#1677ff', fontWeight: 600, fontSize: 11 } : undefined,
         labelBgPadding: hasRule ? [6, 3] : undefined,
@@ -228,7 +273,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
       // 取归属到此 stage 的所有活动（含 parentOverrides）
       const activities = [...activityParentMap.entries()]
         .filter(([actKey, stageKey]) => stageKey === stage.key && !deletedNodeSet.has(actKey))
-        .map(([actKey]) => resources.find((r) => r.key === actKey))
+        .map(([actKey]) => findResource(actKey))
         .filter(Boolean);
       const stageX = sIdx * 380;
       const stageY = 0;
@@ -236,10 +281,37 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
       const totalWeight = stageActivityRules.reduce((sum, r) => sum + (r.weight || 0), 0);
 
       // 阶段容器尺寸：高度随活动数量动态伸缩
-      const STAGE_WIDTH = 300;
-      const HEADER_H = 60;
-      const ACT_H = 200; // 活动节点高度估算
-      const stageHeight = Math.max(160, HEADER_H + activities.length * ACT_H + 20);
+      const STAGE_WIDTH = 240;
+      const HEADER_H = 54;
+      const ACT_H = 150; // 活动节点高度估算
+      const ACT_VISUAL_H = 160; // 活动卡实际渲染高度（header+body 3行+padding）
+      // 考虑 flowPositions 中可能保存了旧坐标（如早期更大的 ACT_H 拖拽过的位置），
+      // stageHeight 取「默认堆叠高度」与「活动实际最大底部」中的较大值，避免卡片溢出容器
+      const computeActVisualH = (a) => {
+        if (!a.isCustomActivity) return ACT_VISUAL_H;
+        const cnt = a.boundResources?.length || 0;
+        // 绑定区：margin+padding+border 约 17，title 约 20，列表 max-height 70
+        // 空态提示 约 32px；每项 约 28px；最多累加 2 项（超出列表内部滚动）
+        const bindContent = cnt === 0 ? 32 : Math.min(2, cnt) * 28 + (cnt > 2 ? 6 : 0);
+        const bindH = 17 + 20 + bindContent;
+        return ACT_VISUAL_H + bindH;
+      };
+      // 按现有 flowPositions 中 y 坐标排序，按每张卡片真实高度紧凑堆叠重排，
+      // 避免自定义活动卡片（含绑定区更高）与下一个活动重叠
+      const sortedActs = activities.slice().sort((a, b) => {
+        const ya = assessment.flowPositions?.[a.key]?.y ?? 0;
+        const yb = assessment.flowPositions?.[b.key]?.y ?? 0;
+        return ya - yb;
+      });
+      const computedActY = new Map();
+      let cursorY = HEADER_H;
+      sortedActs.forEach((a) => {
+        computedActY.set(a.key, cursorY);
+        cursorY += computeActVisualH(a) + 16;
+      });
+      const defaultBottom = HEADER_H + activities.length * ACT_H + 16;
+      const actualBottom = cursorY;
+      const stageHeight = Math.max(140, defaultBottom, actualBottom);
 
       nodes.push({
         id: stage.key,
@@ -300,11 +372,13 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
           id: act.key,
           type: 'activity',
           parentNode: stage.key,
-          position: assessment.flowPositions?.[act.key] || { x: 20, y: HEADER_H + aIdx * ACT_H },
+          position: { x: 20, y: computedActY.get(act.key) ?? (HEADER_H + aIdx * ACT_H) },
           deletable: false,
           data: {
             label: act.name,
             folderKey: act.key,
+            isCustomActivity: !!act.isCustomActivity,
+            boundResources: act.boundResources || [],
             activityType: rule?.activityType ?? '',
             weight: rule?.weight ?? 0,
             required: rule?.required ?? true,
@@ -351,14 +425,18 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
     if (assessment.flowEdges && Array.isArray(assessment.flowEdges)) {
       assessment.flowEdges.forEach((e) => {
         if (!edges.some((ex) => ex.id === e.id)) {
+          // 根据 source 节点类型区分阶段边 / 活动边样式
+          const srcNode = nodes.find((n) => n.id === e.source);
+          const isStageEdge = srcNode?.type === 'stage';
+          const edgeColor = isStageEdge ? '#1677ff' : '#52c41a';
           pushEdge({
             id: e.id,
             source: e.source,
             target: e.target,
-            type: 'smoothstep',
+            type: isStageEdge ? 'smoothstep' : 'straight',
             animated: true,
-            style: { stroke: '#52c41a', strokeWidth: 2 },
-            markerEnd: { type: MarkerType.ArrowClosed, color: '#52c41a' },
+            style: { stroke: edgeColor, strokeWidth: 2 },
+            markerEnd: { type: MarkerType.ArrowClosed, color: edgeColor },
           });
         }
       });
@@ -373,16 +451,22 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
   // 拖动结束后短暂跳过一次 props 同步，避免 useEffect 把刚算好的位置覆盖回去
   const skipNextSyncRef = useRef(false);
 
-  // 同步外部数据变化
+  // 同步外部数据变化（同时保留 selected 状态，避免覆盖面板 state 對应的选中视觉）
   useEffect(() => {
     if (skipNextSyncRef.current) {
       skipNextSyncRef.current = false;
       return;
     }
-    setNodes(initialNodes);
+    const enriched = initialNodes.map((n) => {
+      const should =
+        (n.type === 'activity' && n.id === selectedActivityKey) ||
+        (n.type === 'stage' && n.id === selectedStageKey);
+      return should ? { ...n, selected: true } : n;
+    });
+    setNodes(enriched);
     setEdges(initialEdges);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialNodes, initialEdges]);
+  }, [initialNodes, initialEdges, selectedActivityKey, selectedStageKey]);
 
   // 节点拖动开始 -> 高亮父阶段、记录状态
   const onNodeDragStart = useCallback((event, node) => {
@@ -396,10 +480,10 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
   }, [isDraft, setNodes]);
 
   // 拖动中：实时检测活动中心落在哪个阶段内，切换高亮
-  const ACTIVITY_W = 240;
-  const ACTIVITY_H_VISUAL = 180;
-  const HEADER_H = 60;
-  const SLOT_H = 200;
+  const ACTIVITY_W = 200;
+  const ACTIVITY_H_VISUAL = 140;
+  const HEADER_H = 54;
+  const SLOT_H = 150;
 
   const findHitStage = useCallback((node, stageNodes) => {
     if (node.type !== 'activity') return null;
@@ -465,6 +549,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
     let needPromote = false;
     let promoteAbsX = 0;
     let promoteAbsY = 0;
+    let snappedBack = false;
 
     setNodes((nds) => {
       // 关键：从 state 中读取被拖节点的最新 position（ReactFlow 已经把拖动后的位置写进来了）
@@ -473,22 +558,34 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
       const parentStage = stageNodes.find((s) => s.id === draggedFromState.parentNode);
       const hit = findHitStage(draggedFromState, stageNodes);
 
-      // 未命中任何阶段 -> 提升为阶段容器
+      // 未命中任何阶段 -> 「活动」不允许脱离阶段容器，snap 回原阶段末位
       if (!hit) {
-        needPromote = true;
-        promoteAbsX = draggedFromState.positionAbsolute?.x
-          ?? ((parentStage?.position.x ?? 0) + (draggedFromState.position?.x ?? 0));
-        promoteAbsY = draggedFromState.positionAbsolute?.y
-          ?? ((parentStage?.position.y ?? 0) + (draggedFromState.position?.y ?? 0));
-        // 原阶段剩余活动重排避免空隔
         if (parentStage) {
+          snappedBack = true;
+          // 保持原 parent，被拖节点重排到原阶段末位
           const oldSiblings = nds
             .filter((n) => n.type === 'activity' && n.id !== node.id && n.parentNode === parentStage.id)
             .sort((a, b) => (a.position?.y ?? 0) - (b.position?.y ?? 0));
-          oldSiblings.forEach((n, i) => {
+          const order = [...oldSiblings, { id: node.id }];
+          order.forEach((n, i) => {
             positionsToWrite[n.id] = { x: 20, y: HEADER_H + i * SLOT_H };
           });
+          newParentId = parentStage.id;
+          crossStage = false;
+          return nds.map((n) => {
+            if (n.id === node.id) {
+              return { ...n, parentNode: parentStage.id, position: positionsToWrite[n.id] };
+            }
+            if (positionsToWrite[n.id]) {
+              return { ...n, position: positionsToWrite[n.id] };
+            }
+            if (n.type === 'stage' && n.data?.isDropTarget) {
+              return { ...n, data: { ...n.data, isDropTarget: false } };
+            }
+            return n;
+          });
         }
+        // 无原 parent的孤节点（理论上不应出现）：仅清除 drop target 高亮
         return nds.map((n) => {
           if (n.type === 'stage' && n.data?.isDropTarget) {
             return { ...n, data: { ...n.data, isDropTarget: false } };
@@ -579,6 +676,8 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
     if (crossStage) {
       next.parentOverrides = { ...(next.parentOverrides || {}), [node.id]: newParentId };
       message.success(`已归属到「${hitStageLabel || '新阶段'}」并插入到对应位置`);
+    } else if (snappedBack) {
+      message.warning('「活动」不能移出阶段容器，已自动返回原阶段');
     }
     skipNextSyncRef.current = true;
     onUpdateAssessment(next);
@@ -592,16 +691,25 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
     const sNode = allNodes.find((n) => n.id === source);
     const tNode = allNodes.find((n) => n.id === target);
     if (!sNode || !tNode) return { ok: false, reason: '节点不存在' };
-    if (sNode.type !== 'activity' || tNode.type !== 'activity') {
-      return { ok: false, reason: '连线仅允许在活动卡片之间' };
+    if (sNode.type !== tNode.type) {
+      return { ok: false, reason: '仅允许同类型节点互连（阶段↔阶段、活动↔活动）' };
     }
-    if (sNode.parentNode !== tNode.parentNode) {
-      return { ok: false, reason: '仅允许同一阶段内的活动串联' };
+    if (sNode.type === 'activity') {
+      if (sNode.parentNode !== tNode.parentNode) {
+        return { ok: false, reason: '仅允许同一阶段内的活动串联' };
+      }
+    } else if (sNode.type === 'stage') {
+      // 阶段间连线：两者必须都是顶层阶段（无 parentNode）
+      if (sNode.parentNode || tNode.parentNode) {
+        return { ok: false, reason: '阶段间连线仅允许顶层阶段互连' };
+      }
+    } else {
+      return { ok: false, reason: '仅支持阶段或活动节点连线' };
     }
     const eds = currentEdges || edges;
     // 串联：source 只能有一个出边；target 只能有一个入边
-    if (eds.some((e) => e.source === source)) return { ok: false, reason: '该活动已有下游连线（只能串联）' };
-    if (eds.some((e) => e.target === target)) return { ok: false, reason: '该活动已有上游连线（只能串联）' };
+    if (eds.some((e) => e.source === source)) return { ok: false, reason: '该节点已有下游连线（只能串联）' };
+    if (eds.some((e) => e.target === target)) return { ok: false, reason: '该节点已有上游连线（只能串联）' };
     // 防环：检查从 target 出发能否回到 source
     const visited = new Set();
     const stack = [target];
@@ -628,13 +736,21 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
       message.warning(check.reason);
       return;
     }
+    // 根据节点类型生成不同样式的边：
+    // - 阶段间：蓝色 smoothstep（与资料区阶段间默认边一致）
+    // - 活动间：绿色 straight（上下直线串联）
+    const allNodes = rfInstance?.getNodes ? rfInstance.getNodes() : nodes;
+    const sNode = allNodes.find((n) => n.id === params.source);
+    const isStageEdge = sNode?.type === 'stage';
+    const edgeColor = isStageEdge ? '#1677ff' : '#52c41a';
     const newEdge = {
       ...params,
       id: `${params.source}->${params.target}-${Date.now()}`,
-      type: 'smoothstep',
+      type: isStageEdge ? 'smoothstep' : 'straight',
       animated: true,
-      style: { stroke: '#52c41a', strokeWidth: 2 },
-      markerEnd: { type: MarkerType.ArrowClosed, color: '#52c41a' },
+      interactionWidth: 12,
+      style: { stroke: edgeColor, strokeWidth: 2 },
+      markerEnd: { type: MarkerType.ArrowClosed, color: edgeColor },
     };
     setEdges((eds) => addEdge(newEdge, eds));
     const flowEdges = [...(assessment.flowEdges || []), { id: newEdge.id, source: newEdge.source, target: newEdge.target }];
@@ -651,14 +767,35 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
       setSelectedActivityKey(null);
       setSelectedStageKey(node.id);
     }
-  }, []);
+    setSelectedEdgeId(null);
+    // 手动同步 ReactFlow 内部 selected 状态（避免卡片内控件 onMouseDown={stop} 拦截导致选中视觉不切换）
+    setNodes((nds) => nds.map((n) => (n.selected === (n.id === node.id) ? n : { ...n, selected: n.id === node.id })));
+  }, [setNodes]);
 
   // 点击画布空白 -> 关闭属性面板
   const onPaneClick = useCallback(() => {
     setSelectedActivityKey(null);
     setSelectedStageKey(null);
     setSelectedEdgeId(null);
-  }, []);
+    setNodes((nds) => nds.map((n) => (n.selected ? { ...n, selected: false } : n)));
+  }, [setNodes]);
+
+  // 双向同步：以「属性面板 state」为唯一真相、强制刷新 ReactFlow 节点 selected 状态。
+  // 避免卡片内控件 onMouseDown stopPropagation 拦截后，RF 内部 selection 与面板 state 不一致。
+  useEffect(() => {
+    setNodes((nds) => {
+      let changed = false;
+      const next = nds.map((n) => {
+        const should =
+          (n.type === 'activity' && n.id === selectedActivityKey) ||
+          (n.type === 'stage' && n.id === selectedStageKey);
+        if (!!n.selected === should) return n;
+        changed = true;
+        return { ...n, selected: should };
+      });
+      return changed ? next : nds;
+    });
+  }, [selectedActivityKey, selectedStageKey, setNodes]);
 
   // 更新某个活动的 rule 字段（属性面板专用）
   const handleRuleChange = useCallback((folderKey, field, value) => {
@@ -682,7 +819,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
     onUpdateAssessment({ ...assessment, rules });
   }, [assessment, onUpdateAssessment, resources]);
 
-  // 单击连线 -> 仅选中（弹出顶部连线工具条，不开 Modal，避免焦点被锁在 Modal 内导致 Del 键失效）
+  // 单击连线 -> 选中并在右侧属性面板展示「连线属性」（与「活动属性」「阶段属性」互斥）
   const onEdgeClick = useCallback((event, edge) => {
     event.stopPropagation();
     if (!isDraft) {
@@ -692,29 +829,10 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
     setSelectedEdgeId(edge.id);
     setSelectedActivityKey(null);
     setSelectedStageKey(null);
-  }, [isDraft]);
-
-  // 双击连线 -> 打开进入规则 Modal
-  const onEdgeDoubleClick = useCallback((event, edge) => {
-    event.stopPropagation();
-    if (!isDraft) {
-      message.info('当前版本不可编辑');
-      return;
-    }
+    setNodes((nds) => nds.map((n) => (n.selected ? { ...n, selected: false } : n)));
     const existing = (assessment.edgeRules || {})[edge.id];
     setRuleForm(existing ? { ...DEFAULT_RULE, ...existing } : { ...DEFAULT_RULE });
-    setEditingEdge(edge);
   }, [assessment, isDraft]);
-
-  // 工具条「配置进入规则」按钮
-  const handleEditSelectedEdgeRule = useCallback(() => {
-    if (!selectedEdgeId) return;
-    const edge = edges.find((e) => e.id === selectedEdgeId);
-    if (!edge) return;
-    const existing = (assessment.edgeRules || {})[edge.id];
-    setRuleForm(existing ? { ...DEFAULT_RULE, ...existing } : { ...DEFAULT_RULE });
-    setEditingEdge(edge);
-  }, [selectedEdgeId, edges, assessment]);
 
   // 工具条「删除连线」按钮
   const handleDeleteSelectedEdge = useCallback(() => {
@@ -882,6 +1000,71 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
         message.success('已新增空阶段容器，可在右侧面板修改属性');
         return;
       }
+      if (tool?.tool === 'activity') {
+        // 「活动容器」必须拖入某个阶段内才能创建
+        let hitStage = null;
+        if (rfInstance?.getNodes) {
+          const allNodes = rfInstance.getNodes();
+          const stageNodes = allNodes.filter((n) => n.type === 'stage');
+          for (const s of stageNodes) {
+            const sx = s.position.x;
+            const sy = s.position.y;
+            const sw = s.style?.width ?? 240;
+            const sh = s.style?.height ?? 140;
+            if (position.x >= sx && position.x <= sx + sw && position.y >= sy && position.y <= sy + sh) {
+              hitStage = s;
+              break;
+            }
+          }
+        }
+        if (!hitStage) {
+          message.warning('「活动容器」仅能拖入「阶段容器」内，请拖到某个阶段内部');
+          return;
+        }
+        const newKey = `ca_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+        const newCustomAct = { key: newKey, name: '新活动', parentKey: hitStage.id, boundResources: [] };
+        const next = { ...assessment };
+        next.customActivities = [...(assessment.customActivities || []), newCustomAct];
+        // 初始化一条默认规则
+        next.rules = [
+          ...(assessment.rules || []),
+          {
+            key: `ar_${Date.now()}`,
+            folderKey: newKey,
+            folderName: '新活动',
+            activityType: '',
+            weight: 0,
+            passCondition: { metric: '完成率', op: '>=', value: 80 },
+            required: true,
+          },
+        ];
+        // 插入到阶段内末位
+        const HEADER_H = 54;
+        const SLOT_H = 150;
+        const allNodes = rfInstance.getNodes();
+        const siblings = allNodes
+          .filter((n) => n.type === 'activity' && n.parentNode === hitStage.id)
+          .sort((a, b) => (a.position.y ?? 0) - (b.position.y ?? 0));
+        const localY = position.y - hitStage.position.y;
+        let insertIdx = siblings.findIndex((s) => localY < (s.position.y ?? 0) + SLOT_H / 2);
+        if (insertIdx === -1) insertIdx = siblings.length;
+        const order = [
+          ...siblings.slice(0, insertIdx).map((s) => ({ id: s.id })),
+          { id: newKey },
+          ...siblings.slice(insertIdx).map((s) => ({ id: s.id })),
+        ];
+        const positionsBatch = {};
+        order.forEach((n, i) => {
+          positionsBatch[n.id] = { x: 20, y: HEADER_H + i * SLOT_H };
+        });
+        next.parentOverrides = { ...(next.parentOverrides || {}), [newKey]: hitStage.id };
+        next.flowPositions = { ...(next.flowPositions || {}), ...positionsBatch };
+        onUpdateAssessment(next);
+        setSelectedStageKey(null);
+        setSelectedActivityKey(newKey);
+        message.success(`已在「${hitStage.data?.label || '阶段'}」内新增空活动容器`);
+        return;
+      }
     }
 
     // 其次处理从左侧资料区拖入的资源项
@@ -890,6 +1073,51 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
     let payload;
     try { payload = JSON.parse(raw); } catch { return; }
     if (!payload || !payload.key) return;
+
+    // 0) 优先判定：拖入「自定义活动容器」→ 作为资料绑定（不走「提升为阶段/作为活动」逻辑）
+    if (rfInstance?.getNodes) {
+      const allNodes = rfInstance.getNodes();
+      const stageById = new Map(
+        allNodes.filter((n) => n.type === 'stage').map((n) => [n.id, n])
+      );
+      const hitCustomAct = allNodes.find((n) => {
+        if (n.type !== 'activity' || !n.data?.isCustomActivity) return false;
+        if (n.id === payload.key) return false;
+        const parent = stageById.get(n.parentNode);
+        const ax = (parent?.position?.x ?? 0) + (n.position?.x ?? 0);
+        const ay = (parent?.position?.y ?? 0) + (n.position?.y ?? 0);
+        const aw = n.width ?? 200;
+        const ah = n.height ?? 150;
+        return position.x >= ax && position.x <= ax + aw && position.y >= ay && position.y <= ay + ah;
+      });
+      if (hitCustomAct) {
+        const list = assessment.customActivities || [];
+        const idx = list.findIndex((ca) => ca.key === hitCustomAct.id);
+        if (idx === -1) return;
+        const target = list[idx];
+        if (target.key === payload.key) {
+          message.warning('不能绑定自身');
+          return;
+        }
+        const exists = (target.boundResources || []).some((b) => b.key === payload.key);
+        if (exists) {
+          message.info(`「${payload.name}」已绑定，无需重复`);
+          return;
+        }
+        const updatedTarget = {
+          ...target,
+          boundResources: [
+            ...(target.boundResources || []),
+            { key: payload.key, name: payload.name, isFolder: !!payload.isFolder },
+          ],
+        };
+        const newList = [...list];
+        newList[idx] = updatedTarget;
+        onUpdateAssessment({ ...assessment, customActivities: newList });
+        message.success(`已绑定「${payload.name}」到「${hitCustomAct.data?.label || '活动'}」`);
+        return;
+      }
+    }
 
     const next = { ...assessment };
     // 1) 若该节点曾被软删除（deletedNodes），恢复它
@@ -914,9 +1142,14 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
       }
     }
 
-    // 3) 文件夹角色判定：命中阶段容器 -> 作为活动；未命中 -> 作为阶段
+    // 3) 文件夹角色判定：命中阶段容器 -> 作为活动；未命中 -> 仅一级目录（builtin stage）可独立放置于画布
     const positionsBatch = {};
     if (payload.isFolder) {
+      // 「活动」只能拖入阶段容器：非一级目录且未命中任何阶段时拒绝放置
+      if (!hitStage && payload.parentKey !== null) {
+        message.warning('「活动」仅能拖入「阶段容器」内，请将「' + (payload.name || '该项') + '」拖到某个阶段内部');
+        return;
+      }
       // 为任何层级文件夹初始化一条默认规则（作为活动时需要）
       const exists = (assessment.rules || []).some((r) => r.folderKey === payload.key);
       if (!exists) {
@@ -1021,6 +1254,22 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
             <FolderOutlined style={{ color: '#1677ff' }} />
             <span>阶段容器</span>
           </div>
+          <div
+            className={`flow-tool-item ${!isDraft ? 'disabled' : ''}`}
+            draggable={isDraft}
+            onDragStart={(e) => {
+              if (!isDraft) { e.preventDefault(); return; }
+              e.dataTransfer.setData(
+                'application/assessment-tool',
+                JSON.stringify({ tool: 'activity' })
+              );
+              e.dataTransfer.effectAllowed = 'move';
+            }}
+            title="拖拽到某个阶段内创建一个空活动容器，可再拖入资料进行绑定"
+          >
+            <AppstoreOutlined style={{ color: '#13c2c2' }} />
+            <span>活动容器</span>
+          </div>
         </div>
         <div className="toolbar-divider" />
         <div className="toolbar-group">
@@ -1043,31 +1292,6 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
             </Button>
           </Popconfirm>
         </div>
-        {selectedEdgeId && (
-          <>
-            <div className="toolbar-divider" />
-            <div className="toolbar-group">
-              <span className="toolbar-label">已选中连线</span>
-              <Button
-                size="small"
-                icon={<EditOutlined />}
-                onClick={handleEditSelectedEdgeRule}
-                disabled={!isDraft}
-              >
-                配置进入规则
-              </Button>
-              <Button
-                size="small"
-                danger
-                icon={<DeleteOutlined />}
-                onClick={handleDeleteSelectedEdge}
-                disabled={!isDraft}
-              >
-                删除连线
-              </Button>
-            </div>
-          </>
-        )}
       </div>
       {isDragOver && (
         <div className="flow-drop-hint">松开鼠标以在此处放置资料</div>
@@ -1086,7 +1310,6 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
         onNodeDragStop={onNodeDragStop}
         onNodeClick={onNodeClick}
         onEdgeClick={onEdgeClick}
-        onEdgeDoubleClick={onEdgeDoubleClick}
         onPaneClick={onPaneClick}
         onInit={setRfInstance}
         nodeTypes={nodeTypes}
@@ -1100,8 +1323,11 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
       </ReactFlow>
 
       {selectedActivityKey && (() => {
-        const folder = resources.find((r) => r.key === selectedActivityKey);
+        const builtinFolder = resources.find((r) => r.key === selectedActivityKey);
+        const customAct = (assessment.customActivities || []).find((ca) => ca.key === selectedActivityKey);
+        const folder = builtinFolder || (customAct ? { key: customAct.key, name: customAct.name, isFolder: true } : null);
         if (!folder) return null;
+        const isCustomActivity = !!customAct;
         const rule = (assessment.rules || []).find((r) => r.folderKey === selectedActivityKey) || {
           folderKey: selectedActivityKey,
           folderName: folder.name,
@@ -1129,7 +1355,21 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
             <div className="inspector-body">
               <div className="inspector-field">
                 <label>活动名称</label>
-                <Input value={folder.name} disabled />
+                <Input
+                  value={folder.name}
+                  disabled={!isCustomActivity || !isDraft}
+                  onChange={(e) => {
+                    if (!isCustomActivity) return;
+                    const v = e.target.value;
+                    const customActivities = (assessment.customActivities || []).map((ca) =>
+                      ca.key === selectedActivityKey ? { ...ca, name: v } : ca
+                    );
+                    const rules = (assessment.rules || []).map((r) =>
+                      r.folderKey === selectedActivityKey ? { ...r, folderName: v } : r
+                    );
+                    onUpdateAssessment({ ...assessment, customActivities, rules });
+                  }}
+                />
               </div>
               <div className="inspector-field">
                 <label>活动类型</label>
@@ -1214,6 +1454,71 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
                   />
                 </div>
               </div>
+              {isCustomActivity && (
+                <>
+                  <Divider style={{ margin: '12px 0' }}>已绑定资料 ({customAct.boundResources?.length || 0})</Divider>
+                  {(!customAct.boundResources || customAct.boundResources.length === 0) ? (
+                    <div className="inspector-empty-tip">尚未绑定资料，可从左侧资料区拖入卡片进行绑定</div>
+                  ) : (
+                    <div className="inspector-binding-list">
+                      {customAct.boundResources.map((b) => (
+                        <div key={b.key} className="inspector-binding-item">
+                          {b.isFolder ? <FolderOutlined /> : <FileOutlined />}
+                          <span className="inspector-binding-name" title={b.name}>{b.name}</span>
+                          {isDraft && (
+                            <Button
+                              type="text"
+                              size="small"
+                              icon={<CloseOutlined />}
+                              onClick={() => {
+                                const customActivities = (assessment.customActivities || []).map((ca) => {
+                                  if (ca.key !== selectedActivityKey) return ca;
+                                  return { ...ca, boundResources: (ca.boundResources || []).filter((x) => x.key !== b.key) };
+                                });
+                                onUpdateAssessment({ ...assessment, customActivities });
+                                message.success(`已移除「${b.name}」`);
+                              }}
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+              {isDraft && (
+                <div className="inspector-actions">
+                  <Popconfirm
+                    title={isCustomActivity ? '确认删除该活动容器？' : '确认从画布移除该活动？'}
+                    description={isCustomActivity
+                      ? `「${folder.name}」及其已绑定资料、规则将被删除（不可恢复）`
+                      : `「${folder.name}」将从画布移除（仍保留于资料区，可重新拖入）`}
+                    okText={isCustomActivity ? '删除' : '移除'}
+                    okButtonProps={{ danger: true }}
+                    cancelText="取消"
+                    onConfirm={() => {
+                      const next = { ...assessment };
+                      if (isCustomActivity) {
+                        next.customActivities = (assessment.customActivities || []).filter((ca) => ca.key !== folder.key);
+                        next.rules = (assessment.rules || []).filter((r) => r.folderKey !== folder.key);
+                      } else {
+                        next.deletedNodes = [...(assessment.deletedNodes || []), folder.key];
+                      }
+                      const flowPositions = { ...(assessment.flowPositions || {}) };
+                      delete flowPositions[folder.key];
+                      next.flowPositions = flowPositions;
+                      const parentOverrides = { ...(assessment.parentOverrides || {}) };
+                      delete parentOverrides[folder.key];
+                      next.parentOverrides = parentOverrides;
+                      setSelectedActivityKey(null);
+                      onUpdateAssessment(next);
+                      message.success(`已${isCustomActivity ? '删除' : '从画布移除'}「${folder.name || '活动'}」`);
+                    }}
+                  >
+                    <Button danger icon={<DeleteOutlined />} block>{isCustomActivity ? '删除活动容器' : '移除活动'}</Button>
+                  </Popconfirm>
+                </div>
+              )}
               {!isDraft && (
                 <div className="inspector-readonly-tip">当前版本不可编辑，仅可查看</div>
               )}
@@ -1354,64 +1659,111 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
         );
       })()}
 
-      <Modal
-        open={!!editingEdge}
-        title="配置进入规则"
-        onCancel={() => setEditingEdge(null)}
-        width={460}
-        footer={[
-          <Button key="del" danger icon={<DeleteOutlined />} onClick={handleDeleteEdge}>
-            删除连线
-          </Button>,
-          <Button key="cancel" onClick={() => setEditingEdge(null)}>取消</Button>,
-          <Button key="ok" type="primary" onClick={handleSaveRule}>保存</Button>,
-        ]}
-      >
-        {editingEdge && (
-          <div className="edge-rule-form">
-            <div className="edge-rule-info">
-              连线：<code>{editingEdge.source}</code> → <code>{editingEdge.target}</code>
-            </div>
-            <div className="edge-rule-row">
-              <div className="edge-rule-label">规则类型</div>
-              <Radio.Group
-                value={ruleForm.type}
-                onChange={(e) => setRuleForm({ ...ruleForm, type: e.target.value })}
-              >
-                <Radio value="none">无限制</Radio>
-                <Radio value="completion">完成率达标</Radio>
-                <Radio value="score">得分达标</Radio>
-                <Radio value="all-passed">全部活动通过</Radio>
-                <Radio value="custom">自定义</Radio>
-              </Radio.Group>
-            </div>
-            {(ruleForm.type === 'completion' || ruleForm.type === 'score') && (
-              <div className="edge-rule-row">
-                <div className="edge-rule-label">阈值</div>
-                <InputNumber
-                  min={0}
-                  max={ruleForm.type === 'completion' ? 100 : 1000}
-                  value={ruleForm.threshold}
-                  onChange={(v) => setRuleForm({ ...ruleForm, threshold: v ?? 0 })}
-                  addonAfter={ruleForm.type === 'completion' ? '%' : '分'}
-                  style={{ width: 160 }}
-                />
+      {selectedEdgeId && !selectedActivityKey && !selectedStageKey && (() => {
+        const edge = edges.find((e) => e.id === selectedEdgeId);
+        if (!edge) return null;
+        const sNode = nodes.find((n) => n.id === edge.source);
+        const tNode = nodes.find((n) => n.id === edge.target);
+        const sourceLabel = sNode?.data?.label || edge.source;
+        const targetLabel = tNode?.data?.label || edge.target;
+        const commitRule = (patch) => {
+          const newForm = { ...ruleForm, ...patch };
+          setRuleForm(newForm);
+          if (!isDraft) return;
+          const next = { ...assessment };
+          const edgeRulesMap = { ...(next.edgeRules || {}) };
+          if (newForm.type === 'none') {
+            delete edgeRulesMap[selectedEdgeId];
+          } else {
+            edgeRulesMap[selectedEdgeId] = { ...newForm };
+          }
+          next.edgeRules = edgeRulesMap;
+          onUpdateAssessment(next);
+        };
+        return (
+          <div className="flow-activity-inspector" onMouseDown={(e) => e.stopPropagation()}>
+            <div className="inspector-header">
+              <div className="inspector-title">
+                <EditOutlined style={{ color: '#fa8c16' }} />
+                <span>连线属性 · 进入规则</span>
               </div>
-            )}
-            {ruleForm.type === 'custom' && (
-              <div className="edge-rule-row">
-                <div className="edge-rule-label">规则说明</div>
-                <Input.TextArea
-                  value={ruleForm.note}
-                  onChange={(e) => setRuleForm({ ...ruleForm, note: e.target.value })}
-                  placeholder="例如：必须先完成线下打卡且测验通过"
-                  autoSize={{ minRows: 2, maxRows: 4 }}
-                />
+              <Button
+                type="text"
+                size="small"
+                icon={<CloseOutlined />}
+                onClick={() => setSelectedEdgeId(null)}
+              />
+            </div>
+            <div className="inspector-body">
+              <div className="inspector-field">
+                <label>连线</label>
+                <div className="inspector-readonly">
+                  <strong>{sourceLabel}</strong>
+                  <span style={{ margin: '0 6px', color: '#8c8c8c' }}>→</span>
+                  <strong>{targetLabel}</strong>
+                </div>
               </div>
-            )}
+              <div className="inspector-field">
+                <label>规则类型</label>
+                <Radio.Group
+                  value={ruleForm.type}
+                  disabled={!isDraft}
+                  onChange={(e) => commitRule({ type: e.target.value })}
+                >
+                  <Radio value="none">无限制</Radio>
+                  <Radio value="completion">完成率达标</Radio>
+                  <Radio value="score">得分达标</Radio>
+                  <Radio value="all-passed">全部活动通过</Radio>
+                  <Radio value="custom">自定义</Radio>
+                </Radio.Group>
+              </div>
+              {(ruleForm.type === 'completion' || ruleForm.type === 'score') && (
+                <div className="inspector-field">
+                  <label>阈值</label>
+                  <InputNumber
+                    min={0}
+                    max={ruleForm.type === 'completion' ? 100 : 1000}
+                    value={ruleForm.threshold}
+                    disabled={!isDraft}
+                    onChange={(v) => commitRule({ threshold: v ?? 0 })}
+                    addonAfter={ruleForm.type === 'completion' ? '%' : '分'}
+                    style={{ width: 160 }}
+                  />
+                </div>
+              )}
+              {ruleForm.type === 'custom' && (
+                <div className="inspector-field">
+                  <label>规则说明</label>
+                  <Input.TextArea
+                    value={ruleForm.note}
+                    disabled={!isDraft}
+                    onChange={(e) => commitRule({ note: e.target.value })}
+                    placeholder="例如：必须先完成线下打卡且测验通过"
+                    autoSize={{ minRows: 2, maxRows: 4 }}
+                  />
+                </div>
+              )}
+              {isDraft && (
+                <div className="inspector-actions">
+                  <Popconfirm
+                    title="确认删除该连线？"
+                    description="删除后连线上的「进入规则」将一同丢失"
+                    okText="删除"
+                    okButtonProps={{ danger: true }}
+                    cancelText="取消"
+                    onConfirm={handleDeleteSelectedEdge}
+                  >
+                    <Button danger icon={<DeleteOutlined />} block>删除连线</Button>
+                  </Popconfirm>
+                </div>
+              )}
+              {!isDraft && (
+                <div className="inspector-readonly-tip">当前版本不可编辑，仅可查看</div>
+              )}
+            </div>
           </div>
-        )}
-      </Modal>
+        );
+      })()}
     </div>
   );
 }
