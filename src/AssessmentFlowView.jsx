@@ -29,6 +29,19 @@ const allowedResourceTypeMap = {
   '': null,
 };
 const resourceTypeLabelMap = { video: '视频', exam: '考试', activity: '活动', file: '文件', survey: '调查', vote: '投票', register: '报名' };
+// 资料 type -> 活动 activityType 默认映射（单件场景）
+const resourceTypeToActivityType = { video: 'video', exam: 'exam', file: 'live', activity: 'offline', survey: 'other', vote: 'other', register: 'other' };
+// 根据资料 type 集合推断活动类型：单一类型取默认映射；多类型都在 live 允许集则归为 live；其余归为 other
+function inferActivityType(resourceTypes) {
+  if (!resourceTypes || resourceTypes.length === 0) return '';
+  const set = new Set(resourceTypes);
+  if (set.size === 1) {
+    return resourceTypeToActivityType[[...set][0]] || 'other';
+  }
+  const liveAllowed = ['file', 'video', 'activity'];
+  if ([...set].every((t) => liveAllowed.includes(t))) return 'live';
+  return 'other';
+}
 // 收集资料项的叶子文件 type 集合（文件夹 -> 递归；文件 -> 自身 type）
 function collectResourceTypes(payload, resources) {
   if (!payload) return [];
@@ -83,7 +96,7 @@ function ActivityNode({ data, selected }) {
       className={`flow-activity-node ${selected ? 'is-selected' : ''}`}
       style={selected ? { borderColor: '#1677ff', borderWidth: 2 } : undefined}
     >
-      <Handle type="target" position={Position.Top} style={{ background: color }} />
+      <Handle type="target" position={Position.Top} style={{ background: color, opacity: 0, pointerEvents: 'none' }} isConnectable={false} />
       {data.isDraft && data.onDelete && (
         <div
           className="flow-node-delete-badge nodrag nopan"
@@ -153,7 +166,7 @@ function ActivityNode({ data, selected }) {
           />
         </div>
       </div>
-      {data.isCustomActivity && (
+      {(data.isCustomActivity || (data.boundResources && data.boundResources.length > 0)) && (
         <div className="flow-activity-binding">
           <div className="flow-activity-binding-title">已绑定资料 · {data.boundResources?.length || 0}</div>
           {(!data.boundResources || data.boundResources.length === 0) ? (
@@ -170,7 +183,7 @@ function ActivityNode({ data, selected }) {
           )}
         </div>
       )}
-      <Handle type="source" position={Position.Bottom} style={{ background: color }} />
+      <Handle type="source" position={Position.Bottom} style={{ background: color, opacity: 0, pointerEvents: 'none' }} isConnectable={false} />
     </div>
   );
 }
@@ -303,7 +316,13 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
       const activities = [...activityParentMap.entries()]
         .filter(([actKey, stageKey]) => stageKey === stage.key && !deletedNodeSet.has(actKey))
         .map(([actKey]) => findResource(actKey))
-        .filter(Boolean);
+        .filter(Boolean)
+        .map((a) => {
+          // 非自定义活动（资料区文件夹拖入阶段成为活动）：直接将该文件夹作为“已绑定资料”单项展示，不展开子项
+          if (a.isCustomActivity) return a;
+          if (!a.isFolder) return a;
+          return { ...a, boundResources: [{ key: a.key, name: a.name, isFolder: true }] };
+        });
       const stageX = sIdx * 380;
       const stageY = 0;
       const stageActivityRules = activities.map((a) => assessment.rules.find((r) => r.folderKey === a.key)).filter(Boolean);
@@ -317,8 +336,8 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
       // 考虑 flowPositions 中可能保存了旧坐标（如早期更大的 ACT_H 拖拽过的位置），
       // stageHeight 取「默认堆叠高度」与「活动实际最大底部」中的较大值，避免卡片溢出容器
       const computeActVisualH = (a) => {
-        if (!a.isCustomActivity) return ACT_VISUAL_H;
         const cnt = a.boundResources?.length || 0;
+        if (cnt === 0 && !a.isCustomActivity) return ACT_VISUAL_H;
         // 绑定区：margin+padding+border 约 17，title 约 20，列表 max-height 70
         // 空态提示 约 32px；每项 约 28px；最多累加 2 项（超出列表内部滚动）
         const bindContent = cnt === 0 ? 32 : Math.min(2, cnt) * 28 + (cnt > 2 ? 6 : 0);
@@ -413,6 +432,37 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
             required: rule?.required ?? true,
             isDraft,
             onChange: (folderKey, field, value) => {
+              // 实时类型一致性校验：切换 activityType 时，若已绑定资料与新类型不匹配则拒绝
+              if (field === 'activityType' && value) {
+                const customAct = (assessment.customActivities || []).find((ca) => ca.key === folderKey);
+                if (customAct && (customAct.boundResources || []).length > 0) {
+                  const allowed = allowedResourceTypeMap[value];
+                  if (allowed) {
+                    const types = new Set();
+                    (customAct.boundResources || []).forEach((b) => {
+                      const rr = resources.find((x) => x.key === b.key);
+                      const p = { key: b.key, name: b.name, isFolder: !!b.isFolder, type: rr?.type ?? null };
+                      collectResourceTypes(p, resources).forEach((t) => types.add(t));
+                    });
+                    const invalid = [...types].filter((t) => !allowed.includes(t));
+                    if (invalid.length > 0) {
+                      const actLabel = activityTypeLabelMap[value] || value;
+                      const allowedLabels = allowed.map((t) => resourceTypeLabelMap[t] || t).join('、');
+                      const invalidLabels = invalid.map((t) => resourceTypeLabelMap[t] || t).join('、');
+                      message.warning(`已绑定资料中包含${invalidLabels}类型，与「${actLabel}」不匹配（仅可绑定：${allowedLabels}）。请先移除不匹配的资料再切换类型`);
+                      // 强制刷新该节点，让 Select 重读 value prop 回滚显示
+                      setNodes((nds) =>
+                        nds.map((n) =>
+                          n.id === folderKey
+                            ? { ...n, data: { ...n.data, _refresh: ((n.data._refresh || 0) + 1) } }
+                            : n
+                        )
+                      );
+                      return;
+                    }
+                  }
+                }
+              }
               const rules = [...assessment.rules];
               const idx = rules.findIndex((r) => r.folderKey === folderKey);
               if (idx >= 0) {
@@ -450,22 +500,23 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
       });
     });
 
-    // 加载用户自定义的边
+    // 加载用户自定义的边（仅保留阶段间连线，活动间连线已下线）
     if (assessment.flowEdges && Array.isArray(assessment.flowEdges)) {
       assessment.flowEdges.forEach((e) => {
         if (!edges.some((ex) => ex.id === e.id)) {
-          // 根据 source 节点类型区分阶段边 / 活动边样式
+          // 跳过任一端是活动节点的连线（兼容历史数据）
           const srcNode = nodes.find((n) => n.id === e.source);
-          const isStageEdge = srcNode?.type === 'stage';
-          const edgeColor = isStageEdge ? '#1677ff' : '#52c41a';
+          const tgtNode = nodes.find((n) => n.id === e.target);
+          if (!srcNode || !tgtNode) return;
+          if (srcNode.type !== 'stage' || tgtNode.type !== 'stage') return;
           pushEdge({
             id: e.id,
             source: e.source,
             target: e.target,
-            type: isStageEdge ? 'smoothstep' : 'straight',
+            type: 'smoothstep',
             animated: true,
-            style: { stroke: edgeColor, strokeWidth: 2 },
-            markerEnd: { type: MarkerType.ArrowClosed, color: edgeColor },
+            style: { stroke: '#1677ff', strokeWidth: 2 },
+            markerEnd: { type: MarkerType.ArrowClosed, color: '#1677ff' },
           });
         }
       });
@@ -493,9 +544,12 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
       return should ? { ...n, selected: true } : n;
     });
     setNodes(enriched);
-    setEdges(initialEdges);
+    const enrichedEdges = initialEdges.map((e) =>
+      e.id === selectedEdgeId ? { ...e, selected: true } : e
+    );
+    setEdges(enrichedEdges);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialNodes, initialEdges, selectedActivityKey, selectedStageKey]);
+  }, [initialNodes, initialEdges, selectedActivityKey, selectedStageKey, selectedEdgeId]);
 
   // 节点拖动开始 -> 高亮父阶段、记录状态
   const onNodeDragStart = useCallback((event, node) => {
@@ -708,7 +762,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
     } else if (snappedBack) {
       message.warning('「活动」不能移出阶段容器，已自动返回原阶段');
     }
-    skipNextSyncRef.current = true;
+    // 不跳过同步：让 useMemo 按卡片真实高度紧凑堆叠重新布局，避免拖动后重叠
     onUpdateAssessment(next);
   }, [assessment, isDraft, onUpdateAssessment, setNodes, findHitStage]);
 
@@ -754,38 +808,46 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
 
   const isValidConnection = useCallback((params) => {
     if (!isDraft) return false;
+    // 活动节点不再允许参与连线
+    const allNodes = rfInstance?.getNodes ? rfInstance.getNodes() : nodes;
+    const sNode = allNodes.find((n) => n.id === params.source);
+    const tNode = allNodes.find((n) => n.id === params.target);
+    if (!sNode || !tNode) return false;
+    if (sNode.type === 'activity' || tNode.type === 'activity') return false;
     return validateActivityConnection(params, edges).ok;
-  }, [isDraft, validateActivityConnection, edges]);
+  }, [isDraft, validateActivityConnection, edges, rfInstance, nodes]);
 
-  // 添加新连线
+  // 添加新连线（仅保留阶段间）
   const onConnect = useCallback((params) => {
     if (!isDraft) return;
+    // 活动节点不允许参与连线
+    const allNodes = rfInstance?.getNodes ? rfInstance.getNodes() : nodes;
+    const sNode = allNodes.find((n) => n.id === params.source);
+    const tNode = allNodes.find((n) => n.id === params.target);
+    if (!sNode || !tNode) return;
+    if (sNode.type === 'activity' || tNode.type === 'activity') {
+      message.warning('活动之间不再支持连线');
+      return;
+    }
     const check = validateActivityConnection(params, edges);
     if (!check.ok) {
       message.warning(check.reason);
       return;
     }
-    // 根据节点类型生成不同样式的边：
-    // - 阶段间：蓝色 smoothstep（与资料区阶段间默认边一致）
-    // - 活动间：绿色 straight（上下直线串联）
-    const allNodes = rfInstance?.getNodes ? rfInstance.getNodes() : nodes;
-    const sNode = allNodes.find((n) => n.id === params.source);
-    const isStageEdge = sNode?.type === 'stage';
-    const edgeColor = isStageEdge ? '#1677ff' : '#52c41a';
     const newEdge = {
       ...params,
       id: `${params.source}->${params.target}-${Date.now()}`,
-      type: isStageEdge ? 'smoothstep' : 'straight',
+      type: 'smoothstep',
       animated: true,
       interactionWidth: 12,
-      style: { stroke: edgeColor, strokeWidth: 2 },
-      markerEnd: { type: MarkerType.ArrowClosed, color: edgeColor },
+      style: { stroke: '#1677ff', strokeWidth: 2 },
+      markerEnd: { type: MarkerType.ArrowClosed, color: '#1677ff' },
     };
     setEdges((eds) => addEdge(newEdge, eds));
     const flowEdges = [...(assessment.flowEdges || []), { id: newEdge.id, source: newEdge.source, target: newEdge.target }];
     onUpdateAssessment({ ...assessment, flowEdges });
-    message.success('已新建串联连线，点击连线可配置进入条件');
-  }, [assessment, isDraft, onUpdateAssessment, setEdges, validateActivityConnection, edges]);
+    message.success('已新建阶段间连线');
+  }, [assessment, isDraft, onUpdateAssessment, setEdges, validateActivityConnection, edges, rfInstance, nodes]);
 
   // 节点点击 -> 打开右侧属性编辑面板
   const onNodeClick = useCallback((event, node) => {
@@ -828,6 +890,29 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
 
   // 更新某个活动的 rule 字段（属性面板专用）
   const handleRuleChange = useCallback((folderKey, field, value) => {
+    // 实时类型一致性校验：切换 activityType 时，若已绑定资料与新类型不匹配则拒绝
+    if (field === 'activityType' && value) {
+      const customAct = (assessment.customActivities || []).find((ca) => ca.key === folderKey);
+      if (customAct && (customAct.boundResources || []).length > 0) {
+        const allowed = allowedResourceTypeMap[value];
+        if (allowed) {
+          const types = new Set();
+          (customAct.boundResources || []).forEach((b) => {
+            const r = resources.find((x) => x.key === b.key);
+            const p = { key: b.key, name: b.name, isFolder: !!b.isFolder, type: r?.type ?? null };
+            collectResourceTypes(p, resources).forEach((t) => types.add(t));
+          });
+          const invalid = [...types].filter((t) => !allowed.includes(t));
+          if (invalid.length > 0) {
+            const actLabel = activityTypeLabelMap[value] || value;
+            const allowedLabels = allowed.map((t) => resourceTypeLabelMap[t] || t).join('、');
+            const invalidLabels = invalid.map((t) => resourceTypeLabelMap[t] || t).join('、');
+            message.warning(`已绑定资料中包含${invalidLabels}类型，与「${actLabel}」不匹配（仅可绑定：${allowedLabels}）。请先移除不匹配的资料再切换类型`);
+            return;
+          }
+        }
+      }
+    }
     const folder = resources.find((r) => r.key === folderKey);
     const rules = [...(assessment.rules || [])];
     const idx = rules.findIndex((r) => r.folderKey === folderKey);
@@ -1137,12 +1222,16 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
         const targetRule = (assessment.rules || []).find((r) => r.folderKey === hitCustomAct.id);
         const activityType = targetRule?.activityType ?? '';
         const allowed = allowedResourceTypeMap[activityType];
-        if (allowed) {
-          const resourceTypes = collectResourceTypes(payload, resources);
-          if (resourceTypes.length === 0 && payload.isFolder) {
-            message.warning(`「${payload.name}」为空文件夹，未包含可绑定的资料文件`);
-            return;
-          }
+        const resourceTypes = collectResourceTypes(payload, resources);
+        if (resourceTypes.length === 0 && payload.isFolder) {
+          message.warning(`「${payload.name}」为空文件夹，未包含可绑定的资料文件`);
+          return;
+        }
+        let autoFilledType = null;
+        if (!activityType) {
+          // 活动未设置类型：根据资料推断并自动填充
+          autoFilledType = inferActivityType(resourceTypes);
+        } else if (allowed) {
           const invalid = resourceTypes.filter((t) => !allowed.includes(t));
           if (invalid.length > 0) {
             const actLabel = activityTypeLabelMap[activityType] || activityType;
@@ -1164,8 +1253,36 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
         };
         const newList = [...list];
         newList[idx] = updatedTarget;
-        onUpdateAssessment({ ...assessment, customActivities: newList });
-        message.success(`已绑定「${payload.name}」到「${hitCustomAct.data?.label || '活动'}」`);
+        const nextAssessment = { ...assessment, customActivities: newList };
+        // 同步自动填充活动类型到对应 rule
+        if (autoFilledType) {
+          const rules = assessment.rules || [];
+          const ruleIdx = rules.findIndex((r) => r.folderKey === hitCustomAct.id);
+          if (ruleIdx >= 0) {
+            const newRules = [...rules];
+            newRules[ruleIdx] = { ...newRules[ruleIdx], activityType: autoFilledType };
+            nextAssessment.rules = newRules;
+          } else {
+            nextAssessment.rules = [
+              ...rules,
+              {
+                folderKey: hitCustomAct.id,
+                folderName: target.name,
+                activityType: autoFilledType,
+                weight: 0,
+                passCondition: { metric: '完成率', op: '>=', value: 80 },
+                required: true,
+              },
+            ];
+          }
+        }
+        onUpdateAssessment(nextAssessment);
+        if (autoFilledType) {
+          const actLabel = activityTypeLabelMap[autoFilledType] || autoFilledType;
+          message.success(`已绑定「${payload.name}」到「${hitCustomAct.data?.label || '活动'}」，活动类型已自动设为「${actLabel}」`);
+        } else {
+          message.success(`已绑定「${payload.name}」到「${hitCustomAct.data?.label || '活动'}」`);
+        }
         return;
       }
     }
@@ -1579,7 +1696,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
                   />
                 </div>
               </div>
-              {isCustomActivity && (
+              {isCustomActivity ? (
                 <>
                   <Divider style={{ margin: '12px 0' }}>已绑定资料 ({customAct.boundResources?.length || 0})</Divider>
                   {(!customAct.boundResources || customAct.boundResources.length === 0) ? (
@@ -1610,7 +1727,17 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
                     </div>
                   )}
                 </>
-              )}
+              ) : folder.isFolder ? (
+                <>
+                  <Divider style={{ margin: '12px 0' }}>已绑定资料 (1)</Divider>
+                  <div className="inspector-binding-list">
+                    <div className="inspector-binding-item">
+                      <FolderOutlined />
+                      <span className="inspector-binding-name" title={folder.name}>{folder.name}</span>
+                    </div>
+                  </div>
+                </>
+              ) : null}
               {isDraft && (
                 <div className="inspector-actions">
                   <Popconfirm
