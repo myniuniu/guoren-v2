@@ -2,9 +2,9 @@
   width: 100%;
   height: calc(100vh - 56px - 100px);
   position: relative;
-  border: 1px solid #f0f0f0;
+  border: none;
   border-radius: 10px;
-  background: #fafbfc;
+  background: #ffffff;
   overflow: hidden;
   transition: border-color 0.15s, background 0.15s;
 }

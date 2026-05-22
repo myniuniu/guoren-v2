@@ -281,6 +281,7 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
         name: item.name,
         isFolder: !!item.isFolder,
         parentKey: item.parentKey ?? null,
+        type: item.type ?? null,
       }));
       e.dataTransfer.effectAllowed = 'move';
     };
@@ -339,80 +340,16 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
   // 中间区域：配置面板
   const renderConfigPanel = () => {
     if (!selectedFolderKey) {
-      // 汇总视图
+      // 汇总视图：流程画布充满中间区域
       return (
         <div className="config-summary">
-          <div className="config-summary-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span>考核方案总览</span>
-            <Segmented
-              size="small"
-              value={overviewMode}
-              onChange={setOverviewMode}
-              options={[
-                { label: '列表视图', value: 'list' },
-                { label: '流程视图', value: 'flow' },
-              ]}
-            />
-          </div>
-          {overviewMode === 'flow' ? (
-            <AssessmentFlowView
-              resources={resources}
-              assessment={localAssessment}
-              isDraft={isDraft}
-              onUpdateAssessment={(a) => { setLocalAssessment(a); onUpdateAssessment(a); }}
-              onSelectFolder={(key) => setSelectedFolderKey(key)}
-            />
-          ) : (
-          <>
-          <div className="config-summary-cards">
-            <div className="config-card">
-              <div className="config-card-icon" style={{ background: '#e8f4ff', color: '#1677ff' }}><ClockCircleOutlined /></div>
-              <div className="config-card-info">
-                <span className="config-card-label">总学时</span>
-                {isDraft ? <InputNumber min={1} max={999} value={localAssessment.totalHours} onChange={(v) => handleSummaryChange('totalHours', v || 0)} style={{ width: 90 }} />
-                  : <span className="config-card-value">{localAssessment.totalHours} 学时</span>}
-              </div>
-            </div>
-            <div className="config-card">
-              <div className="config-card-icon" style={{ background: '#f0f5ff', color: '#722ed1' }}><TrophyOutlined /></div>
-              <div className="config-card-info">
-                <span className="config-card-label">及格分</span>
-                {isDraft ? <InputNumber min={0} max={100} value={localAssessment.passScore} onChange={(v) => handleSummaryChange('passScore', v || 0)} style={{ width: 90 }} />
-                  : <span className="config-card-value">{localAssessment.passScore} 分</span>}
-              </div>
-            </div>
-            <div className="config-card">
-              <div className="config-card-icon" style={{ background: '#f6ffed', color: '#52c41a' }}><SafetyCertificateOutlined /></div>
-              <div className="config-card-info">
-                <span className="config-card-label">合格发证</span>
-                {isDraft ? <Switch checked={localAssessment.certificate} onChange={(v) => handleSummaryChange('certificate', v)} />
-                  : <span className="config-card-value">{localAssessment.certificate ? '是' : '否'}</span>}
-              </div>
-            </div>
-          </div>
-          {localAssessment.rules.length > 0 && (
-            <div className="config-rules-list">
-              <div className="config-rules-header">已配置规则 ({localAssessment.rules.length})</div>
-              {localAssessment.rules.map((r) => (
-                <div key={r.key} className="config-rule-item" onClick={() => { setSelectedFolderKey(r.folderKey); }}>
-                  <FolderOutlined style={{ color: '#4facfe', marginRight: 8 }} />
-                  <span className="config-rule-name">{r.folderName}</span>
-                  <Tag color={activityTypeColor[r.activityType || getActivityType(r.folderKey)]} style={{ marginLeft: 'auto', fontSize: 11 }}>
-                    {activityTypeLabel[r.activityType || getActivityType(r.folderKey)]}
-                  </Tag>
-                  <span className="config-rule-weight">{r.weight}%</span>
-                </div>
-              ))}
-            </div>
-          )}
-          {localAssessment.rules.length === 0 && (
-            <div className="config-empty">
-              <FileSearchOutlined style={{ fontSize: 36, color: '#d9d9d9' }} />
-              <span style={{ color: '#999', marginTop: 12 }}>暂无考核规则，请在右侧AI对话中描述需求</span>
-            </div>
-          )}
-          </>
-          )}
+          <AssessmentFlowView
+            resources={resources}
+            assessment={localAssessment}
+            isDraft={isDraft}
+            onUpdateAssessment={(a) => { setLocalAssessment(a); onUpdateAssessment(a); }}
+            onSelectFolder={(key) => setSelectedFolderKey(key)}
+          />
         </div>
       );
     }

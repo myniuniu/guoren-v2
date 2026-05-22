@@ -11,11 +11,39 @@ import ReactFlow, {
   MarkerType,
 } from 'reactflow';
 import { InputNumber, Select, Tooltip, Modal, Input, Button, Radio, message, Popconfirm, Divider } from 'antd';
-import { FolderOutlined, AppstoreOutlined, DeleteOutlined, ClearOutlined, CloseOutlined, EditOutlined, FileOutlined } from '@ant-design/icons';
+import { FolderOutlined, AppstoreOutlined, DeleteOutlined, ClearOutlined, CloseOutlined, EditOutlined, FileOutlined, DatabaseOutlined, CopyOutlined } from '@ant-design/icons';
 import 'reactflow/dist/style.css';
 import './AssessmentFlowView.css';
 
 const activityTypeColor = { video: '#1677ff', live: '#13c2c2', exam: '#ff4d4f', offline: '#faad14', other: '#8c8c8c', '': '#bfbfbf' };
+
+// 活动类型中文名
+ const activityTypeLabelMap = { video: '视频课', live: '直播课', exam: '考试', offline: '线下集训', other: '其他' };
+// 活动类型 -> 允许绑定的资料 type 列表（null = 不限制）
+const allowedResourceTypeMap = {
+  video: ['video'],
+  live: ['file', 'video', 'activity'],
+  exam: ['exam'],
+  offline: ['activity'],
+  other: null,
+  '': null,
+};
+const resourceTypeLabelMap = { video: '视频', exam: '考试', activity: '活动', file: '文件', survey: '调查', vote: '投票', register: '报名' };
+// 收集资料项的叶子文件 type 集合（文件夹 -> 递归；文件 -> 自身 type）
+function collectResourceTypes(payload, resources) {
+  if (!payload) return [];
+  if (!payload.isFolder) return payload.type ? [payload.type] : [];
+  const types = new Set();
+  const visit = (parentKey) => {
+    resources.forEach((r) => {
+      if (r.parentKey !== parentKey) return;
+      if (r.isFolder) visit(r.key);
+      else if (r.type) types.add(r.type);
+    });
+  };
+  visit(payload.key);
+  return [...types];
+}
 
 // 阶段节点（顶级文件夹） - 容器式，包含活动子节点
 function StageNode({ data, selected }) {
@@ -169,6 +197,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
   const [selectedActivityKey, setSelectedActivityKey] = useState(null);
   const [selectedStageKey, setSelectedStageKey] = useState(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState(null);
+  const [dataModalOpen, setDataModalOpen] = useState(false);
   const wrapperRef = useRef(null);
 
   // 计算初始节点和边
@@ -1104,6 +1133,28 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
           message.info(`「${payload.name}」已绑定，无需重复`);
           return;
         }
+        // 类型匹配校验：根据该活动容器的 activityType 限制可绑定的资料 type
+        const targetRule = (assessment.rules || []).find((r) => r.folderKey === hitCustomAct.id);
+        const activityType = targetRule?.activityType ?? '';
+        const allowed = allowedResourceTypeMap[activityType];
+        if (allowed) {
+          const resourceTypes = collectResourceTypes(payload, resources);
+          if (resourceTypes.length === 0 && payload.isFolder) {
+            message.warning(`「${payload.name}」为空文件夹，未包含可绑定的资料文件`);
+            return;
+          }
+          const invalid = resourceTypes.filter((t) => !allowed.includes(t));
+          if (invalid.length > 0) {
+            const actLabel = activityTypeLabelMap[activityType] || activityType;
+            const allowedLabels = allowed.map((t) => resourceTypeLabelMap[t] || t).join('、');
+            const invalidLabels = invalid.map((t) => resourceTypeLabelMap[t] || t).join('、');
+            const tip = payload.isFolder
+              ? `「${payload.name}」包含不允许的资料类型：${invalidLabels}。该活动容器为「${actLabel}」，仅可绑定：${allowedLabels}`
+              : `「${payload.name}」为${invalidLabels}类型，与当前活动「${actLabel}」不匹配，仅可绑定：${allowedLabels}`;
+            message.warning(tip);
+            return;
+          }
+        }
         const updatedTarget = {
           ...target,
           boundResources: [
@@ -1273,6 +1324,14 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
         </div>
         <div className="toolbar-divider" />
         <div className="toolbar-group">
+          <Button
+            size="small"
+            icon={<DatabaseOutlined />}
+            onClick={() => setDataModalOpen(true)}
+            title="查看当前方案的完整数据结构（用于后端持久化对接）"
+          >
+            查看数据
+          </Button>
           <Popconfirm
             title="确定清空画布吗？"
             description="将移除当前画布上的所有节点、连线及进入规则。可重新从左侧拖入资料重建。"
@@ -1321,6 +1380,72 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
         <Controls />
         <MiniMap nodeColor={(n) => n.type === 'stage' ? '#1677ff' : '#52c41a'} pannable zoomable />
       </ReactFlow>
+
+      <Modal
+        title={
+          <span>
+            <DatabaseOutlined style={{ color: '#1677ff', marginRight: 8 }} />
+            方案数据预览
+            <span style={{ marginLeft: 12, fontSize: 12, color: '#8c8c8c', fontWeight: 'normal' }}>
+              用于后端 MongoDB 持久化对接
+            </span>
+          </span>
+        }
+        open={dataModalOpen}
+        onCancel={() => setDataModalOpen(false)}
+        width={780}
+        footer={[
+          <Button
+            key="copy"
+            type="primary"
+            icon={<CopyOutlined />}
+            onClick={() => {
+              try {
+                const text = JSON.stringify(assessment, null, 2);
+                if (navigator.clipboard?.writeText) {
+                  navigator.clipboard.writeText(text).then(
+                    () => message.success('已复制到剪贴板'),
+                    () => message.error('复制失败，请手动选择复制')
+                  );
+                } else {
+                  message.warning('当前环境不支持自动复制，请手动选择复制');
+                }
+              } catch (err) {
+                message.error('复制失败');
+              }
+            }}
+          >
+            复制 JSON
+          </Button>,
+          <Button key="close" onClick={() => setDataModalOpen(false)}>关闭</Button>,
+        ]}
+      >
+        <div style={{ marginBottom: 8, fontSize: 12, color: '#595959', lineHeight: 1.6 }}>
+          以下为当前考核方案的完整数据结构，后端可直接存入 <code style={{ background: '#f5f5f5', padding: '0 4px', borderRadius: 3 }}>assessment</code> 集合：
+          <ul style={{ margin: '4px 0 0 16px', padding: 0 }}>
+            <li><code>rules</code> 考核规则列表（每个活动的权重、及格条件、是否必修）</li>
+            <li><code>customStages</code> / <code>customActivities</code> 自定义阶段与活动容器（含绑定资料）</li>
+            <li><code>parentOverrides</code> 节点归属调整；deletedNodes / deletedEdges 画布删除记录</li>
+            <li><code>edgeRules</code> 连线进入规则；flowPositions 节点位置；stagePromotions 阶段升级记录</li>
+          </ul>
+        </div>
+        <pre
+          style={{
+            background: '#0f172a',
+            color: '#e2e8f0',
+            padding: 12,
+            borderRadius: 6,
+            fontSize: 12,
+            lineHeight: 1.6,
+            maxHeight: 500,
+            overflow: 'auto',
+            margin: 0,
+            fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+          }}
+        >
+          {JSON.stringify(assessment, null, 2)}
+        </pre>
+      </Modal>
 
       {selectedActivityKey && (() => {
         const builtinFolder = resources.find((r) => r.key === selectedActivityKey);
