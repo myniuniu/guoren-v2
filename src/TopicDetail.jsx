@@ -35,6 +35,7 @@ import {
   updateResource,
   deleteResource,
   switchVersion,
+  deleteVersion,
   rollbackVersion,
   updateAssessment,
   updateAssessmentChat,
@@ -171,6 +172,17 @@ function TopicDetail({ topicTitle, onBack }) {
   const handleSwitchVersion = (versionId) => {
     const newData = switchVersion(versionData, versionId);
     setVersionData(newData);
+  };
+
+  // 删除版本
+  const handleDeleteVersion = (versionId) => {
+    const newData = deleteVersion(versionData, versionId);
+    if (newData.error) {
+      message.warning(newData.error);
+      return;
+    }
+    setVersionData(newData);
+    message.success('版本已删除');
   };
 
   // 回退版本
@@ -377,15 +389,24 @@ function TopicDetail({ topicTitle, onBack }) {
                 ...versions.map((v) => {
                   const statusLabel = v.status === 'active' ? '生效中' : v.status === 'published' ? '已失效' : '草稿';
                   const statusColor = v.status === 'active' ? 'green' : v.status === 'published' ? 'default' : 'orange';
+                  const canDelete = v.status !== 'active';
                   return {
                     key: `switch-${v.id}`,
                     icon: v.id === currentVersion?.id ? <CheckCircleOutlined /> : <SwapOutlined />,
                     label: (
-                      <span>
-                        {v.name}
-                        <Tag color={statusColor} style={{ marginLeft: 8, fontSize: 10 }}>
-                          {statusLabel}
-                        </Tag>
+                      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                        <span onClick={() => handleSwitchVersion(v.id)} style={{ flex: 1 }}>
+                          {v.name}
+                          <Tag color={statusColor} style={{ marginLeft: 8, fontSize: 10 }}>
+                            {statusLabel}
+                          </Tag>
+                        </span>
+                        {canDelete && (
+                          <DeleteOutlined
+                            style={{ color: '#ff4d4f', fontSize: 12, marginLeft: 8 }}
+                            onClick={(e) => { e.stopPropagation(); handleDeleteVersion(v.id); }}
+                          />
+                        )}
                       </span>
                     ),
                     onClick: () => handleSwitchVersion(v.id),

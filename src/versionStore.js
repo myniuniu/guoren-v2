@@ -140,8 +140,19 @@ export function createNewVersion(data) {
   }
 
   const activeVersion = data.versions.find((v) => v.status === 'active');
+  // 生成 key 映射，确保 parentKey 关系不断裂
+  const keyMap = new Map();
+  if (activeVersion) {
+    activeVersion.resources.forEach((r) => {
+      keyMap.set(r.key, `r_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
+    });
+  }
   const inheritedResources = activeVersion
-    ? activeVersion.resources.map((r) => ({ ...r, key: `r_${Date.now()}_${Math.random().toString(36).slice(2, 8)}` }))
+    ? activeVersion.resources.map((r) => ({
+        ...r,
+        key: keyMap.get(r.key),
+        parentKey: r.parentKey ? keyMap.get(r.parentKey) || r.parentKey : null,
+      }))
     : [];
 
   const newVersion = {
@@ -264,6 +275,23 @@ export function deleteResource(data, versionId, resourceKey) {
 // 切换当前版本
 export function switchVersion(data, versionId) {
   const newData = { ...data, currentVersionId: versionId };
+  saveToStorage(newData);
+  return newData;
+}
+
+// 删除版本（仅允许删除草稿或已失效的版本）
+export function deleteVersion(data, versionId) {
+  const version = data.versions.find((v) => v.id === versionId);
+  if (!version) return data;
+  if (version.status === 'active') return { ...data, error: '不能删除当前生效版本' };
+  const newVersions = data.versions.filter((v) => v.id !== versionId);
+  // 如果删除的是当前查看的版本，切换到生效版本或第一个版本
+  let newCurrentId = data.currentVersionId;
+  if (newCurrentId === versionId) {
+    const active = newVersions.find((v) => v.status === 'active');
+    newCurrentId = active ? active.id : newVersions[0]?.id;
+  }
+  const newData = { ...data, versions: newVersions, currentVersionId: newCurrentId };
   saveToStorage(newData);
   return newData;
 }

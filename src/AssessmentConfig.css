@@ -1,7 +1,7 @@
 /* ====== 三栏布局 ====== */
 .assessment-layout {
   display: grid;
-  grid-template-columns: 3fr 4fr 3fr;
+  /* grid-template-columns 由组件内联 style 控制，支持拖拽和折叠 */
   height: calc(100vh - 56px);
   overflow: hidden;
 }
@@ -10,6 +10,91 @@
 .assessment-layout .detail-left-panel {
   width: 100%;
   min-width: unset;
+}
+
+/* ====== 拖拽手柄 ====== */
+.resize-handle {
+  background: transparent;
+  cursor: col-resize;
+  position: relative;
+  z-index: 5;
+  transition: background 0.15s;
+}
+.resize-handle::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  background: #e8e8e8;
+}
+.resize-handle:hover {
+  background: rgba(79, 172, 254, 0.18);
+}
+.resize-handle:hover::before {
+  background: #4facfe;
+  width: 2px;
+}
+.resize-handle-disabled {
+  cursor: default;
+  pointer-events: none;
+}
+
+/* ====== 折叠后的竖向面板 ====== */
+.collapsed-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0;
+  background: #fafafa;
+  border-right: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background 0.15s;
+  user-select: none;
+}
+.collapsed-right {
+  border-right: none;
+  border-left: 1px solid #f0f0f0;
+}
+.collapsed-panel:hover {
+  background: #f0f7ff;
+}
+.collapsed-icon {
+  font-size: 16px;
+  color: #4facfe;
+  margin-bottom: 8px;
+}
+.collapsed-label {
+  writing-mode: vertical-rl;
+  font-size: 12px;
+  color: #666;
+  letter-spacing: 2px;
+}
+
+/* 面板标题按钮区 */
+.panel-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.panel-collapse-icon,
+.chat-collapse-icon {
+  font-size: 14px;
+  color: #999;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+.panel-collapse-icon:hover,
+.chat-collapse-icon:hover {
+  color: #4facfe;
+  background: #f0f7ff;
+}
+.chat-collapse-icon {
+  margin-left: auto;
 }
 
 /* ====== 中栏 - 考核配置区 ====== */

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Button, Input, InputNumber, Switch, Tag, Select, Radio, DatePicker, Divider, Dropdown, Progress, message } from 'antd';
+import { Button, Input, InputNumber, Switch, Tag, Select, Radio, DatePicker, Divider, Dropdown, Progress, Segmented, message } from 'antd';
 import {
   RobotOutlined,
   UserOutlined,
@@ -20,8 +20,11 @@ import {
   MessageOutlined,
   EditOutlined,
   FileTextOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
 } from '@ant-design/icons';
 import './AssessmentConfig.css';
+import AssessmentFlowView from './AssessmentFlowView';
 
 // 根据类型获取图标
 function getResourceIcon(type) {
@@ -113,6 +116,7 @@ function generateAIResponse(userMsg, resources, currentAssessment) {
 }
 
 const activityTypeOptions = [
+  { label: '请选择', value: '' },
   { label: '视频课', value: 'video' },
   { label: '直播课', value: 'live' },
   { label: '考试', value: 'exam' },
@@ -134,7 +138,34 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
   });
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
+  const [overviewMode, setOverviewMode] = useState('flow'); // list | flow
+  const [leftCollapsed, setLeftCollapsed] = useState(false);
+  const [rightCollapsed, setRightCollapsed] = useState(false);
+  const [leftWidth, setLeftWidth] = useState(280);
+  const [rightWidth, setRightWidth] = useState(360);
   const messagesEndRef = useRef(null);
+
+  // 拖拽调整宽度
+  const startResize = (side) => (e) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startW = side === 'left' ? leftWidth : rightWidth;
+    const onMove = (ev) => {
+      const delta = side === 'left' ? ev.clientX - startX : startX - ev.clientX;
+      const next = Math.max(200, Math.min(600, startW + delta));
+      side === 'left' ? setLeftWidth(next) : setRightWidth(next);
+    };
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  };
 
   useEffect(() => { setLocalAssessment(assessment || { totalHours: 0, passScore: 60, certificate: false, rules: [] }); }, [assessment]);
   useEffect(() => { setMessages(assessmentChat || []); }, [assessmentChat]);
@@ -243,6 +274,16 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
   };
 
   const renderTreeItem = (item, depth) => {
+    // 拖拽到画布：写入 dataTransfer
+    const handleDragStart = (e) => {
+      e.dataTransfer.setData('application/assessment-resource', JSON.stringify({
+        key: item.key,
+        name: item.name,
+        isFolder: !!item.isFolder,
+        parentKey: item.parentKey ?? null,
+      }));
+      e.dataTransfer.effectAllowed = 'move';
+    };
     if (item.isFolder) {
       const isExpanded = expandedFolders.has(item.key);
       const isSelected = selectedFolderKey === item.key;
@@ -252,6 +293,9 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
           <div
             className={`project-item project-item-folder ${isSelected ? 'project-item-selected' : ''}`}
             onClick={() => handleSelectFolder(item.key)}
+            draggable={overviewMode === 'flow' && !selectedFolderKey}
+            onDragStart={handleDragStart}
+            title={overviewMode === 'flow' && !selectedFolderKey ? '可拖拽到右侧画布' : undefined}
           >
             <span className="project-item-arrow" onClick={(e) => { e.stopPropagation(); toggleFolder(item.key); }}>
               {isExpanded ? <CaretDownOutlined /> : <CaretRightOutlined />}
@@ -273,7 +317,13 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
     }
     // 普通文件
     return (
-      <div key={item.key} className="project-item project-item-child">
+      <div
+        key={item.key}
+        className="project-item project-item-child"
+        draggable={overviewMode === 'flow' && !selectedFolderKey}
+        onDragStart={handleDragStart}
+        title={overviewMode === 'flow' && !selectedFolderKey ? '可拖拽到右侧画布' : undefined}
+      >
         <span className="project-item-icon">{getResourceIcon(item.type)}</span>
         <span className="project-item-title">{item.name}</span>
       </div>
@@ -282,7 +332,9 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
 
   // 当前选中目录的规则
   const currentRule = selectedFolderKey ? localAssessment.rules.find((r) => r.folderKey === selectedFolderKey) : null;
-  const actType = currentRule?.activityType || getActivityType(selectedFolderKey);
+  const actType = currentRule?.activityType !== undefined && currentRule?.activityType !== null
+      ? currentRule.activityType
+      : getActivityType(selectedFolderKey);
 
   // 中间区域：配置面板
   const renderConfigPanel = () => {
@@ -290,7 +342,28 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
       // 汇总视图
       return (
         <div className="config-summary">
-          <div className="config-summary-title">考核方案总览</div>
+          <div className="config-summary-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span>考核方案总览</span>
+            <Segmented
+              size="small"
+              value={overviewMode}
+              onChange={setOverviewMode}
+              options={[
+                { label: '列表视图', value: 'list' },
+                { label: '流程视图', value: 'flow' },
+              ]}
+            />
+          </div>
+          {overviewMode === 'flow' ? (
+            <AssessmentFlowView
+              resources={resources}
+              assessment={localAssessment}
+              isDraft={isDraft}
+              onUpdateAssessment={(a) => { setLocalAssessment(a); onUpdateAssessment(a); }}
+              onSelectFolder={(key) => setSelectedFolderKey(key)}
+            />
+          ) : (
+          <>
           <div className="config-summary-cards">
             <div className="config-card">
               <div className="config-card-icon" style={{ background: '#e8f4ff', color: '#1677ff' }}><ClockCircleOutlined /></div>
@@ -337,6 +410,8 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
               <FileSearchOutlined style={{ fontSize: 36, color: '#d9d9d9' }} />
               <span style={{ color: '#999', marginTop: 12 }}>暂无考核规则，请在右侧AI对话中描述需求</span>
             </div>
+          )}
+          </>
           )}
         </div>
       );
@@ -503,107 +578,149 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
     );
   };
 
+  const layoutStyle = {
+    gridTemplateColumns: `${leftCollapsed ? 36 : leftWidth}px 4px 1fr 4px ${rightCollapsed ? 36 : rightWidth}px`,
+  };
+
   return (
-    <div className="assessment-layout">
+    <div className="assessment-layout" style={layoutStyle}>
       {/* 左栏 - 资料（与知识模式一致） */}
-      <div className="detail-left-panel">
-        <div className="panel-header">
-          <span className="panel-title">资料</span>
-          <MoreOutlined className="panel-more-icon" />
+      {leftCollapsed ? (
+        <div className="collapsed-panel collapsed-left" onClick={() => setLeftCollapsed(false)}>
+          <MenuUnfoldOutlined className="collapsed-icon" />
+          <span className="collapsed-label">资料</span>
         </div>
-
-        {/* AI 问答 */}
-        <div className="ai-qa-box">
-          <MessageOutlined style={{ color: '#999', fontSize: 14 }} />
-          <span className="ai-qa-text">AI 问答</span>
-        </div>
-
-        {/* 操作按钮 */}
-        <div className="panel-actions">
-          <div
-            className={`panel-action-btn ${!isDraft ? 'panel-action-btn-disabled' : ''}`}
-            onClick={() => isDraft && onOpenAddModal && onOpenAddModal()}
-          >
-            <PlusOutlined style={{ fontSize: 12 }} />
-            <span>添加资料</span>
-          </div>
-          <div className="panel-action-btn">
-            <AppstoreOutlined style={{ fontSize: 12 }} />
-            <span>应用</span>
-          </div>
-        </div>
-
-        {/* 项目列表 - 树形目录 */}
-        <div className="project-section">
-          <div className="project-header">
-            <span className="project-title">项目</span>
-            <Dropdown menu={{ items: [
-              { key: 'new-folder', icon: <FolderOutlined />, label: '新建文件夹', onClick: handleCreateFolder, disabled: !isDraft },
-            ] }} trigger={['click']}>
-              <MoreOutlined className="project-more-icon" />
-            </Dropdown>
-          </div>
-
-          {/* 新建文件夹表单 */}
-          {creatingFolder && (
-            <div className="new-folder-form">
-              <div className="new-folder-row">
-                <FolderOutlined style={{ color: '#4facfe', fontSize: 14 }} />
-                <Input size="small" placeholder="输入文件夹名称" value={newFolderName}
-                  onChange={(e) => setNewFolderName(e.target.value)}
-                  onPressEnter={handleSaveNewFolder} autoFocus style={{ flex: 1 }} />
-              </div>
-              <div className="new-folder-actions">
-                <Button size="small" onClick={() => setCreatingFolder(false)}>取消</Button>
-                <Button size="small" type="primary" onClick={handleSaveNewFolder}>创建</Button>
-              </div>
+      ) : (
+        <div className="detail-left-panel">
+          <div className="panel-header">
+            <span className="panel-title">资料</span>
+            <div className="panel-header-actions">
+              <MoreOutlined className="panel-more-icon" />
+              <MenuFoldOutlined
+                className="panel-collapse-icon"
+                title="折叠资料区"
+                onClick={() => setLeftCollapsed(true)}
+              />
             </div>
-          )}
+          </div>
 
-          <div className="project-list">
-            {rootItems.length === 0 && !creatingFolder ? (
-              <div className="project-empty">暂无资料</div>
-            ) : (
-              rootItems.map((item) => renderTreeItem(item, 0))
+          {/* AI 问答 */}
+          <div className="ai-qa-box">
+            <MessageOutlined style={{ color: '#999', fontSize: 14 }} />
+            <span className="ai-qa-text">AI 问答</span>
+          </div>
+
+          {/* 操作按钮 */}
+          <div className="panel-actions">
+            <div
+              className={`panel-action-btn ${!isDraft ? 'panel-action-btn-disabled' : ''}`}
+              onClick={() => isDraft && onOpenAddModal && onOpenAddModal()}
+            >
+              <PlusOutlined style={{ fontSize: 12 }} />
+              <span>添加资料</span>
+            </div>
+            <div className="panel-action-btn">
+              <AppstoreOutlined style={{ fontSize: 12 }} />
+              <span>应用</span>
+            </div>
+          </div>
+
+          {/* 项目列表 - 树形目录 */}
+          <div className="project-section">
+            <div className="project-header">
+              <span className="project-title">项目</span>
+              <Dropdown menu={{ items: [
+                { key: 'new-folder', icon: <FolderOutlined />, label: '新建文件夹', onClick: handleCreateFolder, disabled: !isDraft },
+              ] }} trigger={['click']}>
+                <MoreOutlined className="project-more-icon" />
+              </Dropdown>
+            </div>
+
+            {/* 新建文件夹表单 */}
+            {creatingFolder && (
+              <div className="new-folder-form">
+                <div className="new-folder-row">
+                  <FolderOutlined style={{ color: '#4facfe', fontSize: 14 }} />
+                  <Input size="small" placeholder="输入文件夹名称" value={newFolderName}
+                    onChange={(e) => setNewFolderName(e.target.value)}
+                    onPressEnter={handleSaveNewFolder} autoFocus style={{ flex: 1 }} />
+                </div>
+                <div className="new-folder-actions">
+                  <Button size="small" onClick={() => setCreatingFolder(false)}>取消</Button>
+                  <Button size="small" type="primary" onClick={handleSaveNewFolder}>创建</Button>
+                </div>
+              </div>
             )}
+
+            <div className="project-list">
+              {rootItems.length === 0 && !creatingFolder ? (
+                <div className="project-empty">暂无资料</div>
+              ) : (
+                rootItems.map((item) => renderTreeItem(item, 0))
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* 左侧拖拽手柄 */}
+      <div
+        className={`resize-handle ${leftCollapsed ? 'resize-handle-disabled' : ''}`}
+        onMouseDown={leftCollapsed ? undefined : startResize('left')}
+      />
 
       {/* 中栏 - 考核配置 */}
       <div className="config-panel">
         {renderConfigPanel()}
       </div>
 
+      {/* 右侧拖拽手柄 */}
+      <div
+        className={`resize-handle ${rightCollapsed ? 'resize-handle-disabled' : ''}`}
+        onMouseDown={rightCollapsed ? undefined : startResize('right')}
+      />
+
       {/* 右栏 - AI对话 */}
-      <div className="chat-panel">
-        <div className="chat-header">
-          <RobotOutlined className="chat-header-icon" />
-          <span>AI 考核助手</span>
+      {rightCollapsed ? (
+        <div className="collapsed-panel collapsed-right" onClick={() => setRightCollapsed(false)}>
+          <MenuFoldOutlined className="collapsed-icon" />
+          <span className="collapsed-label">AI助手</span>
         </div>
-        <div className="chat-messages">
-          {messages.map((msg, idx) => (
-            <div key={idx} className={`chat-msg chat-msg-${msg.role === 'assistant' ? 'ai' : 'user'}`}>
-              <div className="chat-msg-avatar">{msg.role === 'assistant' ? <RobotOutlined /> : <UserOutlined />}</div>
-              <div className="chat-msg-bubble">{msg.content}</div>
-            </div>
-          ))}
-          {typing && (
-            <div className="chat-typing">
-              <div className="chat-typing-dot" /><div className="chat-typing-dot" /><div className="chat-typing-dot" />
-            </div>
-          )}
-          <div ref={messagesEndRef} />
+      ) : (
+        <div className="chat-panel">
+          <div className="chat-header">
+            <RobotOutlined className="chat-header-icon" />
+            <span>AI 考核助手</span>
+            <MenuUnfoldOutlined
+              className="chat-collapse-icon"
+              title="折叠AI助手"
+              onClick={() => setRightCollapsed(true)}
+            />
+          </div>
+          <div className="chat-messages">
+            {messages.map((msg, idx) => (
+              <div key={idx} className={`chat-msg chat-msg-${msg.role === 'assistant' ? 'ai' : 'user'}`}>
+                <div className="chat-msg-avatar">{msg.role === 'assistant' ? <RobotOutlined /> : <UserOutlined />}</div>
+                <div className="chat-msg-bubble">{msg.content}</div>
+              </div>
+            ))}
+            {typing && (
+              <div className="chat-typing">
+                <div className="chat-typing-dot" /><div className="chat-typing-dot" /><div className="chat-typing-dot" />
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+          <div className="chat-input-area">
+            <Input.TextArea value={inputValue} onChange={(e) => setInputValue(e.target.value)}
+              onPressEnter={(e) => { if (!e.shiftKey) { e.preventDefault(); handleSend(); } }}
+              placeholder={isDraft ? '描述你的考核需求...' : '当前版本不可编辑'}
+              autoSize={{ minRows: 1, maxRows: 4 }} disabled={!isDraft} />
+            <Button type="primary" icon={<SendOutlined />} onClick={handleSend}
+              disabled={!isDraft || !inputValue.trim()} className="chat-send-btn">发送</Button>
+          </div>
         </div>
-        <div className="chat-input-area">
-          <Input.TextArea value={inputValue} onChange={(e) => setInputValue(e.target.value)}
-            onPressEnter={(e) => { if (!e.shiftKey) { e.preventDefault(); handleSend(); } }}
-            placeholder={isDraft ? '描述你的考核需求...' : '当前版本不可编辑'}
-            autoSize={{ minRows: 1, maxRows: 4 }} disabled={!isDraft} />
-          <Button type="primary" icon={<SendOutlined />} onClick={handleSend}
-            disabled={!isDraft || !inputValue.trim()} className="chat-send-btn">发送</Button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
