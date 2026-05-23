@@ -243,29 +243,114 @@
       </div>
 
       <!-- 表单设置 -->
-      <div v-show="activeTab === 'settings'" class="tab-content settings-tab">
-        <div class="settings-form">
-          <h3>表单基本设置</h3>
-          <el-form label-width="100px" style="max-width: 500px">
-            <el-form-item label="表单名称">
-              <el-input v-model="formName" placeholder="请输入表单名称" />
-            </el-form-item>
-            <el-form-item label="表单标识">
-              <el-input
-                v-model="formKey"
-                placeholder="表单标识(英文)"
-                :disabled="isEdit"
-              />
-            </el-form-item>
-            <el-form-item label="表单描述">
-              <el-input
-                v-model="formDesc"
-                type="textarea"
-                placeholder="请输入表单描述"
-                :rows="4"
-              />
-            </el-form-item>
-          </el-form>
+      <div v-show="activeTab === 'settings'" class="tab-content form-settings-tab">
+        <!-- 左侧菜单 -->
+        <div class="fs-sidebar">
+          <div
+            v-for="item in settingsMenus"
+            :key="item.key"
+            class="fs-menu-item"
+            :class="{ active: settingsActiveMenu === item.key }"
+            @click="settingsActiveMenu = item.key"
+          >
+            <el-icon><component :is="item.icon" /></el-icon>
+            <span>{{ item.label }}</span>
+          </div>
+        </div>
+        <!-- 右侧内容 -->
+        <div class="fs-content">
+          <!-- 提交校验 -->
+          <div v-if="settingsActiveMenu === 'submitValidation'">
+            <div class="fs-content-title">提交校验</div>
+            <div class="fs-empty-state">
+              <div class="fs-empty-icon">
+                <el-icon :size="64" color="#dcdfe6"><DocumentChecked /></el-icon>
+              </div>
+              <div class="fs-empty-text">暂无提交校验</div>
+              <div class="fs-empty-desc">在提交表单时，满足校验规则的数据将不允许提交</div>
+              <el-button type="danger" size="small" @click="validationDialogVisible = true">立即设置</el-button>
+            </div>
+          </div>
+          <!-- 动态校验 -->
+          <div v-if="settingsActiveMenu === 'dynamicValidation'">
+            <div class="dv-header">
+              <span class="dv-title">动态校验</span>
+              <el-button v-if="dynamicRules.length > 0" type="danger" size="small" @click="addDynamicRule">新增规则</el-button>
+            </div>
+            <div class="dv-notice">
+              说明：在提交表单时满足以下校验规则的数据将不允许提交，多条规则之间请避免输入互斥条件，以免校验出错
+            </div>
+            <div v-if="dynamicRules.length === 0" class="fs-empty-state">
+              <div class="fs-empty-icon">
+                <el-icon :size="64" color="#dcdfe6"><Edit /></el-icon>
+              </div>
+              <div class="fs-empty-text">暂无动态校验</div>
+              <div class="fs-empty-desc">根据表单字段值动态控制其他字段的显示/隐藏/必填等</div>
+              <el-button type="danger" size="small" @click="addDynamicRule">立即设置</el-button>
+            </div>
+            <div v-else class="dv-rule-list">
+              <div v-for="(rule, idx) in dynamicRules" :key="idx" class="dv-rule-item">
+                <div class="dv-rule-index">{{ idx + 1 }}</div>
+                <div class="dv-rule-content">
+                  <div><b>触发事件:</b> {{ rule.trigger }}</div>
+                  <div><b>校验信息:</b> {{ rule.message }}</div>
+                  <div><b>关联表单:</b> {{ rule.relatedForm }}</div>
+                  <div><b>备注:</b> {{ rule.remark }}</div>
+                </div>
+                <div class="dv-rule-actions">
+                  <el-switch v-model="rule.enabled" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- 业务规则 -->
+          <div v-if="settingsActiveMenu === 'businessRules'">
+            <div class="fs-content-title">业务规则</div>
+            <div class="fs-empty-state">
+              <div class="fs-empty-icon">
+                <el-icon :size="64" color="#dcdfe6"><Setting /></el-icon>
+              </div>
+              <div class="fs-empty-text">暂无业务规则</div>
+              <div class="fs-empty-desc">配置表单数据的业务逻辑规则</div>
+              <el-button type="danger" size="small" @click="businessRuleDialogVisible = true">立即设置</el-button>
+            </div>
+          </div>
+          <!-- 消息提醒 -->
+          <div v-if="settingsActiveMenu === 'notification'">
+            <div class="fs-content-title">消息提醒</div>
+            <div class="fs-empty-state">
+              <div class="fs-empty-icon">
+                <el-icon :size="64" color="#dcdfe6"><Bell /></el-icon>
+              </div>
+              <div class="fs-empty-text">暂无消息提醒</div>
+              <div class="fs-empty-desc">配置流程节点的消息通知规则</div>
+              <el-button type="danger" size="small">立即设置</el-button>
+            </div>
+          </div>
+          <!-- 关联列表 -->
+          <div v-if="settingsActiveMenu === 'relatedList'">
+            <div class="fs-content-title">关联列表</div>
+            <div class="fs-empty-state">
+              <div class="fs-empty-icon">
+                <el-icon :size="64" color="#dcdfe6"><Connection /></el-icon>
+              </div>
+              <div class="fs-empty-text">暂无关联列表</div>
+              <div class="fs-empty-desc">配置与其他表单的关联关系</div>
+              <el-button type="danger" size="small">立即设置</el-button>
+            </div>
+          </div>
+          <!-- 打印模板 -->
+          <div v-if="settingsActiveMenu === 'printTemplate'">
+            <div class="fs-content-title">打印模板</div>
+            <div class="fs-empty-state">
+              <div class="fs-empty-icon">
+                <el-icon :size="64" color="#dcdfe6"><Printer /></el-icon>
+              </div>
+              <div class="fs-empty-text">暂无打印模板</div>
+              <div class="fs-empty-desc">配置表单数据的打印输出模板</div>
+              <el-button type="danger" size="small">立即设置</el-button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -282,6 +367,220 @@
         <el-button @click="previewVisible = false">关闭</el-button>
       </template>
     </el-dialog>
+
+    <!-- 业务规则配置弹窗 -->
+    <el-dialog
+      v-model="businessRuleDialogVisible"
+      title="业务规则配置"
+      width="720px"
+      destroy-on-close
+      :close-on-click-modal="false"
+    >
+      <div class="dvr-dialog-body">
+        <div class="dvr-tip">
+          "流程启动"是指表单提交时就触发，"流程完成"是指流程审批完成时触发，"流程作废"是指流程被驳回、被撤销时触发。<br/>
+          "明细表"的操作类型只支持仅插入数据和仅删除数据。
+        </div>
+        <el-form label-width="90px" label-position="left">
+          <el-form-item label="触发事件" required>
+            <el-select v-model="businessRuleForm.trigger" placeholder="请选择触发事件" style="width:100%">
+              <el-option label="流程启动" value="流程启动" />
+              <el-option label="流程完成" value="流程完成" />
+              <el-option label="流程作废" value="流程作废" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="目标表单" required>
+            <el-select v-model="businessRuleForm.targetForm" placeholder="请选择" style="width:100%">
+              <el-option
+                v-for="f in validationFields"
+                :key="f.field"
+                :label="f.title"
+                :value="f.field"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="操作类型" required>
+            <el-select v-model="businessRuleForm.operationType" placeholder="请选择操作类型" style="width:100%">
+              <el-option label="仅更新数据" value="仅更新数据" />
+              <el-option label="仅插入数据" value="仅插入数据" />
+              <el-option label="更新和插入数据" value="更新和插入数据" />
+              <el-option label="仅删除数据" value="仅删除数据" />
+            </el-select>
+          </el-form-item>
+        </el-form>
+      </div>
+      <template #footer>
+        <el-button type="danger" @click="saveBusinessRule">确 定</el-button>
+        <el-button @click="businessRuleDialogVisible = false">取 消</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 动态校验规则配置弹窗 -->
+    <el-dialog
+      v-model="dynamicRuleDialogVisible"
+      title="动态校验规则配置"
+      width="720px"
+      destroy-on-close
+      :close-on-click-modal="false"
+    >
+      <div class="dvr-dialog-body">
+        <div class="dvr-tip">
+          "流程启动时"是指表单提交时就触发，"流程审批时"是指流程审批提交时触发。
+        </div>
+        <el-form label-width="90px" label-position="left">
+          <el-form-item label="触发事件" required>
+            <el-select v-model="dynamicRuleForm.trigger" placeholder="请选择触发事件" style="width:100%">
+              <el-option label="流程启动时" value="流程启动时" />
+              <el-option label="流程审批时" value="流程审批时" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="提示信息" required>
+            <el-input v-model="dynamicRuleForm.message" placeholder="请输入提示信息" />
+          </el-form-item>
+          <el-form-item label="备注">
+            <el-input v-model="dynamicRuleForm.remark" placeholder="请输入备注" />
+          </el-form-item>
+          <el-form-item label="关联表单" required>
+            <el-select v-model="dynamicRuleForm.relatedForm" placeholder="请选择关联表单" style="width:100%">
+              <el-option
+                v-for="f in validationFields"
+                :key="f.field"
+                :label="f.title"
+                :value="f.title"
+              />
+            </el-select>
+          </el-form-item>
+        </el-form>
+        <div class="dvr-condition-tip">
+          添加校验条件，用于全局表单校验，校验结果为true时表单不允许提交。
+        </div>
+        <div class="dvr-add-condition" @click="addValidationCondition">
+          <el-icon><Plus /></el-icon>
+          <span>添加校验条件</span>
+        </div>
+        <div v-if="dynamicConditions.length > 0" class="dvr-conditions">
+          <div v-for="(cond, idx) in dynamicConditions" :key="idx" class="dvr-condition-row">
+            <el-select v-model="cond.logic" style="width:100px">
+              <el-option label="并且" value="并且" />
+              <el-option label="或者" value="或者" />
+            </el-select>
+            <el-select v-model="cond.field" placeholder="当前表单属性" style="flex:1">
+              <el-option
+                v-for="f in validationFields"
+                :key="f.field"
+                :label="f.title"
+                :value="f.field"
+              />
+            </el-select>
+            <span class="dvr-condition-label">值</span>
+            <el-select v-model="cond.operator" style="width:120px">
+              <el-option label="等于" value="等于" />
+              <el-option label="不等于" value="不等于" />
+              <el-option label="大于" value="大于" />
+              <el-option label="小于" value="小于" />
+              <el-option label="大于等于" value="大于等于" />
+              <el-option label="小于等于" value="小于等于" />
+              <el-option label="包含" value="包含" />
+            </el-select>
+            <el-select v-model="cond.target" placeholder="目标表单属性" style="flex:1">
+              <el-option
+                v-for="f in validationFields"
+                :key="f.field"
+                :label="f.title"
+                :value="f.field"
+              />
+            </el-select>
+            <el-icon class="dvr-condition-delete" @click="dynamicConditions.splice(idx, 1)"><Delete /></el-icon>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <el-button type="danger" @click="saveDynamicRule">确 定</el-button>
+        <el-button @click="dynamicRuleDialogVisible = false">取 消</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 提交校验弹窗 -->
+    <el-dialog
+      v-model="validationDialogVisible"
+      title="提交校验"
+      width="900px"
+      destroy-on-close
+      :close-on-click-modal="false"
+    >
+      <div class="validation-dialog-body">
+        <!-- 左侧字段列表 -->
+        <div class="vd-left">
+          <div class="vd-left-header">当前表单</div>
+          <div class="vd-field-list">
+            <div
+              v-for="f in validationFields"
+              :key="f.field"
+              class="vd-field-item"
+              @click="insertFieldTag(f)"
+            >
+              {{ f.title }}
+            </div>
+          </div>
+        </div>
+        <!-- 右侧编辑器 -->
+        <div class="vd-right">
+          <div class="vd-formula-header">当满足以下条件时表单不允许提交</div>
+          <div class="vd-formula-editor">
+            <div class="vd-line-numbers"><span>1</span></div>
+            <div
+              class="vd-editor-area"
+              ref="validationEditorRef"
+              contenteditable="true"
+              @input="onEditorInput"
+              @keyup="saveSelection"
+              @mouseup="saveSelection"
+              @blur="saveSelection"
+              @keydown.enter.prevent
+            ></div>
+          </div>
+          <div class="vd-formula-actions">
+            <el-popover placement="right-start" :width="280" trigger="click">
+              <template #reference>
+                <el-button size="small" type="danger" plain>插入函数</el-button>
+              </template>
+              <div class="func-popover">
+                <el-input
+                  v-model="funcFilterKeyword"
+                  placeholder="输入关键字过滤"
+                  size="small"
+                  clearable
+                  class="func-filter-input"
+                />
+                <div class="func-list">
+                  <div
+                    v-for="fn in filteredFuncList"
+                    :key="fn"
+                    class="func-list-item"
+                    @click="insertFunction(fn)"
+                  >{{ fn }}</div>
+                </div>
+              </div>
+            </el-popover>
+          </div>
+          <div class="vd-formula-help">
+            <ul>
+              <li>请从左侧面板选择字段或选项</li>
+              <li>支持英文模式下运算符(+, -, *, /, &gt;, &lt;, ==, !=, &lt;=, &gt;=)及函数</li>
+              <li>参考场景：<br/>根据输入的数量和单价,自动计算出金额,则可将计算公式设置为:数量*单价</li>
+            </ul>
+          </div>
+          <div class="vd-error-tip">
+            <span class="vd-error-label">校验错误提示<span class="required">*</span></span>
+            <el-input v-model="validationErrorMsg" placeholder="当表单不能提交时弹出的提示信息内容" />
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <el-button type="danger" @click="saveValidationRule">确 定</el-button>
+        <el-button @click="validationDialogVisible = false">取 消</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -289,7 +588,7 @@
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowLeft, Grid, Upload, Loading, Search, RefreshLeft, ArrowDown, Delete, Plus, Rank, Close, Refresh, Download, List, Printer, Operation } from '@element-plus/icons-vue'
+import { ArrowLeft, Grid, Upload, Loading, Search, RefreshLeft, ArrowDown, Delete, Plus, Rank, Close, Refresh, Download, List, Printer, Operation, DocumentChecked, Edit, Setting, Bell, Connection } from '@element-plus/icons-vue'
 import { processApi } from '../api'
 
 // 图标名称到组件的映射
@@ -332,6 +631,298 @@ const designerConfig = ref({
   showSaveBtn: false,
 })
 
+// 注册轮播图组件到表单设计器
+function registerCarouselComponent() {
+  if (!designerRef.value) return
+  try {
+    designerRef.value.addComponent({
+      name: 'GrCarousel',
+      label: '轮播图',
+      icon: 'icon-image',
+      menu: 'aide',
+      input: false,
+      drag: false,
+      mask: true,
+      rule() {
+        return {
+          type: 'GrCarousel',
+          props: {
+            height: '200px',
+            autoplay: true,
+            interval: 3000,
+            arrow: 'hover',
+            indicatorPosition: '',
+            type: '',
+            images: [
+              'https://fuss10.elemecdn.com/a/3f/3302e58f9a181d2509f3dc0fa68b0jpeg.jpeg',
+              'https://fuss10.elemecdn.com/1/34/19aa98b1fcb2781c4fba33d850549jpeg.jpeg',
+              'https://fuss10.elemecdn.com/0/6f/e35ff375812e6b0020b6b4e8f9583jpeg.jpeg'
+            ]
+          }
+        }
+      },
+      props(_rule: any, { t }: any) {
+        return [
+          { type: 'input', field: 'height', title: '高度', value: '200px' },
+          { type: 'switch', field: 'autoplay', title: '自动播放', value: true },
+          { type: 'inputNumber', field: 'interval', title: '间隔(ms)', value: 3000, props: { min: 500, step: 500 } },
+          {
+            type: 'select', field: 'arrow', title: '箭头',
+            options: [
+              { label: '划过时显示', value: 'hover' },
+              { label: '始终显示', value: 'always' },
+              { label: '从不显示', value: 'never' }
+            ]
+          },
+          {
+            type: 'select', field: 'indicatorPosition', title: '指示器位置',
+            options: [
+              { label: '内部', value: '' },
+              { label: '外部', value: 'outside' },
+              { label: '不显示', value: 'none' }
+            ]
+          },
+          {
+            type: 'select', field: 'type', title: '类型',
+            options: [
+              { label: '默认', value: '' },
+              { label: '卡片', value: 'card' }
+            ]
+          },
+          {
+            type: 'GrImageList', field: 'images', title: '图片列表', value: []
+          }
+        ]
+      }
+    })
+  } catch (e) { console.warn('[registerCarouselComponent]', e) }
+}
+
+// ===== 表单设置 =====
+const settingsActiveMenu = ref('submitValidation')
+const settingsMenus = [
+  { key: 'submitValidation', label: '提交校验', icon: DocumentChecked },
+  { key: 'dynamicValidation', label: '动态校验', icon: Edit },
+  { key: 'businessRules', label: '业务规则', icon: Setting },
+  { key: 'notification', label: '消息提醒', icon: Bell },
+  { key: 'relatedList', label: '关联列表', icon: Connection },
+  { key: 'printTemplate', label: '打印模板', icon: Printer },
+]
+
+// ===== 业务规则 =====
+const businessRuleDialogVisible = ref(false)
+const businessRuleForm = reactive({
+  trigger: '',
+  targetForm: '',
+  operationType: ''
+})
+
+function saveBusinessRule() {
+  if (!businessRuleForm.trigger) {
+    ElMessage.warning('请选择触发事件')
+    return
+  }
+  if (!businessRuleForm.targetForm) {
+    ElMessage.warning('请选择目标表单')
+    return
+  }
+  if (!businessRuleForm.operationType) {
+    ElMessage.warning('请选择操作类型')
+    return
+  }
+  ElMessage.success('业务规则保存成功')
+  businessRuleDialogVisible.value = false
+}
+
+// ===== 动态校验 =====
+const dynamicRules = ref<Array<{ trigger: string; message: string; relatedForm: string; remark: string; enabled: boolean }>>([])
+const dynamicRuleDialogVisible = ref(false)
+const dynamicRuleForm = reactive({
+  trigger: '',
+  message: '',
+  remark: '',
+  relatedForm: ''
+})
+
+function addDynamicRule() {
+  dynamicRuleForm.trigger = ''
+  dynamicRuleForm.message = ''
+  dynamicRuleForm.remark = ''
+  dynamicRuleForm.relatedForm = ''
+  dynamicRuleDialogVisible.value = true
+}
+
+const dynamicConditions = ref<Array<{ logic: string; field: string; operator: string; target: string }>>([])
+
+function addValidationCondition() {
+  dynamicConditions.value.push({
+    logic: '并且',
+    field: '',
+    operator: '等于',
+    target: ''
+  })
+}
+
+function saveDynamicRule() {
+  if (!dynamicRuleForm.trigger) {
+    ElMessage.warning('请选择触发事件')
+    return
+  }
+  if (!dynamicRuleForm.message) {
+    ElMessage.warning('请输入提示信息')
+    return
+  }
+  dynamicRules.value.push({
+    trigger: dynamicRuleForm.trigger,
+    message: dynamicRuleForm.message,
+    relatedForm: dynamicRuleForm.relatedForm,
+    remark: dynamicRuleForm.remark,
+    enabled: true
+  })
+  dynamicRuleDialogVisible.value = false
+}
+
+// ===== 提交校验弹窗 =====
+const validationDialogVisible = ref(false)
+const validationErrorMsg = ref('')
+const validationEditorRef = ref<HTMLElement | null>(null)
+let savedRange: Range | null = null
+
+// 保存光标位置（在编辑器失焦前调用）
+function saveSelection() {
+  const sel = window.getSelection()
+  if (sel && sel.rangeCount > 0) {
+    const range = sel.getRangeAt(0)
+    const editor = validationEditorRef.value
+    if (editor && editor.contains(range.commonAncestorContainer)) {
+      savedRange = range.cloneRange()
+    }
+  }
+}
+
+// 恢复光标位置
+function restoreSelection() {
+  const editor = validationEditorRef.value
+  if (!editor) return
+  editor.focus()
+  if (savedRange) {
+    const sel = window.getSelection()
+    if (sel) {
+      sel.removeAllRanges()
+      sel.addRange(savedRange)
+    }
+  } else {
+    // 没有保存的位置，将光标放到末尾
+    const sel = window.getSelection()
+    if (sel) {
+      const range = document.createRange()
+      range.selectNodeContents(editor)
+      range.collapse(false)
+      sel.removeAllRanges()
+      sel.addRange(range)
+    }
+  }
+}
+
+// 插入函数列表
+const FUNC_LIST = [
+  'IF', 'AND', 'OR', 'XOR', 'IFS', 'ABS', 'MAX', 'MIN', 'SUM', 'INT', 'MOD', 'PI',
+  'ROUND', 'FLOOR', 'CEIL', 'SQRT', 'AVG', 'DEVSQ', 'AVEDEV', 'HARMEAN', 'LARGE',
+  'UPPERMONEY', 'RAND', 'LAST', 'LEFT', 'RIGHT', 'LEN', 'LENGTH', 'ISEMPTY',
+  'CONCATENATE', 'CHAR', 'UPPERFIRST', 'PADSTART', 'CAPITALIZE', 'ESCAPE',
+  'TRUNCATE', 'BEFORELAST', 'SPLIT', 'TRIM', 'STRIPTAG', 'LINEBREAK',
+  'STARTSWITH', 'ENDSWITH', 'CONTAINS', 'REPLACE', 'BASENAME', 'DATE',
+  'TIMESTAMP', 'TODAY', 'NOW', 'WEEKDAY', 'WEEK', 'DATETOSTR', 'DATERANGESPLIT',
+  'STARTOF', 'ENDOF', 'YEAR', 'MONTH', 'DAY', 'HOUR', 'SECOND', 'YEARS',
+  'MINUTES', 'DAYS', 'HOURS', 'DATEMODIFY', 'STRTODATE', 'ISBEFORE', 'ISAFTER',
+  'BETWEENRANGE', 'ISSAMEORBEFORE', 'ISSAMEOAFTER', 'COUNT', 'ARRAYMAP',
+  'ARRAYFILTER', 'ARRAYFINDINDEX', 'ARRAYFIND', 'ARRAYSOME', 'ARRAYEVERY',
+  'ARRAYINCLUDES', 'COMPACT', 'JOIN', 'CONCAT', 'UNIQ', 'ENCODEJSON'
+]
+const funcFilterKeyword = ref('')
+const filteredFuncList = computed(() => {
+  const kw = funcFilterKeyword.value.trim().toUpperCase()
+  if (!kw) return FUNC_LIST
+  return FUNC_LIST.filter(fn => fn.includes(kw))
+})
+
+// 在光标位置插入内容
+function insertAtCursor(html: string) {
+  const editor = validationEditorRef.value
+  if (!editor) return
+  restoreSelection()
+  const sel = window.getSelection()
+  if (!sel || sel.rangeCount === 0) {
+    editor.innerHTML += html
+    return
+  }
+  const range = sel.getRangeAt(0)
+  range.deleteContents()
+  const temp = document.createElement('div')
+  temp.innerHTML = html
+  const frag = document.createDocumentFragment()
+  let lastNode: Node | null = null
+  while (temp.firstChild) {
+    lastNode = temp.firstChild
+    frag.appendChild(lastNode)
+  }
+  range.insertNode(frag)
+  if (lastNode) {
+    range.setStartAfter(lastNode)
+    range.collapse(true)
+    sel.removeAllRanges()
+    sel.addRange(range)
+  }
+  savedRange = range.cloneRange()
+}
+
+function insertFunction(fn: string) {
+  const funcHtml = `<span class="vd-func-tag" contenteditable="false">${fn}</span>`
+  insertAtCursor(funcHtml + '()')
+  // 将光标放到括号内
+  const editor = validationEditorRef.value
+  if (!editor) return
+  const sel = window.getSelection()
+  if (sel && sel.rangeCount > 0) {
+    const range = sel.getRangeAt(0)
+    if (range.startContainer.nodeType === 3 && range.startOffset > 0) {
+      range.setStart(range.startContainer, range.startOffset - 1)
+      range.collapse(true)
+      sel.removeAllRanges()
+      sel.addRange(range)
+    }
+  }
+}
+
+function insertFieldTag(f: { field: string; title: string }) {
+  const tagHtml = `<span class="vd-field-tag" contenteditable="false" data-field="${f.field}">${f.title}</span>\u200B`
+  insertAtCursor(tagHtml)
+}
+
+function onEditorInput() {
+  // 可以在这里做实时校验或同步
+}
+
+// 从表单设计器提取字段供校验弹窗使用
+const validationFields = computed(() => {
+  if (!designerRef.value) return []
+  try {
+    const rules = designerRef.value.getRule()
+    return extractFields(rules || [])
+  } catch {
+    return []
+  }
+})
+
+function saveValidationRule() {
+  if (!validationErrorMsg.value.trim()) {
+    ElMessage.warning('请填写校验错误提示')
+    return
+  }
+  ElMessage.success('校验规则已保存')
+  validationDialogVisible.value = false
+}
+
 const designerSrc = '/designer/index.html?v=' + Date.now()
 
 // --- Process designer communication ---
@@ -360,8 +951,8 @@ function handleMessage(event: MessageEvent) {
     } else if (processKey) {
       loadProcessByKey(processKey)
     }
-    // 自动发送表单上下文到流程设计器
-    setTimeout(() => sendFormContext(), 300)
+    // 自动发送表单上下文到流程设计器（延迟确保表单规则已加载）
+    setTimeout(() => sendFormContext(), 800)
     return
   }
   if (id && pendingRequests.has(id)) {
@@ -410,6 +1001,8 @@ const loadProcessByKey = async (key: string) => {
 
 onMounted(() => {
   window.addEventListener('message', handleMessage)
+  // 表单设计器加载后注册轮播图组件
+  setTimeout(() => registerCarouselComponent(), 100)
 })
 
 onUnmounted(() => {
@@ -749,6 +1342,10 @@ onMounted(() => {
             designerRef.value.setRule(rules)
             designerRef.value.setOption(options)
           } catch { /* ignore */ }
+        }
+        // 设置完规则后，如果流程设计器已就绪，重新发送表单上下文
+        if (modelerReady.value) {
+          setTimeout(() => sendFormContext(), 100)
         }
       }, 500)
     }
@@ -1191,21 +1788,388 @@ onMounted(() => {
   opacity: 1;
 }
 
-.settings-tab {
-  padding: 40px;
-  overflow: auto;
+/* ===== 表单设置 ===== */
+.form-settings-tab {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
 }
 
-.settings-form {
+.fs-sidebar {
+  width: 140px;
   background: #fff;
-  border-radius: 8px;
-  padding: 30px;
-  max-width: 600px;
+  border-right: 1px solid #e8e8e8;
+  padding: 8px 0;
+  flex-shrink: 0;
+  overflow-y: auto;
 }
 
-.settings-form h3 {
-  margin: 0 0 24px;
-  font-size: 16px;
+.fs-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px;
+  font-size: 14px;
+  color: #606266;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: all 0.2s;
+}
+
+.fs-menu-item:hover {
   color: #303133;
+  background: #f5f7fa;
+}
+
+.fs-menu-item.active {
+  color: #f56c6c;
+  border-left-color: #f56c6c;
+  background: #fff5f5;
+}
+
+.fs-content {
+  flex: 1;
+  padding: 24px 32px;
+  overflow-y: auto;
+  background: #fafafa;
+}
+
+.fs-content-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #303133;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e8e8e8;
+  margin-bottom: 24px;
+}
+
+.fs-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120px 0;
+  gap: 12px;
+}
+
+.fs-empty-icon {
+  margin-bottom: 8px;
+}
+
+.fs-empty-text {
+  font-size: 15px;
+  color: #909399;
+}
+
+.fs-empty-desc {
+  font-size: 13px;
+  color: #c0c4cc;
+  margin-bottom: 8px;
+}
+
+/* ===== 提交校验弹窗 ===== */
+/* ===== 动态校验 =====*/
+.dv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.dv-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #303133;
+}
+
+.dv-notice {
+  font-size: 12px;
+  color: #909399;
+  background: #fef0f0;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.dv-rule-list {
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+}
+
+.dv-rule-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.dv-rule-item:last-child {
+  border-bottom: none;
+}
+
+.dv-rule-index {
+  width: 32px;
+  font-size: 14px;
+  color: #909399;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.dv-rule-content {
+  flex: 1;
+  font-size: 13px;
+  color: #303133;
+  line-height: 1.8;
+}
+
+.dv-rule-content b {
+  font-weight: 500;
+}
+
+.dv-rule-actions {
+  flex-shrink: 0;
+  padding-left: 16px;
+}
+
+/* 动态校验规则弹窗 */
+.dvr-dialog-body {
+  padding: 0 10px;
+}
+
+.dvr-tip {
+  font-size: 13px;
+  color: #606266;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.dvr-condition-tip {
+  font-size: 13px;
+  color: #909399;
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+
+.dvr-add-condition {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #f56c6c;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.dvr-add-condition:hover {
+  color: #e04040;
+}
+
+.dvr-conditions {
+  margin-top: 12px;
+}
+
+.dvr-condition-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.dvr-condition-label {
+  font-size: 13px;
+  color: #606266;
+  white-space: nowrap;
+}
+
+.dvr-condition-delete {
+  font-size: 18px;
+  color: #909399;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.dvr-condition-delete:hover {
+  color: #f56c6c;
+}
+
+.validation-dialog-body {
+  display: flex;
+  min-height: 400px;
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.vd-left {
+  width: 180px;
+  border-right: 1px solid #e8e8e8;
+  background: #fafafa;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+.vd-left-header {
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #606266;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.vd-field-list {
+  padding: 4px 0;
+}
+
+.vd-field-item {
+  padding: 8px 16px;
+  font-size: 13px;
+  color: #303133;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: all 0.15s;
+}
+
+.vd-field-item:hover {
+  background: #f0f0f0;
+  border-left-color: #f56c6c;
+  color: #f56c6c;
+}
+
+.vd-right {
+  flex: 1;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vd-formula-header {
+  font-size: 13px;
+  color: #909399;
+  background: #fef0f0;
+  padding: 8px 12px;
+  border-radius: 4px;
+}
+
+.vd-formula-editor {
+  display: flex;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  min-height: 120px;
+  background: #fff;
+}
+
+.vd-line-numbers {
+  width: 32px;
+  background: #f5f7fa;
+  border-right: 1px solid #e8e8e8;
+  padding: 8px 0;
+  text-align: center;
+  font-size: 12px;
+  color: #c0c4cc;
+  flex-shrink: 0;
+}
+
+.vd-editor-area {
+  flex: 1;
+  padding: 8px 12px;
+  min-height: 100px;
+  font-size: 14px;
+  line-height: 1.8;
+  color: #303133;
+  outline: none;
+  cursor: text;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* 字段标签样式 (contenteditable 中的不可编辑元素) */
+:deep(.vd-field-tag) {
+  display: inline-block;
+  padding: 1px 8px;
+  background: #fef0f0;
+  border: 1px solid #f56c6c;
+  border-radius: 3px;
+  color: #f56c6c;
+  font-size: 12px;
+  line-height: 20px;
+  margin: 0 2px;
+  vertical-align: middle;
+  user-select: all;
+}
+
+:deep(.vd-func-tag) {
+  display: inline-block;
+  padding: 1px 6px;
+  background: #fff5f5;
+  border-radius: 3px;
+  color: #f56c6c;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+  margin: 0 1px;
+  vertical-align: middle;
+  user-select: all;
+}
+
+.vd-formula-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.vd-formula-help {
+  font-size: 12px;
+  color: #909399;
+}
+
+.vd-formula-help ul {
+  margin: 0;
+  padding-left: 16px;
+  line-height: 1.8;
+}
+
+.vd-error-tip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #e8e8e8;
+}
+
+.vd-error-label {
+  font-size: 14px;
+  color: #303133;
+  white-space: nowrap;
+}
+
+.vd-error-label .required {
+  color: #f56c6c;
+  margin-left: 2px;
+}
+
+/* 插入函数 Popover */
+.func-popover {
+  display: flex;
+  flex-direction: column;
+}
+
+.func-filter-input {
+  margin-bottom: 8px;
+}
+
+.func-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.func-list-item {
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #303133;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.func-list-item:hover {
+  background: #f0f0f5;
 }
 </style>
