@@ -128,10 +128,49 @@
             <div class="panel-section">
               <div class="panel-section-header">
                 <span>查询条件</span>
-                <el-icon class="panel-add-icon" @click="addQueryCondition"><Plus /></el-icon>
+                <el-popover
+                  placement="left-start"
+                  :width="280"
+                  trigger="click"
+                >
+                  <template #reference>
+                    <el-icon class="panel-add-icon"><Plus /></el-icon>
+                  </template>
+                  <div class="query-picker-panel">
+                    <div class="query-picker-header">
+                      <span class="query-picker-title">查询字段</span>
+                      <span class="query-picker-selectall">
+                        全选 <el-checkbox v-model="querySelectAll" @change="toggleQuerySelectAll" />
+                      </span>
+                    </div>
+                    <div class="query-picker-list">
+                      <div
+                        v-for="f in allListFields"
+                        :key="f.field"
+                        class="query-picker-item"
+                      >
+                        <span>{{ f.title }}</span>
+                        <el-checkbox
+                          :model-value="isQueryFieldSelected(f.field)"
+                          @change="(val) => toggleQueryField(f.field, f.title, val)"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </el-popover>
               </div>
               <div v-if="listQueryFields.length" class="panel-field-list">
-                <div v-for="(f, idx) in listQueryFields" :key="f.field" class="panel-field-item">
+                <div
+                  v-for="(f, idx) in listQueryFields"
+                  :key="f.field"
+                  class="panel-field-item"
+                  draggable="true"
+                  @dragstart="onQueryDragStart(idx, $event)"
+                  @dragover.prevent="onQueryDragOver(idx)"
+                  @drop="onQueryDrop(idx)"
+                  @dragend="onQueryDragEnd"
+                  :class="{ 'drag-over': queryDragOverIdx === idx }"
+                >
                   <el-icon class="drag-icon"><Rank /></el-icon>
                   <span>{{ f.title }}</span>
                   <el-icon class="remove-icon" @click="listQueryFields.splice(idx, 1)"><Close /></el-icon>
@@ -166,24 +205,39 @@
           </div>
           <!-- 列表设置 -->
           <div v-show="listPanelTab === 'settings'" class="panel-body">
-            <el-form label-width="80px" size="small" style="padding:16px">
-              <el-form-item label="表格尺寸">
-                <el-select v-model="listConfig.size" style="width:100%">
-                  <el-option label="默认" value="default" />
-                  <el-option label="小" value="small" />
-                  <el-option label="迷你" value="mini" />
-                </el-select>
-              </el-form-item>
-              <el-form-item label="是否分页">
-                <el-switch v-model="listConfig.pagination" />
-              </el-form-item>
-              <el-form-item label="每页条数">
-                <el-input-number v-model="listConfig.pageSize" :min="5" :max="100" :step="5" />
-              </el-form-item>
-              <el-form-item label="多选操作">
-                <el-switch v-model="listConfig.selection" />
-              </el-form-item>
-            </el-form>
+            <div class="settings-section">
+              <div class="settings-label">排序字段</div>
+              <el-select v-model="listConfig.sortField" placeholder="请选择" style="width:100%">
+                <el-option
+                  v-for="f in allListFields"
+                  :key="f.field"
+                  :label="f.title"
+                  :value="f.field"
+                />
+              </el-select>
+            </div>
+            <div class="settings-section">
+              <div class="settings-label">排序方式</div>
+              <el-select v-model="listConfig.sortOrder" style="width:100%">
+                <el-option label="降序" value="desc" />
+                <el-option label="升序" value="asc" />
+              </el-select>
+            </div>
+            <div class="settings-section">
+              <div class="settings-label-row">
+                <span>功能按钮</span>
+                <el-icon class="panel-add-icon" @click="addFuncButton"><Plus /></el-icon>
+              </div>
+              <div class="func-btn-list">
+                <div v-for="(btn, idx) in listConfig.funcButtons" :key="btn.key" class="func-btn-item">
+                  <el-icon class="func-btn-icon" :style="{ color: '#f56c6c' }">
+                    <component :is="iconMap[btn.icon]" />
+                  </el-icon>
+                  <span>{{ btn.label }}</span>
+                  <el-icon class="func-btn-delete" @click="listConfig.funcButtons.splice(idx, 1)"><Delete /></el-icon>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -235,8 +289,13 @@
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowLeft, Grid, Upload, Loading, Search, RefreshLeft, ArrowDown, Delete, Plus, Rank, Close } from '@element-plus/icons-vue'
+import { ArrowLeft, Grid, Upload, Loading, Search, RefreshLeft, ArrowDown, Delete, Plus, Rank, Close, Refresh, Download, List, Printer, Operation } from '@element-plus/icons-vue'
 import { processApi } from '../api'
+
+// 图标名称到组件的映射
+const iconMap: Record<string, any> = {
+  Refresh, Search, Upload, Download, List, Printer, Operation, Delete
+}
 
 const router = useRouter()
 const route = useRoute()
@@ -402,11 +461,38 @@ const listPanelTab = ref('fields')
 const listSelectAll = ref(false)
 const listQueryFields = ref<Array<{ field: string; title: string }>>([])
 const listConfig = reactive({
-  size: 'small',
-  pagination: true,
-  pageSize: 10,
-  selection: true
+  sortField: '_createTime',
+  sortOrder: 'desc',
+  funcButtons: [
+    { key: 'refresh', label: '刷新', icon: 'Refresh' },
+    { key: 'filter', label: '筛选', icon: 'Search' },
+    { key: 'import', label: '导入', icon: 'Upload' },
+    { key: 'export', label: '导出', icon: 'Download' },
+    { key: 'display', label: '显示', icon: 'List' },
+  ] as Array<{ key: string; label: string; icon: string }>
 })
+
+// 添加功能按钮
+const AVAILABLE_FUNC_BUTTONS = [
+  { key: 'refresh', label: '刷新', icon: 'Refresh' },
+  { key: 'filter', label: '筛选', icon: 'Search' },
+  { key: 'import', label: '导入', icon: 'Upload' },
+  { key: 'export', label: '导出', icon: 'Download' },
+  { key: 'display', label: '显示', icon: 'List' },
+  { key: 'print', label: '打印', icon: 'Printer' },
+  { key: 'batch', label: '批量操作', icon: 'Operation' },
+]
+
+function addFuncButton() {
+  const available = AVAILABLE_FUNC_BUTTONS.filter(
+    b => !listConfig.funcButtons.some(fb => fb.key === b.key)
+  )
+  if (available.length === 0) {
+    ElMessage.info('所有功能按钮已添加')
+    return
+  }
+  listConfig.funcButtons.push({ ...available[0] })
+}
 
 // 固定字段
 const FIXED_FIELDS = [
@@ -462,18 +548,63 @@ function onFieldDragEnd() {
   dragOverIdx.value = -1
 }
 
-// 添加查询条件
-function addQueryCondition() {
-  // 筛选还未添加的字段
-  const available = allListFields.value.filter(
-    f => !listQueryFields.value.some(q => q.field === f.field)
-  )
-  if (available.length === 0) {
-    ElMessage.info('所有字段已添加为查询条件')
-    return
+// 查询条件弹窗
+const queryPickerVisible = ref(false)
+const querySelectAll = ref(false)
+
+function isQueryFieldSelected(field: string): boolean {
+  return listQueryFields.value.some(q => q.field === field)
+}
+
+function toggleQueryField(field: string, title: string, val: any) {
+  if (val) {
+    if (!listQueryFields.value.some(q => q.field === field)) {
+      listQueryFields.value.push({ field, title })
+    }
+  } else {
+    const idx = listQueryFields.value.findIndex(q => q.field === field)
+    if (idx >= 0) listQueryFields.value.splice(idx, 1)
   }
-  // 默认添加第一个可用字段
-  listQueryFields.value.push({ field: available[0].field, title: available[0].title })
+}
+
+function toggleQuerySelectAll(val: any) {
+  if (val) {
+    allListFields.value.forEach(f => {
+      if (!listQueryFields.value.some(q => q.field === f.field)) {
+        listQueryFields.value.push({ field: f.field, title: f.title })
+      }
+    })
+  } else {
+    listQueryFields.value = []
+  }
+}
+
+// 查询条件拖动排序
+const queryDragFromIdx = ref(-1)
+const queryDragOverIdx = ref(-1)
+
+function onQueryDragStart(idx: number, e: DragEvent) {
+  queryDragFromIdx.value = idx
+  if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
+}
+
+function onQueryDragOver(idx: number) {
+  queryDragOverIdx.value = idx
+}
+
+function onQueryDrop(idx: number) {
+  const from = queryDragFromIdx.value
+  if (from < 0 || from === idx) return
+  const list = listQueryFields.value
+  const [item] = list.splice(from, 1)
+  list.splice(idx, 0, item)
+  queryDragFromIdx.value = -1
+  queryDragOverIdx.value = -1
+}
+
+function onQueryDragEnd() {
+  queryDragFromIdx.value = -1
+  queryDragOverIdx.value = -1
 }
 
 // 监听 tab 切换到列表设计时，自动刷新表单字段
@@ -950,6 +1081,114 @@ onMounted(() => {
 
 .remove-icon:hover {
   color: #f56c6c;
+}
+
+/* 查询字段选择弹窗 */
+.query-picker-panel {
+  padding: 0;
+}
+
+.query-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.query-picker-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #f56c6c;
+}
+
+.query-picker-selectall {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #303133;
+}
+
+.query-picker-list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.query-picker-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  font-size: 14px;
+  color: #303133;
+  border-bottom: 1px solid #fafafa;
+}
+
+.query-picker-item:hover {
+  background: #f5f7fa;
+}
+
+/* 列表设置面板 */
+.settings-section {
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.settings-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #303133;
+  margin-bottom: 10px;
+}
+
+.settings-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 500;
+  color: #303133;
+  margin-bottom: 10px;
+}
+
+.func-btn-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.func-btn-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 8px;
+  border-bottom: 1px solid #f5f5f5;
+  font-size: 14px;
+  color: #303133;
+  gap: 10px;
+}
+
+.func-btn-item:last-child {
+  border-bottom: none;
+}
+
+.func-btn-icon {
+  font-size: 16px;
+}
+
+.func-btn-item span {
+  flex: 1;
+}
+
+.func-btn-delete {
+  cursor: pointer;
+  color: #f56c6c;
+  font-size: 16px;
+  opacity: 0.7;
+}
+
+.func-btn-delete:hover {
+  opacity: 1;
 }
 
 .settings-tab {
