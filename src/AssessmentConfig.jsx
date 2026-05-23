@@ -175,7 +175,7 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
     if (messages.length === 0) {
       const stages = resources.filter((r) => r.isFolder && r.parentKey === null);
       const activities = resources.filter((r) => r.isFolder && r.parentKey !== null);
-      const welcome = `你好！我是 AI 考核助手。\n\n当前培训项目包含 ${stages.length} 个阶段、${activities.length} 个培训活动。\n\n你只需要描述培训目标，例如：\n• "总学时15学时，重点是视频学习，考核通过发放证书"\n• "视频权重50%，考试30%，其余均分"\n\n请描述你的考核需求：`;
+      const welcome = `你好！我是培训管理智能体。\n\n当前培训项目包含 ${stages.length} 个阶段、${activities.length} 个培训活动。\n\n你只需要描述培训目标，例如：\n• "总学时15学时，重点是视频学习，考核通过发放证书"\n• "视频权重50%，考试30%，其余均分"\n\n请描述你的考核需求：`;
       const initialMsgs = [{ role: 'assistant', content: welcome }];
       setMessages(initialMsgs);
       onUpdateChat(initialMsgs);
@@ -621,16 +621,16 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
       {rightCollapsed ? (
         <div className="collapsed-panel collapsed-right" onClick={() => setRightCollapsed(false)}>
           <MenuFoldOutlined className="collapsed-icon" />
-          <span className="collapsed-label">AI助手</span>
+          <span className="collapsed-label">智能体</span>
         </div>
       ) : (
         <div className="chat-panel">
           <div className="chat-header">
             <RobotOutlined className="chat-header-icon" />
-            <span>AI 考核助手</span>
+            <span>培训管理智能体</span>
             <MenuUnfoldOutlined
               className="chat-collapse-icon"
-              title="折叠AI助手"
+              title="折叠智能体"
               onClick={() => setRightCollapsed(true)}
             />
           </div>
