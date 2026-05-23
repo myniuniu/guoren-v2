@@ -1,0 +1,123 @@
+.leave-workflow-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: #f5f7fa;
+}
+
+.leave-workflow-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+  flex-shrink: 0;
+}
+
+.leave-workflow-header-left {
+  display: flex;
+  align-items: center;
+}
+
+.leave-workflow-stats {
+  padding: 16px 20px 0;
+  flex-shrink: 0;
+}
+
+.leave-workflow-content {
+  flex: 1;
+  margin: 16px 20px 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.leave-workflow-info {
+  margin: 0 20px 16px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  flex-shrink: 0;
+}
+
+.leave-workflow-flow-steps {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.flow-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f6f8fa;
+  border-radius: 6px;
+}
+
+.flow-step-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #1677ff;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.flow-arrow {
+  color: #bbb;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* ====== Tabs full-height layout ====== */
+.workflow-tabs {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.workflow-tabs .ant-tabs-nav {
+  padding: 0 16px;
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.workflow-tabs .ant-tabs-content-holder {
+  flex: 1;
+  overflow: hidden;
+}
+
+.workflow-tabs .ant-tabs-content {
+  height: 100%;
+}
+
+.workflow-tabs .ant-tabs-tabpane {
+  height: 100%;
+}
+
+.workflow-tab-content {
+  padding: 16px;
+  overflow: auto;
+  height: 100%;
+}
+
+.workflow-designer-container {
+  height: 100%;
+  width: 100%;
+}
+
+.workflow-designer-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}

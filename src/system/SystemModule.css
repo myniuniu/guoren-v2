@@ -1,0 +1,197 @@
+/* 系统管理模块共享样式 */
+.sys-module {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #f7f8fa;
+  overflow: hidden;
+}
+
+.sys-module-header {
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  height: 56px;
+  flex-shrink: 0;
+}
+
+.sys-module-header-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.sys-module-header-subtitle {
+  margin-left: 12px;
+  font-size: 12px;
+  color: #999;
+}
+
+.sys-module-body {
+  flex: 1;
+  overflow: auto;
+  padding: 16px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 部门管理：左树右表布局 */
+.sys-dept-layout {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+}
+
+.sys-dept-tree-panel {
+  width: 280px;
+  min-width: 280px;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e8e8e8;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.sys-dept-tree-panel-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sys-dept-table-panel {
+  flex: 1;
+  min-width: 0;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e8e8e8;
+  padding: 16px 20px 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 人员管理：左树右表布局 */
+.sys-user-layout {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+}
+
+.sys-user-tree-panel {
+  width: 240px;
+  min-width: 240px;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e8e8e8;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.sys-user-tree-panel-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.sys-user-tree-all {
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #333;
+  transition: all 0.15s;
+}
+
+.sys-user-tree-all:hover {
+  background: #f0f5ff;
+  color: #1677ff;
+}
+
+.sys-user-tree-all-active {
+  background: #1677ff;
+  color: #fff;
+  font-weight: 500;
+}
+
+.sys-user-tree-all-active:hover {
+  background: #4096ff;
+  color: #fff;
+}
+
+.sys-user-table-panel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 搜索区域 */
+.sys-search-card {
+  border-radius: 10px;
+  border: 1px solid #e8e8e8;
+  background: #fff;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.sys-search-card .search-label {
+  font-size: 13px;
+  color: #666;
+  white-space: nowrap;
+}
+
+.sys-search-card .search-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+/* 表格区域 */
+.sys-table-card {
+  border-radius: 10px;
+  border: 1px solid #e8e8e8;
+  background: #fff;
+  padding: 16px 20px 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.sys-table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.sys-table-toolbar-left {
+  display: flex;
+  gap: 8px;
+}
+
+.sys-table-toolbar-right {
+  display: flex;
+  gap: 8px;
+}

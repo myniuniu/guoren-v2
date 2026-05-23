@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <link rel="icon" href="favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>vue-bpmn-designer 流程设计器（flowable版）</title>
+    <script type="module" crossorigin src="assets/js/index-DPwM2wBn.js"></script>
+    <link rel="stylesheet" crossorigin href="assets/css/index-CXCH1V6i.css">
+    <style>
+      /* 流程实例高亮样式 */
+      .djs-element.bpmn-completed .djs-visual > :nth-child(1) {
+        fill: #d9f7be !important;
+        stroke: #52c41a !important;
+      }
+      .djs-element.bpmn-active .djs-visual > :nth-child(1) {
+        fill: #fff1f0 !important;
+        stroke: #ff4d4f !important;
+        stroke-width: 3px !important;
+      }
+      .djs-connection.bpmn-completed-flow .djs-visual > :nth-child(1) {
+        stroke: #52c41a !important;
+        stroke-width: 2.5px !important;
+      }
+      .djs-connection.bpmn-completed-flow .djs-visual > marker path,
+      .djs-connection.bpmn-completed-flow .djs-visual > path[marker-end] {
+        stroke: #52c41a !important;
+      }
+      /* 查看模式：隐藏设计器的侧边栏、palette、属性面板、头部菜单、底部信息 */
+      body.bpmn-view-mode .djs-palette,
+      body.bpmn-view-mode .djs-context-pad,
+      body.bpmn-view-mode .bjs-powered-by,
+      body.bpmn-view-mode .djs-direct-editing-parent {
+        display: none !important;
+      }
+      /* 尽量隐藏上方、侧边、底部原本的设计器外壳 UI 在查看模式下 */
+      body.bpmn-view-mode .el-header,
+      body.bpmn-view-mode .el-aside,
+      body.bpmn-view-mode .el-footer,
+      body.bpmn-view-mode .properties-panel-parent,
+      body.bpmn-view-mode .toolbar-wrap,
+      body.bpmn-view-mode .header-wrap,
+      body.bpmn-view-mode .right-panel,
+      body.bpmn-view-mode .ad-banner {
+        display: none !important;
+      }
+      body.bpmn-view-mode .el-main,
+      body.bpmn-view-mode .canvas,
+      body.bpmn-view-mode .designer-canvas,
+      body.bpmn-view-mode #app > div {
+        height: 100vh !important;
+        width: 100vw !important;
+      }
+
+      /* ============ 选择审批人弹窗样式 ============ */
+      .gr-picker-mask {
+        position: fixed; inset: 0; z-index: 99999;
+        background: rgba(0, 0, 0, 0.45);
+        display: flex; align-items: center; justify-content: center;
+      }
+      .gr-picker-dialog {
+        width: 880px; max-width: 92vw; max-height: 86vh;
+        background: #fff; border-radius: 8px;
+        display: flex; flex-direction: column;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+        font-size: 14px; color: #303133;
+      }
+      .gr-picker-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 16px 24px; border-bottom: 1px solid #f0f0f0;
+        font-size: 16px; font-weight: 600;
+      }
+      .gr-picker-close {
+        cursor: pointer; font-size: 20px; color: #909399; line-height: 1;
+        padding: 4px 8px; border-radius: 4px;
+      }
+      .gr-picker-close:hover { background: #f5f5f5; color: #303133; }
+      .gr-picker-body { padding: 16px 24px; overflow: auto; }
+      .gr-picker-footer {
+        padding: 12px 24px 20px; text-align: right; border-top: 1px solid #f0f0f0;
+        display: flex; gap: 12px; justify-content: flex-end;
+      }
+      .gr-picker-selected {
+        min-height: 92px; border: 1px solid #e8e8e8; border-radius: 6px;
+        padding: 10px 12px; display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start;
+      }
+      .gr-picker-tag {
+        display: inline-flex; align-items: center; height: 28px; padding: 0 8px;
+        background: #fff1f0; color: #ff4d4f; border-radius: 4px;
+        font-size: 13px; gap: 6px; user-select: none;
+      }
+      .gr-picker-tag .gr-tag-icon {
+        display: inline-block; width: 14px; height: 14px;
+        background: currentColor;
+        -webkit-mask: center / contain no-repeat; mask: center / contain no-repeat;
+      }
+      .gr-picker-tag .gr-tag-icon.user {
+        -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='black' d='M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4 0-8 2-8 6v2h16v-2c0-4-4-6-8-6z'/></svg>");
+        mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='black' d='M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4 0-8 2-8 6v2h16v-2c0-4-4-6-8-6z'/></svg>");
+      }
+      .gr-picker-tag .gr-tag-icon.dept {
+        -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='black' d='M3 21V8l9-5 9 5v13h-6v-6h-6v6H3z'/></svg>");
+        mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='black' d='M3 21V8l9-5 9 5v13h-6v-6h-6v6H3z'/></svg>");
+      }
+      .gr-picker-tag .gr-tag-icon.role,
+      .gr-picker-tag .gr-tag-icon.manager {
+        -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='black' d='M16 11a4 4 0 10-4-4 4 4 0 004 4zm-8 0a4 4 0 10-4-4 4 4 0 004 4zm0 2c-3 0-7 1.5-7 4v2h10v-2c0-1 .5-2 1.4-2.7C12 13.2 10 13 8 13zm8 0c-.4 0-.9 0-1.4.1A4.6 4.6 0 0117 17v2h7v-2c0-2.5-4-4-7-4z'/></svg>");
+        mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='black' d='M16 11a4 4 0 10-4-4 4 4 0 004 4zm-8 0a4 4 0 10-4-4 4 4 0 004 4zm0 2c-3 0-7 1.5-7 4v2h10v-2c0-1 .5-2 1.4-2.7C12 13.2 10 13 8 13zm8 0c-.4 0-.9 0-1.4.1A4.6 4.6 0 0117 17v2h7v-2c0-2.5-4-4-7-4z'/></svg>");
+      }
+      .gr-picker-tag .gr-tag-icon.form {
+        -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='black' d='M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zM8 13h8v2H8zm0 4h6v2H8z'/></svg>");
+        mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='black' d='M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zM8 13h8v2H8zm0 4h6v2H8z'/></svg>");
+      }
+      .gr-picker-tag .gr-tag-close { cursor: pointer; opacity: 0.7; font-size: 13px; line-height: 1; }
+      .gr-picker-tag .gr-tag-close:hover { opacity: 1; }
+      .gr-picker-empty { color: #bfbfbf; font-size: 13px; align-self: center; }
+      .gr-picker-tabs {
+        display: flex; gap: 32px; border-bottom: 1px solid #e8e8e8;
+        margin-top: 12px; padding: 0 4px;
+      }
+      .gr-picker-tab {
+        position: relative; padding: 12px 0; cursor: pointer; color: #606266;
+        font-size: 14px;
+      }
+      .gr-picker-tab.active { color: #ff4d4f; font-weight: 600; }
+      .gr-picker-tab.active::after {
+        content: ''; position: absolute; left: 0; right: 0; bottom: -1px;
+        height: 2px; background: #ff4d4f;
+      }
+      .gr-picker-pane {
+        min-height: 280px; max-height: 320px; overflow-y: auto; padding: 12px 4px;
+      }
+      .gr-tree-node {
+        display: flex; align-items: center; padding: 4px 0; cursor: pointer; user-select: none;
+      }
+      .gr-tree-node-content { display: flex; align-items: center; flex: 1; gap: 6px; }
+      .gr-tree-arrow {
+        display: inline-block; width: 16px; height: 16px; text-align: center;
+        font-size: 10px; color: #909399; transition: transform 0.2s;
+      }
+      .gr-tree-arrow.expanded { transform: rotate(90deg); }
+      .gr-tree-arrow.leaf { visibility: hidden; }
+      .gr-tree-checkbox {
+        width: 14px; height: 14px; border: 1px solid #dcdfe6; border-radius: 2px;
+        margin-right: 6px; flex-shrink: 0; position: relative; background: #fff;
+      }
+      .gr-tree-checkbox.checked { background: #ff4d4f; border-color: #ff4d4f; }
+      .gr-tree-checkbox.checked::after {
+        content: ''; position: absolute; left: 3px; top: 0px;
+        width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+      }
+      .gr-tree-children { padding-left: 22px; }
+      .gr-flat-list { display: flex; flex-direction: column; gap: 12px; padding: 4px 0; }
+      .gr-flat-item { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+      .gr-radio {
+        width: 14px; height: 14px; border: 1px solid #dcdfe6; border-radius: 50%;
+        position: relative; flex-shrink: 0; background: #fff;
+      }
+      .gr-radio.checked { border-color: #ff4d4f; }
+      .gr-radio.checked::after {
+        content: ''; position: absolute; left: 3px; top: 3px; width: 6px; height: 6px;
+        border-radius: 50%; background: #ff4d4f;
+      }
+      .gr-btn {
+        height: 32px; padding: 0 18px; border-radius: 4px; cursor: pointer;
+        border: 1px solid #dcdfe6; background: #fff; color: #606266; font-size: 14px;
+      }
+      .gr-btn:hover { color: #ff4d4f; border-color: #ff4d4f; }
+      .gr-btn.gr-btn-primary {
+        background: #ff4d4f; border-color: #ff4d4f; color: #fff;
+      }
+      .gr-btn.gr-btn-primary:hover { background: #ff7875; border-color: #ff7875; color: #fff; }
+      /* 部门主管水平布局 */
+      .gr-manager-row {
+        display: flex; flex-wrap: wrap; gap: 16px 24px; padding: 8px 0;
+      }
+      .gr-manager-item {
+        display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+        user-select: none; font-size: 14px; color: #303133;
+      }
+      /* ============ 表单权限弹窗样式 ============ */
+      .gr-perm-btn {
+        display: inline-flex; align-items: center; gap: 4px;
+        height: 28px; padding: 0 12px; margin: 4px 0 4px 0;
+        border-radius: 4px; cursor: pointer; font-size: 12px;
+        border: 1px solid #ff4d4f; color: #ff4d4f; background: #fff;
+      }
+      .gr-perm-btn:hover { background: #fff1f0; }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script>
+    // Bridge script: postMessage communication with parent frame
+    (function() {
+      var readyFired = false;
+      var importing = false;
+      var selectionListenerAttached = false;
+      // Notify parent when modeler is ready (only once)
+      function checkModeler() {
+        if (readyFired) return true;
+        if (window.bpmnModeler) {
+          readyFired = true;
+          window.parent.postMessage({ type: 'modeler-ready' }, '*');
+          attachSelectionListener();
+          return true;
+        }
+        return false;
+      }
+      // 监听选中变化，推送给父页面
+      function attachSelectionListener() {
+        if (selectionListenerAttached || !window.bpmnModeler) return;
+        try {
+          var eventBus = window.bpmnModeler.get('eventBus');
+          eventBus.on('selection.changed', function(e) {
+            var elements = (e.newSelection || []).map(function(el) {
+              var bo = el.businessObject || {};
+              var info = {
+                id: el.id,
+                type: el.type,
+                name: bo.name || ''
+              };
+              if (el.type === 'bpmn:UserTask') {
+                info.assignee = bo.get ? bo.get('flowable:assignee') : (bo.$attrs && bo.$attrs['flowable:assignee']);
+                info.candidateUsers = bo.get ? bo.get('flowable:candidateUsers') : (bo.$attrs && bo.$attrs['flowable:candidateUsers']);
+                info.candidateGroups = bo.get ? bo.get('flowable:candidateGroups') : (bo.$attrs && bo.$attrs['flowable:candidateGroups']);
+              }
+              return info;
+            });
+            window.parent.postMessage({ type: 'selection-changed', elements: elements }, '*');
+          });
+          selectionListenerAttached = true;
+        } catch (e) { /* ignore */ }
+      }
+      // Poll for modeler readiness (bpmn-js takes a moment to initialize)
+      var timer = setInterval(function() {
+        if (checkModeler()) clearInterval(timer);
+      }, 200);
+      // Safety stop after 30s
+      setTimeout(function() { clearInterval(timer); }, 30000);
+
+      // Listen for commands from parent
+      window.addEventListener('message', async (event) => {
+        const data = event.data || {};
+        const type = data.type;
+        const id = data.id;
+        const xml = data.xml;
+        if (type === 'import-xml' && window.bpmnModeler && xml) {
+          if (importing) return; // dedupe concurrent imports
+          importing = true;
+          try {
+            await window.bpmnModeler.importXML(xml);
+            // disable bpmnlint validation (rules don't match Flowable namespace, causing false-positive X marks)
+            try {
+              var linting = window.bpmnModeler.get('linting', false);
+              if (linting && typeof linting.setActive === 'function') linting.setActive(false);
+              else {
+                var eventBus = window.bpmnModeler.get('eventBus');
+                if (eventBus) eventBus.fire('linting.toggle', { active: false });
+              }
+            } catch (e) { /* ignore */ }
+            window.parent.postMessage({ type: 'import-result', id: id, success: true }, '*');
+          } catch (err) {
+            window.parent.postMessage({ type: 'import-result', id: id, success: false, error: err.message }, '*');
+          } finally {
+            importing = false;
+          }
+        }
+        if (type === 'save-xml' && window.bpmnModeler) {
+          try {
+            const result = await window.bpmnModeler.saveXML({ format: true });
+            window.parent.postMessage({ type: 'save-result', id: id, xml: result.xml }, '*');
+          } catch (err) {
+            window.parent.postMessage({ type: 'save-result', id: id, error: err.message, xml: null }, '*');
+          }
+        }
+        if (type === 'highlight-nodes' && window.bpmnModeler) {
+          try {
+            var canvas = window.bpmnModeler.get('canvas');
+            var elementRegistry = window.bpmnModeler.get('elementRegistry');
+            // 清除旧标记
+            elementRegistry.getAll().forEach(function(el) {
+              try {
+                canvas.removeMarker(el.id, 'bpmn-completed');
+                canvas.removeMarker(el.id, 'bpmn-active');
+                canvas.removeMarker(el.id, 'bpmn-completed-flow');
+              } catch (e) { /* ignore */ }
+            });
+            (data.completedIds || []).forEach(function(eid) {
+              if (elementRegistry.get(eid)) canvas.addMarker(eid, 'bpmn-completed');
+            });
+            (data.activeIds || []).forEach(function(eid) {
+              if (elementRegistry.get(eid)) canvas.addMarker(eid, 'bpmn-active');
+            });
+            (data.completedFlowIds || []).forEach(function(eid) {
+              if (elementRegistry.get(eid)) canvas.addMarker(eid, 'bpmn-completed-flow');
+            });
+            // 适应画布
+            try { canvas.zoom('fit-viewport', 'auto'); } catch (e) { /* ignore */ }
+            window.parent.postMessage({ type: 'highlight-result', id: id, success: true }, '*');
+          } catch (err) {
+            window.parent.postMessage({ type: 'highlight-result', id: id, success: false, error: err.message }, '*');
+          }
+        }
+        if (type === 'set-view-mode') {
+          try {
+            document.body.classList.add('bpmn-view-mode');
+            window.parent.postMessage({ type: 'set-view-mode-result', id: id, success: true }, '*');
+          } catch (err) {
+            window.parent.postMessage({ type: 'set-view-mode-result', id: id, success: false, error: err.message }, '*');
+          }
+        }
+        if (type === 'set-task-assignee' && window.bpmnModeler) {
+          try {
+            var elementRegistry2 = window.bpmnModeler.get('elementRegistry');
+            var modeling = window.bpmnModeler.get('modeling');
+            var element = elementRegistry2.get(data.elementId);
+            if (!element) throw new Error('节点不存在: ' + data.elementId);
+            // Flowable 命名空间属性赋值
+            var props = {};
+            // 三者只允许一个主选项，采取 candidateUsers 优先的启发式覆盖
+            props['flowable:assignee'] = data.assignee || '';
+            props['flowable:candidateUsers'] = data.candidateUsers || '';
+            props['flowable:candidateGroups'] = data.candidateGroups || '';
+            // 还记录完整选择项便于反向回显（可选）
+            if (data.documentation) props['flowable:documentation'] = data.documentation;
+            modeling.updateProperties(element, props);
+            window.parent.postMessage({ type: 'set-task-assignee-result', id: id, success: true }, '*');
+          } catch (err) {
+            window.parent.postMessage({ type: 'set-task-assignee-result', id: id, success: false, error: err.message }, '*');
+          }
+        }
+        // 接收父窗口传来的表单上下文，自动写入 formKey 并同步属性
+        if (type === 'set-form-context') {
+          window._grFormContext = {
+            formKey: data.formKey || '',
+            formName: data.formName || '',
+            rules: data.rules || ''
+          };
+          // 自动将 formKey 写入所有 UserTask 节点
+          if (window.bpmnModeler && data.formKey) {
+            try {
+              var elReg = window.bpmnModeler.get('elementRegistry');
+              var mod = window.bpmnModeler.get('modeling');
+              elReg.getAll().forEach(function(el) {
+                if (el.type === 'bpmn:UserTask') {
+                  var bo = el.businessObject || {};
+                  var existingFk = (bo.get ? bo.get('flowable:formKey') : (bo.$attrs && bo.$attrs['flowable:formKey'])) || '';
+                  if (existingFk !== data.formKey) {
+                    mod.updateProperties(el, { 'flowable:formKey': data.formKey });
+                  }
+                }
+              });
+              // 同步表单属性到所有 UserTask
+              elReg.getAll().forEach(function(el) {
+                if (el.type === 'bpmn:UserTask') {
+                  syncFormPropertiesFromRules(el.id, data.formKey, data.rules);
+                }
+              });
+            } catch(err) { console.warn('[set-form-context] auto-write failed:', err); }
+          }
+        }
+      });
+    })();
+    </script>
+
+    <script>
+    /* ============================================================
+     * 选择审批人拦截器：在设计器属性面板「受让人/候选人/候选组」
+     * 上拦截默认下拉，弹出自定义弹窗。
+     * ============================================================ */
+    (function() {
+      // 字段名 → BPMN 属性 映射
+      var FIELD_MAP = {
+        '受让人': 'assignee',
+        '候选人': 'candidateUsers',
+        '候选组': 'candidateGroups',
+        '表单标识': 'formKey',
+        '表单Key': 'formKey',
+        '表单key': 'formKey'
+      };
+      // ===== Mock 数据（与系统部门/人员/角色/岗位管理 mock 保持一致）=====
+      // 部门树：总公司 → 技术部(前端组/后端组/测试组) / 人事部 / 财务部 / 市场部 / 产品部
+      // 人员按系统人员管理中的 dept 字段挂载到对应部门
+      var USER_TREE = [
+        { key: 'd1', name: '总公司', kind: 'dept', children: [
+          { key: 'admin', name: '管理员', kind: 'user' },
+          { key: 'wangzong', name: '王总', kind: 'user' },
+          { key: 'd2', name: '技术部', kind: 'dept', children: [
+            { key: 'zhaogong', name: '赵工', kind: 'user' },
+            { key: 'd3', name: '前端组', kind: 'dept', children: [
+              { key: 'zhangsan', name: '张三', kind: 'user' },
+              { key: 'liusi', name: '刘四', kind: 'user' }
+            ]},
+            { key: 'd4', name: '后端组', kind: 'dept', children: [
+              { key: 'zhaoliu', name: '赵六', kind: 'user' },
+              { key: 'huangqi', name: '黄七', kind: 'user' }
+            ]},
+            { key: 'd9', name: '测试组', kind: 'dept', children: [
+              { key: 'fengce', name: '冯测', kind: 'user' }
+            ]}
+          ]},
+          { key: 'd5', name: '人事部', kind: 'dept', children: [
+            { key: 'lisi', name: '李四', kind: 'user' },
+            { key: 'chenhr', name: '陈HR', kind: 'user' }
+          ]},
+          { key: 'd6', name: '财务部', kind: 'dept', children: [
+            { key: 'wangwu', name: '王五', kind: 'user' }
+          ]},
+          { key: 'd7', name: '市场部', kind: 'dept', children: [
+            { key: 'sunqi', name: '孙七', kind: 'user' }
+          ]},
+          { key: 'd8', name: '产品部', kind: 'dept', children: [
+            { key: 'zhouba', name: '周八', kind: 'user' },
+            { key: 'wujing', name: '吴静', kind: 'user' }
+          ]}
+        ]}
+      ];
+      // 部门树（仅部门节点，不含人员）
+      var DEPT_TREE = [
+        { key: 'd1', name: '总公司', kind: 'dept', children: [
+          { key: 'd2', name: '技术部', kind: 'dept', children: [
+            { key: 'd3', name: '前端组', kind: 'dept' },
+            { key: 'd4', name: '后端组', kind: 'dept' },
+            { key: 'd9', name: '测试组', kind: 'dept' }
+          ]},
+          { key: 'd5', name: '人事部', kind: 'dept' },
+          { key: 'd6', name: '财务部', kind: 'dept' },
+          { key: 'd7', name: '市场部', kind: 'dept' },
+          { key: 'd8', name: '产品部', kind: 'dept' }
+        ]}
+      ];
+      // 角色 - 与系统角色管理 mock 一致
+      var ROLES = [
+        { id: 'admin', name: '管理员' },
+        { id: 'dept_manager', name: '部门经理' },
+        { id: 'user', name: '普通用户' },
+        { id: 'hr', name: 'HR' },
+        { id: 'guest', name: '访客' }
+      ];
+      // 岗位 - 与系统岗位管理 mock 一致
+      var POSITIONS = [
+        { id: 'CEO', name: '总经理' },
+        { id: 'VP', name: '副总经理' },
+        { id: 'CTO', name: '技术总监' },
+        { id: 'DEPT_MGR', name: '部门经理' },
+        { id: 'FE_ENG', name: '前端工程师' },
+        { id: 'BE_ENG', name: '后端工程师' },
+        { id: 'HR_MGR', name: 'HR经理' },
+        { id: 'HR_SPEC', name: '人事专员' },
+        { id: 'ACCOUNTANT', name: '会计' },
+        { id: 'MKT_SPEC', name: '市场专员' },
+        { id: 'PM', name: '产品经理' },
+        { id: 'PM_ASSIST', name: '产品助理' },
+        { id: 'QA_ENG', name: '测试工程师' }
+      ];
+      var FORM_FIELDS = [
+        { value: 'applicant', label: '申请人' },
+        { value: 'leader', label: '直接上级（表单字段）' },
+        { value: 'reviewer', label: '指定审核人字段' }
+      ];
+      var MANAGER_OPTS = [
+        { id: '1', name: '一级部门主管' },
+        { id: '2', name: '二级部门主管' },
+        { id: '3', name: '三级部门主管' },
+        { id: '4', name: '四级部门主管' },
+        { id: '5', name: '五级部门主管' }
+      ];
+
+      // ===== ID ↔ 中文名 映射表 =====
+      var USER_NAME_MAP = {};   // id -> 中文名
+      var NAME_USER_MAP = {};   // 中文名 -> id
+      var DEPT_NAME_MAP = {};   // id -> 中文名
+      var NAME_DEPT_MAP = {};   // 中文名 -> id
+      var ROLE_NAME_MAP = {};   // id -> 中文名
+      var NAME_ROLE_MAP = {};   // 中文名 -> id
+      // 从 USER_TREE 构建映射
+      function buildUserMaps(nodes) {
+        (nodes || []).forEach(function(n) {
+          if (n.kind === 'user') {
+            USER_NAME_MAP[n.key] = n.name;
+            NAME_USER_MAP[n.name] = n.key;
+          }
+          if (n.kind === 'dept') {
+            DEPT_NAME_MAP[n.key] = n.name;
+            NAME_DEPT_MAP[n.name] = n.key;
+          }
+          if (n.children) buildUserMaps(n.children);
+        });
+      }
+      buildUserMaps(USER_TREE);
+      // 从 ROLES 构建映射
+      ROLES.forEach(function(r) {
+        ROLE_NAME_MAP[r.id] = r.name;
+        NAME_ROLE_MAP[r.name] = r.id;
+      });
+
+      // ===== 工具 =====
+      function findFormItemByLabel(label) {
+        var items = document.querySelectorAll('.el-form-item');
+        for (var i = 0; i < items.length; i++) {
+          var lbl = items[i].querySelector('.el-form-item__label');
+          if (lbl && lbl.textContent.trim().replace(/：$/, '') === label) return items[i];
+        }
+        return null;
+      }
+      function getInputInFormItem(fi) {
+        return fi ? fi.querySelector('input') : null;
+      }
+      function getCurrentBpmnElement() {
+        try {
+          var sel = window.bpmnModeler && window.bpmnModeler.get('selection').get();
+          return sel && sel.length ? sel[0] : null;
+        } catch (e) { return null; }
+      }
+      function isUserTask(el) {
+        return el && (el.type === 'bpmn:UserTask' || (el.businessObject && el.businessObject.$type === 'bpmn:UserTask'));
+      }
+
+      // ===== 弹窗 =====
+      var state = {
+        open: false,
+        field: null,        // 'assignee' | 'candidateUsers' | 'candidateGroups'
+        elementId: null,
+        activeTab: 'user',  // user | dept | role | form | manager
+        selected: [],       // {id, name, kind}
+        expanded: {}
+      };
+      var rootEl = null;
+
+      function openPicker(field, elementId, initial) {
+        state.open = true;
+        state.field = field;
+        state.elementId = elementId;
+        state.activeTab = 'user';
+        state.selected = parseInitial(field, initial);
+        state.expanded = { 'd1': true, 'd2': true, 'd3': true, 'd4': true, 'd5': true, 'd6': true, 'd7': true, 'd8': true, 'd9': true };
+        render();
+      }
+      function closePicker() {
+        state.open = false;
+        if (rootEl) { rootEl.remove(); rootEl = null; }
+      }
+
+      function parseInitial(field, raw) {
+        if (!raw) return [];
+        var parts = String(raw).split(',').map(function(s){return s.trim();}).filter(Boolean);
+        var out = [];
+        if (field === 'assignee') {
+          var v = parts[0] || '';
+          if (/^\$\{.+\}$/.test(v)) {
+            var f = v.slice(2, -1);
+            var ff = FORM_FIELDS.find(function(x){return x.value===f;});
+            out.push({ id: f, name: '表单：' + (ff ? ff.label : f), kind: 'form' });
+          } else if (v) {
+            // 优先从中文名反查，否则当作 ID
+            var uid = NAME_USER_MAP[v] || v;
+            var uname = USER_NAME_MAP[v] || v;
+            out.push({ id: uid, name: uname, kind: 'user' });
+          }
+          return out;
+        }
+        if (field === 'candidateUsers') {
+          parts.forEach(function(p){
+            var uid = NAME_USER_MAP[p] || p;
+            var uname = USER_NAME_MAP[p] || p;
+            out.push({ id: uid, name: uname, kind: 'user' });
+          });
+          return out;
+        }
+        if (field === 'candidateGroups') {
+          parts.forEach(function(p){
+            // 角色中文名反查
+            var rid = NAME_ROLE_MAP[p];
+            if (rid) { out.push({ id: rid, name: p, kind: 'role' }); return; }
+            // 角色ID直接匹配
+            var role = ROLES.find(function(r){return r.id===p;});
+            if (role) { out.push({ id: p, name: role.name, kind: 'role' }); return; }
+            // 部门中文名反查
+            var did = NAME_DEPT_MAP[p];
+            if (did) { out.push({ id: did, name: p, kind: 'dept' }); return; }
+            // 部门ID匹配
+            var dname = DEPT_NAME_MAP[p];
+            if (dname) { out.push({ id: p, name: dname, kind: 'dept' }); return; }
+            // 主管
+            var m = /^level(\d+)Manager$/.exec(p);
+            if (m) { out.push({ id: m[1], name: m[1] + '级部门主管', kind: 'manager' }); return; }
+            if (p === 'directManager') { out.push({ id: '1', name: '一级部门主管', kind: 'manager' }); return; }
+            // 主管中文名
+            var mgr = MANAGER_OPTS.find(function(m2){return m2.name===p;});
+            if (mgr) { out.push({ id: mgr.id, name: mgr.name, kind: 'manager' }); return; }
+            out.push({ id: p, name: p, kind: 'dept' });
+          });
+          return out;
+        }
+        return [];
+      }
+
+      // ===== 渲染 =====
+      function render() {
+        if (!state.open) return;
+        if (!rootEl) {
+          rootEl = document.createElement('div');
+          rootEl.className = 'gr-picker-mask';
+          rootEl.addEventListener('click', function(e){
+            if (e.target === rootEl) closePicker();
+          });
+          document.body.appendChild(rootEl);
+        }
+        var titleMap = { assignee: '选择受让人', candidateUsers: '选择候选人', candidateGroups: '选择候选组' };
+        var html = '';
+        html += '<div class="gr-picker-dialog">';
+        html +=   '<div class="gr-picker-header"><span>' + (titleMap[state.field] || '选择审批人') + '</span><span class="gr-picker-close" data-act="close">×</span></div>';
+        html +=   '<div class="gr-picker-body">';
+        html +=     renderSelected();
+        html +=     renderTabs();
+        html +=     '<div class="gr-picker-pane">' + renderPane() + '</div>';
+        html +=   '</div>';
+        html +=   '<div class="gr-picker-footer">';
+        html +=     '<button class="gr-btn gr-btn-primary" data-act="confirm">确&nbsp;&nbsp;定</button>';
+        html +=     '<button class="gr-btn" data-act="close">取&nbsp;&nbsp;消</button>';
+        html +=   '</div>';
+        html += '</div>';
+        rootEl.innerHTML = html;
+        if (!rootEl._eventsBound) {
+          bindEvents();
+          rootEl._eventsBound = true;
+        }
+      }
+      function renderSelected() {
+        if (!state.selected.length) {
+          return '<div class="gr-picker-selected"><span class="gr-picker-empty">请在下方选择审批人</span></div>';
+        }
+        var inner = state.selected.map(function(s, i){
+          return '<span class="gr-picker-tag"><span class="gr-tag-icon ' + s.kind + '"></span><span>' + escapeHtml(s.name) + '</span><span class="gr-tag-close" data-act="unsel" data-idx="' + i + '">×</span></span>';
+        }).join('');
+        return '<div class="gr-picker-selected">' + inner + '</div>';
+      }
+      function renderTabs() {
+        // 所有字段统一展示五个 Tab
+        var tabs = [{k:'user',l:'用户'},{k:'dept',l:'部门'},{k:'role',l:'角色'},{k:'form',l:'表单'},{k:'manager',l:'部门主管'}];
+        return '<div class="gr-picker-tabs">' + tabs.map(function(t){
+          return '<div class="gr-picker-tab' + (state.activeTab===t.k?' active':'') + '" data-act="tab" data-tab="' + t.k + '">' + t.l + '</div>';
+        }).join('') + '</div>';
+      }
+      function renderPane() {
+        if (state.activeTab === 'user') return renderTree(USER_TREE);
+        if (state.activeTab === 'dept') return renderTree(DEPT_TREE);
+        if (state.activeTab === 'role') return renderFlatList(ROLES.map(function(r){return {id:r.id,name:r.name,kind:'role'};}), 'multi');
+        if (state.activeTab === 'form') return renderFlatList(FORM_FIELDS.map(function(f){return {id:f.value,name:'表单：'+f.label,kind:'form'};}), 'single');
+        if (state.activeTab === 'manager') return renderManagerPane();
+        return '';
+      }
+      function renderManagerPane() {
+        var mode = state.field === 'assignee' ? 'single' : 'multi';
+        return '<div class="gr-manager-row">' + MANAGER_OPTS.map(function(m){
+          var checked = isSelected(m.id, 'manager');
+          var ctrl = mode === 'multi'
+            ? '<span class="gr-tree-checkbox' + (checked?' checked':'') + '" data-act="check" data-key="' + m.id + '" data-kind="manager" data-name="' + escapeAttr(m.name) + '"></span>'
+            : '<span class="gr-radio' + (checked?' checked':'') + '" data-act="pick" data-key="' + m.id + '" data-kind="manager" data-name="' + escapeAttr(m.name) + '"></span>';
+          return '<label class="gr-manager-item">' + ctrl + '<span>' + escapeHtml(m.name) + '</span></label>';
+        }).join('') + '</div>';
+      }
+      function renderTree(nodes) {
+        function walk(list){
+          return list.map(function(n){
+            var hasKids = n.children && n.children.length;
+            var expanded = !!state.expanded[n.key];
+            var checked = isSelected(n.key, n.kind);
+            var arrow = '<span class="gr-tree-arrow' + (hasKids?(expanded?' expanded':''):'  leaf') + '" data-act="toggle" data-key="' + n.key + '">' + (hasKids?'▶':'') + '</span>';
+            var cb = '<span class="gr-tree-checkbox' + (checked?' checked':'') + '" data-act="check" data-key="' + n.key + '" data-kind="' + n.kind + '" data-name="' + escapeAttr(n.name) + '"></span>';
+            var html = '<div class="gr-tree-node">' + arrow + cb + '<span class="gr-tree-node-content" data-act="check" data-key="' + n.key + '" data-kind="' + n.kind + '" data-name="' + escapeAttr(n.name) + '">' + escapeHtml(n.name) + '</span></div>';
+            if (hasKids && expanded) {
+              html += '<div class="gr-tree-children">' + walk(n.children) + '</div>';
+            }
+            return html;
+          }).join('');
+        }
+        return walk(nodes);
+      }
+      function renderFlatList(list, mode) {
+        return '<div class="gr-flat-list">' + list.map(function(it){
+          var checked = isSelected(it.id, it.kind);
+          var ctrl = mode === 'multi'
+            ? '<span class="gr-tree-checkbox' + (checked?' checked':'') + '"></span>'
+            : '<span class="gr-radio' + (checked?' checked':'') + '"></span>';
+          return '<div class="gr-flat-item" data-act="' + (mode==='multi'?'check':'pick') + '" data-key="' + it.id + '" data-kind="' + it.kind + '" data-name="' + escapeAttr(it.name) + '">' + ctrl + '<span>' + escapeHtml(it.name) + '</span></div>';
+        }).join('') + '</div>';
+      }
+      function isSelected(id, kind) {
+        return state.selected.some(function(s){return s.kind===kind && s.id===id;});
+      }
+      function bindEvents() {
+        rootEl.addEventListener('click', function(e){
+          var t = e.target;
+          var act = t.getAttribute('data-act') || (t.parentElement && t.parentElement.getAttribute('data-act'));
+          var node = t.getAttribute('data-act') ? t : t.parentElement;
+          if (!act) return;
+          if (act === 'close') { closePicker(); return; }
+          if (act === 'confirm') { confirmPicker(); return; }
+          if (act === 'tab') { state.activeTab = node.getAttribute('data-tab'); render(); return; }
+          if (act === 'toggle') {
+            var k = node.getAttribute('data-key');
+            state.expanded[k] = !state.expanded[k];
+            render();
+            return;
+          }
+          if (act === 'check' || act === 'pick') {
+            var key = node.getAttribute('data-key');
+            var kind = node.getAttribute('data-kind');
+            var name = node.getAttribute('data-name');
+            toggleItem({ id: key, kind: kind, name: name }, act === 'pick');
+            render();
+            return;
+          }
+          if (act === 'unsel') {
+            var idx = parseInt(node.getAttribute('data-idx'), 10);
+            state.selected.splice(idx, 1);
+            render();
+            return;
+          }
+        });
+      }
+      function toggleItem(item, single) {
+        if (single) {
+          // 单选覆盖同 kind
+          state.selected = state.selected.filter(function(s){return s.kind !== item.kind;});
+          state.selected.push(item);
+          return;
+        }
+        var i = state.selected.findIndex(function(s){return s.kind===item.kind && s.id===item.id;});
+        if (i >= 0) state.selected.splice(i, 1);
+        else state.selected.push(item);
+      }
+      function confirmPicker() {
+        // 根据字段拼接写入 BPMN（写中文名用于显示）
+        var userNames = state.selected.filter(function(s){return s.kind==='user';}).map(function(s){return s.name;});
+        var deptNames = state.selected.filter(function(s){return s.kind==='dept';}).map(function(s){return s.name;});
+        var roleNames = state.selected.filter(function(s){return s.kind==='role';}).map(function(s){return s.name;});
+        var managerNames = state.selected.filter(function(s){return s.kind==='manager';}).map(function(s){return s.name;});
+        var forms = state.selected.filter(function(s){return s.kind==='form';}).map(function(s){return s.id;});
+        var value = '';
+        if (state.field === 'assignee') {
+          if (forms.length) value = '${' + forms[0] + '}';
+          else if (managerNames.length) value = managerNames[0];
+          else if (userNames.length) value = userNames.join(',');
+        } else if (state.field === 'candidateUsers') {
+          value = userNames.join(',');
+        } else if (state.field === 'candidateGroups') {
+          value = roleNames.concat(managerNames).concat(deptNames).join(',');
+        }
+        // 1) 写到 BPMN XML
+        var element = null;
+        try {
+          var modeling = window.bpmnModeler.get('modeling');
+          var elementRegistry = window.bpmnModeler.get('elementRegistry');
+          element = elementRegistry.get(state.elementId);
+          if (element) {
+            var props = {};
+            props['flowable:' + state.field] = value || '';
+            modeling.updateProperties(element, props);
+          }
+        } catch (err) { console.warn('updateProperties failed', err); }
+        // 2) 强制属性面板重新读取：先取消选中再重新选中该元素
+        try {
+          if (element) {
+            var selection = window.bpmnModeler.get('selection');
+            var eventBus = window.bpmnModeler.get('eventBus');
+            // 走事件总线强制 element.changed
+            eventBus.fire('element.changed', { element: element });
+            // 召回选中以触发 properties-panel 重新渲染
+            selection.select(null);
+            setTimeout(function() {
+              try { selection.select(element); } catch (e) { /* ignore */ }
+            }, 30);
+          }
+        } catch (err) { console.warn('refresh panel failed', err); }
+        // 3) 兑底：若面板是普通 input，同时写 value（对 el-select 无效但不负面影响）
+        var labelMap = { assignee: '受让人', candidateUsers: '候选人', candidateGroups: '候选组' };
+        var fi = findFormItemByLabel(labelMap[state.field]);
+        var input = getInputInFormItem(fi);
+        if (input && !input.readOnly) {
+          var nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+          nativeSetter.call(input, value || '');
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        closePicker();
+      }
+
+      function escapeHtml(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+          return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+        });
+      }
+      function escapeAttr(s) { return escapeHtml(s); }
+
+      // ===== DOM 拦截 =====
+      function getFieldByEvent(e) {
+        var path = e.composedPath ? e.composedPath() : [];
+        var fi = null;
+        for (var i = 0; i < path.length; i++) {
+          var n = path[i];
+          if (n && n.classList && n.classList.contains && n.classList.contains('el-form-item')) { fi = n; break; }
+        }
+        if (!fi) return null;
+        var lbl = fi.querySelector('.el-form-item__label');
+        if (!lbl) return null;
+        var text = lbl.textContent.trim().replace(/：$/, '');
+        return FIELD_MAP[text] || null;
+      }
+      function interceptHandler(e) {
+        var field = getFieldByEvent(e);
+        if (!field) return;
+        var element = getCurrentBpmnElement();
+        if (!isUserTask(element)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation && e.stopImmediatePropagation();
+        // 读取当前值作为初始选择
+        var bo = element.businessObject || {};
+        if (field === 'formKey') {
+          // formKey 由父窗口自动传入，不再手动选择
+          return;
+        } else {
+          var initial = bo.get ? bo.get('flowable:' + field) : (bo.$attrs && bo.$attrs['flowable:' + field]);
+          openPicker(field, element.id, initial);
+        }
+      }
+      // 在 capture 阻段拦截 mousedown，Element Plus 下拉是在 mousedown 时展开的
+      document.addEventListener('mousedown', interceptHandler, true);
+      document.addEventListener('click', interceptHandler, true);
+      
+      // ===== 表单Key 选择弹窗 =====
+      var formKeyState = { open: false, elementId: null, current: '' };
+      var formKeyRootEl = null;
+      
+      function openFormKeyPicker(elementId, currentVal) {
+        formKeyState.open = true;
+        formKeyState.elementId = elementId;
+        formKeyState.current = currentVal || '';
+        renderFormKeyPicker();
+      }
+      function closeFormKeyPicker() {
+        formKeyState.open = false;
+        if (formKeyRootEl) { formKeyRootEl.remove(); formKeyRootEl = null; }
+      }
+      function renderFormKeyPicker() {
+        if (!formKeyState.open) return;
+        if (!formKeyRootEl) {
+          formKeyRootEl = document.createElement('div');
+          formKeyRootEl.className = 'gr-picker-mask';
+          formKeyRootEl.addEventListener('click', function(e){
+            if (e.target === formKeyRootEl) closeFormKeyPicker();
+          });
+          document.body.appendChild(formKeyRootEl);
+        }
+        // 从 localStorage 读取已保存的表单列表
+        var formList = [];
+        try {
+          var stored = localStorage.getItem('gr_form_list');
+          formList = stored ? JSON.parse(stored) : [];
+        } catch(e) { formList = []; }
+      
+        var html = '<div class="gr-picker-dialog" style="width:560px;">';
+        html += '<div class="gr-picker-header"><span>关联业务表单</span><span class="gr-picker-close" data-fk-act="close">×</span></div>';
+        html += '<div class="gr-picker-body" style="min-height:200px;max-height:400px;overflow:auto;">';
+        if (formList.length === 0) {
+          html += '<div style="text-align:center;color:#bfbfbf;padding:40px 0;">暂无已保存的表单<br/><small>请先在「表单管理」中新建表单</small></div>';
+        } else {
+          html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+          html += '<tr style="background:#f5f7fa;"><th style="padding:8px 12px;text-align:left;">表单标识</th><th style="padding:8px 12px;text-align:left;">表单名称</th><th style="padding:8px 12px;text-align:center;">操作</th></tr>';
+          formList.forEach(function(f) {
+            var isCurrent = f.key === formKeyState.current;
+            html += '<tr style="border-bottom:1px solid #f0f0f0;' + (isCurrent ? 'background:#fff1f0;' : '') + '">';
+            html += '<td style="padding:8px 12px;">' + escapeHtml(f.key) + '</td>';
+            html += '<td style="padding:8px 12px;">' + escapeHtml(f.name) + '</td>';
+            html += '<td style="padding:8px 12px;text-align:center;"><button class="gr-btn gr-btn-primary" style="height:26px;padding:0 12px;font-size:12px;" data-fk-act="select" data-fk-key="' + escapeAttr(f.key) + '" data-fk-name="' + escapeAttr(f.name) + '">' + (isCurrent ? '已选中' : '选择') + '</button></td>';
+            html += '</tr>';
+          });
+          html += '</table>';
+        }
+        html += '</div>';
+        html += '<div class="gr-picker-footer">';
+        if (formKeyState.current) {
+          html += '<button class="gr-btn" data-fk-act="clear" style="margin-right:auto;">清除关联</button>';
+        }
+        html += '<button class="gr-btn" data-fk-act="close">取消</button>';
+        html += '</div>';
+        html += '</div>';
+        formKeyRootEl.innerHTML = html;
+        // 绑定事件
+        if (!formKeyRootEl._fkBound) {
+          formKeyRootEl.addEventListener('click', function(e) {
+            var t = e.target;
+            var act = t.getAttribute('data-fk-act');
+            if (!act && t.parentElement) { act = t.parentElement.getAttribute('data-fk-act'); t = t.parentElement; }
+            if (!act) return;
+            if (act === 'close') { closeFormKeyPicker(); return; }
+            if (act === 'clear') { writeFormKey(''); closeFormKeyPicker(); return; }
+            if (act === 'select') {
+              var fkey = t.getAttribute('data-fk-key');
+              writeFormKey(fkey || '');
+              closeFormKeyPicker();
+            }
+          });
+          formKeyRootEl._fkBound = true;
+        }
+      }
+      function writeFormKey(value) {
+        try {
+          var modeling = window.bpmnModeler.get('modeling');
+          var elementRegistry = window.bpmnModeler.get('elementRegistry');
+          var element = elementRegistry.get(formKeyState.elementId);
+          if (element) {
+            modeling.updateProperties(element, { 'flowable:formKey': value });
+            // 强制属性面板刷新
+            var eventBus = window.bpmnModeler.get('eventBus');
+            var selection = window.bpmnModeler.get('selection');
+            eventBus.fire('element.changed', { element: element });
+            selection.select(null);
+            setTimeout(function() {
+              try { selection.select(element); } catch(e) {}
+            }, 30);
+          }
+        } catch(err) { console.warn('writeFormKey failed', err); }
+        // 兑底写 input
+        var fi = findFormItemByLabel('表单标识') || findFormItemByLabel('表单Key') || findFormItemByLabel('表单key');
+        var input = getInputInFormItem(fi);
+        if (input && !input.readOnly) {
+          var nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+          nativeSetter.call(input, value || '');
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        // 写入后自动同步表单字段到 formProperty
+        setTimeout(function() { syncFormProperties(formKeyState.elementId, value); }, 200);
+      }
+
+      // ===== 表单权限 =====
+
+      // 从 form-create rules 中提取字段信息
+      function extractFormFields(rules) {
+        var fields = [];
+        function walk(ruleList) {
+          (ruleList || []).forEach(function(r) {
+            if (r.field) {
+              fields.push({
+                field: r.field,
+                title: r.title || r.field,
+                type: r.type || 'input'
+              });
+            }
+            // 递归子组件（布局容器等）
+            if (r.children && Array.isArray(r.children)) walk(r.children);
+            if (r.props && r.props.rule) walk(r.props.rule);
+          });
+        }
+        walk(rules);
+        return fields;
+      }
+
+      // 获取当前 UserTask 的 formKey
+      function getElementFormKey(element) {
+        if (!element) return '';
+        var bo = element.businessObject || {};
+        return (bo.get ? bo.get('flowable:formKey') : (bo.$attrs && bo.$attrs['flowable:formKey'])) || '';
+      }
+
+      // 获取保存在元素上的权限配置
+      function getElementPerms(element) {
+        if (!element) return {};
+        var bo = element.businessObject || {};
+        var raw = bo.get ? bo.get('flowable:formPermissions') : (bo.$attrs && bo.$attrs['flowable:formPermissions']);
+        if (!raw) return {};
+        try { return JSON.parse(raw); } catch(e) { return {}; }
+      }
+
+      // 自动同步表单字段到 BPMN formProperty 扩展元素
+      function syncFormProperties(elementId, formKey) {
+        if (!formKey || !window.bpmnModeler) return;
+        // 从 localStorage 读取表单设计
+        var formList = [];
+        try {
+          var stored = localStorage.getItem('gr_form_list');
+          formList = stored ? JSON.parse(stored) : [];
+        } catch(e) { formList = []; }
+        var form = formList.find(function(f) { return f.key === formKey; });
+        if (!form || !form.rules) return;
+        var rules = [];
+        try { rules = JSON.parse(form.rules); } catch(e) { rules = []; }
+        var fields = extractFormFields(rules);
+        if (!fields.length) return;
+
+        try {
+          var moddle = window.bpmnModeler.get('moddle');
+          var modeling = window.bpmnModeler.get('modeling');
+          var elementRegistry = window.bpmnModeler.get('elementRegistry');
+          var element = elementRegistry.get(elementId);
+          if (!element) return;
+          var bo = element.businessObject;
+
+          // 创建或获取 extensionElements
+          var extensionElements = bo.extensionElements;
+          if (!extensionElements) {
+            extensionElements = moddle.create('bpmn:ExtensionElements', { values: [] });
+            extensionElements.$parent = bo;
+          }
+          if (!extensionElements.values) extensionElements.values = [];
+
+          // 移除已有的 formProperty
+          extensionElements.values = extensionElements.values.filter(function(v) {
+            return !(v.$type === 'flowable:FormProperty' || v.$type === 'flowable:formProperty');
+          });
+
+          // 类型映射：form-create 组件类型 → Flowable formProperty type
+          var typeMap = {
+            'input': 'string',
+            'textarea': 'string',
+            'inputNumber': 'long',
+            'number': 'long',
+            'select': 'enum',
+            'radio': 'enum',
+            'checkbox': 'enum',
+            'switch': 'boolean',
+            'datePicker': 'date',
+            'dateRange': 'date',
+            'timePicker': 'date',
+            'rate': 'long',
+            'slider': 'long',
+            'upload': 'string',
+            'cascader': 'enum',
+            'tree': 'enum',
+            'editor': 'string'
+          };
+
+          // 添加新的 formProperty
+          fields.forEach(function(f) {
+            var fpType = typeMap[f.type] || 'string';
+            var fp = moddle.create('flowable:FormProperty', {
+              id: f.field,
+              name: f.title || f.field,
+              type: fpType
+            });
+            fp.$parent = extensionElements;
+            extensionElements.values.push(fp);
+          });
+
+          // 写入元素
+          modeling.updateProperties(element, { extensionElements: extensionElements });
+
+          // 刷新属性面板
+          var eventBus = window.bpmnModeler.get('eventBus');
+          var selection = window.bpmnModeler.get('selection');
+          eventBus.fire('element.changed', { element: element });
+          selection.select(null);
+          setTimeout(function() {
+            try { selection.select(element); } catch(e) {}
+          }, 50);
+        } catch(err) {
+          console.warn('[syncFormProperties] failed:', err);
+        }
+      }
+
+      // 直接从传入的 rules 字符串同步 formProperty（用于父窗口传入场景）
+      function syncFormPropertiesFromRules(elementId, formKey, rulesStr) {
+        if (!formKey || !rulesStr || !window.bpmnModeler) return;
+        var rules = [];
+        try { rules = JSON.parse(rulesStr); } catch(e) { return; }
+        var fields = extractFormFields(rules);
+        if (!fields.length) return;
+
+        try {
+          var moddle = window.bpmnModeler.get('moddle');
+          var modeling = window.bpmnModeler.get('modeling');
+          var elementRegistry = window.bpmnModeler.get('elementRegistry');
+          var element = elementRegistry.get(elementId);
+          if (!element) return;
+          var bo = element.businessObject;
+
+          var extensionElements = bo.extensionElements;
+          if (!extensionElements) {
+            extensionElements = moddle.create('bpmn:ExtensionElements', { values: [] });
+            extensionElements.$parent = bo;
+          }
+          if (!extensionElements.values) extensionElements.values = [];
+
+          // 移除已有的 formProperty
+          extensionElements.values = extensionElements.values.filter(function(v) {
+            return !(v.$type === 'flowable:FormProperty' || v.$type === 'flowable:formProperty');
+          });
+
+          var typeMap = {
+            'input': 'string', 'textarea': 'string', 'inputNumber': 'long',
+            'number': 'long', 'select': 'enum', 'radio': 'enum',
+            'checkbox': 'enum', 'switch': 'boolean', 'datePicker': 'date',
+            'dateRange': 'date', 'timePicker': 'date', 'rate': 'long',
+            'slider': 'long', 'upload': 'string', 'cascader': 'enum',
+            'tree': 'enum', 'editor': 'string'
+          };
+
+          fields.forEach(function(f) {
+            var fpType = typeMap[f.type] || 'string';
+            var fp = moddle.create('flowable:FormProperty', {
+              id: f.field,
+              name: f.title || f.field,
+              type: fpType
+            });
+            fp.$parent = extensionElements;
+            extensionElements.values.push(fp);
+          });
+
+          modeling.updateProperties(element, { extensionElements: extensionElements });
+        } catch(err) {
+          console.warn('[syncFormPropertiesFromRules] failed:', err);
+        }
+      }
+
+      // 监听选中变化，自动同步表单属性
+      var syncTimer = setInterval(function() {
+        if (!window.bpmnModeler) return;
+        clearInterval(syncTimer);
+        var eventBus = window.bpmnModeler.get('eventBus');
+        var isSyncing = false;
+
+        // 当新建 UserTask 时，自动写入 formKey 和同步属性
+        eventBus.on('shape.added', function(e) {
+          var el = e.element;
+          if (!el || el.type !== 'bpmn:UserTask') return;
+          var ctx = window._grFormContext;
+          if (!ctx || !ctx.formKey) return;
+          setTimeout(function() {
+            try {
+              var modeling = window.bpmnModeler.get('modeling');
+              var elementRegistry = window.bpmnModeler.get('elementRegistry');
+              var realEl = elementRegistry.get(el.id);
+              if (!realEl) return;
+              modeling.updateProperties(realEl, { 'flowable:formKey': ctx.formKey });
+              if (ctx.rules) {
+                syncFormPropertiesFromRules(realEl.id, ctx.formKey, ctx.rules);
+              }
+            } catch(err) { console.warn('[shape.added] auto-formKey failed:', err); }
+          }, 200);
+        });
+
+        // 当元素属性变更时，检查是否需要同步
+        eventBus.on('element.changed', function(e) {
+          if (isSyncing) return;
+          var el = e.element;
+          if (!isUserTask(el)) return;
+          var bo = el.businessObject || {};
+          var fk = (bo.get ? bo.get('flowable:formKey') : (bo.$attrs && bo.$attrs['flowable:formKey'])) || '';
+          if (!fk) return;
+          // 检查是否已有 formProperty，避免重复同步
+          var ext = bo.extensionElements;
+          if (ext && ext.values) {
+            var existing = ext.values.filter(function(v) {
+              return v.$type === 'flowable:FormProperty' || v.$type === 'flowable:formProperty';
+            });
+            if (existing.length > 0) return;
+          }
+          // 需要同步
+          isSyncing = true;
+          setTimeout(function() {
+            syncFormProperties(el.id, fk);
+            isSyncing = false;
+          }, 100);
+        });
+      }, 300);
+    })();
+    </script>
+  </body>
+</html>

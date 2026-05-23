@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Java/Maven
+leave-workflow-backend/target/
+leave-workflow-backend/.mvn/
+*.class
+*.jar
+*.war

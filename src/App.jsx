@@ -19,8 +19,22 @@ import {
   DatabaseOutlined,
   UserOutlined,
   BulbOutlined,
+  ApartmentOutlined,
+  PartitionOutlined,
+  CalendarOutlined,
+  BankOutlined,
+  SolutionOutlined,
+  SafetyCertificateOutlined,
+  IdcardOutlined,
 } from '@ant-design/icons';
 import TopicDetail from './TopicDetail';
+import LeaveWorkflow from './workflow/LeaveWorkflow';
+import ProcessManagement from './workflow/ProcessManagement';
+import LeaveModule from './leave/LeaveModule';
+import DeptManagement from './system/DeptManagement';
+import UserManagement from './system/UserManagement';
+import RoleManagement from './system/RoleManagement';
+import PositionManagement from './system/PositionManagement';
 import './App.css';
 
 const { Sider, Header, Content } = Layout;
@@ -88,6 +102,13 @@ const iconBarItems = [
   { key: 'knowledge-space', icon: <BulbOutlined />, label: '知识空间' },
   { key: 'messages', icon: <MessageOutlined />, label: '消息' },
   { key: 'org-management', icon: <TeamOutlined />, label: '组织管理' },
+  { key: 'workflow', icon: <ApartmentOutlined />, label: '工作流' },
+  { key: 'process-management', icon: <PartitionOutlined />, label: '流程管理' },
+  { key: 'leave', icon: <CalendarOutlined />, label: '请假' },
+  { key: 'dept', icon: <BankOutlined />, label: '部门管理' },
+  { key: 'user', icon: <SolutionOutlined />, label: '人员管理' },
+  { key: 'role', icon: <SafetyCertificateOutlined />, label: '角色管理' },
+  { key: 'position', icon: <IdcardOutlined />, label: '岗位管理' },
   { key: 'lucky', icon: <ThunderboltOutlined />, label: 'lucky' },
   { key: 'lab', icon: <ExperimentOutlined />, label: '实验室' },
   { key: 'tasks', icon: <AppstoreOutlined />, label: '任务' },
@@ -98,7 +119,7 @@ const iconBarItems = [
 function App() {
   const [selectedKeys, setSelectedKeys] = useState(['home']);
   const [activeIconKey, setActiveIconKey] = useState('my-space');
-  const [currentPage, setCurrentPage] = useState('home'); // 'home' or 'detail'
+  const [currentPage, setCurrentPage] = useState('home'); // 'home', 'detail', or 'workflow'
   const [selectedTopic, setSelectedTopic] = useState(null);
 
   const handleCardClick = (card) => {
@@ -109,6 +130,35 @@ function App() {
   const handleBackToHome = () => {
     setCurrentPage('home');
     setSelectedTopic(null);
+  };
+
+  const handleIconBarClick = (key) => {
+    setActiveIconKey(key);
+    if (key === 'workflow') {
+      setCurrentPage('workflow');
+    } else if (key === 'process-management') {
+      setCurrentPage('process-management');
+    } else if (key === 'leave') {
+      setCurrentPage('leave');
+    } else if (key === 'dept') {
+      setCurrentPage('dept');
+    } else if (key === 'user') {
+      setCurrentPage('user');
+    } else if (key === 'role') {
+      setCurrentPage('role');
+    } else if (key === 'position') {
+      setCurrentPage('position');
+    } else if (
+      currentPage === 'workflow' ||
+      currentPage === 'process-management' ||
+      currentPage === 'leave' ||
+      currentPage === 'dept' ||
+      currentPage === 'user' ||
+      currentPage === 'role' ||
+      currentPage === 'position'
+    ) {
+      setCurrentPage('home');
+    }
   };
 
   return (
@@ -125,7 +175,7 @@ function App() {
             <div
               key={item.key}
               className={`icon-bar-item ${activeIconKey === item.key ? 'icon-bar-item-active' : ''}`}
-              onClick={() => setActiveIconKey(item.key)}
+              onClick={() => handleIconBarClick(item.key)}
             >
               <span className="icon-bar-icon">{item.icon}</span>
               <span className="icon-bar-label">{item.label}</span>
@@ -134,8 +184,22 @@ function App() {
         </div>
       </div>
 
-      {/* Page Content - switches between home and detail */}
-      {currentPage === 'home' ? (
+      {/* Page Content */}
+      {currentPage === 'workflow' ? (
+        <LeaveWorkflow onBack={handleBackToHome} />
+      ) : currentPage === 'process-management' ? (
+        <ProcessManagement />
+      ) : currentPage === 'leave' ? (
+        <LeaveModule />
+      ) : currentPage === 'dept' ? (
+        <DeptManagement />
+      ) : currentPage === 'user' ? (
+        <UserManagement />
+      ) : currentPage === 'role' ? (
+        <RoleManagement />
+      ) : currentPage === 'position' ? (
+        <PositionManagement />
+      ) : currentPage === 'home' ? (
         <>
           {/* Scene Sidebar */}
           <Sider width={220} className="app-sider">
@@ -216,7 +280,8 @@ function App() {
         </>
       ) : (
         <TopicDetail topicTitle={selectedTopic} onBack={handleBackToHome} />
-      )}
+      )
+      }
     </Layout>
   );
 }

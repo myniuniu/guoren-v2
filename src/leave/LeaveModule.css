@@ -1,0 +1,109 @@
+/* 请假业务模块样式（与系统风格一致） */
+.leave-module {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #f7f8fa;
+  overflow: hidden;
+}
+
+.leave-module-header {
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  height: 56px;
+  flex-shrink: 0;
+}
+
+.leave-module-header-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.leave-module-header-subtitle {
+  margin-left: 12px;
+  font-size: 12px;
+  color: #999;
+}
+
+.leave-module-body {
+  flex: 1;
+  overflow: auto;
+  padding: 16px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.leave-stats-row .ant-card {
+  border-radius: 10px;
+  border: 1px solid #e8e8e8;
+}
+
+.leave-search-card {
+  border-radius: 10px;
+  border: 1px solid #e8e8e8;
+  background: #fff;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.leave-search-card .search-label {
+  font-size: 13px;
+  color: #666;
+  white-space: nowrap;
+}
+
+.leave-search-card .search-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.leave-table-card {
+  border-radius: 10px;
+  border: 1px solid #e8e8e8;
+  background: #fff;
+  padding: 16px 20px 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.leave-table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.leave-table-toolbar-left {
+  display: flex;
+  gap: 8px;
+}
+
+.leave-table-toolbar-right {
+  display: flex;
+  gap: 8px;
+}
+
+.leave-detail-row {
+  padding: 10px 14px;
+  background: #fafafa;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.leave-detail-row p {
+  margin: 4px 0;
+  font-size: 13px;
+}
