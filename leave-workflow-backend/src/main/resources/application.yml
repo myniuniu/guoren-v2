@@ -3,7 +3,7 @@ server:
 
 spring:
   datasource:
-    url: jdbc:h2:mem:flowable;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    url: jdbc:h2:mem:flowable;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=LEGACY
     driver-class-name: org.h2.Driver
     username: sa
     password:
@@ -11,6 +11,24 @@ spring:
     console:
       enabled: true
       path: /h2-console
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+      continue-on-error: true
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
 
 flowable:
   database-schema-update: true
@@ -20,3 +38,18 @@ flowable:
 logging:
   level:
     org.flowable: INFO
+
+app:
+  upload:
+    dir: ./uploads
+  oss:
+    # 启用后走阿里云 OSS；关闭时走本地 ./uploads 路径作为兑底
+    enabled: ${OSS_ENABLED:false}
+    endpoint: ${OSS_ENDPOINT:}
+    bucket: ${OSS_BUCKET:}
+    access-key-id: ${OSS_ACCESS_KEY_ID:}
+    access-key-secret: ${OSS_ACCESS_KEY_SECRET:}
+    # 预置 key 前缀，比如 guoren/cert/
+    key-prefix: ${OSS_KEY_PREFIX:guoren/}
+    # 访问域名（可选）。不填时拼接 https://{bucket}.{endpoint}/{key}
+    custom-domain: ${OSS_CUSTOM_DOMAIN:}

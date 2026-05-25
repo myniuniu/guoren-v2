@@ -26,6 +26,8 @@ import {
   SolutionOutlined,
   SafetyCertificateOutlined,
   IdcardOutlined,
+  FileImageOutlined,
+  SendOutlined,
 } from '@ant-design/icons';
 import TopicDetail from './TopicDetail';
 import LeaveWorkflow from './workflow/LeaveWorkflow';
@@ -35,6 +37,10 @@ import DeptManagement from './system/DeptManagement';
 import UserManagement from './system/UserManagement';
 import RoleManagement from './system/RoleManagement';
 import PositionManagement from './system/PositionManagement';
+import CertificateModule from './certificate/CertificateModule';
+import CertificateIssueModule from './certificate/CertificateIssueModule';
+import ResourceLibrary from './resourceLib/ResourceLibrary';
+import ArchiveModule from './archive/ArchiveModule';
 import './App.css';
 
 const { Sider, Header, Content } = Layout;
@@ -109,6 +115,9 @@ const iconBarItems = [
   { key: 'user', icon: <SolutionOutlined />, label: '人员管理' },
   { key: 'role', icon: <SafetyCertificateOutlined />, label: '角色管理' },
   { key: 'position', icon: <IdcardOutlined />, label: '岗位管理' },
+  { key: 'certificate', icon: <FileImageOutlined />, label: '证书模版' },
+  { key: 'certificate-issue', icon: <SendOutlined />, label: '证书发放' },
+  { key: 'archive', icon: <FolderOutlined />, label: '档案提交' },
   { key: 'lucky', icon: <ThunderboltOutlined />, label: 'lucky' },
   { key: 'lab', icon: <ExperimentOutlined />, label: '实验室' },
   { key: 'tasks', icon: <AppstoreOutlined />, label: '任务' },
@@ -148,6 +157,14 @@ function App() {
       setCurrentPage('role');
     } else if (key === 'position') {
       setCurrentPage('position');
+    } else if (key === 'certificate') {
+      setCurrentPage('certificate');
+    } else if (key === 'certificate-issue') {
+      setCurrentPage('certificate-issue');
+    } else if (key === 'resource-lib') {
+      setCurrentPage('resource-lib');
+    } else if (key === 'archive') {
+      setCurrentPage('archive');
     } else if (
       currentPage === 'workflow' ||
       currentPage === 'process-management' ||
@@ -155,7 +172,11 @@ function App() {
       currentPage === 'dept' ||
       currentPage === 'user' ||
       currentPage === 'role' ||
-      currentPage === 'position'
+      currentPage === 'position' ||
+      currentPage === 'certificate' ||
+      currentPage === 'certificate-issue' ||
+      currentPage === 'resource-lib' ||
+      currentPage === 'archive'
     ) {
       setCurrentPage('home');
     }
@@ -199,6 +220,14 @@ function App() {
         <RoleManagement />
       ) : currentPage === 'position' ? (
         <PositionManagement />
+      ) : currentPage === 'certificate' ? (
+        <CertificateModule />
+      ) : currentPage === 'certificate-issue' ? (
+        <CertificateIssueModule />
+      ) : currentPage === 'resource-lib' ? (
+        <ResourceLibrary />
+      ) : currentPage === 'archive' ? (
+        <ArchiveModule />
       ) : currentPage === 'home' ? (
         <>
           {/* Scene Sidebar */}

@@ -6,7 +6,7 @@
 echo "======================================"
 echo "  请假流程审批 Demo - Flowable 7.2.0"
 echo "======================================"
-echo "
+echo ""
 
 # 检查 Java
 if ! command -v java &> /dev/null; then
@@ -41,7 +41,7 @@ echo "✓ 编译成功"
 
 # 启动
 echo ""
-echo "正在启动后端服务 (端口: 8080)..."
+echo "正在启动后端服务 端口:8080..."
 echo "前端请访问: http://localhost:5173"
 echo ""
 $MVN_PATH spring-boot:run

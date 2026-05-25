@@ -1,0 +1,45 @@
+.cert-module {
+  min-height: 100vh;
+  background: #f4f5f7;
+}
+
+.cm-header {
+  background: #ffffff !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px !important;
+  height: 60px !important;
+  line-height: 60px !important;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.cm-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.cm-content {
+  padding: 20px 24px;
+}
+
+.cm-thumb {
+  display: inline-block;
+  width: 80px;
+  height: 52px;
+  object-fit: cover;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #f8fafc;
+  vertical-align: middle;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.cm-thumb-empty {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #cbd5e1;
+  font-size: 22px;
+}

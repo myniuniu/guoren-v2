@@ -20,7 +20,7 @@ const router = createRouter({
     {
       path: '/embedded',
       name: 'EmbeddedDesigner',
-      component: () => import('../views/FormDesigner.vue'),
+      component: () => import('../views/DesignerView.vue'),
     },
     {
       path: '/form-list',

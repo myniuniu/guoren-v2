@@ -93,7 +93,7 @@ export default function ProcessManagement() {
 
   const openDesignerNew = () => {
     setDesignerTitle('新建流程');
-    setDesignerSrc(`${DESIGNER_BASE}/embedded?${DESIGNER_CACHE_BUSTER}`);
+    setDesignerSrc(`${DESIGNER_BASE}/designer?${DESIGNER_CACHE_BUSTER}`);
   };
 
   const openDesignerEdit = (record) => {
@@ -102,7 +102,7 @@ export default function ProcessManagement() {
     const params = new URLSearchParams();
     if (record.key) params.set('processKey', record.key);
     else if (record.deploymentId) params.set('deploymentId', record.deploymentId);
-    setDesignerSrc(`${DESIGNER_BASE}/embedded?${params.toString()}&${DESIGNER_CACHE_BUSTER}`);
+    setDesignerSrc(`${DESIGNER_BASE}/designer?${params.toString()}&${DESIGNER_CACHE_BUSTER}`);
   };
 
   const closeDesigner = () => {

@@ -1,0 +1,119 @@
+.cert-designer {
+  height: 100vh;
+  background: #f4f5f7;
+}
+
+.cd-header {
+  background: #ffffff !important;
+  height: 56px !important;
+  line-height: 56px !important;
+  padding: 0 16px !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.cd-body {
+  height: calc(100vh - 56px);
+  background: #f4f5f7;
+}
+
+.cd-left,
+.cd-right {
+  background: #ffffff !important;
+  padding: 16px 14px;
+  border-right: 1px solid #e5e7eb;
+  overflow-y: auto;
+}
+
+.cd-right {
+  border-right: none;
+  border-left: 1px solid #e5e7eb;
+}
+
+.cd-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin: 12px 0 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px dashed #e5e7eb;
+}
+
+.cd-section-title:first-child {
+  margin-top: 0;
+}
+
+.cd-canvas-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow: auto;
+  background: #f4f5f7;
+}
+
+.cd-canvas-stage {
+  background: #ffffff;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.cd-canvas-tip {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.cd-fields-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.cd-fields-table th,
+.cd-fields-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 13px;
+  text-align: left;
+}
+
+.cd-fields-table th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #475569;
+}
+
+/* v1.1 新增 */
+.cd-toolbar-btn {
+  margin-right: 4px;
+}
+.cd-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 16px;
+  background: #fafafa;
+  border-top: 1px solid #e5e7eb;
+  font-size: 12px;
+  color: #64748b;
+}
+.cd-status-bar .cd-zoom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cd-pp-empty {
+  color: #94a3b8;
+  font-size: 13px;
+  padding: 8px 0;
+}
+.cd-property-panel .ant-collapse-header {
+  font-weight: 600;
+}
+.cd-canvas-stage.preview-mode {
+  outline: 2px dashed #1677ff;
+  outline-offset: 4px;
+}
