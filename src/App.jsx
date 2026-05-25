@@ -28,6 +28,7 @@ import {
   IdcardOutlined,
   FileImageOutlined,
   SendOutlined,
+  RocketOutlined,
 } from '@ant-design/icons';
 import TopicDetail from './TopicDetail';
 import LeaveWorkflow from './workflow/LeaveWorkflow';
@@ -41,6 +42,7 @@ import CertificateModule from './certificate/CertificateModule';
 import CertificateIssueModule from './certificate/CertificateIssueModule';
 import ResourceLibrary from './resourceLib/ResourceLibrary';
 import ArchiveModule from './archive/ArchiveModule';
+import StudyClubModule from './studyClub/StudyClubModule';
 import './App.css';
 
 const { Sider, Header, Content } = Layout;
@@ -118,6 +120,7 @@ const iconBarItems = [
   { key: 'certificate', icon: <FileImageOutlined />, label: '证书模版' },
   { key: 'certificate-issue', icon: <SendOutlined />, label: '证书发放' },
   { key: 'archive', icon: <FolderOutlined />, label: '档案提交' },
+  { key: 'study-club', icon: <RocketOutlined />, label: '研习社' },
   { key: 'lucky', icon: <ThunderboltOutlined />, label: 'lucky' },
   { key: 'lab', icon: <ExperimentOutlined />, label: '实验室' },
   { key: 'tasks', icon: <AppstoreOutlined />, label: '任务' },
@@ -165,6 +168,8 @@ function App() {
       setCurrentPage('resource-lib');
     } else if (key === 'archive') {
       setCurrentPage('archive');
+    } else if (key === 'study-club') {
+      setCurrentPage('study-club');
     } else if (
       currentPage === 'workflow' ||
       currentPage === 'process-management' ||
@@ -176,7 +181,8 @@ function App() {
       currentPage === 'certificate' ||
       currentPage === 'certificate-issue' ||
       currentPage === 'resource-lib' ||
-      currentPage === 'archive'
+      currentPage === 'archive' ||
+      currentPage === 'study-club'
     ) {
       setCurrentPage('home');
     }
@@ -228,6 +234,8 @@ function App() {
         <ResourceLibrary />
       ) : currentPage === 'archive' ? (
         <ArchiveModule />
+      ) : currentPage === 'study-club' ? (
+        <StudyClubModule />
       ) : currentPage === 'home' ? (
         <>
           {/* Scene Sidebar */}
