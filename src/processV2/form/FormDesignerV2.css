@@ -1,0 +1,223 @@
+.form-designer-v2 {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  background: #f0f2f5;
+  overflow: hidden;
+}
+
+/* 左侧组件菜单 */
+.component-menu {
+  width: 240px;
+  height: 100%;
+  background: #fff;
+  border-right: 1px solid #e8e8e8;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.menu-title {
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.menu-group {
+  padding: 8px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.menu-group-title {
+  padding: 4px 16px;
+  font-size: 12px;
+  color: #909399;
+  font-weight: 500;
+}
+
+.menu-group-list {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 4px 8px;
+  gap: 6px;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  cursor: grab;
+  font-size: 12px;
+  color: #303133;
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.menu-item:hover {
+  border-color: #409eff;
+  background: #ecf5ff;
+  color: #409eff;
+}
+
+.menu-item-icon {
+  font-size: 14px;
+}
+
+.menu-item-label {
+  white-space: nowrap;
+}
+
+/* 中间画布 */
+.form-canvas-outer {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 24px 0;
+  overflow: auto;
+  background: #f0f2f5;
+}
+
+.form-canvas-phone {
+  width: 360px;
+  min-height: 500px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+  padding: 16px;
+  transition: box-shadow 0.2s;
+}
+
+.form-canvas-phone.drag-over {
+  box-shadow: 0 6px 24px rgba(64, 158, 255, 0.2);
+  outline: 2px dashed #409eff;
+}
+
+.canvas-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  color: #c0c4cc;
+  font-size: 13px;
+}
+
+.canvas-field {
+  position: relative;
+  padding: 10px 12px;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  transition: border-color 0.15s;
+  cursor: pointer;
+}
+
+.canvas-field:hover {
+  border-color: #e0e0e0;
+}
+
+.canvas-field.selected {
+  border-color: #409eff;
+  background: #f7faff;
+}
+
+.canvas-field-delete {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  color: #c0c4cc;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+  font-size: 14px;
+}
+
+.canvas-field:hover .canvas-field-delete,
+.canvas-field.selected .canvas-field-delete {
+  opacity: 1;
+}
+
+.canvas-field-delete:hover {
+  color: #f56c6c;
+}
+
+/* 字段渲染器 */
+.field-renderer {
+  width: 100%;
+}
+
+.field-label {
+  font-size: 13px;
+  color: #303133;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.field-required {
+  color: #f56c6c;
+  margin-right: 2px;
+}
+
+.field-control {
+  width: 100%;
+}
+
+/* 右侧属性面板 */
+.property-panel {
+  width: 280px;
+  height: 100%;
+  background: #fff;
+  border-left: 1px solid #e8e8e8;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.property-title {
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.property-empty {
+  padding: 40px 16px;
+  text-align: center;
+  color: #c0c4cc;
+  font-size: 13px;
+}
+
+.property-list {
+  padding: 12px 16px;
+}
+
+.property-item {
+  margin-bottom: 16px;
+}
+
+.property-label {
+  display: block;
+  font-size: 12px;
+  color: #606266;
+  margin-bottom: 4px;
+}
+
+.property-control {
+  width: 100%;
+}
+
+.property-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.property-option-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}

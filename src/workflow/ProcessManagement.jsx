@@ -16,7 +16,9 @@ import {
   EditOutlined,
   ReloadOutlined,
   CloseOutlined,
+  RocketOutlined,
 } from '@ant-design/icons';
+import ProcessDesignerV2 from '../processV2/ProcessDesignerV2';
 import './ProcessManagement.css';
 
 const PROCESS_API = '/api/workflow/process';
@@ -50,6 +52,7 @@ export default function ProcessManagement() {
   const [selectedKeys, setSelectedKeys] = useState([]);
   const [designerSrc, setDesignerSrc] = useState('');
   const [designerTitle, setDesignerTitle] = useState('');
+  const [v2DesignerRecord, setV2DesignerRecord] = useState(null);
 
   const loadList = useCallback(async () => {
     setLoading(true);
@@ -215,7 +218,7 @@ export default function ProcessManagement() {
     {
       title: '操作',
       key: 'action',
-      width: 160,
+      width: 220,
       align: 'center',
       render: (_, record) => (
         <Space size={4}>
@@ -226,6 +229,15 @@ export default function ProcessManagement() {
             onClick={() => openDesignerEdit(record)}
           >
             修改
+          </Button>
+          <Button
+            type="link"
+            size="small"
+            style={{ color: '#722ed1' }}
+            icon={<RocketOutlined />}
+            onClick={() => setV2DesignerRecord(record)}
+          >
+            修改v2
           </Button>
           <Button
             type="link"
@@ -346,6 +358,14 @@ export default function ProcessManagement() {
             title="流程设计器"
           />
         </div>
+      )}
+
+      {/* V2 React 设计器全屏 */}
+      {v2DesignerRecord && (
+        <ProcessDesignerV2
+          record={v2DesignerRecord}
+          onClose={() => { setV2DesignerRecord(null); loadList(); }}
+        />
       )}
     </div>
   );

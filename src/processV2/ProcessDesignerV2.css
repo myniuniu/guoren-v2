@@ -1,0 +1,149 @@
+.pdv2-container {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: #f7f8fa;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Header ─── */
+.pdv2-header {
+  height: 56px;
+  background: #fff;
+  border-bottom: 1px solid #e8e8e8;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.pdv2-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 200px;
+}
+
+.pdv2-back-btn {
+  font-size: 16px;
+  color: #333;
+}
+
+.pdv2-header-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.pdv2-header-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.pdv2-header-subtitle {
+  font-size: 12px;
+  color: #999;
+}
+
+/* ─── Step Nav ─── */
+.pdv2-header-center {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.pdv2-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 6px 0;
+  transition: color 0.2s;
+  color: #666;
+  font-size: 14px;
+  user-select: none;
+}
+
+.pdv2-step:hover {
+  color: #1677ff;
+}
+
+.pdv2-step.active {
+  color: #1677ff;
+  font-weight: 600;
+}
+
+.pdv2-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.pdv2-step.active .pdv2-step-num {
+  background: #1677ff;
+  color: #fff;
+  border-color: #1677ff;
+}
+
+.pdv2-step-label {
+  white-space: nowrap;
+}
+
+.pdv2-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 200px;
+  justify-content: flex-end;
+}
+
+/* ─── Body ─── */
+.pdv2-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ─── 基础信息 / 更多设置 ─── */
+.pdv2-basic-panel,
+.pdv2-settings-panel {
+  height: 100%;
+  overflow-y: auto;
+  padding: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.pdv2-basic-card,
+.pdv2-settings-card {
+  width: 600px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 32px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.pdv2-basic-card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.pdv2-basic-form .ant-form-item {
+  margin-bottom: 20px;
+}

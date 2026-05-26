@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Layout, Menu, Input, Button, Card, Dropdown, Tag, Tooltip } from 'antd';
 import {
   HomeOutlined,
@@ -29,6 +29,7 @@ import {
   FileImageOutlined,
   SendOutlined,
   RocketOutlined,
+  CodeOutlined,
 } from '@ant-design/icons';
 import TopicDetail from './TopicDetail';
 import LeaveWorkflow from './workflow/LeaveWorkflow';
@@ -43,6 +44,8 @@ import CertificateIssueModule from './certificate/CertificateIssueModule';
 import ResourceLibrary from './resourceLib/ResourceLibrary';
 import ArchiveModule from './archive/ArchiveModule';
 import StudyClubModule from './studyClub/StudyClubModule';
+import OnlineDevModule from './onlineDev/OnlineDevModule';
+import QuickBuildModule from './quickBuild/QuickBuildModule';
 import './App.css';
 
 const { Sider, Header, Content } = Layout;
@@ -126,6 +129,8 @@ const iconBarItems = [
   { key: 'tasks', icon: <AppstoreOutlined />, label: '任务' },
   { key: 'lucky-backend', icon: <SettingOutlined />, label: 'lucky后台' },
   { key: 'learning-analytics', icon: <BarChartOutlined />, label: '学情分析' },
+  { key: 'online-dev', icon: <CodeOutlined />, label: '在线开发' },
+  { key: 'quick-build', icon: <ThunderboltOutlined />, label: '秒搭' },
 ];
 
 function App() {
@@ -133,6 +138,15 @@ function App() {
   const [activeIconKey, setActiveIconKey] = useState('my-space');
   const [currentPage, setCurrentPage] = useState('home'); // 'home', 'detail', or 'workflow'
   const [selectedTopic, setSelectedTopic] = useState(null);
+
+  // 支持 hash 路由直接打开对应页面
+  useEffect(() => {
+    const hash = window.location.hash.replace('#', '');
+    if (hash) {
+      setCurrentPage(hash);
+      setActiveIconKey(hash);
+    }
+  }, []);
 
   const handleCardClick = (card) => {
     setSelectedTopic(card.title);
@@ -170,6 +184,10 @@ function App() {
       setCurrentPage('archive');
     } else if (key === 'study-club') {
       setCurrentPage('study-club');
+    } else if (key === 'online-dev') {
+      setCurrentPage('online-dev');
+    } else if (key === 'quick-build') {
+      setCurrentPage('quick-build');
     } else if (
       currentPage === 'workflow' ||
       currentPage === 'process-management' ||
@@ -182,7 +200,9 @@ function App() {
       currentPage === 'certificate-issue' ||
       currentPage === 'resource-lib' ||
       currentPage === 'archive' ||
-      currentPage === 'study-club'
+      currentPage === 'study-club' ||
+      currentPage === 'online-dev' ||
+      currentPage === 'quick-build'
     ) {
       setCurrentPage('home');
     }
@@ -236,6 +256,10 @@ function App() {
         <ArchiveModule />
       ) : currentPage === 'study-club' ? (
         <StudyClubModule />
+      ) : currentPage === 'online-dev' ? (
+        <OnlineDevModule />
+      ) : currentPage === 'quick-build' ? (
+        <QuickBuildModule />
       ) : currentPage === 'home' ? (
         <>
           {/* Scene Sidebar */}

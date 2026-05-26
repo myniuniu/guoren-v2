@@ -91,20 +91,13 @@ export default function CertificateModule() {
     },
     {
       title: '操作',
-      width: 320,
+      width: 200,
       fixed: 'right',
       align: 'center',
       render: (_, row) => (
         <Space size={0} wrap={false}>
           <Button type="link" size="small" icon={<EyeOutlined />} onClick={() => setPreviewItem(row)}>预览</Button>
-          <Button type="link" size="small" icon={<ExperimentOutlined />} onClick={() => setIssueItem(row)}>发放</Button>
           <Button type="link" size="small" icon={<EditOutlined />} onClick={() => setEditing(row.id)}>编辑</Button>
-          <Button type="link" size="small" icon={<ExportOutlined />} onClick={async () => {
-            try {
-              const blob = await templateApi.exportTpl(row.id);
-              triggerDownload(blob, `${row.name || 'cert-template'}.json`);
-            } catch (e) { message.error('导出失败'); }
-          }}>导出</Button>
           <Popconfirm title="确认删除该模版？" onConfirm={() => handleDelete(row.id)}>
             <Button type="link" size="small" danger icon={<DeleteOutlined />}>删除</Button>
           </Popconfirm>
