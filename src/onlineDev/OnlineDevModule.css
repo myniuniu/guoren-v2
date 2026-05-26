@@ -1943,6 +1943,156 @@
   margin-top: 4px;
 }
 
+/* ─── 飞书审批插件配置 ─── */
+.approval-plugin-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 12px 16px;
+  background: #f6f8fc;
+  border-radius: 6px;
+  margin: 12px 24px 0;
+  font-size: 13px;
+  color: #333;
+  line-height: 1.5;
+}
+
+.approval-plugin-link {
+  color: #1677ff;
+  margin-left: 8px;
+  white-space: nowrap;
+  text-decoration: underline;
+}
+
+.approval-plugin-hint {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 6px;
+}
+
+.approval-plugin-dropdown-wrap {
+  position: relative;
+}
+
+.approval-plugin-select {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  background: #fff;
+}
+
+.approval-plugin-select:hover,
+.approval-plugin-select.open {
+  border-color: #1677ff;
+}
+
+.approval-plugin-select-ph {
+  color: #bfbfbf;
+  font-size: 14px;
+}
+
+.approval-plugin-select-val {
+  color: #333;
+  font-size: 14px;
+}
+
+.approval-plugin-select-arrow {
+  color: #999;
+  font-size: 14px;
+}
+
+.approval-plugin-drop {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  max-height: 320px;
+  display: flex;
+  flex-direction: column;
+}
+
+.approval-plugin-drop-search {
+  padding: 8px 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.approval-plugin-drop-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.approval-plugin-drop-group {
+  padding: 6px 16px 4px;
+  font-size: 12px;
+  color: #999;
+  font-weight: 500;
+}
+
+.approval-plugin-drop-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  transition: background 0.15s;
+}
+
+.approval-plugin-drop-item:hover {
+  background: #f5f5f5;
+}
+
+.approval-plugin-drop-item.selected {
+  background: #e6f4ff;
+  color: #1677ff;
+}
+
+.approval-plugin-drop-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+.approval-plugin-drop-empty {
+  padding: 24px;
+  text-align: center;
+  color: #999;
+  font-size: 13px;
+}
+
+.approval-plugin-drop-footer {
+  padding: 8px 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.approval-plugin-drop-create {
+  color: #1677ff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.approval-plugin-drop-create:hover {
+  text-decoration: underline;
+}
+
 /* 发布 Popover */
 .online-dev-publish-popover .ant-popover-inner {
   padding: 0;

@@ -47,6 +47,7 @@ import {
   CloseOutlined,
   ApiOutlined,
   RightOutlined,
+  InfoCircleOutlined,
 } from '@ant-design/icons';
 import { dataManageApi } from './dataManageApi';
 import LeaveModule from '../leave/LeaveModule';
@@ -387,6 +388,21 @@ function OnlineDevModule() {
   const [pluginCatalogOpen, setPluginCatalogOpen] = useState(false);
   const [pluginCatalogTab, setPluginCatalogTab] = useState('common');
   const [pluginCatalogKw, setPluginCatalogKw] = useState('');
+  // 飞书审批插件状态
+  const [approvalProcesses, setApprovalProcesses] = useState([]);
+  const [approvalDropOpen, setApprovalDropOpen] = useState(false);
+  const [approvalSearch, setApprovalSearch] = useState('');
+  const [approvalSelected, setApprovalSelected] = useState(null);
+
+  // 加载已发布流程列表（供飞书审批插件使用）
+  useEffect(() => {
+    if (activePluginId === 'fs-approval') {
+      fetch('/api/workflow/process/list')
+        .then((r) => r.json())
+        .then((data) => setApprovalProcesses(Array.isArray(data) ? data : []))
+        .catch(() => setApprovalProcesses([]));
+    }
+  }, [activePluginId]);
 
   // ====================== 数据库状态 ======================
   const [dbTables, setDbTables] = useState([]); // [{name, comment, rowCount}]
@@ -1382,7 +1398,36 @@ function OnlineDevModule() {
                           <div className="online-dev-plugin-header-row">
                             <span className="online-dev-plugin-header-icon">{plugin.icon}</span>
                             <span className="online-dev-plugin-header-name">{plugin.name}</span>
-                            <MoreOutlined className="online-dev-plugin-header-more" />
+                            <Dropdown
+                              menu={{
+                                items: [
+                                  { key: 'edit', icon: <EditOutlined />, label: '修改基本信息' },
+                                  { key: 'delete', icon: <DeleteOutlined />, label: '删除', danger: true },
+                                ],
+                                onClick: ({ key }) => {
+                                  if (key === 'delete') {
+                                    Modal.confirm({
+                                      title: '删除插件',
+                                      content: `确定要删除插件「${plugin.name}」吗？`,
+                                      okText: '删除',
+                                      okButtonProps: { danger: true },
+                                      cancelText: '取消',
+                                      onOk: () => {
+                                        setPluginList((prev) => prev.filter((p) => p.id !== plugin.id));
+                                        if (activePluginId === plugin.id) setActivePluginId('');
+                                        message.success('已删除插件');
+                                      },
+                                    });
+                                  } else if (key === 'edit') {
+                                    message.info('修改基本信息功能开发中');
+                                  }
+                                },
+                              }}
+                              trigger={['click']}
+                              placement="bottomRight"
+                            >
+                              <MoreOutlined className="online-dev-plugin-header-more" />
+                            </Dropdown>
                           </div>
                           <div className="online-dev-plugin-header-meta">
                             <span>更新于: {plugin.updatedAt}</span>
@@ -1404,14 +1449,102 @@ function OnlineDevModule() {
                         {/* 详情面板 */}
                         {pluginInnerTab === 'detail' ? (
                           <div className="online-dev-plugin-detail">
-                            <div className="online-dev-plugin-config-head">
-                              <span className="online-dev-plugin-config-title">配置</span>
-                              <div className="online-dev-plugin-config-actions">
-                                <Button size="small" icon={<SendOutlined />}>发送预览</Button>
-                                <Button size="small" type="primary" ghost icon={<SettingOutlined />}>参数(3)</Button>
-                              </div>
-                            </div>
-                            <div className="online-dev-plugin-form">
+                            {activePluginId === 'fs-approval' ? (
+                              /* 飞书审批插件专属配置 */
+                              <>
+                                <div className="online-dev-plugin-config-head">
+                                  <span className="online-dev-plugin-config-title">配置</span>
+                                </div>
+                                <div className="approval-plugin-info">
+                                  <InfoCircleOutlined style={{ color: '#1677ff', marginRight: 8 }} />
+                                  <span>飞书审批查看支持对选中的审批定义进行详情查看、发起审批实例操作</span>
+                                  <a className="approval-plugin-link" href="#">查看详情</a>
+                                </div>
+                                <div className="online-dev-plugin-form">
+                                  <div className="online-dev-plugin-field">
+                                    <label className="online-dev-plugin-label">审批定义 <span style={{ color: '#f5222d' }}>*</span></label>
+                                    <div className="approval-plugin-hint">仅支持当前开发者有管理权限、且已发布的审批流程</div>
+                                    <div className="approval-plugin-dropdown-wrap">
+                                      <div
+                                        className={`approval-plugin-select${approvalDropOpen ? ' open' : ''}`}
+                                        onClick={() => setApprovalDropOpen(!approvalDropOpen)}
+                                      >
+                                        <span className={approvalSelected ? 'approval-plugin-select-val' : 'approval-plugin-select-ph'}>
+                                          {approvalSelected ? approvalSelected.name : '请选择审批定义'}
+                                        </span>
+                                        <span className="approval-plugin-select-arrow">{approvalDropOpen ? '⌃' : '⌄'}</span>
+                                      </div>
+                                      {approvalDropOpen && (
+                                        <div className="approval-plugin-drop">
+                                          <div className="approval-plugin-drop-search">
+                                            <Input
+                                              size="small"
+                                              prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
+                                              placeholder="搜索飞书审批定义"
+                                              value={approvalSearch}
+                                              onChange={(e) => setApprovalSearch(e.target.value)}
+                                              allowClear
+                                            />
+                                          </div>
+                                          <div className="approval-plugin-drop-list">
+                                            {(() => {
+                                              const filtered = approvalProcesses.filter(
+                                                (p) => !approvalSearch || (p.name || '').toLowerCase().includes(approvalSearch.toLowerCase())
+                                              );
+                                              // 按分组展示（用 key 的前缀或按首字母分组）
+                                              const groups = {};
+                                              filtered.forEach((p) => {
+                                                const g = p.category || '其他';
+                                                if (!groups[g]) groups[g] = [];
+                                                groups[g].push(p);
+                                              });
+                                              const groupKeys = Object.keys(groups);
+                                              if (filtered.length === 0) {
+                                                return <div className="approval-plugin-drop-empty">暂无已发布的审批流程</div>;
+                                              }
+                                              return groupKeys.map((gk) => (
+                                                <div key={gk}>
+                                                  <div className="approval-plugin-drop-group">{gk}</div>
+                                                  {groups[gk].map((p) => (
+                                                    <div
+                                                      key={p.deploymentId || p.key}
+                                                      className={`approval-plugin-drop-item${approvalSelected?.key === p.key ? ' selected' : ''}`}
+                                                      onClick={() => { setApprovalSelected(p); setApprovalDropOpen(false); }}
+                                                    >
+                                                      <span className="approval-plugin-drop-icon" style={{ background: '#1677ff' }}>●</span>
+                                                      <span>{p.name}</span>
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              ));
+                                            })()}
+                                          </div>
+                                          <div className="approval-plugin-drop-footer">
+                                            <a
+                                              className="approval-plugin-drop-create"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                window.open(window.location.origin + '/#/process-v2-new', '_blank');
+                                              }}
+                                            >新建</a>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </>
+                            ) : (
+                              /* 通用插件配置面板 */
+                              <>
+                                <div className="online-dev-plugin-config-head">
+                                  <span className="online-dev-plugin-config-title">配置</span>
+                                  <div className="online-dev-plugin-config-actions">
+                                    <Button size="small" icon={<SendOutlined />}>发送预览</Button>
+                                    <Button size="small" type="primary" ghost icon={<SettingOutlined />}>参数(3)</Button>
+                                  </div>
+                                </div>
+                                <div className="online-dev-plugin-form">
                               <div className="online-dev-plugin-field">
                                 <label className="online-dev-plugin-label">发送者</label>
                                 <div className="online-dev-plugin-readonly">
@@ -1444,7 +1577,9 @@ function OnlineDevModule() {
                                 <label className="online-dev-plugin-label">底部按钮</label>
                                 <Button type="link" size="small" icon={<PlusOutlined />} className="online-dev-plugin-add-link">已添加 (0/3)</Button>
                               </div>
-                            </div>
+                                </div>
+                              </>
+                            )}
                           </div>
                         ) : (
                           <div className="online-dev-plugin-log online-dev-db-empty-main">暂无运行日志</div>
