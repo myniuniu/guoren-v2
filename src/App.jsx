@@ -30,6 +30,7 @@ import {
   SendOutlined,
   RocketOutlined,
   CodeOutlined,
+  LayoutOutlined,
 } from '@ant-design/icons';
 import TopicDetail from './TopicDetail';
 import LeaveWorkflow from './workflow/LeaveWorkflow';
@@ -46,6 +47,7 @@ import ArchiveModule from './archive/ArchiveModule';
 import StudyClubModule from './studyClub/StudyClubModule';
 import OnlineDevModule from './onlineDev/OnlineDevModule';
 import QuickBuildModule from './quickBuild/QuickBuildModule';
+import PageDesignerModule from './pageDesigner/PageDesignerModule';
 import './App.css';
 
 const { Sider, Header, Content } = Layout;
@@ -130,7 +132,8 @@ const iconBarItems = [
   { key: 'lucky-backend', icon: <SettingOutlined />, label: 'lucky后台' },
   { key: 'learning-analytics', icon: <BarChartOutlined />, label: '学情分析' },
   { key: 'online-dev', icon: <CodeOutlined />, label: '在线开发' },
-  { key: 'quick-build', icon: <ThunderboltOutlined />, label: '秒搭' },
+  { key: 'quick-build', icon: <ThunderboltOutlined />, label: '智搭' },
+  { key: 'page-designer', icon: <LayoutOutlined />, label: '页面设计' }
 ];
 
 function App() {
@@ -188,6 +191,8 @@ function App() {
       setCurrentPage('online-dev');
     } else if (key === 'quick-build') {
       setCurrentPage('quick-build');
+    } else if (key === 'page-designer') {
+      setCurrentPage('page-designer');
     } else if (
       currentPage === 'workflow' ||
       currentPage === 'process-management' ||
@@ -202,7 +207,8 @@ function App() {
       currentPage === 'archive' ||
       currentPage === 'study-club' ||
       currentPage === 'online-dev' ||
-      currentPage === 'quick-build'
+      currentPage === 'quick-build' ||
+      currentPage === 'page-designer'
     ) {
       setCurrentPage('home');
     }
@@ -260,6 +266,8 @@ function App() {
         <OnlineDevModule />
       ) : currentPage === 'quick-build' ? (
         <QuickBuildModule />
+      ) : currentPage === 'page-designer' ? (
+        <PageDesignerModule />
       ) : currentPage === 'home' ? (
         <>
           {/* Scene Sidebar */}

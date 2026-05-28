@@ -1,5 +1,5 @@
-import React from 'react';
 import { Drawer, Form, Input, Radio, InputNumber } from 'antd';
+import ApprovalConfigPanel from './ApprovalConfigPanel';
 
 const TYPE_TITLES = {
   start: '提交人配置',
@@ -10,7 +10,7 @@ const TYPE_TITLES = {
   branch: '分支配置',
 };
 
-export default function ConfigDrawer({ node, open, onClose, onChange }) {
+export default function ConfigDrawer({ node, open, onClose, onChange, formSchema }) {
   if (!node) return null;
 
   const update = (key, value) => {
@@ -20,6 +20,32 @@ export default function ConfigDrawer({ node, open, onClose, onChange }) {
   const updateName = (name) => {
     onChange({ ...node, name });
   };
+
+  // 审批节点使用专用面板（带 取消/保存 footer）
+  if (node.type === 'approval') {
+    return (
+      <Drawer
+        title={null}
+        closable={false}
+        open={open}
+        onClose={onClose}
+        width={520}
+        destroyOnClose
+        zIndex={1200}
+        styles={{ body: { padding: 0 } }}
+      >
+        <ApprovalConfigPanel
+          node={node}
+          onSave={(updated) => {
+            onChange(updated);
+            onClose();
+          }}
+          onCancel={onClose}
+          formSchema={formSchema}
+        />
+      </Drawer>
+    );
+  }
 
   return (
     <Drawer
@@ -58,36 +84,7 @@ export default function ConfigDrawer({ node, open, onClose, onChange }) {
           </>
         )}
 
-        {/* 审批节点 */}
-        {node.type === 'approval' && (
-          <>
-            <Form.Item label="审批人来源">
-              <Radio.Group value={node.config?.approverType} onChange={(e) => update('approverType', e.target.value)}>
-                <Radio value="user">指定人员</Radio>
-                <Radio value="role">指定角色</Radio>
-                <Radio value="leader">直属上级</Radio>
-                <Radio value="self">提交人自选</Radio>
-              </Radio.Group>
-            </Form.Item>
-            {node.config?.approverType === 'user' && (
-              <Form.Item label="审批人">
-                <Input value={node.config?.approvers} onChange={(e) => update('approvers', e.target.value)} placeholder="多个人员用逗号分隔" />
-              </Form.Item>
-            )}
-            {node.config?.approverType === 'role' && (
-              <Form.Item label="角色">
-                <Input value={node.config?.roles} onChange={(e) => update('roles', e.target.value)} placeholder="多个角色用逗号分隔" />
-              </Form.Item>
-            )}
-            <Form.Item label="多人审批方式">
-              <Radio.Group value={node.config?.multiMode} onChange={(e) => update('multiMode', e.target.value)}>
-                <Radio value="any">任一人通过即可</Radio>
-                <Radio value="all">所有人通过</Radio>
-                <Radio value="sequential">按顺序依次审批</Radio>
-              </Radio.Group>
-            </Form.Item>
-          </>
-        )}
+        {/* 审批节点：由 ApprovalConfigPanel 统一接管（不会走到这里） */}
 
         {/* 抄送节点 */}
         {node.type === 'cc' && (

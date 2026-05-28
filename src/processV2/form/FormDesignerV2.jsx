@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import ComponentMenu from './ComponentMenu';
@@ -12,6 +12,17 @@ export default function FormDesignerV2({ value = [], onChange }) {
   const [selectedId, setSelectedId] = useState(null);
   const [activeItem, setActiveItem] = useState(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  // 当外部 value prop 变化时（如从后端 API 异步加载后），同步到内部 fields
+  // 用 JSON 序列化比较内容而非引用，避免新数组引用但内容相同时不必要的重渲染
+  const prevValueJsonRef = useRef('');
+  useEffect(() => {
+    const json = JSON.stringify(value || []);
+    if (json !== prevValueJsonRef.current) {
+      prevValueJsonRef.current = json;
+      setFieldsRaw(value || []);
+    }
+  }, [value]);
 
   const setFields = useCallback((newFields) => {
     const arr = typeof newFields === 'function' ? newFields(fields) : newFields;

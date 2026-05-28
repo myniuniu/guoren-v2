@@ -1,4 +1,3 @@
-import React from 'react';
 import { PlusOutlined, CloseOutlined } from '@ant-design/icons';
 
 const TYPE_LABELS = {
@@ -20,19 +19,73 @@ function getContentText(node) {
       return '可设置提交人';
     }
     case 'approval': {
-      const t = node.config?.approverType;
+      // 兼容旧数据（直接用 approverType）
+      const cfg = node.config || {};
+      const approvers = cfg.approvers;
+      if (Array.isArray(approvers) && approvers.length > 0) {
+        // 新数据：approvers 数组
+        const labels = approvers.map((a) => {
+          switch (a.type) {
+            case 'leader':
+              return a.level || '直属上级';
+            case 'deptHead':
+              return a.deptLevel || '直属部门负责人';
+            case 'role': {
+              const roles = a.roles;
+              if (!roles) return '角色（未配置）';
+              return '角色: ' + roles;
+            }
+            case 'userGroup': {
+              const groups = a.userGroups;
+              if (!groups) return '用户组（未配置）';
+              return '用户组: ' + groups;
+            }
+            case 'specific': {
+              const members = a.members;
+              if (Array.isArray(members) && members.length > 0)
+                return members.map((m) => m.name).join('、');
+              return '指定成员（未选择）';
+            }
+            case 'submitterPick':
+              return '提交人自选';
+            case 'submitterSelf':
+              return '提交人本人';
+            case 'multiLeader':
+              return '连续多级上级';
+            case 'multiDeptHead':
+              return '连续多级部门负责人';
+            case 'formContact':
+              return '表单内联系人';
+            case 'formDept':
+              return '表单内部门';
+            default:
+              return a.type || '未配置';
+          }
+        });
+        return '审批人：' + labels.join(' → ');
+      }
+      // 旧数据兼容：approverType 单值
+      const t = cfg.approverType;
       if (t === 'self') return '审批人：提交人自选';
       if (t === 'leader') return '审批人：直属上级';
-      if (t === 'role') return `审批人：角色 ${node.config?.roles || '未配置'}`;
-      if (t === 'user') return `审批人：${node.config?.approvers || '未配置'}`;
+      if (t === 'role') return `审批人：角色 ${cfg.roles || '未配置'}`;
+      if (t === 'user') {
+        const val = cfg.approvers;
+        if (Array.isArray(val)) return `审批人：${val.map((m) => (typeof m === 'string' ? m : m.name)).join('、')}`;
+        return `审批人：${val || '未配置'}`;
+      }
       return '请选择审批人';
     }
     case 'cc':
       return node.config?.users ? `抄送：${node.config.users}` : '请选择抄送人';
     case 'condition':
       return '请配置分支条件';
-    case 'end':
-      return node.config?.ccUsers ? `抄送：${node.config.ccUsers}` : '可设置抄送人';
+    case 'end': {
+      const cc = node.config?.ccUsers;
+      if (Array.isArray(cc) && cc.length > 0) return `抄送：${cc.join('、')}`;
+      if (typeof cc === 'string' && cc) return `抄送：${cc}`;
+      return '可设置抄送人';
+    }
     default:
       return '';
   }

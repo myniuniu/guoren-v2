@@ -96,7 +96,7 @@ function QuickBuildModule() {
       {/* 左侧菜单 */}
       <div className="qb-sidebar">
         <div className="qb-sidebar-header">
-          <span className="qb-logo">⚡ 秒搭</span>
+          <span className="qb-logo">⚡ 智搭</span>
         </div>
         <div className="qb-sidebar-menu">
           {sideMenuItems.map((item) => (
@@ -125,7 +125,7 @@ function QuickBuildModule() {
         {/* 头部标语 */}
         <div className="qb-hero">
           <h1 className="qb-hero-title">
-            灵感落地生花，即刻妙搭万物
+            灵感落地生花，即刻智搭万物
             <span className="qb-hero-sparkle">✦</span>
           </h1>
           <div className="qb-hero-actions">

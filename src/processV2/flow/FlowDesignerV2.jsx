@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Button, message } from 'antd';
 import FlowNode from './FlowNode';
 import ConfigDrawer from './ConfigDrawer';
@@ -6,7 +6,7 @@ import AddNodeDialog from './AddNodeDialog';
 import { genId } from '../types';
 import './FlowDesignerV2.css';
 
-export default function FlowDesignerV2({ value, onChange }) {
+export default function FlowDesignerV2({ value, onChange, formSchema }) {
   const [zoom, setZoom] = useState(1);
   const [selectedId, setSelectedId] = useState('');
   const [currentNode, setCurrentNode] = useState(null);
@@ -14,32 +14,12 @@ export default function FlowDesignerV2({ value, onChange }) {
   const [addOpen, setAddOpen] = useState(false);
   const [addParentId, setAddParentId] = useState('');
   const rootRef = useRef(value);
-  rootRef.current = value;
+  // 在 effect 中同步 ref，避免 render 阶段写入
+  rootRef.current = value; // eslint-disable-line react-hooks/refs
 
   const zoomIn = () => setZoom((z) => Math.min(z + 0.1, 1.6));
   const zoomOut = () => setZoom((z) => Math.max(z - 0.1, 0.5));
   const resetZoom = () => setZoom(1);
-
-  // 在节点树中找到节点
-  const findNode = useCallback((root, id) => {
-    if (!root) return null;
-    if (root.id === id) return root;
-    if (root.next) {
-      const found = findNode(root.next, id);
-      if (found) return found;
-    }
-    if (root.branches) {
-      for (const b of root.branches) {
-        const found = findNode(b, id);
-        if (found) return found;
-        if (b.next) {
-          const f2 = findNode(b.next, id);
-          if (f2) return f2;
-        }
-      }
-    }
-    return null;
-  }, []);
 
   // 深拷贝 + 更新节点
   const updateNodeInTree = useCallback((root, id, updater) => {
@@ -197,6 +177,7 @@ export default function FlowDesignerV2({ value, onChange }) {
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         onChange={handleConfigChange}
+        formSchema={formSchema}
       />
 
       {/* 添加节点弹窗 */}

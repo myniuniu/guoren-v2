@@ -125,3 +125,54 @@ CREATE TABLE IF NOT EXISTS certificate_issue_record (
 CREATE INDEX IF NOT EXISTS idx_cert_issue_record_batch ON certificate_issue_record(batch_id);
 CREATE INDEX IF NOT EXISTS idx_cert_issue_record_no ON certificate_issue_record(cert_no);
 CREATE INDEX IF NOT EXISTS idx_cert_issue_record_recipient ON certificate_issue_record(recipient);
+
+-- ============================================================
+-- 流程设计 V2：配置项存储（替代 localStorage，支持版本管理）
+-- ============================================================
+
+-- 流程配置主表（保存最新草稿，每次编辑直接覆盖）
+CREATE TABLE IF NOT EXISTS process_config (
+  id               VARCHAR(36) PRIMARY KEY,
+  process_key      VARCHAR(64) NOT NULL UNIQUE,
+  name             VARCHAR(128) NOT NULL,
+  process_group    VARCHAR(64),
+  description      VARCHAR(512),
+  icon             VARCHAR(256),
+  -- 草稿数据（最新编辑内容）
+  form_schema_json CLOB,
+  flow_json        CLOB,
+  settings_json    CLOB,
+  -- 版本与状态
+  latest_version   INT DEFAULT 0,
+  status           VARCHAR(16) DEFAULT 'DRAFT',  -- DRAFT / PUBLISHED
+  create_by        VARCHAR(64),
+  create_time      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  update_time      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  deleted          TINYINT DEFAULT 0
+);
+
+-- 流程配置版本快照表（每次发布生成一条不可变快照）
+CREATE TABLE IF NOT EXISTS process_config_version (
+  id                       VARCHAR(36) PRIMARY KEY,
+  config_id                VARCHAR(36) NOT NULL,
+  process_key              VARCHAR(64) NOT NULL,
+  version                  INT NOT NULL,
+  -- 快照数据（发布时刻的完整配置）
+  form_schema_json         CLOB,
+  flow_json                CLOB,
+  settings_json            CLOB,
+  bpmn_xml                 CLOB,
+  -- Flowable 关联
+  flowable_deployment_id   VARCHAR(64),
+  flowable_process_def_id  VARCHAR(64),
+  -- 发布信息
+  published                TINYINT DEFAULT 0,
+  publish_time             TIMESTAMP,
+  create_by                VARCHAR(64),
+  create_time              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT uk_config_version UNIQUE(config_id, version)
+);
+
+CREATE INDEX IF NOT EXISTS idx_proc_cfg_key     ON process_config(process_key);
+CREATE INDEX IF NOT EXISTS idx_proc_cfg_ver_key  ON process_config_version(process_key, version);
+CREATE INDEX IF NOT EXISTS idx_proc_cfg_ver_dep  ON process_config_version(flowable_deployment_id);

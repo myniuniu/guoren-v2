@@ -115,6 +115,46 @@
   overflow: hidden;
 }
 
+/* ─── 预览只读状态 ─── */
+.pdv2-preview-banner {
+  flex-shrink: 0;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  background: #fff7e6;
+  border-bottom: 1px solid #ffe7ba;
+  color: #ad6800;
+  font-size: 13px;
+}
+
+.pdv2-preview-link {
+  color: #1677ff;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.pdv2-preview-link:hover {
+  color: #4096ff;
+  text-decoration: underline;
+}
+
+/* 预览模式下整体只读：pointer-events 禁止交互 + 轻微变灰 */
+.pdv2-body--readonly {
+  pointer-events: none;
+  user-select: text;
+  position: relative;
+}
+
+.pdv2-body--readonly input,
+.pdv2-body--readonly textarea,
+.pdv2-body--readonly .ant-select,
+.pdv2-body--readonly .ant-switch,
+.pdv2-body--readonly .ant-input-number,
+.pdv2-body--readonly button {
+  background-color: #fafafa !important;
+}
+
 /* ─── 基础信息 / 更多设置 ─── */
 .pdv2-basic-panel,
 .pdv2-settings-panel {

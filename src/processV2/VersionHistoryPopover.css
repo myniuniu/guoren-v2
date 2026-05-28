@@ -1,0 +1,276 @@
+/* ====== Version History Popover ====== */
+
+/* 外层容器（position: relative 作为下拉锚点） */
+.vh-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* 触发区（顶部 subtitle） */
+.vh-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 14px;
+  background: #f5f5f5;
+  cursor: pointer;
+  user-select: none;
+  font-size: 12px;
+  color: #595959;
+  transition: background 0.15s, color 0.15s;
+  line-height: 1.4;
+}
+
+.vh-trigger:hover {
+  background: #e8e8e8;
+  color: #262626;
+}
+
+.vh-trigger.open {
+  background: #e6f4ff;
+  color: #1677ff;
+}
+
+.vh-trigger.error {
+  background: #fff1f0;
+  color: #ff4d4f;
+}
+
+.vh-trigger.error .vh-trigger-sub {
+  color: #ff4d4f;
+}
+
+.vh-trigger-label {
+  font-weight: 500;
+}
+
+.vh-trigger-sub {
+  color: #8c8c8c;
+}
+
+.vh-trigger.open .vh-trigger-sub {
+  color: #1677ff;
+}
+
+.vh-trigger-arrow {
+  font-size: 10px;
+  margin-left: 2px;
+}
+
+/* 下拉面板（自定义，不走 Popover Portal） */
+.vh-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 1200;
+  width: 380px;
+  max-height: 440px;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 8px;
+}
+
+/* Popover 相关样式已废弃，改用 .vh-dropdown */
+.vh-popover { display: none; }
+
+/* 面板主体 — 废弃，用 .vh-dropdown 代替 */
+.vh-panel { display: none; }
+
+/* 预览模式下的触发器 */
+.vh-trigger.previewing {
+  background: #fff7e6;
+  color: #ad6800;
+}
+
+.vh-trigger.previewing:hover {
+  background: #ffe7ba;
+}
+
+.vh-trigger-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 9px;
+  font-size: 11px;
+  margin-left: 6px;
+  line-height: 1;
+}
+
+.vh-trigger-tag.enabled {
+  background: #52c41a;
+  color: #fff;
+}
+
+.vh-trigger-tag.history {
+  background: #bfbfbf;
+  color: #fff;
+}
+
+/* 下拉项：预览中的草稿项可点击切回 */
+.vh-item--clickable {
+  cursor: pointer;
+}
+
+.vh-item--clickable:hover {
+  background: #fffbe6 !important;
+}
+
+/* 当前预览中的版本高亮 */
+.vh-item--active {
+  background: #e6f4ff;
+}
+
+.vh-item--active:hover {
+  background: #bae0ff;
+}
+
+/* 单条记录 */
+.vh-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+
+.vh-item:hover {
+  background: #fafafa;
+}
+
+.vh-item--draft {
+  background: #fffbe6;
+}
+
+.vh-item--draft:hover {
+  background: #fff4c2;
+}
+
+.vh-item-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vh-item-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.vh-item-date {
+  font-size: 11px;
+  color: #8c8c8c;
+}
+
+.vh-item-title {
+  font-weight: 500;
+  font-size: 13px;
+  color: #262626;
+}
+
+/* 状态标签（按设计稿颜色） */
+.vh-tag {
+  font-size: 11px !important;
+  line-height: 1.4 !important;
+  padding: 1px 6px !important;
+  border: none !important;
+  border-radius: 4px !important;
+  color: #fff !important;
+  margin: 0 !important;
+}
+
+.vh-tag--designing {
+  background: #ff9e4f !important;
+}
+
+.vh-tag--enabled {
+  background: #52c41a !important;
+}
+
+.vh-tag--history {
+  background: #bfbfbf !important;
+}
+
+.vh-item-bottom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #8c8c8c;
+}
+
+.vh-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #91caff 0%, #597ef7 100%);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.vh-author {
+  color: #595959;
+}
+
+.vh-time {
+  color: #8c8c8c;
+}
+
+.vh-item-action {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.vh-check {
+  color: #1677ff;
+  font-size: 16px;
+}
+
+.vh-action-btn {
+  font-size: 12px;
+  padding: 0 6px;
+}
+
+.vh-loading {
+  padding: 12px 0;
+  text-align: center;
+  color: #8c8c8c;
+  font-size: 12px;
+}
+
+.vh-empty-text {
+  padding: 16px 0;
+  text-align: center;
+  color: #bfbfbf;
+  font-size: 12px;
+}
+
+/* 下拉面板滚动条美化 */
+.vh-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.vh-dropdown::-webkit-scrollbar-thumb {
+  background: #d9d9d9;
+  border-radius: 3px;
+}
+
+.vh-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #bfbfbf;
+}

@@ -1,4 +1,3 @@
-import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
@@ -22,8 +21,8 @@ function RootPage() {
   return <App />;
 }
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <RootPage />
-  </StrictMode>,
-)
+// 说明：不使用 <StrictMode> 包裹。
+// 项目集成了 amis-editor (mobx-state-tree)、bpmn-js、reactflow 等多个带内部实例生命周期的第三方设计器，
+// StrictMode 在开发期会双重 mount/unmount，导致它们的内部状态树被销毁后仍被异步回调访问。
+const container = document.getElementById('root');
+createRoot(container).render(<RootPage />)

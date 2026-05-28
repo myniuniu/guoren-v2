@@ -65,28 +65,34 @@ public class LeaveWorkflowService {
 
     /**
      * 获取待办任务列表
+     * 同时按 assignee（个人 / 候选用户 / 任意候选组）查询，
+     * 以兼容流程设计 V2 中可自定义任意 role / userGroup 名称的场景。
      */
     public List<LeaveRequest> getPendingTasks(String assignee) {
         List<LeaveRequest> result = new ArrayList<>();
 
-        List<Task> groupTasks;
-        if ("managers".equals(assignee) || "hr".equals(assignee)) {
-            groupTasks = taskService.createTaskQuery()
-                    .taskCandidateGroup(assignee)
-                    .list();
-        } else {
-            groupTasks = Collections.emptyList();
-        }
+        // 1. 任意候选组：以 assignee 作为 candidateGroup 名查询
+        List<Task> groupTasks = taskService.createTaskQuery()
+                .taskCandidateGroup(assignee)
+                .list();
 
+        // 2. 个人指派任务
         List<Task> personalTasks = taskService.createTaskQuery()
                 .taskAssignee(assignee)
                 .list();
 
-        List<Task> allTasks = new ArrayList<>();
-        allTasks.addAll(groupTasks);
-        allTasks.addAll(personalTasks);
+        // 3. 候选用户任务（candidateUsers 中含本人，未被 claim）
+        List<Task> candidateUserTasks = taskService.createTaskQuery()
+                .taskCandidateUser(assignee)
+                .list();
 
-        for (Task task : allTasks) {
+        // 合并去重
+        Map<String, Task> merged = new LinkedHashMap<>();
+        for (Task t : groupTasks) merged.put(t.getId(), t);
+        for (Task t : personalTasks) merged.put(t.getId(), t);
+        for (Task t : candidateUserTasks) merged.put(t.getId(), t);
+
+        for (Task task : merged.values()) {
             LeaveRequest leaveRequest = buildLeaveRequestFromTask(task);
             result.add(leaveRequest);
         }

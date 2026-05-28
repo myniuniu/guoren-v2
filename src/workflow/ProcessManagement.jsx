@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Input,
   Button,
@@ -15,33 +15,14 @@ import {
   DeleteOutlined,
   EditOutlined,
   ReloadOutlined,
-  CloseOutlined,
-  RocketOutlined,
 } from '@ant-design/icons';
 import ProcessDesignerV2 from '../processV2/ProcessDesignerV2';
+import { processConfigApi } from '../processV2/api';
 import './ProcessManagement.css';
 
-const PROCESS_API = '/api/workflow/process';
-const DESIGNER_BASE = 'http://localhost:5176';
-const DESIGNER_CACHE_BUSTER = '_t=' + Date.now();
-
-async function apiRequest(url, options = {}) {
-  const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-    ...options,
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || res.statusText);
-  }
-  const ct = res.headers.get('content-type') || '';
-  return ct.includes('application/json') ? res.json() : res.text();
-}
-
 const processApi = {
-  list: () => apiRequest(`${PROCESS_API}/list`),
-  remove: (deploymentId) =>
-    apiRequest(`${PROCESS_API}/${deploymentId}`, { method: 'DELETE' }),
+  list: () => processConfigApi.list(),
+  remove: (processKey) => processConfigApi.remove(processKey),
 };
 
 export default function ProcessManagement() {
@@ -50,8 +31,6 @@ export default function ProcessManagement() {
   const [searchName, setSearchName] = useState('');
   const [filterName, setFilterName] = useState('');
   const [selectedKeys, setSelectedKeys] = useState([]);
-  const [designerSrc, setDesignerSrc] = useState('');
-  const [designerTitle, setDesignerTitle] = useState('');
   const [v2DesignerRecord, setV2DesignerRecord] = useState(null);
 
   const loadList = useCallback(async () => {
@@ -70,18 +49,6 @@ export default function ProcessManagement() {
     loadList();
   }, [loadList]);
 
-  // 监听设计器 iframe 的部署完成消息，自动刷新列表
-  useEffect(() => {
-    const handler = (event) => {
-      const data = event.data || {};
-      if (data.type === 'process-deployed') {
-        loadList();
-      }
-    };
-    window.addEventListener('message', handler);
-    return () => window.removeEventListener('message', handler);
-  }, [loadList]);
-
   const filteredList = useMemo(() => {
     const kw = (filterName || '').trim().toLowerCase();
     if (!kw) return list;
@@ -95,37 +62,22 @@ export default function ProcessManagement() {
   };
 
   const openDesignerNew = () => {
-    setDesignerTitle('新建流程');
-    setDesignerSrc(`${DESIGNER_BASE}/designer?${DESIGNER_CACHE_BUSTER}`);
+    setV2DesignerRecord({});
   };
-
-  const openDesignerEdit = (record) => {
-    setDesignerTitle(`修改流程：${record.name}`);
-    // 优先用 processKey 加载（自动取最新版本）
-    const params = new URLSearchParams();
-    if (record.key) params.set('processKey', record.key);
-    else if (record.deploymentId) params.set('deploymentId', record.deploymentId);
-    setDesignerSrc(`${DESIGNER_BASE}/designer?${params.toString()}&${DESIGNER_CACHE_BUSTER}`);
-  };
-
-  const closeDesigner = () => {
-    setDesignerSrc('');
-    setDesignerTitle('');
-    loadList();
-  };
-
-
 
   const handleDelete = (record) => {
+    const key = record.processKey || record.key;
+    const displayName = record.name || key;
+    const verText = record.latestVersion ? `（v${record.latestVersion}）` : '（草稿）';
     Modal.confirm({
       title: '删除确认',
-      content: `确定要删除流程「${record.name}」（v${record.version}）吗？该操作不可恢复。`,
+      content: `确定要删除流程「${displayName}」${verText}吗？该操作不可恢复。`,
       okText: '删除',
       okButtonProps: { danger: true },
       cancelText: '取消',
       onOk: async () => {
         try {
-          await processApi.remove(record.deploymentId);
+          await processApi.remove(key);
           message.success('删除成功');
           loadList();
         } catch (err) {
@@ -167,52 +119,52 @@ export default function ProcessManagement() {
       align: 'center',
       ellipsis: true,
       render: (text, record) => (
-        <Tooltip title={record.key}>
-          <span style={{ fontWeight: 500 }}>{text}</span>
+        <Tooltip title={record.processKey || record.key}>
+          <span style={{ fontWeight: 500 }}>{text || record.processKey}</span>
         </Tooltip>
       ),
     },
     {
       title: '流程标识',
-      dataIndex: 'key',
-      key: 'key',
+      dataIndex: 'processKey',
+      key: 'processKey',
       width: 180,
       align: 'center',
       ellipsis: true,
       render: (text) => <code style={{ color: '#666', fontSize: 12 }}>{text}</code>,
     },
     {
-      title: '资源文件',
-      dataIndex: 'resourceName',
-      key: 'resourceName',
-      width: 200,
+      title: '分组',
+      dataIndex: 'processGroup',
+      key: 'processGroup',
+      width: 120,
       align: 'center',
-      ellipsis: true,
-      render: (text) => <span style={{ color: '#999', fontSize: 12 }}>{text}</span>,
+      render: (text) => <span style={{ color: '#999', fontSize: 12 }}>{text || '-'}</span>,
     },
     {
       title: '版本',
-      dataIndex: 'version',
-      key: 'version',
+      dataIndex: 'latestVersion',
+      key: 'latestVersion',
       width: 90,
       align: 'center',
-      render: (v) => (
-        <Tag color="green" className="process-version-tag">
-          v{v}
-        </Tag>
-      ),
+      render: (v) =>
+        v ? (
+          <Tag color="green" className="process-version-tag">v{v}</Tag>
+        ) : (
+          <Tag color="default" className="process-version-tag">草稿</Tag>
+        ),
     },
     {
       title: '状态',
-      dataIndex: 'suspensionState',
-      key: 'suspensionState',
+      dataIndex: 'status',
+      key: 'status',
       width: 90,
       align: 'center',
-      render: (state) =>
-        state === 1 ? (
-          <Tag color="success">启用</Tag>
+      render: (status) =>
+        status === 'PUBLISHED' ? (
+          <Tag color="success">已发布</Tag>
         ) : (
-          <Tag color="default">挂起</Tag>
+          <Tag color="processing">草稿</Tag>
         ),
     },
     {
@@ -226,18 +178,9 @@ export default function ProcessManagement() {
             type="link"
             size="small"
             icon={<EditOutlined />}
-            onClick={() => openDesignerEdit(record)}
-          >
-            修改
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            style={{ color: '#722ed1' }}
-            icon={<RocketOutlined />}
             onClick={() => setV2DesignerRecord(record)}
           >
-            修改v2
+            修改
           </Button>
           <Button
             type="link"
@@ -326,7 +269,7 @@ export default function ProcessManagement() {
           </div>
 
           <Table
-            rowKey="deploymentId"
+            rowKey="processKey"
             columns={columns}
             dataSource={filteredList}
             loading={loading}
@@ -340,27 +283,7 @@ export default function ProcessManagement() {
         </div>
       </div>
 
-      {/* 设计器全屏 */}
-      {designerSrc && (
-        <div className="designer-overlay">
-          <div className="designer-overlay-header">
-            <span className="designer-overlay-title">{designerTitle}</span>
-            <Button
-              icon={<CloseOutlined />}
-              onClick={closeDesigner}
-            >
-              关闭
-            </Button>
-          </div>
-          <iframe
-            src={designerSrc}
-            className="designer-overlay-iframe"
-            title="流程设计器"
-          />
-        </div>
-      )}
-
-      {/* V2 React 设计器全屏 */}
+      {/* 流程设计器全屏（V2） */}
       {v2DesignerRecord && (
         <ProcessDesignerV2
           record={v2DesignerRecord}
