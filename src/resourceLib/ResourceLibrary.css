@@ -1,289 +1,709 @@
-/* ====== Resource Library Layout ====== */
-.rl-layout {
+/* ====== macOS Finder Style Resource Library ====== */
+.finder-layout {
   display: flex;
+  width: 100%;
   height: 100vh;
-  background: #f5f6f8;
+  background: #ececec;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
 }
 
-/* ====== Sider ====== */
-.rl-sider {
-  width: 280px;
-  background: #ffffff;
-  border-right: 1px solid #ebedf0;
+/* ====== Sidebar (访达左侧栏) ====== */
+.finder-sidebar {
+  width: 200px;
+  background: rgba(246, 246, 246, 0.92);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid #d4d4d4;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-}
-
-.rl-sider-tabs {
-  padding: 12px 16px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.rl-sider-tabs .ant-tabs-nav {
-  margin-bottom: 0;
-}
-
-.rl-sider-tabs .ant-tabs-tab {
-  padding: 6px 12px !important;
-  font-size: 13px;
-  background: #f5f6f8;
-  border-radius: 6px !important;
-  border: 1px solid transparent !important;
-}
-
-.rl-sider-tabs .ant-tabs-tab.ant-tabs-tab-active {
-  background: #ffffff;
-  border-color: #d9d9d9 !important;
-}
-
-.rl-sider-tabs .ant-tabs-ink-bar {
-  display: none;
-}
-
-.rl-sider-actions {
-  padding: 12px 16px;
-}
-
-.rl-sider-actions .ant-btn {
-  height: 36px;
-  border-radius: 8px;
-  border-style: dashed;
-}
-
-.rl-sider-section-head {
-  padding: 4px 16px 8px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: #999;
-  font-size: 12px;
-}
-
-.rl-sider-section-title {
-  font-weight: 500;
-}
-
-.rl-sider-section-tools {
-  display: inline-flex;
-  gap: 8px;
-  cursor: pointer;
-  color: #999;
-}
-
-.rl-sider-section-tools .anticon:hover {
-  color: #1677ff;
-}
-
-.rl-sider-keyword {
-  padding: 0 16px 6px;
-}
-
-/* ====== Tree ====== */
-.rl-tree {
-  flex: 1;
+  padding-top: 8px;
   overflow-y: auto;
-  padding: 4px 8px 16px;
+  -webkit-font-smoothing: antialiased;
 }
 
-.rl-tree-empty {
-  padding: 32px 16px;
-  text-align: center;
-  color: #bfbfbf;
-  font-size: 13px;
+.finder-sidebar-section {
+  margin-bottom: 4px;
 }
 
-.rl-tree-group {
-  display: flex;
-  flex-direction: column;
+.finder-sidebar-title {
+  padding: 6px 16px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #86868b;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  user-select: none;
 }
 
-.rl-tree-node {
+.finder-sidebar-item {
   display: flex;
   align-items: center;
-  height: 30px;
-  padding-right: 8px;
-  border-radius: 6px;
+  gap: 8px;
+  padding: 4px 12px 4px 16px;
+  margin: 0 8px;
+  border-radius: 5px;
   cursor: pointer;
-  transition: background 0.15s;
-  position: relative;
-}
-
-.rl-tree-node:hover {
-  background: #f5f7fa;
-}
-
-.rl-tree-node:hover .rl-tree-more {
-  visibility: visible;
-}
-
-.rl-tree-node-selected {
-  background: #e6f0ff !important;
-}
-
-.rl-tree-node-selected .rl-tree-name {
-  color: #1677ff;
-  font-weight: 500;
-}
-
-.rl-tree-arrow {
-  width: 16px;
-  display: inline-flex;
-  justify-content: center;
-  color: #8c8c8c;
-  font-size: 10px;
-  flex-shrink: 0;
-}
-
-.rl-tree-icon {
-  margin-right: 6px;
-  display: inline-flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.rl-tree-name {
-  flex: 1;
   font-size: 13px;
-  color: #333;
+  color: #1d1d1f;
+  transition: background 0.1s;
+  user-select: none;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.rl-tree-more {
-  visibility: hidden;
-  color: #999;
-  padding: 2px 4px;
-  border-radius: 4px;
+.finder-sidebar-item:hover {
+  background: rgba(0, 0, 0, 0.04);
 }
 
-.rl-tree-more:hover {
-  background: rgba(0, 0, 0, 0.06);
-  color: #1677ff;
+.finder-sidebar-item-active {
+  background: #007aff !important;
+  color: #fff !important;
 }
 
-/* ====== Main ====== */
-.rl-main {
+.finder-sidebar-item-active .finder-sidebar-item-icon {
+  color: #fff !important;
+}
+
+.finder-sidebar-item-icon {
+  font-size: 15px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.finder-sidebar-item-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ====== Tags in sidebar ====== */
+.finder-tag-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 16px;
+  margin: 0 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #1d1d1f;
+  transition: background 0.1s;
+  user-select: none;
+}
+
+.finder-tag-item:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.finder-tag-item-active {
+  background: #007aff !important;
+  color: #fff !important;
+}
+
+.finder-tag-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.finder-tag-label {
+  flex: 1;
+}
+
+.finder-all-tags-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 16px;
+  margin: 0 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #86868b;
+}
+
+.finder-all-tags-link:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: #1d1d1f;
+}
+
+/* ====== Main Panel ====== */
+.finder-main {
   flex: 1;
   display: flex;
   flex-direction: column;
+  background: #ffffff;
   overflow: hidden;
-  padding: 16px 24px 24px;
 }
 
-.rl-main-head {
+/* ====== Toolbar (顶部工具栏) ====== */
+.finder-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  background: #ffffff;
-  padding: 16px 20px;
-  border-radius: 10px;
-  border: 1px solid #ebedf0;
-  margin-bottom: 12px;
+  height: 52px;
+  padding: 0 16px;
+  background: rgba(246, 246, 246, 0.95);
+  border-bottom: 1px solid #d4d4d4;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
-.rl-main-title {
+.finder-toolbar-nav {
   display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.finder-toolbar-nav-btn {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  border: none;
+  background: transparent;
+  color: #555;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.finder-toolbar-nav-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.finder-toolbar-nav-btn:disabled {
+  color: #ccc;
+  cursor: default;
+}
+
+.finder-toolbar-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin-left: 4px;
+  flex: 1;
+}
+
+.finder-toolbar-views {
+  display: flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 6px;
+  padding: 2px;
+  gap: 1px;
+}
+
+.finder-toolbar-view-btn {
+  width: 28px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: #666;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.finder-toolbar-view-btn:hover {
+  color: #333;
+}
+
+.finder-toolbar-view-btn-active {
+  background: #fff;
+  color: #1d1d1f;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.finder-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.finder-toolbar-action-btn {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  border: none;
+  background: transparent;
+  color: #555;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.finder-toolbar-action-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.finder-toolbar-group-btn {
+  width: auto;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+}
+
+.finder-toolbar-search {
+  width: 180px;
+}
+
+.finder-toolbar-search .ant-input-affix-wrapper {
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid transparent;
+  height: 28px;
+  font-size: 12px;
+}
+
+.finder-toolbar-search .ant-input-affix-wrapper:focus,
+.finder-toolbar-search .ant-input-affix-wrapper-focused {
+  border-color: #007aff;
+  background: #fff;
+}
+
+/* ====== File List (文件列表 - list view) ====== */
+.finder-content-area {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.finder-file-list {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.finder-file-row {
+  display: flex;
+  align-items: center;
+  padding: 6px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: default;
+  transition: background 0.08s;
+  user-select: none;
+}
+
+.finder-file-row:hover {
+  background: #f5f5f7;
+}
+
+.finder-file-row-selected {
+  background: #007aff !important;
+  color: #fff !important;
+}
+
+.finder-file-row-selected .finder-file-name {
+  color: #fff;
+}
+
+.finder-file-row-selected .finder-file-chevron {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.finder-file-row-selected .finder-file-meta {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.finder-file-icon {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
+.finder-file-name {
+  flex: 1;
+  font-size: 13px;
+  color: #1d1d1f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.finder-file-tags {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-right: 12px;
+}
+
+.finder-file-tag-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.finder-file-meta {
+  font-size: 12px;
+  color: #86868b;
+  white-space: nowrap;
+  margin-right: 12px;
+  min-width: 100px;
+}
+
+.finder-file-chevron {
+  color: #c7c7c7;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+/* ====== Detail mode header ====== */
+.finder-detail-header {
+  display: flex;
+  align-items: center;
+  padding: 6px 20px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #fafafa;
+  font-size: 11px;
+  color: #86868b;
+  font-weight: 500;
+  user-select: none;
+}
+
+.finder-detail-col-name {
+  flex: 1;
+  padding-left: 28px;
+}
+
+.finder-detail-col-date {
+  width: 120px;
+  text-align: left;
+}
+
+.finder-detail-col-size {
+  width: 80px;
+  text-align: right;
+}
+
+.finder-detail-col-kind {
+  width: 80px;
+  text-align: left;
+  padding-left: 12px;
+}
+
+/* Detail mode row overrides */
+.finder-file-row .finder-detail-col-date,
+.finder-file-row .finder-detail-col-size,
+.finder-file-row .finder-detail-col-kind {
+  font-size: 12px;
+  color: #86868b;
+  white-space: nowrap;
+}
+
+.finder-file-row-selected .finder-detail-col-date,
+.finder-file-row-selected .finder-detail-col-size,
+.finder-file-row-selected .finder-detail-col-kind {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ====== Right Preview Panel (右侧预览面板) ====== */
+.finder-preview-panel {
+  width: 45%;
+  max-width: 560px;
+  min-width: 320px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  background: #fafafa;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #e0e0e0;
+}
+
+.finder-preview-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #c7c7cc;
+  font-size: 13px;
+}
+
+.finder-preview-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+/* 内容预览主体区域 */
+.finder-preview-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow: hidden;
+}
+
+.finder-preview-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+.finder-preview-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 8px;
+}
+
+.finder-preview-video {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 8px;
+}
+
+.finder-preview-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #86868b;
+  font-size: 14px;
+}
+
+.finder-preview-folder-grid {
+  display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 12px;
 }
 
-.rl-main-title-icon {
-  width: 44px;
-  height: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: #f0f7ff;
-  border-radius: 8px;
+.finder-preview-folder-hint {
+  font-size: 13px;
+  color: #86868b;
 }
 
-.rl-main-title-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+/* 底部信息栏 */
+.finder-preview-footer {
+  border-top: 1px solid #e8e8e8;
+  padding: 12px 16px;
+  background: #fff;
 }
 
-.rl-main-title-name {
-  font-size: 16px;
+.finder-preview-name {
+  font-size: 13px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #1d1d1f;
+  word-break: break-all;
+  margin-bottom: 4px;
 }
 
-.rl-main-title-sub {
-  font-size: 12px;
-  color: #999;
+.finder-preview-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  color: #86868b;
+  margin-bottom: 4px;
 }
 
-.rl-main-actions {
+.finder-preview-tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.finder-preview-tag {
   display: inline-flex;
-  gap: 8px;
-}
-
-.rl-main-body {
-  flex: 1;
-  background: #ffffff;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  background: #fff;
+  border: 1px solid #e8e8e8;
   border-radius: 10px;
-  border: 1px solid #ebedf0;
-  padding: 4px 12px 12px;
-  overflow: auto;
+  padding: 1px 8px 1px 4px;
 }
 
-.rl-main-body .ant-table {
-  background: transparent;
-}
-
-.rl-main-body .ant-table-thead > tr > th {
-  background: transparent;
-  color: #666;
-  font-weight: 500;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.rl-main-body .ant-table-tbody > tr > td {
-  border-bottom: 1px solid #f5f5f5;
-}
-
-.rl-main-body .ant-table-tbody > tr:hover > td {
-  background: #f7faff !important;
-}
-
-/* ====== Name Cell ====== */
-.rl-name-cell {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  max-width: 100%;
-}
-
-.rl-name-clickable {
-  cursor: pointer;
-}
-
-.rl-name-clickable:hover .rl-name-text {
-  color: #1677ff;
-}
-
-.rl-name-icon {
-  display: inline-flex;
-  align-items: center;
+.finder-preview-tag-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
   flex-shrink: 0;
 }
 
-.rl-name-text {
-  color: #333;
-  white-space: nowrap;
+.finder-preview-open-link {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #007aff;
+  text-decoration: none;
+}
+
+.finder-preview-open-link:hover {
+  text-decoration: underline;
+}
+
+/* ====== Column View (分栏视图) ====== */
+.finder-column-scroll {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.finder-column {
+  min-width: 220px;
+  max-width: 280px;
+  flex-shrink: 0;
+  border-right: 1px solid #e0e0e0;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.finder-column-empty {
+  padding: 24px 16px;
+  color: #999;
+  font-size: 12px;
+  text-align: center;
+}
+
+.finder-column-item {
+  display: flex;
+  align-items: center;
+  padding: 5px 12px;
+  cursor: default;
+  user-select: none;
+  gap: 6px;
+  font-size: 13px;
+  color: #1d1d1f;
+  border-radius: 6px;
+  margin: 1px 6px;
+  transition: background 0.1s;
+}
+
+.finder-column-item:hover {
+  background: #f0f0f5;
+}
+
+.finder-column-item-active {
+  background: #007aff;
+  color: #fff;
+}
+
+.finder-column-item-active:hover {
+  background: #0066e0;
+}
+
+.finder-column-item-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.finder-column-item-active .finder-column-item-icon {
+  color: #fff;
+}
+
+.finder-column-item-name {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.rl-table-ops {
+.finder-column-item-arrow {
+  font-size: 9px;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.finder-column-item-active .finder-column-item-arrow {
+  opacity: 1;
+  color: #fff;
+}
+
+/* 分栏视图内的预览区域（紧跟最后一列，填满剩余空间） */
+.finder-column-preview {
+  flex: 1;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  background: #fafafa;
+  border-left: 1px solid #e0e0e0;
+  overflow-y: auto;
+}
+
+/* ====== Path Bar (底部路径栏) ====== */
+.finder-pathbar {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 16px;
+  background: rgba(246, 246, 246, 0.95);
+  border-top: 1px solid #d4d4d4;
+  font-size: 11px;
+  color: #86868b;
+  gap: 4px;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.finder-pathbar-segment {
   display: inline-flex;
-  gap: 0;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  padding: 1px 4px;
+  border-radius: 3px;
 }
 
-/* ====== Add Modal ====== */
+.finder-pathbar-segment:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: #1d1d1f;
+}
+
+.finder-pathbar-segment-icon {
+  font-size: 12px;
+}
+
+.finder-pathbar-sep {
+  color: #c7c7c7;
+  font-size: 9px;
+}
+
+/* ====== Empty State ====== */
+.finder-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #86868b;
+  font-size: 14px;
+}
+
+/* ====== Modals retain antd styling ====== */
 .rl-add-tip {
   font-size: 12px;
   color: #8c8c8c;
@@ -294,6 +714,187 @@
 }
 
 .rl-add-tip b {
-  color: #1677ff;
+  color: #007aff;
   font-weight: 500;
+}
+
+/* ====== Inline New Folder ====== */
+.finder-inline-input {
+  border-radius: 4px !important;
+  font-size: 12px !important;
+}
+
+.finder-inline-input .ant-input {
+  font-size: 12px;
+}
+
+/* ====== Quick Look Preview Modal ====== */
+.finder-quicklook-modal .ant-modal-content {
+  padding: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.finder-quicklook-modal .ant-modal-body {
+  padding: 0;
+}
+
+.finder-quicklook {
+  display: flex;
+  flex-direction: column;
+}
+
+.finder-quicklook-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(246, 246, 246, 0.95);
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.finder-quicklook-title {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1d1d1f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.finder-quicklook-close {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 11px;
+  color: #666;
+  transition: background 0.15s;
+}
+
+.finder-quicklook-close:hover {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.finder-quicklook-body {
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background: #fff;
+}
+
+.finder-quicklook-folder,
+.finder-quicklook-file,
+.finder-quicklook-image {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.finder-quicklook-info {
+  font-size: 14px;
+  color: #1d1d1f;
+  font-weight: 500;
+}
+
+.finder-quicklook-detail {
+  font-size: 12px;
+  color: #86868b;
+}
+
+.finder-quicklook-footer {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  background: rgba(246, 246, 246, 0.95);
+  border-top: 1px solid #e0e0e0;
+  gap: 12px;
+}
+
+.finder-quicklook-footer-type {
+  font-size: 11px;
+  color: #86868b;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.finder-quicklook-footer-open {
+  font-size: 12px;
+  color: #007aff;
+  text-decoration: none;
+  margin-left: auto;
+}
+
+.finder-quicklook-footer-open:hover {
+  text-decoration: underline;
+}
+
+/* ====== Tag Picker Popover ====== */
+.rl-tag-picker {
+  min-width: 200px;
+}
+
+.rl-tag-picker-title {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 8px;
+}
+
+.rl-tag-picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rl-tag-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.15s;
+}
+
+.rl-tag-picker-row:hover {
+  background: #f5f7fa;
+}
+
+.rl-tag-picker-row-checked {
+  background: #f0f7ff;
+}
+
+.rl-tag-picker-row-name {
+  flex: 1;
+}
+
+.rl-tag-picker-row-check {
+  color: #007aff;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.rl-tag-picker-actions {
+  margin-top: 8px;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 8px;
+}
+
+.rl-tag-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
 }
