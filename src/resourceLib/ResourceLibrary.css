@@ -3,17 +3,14 @@
   display: flex;
   width: 100%;
   height: 100vh;
-  background: #ececec;
-  border-radius: 10px;
+  background: #ffffff;
   overflow: hidden;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
 }
 
 /* ====== Sidebar (访达左侧栏) ====== */
 .finder-sidebar {
   width: 200px;
-  background: rgba(246, 246, 246, 0.92);
-  backdrop-filter: blur(20px);
+  background: #fff;
   border-right: 1px solid #d4d4d4;
   display: flex;
   flex-direction: column;
@@ -23,8 +20,88 @@
   -webkit-font-smoothing: antialiased;
 }
 
+.finder-sidebar-resize-handle {
+  width: 5px;
+  cursor: col-resize;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  margin-left: -3px;
+  margin-right: -2px;
+}
+
+.finder-sidebar-resize-handle:hover,
+.finder-sidebar-resize-handle:active {
+  background: rgba(0, 122, 255, 0.15);
+}
+
 .finder-sidebar-section {
   margin-bottom: 4px;
+}
+
+.finder-sidebar-fav-dragover {
+  background: rgba(0, 122, 255, 0.06);
+  border-radius: 6px;
+  outline: 2px dashed rgba(0, 122, 255, 0.4);
+  outline-offset: -2px;
+}
+
+.finder-sidebar-fav-remove {
+  display: none;
+  margin-left: auto;
+  font-size: 14px;
+  color: #999;
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+  text-align: center;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.finder-sidebar-item:hover .finder-sidebar-fav-remove {
+  display: block;
+}
+
+.finder-sidebar-fav-remove:hover {
+  color: #ff3b30;
+  background: rgba(255, 59, 48, 0.1);
+}
+
+.finder-sidebar-fav-more {
+  display: none;
+  margin-left: auto;
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  line-height: 18px;
+  text-align: center;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.finder-sidebar-item:hover .finder-sidebar-fav-more,
+.finder-sidebar-fav-more.ant-dropdown-open {
+  display: block;
+}
+
+.finder-sidebar-fav-more:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: #000;
+}
+
+.finder-sidebar-fav-drop-indicator {
+  height: 2px;
+  background: #007aff;
+  border-radius: 1px;
+  margin: 0 8px;
+}
+
+.finder-sidebar-item-dragging {
+  opacity: 0.4;
 }
 
 .finder-sidebar-title {
@@ -59,12 +136,13 @@
 }
 
 .finder-sidebar-item-active {
-  background: #007aff !important;
-  color: #fff !important;
+  background: rgba(0, 0, 0, 0.1) !important;
+  color: inherit !important;
+  border-radius: 6px;
 }
 
 .finder-sidebar-item-active .finder-sidebar-item-icon {
-  color: #fff !important;
+  color: inherit !important;
 }
 
 .finder-sidebar-item-icon {
@@ -78,6 +156,35 @@
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ====== Tag tabs ====== */
+.finder-tag-tabs {
+  display: flex;
+  gap: 0;
+  margin: 2px 12px 6px 16px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 5px;
+  padding: 2px;
+}
+
+.finder-tag-tab {
+  flex: 1;
+  text-align: center;
+  font-size: 11px;
+  padding: 3px 0;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #666;
+  user-select: none;
+  transition: all 0.15s;
+}
+
+.finder-tag-tab-active {
+  background: #fff;
+  color: #1d1d1f;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  font-weight: 500;
 }
 
 /* ====== Tags in sidebar ====== */
@@ -100,8 +207,8 @@
 }
 
 .finder-tag-item-active {
-  background: #007aff !important;
-  color: #fff !important;
+  background: rgba(0, 0, 0, 0.1) !important;
+  color: inherit !important;
 }
 
 .finder-tag-dot {
@@ -259,7 +366,7 @@
 }
 
 .finder-toolbar-search {
-  width: 180px;
+  width: 260px;
 }
 
 .finder-toolbar-search .ant-input-affix-wrapper {
@@ -419,10 +526,24 @@
 }
 
 /* ====== Right Preview Panel (右侧预览面板) ====== */
+.finder-preview-resize-handle {
+  width: 5px;
+  cursor: col-resize;
+  flex-shrink: 0;
+  z-index: 10;
+  position: relative;
+  margin-left: -2px;
+  margin-right: -2px;
+}
+
+.finder-preview-resize-handle:hover,
+.finder-preview-resize-handle:active {
+  background: rgba(0, 122, 255, 0.15);
+}
+
 .finder-preview-panel {
-  width: 45%;
-  max-width: 560px;
-  min-width: 320px;
+  max-width: 800px;
+  min-width: 280px;
   flex-shrink: 0;
   overflow-y: auto;
   background: #fafafa;
@@ -578,7 +699,25 @@
   flex-shrink: 0;
   border-right: 1px solid #e0e0e0;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   padding: 4px 0;
+  position: relative;
+}
+
+.finder-column-resize-handle {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 2;
+}
+
+.finder-column-resize-handle:hover,
+.finder-column-resize-handle:active {
+  background: rgba(0, 122, 255, 0.15);
 }
 
 .finder-column-empty {
@@ -602,6 +741,10 @@
   transition: background 0.1s;
 }
 
+.finder-column-item:first-of-type {
+  margin-top: 4px;
+}
+
 .finder-column-item:hover {
   background: #f0f0f5;
 }
@@ -609,6 +752,14 @@
 .finder-column-item-active {
   background: #007aff;
   color: #fff;
+}
+
+.finder-column-item-selected {
+  background: rgba(0, 122, 255, 0.15);
+}
+
+.finder-column-item-selected:hover {
+  background: rgba(0, 122, 255, 0.22);
 }
 
 .finder-column-item-active:hover {
@@ -641,6 +792,51 @@
 
 .finder-column-item-active .finder-column-item-arrow {
   opacity: 1;
+  color: #fff;
+}
+
+/* 行内 hover 操作按钮 */
+.finder-column-item-actions {
+  display: none;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.finder-column-item:hover .finder-column-item-actions {
+  display: flex;
+}
+
+.finder-column-item-active .finder-column-item-actions {
+  display: flex;
+}
+
+.finder-column-action-btn {
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  flex-shrink: 0;
+}
+
+.finder-column-action-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: #333;
+}
+
+.finder-column-item-active .finder-column-action-btn {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.finder-column-item-active .finder-column-action-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
   color: #fff;
 }
 
@@ -682,6 +878,16 @@
 .finder-pathbar-segment:hover {
   background: rgba(0, 0, 0, 0.04);
   color: #1d1d1f;
+}
+
+.finder-pathbar-segment-current {
+  color: #1d1d1f;
+  font-weight: 500;
+  cursor: default;
+}
+
+.finder-pathbar-segment-current:hover {
+  background: transparent;
 }
 
 .finder-pathbar-segment-icon {
@@ -897,4 +1103,31 @@
   border-radius: 50%;
   display: inline-block;
   flex-shrink: 0;
+}
+
+/* macOS 风格菜单内标签色点行 */
+.finder-menu-tags-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.finder-menu-tag-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: inline-block;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+  border: 2px solid transparent;
+}
+
+.finder-menu-tag-dot:hover {
+  transform: scale(1.2);
+}
+
+.finder-menu-tag-dot-active {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px currentColor;
 }

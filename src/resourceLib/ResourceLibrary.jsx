@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Button, Input, Empty, Tooltip, Dropdown, Popover,
   Modal, Form, Select, message, Upload, ColorPicker,
@@ -13,14 +13,14 @@ import {
   DownloadOutlined, ClockCircleOutlined,
   CloudOutlined, ShareAltOutlined, GlobalOutlined,
   ExportOutlined, HighlightOutlined, SmileOutlined,
-  CaretDownOutlined,
+  CaretDownOutlined, MoreOutlined,
   FileTextOutlined, FilePdfOutlined, FileImageOutlined,
   PlayCircleOutlined, SoundOutlined, TagsOutlined,
   FileExcelOutlined, FileWordOutlined, FilePptOutlined,
 } from '@ant-design/icons';
 import {
   loadResourceLib, addItem, renameItem, deleteItem, setSelectedFolder, inferFileType,
-  getTagDefinitions, addTagDefinition,
+  getTagDefinitions, addTagDefinition, reorderTagDefinition,
   addTagToItem, removeTagFromItem,
 } from './resourceLibStore';
 import { renderFileIcon } from './resourceIcons.jsx';
@@ -35,10 +35,22 @@ export default function ResourceLibrary() {
   const [addType, setAddType] = useState('file');
   const [addForm] = Form.useForm();
   const [activeTagFilter, setActiveTagFilter] = useState(null);
-  const [selectedItemKey, setSelectedItemKey] = useState(null);
+  const [selectedItemKeys, setSelectedItemKeys] = useState([]); // 多选
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#FF3B30');
   const [addTagOpen, setAddTagOpen] = useState(false);
+  const [tagPickerTarget, setTagPickerTarget] = useState(null); // 分栏视图中标签管理目标item key
+  const [favorites, setFavorites] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('guoren_rl_favorites') || '[]'); } catch { return []; }
+  }); // 侧栏快捷方式 [{key, name, isFolder, fileType}]
+  const [hiddenSidebarFolders, setHiddenSidebarFolders] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('guoren_rl_hidden_sidebar') || '[]'); } catch { return []; }
+  });
+  const [favDragOver, setFavDragOver] = useState(false);
+  const [favDragIdx, setFavDragIdx] = useState(null); // 拖拽排序中的源索引
+  const [favDropIdx, setFavDropIdx] = useState(null); // 拖抽插入位置指示器
+  const [tagDragIdx, setTagDragIdx] = useState(null); // 标签拖拽源索引
+  const [tagDropIdx, setTagDropIdx] = useState(null); // 标签拖拽插入位置
   const [navHistory, setNavHistory] = useState([null]); // 导航历史
   const [navIndex, setNavIndex] = useState(0);
   const [viewMode, setViewMode] = useState('list'); // list | detail | column
@@ -50,10 +62,93 @@ export default function ResourceLibrary() {
   // 分栏视图状态：各层打开的文件夹 key 路径
   const [columnPath, setColumnPath] = useState([null]); // [null, folderKey1, folderKey2, ...]
   const [columnSelectedItem, setColumnSelectedItem] = useState(null); // 分栏视图中选中的文件
+  // 侧栏宽度拖拽
+  const [sidebarWidth, setSidebarWidth] = useState(200);
+  const sidebarDragRef = useRef(null);
+  // 预览面板宽度拖拽
+  const [previewWidth, setPreviewWidth] = useState(480);
+  const previewDragRef = useRef(null);
+  const handleSidebarResizeStart = useCallback((e) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = sidebarWidth;
+    sidebarDragRef.current = { startX, startWidth };
+    const onMouseMove = (ev) => {
+      if (!sidebarDragRef.current) return;
+      const delta = ev.clientX - sidebarDragRef.current.startX;
+      const newWidth = Math.max(140, Math.min(400, sidebarDragRef.current.startWidth + delta));
+      setSidebarWidth(newWidth);
+    };
+    const onMouseUp = () => {
+      sidebarDragRef.current = null;
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, [sidebarWidth]);
+
+  const handlePreviewResizeStart = useCallback((e) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = previewWidth;
+    previewDragRef.current = { startX, startWidth };
+    const onMouseMove = (ev) => {
+      if (!previewDragRef.current) return;
+      const delta = previewDragRef.current.startX - ev.clientX;
+      const newWidth = Math.max(280, Math.min(800, previewDragRef.current.startWidth + delta));
+      setPreviewWidth(newWidth);
+    };
+    const onMouseUp = () => {
+      previewDragRef.current = null;
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, [previewWidth]);
+  // 分栏视图列宽拖拽
+  const [columnWidths, setColumnWidths] = useState({}); // { colIdx: width }
+  const dragRef = useRef(null);
+  const handleColumnResizeStart = useCallback((colIdx, e) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const colEl = e.target.parentElement;
+    const startWidth = colEl?.getBoundingClientRect().width || 220;
+    dragRef.current = { colIdx, startX, startWidth };
+    const onMouseMove = (ev) => {
+      if (!dragRef.current) return;
+      const delta = ev.clientX - dragRef.current.startX;
+      const newWidth = Math.max(140, Math.min(500, dragRef.current.startWidth + delta));
+      setColumnWidths((prev) => ({ ...prev, [dragRef.current.colIdx]: newWidth }));
+    };
+    const onMouseUp = () => {
+      dragRef.current = null;
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, []);
 
   const list = data[scope] || [];
   const selectedFolderKey = data.selectedFolderKey?.[scope] ?? null;
   const tagDefs = getTagDefinitions(data);
+  const personalTagDefs = getTagDefinitions(data, 'personal').filter((t) => t.scope === 'personal');
+  const orgTagDefs = getTagDefinitions(data, 'organization').filter((t) => t.scope === 'organization');
+  const [tagTab, setTagTab] = useState('personal'); // 'personal' | 'organization'
 
   // 当前文件夹信息
   const currentFolder = useMemo(
@@ -91,8 +186,8 @@ export default function ResourceLibrary() {
 
   // 侧栏收藏夹项目（根文件夹）
   const rootFolders = useMemo(
-    () => list.filter((r) => r.isFolder && r.parentKey === null),
-    [list],
+    () => list.filter((r) => r.isFolder && r.parentKey === null && !hiddenSidebarFolders.includes(r.key)),
+    [list, hiddenSidebarFolders],
   );
 
   // 面包屑路径
@@ -110,12 +205,24 @@ export default function ResourceLibrary() {
   const navigateTo = (folderKey) => {
     setData((d) => setSelectedFolder(d, scope, folderKey));
     setActiveTagFilter(null);
-    setSelectedItemKey(null);
-    // 更新导航历史
+    setSelectedItemKeys([]);
     const newHistory = navHistory.slice(0, navIndex + 1);
     newHistory.push(folderKey);
     setNavHistory(newHistory);
     setNavIndex(newHistory.length - 1);
+    // 同步分栏视图的 columnPath
+    if (viewMode === 'column') {
+      if (folderKey) {
+        // 直接以该文件夹为起点，显示其子内容
+        setColumnPath([folderKey]);
+      } else {
+        setColumnPath([null]);
+      }
+      setColumnSelectedItem(null);
+      setTimeout(() => {
+        columnScrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' });
+      }, 50);
+    }
   };
 
   const handleBack = () => {
@@ -156,6 +263,91 @@ export default function ResourceLibrary() {
     });
   };
 
+  // ====== 侧栏快捷方式（拖拽收藏） ======
+  const saveFavorites = (newFavs) => {
+    setFavorites(newFavs);
+    localStorage.setItem('guoren_rl_favorites', JSON.stringify(newFavs));
+  };
+  const handleFavDrop = (e) => {
+    e.preventDefault();
+    setFavDragOver(false);
+    setFavDropIdx(null);
+    try {
+      const raw = e.dataTransfer.getData('application/json');
+      if (!raw) return;
+      const itemData = JSON.parse(raw);
+      if (!itemData || !itemData.key) return;
+
+      // 内部排序（收藏项之间拖拽）
+      if (favDragIdx !== null) {
+        const newFavs = [...favorites];
+        const [moved] = newFavs.splice(favDragIdx, 1);
+        const targetIdx = favDropIdx !== null ? (favDropIdx > favDragIdx ? favDropIdx - 1 : favDropIdx) : newFavs.length;
+        newFavs.splice(targetIdx, 0, moved);
+        saveFavorites(newFavs);
+        setFavDragIdx(null);
+        return;
+      }
+
+      // 外部拖入（从分栏视图拖入）
+      if (favorites.some((f) => f.key === itemData.key)) {
+        message.info('该项已在收藏中');
+        return;
+      }
+      const insertAt = favDropIdx !== null ? favDropIdx : favorites.length;
+      const newFavs = [...favorites];
+      newFavs.splice(insertAt, 0, { key: itemData.key, name: itemData.name, isFolder: itemData.isFolder, fileType: itemData.fileType });
+      saveFavorites(newFavs);
+      message.success(`「${itemData.name}」已添加到收藏`);
+    } catch { /* ignore */ }
+  };
+  const handleFavItemDragOver = (e, idx) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const midY = rect.top + rect.height / 2;
+    setFavDropIdx(e.clientY < midY ? idx : idx + 1);
+  };
+  const removeFavorite = (key) => {
+    saveFavorites(favorites.filter((f) => f.key !== key));
+  };
+  const renameFavorite = (fav) => {
+    let newName = fav.name;
+    Modal.confirm({
+      title: '重命名收藏',
+      icon: null,
+      content: <Input defaultValue={fav.name} onChange={(e) => { newName = e.target.value; }} placeholder="请输入新名称" />,
+      onOk: () => {
+        const trimmed = (newName || '').trim();
+        if (!trimmed) { message.warning('名称不能为空'); return Promise.reject(); }
+        saveFavorites(favorites.map((f) => f.key === fav.key ? { ...f, name: trimmed } : f));
+        message.success('已重命名');
+      },
+    });
+  };
+
+  const renameSidebarFolder = (folder) => {
+    let newName = folder.name;
+    Modal.confirm({
+      title: '重命名文件夹',
+      icon: null,
+      content: <Input defaultValue={folder.name} onChange={(e) => { newName = e.target.value; }} placeholder="请输入新名称" />,
+      onOk: () => {
+        const trimmed = (newName || '').trim();
+        if (!trimmed) { message.warning('名称不能为空'); return Promise.reject(); }
+        setData((d) => renameItem(d, scope, folder.key, trimmed));
+        message.success('已重命名');
+      },
+    });
+  };
+
+  const hideSidebarFolder = (key) => {
+    const newHidden = [...hiddenSidebarFolders, key];
+    setHiddenSidebarFolders(newHidden);
+    localStorage.setItem('guoren_rl_hidden_sidebar', JSON.stringify(newHidden));
+    message.success('已从边栏移除');
+  };
+
   const handleAddSubmit = async () => {
     try {
       const v = await addForm.validateFields();
@@ -178,7 +370,33 @@ export default function ResourceLibrary() {
 
   const handleTagFilter = (tagId) => {
     setActiveTagFilter(activeTagFilter === tagId ? null : tagId);
-    setSelectedItemKey(null);
+    setSelectedItemKeys([]);
+    if (viewMode === 'column') {
+      setColumnPath([null]);
+      setColumnSelectedItem(null);
+    }
+  };
+
+  // 多选点击处理（Cmd+Click 切换选中，Shift+Click 范围选，普通点击单选）
+  const lastClickedIdx = useRef(null);
+  const handleItemClick = (key, idx, e) => {
+    if (e.metaKey || e.ctrlKey) {
+      // Cmd/Ctrl + Click: toggle
+      setSelectedItemKeys((prev) =>
+        prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+      );
+      lastClickedIdx.current = idx;
+    } else if (e.shiftKey && lastClickedIdx.current !== null) {
+      // Shift + Click: range select
+      const start = Math.min(lastClickedIdx.current, idx);
+      const end = Math.max(lastClickedIdx.current, idx);
+      const rangeKeys = currentChildren.slice(start, end + 1).map((it) => it.key);
+      setSelectedItemKeys(rangeKeys);
+    } else {
+      // 普通点击：单选
+      setSelectedItemKeys([key]);
+      lastClickedIdx.current = idx;
+    }
   };
 
   const handleDoubleClick = (item) => {
@@ -187,12 +405,8 @@ export default function ResourceLibrary() {
 
   // ====== 分栏视图 - 点击文件夹时扩展列 ======
   const handleColumnFolderClick = (folderKey, colIndex) => {
-    // 检查该文件夹是否有内容，没有内容则不扩展新列
-    const children = list.filter((r) => r.parentKey === folderKey);
     const newPath = columnPath.slice(0, colIndex + 1);
-    if (children.length > 0) {
-      newPath.push(folderKey);
-    }
+    newPath.push(folderKey);
     setColumnPath(newPath);
     setColumnSelectedItem(null);
     // 自动滚动到最右
@@ -205,11 +419,36 @@ export default function ResourceLibrary() {
     // 截断后续列，选中该文件
     setColumnPath(columnPath.slice(0, colIndex + 1));
     setColumnSelectedItem(item);
-    setSelectedItemKey(item.key);
+    setSelectedItemKeys([item.key]);
   };
 
   // 分栏视图各列的子项
   const columnLevels = useMemo(() => {
+    // 标签筛选模式：第一列显示所有带该标签的项目
+    if (activeTagFilter) {
+      const taggedItems = list.filter((r) => (r.tags || []).includes(activeTagFilter));
+      const sorted = [...taggedItems].sort((a, b) => {
+        if (a.isFolder && !b.isFolder) return -1;
+        if (!a.isFolder && b.isFolder) return 1;
+        return (a.name || '').localeCompare(b.name || '', 'zh');
+      });
+      // 第一列显示标签结果，后续列按正常层级展开
+      const levels = [sorted];
+      for (let i = 1; i < columnPath.length; i++) {
+        const parentKey = columnPath[i];
+        let items = list.filter((r) => r.parentKey === parentKey);
+        if (keyword.trim()) {
+          const kw = keyword.trim().toLowerCase();
+          items = items.filter((r) => r.name?.toLowerCase().includes(kw));
+        }
+        levels.push([...items].sort((a, b) => {
+          if (a.isFolder && !b.isFolder) return -1;
+          if (!a.isFolder && b.isFolder) return 1;
+          return (a.name || '').localeCompare(b.name || '', 'zh');
+        }));
+      }
+      return levels;
+    }
     return columnPath.map((parentKey) => {
       let items = list.filter((r) => r.parentKey === parentKey);
       if (keyword.trim()) {
@@ -222,7 +461,7 @@ export default function ResourceLibrary() {
         return (a.name || '').localeCompare(b.name || '', 'zh');
       });
     });
-  }, [columnPath, list, keyword]);
+  }, [columnPath, list, keyword, activeTagFilter]);
 
   // 切换视图模式时同步 columnPath
   const handleViewModeChange = (mode) => {
@@ -255,6 +494,7 @@ export default function ResourceLibrary() {
   };
 
   // ====== Quick Look 预览（右侧面板常驻） ======
+  const selectedItemKey = selectedItemKeys.length === 1 ? selectedItemKeys[0] : null;
   const previewItem = useMemo(() => {
     if (!selectedItemKey) return null;
     return list.find((r) => r.key === selectedItemKey) || null;
@@ -363,9 +603,14 @@ export default function ResourceLibrary() {
     )}
     <div className="finder-layout">
       {/* ===== 左侧栏（macOS Finder 侧栏） ===== */}
-      <div className="finder-sidebar">
+      <div className="finder-sidebar" style={{ width: sidebarWidth, minWidth: sidebarWidth }}>
         {/* 个人收藏 */}
-        <div className="finder-sidebar-section">
+        <div
+          className={`finder-sidebar-section ${favDragOver ? 'finder-sidebar-fav-dragover' : ''}`}
+          onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'link'; setFavDragOver(true); }}
+          onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) { setFavDragOver(false); setFavDropIdx(null); } }}
+          onDrop={handleFavDrop}
+        >
           <div className="finder-sidebar-title">{scope === 'personal' ? '个人收藏' : '组织空间'}</div>
           <div
             className={`finder-sidebar-item ${!selectedFolderKey && !activeTagFilter ? 'finder-sidebar-item-active' : ''}`}
@@ -382,32 +627,42 @@ export default function ResourceLibrary() {
             <span className="finder-sidebar-item-icon" style={{ color: '#34c759' }}><DownloadOutlined /></span>
             <span className="finder-sidebar-item-label">下载</span>
           </div>
-          {rootFolders.map((f) => (
-            <div
-              key={f.key}
-              className={`finder-sidebar-item ${selectedFolderKey === f.key && !activeTagFilter ? 'finder-sidebar-item-active' : ''}`}
-              onClick={() => navigateTo(f.key)}
-            >
-              <span className="finder-sidebar-item-icon" style={{ color: '#4facfe' }}><FolderFilled /></span>
-              <span className="finder-sidebar-item-label">{f.name}</span>
+          {/* 拖拽收藏的快捷方式（可拖动排序） */}
+          {favorites.map((fav, idx) => (
+            <div key={`fav_${fav.key}`}>
+              {favDropIdx === idx && <div className="finder-sidebar-fav-drop-indicator" />}
+              <div
+                className={`finder-sidebar-item ${selectedFolderKey === fav.key && !activeTagFilter ? 'finder-sidebar-item-active' : ''} ${favDragIdx === idx ? 'finder-sidebar-item-dragging' : ''}`}
+                draggable
+                onDragStart={(e) => {
+                  setFavDragIdx(idx);
+                  e.dataTransfer.setData('application/json', JSON.stringify(fav));
+                  e.dataTransfer.effectAllowed = 'move';
+                }}
+                onDragEnd={() => { setFavDragIdx(null); setFavDropIdx(null); }}
+                onDragOver={(e) => handleFavItemDragOver(e, idx)}
+                onClick={() => { if (fav.isFolder) navigateTo(fav.key); }}
+              >
+                <span className="finder-sidebar-item-icon" style={{ color: fav.isFolder ? '#4facfe' : '#8e8e93' }}>
+                  {fav.isFolder ? <FolderFilled /> : renderFileIcon(fav.fileType, { fontSize: 14 })}
+                </span>
+                <span className="finder-sidebar-item-label">{fav.name}</span>
+                <Dropdown
+                  trigger={['click']}
+                  menu={{
+                    items: [
+                      { key: 'rename', icon: <EditOutlined />, label: '重命名', onClick: ({ domEvent }) => { domEvent.stopPropagation(); renameFavorite(fav); } },
+                      { type: 'divider' },
+                      { key: 'remove', icon: <DeleteOutlined />, label: '从边栏移除', danger: true, onClick: ({ domEvent }) => { domEvent.stopPropagation(); removeFavorite(fav.key); } },
+                    ],
+                  }}
+                >
+                  <span className="finder-sidebar-fav-more" onClick={(e) => e.stopPropagation()}><MoreOutlined /></span>
+                </Dropdown>
+              </div>
             </div>
           ))}
-        </div>
-
-        {/* iCloud / 切换 scope */}
-        <div className="finder-sidebar-section">
-          <div className="finder-sidebar-title">{scope === 'personal' ? 'iCloud' : '位置'}</div>
-          <div
-            className={`finder-sidebar-item ${scope === 'organization' && !selectedFolderKey ? '' : ''}`}
-            onClick={() => { setScope(scope === 'personal' ? 'organization' : 'personal'); navigateTo(null); setNavHistory([null]); setNavIndex(0); }}
-          >
-            <span className="finder-sidebar-item-icon" style={{ color: '#007aff' }}><CloudOutlined /></span>
-            <span className="finder-sidebar-item-label">{scope === 'personal' ? '组织资料库' : '个人资料库'}</span>
-          </div>
-          <div className="finder-sidebar-item">
-            <span className="finder-sidebar-item-icon" style={{ color: '#8e8e93' }}><ShareAltOutlined /></span>
-            <span className="finder-sidebar-item-label">共享</span>
-          </div>
+          {favDropIdx === favorites.length && favorites.length > 0 && <div className="finder-sidebar-fav-drop-indicator" />}
         </div>
 
         {/* 位置 */}
@@ -415,29 +670,69 @@ export default function ResourceLibrary() {
           <div className="finder-sidebar-title">位置</div>
           <div className="finder-sidebar-item">
             <span className="finder-sidebar-item-icon" style={{ color: '#8e8e93' }}><GlobalOutlined /></span>
-            <span className="finder-sidebar-item-label">网络</span>
+            <span className="finder-sidebar-item-label">云电脑</span>
           </div>
         </div>
 
         {/* 标签 */}
         <div className="finder-sidebar-section">
           <div className="finder-sidebar-title">标签</div>
-          {tagDefs.slice(0, 6).map((t) => (
-            <div
-              key={t.id}
-              className={`finder-tag-item ${activeTagFilter === t.id ? 'finder-tag-item-active' : ''}`}
-              onClick={() => handleTagFilter(t.id)}
-            >
-              <span className="finder-tag-dot" style={{ background: t.color }} />
-              <span className="finder-tag-label">{t.name}</span>
+          <div className="finder-tag-tabs">
+            <span className={`finder-tag-tab ${tagTab === 'personal' ? 'finder-tag-tab-active' : ''}`} onClick={() => setTagTab('personal')}>个人</span>
+            <span className={`finder-tag-tab ${tagTab === 'organization' ? 'finder-tag-tab-active' : ''}`} onClick={() => setTagTab('organization')}>组织</span>
+          </div>
+          {(tagTab === 'personal' ? personalTagDefs : orgTagDefs).map((t, idx) => (
+            <div key={t.id}>
+              {tagDropIdx === idx && <div className="finder-sidebar-fav-drop-indicator" />}
+              <div
+                className={`finder-tag-item ${activeTagFilter === t.id ? 'finder-tag-item-active' : ''} ${tagDragIdx === idx ? 'finder-sidebar-item-dragging' : ''}`}
+                draggable
+                onDragStart={(e) => {
+                  setTagDragIdx(idx);
+                  e.dataTransfer.setData('text/plain', t.id);
+                  e.dataTransfer.effectAllowed = 'move';
+                }}
+                onDragEnd={() => { setTagDragIdx(null); setTagDropIdx(null); }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const midY = rect.top + rect.height / 2;
+                  setTagDropIdx(e.clientY < midY ? idx : idx + 1);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (tagDragIdx !== null && tagDropIdx !== null && tagDragIdx !== tagDropIdx) {
+                    const currentTags = tagTab === 'personal' ? personalTagDefs : orgTagDefs;
+                    const allScopeTags = getTagDefinitions(data, tagTab);
+                    const fromGlobal = allScopeTags.findIndex((at) => at.id === currentTags[tagDragIdx]?.id);
+                    const toItem = tagDropIdx < currentTags.length ? currentTags[tagDropIdx] : null;
+                    const toGlobal = toItem ? allScopeTags.findIndex((at) => at.id === toItem.id) : allScopeTags.length;
+                    if (fromGlobal >= 0 && toGlobal >= 0) {
+                      setData((d) => reorderTagDefinition(d, tagTab, fromGlobal, toGlobal));
+                    }
+                  }
+                  setTagDragIdx(null);
+                  setTagDropIdx(null);
+                }}
+                onClick={() => handleTagFilter(t.id)}
+              >
+                <span className="finder-tag-dot" style={{ background: t.color }} />
+                <span className="finder-tag-label">{t.name}</span>
+              </div>
             </div>
           ))}
+          {tagDropIdx === (tagTab === 'personal' ? personalTagDefs : orgTagDefs).length && <div className="finder-sidebar-fav-drop-indicator" />}
           <div className="finder-all-tags-link" onClick={() => { /* 跳转标签管理 */ }}>
             <span style={{ width: 10, height: 10, borderRadius: '50%', border: '1.5px solid #86868b', display: 'inline-block' }} />
             <span>所有标签...</span>
           </div>
         </div>
       </div>
+
+      {/* 侧栏拖拽调整宽度手柄 */}
+      <div className="finder-sidebar-resize-handle" onMouseDown={handleSidebarResizeStart} />
 
       {/* ===== 主面板 ===== */}
       <div className="finder-main">
@@ -497,7 +792,7 @@ export default function ResourceLibrary() {
               </button>
             </Tooltip>
             <Popover
-              content={selectedItemKey ? renderTagPicker(selectedItemKey) : <span style={{ color: '#999', fontSize: 13 }}>请先选中一个文件</span>}
+              content={selectedItemKeys.length > 0 ? renderTagPicker(selectedItemKeys[selectedItemKeys.length - 1]) : <span style={{ color: '#999', fontSize: 13 }}>请先选中一个文件</span>}
               trigger="click"
               title="标签"
             >
@@ -527,30 +822,127 @@ export default function ResourceLibrary() {
           {/* ==== 分栏视图 ==== */}
           {viewMode === 'column' ? (
               <div className="finder-column-scroll" ref={columnScrollRef}>
-                {columnLevels.map((items, colIdx) => (
-                  <div className="finder-column" key={colIdx}>
+                {columnLevels.map((items, colIdx) => {
+                  const colWidth = columnWidths[colIdx];
+                  return (
+                  <div className="finder-column" key={colIdx} style={colWidth ? { width: colWidth, minWidth: colWidth, maxWidth: colWidth } : undefined}>
                     {items.map((item) => {
                       const isActive = columnPath[colIdx + 1] === item.key || (columnSelectedItem?.key === item.key);
+                      // 文件/文件夹行的更多菜单
+                      const itemTags = item.tags || [];
+                      const itemMoreMenu = {
+                        items: [
+                          // 标签色点行（类似 macOS）
+                          { key: 'tags-row', label: (
+                            <div className="finder-menu-tags-row" onClick={(e) => e.stopPropagation()}>
+                              {tagDefs.slice(0, 7).map((t) => {
+                                const hasTag = itemTags.includes(t.id);
+                                return (
+                                  <span key={t.id} className={`finder-menu-tag-dot ${hasTag ? 'finder-menu-tag-dot-active' : ''}`}
+                                    style={{ background: t.color }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (hasTag) setData((d) => removeTagFromItem(d, scope, item.key, t.id));
+                                      else setData((d) => addTagToItem(d, scope, item.key, t.id));
+                                    }}
+                                  />
+                                );
+                              })}
+                            </div>
+                          ) },
+                          { key: 'tags-manage', icon: <TagsOutlined />, label: '标签...' },
+                          { type: 'divider' },
+                          ...(item.isFolder ? [
+                            { key: 'newFolder', icon: <FolderAddOutlined />, label: '新建文件夹' },
+                            { type: 'divider' },
+                          ] : []),
+                          { key: 'rename', icon: <EditOutlined />, label: '重命名' },
+                          { key: 'delete', icon: <DeleteOutlined />, label: '删除', danger: true },
+                        ],
+                        onClick: ({ key, domEvent }) => {
+                          domEvent.stopPropagation();
+                          if (key === 'newFolder') {
+                            setData((d) => addItem(d, scope, {
+                              name: '未命名文件夹', isFolder: true, parentKey: item.key, fileType: 'folder', parseStatus: 'parsed',
+                            }));
+                            message.success('文件夹已创建');
+                          }
+                          if (key === 'rename') handleRename(item);
+                          if (key === 'delete') handleDelete(item.key);
+                          if (key === 'tags-manage') {
+                            // 打开标签管理 popover - 使用已有的 tagPicker
+                            setTagPickerTarget(item.key);
+                          }
+                        },
+                      };
+
                       return (
                         <div
                           key={item.key}
-                          className={`finder-column-item ${isActive ? 'finder-column-item-active' : ''}`}
-                          onClick={() => {
-                            if (item.isFolder) {
-                              handleColumnFolderClick(item.key, colIdx);
+                          className={`finder-column-item ${isActive ? 'finder-column-item-active' : ''} ${selectedItemKeys.includes(item.key) && !isActive ? 'finder-column-item-selected' : ''}`}
+                          draggable
+                          onDragStart={(e) => {
+                            e.dataTransfer.setData('application/json', JSON.stringify({ key: item.key, name: item.name, isFolder: item.isFolder, fileType: item.fileType }));
+                            e.dataTransfer.effectAllowed = 'copyLink';
+                          }}
+                          onClick={(e) => {
+                            if (e.metaKey || e.ctrlKey) {
+                              // Cmd/Ctrl+Click: 切换选中
+                              setSelectedItemKeys((prev) =>
+                                prev.includes(item.key) ? prev.filter((k) => k !== item.key) : [...prev, item.key]
+                              );
+                            } else if (e.shiftKey) {
+                              // Shift+Click: 范围选
+                              const colItems = columnLevels[colIdx] || [];
+                              const curIdx = colItems.findIndex((it) => it.key === item.key);
+                              const lastIdx = colItems.findIndex((it) => selectedItemKeys.includes(it.key));
+                              if (lastIdx >= 0 && curIdx >= 0) {
+                                const start = Math.min(lastIdx, curIdx);
+                                const end = Math.max(lastIdx, curIdx);
+                                const rangeKeys = colItems.slice(start, end + 1).map((it) => it.key);
+                                setSelectedItemKeys(rangeKeys);
+                              } else {
+                                setSelectedItemKeys([item.key]);
+                              }
                             } else {
-                              handleColumnFileClick(item, colIdx);
+                              // 普通点击
+                              setSelectedItemKeys([item.key]);
+                              if (item.isFolder) {
+                                handleColumnFolderClick(item.key, colIdx);
+                              } else {
+                                handleColumnFileClick(item, colIdx);
+                              }
                             }
                           }}
                         >
                           <span className="finder-column-item-icon">{renderFileIcon(item.fileType, { fontSize: 16 })}</span>
                           <span className="finder-column-item-name">{item.name}</span>
+                          <span className="finder-column-item-actions">
+                            {item.isFolder && (
+                              <button className="finder-column-action-btn" onClick={(e) => {
+                                e.stopPropagation();
+                                setData((d) => addItem(d, scope, {
+                                  name: '未命名文件夹', isFolder: true, parentKey: item.key, fileType: 'folder', parseStatus: 'parsed',
+                                }));
+                                message.success('文件夹已创建');
+                              }}>
+                                <PlusOutlined style={{ fontSize: 11 }} />
+                              </button>
+                            )}
+                            <Dropdown menu={itemMoreMenu} trigger={['click']}>
+                              <button className="finder-column-action-btn" onClick={(e) => e.stopPropagation()}>
+                                <MoreOutlined style={{ fontSize: 13 }} />
+                              </button>
+                            </Dropdown>
+                          </span>
                           {item.isFolder && <RightOutlined className="finder-column-item-arrow" />}
                         </div>
                       );
                     })}
+                    <div className="finder-column-resize-handle" onMouseDown={(e) => handleColumnResizeStart(colIdx, e)} />
                   </div>
-                ))}
+                  );
+                })}
 
                 {/* 分栏视图预览（紧跟最后一列，填满剩余空间） */}
                 <div className="finder-column-preview">
@@ -618,14 +1010,19 @@ export default function ResourceLibrary() {
               {currentChildren.length === 0 && !newFolderInline ? (
                 <div className="finder-empty"><Empty description="此文件夹为空，右键新建" image={Empty.PRESENTED_IMAGE_SIMPLE} /></div>
               ) : (
-                currentChildren.map((item) => {
-                  const isSelected = selectedItemKey === item.key;
+                currentChildren.map((item, idx) => {
+                  const isSelected = selectedItemKeys.includes(item.key);
                   const itemTags = (item.tags || []).map((tid) => tagDefs.find((t) => t.id === tid)).filter(Boolean);
                   return (
                     <Dropdown key={item.key} menu={getContextMenu(item)} trigger={['contextMenu']}>
                       <div
                         className={`finder-file-row ${isSelected ? 'finder-file-row-selected' : ''}`}
-                        onClick={() => setSelectedItemKey(item.key)}
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData('application/json', JSON.stringify({ key: item.key, name: item.name, isFolder: item.isFolder, fileType: item.fileType }));
+                          e.dataTransfer.effectAllowed = 'copyLink';
+                        }}
+                        onClick={(e) => handleItemClick(item.key, idx, e)}
                         onDoubleClick={() => handleDoubleClick(item)}
                       >
                         <span className="finder-file-icon">{renderFileIcon(item.fileType, { fontSize: 18 })}</span>
@@ -651,8 +1048,11 @@ export default function ResourceLibrary() {
               )}
           </div>
 
+          {/* 预览面板拖拽调整宽度手柄 */}
+          <div className="finder-preview-resize-handle" onMouseDown={handlePreviewResizeStart} />
+
           {/* 右侧预览面板（常驻 - 文件内容预览） */}
-          <div className="finder-preview-panel">
+          <div className="finder-preview-panel" style={{ width: previewWidth }}>
             {previewItem ? (
               <div className="finder-preview-content">
                 {/* 内容预览区 */}
@@ -725,21 +1125,65 @@ export default function ResourceLibrary() {
 
         {/* 底部路径栏 */}
         <div className="finder-pathbar">
-          <span className="finder-pathbar-segment" onClick={() => navigateTo(null)}>
+          <span className="finder-pathbar-segment" onClick={() => { if (viewMode === 'column') { setColumnPath([null]); setColumnSelectedItem(null); } else { navigateTo(null); } }}>
             <span className="finder-pathbar-segment-icon"><DesktopOutlined /></span>
             <span>{scope === 'personal' ? '个人资料库' : '组织资料库'}</span>
           </span>
-          {breadcrumb.map((seg) => (
-            <span key={seg.key} style={{ display: 'contents' }}>
-              <span className="finder-pathbar-sep">›</span>
-              <span className="finder-pathbar-segment" onClick={() => navigateTo(seg.key)}>
-                <span className="finder-pathbar-segment-icon"><FolderFilled style={{ color: '#4facfe', fontSize: 11 }} /></span>
-                <span>{seg.name}</span>
+          {viewMode === 'column' ? (
+            // 分栏视图：根据 columnPath 显示路径
+            <>
+              {columnPath.slice(1).map((folderKey, idx) => {
+                const folder = list.find((r) => r.key === folderKey);
+                if (!folder) return null;
+                return (
+                  <span key={folderKey} style={{ display: 'contents' }}>
+                    <span className="finder-pathbar-sep">›</span>
+                    <span className="finder-pathbar-segment" onClick={() => {
+                      setColumnPath(columnPath.slice(0, idx + 2));
+                      setColumnSelectedItem(null);
+                    }}>
+                      <span className="finder-pathbar-segment-icon"><FolderFilled style={{ color: '#4facfe', fontSize: 11 }} /></span>
+                      <span>{folder.name}</span>
+                    </span>
+                  </span>
+                );
+              })}
+              {columnSelectedItem && (
+                <span style={{ display: 'contents' }}>
+                  <span className="finder-pathbar-sep">›</span>
+                  <span className="finder-pathbar-segment finder-pathbar-segment-current">
+                    <span className="finder-pathbar-segment-icon">{renderFileIcon(columnSelectedItem.fileType, { fontSize: 11 })}</span>
+                    <span>{columnSelectedItem.name}</span>
+                  </span>
+                </span>
+              )}
+            </>
+          ) : (
+            // 列表/详情视图：原有 breadcrumb
+            breadcrumb.map((seg) => (
+              <span key={seg.key} style={{ display: 'contents' }}>
+                <span className="finder-pathbar-sep">›</span>
+                <span className="finder-pathbar-segment" onClick={() => navigateTo(seg.key)}>
+                  <span className="finder-pathbar-segment-icon"><FolderFilled style={{ color: '#4facfe', fontSize: 11 }} /></span>
+                  <span>{seg.name}</span>
+                </span>
               </span>
-            </span>
-          ))}
+            ))
+          )}
         </div>
       </div>
+
+      {/* ===== 标签管理 Modal（分栏视图菜单触发） ===== */}
+      <Modal
+        title="编辑标签"
+        open={!!tagPickerTarget}
+        onCancel={() => setTagPickerTarget(null)}
+        footer={null}
+        destroyOnClose
+        width={320}
+      >
+        {tagPickerTarget && renderTagPicker(tagPickerTarget)}
+      </Modal>
 
       {/* ===== 新建标签 Modal ===== */}
       <Modal

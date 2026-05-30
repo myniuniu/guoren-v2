@@ -291,6 +291,23 @@ export function updateTagColor(data, tagId, newColor, scope = 'personal') {
   return next;
 }
 
+// 标签拖动排序
+export function reorderTagDefinition(data, scope, fromIdx, toIdx) {
+  const defs = data.tagDefinitions;
+  if (Array.isArray(defs)) return data;
+  const list = [...(defs[scope] || [])];
+  if (fromIdx < 0 || fromIdx >= list.length || toIdx < 0 || toIdx > list.length) return data;
+  const [moved] = list.splice(fromIdx, 1);
+  const insertAt = toIdx > fromIdx ? toIdx - 1 : toIdx;
+  list.splice(insertAt, 0, moved);
+  const next = {
+    ...data,
+    tagDefinitions: { ...defs, [scope]: list },
+  };
+  saveResourceLib(next);
+  return next;
+}
+
 // 给资料添加标签
 export function addTagToItem(data, scope, itemKey, tagId) {
   const next = {
