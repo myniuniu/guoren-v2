@@ -32,6 +32,7 @@ import {
   CodeOutlined,
   LayoutOutlined,
   TagsOutlined,
+  ScanOutlined,
 } from '@ant-design/icons';
 import TopicDetail from './TopicDetail';
 import LeaveWorkflow from './workflow/LeaveWorkflow';
@@ -44,6 +45,7 @@ import PositionManagement from './system/PositionManagement';
 import CertificateModule from './certificate/CertificateModule';
 import CertificateIssueModule from './certificate/CertificateIssueModule';
 import ResourceLibrary from './resourceLib/ResourceLibrary';
+import ResourceParseStatus from './resourceLib/ResourceParseStatus';
 import ArchiveModule from './archive/ArchiveModule';
 import StudyClubModule from './studyClub/StudyClubModule';
 import OnlineDevModule from './onlineDev/OnlineDevModule';
@@ -114,6 +116,7 @@ const iconBarItems = [
   { key: 'my-space', icon: <AppstoreOutlined />, label: '我的空间', active: true },
   { key: 'cloud-disk', icon: <CloudOutlined />, label: '云盘' },
   { key: 'resource-lib', icon: <BookOutlined />, label: '资料库' },
+  { key: 'resource-parse', icon: <ScanOutlined />, label: '资料解析' },
   { key: 'knowledge-space', icon: <BulbOutlined />, label: '知识空间' },
   { key: 'messages', icon: <MessageOutlined />, label: '消息' },
   { key: 'org-management', icon: <TeamOutlined />, label: '组织管理' },
@@ -186,6 +189,8 @@ function App() {
       setCurrentPage('certificate-issue');
     } else if (key === 'resource-lib') {
       setCurrentPage('resource-lib');
+    } else if (key === 'resource-parse') {
+      setCurrentPage('resource-parse');
     } else if (key === 'archive') {
       setCurrentPage('archive');
     } else if (key === 'study-club') {
@@ -209,6 +214,7 @@ function App() {
       currentPage === 'certificate' ||
       currentPage === 'certificate-issue' ||
       currentPage === 'resource-lib' ||
+      currentPage === 'resource-parse' ||
       currentPage === 'archive' ||
       currentPage === 'study-club' ||
       currentPage === 'online-dev' ||
@@ -264,6 +270,8 @@ function App() {
         <CertificateIssueModule />
       ) : currentPage === 'resource-lib' ? (
         <ResourceLibrary />
+      ) : currentPage === 'resource-parse' ? (
+        <ResourceParseStatus />
       ) : currentPage === 'archive' ? (
         <ArchiveModule />
       ) : currentPage === 'study-club' ? (

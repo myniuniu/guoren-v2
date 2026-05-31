@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import {
   Button, Input, Empty, Tooltip, Dropdown, Popover,
   Modal, Form, Select, message, Upload, ColorPicker,
@@ -22,6 +22,7 @@ import {
   loadResourceLib, addItem, renameItem, deleteItem, setSelectedFolder, inferFileType,
   getTagDefinitions, addTagDefinition, reorderTagDefinition,
   addTagToItem, removeTagFromItem,
+  getLibraryList, getLibraryId, getOrganizations, setCurrentScope, setCurrentOrg,
 } from './resourceLibStore';
 import { renderFileIcon } from './resourceIcons.jsx';
 import { fileApi } from '../api/fileApi';
@@ -29,7 +30,8 @@ import './ResourceLibrary.css';
 
 export default function ResourceLibrary() {
   const [data, setData] = useState(() => loadResourceLib());
-  const [scope, setScope] = useState('personal');
+  const [scope, setScope] = useState(() => data?.currentScope || 'personal');
+  const [currentOrgId, setCurrentOrgId] = useState(() => data?.currentOrgId || 'org_default');
   const [keyword, setKeyword] = useState('');
   const [addOpen, setAddOpen] = useState(false);
   const [addType, setAddType] = useState('file');
@@ -41,8 +43,11 @@ export default function ResourceLibrary() {
   const [addTagOpen, setAddTagOpen] = useState(false);
   const [tagPickerTarget, setTagPickerTarget] = useState(null); // 分栏视图中标签管理目标item key
   const [favorites, setFavorites] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('guoren_rl_favorites') || '[]'); } catch { return []; }
-  }); // 侧栏快捷方式 [{key, name, isFolder, fileType}]
+    try {
+      const initLibId = (data?.currentScope === 'organization' ? (data?.currentOrgId || 'org_default') : 'personal');
+      return JSON.parse(localStorage.getItem(`guoren_rl_favorites_${initLibId}`) || '[]');
+    } catch { return []; }
+  }); // 侧栏快捷方式（按库隔离）
   const [hiddenSidebarFolders, setHiddenSidebarFolders] = useState(() => {
     try { return JSON.parse(localStorage.getItem('guoren_rl_hidden_sidebar') || '[]'); } catch { return []; }
   });
@@ -55,6 +60,44 @@ export default function ResourceLibrary() {
   const [navIndex, setNavIndex] = useState(0);
   const [viewMode, setViewMode] = useState('list'); // list | detail | column
   const [sortBy, setSortBy] = useState('name'); // name | kind | date | size | tag
+  const [sortOrder, setSortOrder] = useState('asc'); // asc | desc
+  // 详情视图各列宽度（可拖拽调整）
+  const [detailColWidths, setDetailColWidths] = useState({ name: 320, date: 120, size: 80, kind: 80 });
+  const detailColResizeRef = useRef(null);
+  const handleDetailColResizeStart = (field, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startWidth = detailColWidths[field];
+    detailColResizeRef.current = { field, startX, startWidth };
+    const onMove = (ev) => {
+      if (!detailColResizeRef.current) return;
+      const delta = ev.clientX - detailColResizeRef.current.startX;
+      const newW = Math.max(80, Math.min(600, detailColResizeRef.current.startWidth + delta));
+      setDetailColWidths((w) => ({ ...w, [detailColResizeRef.current.field]: newW }));
+    };
+    const onUp = () => {
+      detailColResizeRef.current = null;
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  };
+  // 点击表头：同列切换升降序，换列重置为该列默认顺序
+  const handleHeaderSort = (field) => {
+    if (field === sortBy) {
+      setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortBy(field);
+      // 默认顺序：名称/种类升序，日期/大小/标签降序
+      setSortOrder(field === 'name' || field === 'kind' ? 'asc' : 'desc');
+    }
+  };
   const [newFolderInline, setNewFolderInline] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const newFolderInputRef = useRef(null);
@@ -68,6 +111,9 @@ export default function ResourceLibrary() {
   // 预览面板宽度拖拽
   const [previewWidth, setPreviewWidth] = useState(480);
   const previewDragRef = useRef(null);
+  const contentAreaRef = useRef(null);
+  // 记录用户是否在列表视图下手动拖过，避免覆盖用户选择
+  const previewListResizedRef = useRef(false);
   const handleSidebarResizeStart = useCallback((e) => {
     e.preventDefault();
     const startX = e.clientX;
@@ -97,10 +143,13 @@ export default function ResourceLibrary() {
     const startX = e.clientX;
     const startWidth = previewWidth;
     previewDragRef.current = { startX, startWidth };
+    if (viewMode === 'list') previewListResizedRef.current = true;
     const onMouseMove = (ev) => {
       if (!previewDragRef.current) return;
       const delta = previewDragRef.current.startX - ev.clientX;
-      const newWidth = Math.max(280, Math.min(800, previewDragRef.current.startWidth + delta));
+      const containerW = contentAreaRef.current?.getBoundingClientRect().width || 1600;
+      const upper = Math.max(800, Math.round(containerW - 240));
+      const newWidth = Math.max(280, Math.min(upper, previewDragRef.current.startWidth + delta));
       setPreviewWidth(newWidth);
     };
     const onMouseUp = () => {
@@ -114,7 +163,18 @@ export default function ResourceLibrary() {
     document.addEventListener('mouseup', onMouseUp);
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
-  }, [previewWidth]);
+  }, [previewWidth, viewMode]);
+
+  // 列表视图默认预览区占 70%（用户手动拖过后不再覆盖）
+  useEffect(() => {
+    if (viewMode !== 'list' || previewListResizedRef.current) return;
+    const el = contentAreaRef.current;
+    if (!el) return;
+    const w = el.getBoundingClientRect().width;
+    if (w > 0) {
+      setPreviewWidth(Math.round(w * 0.7));
+    }
+  }, [viewMode]);
   // 分栏视图列宽拖拽
   const [columnWidths, setColumnWidths] = useState({}); // { colIdx: width }
   const dragRef = useRef(null);
@@ -143,12 +203,46 @@ export default function ResourceLibrary() {
     document.body.style.userSelect = 'none';
   }, []);
 
-  const list = data[scope] || [];
-  const selectedFolderKey = data.selectedFolderKey?.[scope] ?? null;
+  const list = getLibraryList(data, scope);
+  const libraryId = getLibraryId(data, scope);
+  const selectedFolderKey = data.selectedFolderKey?.[libraryId] ?? null;
+  const organizations = getOrganizations(data);
   const tagDefs = getTagDefinitions(data);
   const personalTagDefs = getTagDefinitions(data, 'personal').filter((t) => t.scope === 'personal');
   const orgTagDefs = getTagDefinitions(data, 'organization').filter((t) => t.scope === 'organization');
-  const [tagTab, setTagTab] = useState('personal'); // 'personal' | 'organization'
+  // 标签随当前库自动切换：个人库->个人标签；组织库->组织标签
+  const tagScope = scope === 'organization' ? 'organization' : 'personal';
+  const currentTagDefs = tagScope === 'organization' ? orgTagDefs : personalTagDefs;
+
+  // 库切换时：重新加载该库的收藏，清空选中/过滤/导航历史
+  useEffect(() => {
+    try {
+      const favs = JSON.parse(localStorage.getItem(`guoren_rl_favorites_${libraryId}`) || '[]');
+      setFavorites(favs);
+    } catch { setFavorites([]); }
+    setActiveTagFilter(null);
+    setKeyword('');
+    setSelectedItemKeys([]);
+    setColumnPath([null]);
+    setColumnSelectedItem(null);
+    setNavHistory([null]);
+    setNavIndex(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [libraryId]);
+
+  // 切换个人/组织库
+  const handleScopeChange = (nextScope) => {
+    if (nextScope === scope) return;
+    setScope(nextScope);
+    setData((d) => setCurrentScope(d, nextScope));
+  };
+
+  // 切换组织
+  const handleOrgChange = (orgId) => {
+    if (orgId === currentOrgId) return;
+    setCurrentOrgId(orgId);
+    setData((d) => setCurrentOrg(d, orgId));
+  };
 
   // 当前文件夹信息
   const currentFolder = useMemo(
@@ -169,20 +263,23 @@ export default function ResourceLibrary() {
       }
     }
     // 排序
-    return [...items].sort((a, b) => {
+    const sorted = [...items].sort((a, b) => {
       // 文件夹永远排前面
       if (a.isFolder && !b.isFolder) return -1;
       if (!a.isFolder && b.isFolder) return 1;
+      let cmp = 0;
       switch (sortBy) {
-        case 'name': return (a.name || '').localeCompare(b.name || '', 'zh');
-        case 'kind': return (a.fileType || '').localeCompare(b.fileType || '');
-        case 'date': return (b.lastEdit || '').localeCompare(a.lastEdit || '');
-        case 'size': return (b.size || 0) - (a.size || 0);
-        case 'tag': return (b.tags || []).length - (a.tags || []).length;
-        default: return 0;
+        case 'name': cmp = (a.name || '').localeCompare(b.name || '', 'zh'); break;
+        case 'kind': cmp = (a.fileType || '').localeCompare(b.fileType || ''); break;
+        case 'date': cmp = (a.lastEdit || '').localeCompare(b.lastEdit || ''); break;
+        case 'size': cmp = (a.size || 0) - (b.size || 0); break;
+        case 'tag': cmp = (a.tags || []).length - (b.tags || []).length; break;
+        default: cmp = 0;
       }
+      return sortOrder === 'asc' ? cmp : -cmp;
     });
-  }, [list, selectedFolderKey, activeTagFilter, keyword, sortBy]);
+    return sorted;
+  }, [list, selectedFolderKey, activeTagFilter, keyword, sortBy, sortOrder]);
 
   // 侧栏收藏夹项目（根文件夹）
   const rootFolders = useMemo(
@@ -266,7 +363,7 @@ export default function ResourceLibrary() {
   // ====== 侧栏快捷方式（拖拽收藏） ======
   const saveFavorites = (newFavs) => {
     setFavorites(newFavs);
-    localStorage.setItem('guoren_rl_favorites', JSON.stringify(newFavs));
+    localStorage.setItem(`guoren_rl_favorites_${libraryId}`, JSON.stringify(newFavs));
   };
   const handleFavDrop = (e) => {
     e.preventDefault();
@@ -300,6 +397,24 @@ export default function ResourceLibrary() {
       saveFavorites(newFavs);
       message.success(`「${itemData.name}」已添加到收藏`);
     } catch { /* ignore */ }
+  };
+  const handleFavSectionDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = favDragIdx !== null ? 'move' : 'link';
+    setFavDragOver(true);
+    // 根据鼠标 Y 与每个 fav 项中点比较，计算 favDropIdx
+    const items = e.currentTarget.querySelectorAll('[data-fav-idx]');
+    if (items.length === 0) {
+      setFavDropIdx(0);
+      return;
+    }
+    let dropIdx = items.length;
+    for (let i = 0; i < items.length; i++) {
+      const r = items[i].getBoundingClientRect();
+      const mid = r.top + r.height / 2;
+      if (e.clientY < mid) { dropIdx = i; break; }
+    }
+    setFavDropIdx(dropIdx);
   };
   const handleFavItemDragOver = (e, idx) => {
     e.preventDefault();
@@ -604,14 +719,42 @@ export default function ResourceLibrary() {
     <div className="finder-layout">
       {/* ===== 左侧栏（macOS Finder 侧栏） ===== */}
       <div className="finder-sidebar" style={{ width: sidebarWidth, minWidth: sidebarWidth }}>
+        {/* 库类型切换 Bar */}
+        <div className="finder-library-switcher">
+          <div className="finder-library-tabs">
+            <span
+              className={`finder-library-tab ${scope === 'personal' ? 'finder-library-tab-active' : ''}`}
+              onClick={() => handleScopeChange('personal')}
+            >
+              个人库
+            </span>
+            <span
+              className={`finder-library-tab ${scope === 'organization' ? 'finder-library-tab-active' : ''}`}
+              onClick={() => handleScopeChange('organization')}
+            >
+              组织库
+            </span>
+          </div>
+          {scope === 'organization' && (
+            <Select
+              size="small"
+              className="finder-library-org-select"
+              value={currentOrgId}
+              onChange={handleOrgChange}
+              options={organizations.map((o) => ({ label: o.name, value: o.id }))}
+              suffixIcon={<CaretDownOutlined style={{ fontSize: 10 }} />}
+            />
+          )}
+        </div>
+
         {/* 个人收藏 */}
         <div
           className={`finder-sidebar-section ${favDragOver ? 'finder-sidebar-fav-dragover' : ''}`}
-          onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'link'; setFavDragOver(true); }}
+          onDragOver={handleFavSectionDragOver}
           onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) { setFavDragOver(false); setFavDropIdx(null); } }}
           onDrop={handleFavDrop}
         >
-          <div className="finder-sidebar-title">{scope === 'personal' ? '个人收藏' : '组织空间'}</div>
+          <div className="finder-sidebar-title">{scope === 'personal' ? '个人收藏' : '组织收藏'}</div>
           <div
             className={`finder-sidebar-item ${!selectedFolderKey && !activeTagFilter ? 'finder-sidebar-item-active' : ''}`}
             onClick={() => { navigateTo(null); }}
@@ -629,7 +772,7 @@ export default function ResourceLibrary() {
           </div>
           {/* 拖拽收藏的快捷方式（可拖动排序） */}
           {favorites.map((fav, idx) => (
-            <div key={`fav_${fav.key}`}>
+            <div key={`fav_${fav.key}`} data-fav-idx={idx}>
               {favDropIdx === idx && <div className="finder-sidebar-fav-drop-indicator" />}
               <div
                 className={`finder-sidebar-item ${selectedFolderKey === fav.key && !activeTagFilter ? 'finder-sidebar-item-active' : ''} ${favDragIdx === idx ? 'finder-sidebar-item-dragging' : ''}`}
@@ -640,7 +783,6 @@ export default function ResourceLibrary() {
                   e.dataTransfer.effectAllowed = 'move';
                 }}
                 onDragEnd={() => { setFavDragIdx(null); setFavDropIdx(null); }}
-                onDragOver={(e) => handleFavItemDragOver(e, idx)}
                 onClick={() => { if (fav.isFolder) navigateTo(fav.key); }}
               >
                 <span className="finder-sidebar-item-icon" style={{ color: fav.isFolder ? '#4facfe' : '#8e8e93' }}>
@@ -677,11 +819,7 @@ export default function ResourceLibrary() {
         {/* 标签 */}
         <div className="finder-sidebar-section">
           <div className="finder-sidebar-title">标签</div>
-          <div className="finder-tag-tabs">
-            <span className={`finder-tag-tab ${tagTab === 'personal' ? 'finder-tag-tab-active' : ''}`} onClick={() => setTagTab('personal')}>个人</span>
-            <span className={`finder-tag-tab ${tagTab === 'organization' ? 'finder-tag-tab-active' : ''}`} onClick={() => setTagTab('organization')}>组织</span>
-          </div>
-          {(tagTab === 'personal' ? personalTagDefs : orgTagDefs).map((t, idx) => (
+          {currentTagDefs.map((t, idx) => (
             <div key={t.id}>
               {tagDropIdx === idx && <div className="finder-sidebar-fav-drop-indicator" />}
               <div
@@ -704,13 +842,13 @@ export default function ResourceLibrary() {
                   e.preventDefault();
                   e.stopPropagation();
                   if (tagDragIdx !== null && tagDropIdx !== null && tagDragIdx !== tagDropIdx) {
-                    const currentTags = tagTab === 'personal' ? personalTagDefs : orgTagDefs;
-                    const allScopeTags = getTagDefinitions(data, tagTab);
+                    const currentTags = currentTagDefs;
+                    const allScopeTags = getTagDefinitions(data, tagScope);
                     const fromGlobal = allScopeTags.findIndex((at) => at.id === currentTags[tagDragIdx]?.id);
                     const toItem = tagDropIdx < currentTags.length ? currentTags[tagDropIdx] : null;
                     const toGlobal = toItem ? allScopeTags.findIndex((at) => at.id === toItem.id) : allScopeTags.length;
                     if (fromGlobal >= 0 && toGlobal >= 0) {
-                      setData((d) => reorderTagDefinition(d, tagTab, fromGlobal, toGlobal));
+                      setData((d) => reorderTagDefinition(d, tagScope, fromGlobal, toGlobal));
                     }
                   }
                   setTagDragIdx(null);
@@ -723,7 +861,7 @@ export default function ResourceLibrary() {
               </div>
             </div>
           ))}
-          {tagDropIdx === (tagTab === 'personal' ? personalTagDefs : orgTagDefs).length && <div className="finder-sidebar-fav-drop-indicator" />}
+          {tagDropIdx === currentTagDefs.length && <div className="finder-sidebar-fav-drop-indicator" />}
           <div className="finder-all-tags-link" onClick={() => { /* 跳转标签管理 */ }}>
             <span style={{ width: 10, height: 10, borderRadius: '50%', border: '1.5px solid #86868b', display: 'inline-block' }} />
             <span>所有标签...</span>
@@ -817,7 +955,7 @@ export default function ResourceLibrary() {
         </div>
 
         {/* ===== 内容区域：文件列表 + 右侧预览面板 ===== */}
-        <div className="finder-content-area">
+        <div className="finder-content-area" ref={contentAreaRef}>
 
           {/* ==== 分栏视图 ==== */}
           {viewMode === 'column' ? (
@@ -985,10 +1123,22 @@ export default function ResourceLibrary() {
               {/* 详情模式表头 */}
               {viewMode === 'detail' && currentChildren.length > 0 && (
                 <div className="finder-detail-header">
-                  <span className="finder-detail-col-name">名称</span>
-                  <span className="finder-detail-col-date">修改日期</span>
-                  <span className="finder-detail-col-size">大小</span>
-                  <span className="finder-detail-col-kind">种类</span>
+                  <span className={`finder-detail-col-name finder-detail-col-sortable ${sortBy === 'name' ? 'finder-detail-col-active' : ''}`} style={{ width: detailColWidths.name, flex: 'none' }} onClick={() => handleHeaderSort('name')}>
+                    名称{sortBy === 'name' && <span className="finder-detail-col-arrow">{sortOrder === 'asc' ? '▲' : '▼'}</span>}
+                    <span className="finder-detail-col-resize-handle" onMouseDown={(e) => handleDetailColResizeStart('name', e)} onClick={(e) => e.stopPropagation()} />
+                  </span>
+                  <span className={`finder-detail-col-date finder-detail-col-sortable ${sortBy === 'date' ? 'finder-detail-col-active' : ''}`} style={{ width: detailColWidths.date }} onClick={() => handleHeaderSort('date')}>
+                    修改日期{sortBy === 'date' && <span className="finder-detail-col-arrow">{sortOrder === 'asc' ? '▲' : '▼'}</span>}
+                    <span className="finder-detail-col-resize-handle" onMouseDown={(e) => handleDetailColResizeStart('date', e)} onClick={(e) => e.stopPropagation()} />
+                  </span>
+                  <span className={`finder-detail-col-size finder-detail-col-sortable ${sortBy === 'size' ? 'finder-detail-col-active' : ''}`} style={{ width: detailColWidths.size }} onClick={() => handleHeaderSort('size')}>
+                    大小{sortBy === 'size' && <span className="finder-detail-col-arrow">{sortOrder === 'asc' ? '▲' : '▼'}</span>}
+                    <span className="finder-detail-col-resize-handle" onMouseDown={(e) => handleDetailColResizeStart('size', e)} onClick={(e) => e.stopPropagation()} />
+                  </span>
+                  <span className={`finder-detail-col-kind finder-detail-col-sortable ${sortBy === 'kind' ? 'finder-detail-col-active' : ''}`} style={{ width: detailColWidths.kind }} onClick={() => handleHeaderSort('kind')}>
+                    种类{sortBy === 'kind' && <span className="finder-detail-col-arrow">{sortOrder === 'asc' ? '▲' : '▼'}</span>}
+                    <span className="finder-detail-col-resize-handle" onMouseDown={(e) => handleDetailColResizeStart('kind', e)} onClick={(e) => e.stopPropagation()} />
+                  </span>
                 </div>
               )}
               {/* 内联新建文件夹 */}
@@ -1026,17 +1176,12 @@ export default function ResourceLibrary() {
                         onDoubleClick={() => handleDoubleClick(item)}
                       >
                         <span className="finder-file-icon">{renderFileIcon(item.fileType, { fontSize: 18 })}</span>
-                        <span className="finder-file-name">{item.name}</span>
-                        {viewMode === 'list' && itemTags.length > 0 && (
-                          <span className="finder-file-tags">
-                            {itemTags.map((t) => (<span key={t.id} className="finder-file-tag-dot" style={{ background: t.color }} />))}
-                          </span>
-                        )}
+                        <span className="finder-file-name" style={viewMode === 'detail' ? { width: detailColWidths.name - 28, flex: 'none' } : undefined}>{item.name}</span>
                         {viewMode === 'detail' && (
                           <>
-                            <span className="finder-detail-col-date">{item.lastEdit || '--'}</span>
-                            <span className="finder-detail-col-size">{item.size ? `${(item.size / 1024).toFixed(1)} KB` : '--'}</span>
-                            <span className="finder-detail-col-kind">{item.isFolder ? '文件夹' : (item.fileType || '--')}</span>
+                            <span className="finder-detail-col-date" style={{ width: detailColWidths.date }}>{item.lastEdit || '--'}</span>
+                            <span className="finder-detail-col-size" style={{ width: detailColWidths.size }}>{item.size ? `${(item.size / 1024).toFixed(1)} KB` : '--'}</span>
+                            <span className="finder-detail-col-kind" style={{ width: detailColWidths.kind }}>{item.isFolder ? '文件夹' : (item.fileType || '--')}</span>
                           </>
                         )}
                         {viewMode === 'list' && <span className="finder-file-meta">{item.lastEdit || ''}</span>}
