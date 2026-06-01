@@ -20,7 +20,7 @@ import {
   StarOutlined, StarFilled,
 } from '@ant-design/icons';
 import {
-  loadResourceLib, addItem, renameItem, deleteItem, setSelectedFolder, inferFileType,
+  loadResourceLib, addItem, renameItem, deleteItem, setSelectedFolder, inferFileType, moveItem,
   getTagDefinitions, addTagDefinition, reorderTagDefinition,
   addTagToItem, removeTagFromItem,
   getLibraryList, getLibraryId, getOrganizations, setCurrentScope, setCurrentOrg,
@@ -60,6 +60,7 @@ export default function ResourceLibrary() {
   const [favDropIdx, setFavDropIdx] = useState(null); // 拖抽插入位置指示器
   const [tagDragIdx, setTagDragIdx] = useState(null); // 标签拖拽源索引
   const [tagDropIdx, setTagDropIdx] = useState(null); // 标签拖拽插入位置
+  const [dragOverFolderKey, setDragOverFolderKey] = useState(null); // 当前拖放目标文件夹 key
   const [navHistory, setNavHistory] = useState([null]); // 导航历史
   const [navIndex, setNavIndex] = useState(0);
   const [viewMode, setViewMode] = useState('detail'); // detail | column
@@ -631,6 +632,74 @@ export default function ResourceLibrary() {
     if (item.isFolder) navigateTo(item.key);
   };
 
+  // ====== 拖放处理 ======
+  const isDraggingRef = useRef(false); // 跟踪是否正在拖拽
+  
+  const handleFolderDragOver = (e, folderKey) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverFolderKey(folderKey);
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleFolderDragLeave = (e, folderKey) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // 只有当离开的目标确实是当前 folderKey 时才清除
+    if (dragOverFolderKey === folderKey) {
+      setDragOverFolderKey(null);
+    }
+  };
+
+  const handleFolderDrop = (e, targetFolderKey) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverFolderKey(null);
+    isDraggingRef.current = false;
+    
+    try {
+      const draggedData = e.dataTransfer.getData('application/json');
+      if (!draggedData) return;
+      
+      const { key: itemKey, name, isFolder } = JSON.parse(draggedData);
+      if (!itemKey) return;
+      
+      // 不能将文件夹拖到自己里面
+      if (isFolder && itemKey === targetFolderKey) {
+        message.warning('不能将文件夹移动到自己里面');
+        return;
+      }
+      
+      setData((d) => moveItem(d, scope, itemKey, targetFolderKey));
+      message.success(`已将「${name}」移动到文件夹`);
+    } catch (err) {
+      console.error('Drop failed:', err);
+    }
+  };
+
+  // 空白区域拖放（移动到当前文件夹）
+  const handleListDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleListDrop = (e) => {
+    e.preventDefault();
+    try {
+      const draggedData = e.dataTransfer.getData('application/json');
+      if (!draggedData) return;
+      
+      const { key: itemKey, name } = JSON.parse(draggedData);
+      if (!itemKey) return;
+      
+      // 移动到当前文件夹（selectedFolderKey）
+      setData((d) => moveItem(d, scope, itemKey, selectedFolderKey));
+      message.success(`已将「${name}」移动到当前位置`);
+    } catch (err) {
+      console.error('Drop failed:', err);
+    }
+  };
+
   // ====== 分栏视图 - 点击文件夹时扩展列 ======
   const handleColumnFolderClick = (folderKey, colIndex) => {
     const newPath = columnPath.slice(0, colIndex + 1);
@@ -1121,13 +1190,23 @@ export default function ResourceLibrary() {
                       return (
                         <div
                           key={item.key}
-                          className={`finder-column-item ${isActive ? 'finder-column-item-active' : ''} ${selectedItemKeys.includes(item.key) && !isActive ? 'finder-column-item-selected' : ''}`}
+                          className={`finder-column-item ${isActive ? 'finder-column-item-active' : ''} ${selectedItemKeys.includes(item.key) && !isActive ? 'finder-column-item-selected' : ''} ${item.isFolder && dragOverFolderKey === item.key ? 'finder-column-item-dragover' : ''}`}
                           draggable
                           onDragStart={(e) => {
+                            isDraggingRef.current = true;
                             e.dataTransfer.setData('application/json', JSON.stringify({ key: item.key, name: item.name, isFolder: item.isFolder, fileType: item.fileType }));
                             e.dataTransfer.effectAllowed = 'copyLink';
                           }}
+                          onDragEnd={() => {
+                            isDraggingRef.current = false;
+                          }}
+                          onDragOver={item.isFolder ? (e) => handleFolderDragOver(e, item.key) : undefined}
+                          onDragLeave={item.isFolder ? (e) => handleFolderDragLeave(e, item.key) : undefined}
+                          onDrop={item.isFolder ? (e) => handleFolderDrop(e, item.key) : undefined}
                           onClick={(e) => {
+                            // 如果刚刚完成拖拽，不触发点击
+                            if (isDraggingRef.current) return;
+                            
                             if (e.metaKey || e.ctrlKey) {
                               // Cmd/Ctrl+Click: 切换选中
                               setSelectedItemKeys((prev) =>
@@ -1221,7 +1300,12 @@ export default function ResourceLibrary() {
           ) : (
             <>
           {/* ==== 列表/详情视图 ==== */}
-          <div className="finder-file-list" onContextMenu={handleBgContextMenu}>
+          <div 
+            className="finder-file-list" 
+            onContextMenu={handleBgContextMenu}
+            onDragOver={handleListDragOver}
+            onDrop={handleListDrop}
+          >
               {/* 详情模式表头 */}
               {viewMode === 'detail' && currentChildren.length > 0 && (
                 <Dropdown menu={colVisibilityMenu} trigger={['contextMenu']}>
@@ -1309,13 +1393,24 @@ export default function ResourceLibrary() {
                   return (
                     <Dropdown key={item.key} menu={getContextMenu(item)} trigger={['contextMenu']}>
                       <div
-                        className={`finder-file-row ${isSelected ? 'finder-file-row-selected' : ''}`}
+                        className={`finder-file-row ${isSelected ? 'finder-file-row-selected' : ''} ${item.isFolder && dragOverFolderKey === item.key ? 'finder-file-row-dragover' : ''}`}
                         draggable
                         onDragStart={(e) => {
+                          isDraggingRef.current = true;
                           e.dataTransfer.setData('application/json', JSON.stringify({ key: item.key, name: item.name, isFolder: item.isFolder, fileType: item.fileType }));
                           e.dataTransfer.effectAllowed = 'copyLink';
                         }}
-                        onClick={(e) => handleItemClick(item.key, idx, e)}
+                        onDragEnd={() => {
+                          isDraggingRef.current = false;
+                        }}
+                        onDragOver={item.isFolder ? (e) => handleFolderDragOver(e, item.key) : undefined}
+                        onDragLeave={item.isFolder ? (e) => handleFolderDragLeave(e, item.key) : undefined}
+                        onDrop={item.isFolder ? (e) => handleFolderDrop(e, item.key) : undefined}
+                        onClick={(e) => {
+                          // 如果刚刚完成拖拽，不触发点击
+                          if (isDraggingRef.current) return;
+                          handleItemClick(item.key, idx, e);
+                        }}
                         onDoubleClick={() => handleDoubleClick(item)}
                       >
                         {/* 展开三角（详情视图专用） */}

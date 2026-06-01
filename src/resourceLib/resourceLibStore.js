@@ -303,6 +303,32 @@ export function deleteItem(data, scope, key) {
   return next;
 }
 
+// 移动项目到目标文件夹
+export function moveItem(data, scope, itemKey, targetFolderKey) {
+  const list = getLibraryList(data, scope);
+  const item = list.find((r) => r.key === itemKey);
+  if (!item) return data;
+  
+  // 防止将文件夹移动到自身或自身的子文件夹中
+  if (item.isFolder && targetFolderKey) {
+    const isDescendant = (parentKey, targetKey) => {
+      if (parentKey === targetKey) return true;
+      const parent = list.find((r) => r.key === parentKey);
+      if (!parent || !parent.parentKey) return false;
+      return isDescendant(parent.parentKey, targetKey);
+    };
+    if (isDescendant(targetFolderKey, itemKey)) {
+      return data; // 不允许移动到自己的子文件夹中
+    }
+  }
+  
+  const next = setLibraryList(data, scope, list.map((r) => 
+    r.key === itemKey ? { ...r, parentKey: targetFolderKey, lastEdit: now() } : r
+  ));
+  saveResourceLib(next);
+  return next;
+}
+
 // 设置当前选中文件夹（按 libraryId 存）
 export function setSelectedFolder(data, scope, folderKey) {
   const libId = getLibraryId(data, scope);

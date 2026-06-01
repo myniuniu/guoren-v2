@@ -71,7 +71,8 @@
 }
 
 .finder-sidebar-fav-more {
-  display: none;
+  visibility: hidden;
+  opacity: 0;
   margin-left: auto;
   font-size: 12px;
   color: #666;
@@ -82,11 +83,13 @@
   text-align: center;
   border-radius: 3px;
   flex-shrink: 0;
+  transition: opacity 0.12s;
 }
 
 .finder-sidebar-item:hover .finder-sidebar-fav-more,
 .finder-sidebar-fav-more.ant-dropdown-open {
-  display: block;
+  visibility: visible;
+  opacity: 1;
 }
 
 .finder-sidebar-fav-more:hover {
@@ -481,6 +484,17 @@
   color: rgba(255, 255, 255, 0.7);
 }
 
+/* 拖放目标高亮 */
+.finder-file-row-dragover {
+  background: rgba(0, 122, 255, 0.15) !important;
+  outline: 2px dashed #007aff;
+  outline-offset: -2px;
+}
+
+.finder-file-row-dragover.finder-file-row-selected {
+  background: rgba(0, 122, 255, 0.3) !important;
+}
+
 .finder-file-icon {
   width: 20px;
   height: 20px;
@@ -501,20 +515,25 @@
   text-overflow: ellipsis;
 }
 
-/* 详情视图行 hover 操作区（贴在名称列右侧边汿） */
+/* 详情视图行 hover 操作区（贴在名称列右侧边界） */
 .finder-file-row-actions {
-  display: none;
+  visibility: hidden;
+  opacity: 0;
+  display: inline-flex;
   align-items: center;
   gap: 2px;
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
   padding: 0 4px;
-  pointer-events: auto;
+  pointer-events: none;
   z-index: 2;
+  transition: opacity 0.12s;
 }
 .finder-file-row:hover .finder-file-row-actions {
-  display: inline-flex;
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
 }
 .finder-file-row-selected .finder-file-row-actions .finder-column-action-btn {
   color: rgba(255,255,255,0.85);
@@ -966,19 +985,27 @@
 
 /* 行内 hover 操作按钮 */
 .finder-column-item-actions {
-  display: none;
+  visibility: hidden;
+  opacity: 0;
+  display: flex;
   align-items: center;
   gap: 2px;
   flex-shrink: 0;
   margin-left: auto;
+  pointer-events: none;
+  transition: opacity 0.12s;
 }
 
 .finder-column-item:hover .finder-column-item-actions {
-  display: flex;
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .finder-column-item-active .finder-column-item-actions {
-  display: flex;
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .finder-column-action-btn {
@@ -1007,6 +1034,17 @@
 .finder-column-item-active .finder-column-action-btn:hover {
   background: rgba(255, 255, 255, 0.2);
   color: #fff;
+}
+
+/* 分栏视图拖放目标高亮 */
+.finder-column-item-dragover {
+  background: rgba(0, 122, 255, 0.2) !important;
+  outline: 2px dashed #007aff;
+  outline-offset: -2px;
+}
+
+.finder-column-item-dragover.finder-column-item-active {
+  background: rgba(0, 122, 255, 0.4) !important;
 }
 
 /* 分栏视图内的预览区域（紧跟最后一列，填满剩余空间） */
