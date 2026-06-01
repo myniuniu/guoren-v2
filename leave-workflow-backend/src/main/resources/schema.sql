@@ -176,3 +176,79 @@ CREATE TABLE IF NOT EXISTS process_config_version (
 CREATE INDEX IF NOT EXISTS idx_proc_cfg_key     ON process_config(process_key);
 CREATE INDEX IF NOT EXISTS idx_proc_cfg_ver_key  ON process_config_version(process_key, version);
 CREATE INDEX IF NOT EXISTS idx_proc_cfg_ver_dep  ON process_config_version(flowable_deployment_id);
+
+-- ============================================================
+-- DMS 文档管理：分类 + 文档（v1 骨架，版本/审批留至下一轮）
+-- ============================================================
+
+-- DMS 分类（树形，本轮仅建表，前端暂不展开管理 UI）
+CREATE TABLE IF NOT EXISTS dms_category (
+  id           VARCHAR(36) PRIMARY KEY,
+  parent_id    VARCHAR(36),
+  name         VARCHAR(128) NOT NULL,
+  sort_no      INT DEFAULT 0,
+  create_time  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  deleted      TINYINT DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_dms_cat_parent ON dms_category(parent_id);
+
+-- DMS 文档主表（本轮：单文件 + 直存 url；下一轮再拆 dms_document_version）
+CREATE TABLE IF NOT EXISTS dms_document (
+  id            VARCHAR(36) PRIMARY KEY,
+  doc_no        VARCHAR(64),
+  title         VARCHAR(256) NOT NULL,
+  category_id   VARCHAR(36),
+  doc_type      VARCHAR(32),
+  tags          VARCHAR(512),
+  description   VARCHAR(1024),
+  file_url      CLOB,
+  file_name     VARCHAR(256),
+  file_size     BIGINT,
+  mime          VARCHAR(64),
+  status        VARCHAR(16) DEFAULT 'DRAFT',
+  latest_version INT DEFAULT 1,
+  process_instance_id VARCHAR(64),
+  create_by     VARCHAR(64),
+  create_dept   VARCHAR(64),
+  create_time   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  update_time   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  deleted       TINYINT DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_dms_doc_no    ON dms_document(doc_no);
+CREATE INDEX IF NOT EXISTS idx_dms_doc_cat   ON dms_document(category_id);
+CREATE INDEX IF NOT EXISTS idx_dms_doc_type  ON dms_document(doc_type);
+CREATE INDEX IF NOT EXISTS idx_dms_doc_stat  ON dms_document(status);
+
+-- v2: DMS 文档版本快照
+CREATE TABLE IF NOT EXISTS dms_document_version (
+  id           VARCHAR(36) PRIMARY KEY,
+  document_id  VARCHAR(36) NOT NULL,
+  version_no   INT NOT NULL,
+  file_url     CLOB,
+  file_name    VARCHAR(256),
+  file_size    BIGINT,
+  mime         VARCHAR(64),
+  change_log   VARCHAR(512),
+  create_by    VARCHAR(64),
+  create_time  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_dms_doc_ver_doc ON dms_document_version(document_id);
+
+-- v2: DMS 标签字典
+CREATE TABLE IF NOT EXISTS dms_tag (
+  id           VARCHAR(36) PRIMARY KEY,
+  name         VARCHAR(64) NOT NULL,
+  color        VARCHAR(16),
+  usage_count  INT DEFAULT 0,
+  create_time  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  deleted      TINYINT DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_dms_tag_name ON dms_tag(name);
+
+-- v2: DMS 文档-标签关联
+CREATE TABLE IF NOT EXISTS dms_doc_tag (
+  document_id  VARCHAR(36) NOT NULL,
+  tag_id       VARCHAR(36) NOT NULL,
+  PRIMARY KEY (document_id, tag_id)
+);
+CREATE INDEX IF NOT EXISTS idx_dms_doc_tag_tag ON dms_doc_tag(tag_id);

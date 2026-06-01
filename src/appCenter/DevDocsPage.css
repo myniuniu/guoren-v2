@@ -1,0 +1,499 @@
+.dd-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  background: #fff;
+  overflow: hidden;
+}
+
+/* ====== 顶部主导航 ====== */
+.dd-topbar {
+  flex-shrink: 0;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  border-bottom: 1px solid #eef0f3;
+  background: #fff;
+  z-index: 5;
+}
+
+.dd-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+}
+
+.dd-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dd-logo-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2329;
+  letter-spacing: 0.5px;
+}
+
+.dd-topnav {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  height: 56px;
+}
+
+.dd-topnav-item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+  font-size: 14px;
+  color: #4e5969;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.dd-topnav-item:hover {
+  color: #3b5cff;
+}
+
+.dd-topnav-item-active {
+  color: #1f2329;
+  font-weight: 600;
+}
+
+.dd-topnav-item-active::after {
+  content: '';
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #3b5cff;
+  border-radius: 2px;
+}
+
+.dd-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.dd-topbar-search {
+  width: 320px;
+}
+
+.dd-topbar-search.ant-input-affix-wrapper {
+  border-radius: 6px;
+  background: #f3f5f8;
+  border: 1px solid transparent;
+}
+
+.dd-portal-btn {
+  background: #3b5cff !important;
+  border-color: #3b5cff !important;
+  font-size: 13px;
+}
+
+.dd-icon-btn {
+  font-size: 18px;
+  color: #4e5969;
+  cursor: pointer;
+}
+
+.dd-icon-btn:hover {
+  color: #3b5cff;
+}
+
+.dd-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff8a3b, #c41e1e);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ====== 二级导航 ====== */
+.dd-subbar {
+  flex-shrink: 0;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  border-bottom: 1px solid #eef0f3;
+  background: #fff;
+}
+
+.dd-subnav {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.dd-subnav-item {
+  font-size: 13px;
+  color: #4e5969;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.dd-subnav-item:hover {
+  color: #3b5cff;
+}
+
+.dd-subnav-item-active {
+  color: #3b5cff;
+  background: #ecf0ff;
+  font-weight: 500;
+}
+
+.dd-subbar-right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.dd-subbar-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #4e5969;
+  cursor: pointer;
+}
+
+.dd-subbar-action:hover {
+  color: #3b5cff;
+}
+
+/* ====== 滚动区 ====== */
+.dd-scroll {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* ====== Hero ====== */
+.dd-hero {
+  position: relative;
+  padding: 40px 48px 56px;
+  overflow: hidden;
+}
+
+.dd-hero-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 600px 300px at 95% 50%, rgba(160, 130, 255, 0.32) 0%, transparent 60%),
+    radial-gradient(ellipse 500px 280px at 85% 30%, rgba(200, 175, 255, 0.28) 0%, transparent 60%),
+    radial-gradient(ellipse 700px 320px at 0% 60%, rgba(180, 200, 255, 0.22) 0%, transparent 65%),
+    linear-gradient(180deg, #f7f5ff 0%, #fbfaff 100%);
+  z-index: 0;
+}
+
+.dd-hero-title {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  font-size: 30px;
+  font-weight: 700;
+  color: #1f2329;
+  margin: 0 0 28px;
+  letter-spacing: 1px;
+}
+
+.dd-hero-search {
+  position: relative;
+  z-index: 1;
+  max-width: 640px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 8px;
+  padding: 6px 6px 6px 16px;
+  box-shadow: 0 4px 16px rgba(40, 40, 120, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 52px;
+}
+
+.dd-hero-search-icon {
+  color: #86909c;
+  font-size: 16px;
+}
+
+.dd-hero-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  height: 36px;
+}
+
+.dd-hero-search-btn {
+  height: 40px !important;
+  width: 60px;
+  border: none !important;
+  border-radius: 6px !important;
+  background: linear-gradient(135deg, #6a3bff 0%, #3b5cff 100%) !important;
+  font-size: 18px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dd-hero-card {
+  position: relative;
+  z-index: 1;
+  max-width: 640px;
+  margin: 18px auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dd-hero-tip {
+  font-size: 13px;
+  color: #4e5969;
+}
+
+.dd-hero-tip-sub {
+  margin-top: 6px;
+}
+
+.dd-tip-link {
+  color: #6a3bff;
+  cursor: pointer;
+}
+
+.dd-tip-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.dd-tip-item {
+  background: #fff;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #1f2329;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #eef0f3;
+  transition: all 0.2s;
+}
+
+.dd-tip-item:hover {
+  border-color: #c5b8ff;
+  background: #fafaff;
+}
+
+.dd-tip-emoji {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.dd-tip-text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dd-tip-row {
+  display: flex;
+  gap: 10px;
+}
+
+.dd-tip-error {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid #eef0f3;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #4e5969;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dd-tip-error:hover {
+  border-color: #c5b8ff;
+  background: #fafaff;
+}
+
+/* ====== 新手入门 ====== */
+.dd-novice {
+  padding: 40px 48px 0;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.dd-novice-title {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  color: #1f2329;
+  margin: 0 0 36px;
+  letter-spacing: 1px;
+}
+
+.dd-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.dd-step {
+  display: flex;
+  align-items: stretch;
+  gap: 20px;
+}
+
+.dd-step-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 32px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.dd-step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #d9dce0;
+  color: #86909c;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dd-step-line {
+  flex: 1;
+  width: 1px;
+  background: #d9dce0;
+  margin: 6px 0 0;
+}
+
+.dd-step-body {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: 28px;
+}
+
+.dd-step-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2329;
+  margin: 0 0 16px;
+}
+
+.dd-step-cards {
+  display: grid;
+  gap: 16px;
+}
+
+.dd-step-cards-1 {
+  grid-template-columns: 1fr;
+  max-width: 100%;
+}
+
+.dd-step-cards-2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.dd-step-cards-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.dd-step-cards-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 1200px) {
+  .dd-step-cards-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.dd-step-card {
+  background: #f7f8fa;
+  border-radius: 8px;
+  padding: 18px 20px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 96px;
+}
+
+.dd-step-card:hover {
+  background: #fff;
+  border-color: #d9dce0;
+  box-shadow: 0 4px 14px rgba(40, 40, 120, 0.06);
+  transform: translateY(-1px);
+}
+
+.dd-step-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.dd-step-card-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2329;
+}
+
+.dd-step-card-tag {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-weight: 500;
+}
+
+.dd-tag-blue {
+  background: #eaf3ff;
+  color: #3b5cff;
+}
+
+.dd-tag-green {
+  background: #e3f7ee;
+  color: #14a07a;
+}
+
+.dd-tag-orange {
+  background: #fff1e0;
+  color: #ff8a3b;
+}
+
+.dd-step-card-desc {
+  font-size: 13px;
+  color: #86909c;
+  line-height: 1.7;
+}
+
+.dd-bottom-space {
+  height: 80px;
+}

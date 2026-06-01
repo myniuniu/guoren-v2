@@ -457,6 +457,7 @@
   cursor: default;
   transition: background 0.08s;
   user-select: none;
+  position: relative;
 }
 
 .finder-file-row:hover {
@@ -498,6 +499,53 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* 详情视图行 hover 操作区（贴在名称列右侧边汿） */
+.finder-file-row-actions {
+  display: none;
+  align-items: center;
+  gap: 2px;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0 4px;
+  pointer-events: auto;
+  z-index: 2;
+}
+.finder-file-row:hover .finder-file-row-actions {
+  display: inline-flex;
+}
+.finder-file-row-selected .finder-file-row-actions .finder-column-action-btn {
+  color: rgba(255,255,255,0.85);
+}
+.finder-file-row-selected .finder-file-row-actions .finder-column-action-btn:hover {
+  background: rgba(255,255,255,0.18);
+  color: #fff;
+}
+
+/* 详情视图展开三角 */
+.finder-detail-expand-icon {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #86868b;
+  cursor: pointer;
+  border-radius: 3px;
+  margin-right: 2px;
+  transition: background 0.1s;
+}
+.finder-detail-expand-icon:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+.finder-file-row-selected .finder-detail-expand-icon {
+  color: rgba(255, 255, 255, 0.9);
+}
+.finder-file-row-selected .finder-detail-expand-icon:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .finder-file-tags {
@@ -609,7 +657,13 @@
 /* Detail mode row overrides */
 .finder-file-row .finder-detail-col-date,
 .finder-file-row .finder-detail-col-size,
-.finder-file-row .finder-detail-col-kind {
+.finder-file-row .finder-detail-col-kind,
+.finder-file-row .finder-detail-col-createdAt,
+.finder-file-row .finder-detail-col-lastOpenedAt,
+.finder-file-row .finder-detail-col-addedAt,
+.finder-file-row .finder-detail-col-version,
+.finder-file-row .finder-detail-col-comment,
+.finder-file-row .finder-detail-col-tags {
   font-size: 12px;
   color: #86868b;
   white-space: nowrap;
@@ -620,8 +674,24 @@
 
 .finder-file-row-selected .finder-detail-col-date,
 .finder-file-row-selected .finder-detail-col-size,
-.finder-file-row-selected .finder-detail-col-kind {
+.finder-file-row-selected .finder-detail-col-kind,
+.finder-file-row-selected .finder-detail-col-createdAt,
+.finder-file-row-selected .finder-detail-col-lastOpenedAt,
+.finder-file-row-selected .finder-detail-col-addedAt,
+.finder-file-row-selected .finder-detail-col-version,
+.finder-file-row-selected .finder-detail-col-comment,
+.finder-file-row-selected .finder-detail-col-tags {
   color: rgba(255, 255, 255, 0.7);
+}
+
+/* 新增可选列的表头默认样式 */
+.finder-detail-col-createdAt,
+.finder-detail-col-lastOpenedAt,
+.finder-detail-col-addedAt,
+.finder-detail-col-version,
+.finder-detail-col-comment,
+.finder-detail-col-tags {
+  text-align: left;
 }
 
 /* ====== Right Preview Panel (右侧预览面板) ====== */

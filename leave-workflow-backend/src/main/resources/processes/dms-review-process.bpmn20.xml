@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             typeLanguage="http://www.w3.org/2001/XMLSchema"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://www.guoren.com/workflow">
+
+    <process id="dmsReviewProcess" name="DMS文档审批流程" isExecutable="true">
+
+        <startEvent id="startEvent" name="提交文档"/>
+
+        <userTask id="submitTask" name="填写文档信息" flowable:assignee="${applicant}"/>
+
+        <userTask id="managerApproval" name="主管审批" flowable:candidateGroups="managers"/>
+
+        <exclusiveGateway id="managerDecision" name="主管审批结果"/>
+
+        <endEvent id="endApproved" name="审批通过"/>
+
+        <endEvent id="endRejected" name="审批拒绝"/>
+
+        <sequenceFlow id="flow1" sourceRef="startEvent" targetRef="submitTask"/>
+        <sequenceFlow id="flow2" sourceRef="submitTask" targetRef="managerApproval"/>
+        <sequenceFlow id="flow3" sourceRef="managerApproval" targetRef="managerDecision"/>
+        <sequenceFlow id="flow4" name="同意" sourceRef="managerDecision" targetRef="endApproved">
+            <conditionExpression xsi:type="tFormalExpression">
+                <![CDATA[${approved == true}]]>
+            </conditionExpression>
+        </sequenceFlow>
+        <sequenceFlow id="flow5" name="拒绝" sourceRef="managerDecision" targetRef="endRejected">
+            <conditionExpression xsi:type="tFormalExpression">
+                <![CDATA[${approved == false}]]>
+            </conditionExpression>
+        </sequenceFlow>
+
+    </process>
+
+    <bpmndi:BPMNDiagram id="BPMNDiagram_dmsReviewProcess">
+        <bpmndi:BPMNPlane bpmnElement="dmsReviewProcess" id="BPMNPlane_dmsReviewProcess">
+            <bpmndi:BPMNShape bpmnElement="startEvent" id="BPMNShape_startEvent">
+                <omgdc:Bounds height="30" width="30" x="100" y="165"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="submitTask" id="BPMNShape_submitTask">
+                <omgdc:Bounds height="60" width="120" x="180" y="150"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="managerApproval" id="BPMNShape_managerApproval">
+                <omgdc:Bounds height="60" width="120" x="350" y="150"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="managerDecision" id="BPMNShape_managerDecision">
+                <omgdc:Bounds height="40" width="40" x="520" y="160"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="endApproved" id="BPMNShape_endApproved">
+                <omgdc:Bounds height="28" width="28" x="610" y="166"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="endRejected" id="BPMNShape_endRejected">
+                <omgdc:Bounds height="28" width="28" x="540" y="280"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="flow1" id="BPMNEdge_flow1">
+                <omgdi:waypoint x="130" y="180"/>
+                <omgdi:waypoint x="180" y="180"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="flow2" id="BPMNEdge_flow2">
+                <omgdi:waypoint x="300" y="180"/>
+                <omgdi:waypoint x="350" y="180"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="flow3" id="BPMNEdge_flow3">
+                <omgdi:waypoint x="470" y="180"/>
+                <omgdi:waypoint x="520" y="180"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="flow4" id="BPMNEdge_flow4">
+                <omgdi:waypoint x="560" y="180"/>
+                <omgdi:waypoint x="610" y="180"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="flow5" id="BPMNEdge_flow5">
+                <omgdi:waypoint x="540" y="200"/>
+                <omgdi:waypoint x="540" y="280"/>
+            </bpmndi:BPMNEdge>
+        </bpmndi:BPMNPlane>
+    </bpmndi:BPMNDiagram>
+
+</definitions>

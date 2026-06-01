@@ -1,0 +1,762 @@
+.db-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  background: #fff;
+  overflow: hidden;
+}
+
+/* ====== 顶部导航 ====== */
+.db-topbar {
+  flex-shrink: 0;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  border-bottom: 1px solid #eef0f3;
+  background: #fff;
+  z-index: 5;
+}
+
+.db-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+}
+
+.db-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.db-logo-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2329;
+  letter-spacing: 0.5px;
+}
+
+.db-topnav {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  height: 56px;
+}
+
+.db-topnav-item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+  font-size: 14px;
+  color: #4e5969;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.db-topnav-item:hover {
+  color: #3b5cff;
+}
+
+.db-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.db-topbar-search {
+  width: 320px;
+}
+
+.db-topbar-search.ant-input-affix-wrapper {
+  border-radius: 6px;
+  background: #f3f5f8;
+  border: 1px solid transparent;
+}
+
+.db-portal-btn {
+  background: #3b5cff !important;
+  border-color: #3b5cff !important;
+  font-size: 13px;
+  border-radius: 6px;
+}
+
+.db-icon-btn {
+  font-size: 18px;
+  color: #4e5969;
+  cursor: pointer;
+}
+
+.db-icon-btn:hover {
+  color: #3b5cff;
+}
+
+.db-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff8a3b, #c41e1e);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ====== 滚动区 ====== */
+.db-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 48px;
+}
+
+/* ====== Hero 区域 ====== */
+.db-hero {
+  margin: 32px auto 0;
+  max-width: 1100px;
+}
+
+.db-hero-inner {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: linear-gradient(135deg, #eef2ff 0%, #f8f0ff 50%, #fff5f0 100%);
+  border-radius: 16px;
+  padding: 28px 36px;
+  position: relative;
+  overflow: hidden;
+}
+
+.db-hero-avatar {
+  flex-shrink: 0;
+}
+
+.db-hero-avatar-img {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #a78bfa, #7c3aed);
+  opacity: 0.9;
+}
+
+.db-hero-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.db-hero-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1f2329;
+  margin: 0 0 8px;
+}
+
+.db-hero-highlight {
+  color: #7c3aed;
+}
+
+.db-hero-desc {
+  font-size: 13px;
+  color: #4e5969;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.db-hero-btn {
+  flex-shrink: 0;
+  height: 36px;
+  border-radius: 18px;
+  background: #1f2329 !important;
+  border-color: #1f2329 !important;
+  font-size: 14px;
+  padding: 0 24px;
+}
+
+/* ====== Tabs ====== */
+.db-tabs-wrapper {
+  max-width: 1100px;
+  margin: 32px auto 0;
+}
+
+.db-tabs {
+  display: flex;
+  gap: 32px;
+  border-bottom: 1px solid #eef0f3;
+  padding-bottom: 0;
+}
+
+.db-tab {
+  position: relative;
+  font-size: 16px;
+  font-weight: 500;
+  color: #86909c;
+  cursor: pointer;
+  padding-bottom: 12px;
+  transition: color 0.2s;
+}
+
+.db-tab:hover {
+  color: #1f2329;
+}
+
+.db-tab-active {
+  color: #1f2329;
+  font-weight: 600;
+}
+
+.db-tab-active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #1d75e8;
+  border-radius: 2px;
+}
+
+/* ====== 工具栏 ====== */
+.db-toolbar {
+  max-width: 1100px;
+  margin: 20px auto 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.db-create-btn {
+  background: #1d75e8 !important;
+  border-color: #1d75e8 !important;
+  border-radius: 6px;
+  font-size: 13px;
+  height: 32px;
+}
+
+.db-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.db-search-input {
+  width: 220px;
+}
+
+.db-search-input.ant-input-affix-wrapper {
+  border-radius: 6px;
+  height: 32px;
+}
+
+.db-toolbar-icon-btn {
+  border-radius: 6px;
+  height: 32px;
+  width: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.db-view-toggle {
+  display: flex;
+  align-items: center;
+  border: 1px solid #d9dce0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.db-view-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 30px;
+  cursor: pointer;
+  color: #86909c;
+  transition: all 0.2s;
+}
+
+.db-view-btn:first-child {
+  border-right: 1px solid #d9dce0;
+}
+
+.db-view-btn-active {
+  color: #1d75e8;
+  background: #eaf3ff;
+}
+
+.db-view-btn:hover {
+  color: #1d75e8;
+}
+
+/* ====== 提示条 ====== */
+.db-notice {
+  max-width: 1100px;
+  margin: 16px auto 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #f0f5ff;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #4e5969;
+}
+
+.db-notice-icon {
+  color: #1d75e8;
+  flex-shrink: 0;
+}
+
+.db-notice-link {
+  color: #1d75e8;
+  cursor: pointer;
+}
+
+.db-notice-link:hover {
+  text-decoration: underline;
+}
+
+/* ====== 应用卡片网格 ====== */
+.db-app-grid {
+  max-width: 1100px;
+  margin: 20px auto 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .db-app-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.db-app-card {
+  background: #fff;
+  border: 1px solid #eef0f3;
+  border-radius: 12px;
+  padding: 20px 24px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.db-app-card:hover {
+  border-color: #d4dff0;
+  box-shadow: 0 4px 16px rgba(20, 60, 120, 0.06);
+}
+
+.db-app-card-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.db-app-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.db-app-avatar-emoji {
+  font-size: 22px;
+}
+
+.db-app-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.db-app-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.db-app-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2329;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.db-app-status {
+  font-size: 11px;
+  border-radius: 4px;
+  padding: 1px 8px;
+  margin: 0;
+  background: #e8f7f0;
+  color: #14a07a;
+  border: none;
+  line-height: 20px;
+}
+
+.db-app-status-draft {
+  background: #fff1e0;
+  color: #ff8a3b;
+}
+
+.db-app-meta {
+  font-size: 12px;
+  color: #86909c;
+}
+
+.db-app-owner {
+  color: #1d75e8;
+  cursor: pointer;
+}
+
+.db-app-meta-sep {
+  margin: 0 6px;
+  color: #d9dce0;
+}
+
+.db-app-date {
+  font-size: 12px;
+  color: #b8c0cc;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #f3f5f8;
+}
+
+/* ====== 我的开发之旅 ====== */
+.db-journey {
+  max-width: 1100px;
+  margin: 48px auto 0;
+  padding: 36px 0;
+  border-top: 1px solid #eef0f3;
+}
+
+.db-journey-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2329;
+  margin: 0 0 24px;
+}
+
+.db-journey-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  position: relative;
+}
+
+@media (max-width: 900px) {
+  .db-journey-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.db-journey-step {
+  background: #f7f8fa;
+  border-radius: 12px;
+  padding: 24px;
+  position: relative;
+}
+
+.db-journey-step-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.db-journey-step-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2329;
+  margin: 0;
+}
+
+.db-journey-step-num {
+  font-size: 28px;
+  font-weight: 700;
+  color: #eef0f3;
+  font-style: italic;
+}
+
+.db-journey-step-desc {
+  font-size: 13px;
+  color: #86909c;
+  margin: 0 0 16px;
+}
+
+.db-journey-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.db-journey-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1px solid #eef0f3;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  color: #4e5969;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.db-journey-link:hover {
+  border-color: #c5d8ff;
+  color: #1d75e8;
+  background: #f8fbff;
+}
+
+.db-journey-link-icon {
+  font-size: 14px;
+}
+
+.db-journey-arrow {
+  position: absolute;
+  right: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 22px;
+  color: #d9dce0;
+  font-weight: 700;
+  z-index: 1;
+}
+
+/* ====== 底部间距 ====== */
+.db-bottom-space {
+  height: 80px;
+}
+
+/* ====== 创建应用弹窗 ====== */
+.db-create-modal .ant-modal-content {
+  padding: 28px 32px;
+  border-radius: 12px;
+}
+
+.db-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.db-modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2329;
+  margin: 0;
+}
+
+.db-modal-close {
+  font-size: 16px;
+  color: #86909c;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.db-modal-close:hover {
+  color: #4e5969;
+  background: #f3f5f8;
+}
+
+.db-modal-notice {
+  font-size: 13px;
+  color: #ff5b3b;
+  margin: 0 0 24px;
+  line-height: 1.6;
+}
+
+.db-modal-link {
+  color: #1d75e8;
+  cursor: pointer;
+}
+
+.db-modal-link:hover {
+  text-decoration: underline;
+}
+
+.db-modal-field {
+  margin-bottom: 20px;
+}
+
+.db-modal-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1f2329;
+  margin-bottom: 8px;
+}
+
+.db-modal-required {
+  color: #ff4d4f;
+  margin-left: 2px;
+}
+
+.db-modal-input-wrap {
+  position: relative;
+}
+
+.db-modal-input {
+  width: 100%;
+}
+
+.db-modal-textarea {
+  width: 100%;
+  resize: vertical;
+}
+
+.db-modal-counter {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: #b8c0cc;
+  pointer-events: none;
+}
+
+.db-modal-counter-area {
+  top: auto;
+  bottom: 10px;
+  transform: none;
+}
+
+.db-modal-hint {
+  font-size: 12px;
+  color: #86909c;
+  margin: 0 0 12px;
+}
+
+.db-modal-icon-section {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.db-modal-icon-preview-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.db-modal-icon-preview {
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 28px;
+}
+
+.db-modal-upload-btn {
+  font-size: 12px;
+  border-radius: 4px;
+}
+
+.db-modal-icon-config {
+  flex: 1;
+  min-width: 0;
+}
+
+.db-modal-config-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2329;
+  margin-bottom: 10px;
+}
+
+.db-modal-config-label:not(:first-child) {
+  margin-top: 16px;
+}
+
+.db-modal-color-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.db-modal-color-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
+  transition: transform 0.15s, box-shadow 0.15s;
+  border: 2px solid transparent;
+}
+
+.db-modal-color-dot:hover {
+  transform: scale(1.1);
+}
+
+.db-modal-color-dot-active {
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px currentColor;
+  border-color: transparent;
+}
+
+.db-modal-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 32px);
+  gap: 8px;
+}
+
+.db-modal-icon-item {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: #f3f5f8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #4e5969;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.db-modal-icon-item:hover {
+  background: #e8ebf0;
+  color: #1f2329;
+}
+
+.db-modal-icon-item-active {
+  background: #eaf3ff;
+  color: #1d75e8;
+  box-shadow: 0 0 0 2px #1d75e8;
+}
+
+.db-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid #eef0f3;
+}
+
+.db-modal-footer .ant-btn-primary {
+  min-width: 72px;
+  border-radius: 6px;
+}
+
+.db-modal-footer .ant-btn-default {
+  min-width: 72px;
+  border-radius: 6px;
+}

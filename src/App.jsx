@@ -33,6 +33,7 @@ import {
   LayoutOutlined,
   TagsOutlined,
   ScanOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import TopicDetail from './TopicDetail';
 import LeaveWorkflow from './workflow/LeaveWorkflow';
@@ -52,6 +53,10 @@ import OnlineDevModule from './onlineDev/OnlineDevModule';
 import QuickBuildModule from './quickBuild/QuickBuildModule';
 import PageDesignerModule from './pageDesigner/PageDesignerModule';
 import TagManagement from './resourceLib/TagManagement';
+import AppCenterModule from './appCenter/AppCenterModule';
+import DevDocsPage from './appCenter/DevDocsPage';
+import DevBackendPage from './appCenter/DevBackendPage';
+import DmsModule from './dms/DmsModule';
 import './App.css';
 
 const { Sider, Header, Content } = Layout;
@@ -139,7 +144,9 @@ const iconBarItems = [
   { key: 'online-dev', icon: <CodeOutlined />, label: '在线开发' },
   { key: 'quick-build', icon: <ThunderboltOutlined />, label: '智搭' },
   { key: 'page-designer', icon: <LayoutOutlined />, label: '页面设计' },
-  { key: 'tag-management', icon: <TagsOutlined />, label: '标签管理' }
+  { key: 'tag-management', icon: <TagsOutlined />, label: '标签管理' },
+  { key: 'app-center', icon: <AppstoreOutlined />, label: '应用中心' },
+  { key: 'dms', icon: <FileTextOutlined />, label: '文档管理' }
 ];
 
 function App() {
@@ -203,6 +210,10 @@ function App() {
       setCurrentPage('page-designer');
     } else if (key === 'tag-management') {
       setCurrentPage('tag-management');
+    } else if (key === 'app-center') {
+      setCurrentPage('app-center');
+    } else if (key === 'dms') {
+      setCurrentPage('dms');
     } else if (
       currentPage === 'workflow' ||
       currentPage === 'process-management' ||
@@ -220,11 +231,23 @@ function App() {
       currentPage === 'online-dev' ||
       currentPage === 'quick-build' ||
       currentPage === 'page-designer' ||
-      currentPage === 'tag-management'
+      currentPage === 'tag-management' ||
+      currentPage === 'app-center' ||
+      currentPage === 'dms'
     ) {
       setCurrentPage('home');
     }
   };
+
+  // 开发者文档页面（独立全屏，不带侧边图标栏）
+  if (currentPage === 'dev-docs') {
+    return <DevDocsPage />;
+  }
+
+  // 开发者后台页面（独立全屏）
+  if (currentPage === 'dev-backend') {
+    return <DevBackendPage />;
+  }
 
   return (
     <Layout className="app-layout">
@@ -284,6 +307,10 @@ function App() {
         <PageDesignerModule />
       ) : currentPage === 'tag-management' ? (
         <TagManagement />
+      ) : currentPage === 'app-center' ? (
+        <AppCenterModule />
+      ) : currentPage === 'dms' ? (
+        <DmsModule />
       ) : currentPage === 'home' ? (
         <>
           {/* Scene Sidebar */}

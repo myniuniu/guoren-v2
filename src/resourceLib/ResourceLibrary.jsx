@@ -6,17 +6,18 @@ import {
 import {
   PlusOutlined, SearchOutlined,
   LeftOutlined, RightOutlined,
-  UnorderedListOutlined, ProfileOutlined,
+  UnorderedListOutlined,
   FolderAddOutlined, FileAddOutlined,
   EditOutlined, DeleteOutlined,
   FolderFilled, DesktopOutlined,
   DownloadOutlined, ClockCircleOutlined,
   CloudOutlined, ShareAltOutlined, GlobalOutlined,
   ExportOutlined, HighlightOutlined, SmileOutlined,
-  CaretDownOutlined, MoreOutlined,
+  CaretDownOutlined, MoreOutlined, CaretRightOutlined,
   FileTextOutlined, FilePdfOutlined, FileImageOutlined,
   PlayCircleOutlined, SoundOutlined, TagsOutlined,
   FileExcelOutlined, FileWordOutlined, FilePptOutlined,
+  StarOutlined, StarFilled,
 } from '@ant-design/icons';
 import {
   loadResourceLib, addItem, renameItem, deleteItem, setSelectedFolder, inferFileType,
@@ -26,6 +27,7 @@ import {
 } from './resourceLibStore';
 import { renderFileIcon } from './resourceIcons.jsx';
 import { fileApi } from '../api/fileApi';
+import AddResourceDialog from './AddResourceDialog.jsx';
 import './ResourceLibrary.css';
 
 export default function ResourceLibrary() {
@@ -42,6 +44,8 @@ export default function ResourceLibrary() {
   const [newTagColor, setNewTagColor] = useState('#FF3B30');
   const [addTagOpen, setAddTagOpen] = useState(false);
   const [tagPickerTarget, setTagPickerTarget] = useState(null); // 分栏视图中标签管理目标item key
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [addDialogParentKey, setAddDialogParentKey] = useState(null);
   const [favorites, setFavorites] = useState(() => {
     try {
       const initLibId = (data?.currentScope === 'organization' ? (data?.currentOrgId || 'org_default') : 'personal');
@@ -58,17 +62,28 @@ export default function ResourceLibrary() {
   const [tagDropIdx, setTagDropIdx] = useState(null); // 标签拖拽插入位置
   const [navHistory, setNavHistory] = useState([null]); // 导航历史
   const [navIndex, setNavIndex] = useState(0);
-  const [viewMode, setViewMode] = useState('list'); // list | detail | column
+  const [viewMode, setViewMode] = useState('detail'); // detail | column
+  const [expandedFolders, setExpandedFolders] = useState(new Set()); // 详情视图中展开的文件夹 key
   const [sortBy, setSortBy] = useState('name'); // name | kind | date | size | tag
   const [sortOrder, setSortOrder] = useState('asc'); // asc | desc
   // 详情视图各列宽度（可拖拽调整）
-  const [detailColWidths, setDetailColWidths] = useState({ name: 320, date: 120, size: 80, kind: 80 });
+  const [detailColWidths, setDetailColWidths] = useState({
+    name: 320, date: 120, size: 80, kind: 80,
+    createdAt: 140, addedAt: 140, lastOpenedAt: 140, tags: 100, comment: 140, version: 80,
+  });
+  // 详情视图可见列（顺序决定显示顺序）
+  const [visibleCols, setVisibleCols] = useState(['date', 'size', 'kind']);
+  // 名称列是否被拖过：默认 false 时名称列使用 flex:1 占满剩余空间
+  const [nameColResized, setNameColResized] = useState(false);
   const detailColResizeRef = useRef(null);
   const handleDetailColResizeStart = (field, e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (field === 'name') setNameColResized(true);
     const startX = e.clientX;
-    const startWidth = detailColWidths[field];
+    const startWidth = field === 'name' && !nameColResized
+      ? (e.currentTarget?.parentElement?.getBoundingClientRect().width || detailColWidths.name)
+      : detailColWidths[field];
     detailColResizeRef.current = { field, startX, startWidth };
     const onMove = (ev) => {
       if (!detailColResizeRef.current) return;
@@ -143,7 +158,6 @@ export default function ResourceLibrary() {
     const startX = e.clientX;
     const startWidth = previewWidth;
     previewDragRef.current = { startX, startWidth };
-    if (viewMode === 'list') previewListResizedRef.current = true;
     const onMouseMove = (ev) => {
       if (!previewDragRef.current) return;
       const delta = previewDragRef.current.startX - ev.clientX;
@@ -163,11 +177,11 @@ export default function ResourceLibrary() {
     document.addEventListener('mouseup', onMouseUp);
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
-  }, [previewWidth, viewMode]);
+  }, [previewWidth]);
 
-  // 列表视图默认预览区占 70%（用户手动拖过后不再覆盖）
+  // 详情视图预览区默认占 70%（用户手动拖过后不再覆盖）
   useEffect(() => {
-    if (viewMode !== 'list' || previewListResizedRef.current) return;
+    if (viewMode !== 'detail' || previewListResizedRef.current) return;
     const el = contentAreaRef.current;
     if (!el) return;
     const w = el.getBoundingClientRect().width;
@@ -281,6 +295,101 @@ export default function ResourceLibrary() {
     return sorted;
   }, [list, selectedFolderKey, activeTagFilter, keyword, sortBy, sortOrder]);
 
+  // 详情视图递归展开后的表示列表（带 depth 缩进）
+  const displayChildren = useMemo(() => {
+    if (viewMode !== 'detail') return currentChildren.map((it) => ({ ...it, _depth: 0 }));
+    const result = [];
+    const walk = (items, depth) => {
+      // 对同级进行排序（复用上面逻辑）
+      const sorted = [...items].sort((a, b) => {
+        if (a.isFolder && !b.isFolder) return -1;
+        if (!a.isFolder && b.isFolder) return 1;
+        let cmp = 0;
+        switch (sortBy) {
+          case 'name': cmp = (a.name || '').localeCompare(b.name || '', 'zh'); break;
+          case 'kind': cmp = (a.fileType || '').localeCompare(b.fileType || ''); break;
+          case 'date': cmp = (a.lastEdit || '').localeCompare(b.lastEdit || ''); break;
+          case 'size': cmp = (a.size || 0) - (b.size || 0); break;
+          case 'tag': cmp = (a.tags || []).length - (b.tags || []).length; break;
+          default: cmp = 0;
+        }
+        return sortOrder === 'asc' ? cmp : -cmp;
+      });
+      sorted.forEach((it) => {
+        result.push({ ...it, _depth: depth });
+        if (it.isFolder && expandedFolders.has(it.key)) {
+          const childItems = list.filter((r) => r.parentKey === it.key);
+          walk(childItems, depth + 1);
+        }
+      });
+    };
+    walk(currentChildren, 0);
+    return result;
+  }, [viewMode, currentChildren, expandedFolders, list, sortBy, sortOrder]);
+
+  // 详情视图可选列定义（顺序 = 菜单顺序）
+  const COL_DEFS = [
+    { key: 'date', label: '修改日期', sortable: true },
+    { key: 'createdAt', label: '创建日期', sortable: false },
+    { key: 'lastOpenedAt', label: '上次打开日期', sortable: false },
+    { key: 'addedAt', label: '添加日期', sortable: false },
+    { key: 'size', label: '大小', sortable: true },
+    { key: 'kind', label: '种类', sortable: true },
+    { key: 'version', label: '版本', sortable: false },
+    { key: 'comment', label: '注释', sortable: false },
+    { key: 'tags', label: '标签', sortable: false },
+  ];
+  // 渲染某列单元格内容
+  const renderColCell = (colKey, item) => {
+    switch (colKey) {
+      case 'date': return item.lastEdit || '--';
+      case 'createdAt': return item.createdAt || item.lastEdit || '--';
+      case 'lastOpenedAt': return item.lastOpenedAt || '--';
+      case 'addedAt': return item.addedAt || item.lastEdit || '--';
+      case 'size': return item.size ? `${(item.size / 1024).toFixed(1)} KB` : '--';
+      case 'kind': return item.isFolder ? '文件夹' : (item.fileType || '--');
+      case 'version': return item.version || '--';
+      case 'comment': return item.comment || '--';
+      case 'tags': {
+        const tagsArr = (item.tags || []).map((tid) => tagDefs.find((t) => t.id === tid)).filter(Boolean);
+        if (tagsArr.length === 0) return '--';
+        return (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+            {tagsArr.slice(0, 5).map((t) => (
+              <span key={t.id} style={{ width: 8, height: 8, borderRadius: '50%', background: t.color }} />
+            ))}
+          </span>
+        );
+      }
+      default: return '--';
+    }
+  };
+  // 表头右键菜单：列显示设置
+  const colVisibilityMenu = {
+    items: COL_DEFS.map((c) => ({
+      key: c.key,
+      label: (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minWidth: 120 }}>
+          <span style={{ width: 14, display: 'inline-block', textAlign: 'center', color: '#1677ff' }}>
+            {visibleCols.includes(c.key) ? '✓' : ''}
+          </span>
+          {c.label}
+        </span>
+      ),
+    })),
+    onClick: ({ key, domEvent }) => {
+      domEvent.stopPropagation();
+      setVisibleCols((prev) => {
+        if (prev.includes(key)) return prev.filter((k) => k !== key);
+        // 按原始定义顺序插入
+        const next = [...prev, key];
+        return COL_DEFS.map((c) => c.key).filter((k) => next.includes(k));
+      });
+    },
+  };
+  // 可见列总宽（用于计算 actions 位置）
+  const visibleColsTotalWidth = visibleCols.reduce((sum, k) => sum + (detailColWidths[k] || 100), 0);
+
   // 侧栏收藏夹项目（根文件夹）
   const rootFolders = useMemo(
     () => list.filter((r) => r.isFolder && r.parentKey === null && !hiddenSidebarFolders.includes(r.key)),
@@ -387,6 +496,10 @@ export default function ResourceLibrary() {
       }
 
       // 外部拖入（从分栏视图拖入）
+      if (!itemData.isFolder) {
+        message.warning('仅文件夹可添加到收藏');
+        return;
+      }
       if (favorites.some((f) => f.key === itemData.key)) {
         message.info('该项已在收藏中');
         return;
@@ -766,10 +879,6 @@ export default function ResourceLibrary() {
             <span className="finder-sidebar-item-icon" style={{ color: '#8e8e93' }}><ClockCircleOutlined /></span>
             <span className="finder-sidebar-item-label">最近使用</span>
           </div>
-          <div className="finder-sidebar-item" onClick={() => navigateTo(null)}>
-            <span className="finder-sidebar-item-icon" style={{ color: '#34c759' }}><DownloadOutlined /></span>
-            <span className="finder-sidebar-item-label">下载</span>
-          </div>
           {/* 拖拽收藏的快捷方式（可拖动排序） */}
           {favorites.map((fav, idx) => (
             <div key={`fav_${fav.key}`} data-fav-idx={idx}>
@@ -890,16 +999,11 @@ export default function ResourceLibrary() {
               : (currentFolder?.name || (scope === 'personal' ? '全部资料' : '组织资料'))}
           </div>
 
-          {/* 视图切换按钮组：仅保留列表和详情 */}
+          {/* 视图切换按钮组：仅保留详情和分栏 */}
           <div className="finder-toolbar-views">
-            <Tooltip title="列表">
-              <button className={`finder-toolbar-view-btn ${viewMode === 'list' ? 'finder-toolbar-view-btn-active' : ''}`} onClick={() => handleViewModeChange('list')}>
-                <UnorderedListOutlined />
-              </button>
-            </Tooltip>
             <Tooltip title="详情">
               <button className={`finder-toolbar-view-btn ${viewMode === 'detail' ? 'finder-toolbar-view-btn-active' : ''}`} onClick={() => handleViewModeChange('detail')}>
-                <ProfileOutlined />
+                <UnorderedListOutlined />
               </button>
             </Tooltip>
             <Tooltip title="分栏">
@@ -1059,10 +1163,8 @@ export default function ResourceLibrary() {
                             {item.isFolder && (
                               <button className="finder-column-action-btn" onClick={(e) => {
                                 e.stopPropagation();
-                                setData((d) => addItem(d, scope, {
-                                  name: '未命名文件夹', isFolder: true, parentKey: item.key, fileType: 'folder', parseStatus: 'parsed',
-                                }));
-                                message.success('文件夹已创建');
+                                setAddDialogParentKey(item.key);
+                                setAddDialogOpen(true);
                               }}>
                                 <PlusOutlined style={{ fontSize: 11 }} />
                               </button>
@@ -1122,24 +1224,29 @@ export default function ResourceLibrary() {
           <div className="finder-file-list" onContextMenu={handleBgContextMenu}>
               {/* 详情模式表头 */}
               {viewMode === 'detail' && currentChildren.length > 0 && (
-                <div className="finder-detail-header">
-                  <span className={`finder-detail-col-name finder-detail-col-sortable ${sortBy === 'name' ? 'finder-detail-col-active' : ''}`} style={{ width: detailColWidths.name, flex: 'none' }} onClick={() => handleHeaderSort('name')}>
-                    名称{sortBy === 'name' && <span className="finder-detail-col-arrow">{sortOrder === 'asc' ? '▲' : '▼'}</span>}
-                    <span className="finder-detail-col-resize-handle" onMouseDown={(e) => handleDetailColResizeStart('name', e)} onClick={(e) => e.stopPropagation()} />
-                  </span>
-                  <span className={`finder-detail-col-date finder-detail-col-sortable ${sortBy === 'date' ? 'finder-detail-col-active' : ''}`} style={{ width: detailColWidths.date }} onClick={() => handleHeaderSort('date')}>
-                    修改日期{sortBy === 'date' && <span className="finder-detail-col-arrow">{sortOrder === 'asc' ? '▲' : '▼'}</span>}
-                    <span className="finder-detail-col-resize-handle" onMouseDown={(e) => handleDetailColResizeStart('date', e)} onClick={(e) => e.stopPropagation()} />
-                  </span>
-                  <span className={`finder-detail-col-size finder-detail-col-sortable ${sortBy === 'size' ? 'finder-detail-col-active' : ''}`} style={{ width: detailColWidths.size }} onClick={() => handleHeaderSort('size')}>
-                    大小{sortBy === 'size' && <span className="finder-detail-col-arrow">{sortOrder === 'asc' ? '▲' : '▼'}</span>}
-                    <span className="finder-detail-col-resize-handle" onMouseDown={(e) => handleDetailColResizeStart('size', e)} onClick={(e) => e.stopPropagation()} />
-                  </span>
-                  <span className={`finder-detail-col-kind finder-detail-col-sortable ${sortBy === 'kind' ? 'finder-detail-col-active' : ''}`} style={{ width: detailColWidths.kind }} onClick={() => handleHeaderSort('kind')}>
-                    种类{sortBy === 'kind' && <span className="finder-detail-col-arrow">{sortOrder === 'asc' ? '▲' : '▼'}</span>}
-                    <span className="finder-detail-col-resize-handle" onMouseDown={(e) => handleDetailColResizeStart('kind', e)} onClick={(e) => e.stopPropagation()} />
-                  </span>
-                </div>
+                <Dropdown menu={colVisibilityMenu} trigger={['contextMenu']}>
+                  <div className="finder-detail-header">
+                    <span className={`finder-detail-col-name finder-detail-col-sortable ${sortBy === 'name' ? 'finder-detail-col-active' : ''}`} style={nameColResized ? { width: detailColWidths.name, flex: 'none' } : { flex: 1, minWidth: 200 }} onClick={() => handleHeaderSort('name')}>
+                      名称{sortBy === 'name' && <span className="finder-detail-col-arrow">{sortOrder === 'asc' ? '▲' : '▼'}</span>}
+                      <span className="finder-detail-col-resize-handle" onMouseDown={(e) => handleDetailColResizeStart('name', e)} onClick={(e) => e.stopPropagation()} />
+                    </span>
+                    {visibleCols.map((colKey) => {
+                      const def = COL_DEFS.find((c) => c.key === colKey);
+                      if (!def) return null;
+                      return (
+                        <span
+                          key={colKey}
+                          className={`finder-detail-col-${colKey} ${def.sortable ? 'finder-detail-col-sortable' : ''} ${sortBy === colKey ? 'finder-detail-col-active' : ''}`}
+                          style={{ width: detailColWidths[colKey] }}
+                          onClick={() => def.sortable && handleHeaderSort(colKey)}
+                        >
+                          {def.label}{sortBy === colKey && <span className="finder-detail-col-arrow">{sortOrder === 'asc' ? '▲' : '▼'}</span>}
+                          <span className="finder-detail-col-resize-handle" onMouseDown={(e) => handleDetailColResizeStart(colKey, e)} onClick={(e) => e.stopPropagation()} />
+                        </span>
+                      );
+                    })}
+                  </div>
+                </Dropdown>
               )}
               {/* 内联新建文件夹 */}
               {newFolderInline && (
@@ -1160,9 +1267,45 @@ export default function ResourceLibrary() {
               {currentChildren.length === 0 && !newFolderInline ? (
                 <div className="finder-empty"><Empty description="此文件夹为空，右键新建" image={Empty.PRESENTED_IMAGE_SIMPLE} /></div>
               ) : (
-                currentChildren.map((item, idx) => {
+                displayChildren.map((item, idx) => {
                   const isSelected = selectedItemKeys.includes(item.key);
                   const itemTags = (item.tags || []).map((tid) => tagDefs.find((t) => t.id === tid)).filter(Boolean);
+                  const depth = item._depth || 0;
+                  const isExpanded = expandedFolders.has(item.key);
+                  // 详情视图行的更多菜单（简化版：新建文件夹/收藏/重命名/删除）
+                  const isFavorited = item.isFolder && favorites.some((f) => f.key === item.key);
+                  const rowMoreMenu = {
+                    items: [
+                      ...(item.isFolder ? [
+                        { key: 'newFolder', icon: <FolderAddOutlined />, label: '新建文件夹' },
+                        { type: 'divider' },
+                        { key: 'favorite', icon: isFavorited ? <StarFilled style={{ color: '#faad14' }} /> : <StarOutlined />, label: isFavorited ? '取消收藏' : '收藏' },
+                        { type: 'divider' },
+                      ] : []),
+                      { key: 'rename', icon: <EditOutlined />, label: '重命名' },
+                      { key: 'delete', icon: <DeleteOutlined />, label: '删除', danger: true },
+                    ],
+                    onClick: ({ key, domEvent }) => {
+                      domEvent.stopPropagation();
+                      if (key === 'newFolder') {
+                        setData((d) => addItem(d, scope, {
+                          name: '未命名文件夹', isFolder: true, parentKey: item.key, fileType: 'folder', parseStatus: 'parsed',
+                        }));
+                        message.success('文件夹已创建');
+                      }
+                      if (key === 'favorite') {
+                        if (isFavorited) {
+                          saveFavorites(favorites.filter((f) => f.key !== item.key));
+                          message.success('已取消收藏');
+                        } else {
+                          saveFavorites([...favorites, { key: item.key, name: item.name, isFolder: item.isFolder, fileType: item.fileType }]);
+                          message.success(`「${item.name}」已添加到收藏`);
+                        }
+                      }
+                      if (key === 'rename') handleRename(item);
+                      if (key === 'delete') handleDelete(item.key);
+                    },
+                  };
                   return (
                     <Dropdown key={item.key} menu={getContextMenu(item)} trigger={['contextMenu']}>
                       <div
@@ -1175,17 +1318,63 @@ export default function ResourceLibrary() {
                         onClick={(e) => handleItemClick(item.key, idx, e)}
                         onDoubleClick={() => handleDoubleClick(item)}
                       >
-                        <span className="finder-file-icon">{renderFileIcon(item.fileType, { fontSize: 18 })}</span>
-                        <span className="finder-file-name" style={viewMode === 'detail' ? { width: detailColWidths.name - 28, flex: 'none' } : undefined}>{item.name}</span>
+                        {/* 展开三角（详情视图专用） */}
                         {viewMode === 'detail' && (
-                          <>
-                            <span className="finder-detail-col-date" style={{ width: detailColWidths.date }}>{item.lastEdit || '--'}</span>
-                            <span className="finder-detail-col-size" style={{ width: detailColWidths.size }}>{item.size ? `${(item.size / 1024).toFixed(1)} KB` : '--'}</span>
-                            <span className="finder-detail-col-kind" style={{ width: detailColWidths.kind }}>{item.isFolder ? '文件夹' : (item.fileType || '--')}</span>
-                          </>
+                          <span
+                            className="finder-detail-expand-icon"
+                            style={{ marginLeft: depth * 16 }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (!item.isFolder) return;
+                              setExpandedFolders((prev) => {
+                                const next = new Set(prev);
+                                if (next.has(item.key)) next.delete(item.key);
+                                else next.add(item.key);
+                                return next;
+                              });
+                            }}
+                          >
+                            {item.isFolder ? (
+                              isExpanded
+                                ? <CaretDownOutlined style={{ fontSize: 10 }} />
+                                : <CaretRightOutlined style={{ fontSize: 10 }} />
+                            ) : null}
+                          </span>
                         )}
-                        {viewMode === 'list' && <span className="finder-file-meta">{item.lastEdit || ''}</span>}
-                        {item.isFolder && <span className="finder-file-chevron"><RightOutlined style={{ fontSize: 10 }} /></span>}
+                        <span className="finder-file-icon">{renderFileIcon(item.fileType, { fontSize: 18 })}</span>
+                        <span className="finder-file-name" style={viewMode === 'detail' ? (nameColResized ? { width: detailColWidths.name - 28 - 16 - depth * 16, flex: 'none' } : { flex: 1, minWidth: 0, marginRight: 0 }) : undefined}>{item.name}</span>
+                        {/* hover 显示的操作区：+ 和三个点 */}
+                        <span
+                          className="finder-file-row-actions"
+                          style={viewMode === 'detail' ? {
+                            right: visibleColsTotalWidth + 20 + 12,
+                          } : { right: 20 }}
+                        >
+                          {item.isFolder && (
+                            <button className="finder-column-action-btn" onClick={(e) => {
+                              e.stopPropagation();
+                              setAddDialogParentKey(item.key);
+                              setAddDialogOpen(true);
+                            }}>
+                              <PlusOutlined style={{ fontSize: 11 }} />
+                            </button>
+                          )}
+                          <Dropdown menu={rowMoreMenu} trigger={['click']}>
+                            <button className="finder-column-action-btn" onClick={(e) => e.stopPropagation()}>
+                              <MoreOutlined style={{ fontSize: 13 }} />
+                            </button>
+                          </Dropdown>
+                        </span>
+                        {viewMode === 'detail' && visibleCols.map((colKey) => (
+                          <span
+                            key={colKey}
+                            className={`finder-detail-col-${colKey}`}
+                            style={{ width: detailColWidths[colKey] }}
+                          >
+                            {renderColCell(colKey, item)}
+                          </span>
+                        ))}
+                        {item.isFolder && viewMode !== 'detail' && <span className="finder-file-chevron"><RightOutlined style={{ fontSize: 10 }} /></span>}
                       </div>
                     </Dropdown>
                   );
@@ -1206,6 +1395,17 @@ export default function ResourceLibrary() {
                     <div className="finder-preview-folder-grid">
                       <FolderFilled style={{ fontSize: 80, color: '#4facfe' }} />
                       <div className="finder-preview-folder-hint">文件夹包含 {previewFolderCount} 个项目</div>
+                      <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        style={{ marginTop: 16 }}
+                        onClick={() => {
+                          setAddDialogParentKey(previewItem.key);
+                          setAddDialogOpen(true);
+                        }}
+                      >
+                        添加资料
+                      </Button>
                     </div>
                   ) : previewItem.fileType === 'image' ? (
                     previewItem.url
@@ -1233,27 +1433,6 @@ export default function ResourceLibrary() {
                     <div className="finder-preview-placeholder"><FileWordOutlined style={{ fontSize: 80, color: '#007aff' }} /><div>Word 文档</div></div>
                   ) : (
                     <div className="finder-preview-placeholder"><FileTextOutlined style={{ fontSize: 80, color: '#8e8e93' }} /><div>文件预览</div></div>
-                  )}
-                </div>
-                {/* 底部信息栏 */}
-                <div className="finder-preview-footer">
-                  <div className="finder-preview-name">{previewItem.name}</div>
-                  <div className="finder-preview-meta-row">
-                    <span>{previewItem.isFolder ? '文件夹' : (previewItem.fileType?.toUpperCase() || '文件')}</span>
-                    {previewItem.size && <span>{(previewItem.size / 1024).toFixed(1)} KB</span>}
-                    {previewItem.lastEdit && <span>{previewItem.lastEdit}</span>}
-                  </div>
-                  {(previewItem.tags || []).length > 0 && (
-                    <div className="finder-preview-tags-row">
-                      {(previewItem.tags || []).map((tid) => {
-                        const t = tagDefs.find((td) => td.id === tid);
-                        if (!t) return null;
-                        return <span key={t.id} className="finder-preview-tag"><span className="finder-preview-tag-dot" style={{ background: t.color }} />{t.name}</span>;
-                      })}
-                    </div>
-                  )}
-                  {previewItem.url && (
-                    <a href={previewItem.url} target="_blank" rel="noreferrer" className="finder-preview-open-link">打开原文件</a>
                   )}
                 </div>
               </div>
@@ -1397,6 +1576,40 @@ export default function ResourceLibrary() {
           <div className="rl-add-tip">将创建到：<b>{currentFolder ? currentFolder.name : '根目录'}</b></div>
         </Form>
       </Modal>
+
+      {/* 添加资料对话框（点击 + 弹出） */}
+      <AddResourceDialog
+        open={addDialogOpen}
+        onClose={() => setAddDialogOpen(false)}
+        onUpload={async (files) => {
+          const parentKey = addDialogParentKey ?? selectedFolderKey;
+          const hide = message.loading(`上传中 (${files.length})...`, 0);
+          try {
+            for (const file of files) {
+              try {
+                const inferred = inferFileType(file.name);
+                const r = await fileApi.upload(file, 'resource-lib');
+                setData((d) => addItem(d, scope, {
+                  name: file.name,
+                  isFolder: false,
+                  parentKey,
+                  fileType: inferred,
+                  url: r.url,
+                  size: r.size,
+                  mime: r.mime,
+                  parseStatus: 'parsing',
+                }));
+              } catch {
+                message.error(`「${file.name}」上传失败`);
+              }
+            }
+            hide();
+            message.success(`已上传 ${files.length} 个文件`);
+          } catch {
+            hide();
+          }
+        }}
+      />
     </div>
     </>
   );
