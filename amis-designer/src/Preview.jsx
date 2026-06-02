@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { render as amisRender } from 'amis';
 import axios from 'axios';
 import 'amis/lib/themes/cxd.css';
@@ -29,15 +29,50 @@ const env = {
 export default function PreviewView() {
   const [schema, setSchema] = useState(null);
   const [name, setName] = useState('页面预览');
+  const [noData, setNoData] = useState(false);
+
+  // 从 URL 读取 pageId（新标签页模式）
+  const pageId = new URLSearchParams(window.location.search).get('pageId');
+  const initReceivedRef = useRef(false);
 
   useEffect(() => {
     const off = onParentMessage((type, payload) => {
       if (type === 'init') {
+        initReceivedRef.current = true;
         if (payload?.schema) setSchema(payload.schema);
         if (payload?.name) setName(payload.name);
       }
     });
-    postToParent('ready');
+
+    if (pageId) {
+      // 新标签页模式：向父窗口请求数据，带重试
+      console.log('[preview] pageId=', pageId, 'opener=', window.opener ? 'yes' : 'null');
+      let retries = 0;
+      const maxRetries = 8;
+      const sendRequest = () => {
+        if (initReceivedRef.current || retries >= maxRetries) {
+          clearInterval(retryTimer);
+          if (!initReceivedRef.current) setNoData(true);
+          return;
+        }
+        console.log('[preview] request-init retry', retries);
+        postToParent('request-init', { pageId });
+        retries++;
+      };
+      sendRequest();
+      const retryTimer = setInterval(sendRequest, 400);
+      return () => {
+        off();
+        clearInterval(retryTimer);
+      };
+    } else if (window.parent !== window) {
+      // iframe 模式无 pageId：通知父端准备好
+      postToParent('ready');
+      return off;
+    }
+
+    // 独立模式（无 pageId 且无 parent）
+    setNoData(true);
     return off;
   }, []);
 
@@ -47,7 +82,11 @@ export default function PreviewView() {
         <span style={styles.brand}>预览：{name}</span>
       </div>
       <div style={styles.body}>
-        {schema ? amisRender(schema, {}, env) : <div style={styles.empty}>等待数据...</div>}
+        {schema ? amisRender(schema, {}, env) : (
+          <div style={styles.empty}>
+            {noData ? '无法获取页面数据，请从主应用的页面列表中打开预览' : '等待数据...'}
+          </div>
+        )}
       </div>
     </div>
   );

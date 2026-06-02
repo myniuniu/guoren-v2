@@ -1,7 +1,10 @@
 // 页面设计 Schema 持久化（localStorage 实现）
 // 数据结构：{ id, name, updatedAt, schema }
 
+import { dashboardSchema } from './dashboardSchema';
+
 const STORAGE_KEY = 'gr.pageDesigner.pages';
+const SEED_KEY = 'gr.pageDesigner.seeded';
 
 function readAll() {
   try {
@@ -61,8 +64,34 @@ export function defaultSchema() {
     body: [
       {
         type: 'tpl',
-        tpl: '<h2>欢迎使用 amis 页面设计器</h2><p>从左侧拖入组件开始设计你的页面。</p>',
+        tpl: '<h2>欢迎使用果仁页面设计器</h2><p>从左侧拖入组件开始设计你的页面。</p>',
       },
     ],
   };
+}
+
+/**
+ * 种子：首次加载时自动创建仪表盘示例页面（仅执行一次）
+ */
+export function seedDashboardPage() {
+  try {
+    const seeded = localStorage.getItem(SEED_KEY);
+    if (seeded) return; // 已种过，跳过
+    const now = Date.now();
+    const page = {
+      id: 'page_dashboard_seed',
+      name: '销售数据仪表盘',
+      schema: dashboardSchema(),
+      updatedAt: now,
+      createdAt: now,
+    };
+    const list = readAll();
+    // 如果已存在同 id 则不重复
+    if (list.find((p) => p.id === page.id)) return;
+    list.unshift(page);
+    writeAll(list);
+    localStorage.setItem(SEED_KEY, '1');
+  } catch (e) {
+    console.warn('[pageDesigner] seedDashboardPage failed', e);
+  }
 }

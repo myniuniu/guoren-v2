@@ -1,0 +1,338 @@
+/* ====== Integration Module Layout ====== */
+.integration-module {
+  min-height: 100vh;
+  background: #f4f5f7;
+  display: flex;
+  flex-direction: column;
+}
+
+.intm-header {
+  background: #ffffff !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px !important;
+  height: 60px !important;
+  line-height: 60px !important;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.intm-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.intm-title-icon {
+  color: #1677ff;
+  font-size: 20px;
+}
+
+.intm-content {
+  padding: 20px 24px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* ====== 统计卡片 ====== */
+.intm-stats {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.intm-stat-card {
+  border-radius: 10px;
+  border: 1px solid #f0f0f0;
+}
+
+.intm-stat-card .ant-statistic-title {
+  font-size: 12px;
+  color: #8c8c8c;
+  white-space: nowrap;
+}
+
+.intm-stat-card .ant-statistic-content {
+  font-size: 22px;
+}
+
+/* ====== Tab 面板 ====== */
+.intm-tabs .ant-tabs-nav {
+  margin-bottom: 0 !important;
+  background: #fff;
+  padding: 0 24px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.intm-tab-panel {
+  padding: 20px 0 0;
+}
+
+/* ====== 数据源卡片 ====== */
+.ds-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 16px;
+}
+
+.ds-card {
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  transition: box-shadow 0.25s, transform 0.2s;
+  cursor: pointer;
+}
+
+.ds-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.ds-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.ds-card-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ds-card-type-icon {
+  font-size: 20px;
+}
+
+.ds-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ds-card-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.ds-card-info .anticon {
+  font-size: 14px;
+  color: #9ca3af;
+}
+
+.ds-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #f5f5f5;
+}
+
+/* ====== 数据源类型图标 ====== */
+.ds-type-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.ds-type-icon.database {
+  background: linear-gradient(135deg, #667eea, #4facfe);
+}
+
+.ds-type-icon.api {
+  background: linear-gradient(135deg, #43e97b, #38f9d7);
+}
+
+.ds-type-icon.event {
+  background: linear-gradient(135deg, #fa709a, #fee140);
+}
+
+/* ====== ETL 管道列表 ====== */
+.pl-table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.pl-status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.pl-status-dot.success { background: #52c41a; }
+.pl-status-dot.failed { background: #ff4d4f; }
+.pl-status-dot.running { background: #1677ff; animation: pulse 1.5s infinite; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ====== ETL 管道详情抽屉 ====== */
+.etl-flow {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin: 16px 0;
+  background: #fafbfc;
+  border-radius: 10px;
+  border: 1px solid #f0f0f0;
+  overflow: hidden;
+}
+
+.etl-step {
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.etl-step-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.etl-step-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #fff;
+}
+
+.etl-step-icon.extract { background: linear-gradient(135deg, #667eea, #4facfe); }
+.etl-step-icon.transform { background: linear-gradient(135deg, #f093fb, #f5576c); }
+.etl-step-icon.load { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+
+.etl-step-body {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.8;
+}
+
+.etl-step-body code {
+  background: #f0f0f0;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+.etl-arrow {
+  display: flex;
+  align-items: center;
+  font-size: 20px;
+  color: #d1d5db;
+  padding: 0 4px;
+}
+
+/* ====== 字段映射编辑 ====== */
+.fm-mapping-row {
+  display: grid;
+  grid-template-columns: 1fr 40px 1fr 140px 60px;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.fm-mapping-row:last-child {
+  border-bottom: none;
+}
+
+.fm-arrow {
+  text-align: center;
+  color: #d1d5db;
+  font-size: 16px;
+}
+
+.fm-header {
+  display: grid;
+  grid-template-columns: 1fr 40px 1fr 140px 60px;
+  gap: 8px;
+  padding: 8px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #8c8c8c;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 4px;
+}
+
+/* ====== 同步任务列表 ====== */
+.st-record-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ====== 数据源表单弹窗 ====== */
+.ds-form-section {
+  margin-bottom: 16px;
+}
+
+.ds-form-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4b5563;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ====== 管道编辑器 ====== */
+.pl-editor-section {
+  margin-bottom: 24px;
+}
+
+.pl-editor-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ====== 响应式 ====== */
+@media (max-width: 1200px) {
+  .intm-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .ds-card-grid {
+    grid-template-columns: 1fr;
+  }
+}

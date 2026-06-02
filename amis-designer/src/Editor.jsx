@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Editor } from 'amis-editor';
 import 'amis/lib/themes/cxd.css';
 import 'amis/lib/helper.css';
@@ -18,34 +18,76 @@ export default function EditorView() {
   const [schema, setSchema] = useState(DEFAULT_SCHEMA);
   const [name, setName] = useState('未命名页面');
   const [ready, setReady] = useState(false);
+  const [saveStatus, setSaveStatus] = useState('');
 
-  // 接收父应用 init
+  // 从 URL 读取 pageId（新标签页模式）
+  const pageId = new URLSearchParams(window.location.search).get('pageId');
+  const initReceivedRef = useRef(false);
+
+  // 接收父应用 init / save-success，支持重试
   useEffect(() => {
     const off = onParentMessage((type, payload) => {
       if (type === 'init') {
+        initReceivedRef.current = true;
         if (payload?.schema) setSchema(payload.schema);
         if (payload?.name) setName(payload.name);
+      } else if (type === 'save-success') {
+        setSaveStatus('已保存');
+        setTimeout(() => setSaveStatus(''), 2000);
       }
     });
-    // 通知父端：iframe 准备好了，可以下发 init
-    postToParent('ready');
+
+    if (pageId) {
+      // 新标签页模式：向父窗口请求数据，带重试
+      console.log('[editor] pageId=', pageId, 'opener=', window.opener ? 'yes' : 'null');
+      let retries = 0;
+      const maxRetries = 8;
+      const sendRequest = () => {
+        if (initReceivedRef.current || retries >= maxRetries) {
+          clearInterval(retryTimer);
+          return;
+        }
+        console.log('[editor] request-init retry', retries);
+        postToParent('request-init', { pageId });
+        retries++;
+      };
+      sendRequest();
+      const retryTimer = setInterval(sendRequest, 400);
+
+      setReady(true);
+      return () => {
+        off();
+        clearInterval(retryTimer);
+      };
+    } else if (window.parent !== window) {
+      // iframe 模式无 pageId：通知父端准备好
+      postToParent('ready');
+      setReady(true);
+      return off;
+    }
+
     setReady(true);
     return off;
   }, []);
 
   const handleSave = () => {
-    postToParent('save', { schema, name });
+    if (window.opener || window.parent !== window) {
+      postToParent('save', { schema, name, pageId });
+      setSaveStatus('保存中...');
+    }
   };
 
   const handlePreview = () => {
-    postToParent('preview', { schema, name });
+    if (window.opener || window.parent !== window) {
+      postToParent('preview', { schema, name, pageId });
+    }
   };
 
   return (
     <div style={styles.wrap}>
       <div style={styles.toolbar}>
         <div style={styles.left}>
-          <span style={styles.brand}>amis 设计器</span>
+          <span style={styles.brand}>果仁设计器</span>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -55,6 +97,11 @@ export default function EditorView() {
           />
         </div>
         <div style={styles.right}>
+          {saveStatus && (
+            <span style={{ color: saveStatus === '已保存' ? '#52c41a' : '#86909c', fontSize: 13 }}>
+              {saveStatus}
+            </span>
+          )}
           <button style={styles.btn} onClick={handlePreview}>
             预览
           </button>

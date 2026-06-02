@@ -57,6 +57,7 @@ import AppCenterModule from './appCenter/AppCenterModule';
 import DevDocsPage from './appCenter/DevDocsPage';
 import DevBackendPage from './appCenter/DevBackendPage';
 import DmsModule from './dms/DmsModule';
+import IntegrationModule from './integration/IntegrationModule';
 import './App.css';
 
 const { Sider, Header, Content } = Layout;
@@ -146,7 +147,8 @@ const iconBarItems = [
   { key: 'page-designer', icon: <LayoutOutlined />, label: '页面设计' },
   { key: 'tag-management', icon: <TagsOutlined />, label: '标签管理' },
   { key: 'app-center', icon: <AppstoreOutlined />, label: '应用中心' },
-  { key: 'dms', icon: <FileTextOutlined />, label: '文档管理' }
+  { key: 'dms', icon: <FileTextOutlined />, label: '文档管理' },
+  { key: 'integration', icon: <PartitionOutlined />, label: '三方对接' }
 ];
 
 function App() {
@@ -214,6 +216,8 @@ function App() {
       setCurrentPage('app-center');
     } else if (key === 'dms') {
       setCurrentPage('dms');
+    } else if (key === 'integration') {
+      setCurrentPage('integration');
     } else if (
       currentPage === 'workflow' ||
       currentPage === 'process-management' ||
@@ -233,7 +237,8 @@ function App() {
       currentPage === 'page-designer' ||
       currentPage === 'tag-management' ||
       currentPage === 'app-center' ||
-      currentPage === 'dms'
+      currentPage === 'dms' ||
+      currentPage === 'integration'
     ) {
       setCurrentPage('home');
     }
@@ -311,6 +316,8 @@ function App() {
         <AppCenterModule />
       ) : currentPage === 'dms' ? (
         <DmsModule />
+      ) : currentPage === 'integration' ? (
+        <IntegrationModule />
       ) : currentPage === 'home' ? (
         <>
           {/* Scene Sidebar */}

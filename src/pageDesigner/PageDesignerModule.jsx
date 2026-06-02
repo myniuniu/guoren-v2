@@ -7,19 +7,15 @@ import {
   EyeOutlined,
   CopyOutlined,
 } from '@ant-design/icons';
-import PageDesigner from './PageDesigner';
-import PagePreview from './PagePreview';
 import { pageApi } from './api';
 import './PageDesignerModule.css';
 
-const VIEW_LIST = 'list';
-const VIEW_DESIGN = 'design';
-const VIEW_PREVIEW = 'preview';
+const AMIS_DESIGNER_URL =
+  import.meta.env.VITE_AMIS_DESIGNER_URL || 'http://127.0.0.1:5177';
+const CHANNEL = 'amis-designer';
 
 export default function PageDesignerModule() {
-  const [view, setView] = useState(VIEW_LIST);
   const [pages, setPages] = useState([]);
-  const [current, setCurrent] = useState(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [createName, setCreateName] = useState('');
 
@@ -29,7 +25,61 @@ export default function PageDesignerModule() {
   }, []);
 
   useEffect(() => {
+    pageApi.seedDashboardPage();
     refresh();
+  }, [refresh]);
+
+  // 监听来自果仁设计器新标签页的消息
+  useEffect(() => {
+    async function handleMessage(e) {
+      const data = e?.data;
+      if (!data || data.channel !== CHANNEL) return;
+
+      console.log('[pageDesigner] received:', data.type, data.payload);
+
+      if (data.type === 'request-init') {
+        // 设计器请求数据：根据 pageId 查找并发送
+        const { pageId } = data.payload || {};
+        if (pageId) {
+          const page = await pageApi.get(pageId);
+          console.log('[pageDesigner] page found:', page ? 'yes' : 'no', 'source:', e.source ? 'yes' : 'no');
+          if (page && e.source) {
+            e.source.postMessage(
+              {
+                channel: CHANNEL,
+                type: 'init',
+                payload: { schema: page.schema, name: page.name, pageId: page.id },
+              },
+              '*'
+            );
+          }
+        }
+      } else if (data.type === 'save') {
+        // 设计器保存数据
+        const { pageId, schema, name } = data.payload || {};
+        if (pageId) {
+          const existing = await pageApi.get(pageId);
+          await pageApi.save({ id: pageId, name, schema, createdAt: existing?.createdAt });
+          refresh();
+          if (e.source) {
+            e.source.postMessage({ channel: CHANNEL, type: 'save-success' }, '*');
+          }
+          message.success('页面已保存');
+        }
+      } else if (data.type === 'preview') {
+        // 设计器发起预览：保存后打开预览新标签页
+        const { pageId, schema, name } = data.payload || {};
+        if (pageId) {
+          const existing = await pageApi.get(pageId);
+          await pageApi.save({ id: pageId, name, schema, createdAt: existing?.createdAt });
+          refresh();
+          window.open(`${AMIS_DESIGNER_URL}/?mode=preview&pageId=${pageId}`, '_blank');
+        }
+      }
+    }
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
   }, [refresh]);
 
   const openCreate = () => {
@@ -44,18 +94,18 @@ export default function PageDesignerModule() {
       schema: pageApi.defaultSchema(),
     });
     setCreateOpen(false);
-    setCurrent(page);
-    setView(VIEW_DESIGN);
+    // 创建后在新标签页打开设计器
+    window.open(`${AMIS_DESIGNER_URL}/?mode=editor&pageId=${page.id}`, '_blank');
   };
 
   const handleEdit = (record) => {
-    setCurrent(record);
-    setView(VIEW_DESIGN);
+    // 在新标签页打开设计器
+    window.open(`${AMIS_DESIGNER_URL}/?mode=editor&pageId=${record.id}`, '_blank');
   };
 
   const handlePreviewFromList = (record) => {
-    setCurrent(record);
-    setView(VIEW_PREVIEW);
+    // 在新标签页打开预览
+    window.open(`${AMIS_DESIGNER_URL}/?mode=preview&pageId=${record.id}`, '_blank');
   };
 
   const handleRemove = async (record) => {
@@ -73,53 +123,6 @@ export default function PageDesignerModule() {
     refresh();
     return cloned;
   };
-
-  const handleSaveFromDesigner = async (page) => {
-    const saved = await pageApi.save(page);
-    setCurrent(saved);
-    refresh();
-  };
-
-  const handlePreviewFromDesigner = async (page) => {
-    // 先持久化最新内容，再切到预览
-    const saved = await pageApi.save(page);
-    setCurrent(saved);
-    refresh();
-    setView(VIEW_PREVIEW);
-  };
-
-  const handleBackToList = () => {
-    setView(VIEW_LIST);
-    setCurrent(null);
-    refresh();
-  };
-
-  const handleBackFromPreview = () => {
-    // 若是从设计器进入的预览，返回设计器；否则回列表
-    if (current) setView(VIEW_DESIGN);
-    else setView(VIEW_LIST);
-  };
-
-  if (view === VIEW_DESIGN && current) {
-    return (
-      <PageDesigner
-        page={current}
-        onSave={handleSaveFromDesigner}
-        onPreview={handlePreviewFromDesigner}
-        onBack={handleBackToList}
-      />
-    );
-  }
-
-  if (view === VIEW_PREVIEW && current) {
-    return (
-      <PagePreview
-        schema={current.schema}
-        name={current.name}
-        onBack={handleBackFromPreview}
-      />
-    );
-  }
 
   const columns = [
     {
