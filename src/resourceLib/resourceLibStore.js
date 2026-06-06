@@ -1,6 +1,6 @@
 // 资料库本地存储（独立于 versionStore，避免耦合）
 const STORAGE_KEY = 'guoren_resource_lib';
-const DATA_VERSION = 7;
+const DATA_VERSION = 10;
 
 // macOS 访达风格预设标签（7色 + 自定义）
 const PRESET_TAGS = [
@@ -63,17 +63,43 @@ const DEFAULT_ORGS = [
 ];
 
 const RESET_PERSONAL_TEACHING_DEMO_VERSION = 7;
+const DEFAULT_QUICK_TAG_IDS = new Set([
+  'tag_p_courseware',
+  'tag_p_teaching_plan',
+  'tag_p_teaching_aid',
+  'tag_p_assignment',
+  'tag_p_activity',
+  'tag_p_experiment',
+]);
 
 const PERSONAL_TEACHING_TAGS = [
-  { id: 'tag_p_courseware', name: '课件', color: '#007AFF', scope: 'personal' },
-  { id: 'tag_p_teaching_plan', name: '教学方案', color: '#34C759', scope: 'personal' },
-  { id: 'tag_p_teaching_aid', name: '教辅', color: '#FF9500', scope: 'personal' },
-  { id: 'tag_p_activity', name: '课堂活动', color: '#AF52DE', scope: 'personal' },
+  { id: 'tag_p_courseware', name: '课件', color: '#007AFF', scope: 'personal', quick: true },
+  { id: 'tag_p_teaching_plan', name: '教学方案', color: '#34C759', scope: 'personal', quick: true },
+  { id: 'tag_p_teaching_aid', name: '教辅', color: '#FF9500', scope: 'personal', quick: true },
+  { id: 'tag_p_activity', name: '课堂活动', color: '#AF52DE', scope: 'personal', quick: true },
   { id: 'tag_p_assignment', name: '作业任务', color: '#FF2D55', scope: 'personal' },
   { id: 'tag_p_assessment', name: '评价量规', color: '#8E8E93', scope: 'personal' },
   { id: 'tag_p_case', name: '案例素材', color: '#00C7BE', scope: 'personal' },
   { id: 'tag_p_video', name: '视频素材', color: '#5856D6', scope: 'personal' },
-  { id: 'tag_p_experiment', name: '实验指导', color: '#FFCC00', scope: 'personal' },
+  { id: 'tag_p_experiment', name: '实验指导', color: '#FFCC00', scope: 'personal', quick: true },
+];
+
+const LEGACY_ORGANIZATION_TAGS = [
+  { id: 'tag_o_official', name: '正式文件', color: '#007AFF' },
+  { id: 'tag_o_draft', name: '草稿', color: '#8E8E93' },
+  { id: 'tag_o_urgent', name: '紧急', color: '#FF3B30' },
+  { id: 'tag_o_archive', name: '归档', color: '#34C759' },
+  { id: 'tag_rd_req', name: '需求', color: '#007AFF' },
+  { id: 'tag_rd_design', name: '设计', color: '#AF52DE' },
+  { id: 'tag_rd_test', name: '测试', color: '#FF9500' },
+  { id: 'tag_mk_promo', name: '推广', color: '#FF3B30' },
+  { id: 'tag_mk_brand', name: '品牌', color: '#5856D6' },
+];
+const LEGACY_ORGANIZATION_TAG_MAP = new Map(LEGACY_ORGANIZATION_TAGS.map((tag) => [tag.id, tag]));
+const LEGACY_ORGANIZATION_TAG_IDS = new Set(LEGACY_ORGANIZATION_TAGS.map((tag) => tag.id));
+const SHARED_DEFAULT_TAGS = [
+  ...PRESET_TAGS,
+  ...withDefaultQuickTags(PERSONAL_TEACHING_TAGS),
 ];
 
 const AI_GENERAL_COURSES = [
@@ -112,6 +138,121 @@ function createDemoTimestamp(daysAgo = 0, hour = 9, minute = 0) {
 
 function dedupeTags(tags = []) {
   return Array.from(new Set(tags.filter(Boolean)));
+}
+
+function withDefaultQuickTags(tagList = []) {
+  return tagList.map((tag) => (
+    DEFAULT_QUICK_TAG_IDS.has(tag.id) && typeof tag.quick === 'undefined'
+      ? { ...tag, quick: true }
+      : tag
+  ));
+}
+
+function mergeTagDefinitions(...tagLists) {
+  const merged = [];
+  const indexById = new Map();
+
+  tagLists.flat().forEach((tag) => {
+    if (!tag?.id) return;
+    const normalized = withDefaultQuickTags([tag])[0] || tag;
+    const existingIndex = indexById.get(normalized.id);
+    if (typeof existingIndex === 'undefined') {
+      merged.push({ ...normalized, quick: Boolean(normalized.quick) });
+      indexById.set(normalized.id, merged.length - 1);
+      return;
+    }
+    const prev = merged[existingIndex];
+    merged[existingIndex] = {
+      ...prev,
+      ...normalized,
+      quick: Boolean(prev.quick || normalized.quick),
+    };
+  });
+
+  return merged;
+}
+
+function collectUsedTagIds(data = {}) {
+  const usedTagIds = new Set();
+  const orgItems = Object.values(data.organizations || {}).flatMap((items) => items || []);
+  const allItems = [...(data.personal || []), ...(data.organization || []), ...orgItems];
+  allItems.forEach((item) => {
+    (item.tags || []).forEach((tagId) => usedTagIds.add(tagId));
+  });
+  return usedTagIds;
+}
+
+function shouldKeepLegacyOrganizationTag(tag, usedTagIds) {
+  if (!tag?.id) return false;
+  if (!LEGACY_ORGANIZATION_TAG_IDS.has(tag.id)) return true;
+  if (usedTagIds.has(tag.id) || tag.quick) return true;
+  const baseline = LEGACY_ORGANIZATION_TAG_MAP.get(tag.id);
+  return !baseline || baseline.name !== tag.name || baseline.color !== tag.color;
+}
+
+function collectLegacyOrganizationTags(defs, data = {}) {
+  if (!defs || Array.isArray(defs)) return [];
+  const usedTagIds = collectUsedTagIds(data);
+  const scopedLists = [];
+  if (Array.isArray(defs.organization)) scopedLists.push(defs.organization);
+  Object.values(defs.organizations || {}).forEach((list) => {
+    if (Array.isArray(list)) scopedLists.push(list);
+  });
+  return scopedLists
+    .flat()
+    .filter((tag) => shouldKeepLegacyOrganizationTag(tag, usedTagIds));
+}
+
+function buildSharedTagDefinitions(defs, data = {}) {
+  if (!defs) return mergeTagDefinitions(SHARED_DEFAULT_TAGS);
+  if (Array.isArray(defs)) return mergeTagDefinitions(defs);
+  const personalTags = Array.isArray(defs.personal) && defs.personal.length > 0
+    ? defs.personal
+    : SHARED_DEFAULT_TAGS;
+  const legacyOrgTags = collectLegacyOrganizationTags(defs, data);
+  const merged = mergeTagDefinitions(personalTags, legacyOrgTags);
+  return merged.length > 0 ? merged : mergeTagDefinitions(SHARED_DEFAULT_TAGS);
+}
+
+function getUnifiedTagDefinitionState(data) {
+  const defs = data.tagDefinitions;
+  const personal = buildSharedTagDefinitions(defs, data);
+  if (!defs || Array.isArray(defs)) {
+    return { personal, organizations: {} };
+  }
+  return {
+    ...defs,
+    personal,
+    organizations: {},
+  };
+}
+
+function stripInheritedTagsFromPersonalDemoFolders(items = []) {
+  return items.map((item) => {
+    if (!item?.isFolder) return item;
+    const key = item.key || '';
+    const caseMatch = key.match(/^p_course_(\d{2})_cases$/);
+    if (caseMatch) {
+      const nextTags = (item.tags || []).filter((tagId) => tagId !== 'tag_p_case');
+      return nextTags.length === (item.tags || []).length ? item : { ...item, tags: nextTags };
+    }
+    const courseMatch = key.match(/^p_course_(\d{2})$/);
+    if (!courseMatch) return item;
+    const courseIndex = Number(courseMatch[1]) - 1;
+    if (!Number.isInteger(courseIndex) || courseIndex < 0) return item;
+    const inheritedTagIds = new Set([
+      'tag_p_courseware',
+      'tag_p_teaching_plan',
+      'tag_p_teaching_aid',
+      courseIndex % 2 === 0 ? 'tag_p_activity' : 'tag_p_assignment',
+      ...(courseIndex % 3 === 0 ? ['tag_p_case'] : []),
+      ...(courseIndex % 4 === 0 ? ['tag_p_video'] : []),
+      ...(courseIndex % 5 === 0 ? ['tag_p_assessment'] : []),
+      ...(courseIndex % 6 === 0 ? ['tag_p_experiment'] : []),
+    ]);
+    const nextTags = (item.tags || []).filter((tagId) => !inheritedTagIds.has(tagId));
+    return nextTags.length === (item.tags || []).length ? item : { ...item, tags: nextTags };
+  });
 }
 
 function createTeachingFile({
@@ -168,7 +309,6 @@ function buildPersonalTeachingDemo() {
   return AI_GENERAL_COURSES.flatMap((course, index) => {
     const folderKey = `p_course_${course.id}`;
     const daysAgo = 25 - index;
-    const folderTags = ['tag_p_courseware', 'tag_p_teaching_plan', 'tag_p_teaching_aid'];
     const courseItems = [];
     const recentOpenedAt = index < 12 ? createDemoTimestamp(11 - index, 18, 10 + ((index % 4) * 10)) : undefined;
 
@@ -210,7 +350,6 @@ function buildPersonalTeachingDemo() {
     }));
 
     if (index % 2 === 0) {
-      folderTags.push('tag_p_activity');
       courseItems.push(createTeachingFile({
         key: `${folderKey}_activity`,
         name: `第${course.id}课 ${course.activity}.xlsx`,
@@ -223,7 +362,6 @@ function buildPersonalTeachingDemo() {
         contentText: `课堂活动单用于组织学生完成“${course.activity}”，帮助教师围绕${course.focus}开展课堂互动与小组协作。`,
       }));
     } else {
-      folderTags.push('tag_p_assignment');
       courseItems.push(createTeachingFile({
         key: `${folderKey}_assignment`,
         name: `第${course.id}课 ${course.title} 作业任务单.docx`,
@@ -238,13 +376,12 @@ function buildPersonalTeachingDemo() {
     }
 
     if (index % 3 === 0) {
-      folderTags.push('tag_p_case');
       const caseFolderKey = `${folderKey}_cases`;
       courseItems.push(createTeachingFolder({
         key: caseFolderKey,
         name: '拓展案例',
         parentKey: folderKey,
-        tags: ['tag_p_case'],
+        tags: [],
         daysAgo,
         hour: 11,
         minute: 0,
@@ -263,7 +400,6 @@ function buildPersonalTeachingDemo() {
     }
 
     if (index % 4 === 0) {
-      folderTags.push('tag_p_video');
       courseItems.push(createTeachingFile({
         key: `${folderKey}_video`,
         name: `第${course.id}课 ${course.title} 讲解视频.mp4`,
@@ -279,7 +415,6 @@ function buildPersonalTeachingDemo() {
     }
 
     if (index % 5 === 0) {
-      folderTags.push('tag_p_assessment');
       courseItems.push(createTeachingFile({
         key: `${folderKey}_rubric`,
         name: `第${course.id}课 ${course.title} 评价量规.xlsx`,
@@ -294,7 +429,6 @@ function buildPersonalTeachingDemo() {
     }
 
     if (index % 6 === 0) {
-      folderTags.push('tag_p_experiment');
       courseItems.push(createTeachingFile({
         key: `${folderKey}_experiment`,
         name: `第${course.id}课 ${course.title} 实验指导.docx`,
@@ -312,7 +446,7 @@ function buildPersonalTeachingDemo() {
       createTeachingFolder({
         key: folderKey,
         name: `第${course.id}课 ${course.title}`,
-        tags: folderTags,
+        tags: [],
         daysAgo,
         hour: 8,
         minute: 50,
@@ -395,33 +529,10 @@ const defaultData = {
     org_market: null,
   },
   // 标签定义：
-  //   personal: 个人标签（跨所有库共享）
-  //   organizations: { [orgId]: 该组织的标签 }
+  //   personal: 个人库与组织库共用的一套标签/快捷标签配置
   tagDefinitions: {
-    personal: [
-      ...PRESET_TAGS,
-      ...PERSONAL_TEACHING_TAGS,
-    ],
-    organizations: {
-      org_default: [
-        ...PRESET_TAGS,
-        { id: 'tag_o_official', name: '正式文件', color: '#007AFF', scope: 'organization' },
-        { id: 'tag_o_draft', name: '草稿', color: '#8E8E93', scope: 'organization' },
-        { id: 'tag_o_urgent', name: '紧急', color: '#FF3B30', scope: 'organization' },
-        { id: 'tag_o_archive', name: '归档', color: '#34C759', scope: 'organization' },
-      ],
-      org_rd: [
-        ...PRESET_TAGS,
-        { id: 'tag_rd_req', name: '需求', color: '#007AFF', scope: 'organization' },
-        { id: 'tag_rd_design', name: '设计', color: '#AF52DE', scope: 'organization' },
-        { id: 'tag_rd_test', name: '测试', color: '#FF9500', scope: 'organization' },
-      ],
-      org_market: [
-        ...PRESET_TAGS,
-        { id: 'tag_mk_promo', name: '推广', color: '#FF3B30', scope: 'organization' },
-        { id: 'tag_mk_brand', name: '品牌', color: '#5856D6', scope: 'organization' },
-      ],
-    },
+    personal: mergeTagDefinitions(SHARED_DEFAULT_TAGS),
+    organizations: {},
   },
   activeTagFilter: null,
 };
@@ -481,22 +592,13 @@ function migrate(old) {
   } else if (old.organizations && typeof old.organizations === 'object') {
     next.organizations = { ...next.organizations, ...old.organizations };
   }
-  // 标签定义迁移
+  // 标签定义迁移：组织标签并入共享标签，保留已有快捷标签设置
   if (old.tagDefinitions) {
-    if (!shouldResetPersonalDemo && Array.isArray(old.tagDefinitions.personal)) {
-      next.tagDefinitions.personal = old.tagDefinitions.personal;
-    }
-    if (Array.isArray(old.tagDefinitions.organization)) {
-      // 旧的 organization 标签复制到默认组织
-      next.tagDefinitions.organizations.org_default = old.tagDefinitions.organization;
-    }
-    if (old.tagDefinitions.organizations) {
-      next.tagDefinitions.organizations = {
-        ...next.tagDefinitions.organizations,
-        ...old.tagDefinitions.organizations,
-      };
-    }
+    next.tagDefinitions.personal = buildSharedTagDefinitions(old.tagDefinitions, old);
   }
+  next.tagDefinitions.organizations = {};
+  next.tagDefinitions.personal = buildSharedTagDefinitions(next.tagDefinitions, next);
+  next.personal = stripInheritedTagsFromPersonalDemoFolders(next.personal);
   // 选中文件夹迁移
   if (old.selectedFolderKey) {
     next.selectedFolderKey = { ...next.selectedFolderKey, ...old.selectedFolderKey };
@@ -624,63 +726,39 @@ export function setSelectedFolder(data, scope, folderKey) {
 
 // ====== 标签管理函数 ======
 
-// 获取标签定义
-// scope: 'personal' | 'organization' | undefined(合并去重)
-export function getTagDefinitions(data, scope) {
+// 获取标签定义：个人库与组织库现在共用同一套标签定义
+export function getTagDefinitions(data) {
   const defs = data.tagDefinitions;
-  if (!defs) return PRESET_TAGS;
+  if (!defs) return mergeTagDefinitions(SHARED_DEFAULT_TAGS);
   // 兼容旧版本（数组格式）
-  if (Array.isArray(defs)) return defs;
-  if (scope === 'personal') return defs.personal || PRESET_TAGS;
-  if (scope === 'organization') {
-    const orgId = data.currentOrgId || 'org_default';
-    return (defs.organizations && defs.organizations[orgId]) || PRESET_TAGS;
+  if (Array.isArray(defs)) return buildSharedTagDefinitions(defs, data);
+  if (Array.isArray(defs.personal) && (!defs.organizations || Object.keys(defs.organizations).length === 0)) {
+    return defs.personal;
   }
-  // 不传 scope 则合并去重（用于全局过滤等）
-  const orgId = data.currentOrgId || 'org_default';
-  const orgTags = (defs.organizations && defs.organizations[orgId]) || [];
-  const merged = [...(defs.personal || []), ...orgTags];
-  const seen = new Set();
-  return merged.filter((t) => { if (seen.has(t.id)) return false; seen.add(t.id); return true; });
+  return buildSharedTagDefinitions(defs, data);
 }
 
-// 获取标签所属库（用于切库时同步过滤）
+// 获取标签所属范围（兼容旧调用）
 export function getTagOwner(data, tagId) {
-  const defs = data.tagDefinitions;
-  if (!defs || Array.isArray(defs)) return 'personal';
-  if ((defs.personal || []).some((t) => t.id === tagId)) return 'personal';
-  if (defs.organizations) {
-    for (const [orgId, list] of Object.entries(defs.organizations)) {
-      if ((list || []).some((t) => t.id === tagId)) return orgId;
-    }
-  }
+  if (getTagDefinitions(data).some((t) => t.id === tagId)) return 'shared';
   return null;
 }
 
 // 添加自定义标签
-export function addTagDefinition(data, tag, scope = 'personal') {
+export function addTagDefinition(data, tag) {
   const newTag = {
     id: `tag_custom_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-    scope,
+    scope: 'shared',
+    quick: false,
     ...tag,
   };
-  const defs = data.tagDefinitions || { personal: [], organizations: {} };
-  if (scope === 'personal') {
-    const next = {
-      ...data,
-      tagDefinitions: { ...defs, personal: [...(defs.personal || []), newTag] },
-    };
-    saveResourceLib(next);
-    return next;
-  }
-  // 组织标签：写入当前选中组织
-  const orgId = data.currentOrgId || 'org_default';
-  const orgs = defs.organizations || {};
+  const defs = getUnifiedTagDefinitionState(data);
   const next = {
     ...data,
     tagDefinitions: {
       ...defs,
-      organizations: { ...orgs, [orgId]: [...(orgs[orgId] || []), newTag] },
+      personal: [...(defs.personal || []), newTag],
+      organizations: {},
     },
   };
   saveResourceLib(next);
@@ -688,21 +766,15 @@ export function addTagDefinition(data, tag, scope = 'personal') {
 }
 
 // 删除标签
-export function deleteTagDefinition(data, tagId, scope = 'personal') {
+export function deleteTagDefinition(data, tagId) {
   const isPreset = PRESET_TAGS.some((t) => t.id === tagId);
   if (isPreset) return data;
-  const defs = data.tagDefinitions || { personal: [], organizations: {} };
-  let nextDefs;
-  if (scope === 'personal') {
-    nextDefs = { ...defs, personal: (defs.personal || []).filter((t) => t.id !== tagId) };
-  } else {
-    const orgId = data.currentOrgId || 'org_default';
-    const orgs = defs.organizations || {};
-    nextDefs = {
-      ...defs,
-      organizations: { ...orgs, [orgId]: (orgs[orgId] || []).filter((t) => t.id !== tagId) },
-    };
-  }
+  const defs = getUnifiedTagDefinitionState(data);
+  const nextDefs = {
+    ...defs,
+    personal: (defs.personal || []).filter((t) => t.id !== tagId),
+    organizations: {},
+  };
   // 清除所有库（个人 + 全部组织）中的该标签引用
   const cleanList = (items) => items.map((r) => ({
     ...r,
@@ -721,30 +793,14 @@ export function deleteTagDefinition(data, tagId, scope = 'personal') {
 }
 
 // 重命名标签
-export function renameTagDefinition(data, tagId, newName, scope = 'personal') {
-  const defs = data.tagDefinitions;
-  if (!defs || Array.isArray(defs)) return data;
-  if (scope === 'personal') {
-    const next = {
-      ...data,
-      tagDefinitions: {
-        ...defs,
-        personal: (defs.personal || []).map((t) => (t.id === tagId ? { ...t, name: newName } : t)),
-      },
-    };
-    saveResourceLib(next);
-    return next;
-  }
-  const orgId = data.currentOrgId || 'org_default';
-  const orgs = defs.organizations || {};
+export function renameTagDefinition(data, tagId, newName) {
+  const defs = getUnifiedTagDefinitionState(data);
   const next = {
     ...data,
     tagDefinitions: {
       ...defs,
-      organizations: {
-        ...orgs,
-        [orgId]: (orgs[orgId] || []).map((t) => (t.id === tagId ? { ...t, name: newName } : t)),
-      },
+      personal: (defs.personal || []).map((t) => (t.id === tagId ? { ...t, name: newName } : t)),
+      organizations: {},
     },
   };
   saveResourceLib(next);
@@ -752,62 +808,55 @@ export function renameTagDefinition(data, tagId, newName, scope = 'personal') {
 }
 
 // 修改标签颜色
-export function updateTagColor(data, tagId, newColor, scope = 'personal') {
-  const defs = data.tagDefinitions;
-  if (!defs || Array.isArray(defs)) return data;
-  if (scope === 'personal') {
-    const next = {
-      ...data,
-      tagDefinitions: {
-        ...defs,
-        personal: (defs.personal || []).map((t) => (t.id === tagId ? { ...t, color: newColor } : t)),
-      },
-    };
-    saveResourceLib(next);
-    return next;
-  }
-  const orgId = data.currentOrgId || 'org_default';
-  const orgs = defs.organizations || {};
+export function updateTagColor(data, tagId, newColor) {
+  const defs = getUnifiedTagDefinitionState(data);
   const next = {
     ...data,
     tagDefinitions: {
       ...defs,
-      organizations: {
-        ...orgs,
-        [orgId]: (orgs[orgId] || []).map((t) => (t.id === tagId ? { ...t, color: newColor } : t)),
-      },
+      personal: (defs.personal || []).map((t) => (t.id === tagId ? { ...t, color: newColor } : t)),
+      organizations: {},
     },
   };
   saveResourceLib(next);
   return next;
 }
 
-// 标签拖动排序
-export function reorderTagDefinition(data, scope, fromIdx, toIdx) {
-  const defs = data.tagDefinitions;
-  if (!defs || Array.isArray(defs)) return data;
-  let list;
-  if (scope === 'personal') {
-    list = [...(defs.personal || [])];
-  } else {
-    const orgId = data.currentOrgId || 'org_default';
-    list = [...((defs.organizations || {})[orgId] || [])];
-  }
-  if (fromIdx < 0 || fromIdx >= list.length || toIdx < 0 || toIdx > list.length) return data;
-  const [moved] = list.splice(fromIdx, 1);
-  const insertAt = toIdx > fromIdx ? toIdx - 1 : toIdx;
-  list.splice(insertAt, 0, moved);
-  if (scope === 'personal') {
-    const next = { ...data, tagDefinitions: { ...defs, personal: list } };
-    saveResourceLib(next);
-    return next;
-  }
-  const orgId = data.currentOrgId || 'org_default';
+export function toggleTagQuickAccess(data, tagId, quick) {
+  const defs = getUnifiedTagDefinitionState(data);
+  let changed = false;
   const next = {
     ...data,
     tagDefinitions: {
       ...defs,
-      organizations: { ...(defs.organizations || {}), [orgId]: list },
+      personal: (defs.personal || []).map((tag) => {
+        if (tag.id !== tagId) return tag;
+        if (tag.quick === quick) return tag;
+        changed = true;
+        return { ...tag, quick };
+      }),
+      organizations: {},
+    },
+  };
+  if (!changed) return data;
+  saveResourceLib(next);
+  return next;
+}
+
+// 标签拖动排序
+export function reorderTagDefinition(data, fromIdx, toIdx) {
+  const defs = getUnifiedTagDefinitionState(data);
+  const list = [...(defs.personal || [])];
+  if (fromIdx < 0 || fromIdx >= list.length || toIdx < 0 || toIdx > list.length) return data;
+  const [moved] = list.splice(fromIdx, 1);
+  const insertAt = toIdx > fromIdx ? toIdx - 1 : toIdx;
+  list.splice(insertAt, 0, moved);
+  const next = {
+    ...data,
+    tagDefinitions: {
+      ...defs,
+      personal: list,
+      organizations: {},
     },
   };
   saveResourceLib(next);

@@ -57,6 +57,12 @@
   margin-bottom: 0;
 }
 
+.tm-toolbar-note {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
 .tm-toolbar-actions {
   display: flex;
   align-items: center;

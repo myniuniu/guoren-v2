@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
-  Button, Input, Table, Tabs, Tag, Tooltip, Modal, Form, message,
+  Button, Input, Table, Tag, Tooltip, Modal, Form, message,
   Popconfirm, ColorPicker, Empty, Badge,
 } from 'antd';
 import {
@@ -13,11 +13,6 @@ import {
 } from './resourceLibStore';
 import './TagManagement.css';
 
-const SCOPE_TABS = [
-  { key: 'personal', label: '个人标签' },
-  { key: 'organization', label: '组织标签' },
-];
-
 // 预设标签ID列表（不可删除）
 const PRESET_IDS = new Set([
   'tag_red', 'tag_orange', 'tag_yellow', 'tag_green',
@@ -26,7 +21,6 @@ const PRESET_IDS = new Set([
 
 export default function TagManagement() {
   const [data, setData] = useState(() => loadResourceLib());
-  const [scope, setScope] = useState('personal');
   const [keyword, setKeyword] = useState('');
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -34,7 +28,7 @@ export default function TagManagement() {
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#FF3B30');
 
-  const tagDefs = getTagDefinitions(data, scope);
+  const tagDefs = getTagDefinitions(data);
 
   // 搜索过滤
   const filteredTags = useMemo(() => {
@@ -46,7 +40,10 @@ export default function TagManagement() {
   // 统计每个标签被使用的次数（跨全部资料）
   const usageCounts = useMemo(() => {
     const counts = {};
-    const allItems = [...(data.personal || []), ...(data.organization || [])];
+    const allItems = [
+      ...(data.personal || []),
+      ...Object.values(data.organizations || {}).flatMap((items) => items || []),
+    ];
     allItems.forEach((item) => {
       (item.tags || []).forEach((tid) => {
         counts[tid] = (counts[tid] || 0) + 1;
@@ -55,14 +52,11 @@ export default function TagManagement() {
     return counts;
   }, [data]);
 
-  // ====== 操作 ======
-  const reload = () => setData(loadResourceLib());
-
   const handleAdd = () => {
     const trimmed = newTagName.trim();
     if (!trimmed) { message.warning('标签名称不能为空'); return; }
     const color = typeof newTagColor === 'string' ? newTagColor : newTagColor.toHexString();
-    setData((d) => addTagDefinition(d, { name: trimmed, color }, scope));
+    setData((d) => addTagDefinition(d, { name: trimmed, color }));
     setAddOpen(false);
     setNewTagName('');
     setNewTagColor('#FF3B30');
@@ -70,7 +64,7 @@ export default function TagManagement() {
   };
 
   const handleDelete = (tagId) => {
-    setData((d) => deleteTagDefinition(d, tagId, scope));
+    setData((d) => deleteTagDefinition(d, tagId));
     message.success('标签已删除');
   };
 
@@ -87,8 +81,8 @@ export default function TagManagement() {
     if (!trimmed) { message.warning('标签名称不能为空'); return; }
     const color = typeof newTagColor === 'string' ? newTagColor : newTagColor.toHexString();
     setData((d) => {
-      let next = renameTagDefinition(d, editItem.id, trimmed, scope);
-      next = updateTagColor(next, editItem.id, color, scope);
+      let next = renameTagDefinition(d, editItem.id, trimmed);
+      next = updateTagColor(next, editItem.id, color);
       return next;
     });
     setEditOpen(false);
@@ -176,18 +170,13 @@ export default function TagManagement() {
         <div className="tm-header-left">
           <TagsOutlined className="tm-header-icon" />
           <span className="tm-header-title">标签管理</span>
-          <span className="tm-header-sub">管理个人标签与组织标签，标签可用于资料库中对文件/文件夹进行分类标记</span>
+          <span className="tm-header-sub">个人库与组织库共用同一套标签和快捷标签配置，用于资料分类与快速打标</span>
         </div>
       </div>
 
       {/* Tab + 工具栏 */}
       <div className="tm-toolbar">
-        <Tabs
-          activeKey={scope}
-          onChange={(k) => { setScope(k); setKeyword(''); }}
-          items={SCOPE_TABS}
-          size="middle"
-        />
+        <div className="tm-toolbar-note">共享标签库</div>
         <div className="tm-toolbar-actions">
           <Input
             allowClear
@@ -226,7 +215,7 @@ export default function TagManagement() {
       {/* 提示信息 */}
       <div className="tm-info-bar">
         <InfoCircleOutlined />
-        <span>{scope === 'personal' ? '个人标签仅自己可见，可自由创建和删除' : '组织标签全组织可见，可用于统一管理组织资料分类'}</span>
+        <span>个人库与组织库共用同一套标签定义，快捷标签设置也会在两边同步生效。</span>
       </div>
 
       {/* 标签列表 */}
@@ -271,7 +260,7 @@ export default function TagManagement() {
             </div>
           </Form.Item>
           <div className="tm-modal-tip">
-            标签将创建到：<b>{scope === 'personal' ? '个人标签' : '组织标签'}</b>
+            标签将同步应用到：<b>个人库 + 组织库</b>
           </div>
         </Form>
       </Modal>

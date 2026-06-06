@@ -21,7 +21,7 @@ import {
 import {
   loadResourceLib, addItem, renameItem, deleteItem, setSelectedFolder, inferFileType, moveItem,
   getTagDefinitions, addTagDefinition, reorderTagDefinition,
-  addTagToItem, removeTagFromItem,
+  addTagToItem, removeTagFromItem, toggleTagQuickAccess,
   getLibraryList, getLibraryId, getOrganizations, setCurrentScope, setCurrentOrg, markItemOpened,
 } from './resourceLibStore';
 import { renderFileIcon } from './resourceIcons.jsx';
@@ -232,11 +232,14 @@ export default function ResourceLibrary() {
   const selectedFolderKey = data.selectedFolderKey?.[libraryId] ?? null;
   const organizations = getOrganizations(data);
   const tagDefs = getTagDefinitions(data);
-  const personalTagDefs = getTagDefinitions(data, 'personal').filter((t) => t.scope === 'personal');
-  const orgTagDefs = getTagDefinitions(data, 'organization').filter((t) => t.scope === 'organization');
-  // 标签随当前库自动切换：个人库->个人标签；组织库->组织标签
-  const tagScope = scope === 'organization' ? 'organization' : 'personal';
-  const currentTagDefs = tagScope === 'organization' ? orgTagDefs : personalTagDefs;
+  const quickTagDefs = useMemo(
+    () => tagDefs.filter((tag) => tag.quick),
+    [tagDefs],
+  );
+  const menuQuickTagDefs = useMemo(
+    () => (quickTagDefs.length > 0 ? quickTagDefs : tagDefs.slice(0, 7)),
+    [quickTagDefs, tagDefs],
+  );
   const normalizedKeyword = keyword.trim();
   const hasActiveSearch = normalizedKeyword.length > 0;
   const normalizedKeywordLower = normalizedKeyword.toLowerCase();
@@ -405,7 +408,7 @@ export default function ResourceLibrary() {
     viewMode,
   ]);
 
-  const allSidebarTagEntries = useMemo(() => currentTagDefs, [currentTagDefs]);
+  const allSidebarTagEntries = useMemo(() => tagDefs, [tagDefs]);
 
   const contextualSidebarTagEntries = useMemo(() => {
     const visibleTagIds = new Set();
@@ -796,15 +799,15 @@ export default function ResourceLibrary() {
     if (tagDragIdx !== null && tagDropIdx !== null) {
       const draggedEntry = sidebarTagEntries[tagDragIdx];
       const unchangedDropPosition = tagDropIdx === tagDragIdx || tagDropIdx === tagDragIdx + 1;
-      const allScopeTags = getTagDefinitions(data, tagScope);
-      const fromGlobal = allScopeTags.findIndex((at) => at.id === draggedEntry?.id);
+      const allSharedTags = getTagDefinitions(data);
+      const fromGlobal = allSharedTags.findIndex((at) => at.id === draggedEntry?.id);
       const toItem = tagDropIdx < sidebarTagEntries.length ? sidebarTagEntries[tagDropIdx] : null;
       const lastVisibleItem = sidebarTagEntries[sidebarTagEntries.length - 1] || null;
       const toGlobal = toItem
-        ? allScopeTags.findIndex((at) => at.id === toItem.id)
-        : (lastVisibleItem ? allScopeTags.findIndex((at) => at.id === lastVisibleItem.id) + 1 : allScopeTags.length);
+        ? allSharedTags.findIndex((at) => at.id === toItem.id)
+        : (lastVisibleItem ? allSharedTags.findIndex((at) => at.id === lastVisibleItem.id) + 1 : allSharedTags.length);
       if (!unchangedDropPosition && fromGlobal >= 0 && toGlobal >= 0) {
-        setData((d) => reorderTagDefinition(d, tagScope, fromGlobal, toGlobal));
+        setData((d) => reorderTagDefinition(d, fromGlobal, toGlobal));
       }
     }
 
@@ -1043,6 +1046,18 @@ export default function ResourceLibrary() {
     </span>
   );
 
+  const toggleItemTagSelection = useCallback((itemKey, tagId, checked) => {
+    setData((d) => (
+      checked
+        ? removeTagFromItem(d, scope, itemKey, tagId)
+        : addTagToItem(d, scope, itemKey, tagId)
+    ));
+  }, [scope]);
+
+  const handleQuickTagToggle = useCallback((tagId, quick) => {
+    setData((d) => toggleTagQuickAccess(d, tagId, quick));
+  }, []);
+
   const renderMenuTagDots = (item, { disabled = false } = {}) => {
     const itemTagIds = item?.tags || [];
     return (
@@ -1050,20 +1065,27 @@ export default function ResourceLibrary() {
         className={`finder-menu-tags-row ${disabled ? 'finder-menu-tags-row-disabled' : ''}`}
         onClick={(e) => e.stopPropagation()}
       >
-        {tagDefs.slice(0, 7).map((t) => {
+        {menuQuickTagDefs.map((t) => {
           const hasTag = itemTagIds.includes(t.id);
           return (
-            <span
+            <button
+              type="button"
               key={t.id}
-              className={`finder-menu-tag-dot ${hasTag ? 'finder-menu-tag-dot-active' : ''}`}
-              style={{ background: t.color, color: t.color }}
+              className={`finder-menu-quick-tag ${hasTag ? 'finder-menu-quick-tag-active' : ''}`}
+              title={t.name}
+              disabled={disabled}
               onClick={(e) => {
                 e.stopPropagation();
                 if (disabled || !item) return;
-                if (hasTag) setData((d) => removeTagFromItem(d, scope, item.key, t.id));
-                else setData((d) => addTagToItem(d, scope, item.key, t.id));
+                toggleItemTagSelection(item.key, t.id, hasTag);
               }}
-            />
+            >
+              <span
+                className={`finder-menu-quick-tag-dot ${hasTag ? 'finder-menu-quick-tag-dot-active' : ''}`}
+                style={{ background: t.color, color: t.color }}
+              />
+              <span className="finder-menu-quick-tag-label">{t.name}</span>
+            </button>
           );
         })}
       </div>
@@ -1327,7 +1349,12 @@ export default function ResourceLibrary() {
         ? columnLevels.flatMap((items) => items.map((item) => item.key))
         : displayChildren.map((item) => item.key),
     );
-    setSelectedItemKeys((prev) => prev.filter((key) => visibleKeys.has(key)));
+    setSelectedItemKeys((prev) => {
+      const next = prev.filter((key) => visibleKeys.has(key));
+      return next.length === prev.length && next.every((key, idx) => key === prev[idx])
+        ? prev
+        : next;
+    });
     setColumnSelectedItem((prev) => (prev && visibleKeys.has(prev.key) ? prev : null));
   }, [columnLevels, displayChildren, viewMode]);
 
@@ -1349,8 +1376,12 @@ export default function ResourceLibrary() {
   // ====== 标签选择 Popover 内容 ======
   const renderTagPicker = (itemKey) => {
     const item = list.find((r) => r.key === itemKey);
+    const availableTagDefs = tagDefs;
+    const itemTagIds = item?.tags || [];
     const selectedTags = (item?.tags || []).map((tagId) => (
-      tagDefs.find((t) => t.id === tagId) || { id: tagId, name: tagId, color: '#8e8e93' }
+      availableTagDefs.find((t) => t.id === tagId)
+      || tagDefs.find((t) => t.id === tagId)
+      || { id: tagId, name: tagId, color: '#8e8e93' }
     ));
 
     return (
@@ -1368,17 +1399,52 @@ export default function ResourceLibrary() {
             <span className="rl-tag-picker-placeholder">选择或新建标签</span>
           )}
         </div>
+        <div className="rl-tag-picker-section-title">快捷标签</div>
+        <div className="rl-tag-picker-quick-hint">设为快捷标签后，会同时显示在个人库和组织库的文件菜单顶部，方便快速打标。</div>
+        {quickTagDefs.length > 0 ? (
+          <div className="rl-tag-picker-quick-list">
+            {quickTagDefs.map((t) => {
+              const checked = itemTagIds.includes(t.id);
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  className={`rl-tag-picker-quick-chip ${checked ? 'rl-tag-picker-quick-chip-active' : ''}`}
+                  onClick={() => toggleItemTagSelection(itemKey, t.id, checked)}
+                >
+                  <span className="rl-tag-dot" style={{ background: t.color }} />
+                  <span>{t.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="rl-tag-picker-quick-empty">将常用标签设为快捷标签后，这里可以一键给文件打标签。</div>
+        )}
+        <div className="rl-tag-picker-section-title">全部标签</div>
         <div className="rl-tag-picker-list">
-          {tagDefs.map((t) => {
-            const checked = (item?.tags || []).includes(t.id);
+          {availableTagDefs.map((t) => {
+            const checked = itemTagIds.includes(t.id);
             return (
-              <div key={t.id} className={`rl-tag-picker-row ${checked ? 'rl-tag-picker-row-checked' : ''}`}
-                onClick={() => {
-                  if (checked) setData((d) => removeTagFromItem(d, scope, itemKey, t.id));
-                  else setData((d) => addTagToItem(d, scope, itemKey, t.id));
-                }}>
+              <div
+                key={t.id}
+                className={`rl-tag-picker-row ${checked ? 'rl-tag-picker-row-checked' : ''}`}
+                onClick={() => toggleItemTagSelection(itemKey, t.id, checked)}
+              >
                 <span className="rl-tag-dot" style={{ background: t.color }} />
                 <span className="rl-tag-picker-row-name">{t.name}</span>
+                <button
+                  type="button"
+                  className={`rl-tag-picker-row-quick-btn ${t.quick ? 'rl-tag-picker-row-quick-btn-active' : ''}`}
+                  title={t.quick ? '取消快捷标签' : '设为快捷标签'}
+                  aria-label={t.quick ? `取消快捷标签：${t.name}` : `设为快捷标签：${t.name}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleQuickTagToggle(t.id, !t.quick);
+                  }}
+                >
+                  {t.quick ? <StarFilled /> : <StarOutlined />}
+                </button>
                 {checked && <span className="rl-tag-picker-row-check">✓</span>}
               </div>
             );
@@ -1609,11 +1675,11 @@ export default function ResourceLibrary() {
             <button
               type="button"
               className="finder-toolbar-action-btn finder-toolbar-group-btn finder-toolbar-more-btn"
-              aria-label="快捷操作"
-              title="快捷操作"
+              aria-label="操作"
+              title="操作"
             >
               <MoreOutlined />
-              <span>快捷操作</span>
+              <span>操作</span>
               <CaretDownOutlined className="finder-toolbar-more-btn-caret" />
             </button>
           </Dropdown>
@@ -2174,7 +2240,7 @@ export default function ResourceLibrary() {
         onOk={() => {
           const trimmed = newTagName.trim();
           if (!trimmed) { message.warning('标签名称不能为空'); return; }
-          setData((d) => addTagDefinition(d, { name: trimmed, color: typeof newTagColor === 'string' ? newTagColor : newTagColor.toHexString() }, scope));
+          setData((d) => addTagDefinition(d, { name: trimmed, color: typeof newTagColor === 'string' ? newTagColor : newTagColor.toHexString() }));
           setAddTagOpen(false);
           message.success(`标签「${trimmed}」已创建`);
         }}
