@@ -539,14 +539,86 @@ export default function ResourceLibrary() {
 
   const allSidebarTagEntries = useMemo(() => tagDefs, [tagDefs]);
 
+  const contextualSidebarTagSourceMap = useMemo(() => {
+    const sourceMap = new Map();
+
+    const markSource = (items, sourceKey) => {
+      items.forEach((item) => {
+        (item?.tags || []).forEach((tagId) => {
+          const prev = sourceMap.get(tagId) || { fromFolder: false, fromContent: false };
+          sourceMap.set(tagId, { ...prev, [sourceKey]: true });
+        });
+      });
+    };
+
+    if (viewMode === 'column') {
+      markSource(columnContextItems.filter((item) => item.isFolder), 'fromFolder');
+      markSource(columnContextItems.filter((item) => !item.isFolder), 'fromContent');
+      return sourceMap;
+    }
+
+    if (activeTagFilter && persistedTagFilterContextItems.length > 0) {
+      const contextFolderKeySet = new Set(tagFilterContextFolderKeys);
+      markSource(
+        persistedTagFilterContextItems.filter((item) => contextFolderKeySet.has(item.key)),
+        'fromFolder',
+      );
+      markSource(
+        persistedTagFilterContextItems.filter((item) => !contextFolderKeySet.has(item.key)),
+        'fromContent',
+      );
+      return sourceMap;
+    }
+
+    if (selectedFolderContextItems.length > 0) {
+      const selectedFolderKeySet = new Set(selectedFolderContextKeys);
+      markSource(
+        selectedFolderContextItems.filter((item) => selectedFolderKeySet.has(item.key)),
+        'fromFolder',
+      );
+      markSource(
+        selectedFolderContextItems.filter((item) => !selectedFolderKeySet.has(item.key)),
+        'fromContent',
+      );
+      return sourceMap;
+    }
+
+    if (selectedFileContextItems.length > 0) {
+      markSource(selectedFileContextItems.filter((item) => item.isFolder), 'fromFolder');
+      markSource(selectedFileContextItems.filter((item) => !item.isFolder), 'fromContent');
+      return sourceMap;
+    }
+
+    if (!hasActiveSearch && !isRecentView && currentFolder) {
+      markSource([currentFolder], 'fromFolder');
+      markSource(detailContextItems, 'fromContent');
+      return sourceMap;
+    }
+
+    markSource(sidebarTagContextItems.filter((item) => item.isFolder), 'fromFolder');
+    markSource(sidebarTagContextItems.filter((item) => !item.isFolder), 'fromContent');
+    return sourceMap;
+  }, [
+    activeTagFilter,
+    columnContextItems,
+    currentFolder,
+    detailContextItems,
+    hasActiveSearch,
+    isRecentView,
+    persistedTagFilterContextItems,
+    selectedFileContextItems,
+    selectedFolderContextItems,
+    selectedFolderContextKeys,
+    sidebarTagContextItems,
+    tagFilterContextFolderKeys,
+    viewMode,
+  ]);
+
   const contextualSidebarTagEntries = useMemo(() => {
-    const visibleTagIds = new Set();
-    sidebarTagContextItems.forEach((item) => {
-      (item.tags || []).forEach((tagId) => visibleTagIds.add(tagId));
-    });
+    const visibleTagIds = new Set(contextualSidebarTagSourceMap.keys());
     if (activeTagFilter) visibleTagIds.add(activeTagFilter);
     return allSidebarTagEntries.filter((tag) => visibleTagIds.has(tag.id));
-  }, [activeTagFilter, allSidebarTagEntries, sidebarTagContextItems]);
+  }, [activeTagFilter, allSidebarTagEntries, contextualSidebarTagSourceMap]);
 
   const sidebarTagEntries = showAllSidebarTags ? allSidebarTagEntries : contextualSidebarTagEntries;
   const sidebarTagToggleLabel = showAllSidebarTags
@@ -600,11 +672,15 @@ export default function ResourceLibrary() {
       case 'tags': {
         const tagsArr = (item.tags || []).map((tid) => tagDefs.find((t) => t.id === tid)).filter(Boolean);
         if (tagsArr.length === 0) return '--';
+        const tagText = tagsArr.map((t) => t.name).join('、');
         return (
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-            {tagsArr.slice(0, 5).map((t) => (
-              <span key={t.id} style={{ width: 8, height: 8, borderRadius: '50%', background: t.color }} />
-            ))}
+          <span className="finder-detail-tags-text" title={tagText}>
+            <span className="finder-detail-tags-dots">
+              {tagsArr.slice(0, 5).map((t) => (
+                <span key={t.id} className="finder-detail-tags-dot" style={{ background: t.color }} />
+              ))}
+            </span>
+            <span className="finder-detail-tags-text-value">{tagText}</span>
           </span>
         );
       }
@@ -1816,29 +1892,44 @@ export default function ResourceLibrary() {
           }}
         >
           <div className="finder-sidebar-title">标签</div>
-          {sidebarTagEntries.map((t, idx) => (
-            <div key={t.id}>
-              {tagDropIdx === idx && <div className="finder-sidebar-fav-drop-indicator" />}
-              <div
-                className={`finder-tag-item ${activeTagFilter === t.id ? 'finder-tag-item-active' : ''} ${tagDragIdx === idx ? 'finder-sidebar-item-dragging' : ''} ${tagDropTargetId === t.id ? 'finder-tag-item-drop-target' : ''}`}
-                draggable
-                onDragStart={(e) => {
-                  setTagDragIdx(idx);
-                  setTagDropTargetId(null);
-                  e.dataTransfer.setData('text/plain', t.id);
-                  e.dataTransfer.effectAllowed = 'move';
-                }}
-                onDragEnd={() => { setTagDragIdx(null); clearTagDragState(); }}
-                onDragOver={(e) => handleTagItemDragOver(e, t.id, idx)}
-                onDragLeave={(e) => handleTagItemDragLeave(e, t.id)}
-                onDrop={(e) => handleTagItemDrop(e, t)}
-                onClick={() => handleTagFilter(t.id)}
-              >
-                <span className="finder-tag-dot" style={{ background: t.color }} />
-                <span className="finder-tag-label">{t.name}</span>
+          {sidebarTagEntries.map((t, idx) => {
+            const tagSourceMeta = showAllSidebarTags ? null : contextualSidebarTagSourceMap.get(t.id);
+            return (
+              <div key={t.id}>
+                {tagDropIdx === idx && <div className="finder-sidebar-fav-drop-indicator" />}
+                <div
+                  className={`finder-tag-item ${activeTagFilter === t.id ? 'finder-tag-item-active' : ''} ${tagDragIdx === idx ? 'finder-sidebar-item-dragging' : ''} ${tagDropTargetId === t.id ? 'finder-tag-item-drop-target' : ''}`}
+                  draggable
+                  onDragStart={(e) => {
+                    setTagDragIdx(idx);
+                    setTagDropTargetId(null);
+                    e.dataTransfer.setData('text/plain', t.id);
+                    e.dataTransfer.effectAllowed = 'move';
+                  }}
+                  onDragEnd={() => { setTagDragIdx(null); clearTagDragState(); }}
+                  onDragOver={(e) => handleTagItemDragOver(e, t.id, idx)}
+                  onDragLeave={(e) => handleTagItemDragLeave(e, t.id)}
+                  onDrop={(e) => handleTagItemDrop(e, t)}
+                  onClick={() => handleTagFilter(t.id)}
+                >
+                  <span className="finder-tag-dot" style={{ background: t.color }} />
+                  <span className="finder-tag-label-wrap">
+                    <span className="finder-tag-label">{t.name}</span>
+                    {tagSourceMeta && (
+                      <span className="finder-tag-source-list">
+                        {tagSourceMeta.fromFolder && (
+                          <span className="finder-tag-source-badge finder-tag-source-badge-folder">文件夹</span>
+                        )}
+                        {tagSourceMeta.fromContent && (
+                          <span className="finder-tag-source-badge finder-tag-source-badge-content">内容</span>
+                        )}
+                      </span>
+                    )}
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           {!showAllSidebarTags && sidebarTagEntries.length === 0 && (
             <div className="finder-sidebar-tag-empty">当前内容暂无标签</div>
           )}
@@ -2053,7 +2144,6 @@ export default function ResourceLibrary() {
                         <Dropdown key={item.key} menu={getContextMenu(item)} trigger={['contextMenu']}>
                           <div
                             className={`finder-column-item ${isActive ? 'finder-column-item-active' : ''} ${selectedItemKeys.includes(item.key) && !isActive ? 'finder-column-item-selected' : ''} ${item.isFolder && dragOverFolderKey === item.key ? 'finder-column-item-dragover' : ''}`}
-                            title={item.isFolder ? '双击进入文件夹' : undefined}
                             draggable
                             onDragStart={(e) => {
                               isDraggingRef.current = true;

@@ -339,8 +339,45 @@
   transition: transform 0.1s;
 }
 
-.finder-tag-label {
+.finder-tag-label-wrap {
+  min-width: 0;
   flex: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.finder-tag-label {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.finder-tag-source-list {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.finder-tag-source-badge {
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.finder-tag-source-badge-folder {
+  color: #0f4fbf;
+  background: rgba(0, 122, 255, 0.12);
+}
+
+.finder-tag-source-badge-content {
+  color: #166534;
+  background: rgba(52, 199, 89, 0.14);
 }
 
 .finder-sidebar-tag-empty {
@@ -1042,6 +1079,35 @@
 .finder-detail-col-comment,
 .finder-detail-col-tags {
   text-align: left;
+}
+
+.finder-detail-tags-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.finder-detail-tags-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.finder-detail-tags-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.finder-detail-tags-text-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ====== Right Preview Panel (右侧预览面板) ====== */
