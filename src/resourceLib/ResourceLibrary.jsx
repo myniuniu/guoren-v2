@@ -52,6 +52,7 @@ export default function ResourceLibrary() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [addDialogParentKey, setAddDialogParentKey] = useState(null);
   const [parseDrawerOpen, setParseDrawerOpen] = useState(false);
+  const [showAllSidebarTags, setShowAllSidebarTags] = useState(false);
   const [favorites, setFavorites] = useState(() => {
     try {
       const initLibId = (data?.currentScope === 'organization' ? (data?.currentOrgId || 'org_default') : 'personal');
@@ -64,8 +65,8 @@ export default function ResourceLibrary() {
   const [favDragOver, setFavDragOver] = useState(false);
   const [favDragIdx, setFavDragIdx] = useState(null); // 拖拽排序中的源索引
   const [favDropIdx, setFavDropIdx] = useState(null); // 拖抽插入位置指示器
-  const [tagDragIdx, setTagDragIdx] = useState(null); // 标签拖拽源索引
-  const [tagDropIdx, setTagDropIdx] = useState(null); // 标签拖拽插入位置
+  const [tagDragIdx, setTagDragIdx] = useState(null); // 标签拖拽源索引（当前显示列表）
+  const [tagDropIdx, setTagDropIdx] = useState(null); // 标签拖拽插入位置（当前显示列表）
   const [tagDropTargetId, setTagDropTargetId] = useState(null); // 拖入资料时高亮的标签
   const [dragOverFolderKey, setDragOverFolderKey] = useState(null); // 当前拖放目标文件夹 key
   const [navHistory, setNavHistory] = useState([null]); // 导航历史
@@ -305,11 +306,8 @@ export default function ResourceLibrary() {
 
   const searchResults = useMemo(() => {
     if (!hasActiveSearch) return [];
-    const source = activeTagFilter
-      ? list.filter((r) => (r.tags || []).includes(activeTagFilter))
-      : list;
-    return sortLibraryItems(source.filter(matchesSearch));
-  }, [activeTagFilter, hasActiveSearch, list, matchesSearch, sortLibraryItems]);
+    return sortLibraryItems(list.filter(matchesSearch));
+  }, [hasActiveSearch, list, matchesSearch, sortLibraryItems]);
 
   const recentItems = useMemo(() => {
     const nowTs = Date.now();
@@ -340,6 +338,20 @@ export default function ResourceLibrary() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [libraryId]);
 
+  useEffect(() => {
+    setFavorites((prev) => {
+      const nextFavs = prev.filter((fav) => list.some((item) => item.key === fav.key && item.isFolder));
+      if (nextFavs.length !== prev.length) {
+        localStorage.setItem(`guoren_rl_favorites_${libraryId}`, JSON.stringify(nextFavs));
+      }
+      return nextFavs;
+    });
+  }, [libraryId, list]);
+
+  useEffect(() => {
+    setShowAllSidebarTags(false);
+  }, [activeTagFilter, columnPath, libraryId, normalizedKeyword, searchMode, selectedFolderKey, specialView, viewMode]);
+
   // 切换个人/组织库
   const handleScopeChange = (nextScope) => {
     if (nextScope === scope) return;
@@ -365,24 +377,56 @@ export default function ResourceLibrary() {
     [list, selectedFolderKey],
   );
 
-  // 当前文件夹下的子项
-  const currentChildren = useMemo(() => {
+  const detailContextItems = useMemo(() => {
     if (hasActiveSearch) return searchResults;
     if (isRecentView) return recentItems;
+    return sortLibraryItems(list.filter((r) => r.parentKey === selectedFolderKey));
+  }, [hasActiveSearch, isRecentView, list, recentItems, searchResults, selectedFolderKey, sortLibraryItems]);
 
-    let items;
-    if (activeTagFilter) {
-      items = list.filter((r) => (r.tags || []).includes(activeTagFilter));
-    } else {
-      items = list.filter((r) => r.parentKey === selectedFolderKey);
-    }
-    return sortLibraryItems(items);
-  }, [activeTagFilter, hasActiveSearch, isRecentView, list, recentItems, searchResults, selectedFolderKey, sortLibraryItems]);
+  const columnContextItems = useMemo(() => {
+    if (hasActiveSearch) return searchResults;
+    if (isRecentView) return recentItems;
+    const parentKey = columnPath[columnPath.length - 1] ?? null;
+    return sortLibraryItems(list.filter((item) => item.parentKey === parentKey));
+  }, [columnPath, hasActiveSearch, isRecentView, list, recentItems, searchResults, sortLibraryItems]);
+
+  // 当前上下文下的子项
+  const currentChildren = useMemo(() => {
+    if (!activeTagFilter) return detailContextItems;
+    return detailContextItems.filter((item) => (item.tags || []).includes(activeTagFilter));
+  }, [activeTagFilter, detailContextItems]);
+
+  const sidebarTagContextItems = useMemo(() => {
+    if (viewMode === 'column') return columnContextItems;
+    return detailContextItems;
+  }, [
+    columnContextItems,
+    detailContextItems,
+    viewMode,
+  ]);
+
+  const allSidebarTagEntries = useMemo(() => currentTagDefs, [currentTagDefs]);
+
+  const contextualSidebarTagEntries = useMemo(() => {
+    const visibleTagIds = new Set();
+    sidebarTagContextItems.forEach((item) => {
+      (item.tags || []).forEach((tagId) => visibleTagIds.add(tagId));
+    });
+    if (activeTagFilter) visibleTagIds.add(activeTagFilter);
+    return allSidebarTagEntries.filter((tag) => visibleTagIds.has(tag.id));
+  }, [activeTagFilter, allSidebarTagEntries, sidebarTagContextItems]);
+
+  const sidebarTagEntries = showAllSidebarTags ? allSidebarTagEntries : contextualSidebarTagEntries;
+  const sidebarTagToggleLabel = showAllSidebarTags
+    ? '只看当前标签'
+    : contextualSidebarTagEntries.length > 0
+      ? '所有标签...'
+      : '显示全部标签...';
 
   // 详情视图递归展开后的表示列表（带 depth 缩进）
   const displayChildren = useMemo(() => {
     if (viewMode !== 'detail') return currentChildren.map((it) => ({ ...it, _depth: 0 }));
-    if (hasActiveSearch || isRecentView) return currentChildren.map((it) => ({ ...it, _depth: 0 }));
+    if (hasActiveSearch || isRecentView || activeTagFilter) return currentChildren.map((it) => ({ ...it, _depth: 0 }));
     const result = [];
     const walk = (items, depth) => {
       const sorted = sortLibraryItems(items);
@@ -396,7 +440,7 @@ export default function ResourceLibrary() {
     };
     walk(currentChildren, 0);
     return result;
-  }, [currentChildren, expandedFolders, hasActiveSearch, isRecentView, list, sortLibraryItems, viewMode]);
+  }, [activeTagFilter, currentChildren, expandedFolders, hasActiveSearch, isRecentView, list, sortLibraryItems, viewMode]);
 
   // 详情视图可选列定义（顺序 = 菜单顺序）
   const COL_DEFS = [
@@ -682,13 +726,9 @@ export default function ResourceLibrary() {
   const openAdd = (type) => { setAddType(type); addForm.resetFields(); setAddOpen(true); };
 
   const handleTagFilter = (tagId) => {
-    setSpecialView('all');
     setActiveTagFilter(activeTagFilter === tagId ? null : tagId);
     setSelectedItemKeys([]);
-    if (viewMode === 'column') {
-      setColumnPath([null]);
-      setColumnSelectedItem(null);
-    }
+    setColumnSelectedItem(null);
   };
 
   const hasResourceDragPayload = (e) => Array.from(e.dataTransfer?.types || []).includes('application/json');
@@ -753,13 +793,17 @@ export default function ResourceLibrary() {
       return;
     }
 
-    if (tagDragIdx !== null && tagDropIdx !== null && tagDragIdx !== tagDropIdx) {
-      const currentTags = currentTagDefs;
+    if (tagDragIdx !== null && tagDropIdx !== null) {
+      const draggedEntry = sidebarTagEntries[tagDragIdx];
+      const unchangedDropPosition = tagDropIdx === tagDragIdx || tagDropIdx === tagDragIdx + 1;
       const allScopeTags = getTagDefinitions(data, tagScope);
-      const fromGlobal = allScopeTags.findIndex((at) => at.id === currentTags[tagDragIdx]?.id);
-      const toItem = tagDropIdx < currentTags.length ? currentTags[tagDropIdx] : null;
-      const toGlobal = toItem ? allScopeTags.findIndex((at) => at.id === toItem.id) : allScopeTags.length;
-      if (fromGlobal >= 0 && toGlobal >= 0) {
+      const fromGlobal = allScopeTags.findIndex((at) => at.id === draggedEntry?.id);
+      const toItem = tagDropIdx < sidebarTagEntries.length ? sidebarTagEntries[tagDropIdx] : null;
+      const lastVisibleItem = sidebarTagEntries[sidebarTagEntries.length - 1] || null;
+      const toGlobal = toItem
+        ? allScopeTags.findIndex((at) => at.id === toItem.id)
+        : (lastVisibleItem ? allScopeTags.findIndex((at) => at.id === lastVisibleItem.id) + 1 : allScopeTags.length);
+      if (!unchangedDropPosition && fromGlobal >= 0 && toGlobal >= 0) {
         setData((d) => reorderTagDefinition(d, tagScope, fromGlobal, toGlobal));
       }
     }
@@ -922,26 +966,25 @@ export default function ResourceLibrary() {
   // 分栏视图各列的子项
   const columnLevels = useMemo(() => {
     if (hasActiveSearch) {
-      return [searchResults];
+      return [activeTagFilter
+        ? searchResults.filter((item) => (item.tags || []).includes(activeTagFilter))
+        : searchResults];
     }
     if (isRecentView) {
-      return [recentItems];
+      return [activeTagFilter
+        ? recentItems.filter((item) => (item.tags || []).includes(activeTagFilter))
+        : recentItems];
     }
-    // 标签筛选模式：第一列显示所有带该标签的项目
-    if (activeTagFilter) {
-      const taggedItems = list.filter((r) => (r.tags || []).includes(activeTagFilter));
-      const sorted = sortLibraryItems(taggedItems);
-      // 第一列显示标签结果，后续列按正常层级展开
-      const levels = [sorted];
-      for (let i = 1; i < columnPath.length; i++) {
-        const parentKey = columnPath[i];
-        const items = list.filter((r) => r.parentKey === parentKey);
-        levels.push(sortLibraryItems(items));
+    return columnPath.map((parentKey, idx) => {
+      const items = idx === columnPath.length - 1
+        ? columnContextItems
+        : sortLibraryItems(list.filter((r) => r.parentKey === parentKey));
+      if (activeTagFilter && idx === columnPath.length - 1) {
+        return items.filter((item) => (item.tags || []).includes(activeTagFilter));
       }
-      return levels;
-    }
-    return columnPath.map((parentKey) => sortLibraryItems(list.filter((r) => r.parentKey === parentKey)));
-  }, [activeTagFilter, columnPath, hasActiveSearch, isRecentView, list, recentItems, searchResults, sortLibraryItems]);
+      return items;
+    });
+  }, [activeTagFilter, columnContextItems, columnPath, hasActiveSearch, isRecentView, list, recentItems, searchResults, sortLibraryItems]);
 
   // 切换视图模式时同步 columnPath
   const handleViewModeChange = (mode) => {
@@ -1279,11 +1322,14 @@ export default function ResourceLibrary() {
   }, [searchPanelOpen]);
 
   useEffect(() => {
-    if (!hasActiveSearch) return;
-    const visibleKeys = new Set(searchResults.map((item) => item.key));
+    const visibleKeys = new Set(
+      viewMode === 'column'
+        ? columnLevels.flatMap((items) => items.map((item) => item.key))
+        : displayChildren.map((item) => item.key),
+    );
     setSelectedItemKeys((prev) => prev.filter((key) => visibleKeys.has(key)));
     setColumnSelectedItem((prev) => (prev && visibleKeys.has(prev.key) ? prev : null));
-  }, [hasActiveSearch, searchResults]);
+  }, [columnLevels, displayChildren, viewMode]);
 
   const handleSearchChange = (e) => {
     const nextKeyword = e.target.value;
@@ -1500,7 +1546,7 @@ export default function ResourceLibrary() {
           }}
         >
           <div className="finder-sidebar-title">标签</div>
-          {currentTagDefs.map((t, idx) => (
+          {sidebarTagEntries.map((t, idx) => (
             <div key={t.id}>
               {tagDropIdx === idx && <div className="finder-sidebar-fav-drop-indicator" />}
               <div
@@ -1523,10 +1569,13 @@ export default function ResourceLibrary() {
               </div>
             </div>
           ))}
-          {tagDropIdx === currentTagDefs.length && <div className="finder-sidebar-fav-drop-indicator" />}
-          <div className="finder-all-tags-link" onClick={() => { /* 跳转标签管理 */ }}>
+          {!showAllSidebarTags && sidebarTagEntries.length === 0 && (
+            <div className="finder-sidebar-tag-empty">当前内容暂无标签</div>
+          )}
+          {tagDropIdx === sidebarTagEntries.length && <div className="finder-sidebar-fav-drop-indicator" />}
+          <div className="finder-all-tags-link" onClick={() => setShowAllSidebarTags((prev) => !prev)}>
             <span style={{ width: 10, height: 10, borderRadius: '50%', border: '1.5px solid #86868b', display: 'inline-block' }} />
-            <span>所有标签...</span>
+            <span>{sidebarTagToggleLabel}</span>
           </div>
         </div>
       </div>
@@ -1667,7 +1716,7 @@ export default function ResourceLibrary() {
               内容
             </button>
             <span className="finder-search-summary-text">{activeSearchDescription}</span>
-            <span className="finder-search-summary-count">共 {searchResults.length} 项</span>
+            <span className="finder-search-summary-count">共 {currentChildren.length} 项</span>
           </div>
         )}
 

@@ -1,6 +1,6 @@
 // 资料库本地存储（独立于 versionStore，避免耦合）
 const STORAGE_KEY = 'guoren_resource_lib';
-const DATA_VERSION = 6;
+const DATA_VERSION = 7;
 
 // macOS 访达风格预设标签（7色 + 自定义）
 const PRESET_TAGS = [
@@ -62,16 +62,267 @@ const DEFAULT_ORGS = [
   { id: 'org_market',  name: '市场部' },
 ];
 
+const RESET_PERSONAL_TEACHING_DEMO_VERSION = 7;
+
+const PERSONAL_TEACHING_TAGS = [
+  { id: 'tag_p_courseware', name: '课件', color: '#007AFF', scope: 'personal' },
+  { id: 'tag_p_teaching_plan', name: '教学方案', color: '#34C759', scope: 'personal' },
+  { id: 'tag_p_teaching_aid', name: '教辅', color: '#FF9500', scope: 'personal' },
+  { id: 'tag_p_activity', name: '课堂活动', color: '#AF52DE', scope: 'personal' },
+  { id: 'tag_p_assignment', name: '作业任务', color: '#FF2D55', scope: 'personal' },
+  { id: 'tag_p_assessment', name: '评价量规', color: '#8E8E93', scope: 'personal' },
+  { id: 'tag_p_case', name: '案例素材', color: '#00C7BE', scope: 'personal' },
+  { id: 'tag_p_video', name: '视频素材', color: '#5856D6', scope: 'personal' },
+  { id: 'tag_p_experiment', name: '实验指导', color: '#FFCC00', scope: 'personal' },
+];
+
+const AI_GENERAL_COURSES = [
+  { id: '01', title: '认识人工智能', focus: '理解人工智能的基本概念、发展历程和课堂中的典型应用', activity: 'AI 应用观察清单' },
+  { id: '02', title: '数据如何驱动智能', focus: '认识数据采集、清洗、标注和训练样本的价值', activity: '数据标注体验单' },
+  { id: '03', title: '机器学习初体验', focus: '体验特征、分类和预测模型的基础流程', activity: '模型分类练习卡' },
+  { id: '04', title: '深度学习与神经网络', focus: '了解神经网络、训练过程和推理机制', activity: '神经网络连线活动' },
+  { id: '05', title: '计算机视觉入门', focus: '学习图像识别、目标检测和视觉应用案例', activity: '图像识别案例分析' },
+  { id: '06', title: '智能语音与语音交互', focus: '认识语音识别、语音合成和智能助手的工作方式', activity: '语音助手任务单' },
+  { id: '07', title: '自然语言处理基础', focus: '学习分词、问答、摘要和文本生成的基本任务', activity: '文本摘要对比实验' },
+  { id: '08', title: '大语言模型与生成式 AI', focus: '理解大模型的能力边界、局限与课堂使用规范', activity: '大模型问答规范卡' },
+  { id: '09', title: '提示词设计与高效提问', focus: '训练高质量提示词设计、拆解和追问策略', activity: '提示词迭代记录表' },
+  { id: '10', title: 'AIGC 图文创作实践', focus: '完成图文海报、课堂讲义和多模态内容创作', activity: 'AI 海报设计任务' },
+  { id: '11', title: '智能搜索与知识库', focus: '理解知识库、检索增强和可信回答机制', activity: '知识库检索任务单' },
+  { id: '12', title: 'AI 助教与课堂问答', focus: '设计 AI 助教在答疑、测验和反馈中的应用', activity: 'AI 助教角色设计表' },
+  { id: '13', title: '智能体与任务自动化', focus: '认识 Agent 工作流、工具调用和自动化任务', activity: '智能体流程拆解图' },
+  { id: '14', title: 'AI 编程辅助实践', focus: '学习用 AI 辅助代码生成、调试和网页制作', activity: 'AI 编程调试清单' },
+  { id: '15', title: '教育数据与学习分析', focus: '通过学习数据看板理解学习分析与个性化反馈', activity: '学习数据看板解读' },
+  { id: '16', title: 'AI 伦理与隐私保护', focus: '讨论公平性、隐私保护、版权和学术诚信问题', activity: 'AI 伦理情景辩论' },
+  { id: '17', title: '智慧校园应用案例', focus: '分析智慧校园中的排课、巡检和服务机器人案例', activity: '智慧校园案例调研' },
+  { id: '18', title: '机器人与具身智能', focus: '了解机器人感知、控制和具身智能场景', activity: '机器人任务路径规划' },
+  { id: '19', title: '期末项目策划与实现', focus: '组织学生完成 AI 课程结课项目策划与分工', activity: '结课项目甘特表' },
+  { id: '20', title: '课程复盘与成果展示', focus: '汇总课程成果、展示作品并完成课程反思评价', activity: '成果展示与课程反思' },
+];
+
+const PERSONAL_DEMO_OWNER = 'teacher_li';
+
+const padNumber = (value) => String(value).padStart(2, '0');
+
+function createDemoTimestamp(daysAgo = 0, hour = 9, minute = 0) {
+  const base = new Date(2026, 5, 6, 9, 0, 0, 0);
+  base.setDate(base.getDate() - daysAgo);
+  base.setHours(hour, minute, 0, 0);
+  return `${base.getFullYear()}-${padNumber(base.getMonth() + 1)}-${padNumber(base.getDate())} ${padNumber(base.getHours())}:${padNumber(base.getMinutes())}:${padNumber(base.getSeconds())}`;
+}
+
+function dedupeTags(tags = []) {
+  return Array.from(new Set(tags.filter(Boolean)));
+}
+
+function createTeachingFile({
+  key,
+  name,
+  parentKey,
+  fileType,
+  tags,
+  daysAgo,
+  hour,
+  minute,
+  contentText,
+  parseStatus = 'parsed',
+  lastOpenedAt,
+}) {
+  return {
+    key,
+    name,
+    isFolder: false,
+    parentKey,
+    fileType,
+    owner: PERSONAL_DEMO_OWNER,
+    parseStatus,
+    lastEdit: createDemoTimestamp(daysAgo, hour, minute),
+    tags: dedupeTags(tags),
+    contentText,
+    ...(lastOpenedAt ? { lastOpenedAt } : {}),
+  };
+}
+
+function createTeachingFolder({
+  key,
+  name,
+  parentKey = null,
+  tags,
+  daysAgo,
+  hour,
+  minute,
+}) {
+  return {
+    key,
+    name,
+    isFolder: true,
+    parentKey,
+    fileType: 'folder',
+    owner: PERSONAL_DEMO_OWNER,
+    parseStatus: 'parsed',
+    lastEdit: createDemoTimestamp(daysAgo, hour, minute),
+    tags: dedupeTags(tags),
+  };
+}
+
+function buildPersonalTeachingDemo() {
+  return AI_GENERAL_COURSES.flatMap((course, index) => {
+    const folderKey = `p_course_${course.id}`;
+    const daysAgo = 25 - index;
+    const folderTags = ['tag_p_courseware', 'tag_p_teaching_plan', 'tag_p_teaching_aid'];
+    const courseItems = [];
+    const recentOpenedAt = index < 12 ? createDemoTimestamp(11 - index, 18, 10 + ((index % 4) * 10)) : undefined;
+
+    courseItems.push(createTeachingFile({
+      key: `${folderKey}_slides`,
+      name: `第${course.id}课 ${course.title} 课件.pptx`,
+      parentKey: folderKey,
+      fileType: 'pptx',
+      tags: ['tag_p_courseware'],
+      daysAgo,
+      hour: 9,
+      minute: 10,
+      contentText: `本课件围绕“${course.title}”展开，聚焦${course.focus}，用于教师进行人工智能通识课讲解和课堂演示。`,
+      lastOpenedAt: recentOpenedAt,
+    }));
+
+    courseItems.push(createTeachingFile({
+      key: `${folderKey}_plan`,
+      name: `第${course.id}课 ${course.title} 教学方案.docx`,
+      parentKey: folderKey,
+      fileType: 'docx',
+      tags: ['tag_p_teaching_plan'],
+      daysAgo,
+      hour: 9,
+      minute: 40,
+      contentText: `该教学方案明确了第${course.id}课《${course.title}》的教学目标、教学流程、提问设计和板书安排，适用于教师备课。`,
+    }));
+
+    courseItems.push(createTeachingFile({
+      key: `${folderKey}_aid`,
+      name: `第${course.id}课 ${course.title} 教辅资料.pdf`,
+      parentKey: folderKey,
+      fileType: 'pdf',
+      tags: ['tag_p_teaching_aid'],
+      daysAgo,
+      hour: 10,
+      minute: 5,
+      contentText: `教辅资料汇总了“${course.title}”的概念说明、案例阅读和延伸知识，帮助教师组织分层教学和课后辅导。`,
+    }));
+
+    if (index % 2 === 0) {
+      folderTags.push('tag_p_activity');
+      courseItems.push(createTeachingFile({
+        key: `${folderKey}_activity`,
+        name: `第${course.id}课 ${course.activity}.xlsx`,
+        parentKey: folderKey,
+        fileType: 'xlsx',
+        tags: ['tag_p_activity'],
+        daysAgo,
+        hour: 10,
+        minute: 30,
+        contentText: `课堂活动单用于组织学生完成“${course.activity}”，帮助教师围绕${course.focus}开展课堂互动与小组协作。`,
+      }));
+    } else {
+      folderTags.push('tag_p_assignment');
+      courseItems.push(createTeachingFile({
+        key: `${folderKey}_assignment`,
+        name: `第${course.id}课 ${course.title} 作业任务单.docx`,
+        parentKey: folderKey,
+        fileType: 'docx',
+        tags: ['tag_p_assignment'],
+        daysAgo,
+        hour: 10,
+        minute: 30,
+        contentText: `作业任务单围绕“${course.title}”布置课后实践，要求学生结合${course.focus}完成观察、记录或设计任务。`,
+      }));
+    }
+
+    if (index % 3 === 0) {
+      folderTags.push('tag_p_case');
+      const caseFolderKey = `${folderKey}_cases`;
+      courseItems.push(createTeachingFolder({
+        key: caseFolderKey,
+        name: '拓展案例',
+        parentKey: folderKey,
+        tags: ['tag_p_case'],
+        daysAgo,
+        hour: 11,
+        minute: 0,
+      }));
+      courseItems.push(createTeachingFile({
+        key: `${caseFolderKey}_note`,
+        name: `第${course.id}课 ${course.title} 案例研读.md`,
+        parentKey: caseFolderKey,
+        fileType: 'note',
+        tags: ['tag_p_case'],
+        daysAgo,
+        hour: 11,
+        minute: 20,
+        contentText: `案例研读笔记收集了与“${course.title}”相关的课堂案例、讨论问题和反思提示，便于教师引导学生进行情境分析。`,
+      }));
+    }
+
+    if (index % 4 === 0) {
+      folderTags.push('tag_p_video');
+      courseItems.push(createTeachingFile({
+        key: `${folderKey}_video`,
+        name: `第${course.id}课 ${course.title} 讲解视频.mp4`,
+        parentKey: folderKey,
+        fileType: 'video',
+        tags: ['tag_p_video'],
+        daysAgo,
+        hour: 11,
+        minute: 40,
+        parseStatus: index === 8 ? 'parsing' : 'parsed',
+        contentText: `讲解视频用于辅助教师进行翻转课堂或课后复习，视频内容覆盖${course.focus}和重点概念讲解。`,
+      }));
+    }
+
+    if (index % 5 === 0) {
+      folderTags.push('tag_p_assessment');
+      courseItems.push(createTeachingFile({
+        key: `${folderKey}_rubric`,
+        name: `第${course.id}课 ${course.title} 评价量规.xlsx`,
+        parentKey: folderKey,
+        fileType: 'xlsx',
+        tags: ['tag_p_assessment'],
+        daysAgo,
+        hour: 12,
+        minute: 5,
+        contentText: `评价量规用于教师对“${course.title}”的课堂表现、合作情况和任务成果进行分项评价。`,
+      }));
+    }
+
+    if (index % 6 === 0) {
+      folderTags.push('tag_p_experiment');
+      courseItems.push(createTeachingFile({
+        key: `${folderKey}_experiment`,
+        name: `第${course.id}课 ${course.title} 实验指导.docx`,
+        parentKey: folderKey,
+        fileType: 'docx',
+        tags: ['tag_p_experiment'],
+        daysAgo,
+        hour: 12,
+        minute: 30,
+        contentText: `实验指导文档用于教师安排“${course.title}”的上机或分组实验，内容包含步骤提示、操作要求和结果记录方式。`,
+      }));
+    }
+
+    return [
+      createTeachingFolder({
+        key: folderKey,
+        name: `第${course.id}课 ${course.title}`,
+        tags: folderTags,
+        daysAgo,
+        hour: 8,
+        minute: 50,
+      }),
+      ...courseItems,
+    ];
+  });
+}
+
 const DEMO_CONTENT_TEXT_BY_KEY = {
-  p_r1: '果仁空间 v3 规划包含 React 组件库改造、资料库交互优化、AI 解析工作台和演示流程设计。',
-  p_r3: '这是一篇关于 React Hooks、状态提升、组件拆分和前端工程规范的学习笔记。',
-  p_r8: '课程内容介绍积木编程基础、事件驱动、组件思维和交互式页面搭建。',
-  p_r9: '课堂内容涵盖人工智能基础、AIGC 入门、React 前端应用案例和课堂互动设计。',
-  p_r10: '平台课堂资料包含 AI 原生框架、知识库检索、React 页面搭建与自动化测试案例。',
-  p_r11: '方案正文涉及 Claude Skill 设计、React 控制台接入、RAG 检索流程和提示词编排。',
-  p_r13: 'DeepAgent 技术汇报介绍多智能体协作、React 可视化面板、向量检索和任务编排。',
-  p_r14: '文档内容涵盖 Skill 配置、工作流约束、组件化界面和知识片段召回策略。',
-  p_r15: '失败样例文档仍保留了摘要文本，内容涉及智能体编排、React 仪表盘和报告生成。',
   o_r1: '员工手册正文包含入职制度、行为规范、内容安全要求和资料协作流程。',
   o_r2: '发布会 PPT 内容包含产品路线、React 门户改版、AI 能力矩阵与商业化计划。',
   rd_r1: '架构方案涉及 React 前端分层、微前端集成、向量搜索和解析服务治理。',
@@ -79,11 +330,6 @@ const DEMO_CONTENT_TEXT_BY_KEY = {
 };
 
 const DEMO_RECENT_OPENED_AT_BY_KEY = {
-  p_r11: '2026-06-05 18:20:00',
-  p_r13: '2026-06-04 09:12:00',
-  p_r1: '2026-05-30 14:05:00',
-  p_r3: '2026-05-24 11:30:00',
-  p_r9: '2026-05-21 16:45:00',
   o_r2: '2026-05-29 16:40:00',
   rd_r1: '2026-05-26 10:05:00',
 };
@@ -116,34 +362,7 @@ function hydrateSearchContent(data) {
 const defaultData = {
   _dataVersion: DATA_VERSION,
   // 个人资料库
-  personal: [
-    { key: 'p_f1', name: '测试白板数据丢失', isFolder: true, parentKey: null, fileType: 'folder', owner: 'zhanghl', parseStatus: 'parsed', lastEdit: '2026-05-24 09:10:00', tags: ['tag_blue'] },
-    { key: 'p_r1', name: '果仁空间v3.pptx', isFolder: false, parentKey: null, fileType: 'pptx', owner: 'zhanghl', parseStatus: 'parsed', lastEdit: '2026-05-23 17:42:11', tags: ['tag_red'] },
-    { key: 'p_f2', name: 'AIGC', isFolder: true, parentKey: null, fileType: 'folder', owner: 'zhanghl', parseStatus: 'parsed', lastEdit: '2026-05-23 16:20:00', tags: ['tag_purple'] },
-    { key: 'p_r2', name: '1111', isFolder: false, parentKey: null, fileType: 'test', owner: 'zhanghl', parseStatus: 'parsed', lastEdit: '2026-05-23 15:11:30', tags: [] },
-    { key: 'p_r3', name: '未命名笔记', isFolder: false, parentKey: null, fileType: 'note', owner: 'zhanghl', parseStatus: 'parsed', lastEdit: '2026-05-23 11:08:00', tags: [] },
-    { key: 'p_r4', name: '白板json', isFolder: false, parentKey: null, fileType: 'whiteboard', owner: 'zhanghl', parseStatus: 'parsed', lastEdit: '2026-05-22 18:45:22', tags: ['tag_green'] },
-    { key: 'p_r5', name: '白板json', isFolder: false, parentKey: null, fileType: 'whiteboard', owner: 'zhanghl', parseStatus: 'parsed', lastEdit: '2026-05-22 17:32:00', tags: ['tag_green'] },
-    { key: 'p_r6', name: '白板json', isFolder: false, parentKey: null, fileType: 'whiteboard', owner: 'zhanghl', parseStatus: 'parsed', lastEdit: '2026-05-22 16:15:10', tags: [] },
-    { key: 'p_r7', name: '1111', isFolder: false, parentKey: null, fileType: 'video', owner: 'zhanghl', parseStatus: 'parsed', lastEdit: '2026-05-22 14:01:55', tags: ['tag_orange'] },
-    { key: 'p_r8', name: '积木编程第一课', isFolder: false, parentKey: null, fileType: 'test', owner: 'zhanghl', parseStatus: 'parsed', lastEdit: '2026-05-22 10:20:00', tags: [] },
-    { key: 'p_f3', name: 'AI + 自动化测试', isFolder: true, parentKey: null, fileType: 'folder', owner: 'zhanghl', parseStatus: 'parsed', lastEdit: '2026-05-21 16:30:00', tags: ['tag_purple', 'tag_red'] },
-    { key: 'p_f4', name: '人工智能+教育', isFolder: true, parentKey: null, fileType: 'folder', owner: 'zhanghl', parseStatus: 'parsed', lastEdit: '2026-05-21 11:00:00', tags: ['tag_purple'] },
-    { key: 'p_r9', name: '人工智能通识讲解课堂', isFolder: false, parentKey: null, fileType: 'whiteboard', owner: 'zhanghl', parseStatus: 'parsed', lastEdit: '2026-05-21 09:48:30', tags: ['tag_purple'] },
-    { key: 'p_r10', name: 'AI原生基础框架与人工智能通识教学平台课堂', isFolder: false, parentKey: null, fileType: 'whiteboard', owner: 'zhanghl', parseStatus: 'parsing', lastEdit: '2026-05-20 17:55:00', tags: ['tag_yellow'] },
-    { key: 'p_f5', name: '实训任务', isFolder: true, parentKey: null, fileType: 'folder', owner: 'zhanghl', parseStatus: 'parsed', lastEdit: '2026-05-20 14:00:00', tags: ['tag_green'] },
-    { key: 'p_r11', name: '岗位Claude Skill设计方案.pdf', isFolder: false, parentKey: null, fileType: 'pdf', owner: 'zhanghl', parseStatus: 'parsed', lastEdit: '2026-05-20 10:33:00', tags: ['tag_blue'] },
-    { key: 'p_r12', name: '果仁空间v3.pptx', isFolder: false, parentKey: null, fileType: 'pptx', owner: 'zhanghl', parseStatus: 'parsed', lastEdit: '2026-05-19 18:15:11', tags: [] },
-    { key: 'p_r13', name: 'DeepAgent 技术汇报报告（对外分享_会议版）.pdf', isFolder: false, parentKey: null, fileType: 'pdf', owner: 'zhanghl', parseStatus: 'parsed', lastEdit: '2026-05-19 15:42:00', tags: ['tag_red'] },
-    { key: 'p_r14', name: '岗位Claude Skill设计方案.pdf', isFolder: false, parentKey: null, fileType: 'pdf', owner: 'zhanghl', parseStatus: 'parsed', lastEdit: '2026-05-19 11:20:00', tags: ['tag_blue'] },
-    { key: 'p_r15', name: 'DeepAgent 技术汇报报告（对外分享_会议版）.pdf', isFolder: false, parentKey: null, fileType: 'pdf', owner: 'zhanghl', parseStatus: 'failed', lastEdit: '2026-05-18 17:00:30', tags: ['tag_gray'] },
-    { key: 'p_f6', name: '通用', isFolder: true, parentKey: null, fileType: 'folder', owner: 'zhanghl', parseStatus: 'parsed', lastEdit: '2026-05-18 09:00:00', tags: [] },
-    { key: 'p_f7', name: '智能体相关', isFolder: true, parentKey: null, fileType: 'folder', owner: 'zhanghl', parseStatus: 'parsed', lastEdit: '2026-05-17 16:00:00', tags: ['tag_purple'] },
-    { key: 'p_f8', name: '技能开发相关', isFolder: true, parentKey: null, fileType: 'folder', owner: 'zhanghl', parseStatus: 'parsed', lastEdit: '2026-05-17 11:30:00', tags: ['tag_orange'] },
-    { key: 'p_bg1', name: '证书背景 - 藍色经典.svg', isFolder: false, parentKey: null, fileType: 'image', dataUrl: DEMO_BG_BLUE, owner: 'zhanghl', parseStatus: 'parsed', lastEdit: '2026-05-24 10:00:00', tags: ['tag_blue'] },
-    { key: 'p_bg2', name: '证书背景 - 金色荣誉.svg', isFolder: false, parentKey: null, fileType: 'image', dataUrl: DEMO_BG_GOLD, owner: 'zhanghl', parseStatus: 'parsed', lastEdit: '2026-05-24 10:00:00', tags: ['tag_orange'] },
-    { key: 'p_f9', name: 'abc', isFolder: true, parentKey: null, fileType: 'folder', owner: 'zhanghl', parseStatus: 'parsed', lastEdit: '2026-05-16 14:20:00', tags: [] },
-  ],
+  personal: buildPersonalTeachingDemo(),
   // 组织资料库（按 orgId 分组）
   organizations: {
     org_default: [
@@ -181,9 +400,7 @@ const defaultData = {
   tagDefinitions: {
     personal: [
       ...PRESET_TAGS,
-      { id: 'tag_p_important', name: '重要', color: '#FF2D55', scope: 'personal' },
-      { id: 'tag_p_todo', name: '待办', color: '#5856D6', scope: 'personal' },
-      { id: 'tag_p_review', name: '待复习', color: '#FF9500', scope: 'personal' },
+      ...PERSONAL_TEACHING_TAGS,
     ],
     organizations: {
       org_default: [
@@ -255,8 +472,9 @@ export function loadResourceLib() {
 
 function migrate(old) {
   const next = JSON.parse(JSON.stringify(defaultData));
+  const shouldResetPersonalDemo = (old?._dataVersion || 0) < RESET_PERSONAL_TEACHING_DEMO_VERSION;
   // 保留个人数据
-  if (Array.isArray(old.personal)) next.personal = old.personal;
+  if (!shouldResetPersonalDemo && Array.isArray(old.personal)) next.personal = old.personal;
   // 旧版本：data.organization[] → 默认组织
   if (Array.isArray(old.organization)) {
     next.organizations.org_default = old.organization;
@@ -265,7 +483,7 @@ function migrate(old) {
   }
   // 标签定义迁移
   if (old.tagDefinitions) {
-    if (Array.isArray(old.tagDefinitions.personal)) {
+    if (!shouldResetPersonalDemo && Array.isArray(old.tagDefinitions.personal)) {
       next.tagDefinitions.personal = old.tagDefinitions.personal;
     }
     if (Array.isArray(old.tagDefinitions.organization)) {
@@ -282,6 +500,7 @@ function migrate(old) {
   // 选中文件夹迁移
   if (old.selectedFolderKey) {
     next.selectedFolderKey = { ...next.selectedFolderKey, ...old.selectedFolderKey };
+    if (shouldResetPersonalDemo) next.selectedFolderKey.personal = null;
   }
   next._dataVersion = DATA_VERSION;
   return hydrateSearchContent(next);
