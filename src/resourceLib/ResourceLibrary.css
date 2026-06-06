@@ -404,7 +404,7 @@
 }
 
 .finder-toolbar-nav-btn:hover {
-  background: rgba(0, 0, 0, 0.06);
+  background: transparent;
 }
 
 .finder-toolbar-nav-btn:disabled {
@@ -447,7 +447,7 @@
 }
 
 .finder-toolbar-view-btn:hover {
-  background: rgba(15, 23, 42, 0.06);
+  background: transparent;
   color: #374151;
 }
 
@@ -531,7 +531,7 @@
 }
 
 .finder-toolbar-action-btn:hover {
-  background: rgba(0, 0, 0, 0.06);
+  background: transparent;
 }
 
 .finder-toolbar-group-btn {
@@ -918,7 +918,7 @@
 }
 .finder-detail-col-sortable:hover {
   color: #1d1d1f;
-  background: rgba(0, 0, 0, 0.04);
+  background: transparent;
 }
 .finder-detail-col-active {
   color: #1d1d1f;

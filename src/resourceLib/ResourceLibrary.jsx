@@ -22,7 +22,7 @@ import {
   loadResourceLib, addItem, renameItem, deleteItem, setSelectedFolder, inferFileType, moveItem,
   getTagDefinitions, addTagDefinition, reorderTagDefinition,
   addTagToItem, removeTagFromItem,
-  getLibraryList, getLibraryId, getOrganizations, setCurrentScope, setCurrentOrg,
+  getLibraryList, getLibraryId, getOrganizations, setCurrentScope, setCurrentOrg, markItemOpened,
 } from './resourceLibStore';
 import { renderFileIcon } from './resourceIcons.jsx';
 import { fileApi } from '../api/fileApi';
@@ -37,6 +37,7 @@ export default function ResourceLibrary() {
   const [scope, setScope] = useState(() => data?.currentScope || 'personal');
   const [currentOrgId, setCurrentOrgId] = useState(() => data?.currentOrgId || 'org_default');
   const [keyword, setKeyword] = useState('');
+  const [specialView, setSpecialView] = useState('all'); // all | recent
   const [searchMode, setSearchMode] = useState('name'); // name | content
   const [searchPanelOpen, setSearchPanelOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
@@ -238,6 +239,20 @@ export default function ResourceLibrary() {
   const normalizedKeyword = keyword.trim();
   const hasActiveSearch = normalizedKeyword.length > 0;
   const normalizedKeywordLower = normalizedKeyword.toLowerCase();
+  const isRecentView = specialView === 'recent';
+
+  const parseDateValue = useCallback((value) => {
+    if (!value) return null;
+    if (value instanceof Date) return value.getTime();
+    const normalized = String(value)
+      .trim()
+      .replace(/[年.-]/g, '/')
+      .replace(/月/g, '/')
+      .replace(/日/g, '')
+      .replace(/\s+/g, ' ');
+    const parsed = Date.parse(normalized);
+    return Number.isNaN(parsed) ? null : parsed;
+  }, []);
 
   const sortLibraryItems = useCallback((items) => [...items].sort((a, b) => {
     if (a.isFolder && !b.isFolder) return -1;
@@ -296,6 +311,17 @@ export default function ResourceLibrary() {
     return sortLibraryItems(source.filter(matchesSearch));
   }, [activeTagFilter, hasActiveSearch, list, matchesSearch, sortLibraryItems]);
 
+  const recentItems = useMemo(() => {
+    const nowTs = Date.now();
+    const monthAgoTs = nowTs - 30 * 24 * 60 * 60 * 1000;
+    return list
+      .filter((item) => !item.isFolder)
+      .map((item) => ({ item, openedAtTs: parseDateValue(item.lastOpenedAt) }))
+      .filter(({ openedAtTs }) => openedAtTs && openedAtTs >= monthAgoTs && openedAtTs <= nowTs)
+      .sort((a, b) => b.openedAtTs - a.openedAtTs)
+      .map(({ item }) => item);
+  }, [list, parseDateValue]);
+
   // 库切换时：重新加载该库的收藏，清空选中/过滤/导航历史
   useEffect(() => {
     try {
@@ -304,6 +330,7 @@ export default function ResourceLibrary() {
     } catch { setFavorites([]); }
     setActiveTagFilter(null);
     setKeyword('');
+    setSpecialView('all');
     setSearchPanelOpen(false);
     setSelectedItemKeys([]);
     setColumnPath([null]);
@@ -327,6 +354,11 @@ export default function ResourceLibrary() {
     setData((d) => setCurrentOrg(d, orgId));
   };
 
+  const recordItemOpened = useCallback((item) => {
+    if (!item || item.isFolder) return;
+    setData((d) => markItemOpened(d, scope, item.key));
+  }, [scope]);
+
   // 当前文件夹信息
   const currentFolder = useMemo(
     () => (selectedFolderKey ? list.find((r) => r.key === selectedFolderKey) : null),
@@ -336,6 +368,7 @@ export default function ResourceLibrary() {
   // 当前文件夹下的子项
   const currentChildren = useMemo(() => {
     if (hasActiveSearch) return searchResults;
+    if (isRecentView) return recentItems;
 
     let items;
     if (activeTagFilter) {
@@ -344,12 +377,12 @@ export default function ResourceLibrary() {
       items = list.filter((r) => r.parentKey === selectedFolderKey);
     }
     return sortLibraryItems(items);
-  }, [activeTagFilter, hasActiveSearch, list, searchResults, selectedFolderKey, sortLibraryItems]);
+  }, [activeTagFilter, hasActiveSearch, isRecentView, list, recentItems, searchResults, selectedFolderKey, sortLibraryItems]);
 
   // 详情视图递归展开后的表示列表（带 depth 缩进）
   const displayChildren = useMemo(() => {
     if (viewMode !== 'detail') return currentChildren.map((it) => ({ ...it, _depth: 0 }));
-    if (hasActiveSearch) return currentChildren.map((it) => ({ ...it, _depth: 0 }));
+    if (hasActiveSearch || isRecentView) return currentChildren.map((it) => ({ ...it, _depth: 0 }));
     const result = [];
     const walk = (items, depth) => {
       const sorted = sortLibraryItems(items);
@@ -363,7 +396,7 @@ export default function ResourceLibrary() {
     };
     walk(currentChildren, 0);
     return result;
-  }, [currentChildren, expandedFolders, hasActiveSearch, list, sortLibraryItems, viewMode]);
+  }, [currentChildren, expandedFolders, hasActiveSearch, isRecentView, list, sortLibraryItems, viewMode]);
 
   // 详情视图可选列定义（顺序 = 菜单顺序）
   const COL_DEFS = [
@@ -447,6 +480,7 @@ export default function ResourceLibrary() {
 
   // ====== 操作 ======
   const navigateTo = (folderKey) => {
+    setSpecialView('all');
     setData((d) => setSelectedFolder(d, scope, folderKey));
     setActiveTagFilter(null);
     setSelectedItemKeys([]);
@@ -473,6 +507,7 @@ export default function ResourceLibrary() {
     if (navIndex > 0) {
       const newIndex = navIndex - 1;
       setNavIndex(newIndex);
+      setSpecialView('all');
       setData((d) => setSelectedFolder(d, scope, navHistory[newIndex]));
       setActiveTagFilter(null);
     }
@@ -482,8 +517,20 @@ export default function ResourceLibrary() {
     if (navIndex < navHistory.length - 1) {
       const newIndex = navIndex + 1;
       setNavIndex(newIndex);
+      setSpecialView('all');
       setData((d) => setSelectedFolder(d, scope, navHistory[newIndex]));
     }
+  };
+
+  const openRecentView = () => {
+    setSpecialView('recent');
+    setActiveTagFilter(null);
+    setKeyword('');
+    setSearchPanelOpen(false);
+    setSelectedItemKeys([]);
+    setColumnSelectedItem(null);
+    setColumnPath([null]);
+    setData((d) => setSelectedFolder(d, scope, null));
   };
 
   const handleDelete = (key) => {
@@ -635,6 +682,7 @@ export default function ResourceLibrary() {
   const openAdd = (type) => { setAddType(type); addForm.resetFields(); setAddOpen(true); };
 
   const handleTagFilter = (tagId) => {
+    setSpecialView('all');
     setActiveTagFilter(activeTagFilter === tagId ? null : tagId);
     setSelectedItemKeys([]);
     if (viewMode === 'column') {
@@ -722,11 +770,11 @@ export default function ResourceLibrary() {
 
   // 多选点击处理（Cmd+Click 切换选中，Shift+Click 范围选，普通点击单选）
   const lastClickedIdx = useRef(null);
-  const handleItemClick = (key, idx, e) => {
+  const handleItemClick = (item, idx, e) => {
     if (e.metaKey || e.ctrlKey) {
       // Cmd/Ctrl + Click: toggle
       setSelectedItemKeys((prev) =>
-        prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+        prev.includes(item.key) ? prev.filter((k) => k !== item.key) : [...prev, item.key]
       );
       lastClickedIdx.current = idx;
     } else if (e.shiftKey && lastClickedIdx.current !== null) {
@@ -737,8 +785,9 @@ export default function ResourceLibrary() {
       setSelectedItemKeys(rangeKeys);
     } else {
       // 普通点击：单选
-      setSelectedItemKeys([key]);
+      setSelectedItemKeys([item.key]);
       lastClickedIdx.current = idx;
+      recordItemOpened(item);
     }
   };
 
@@ -867,12 +916,16 @@ export default function ResourceLibrary() {
     setColumnPath(columnPath.slice(0, colIndex + 1));
     setColumnSelectedItem(item);
     setSelectedItemKeys([item.key]);
+    recordItemOpened(item);
   };
 
   // 分栏视图各列的子项
   const columnLevels = useMemo(() => {
     if (hasActiveSearch) {
       return [searchResults];
+    }
+    if (isRecentView) {
+      return [recentItems];
     }
     // 标签筛选模式：第一列显示所有带该标签的项目
     if (activeTagFilter) {
@@ -888,7 +941,7 @@ export default function ResourceLibrary() {
       return levels;
     }
     return columnPath.map((parentKey) => sortLibraryItems(list.filter((r) => r.parentKey === parentKey)));
-  }, [activeTagFilter, columnPath, hasActiveSearch, list, searchResults, sortLibraryItems]);
+  }, [activeTagFilter, columnPath, hasActiveSearch, isRecentView, list, recentItems, searchResults, sortLibraryItems]);
 
   // 切换视图模式时同步 columnPath
   const handleViewModeChange = (mode) => {
@@ -1346,7 +1399,7 @@ export default function ResourceLibrary() {
         >
           <div className="finder-sidebar-title">{scope === 'personal' ? '个人收藏' : '组织收藏'}</div>
           <div
-            className={`finder-sidebar-item ${!selectedFolderKey && !activeTagFilter ? 'finder-sidebar-item-active' : ''}`}
+            className={`finder-sidebar-item ${specialView === 'all' && !selectedFolderKey && !activeTagFilter && !hasActiveSearch ? 'finder-sidebar-item-active' : ''}`}
             onClick={() => { navigateTo(null); }}
           >
             <span className="finder-sidebar-item-icon" style={{ color: '#007aff' }}><DesktopOutlined /></span>
@@ -1384,7 +1437,10 @@ export default function ResourceLibrary() {
               </button>
             </span>
           </div>
-          <div className="finder-sidebar-item" onClick={() => navigateTo(null)}>
+          <div
+            className={`finder-sidebar-item ${isRecentView && !hasActiveSearch ? 'finder-sidebar-item-active' : ''}`}
+            onClick={openRecentView}
+          >
             <span className="finder-sidebar-item-icon" style={{ color: '#8e8e93' }}><ClockCircleOutlined /></span>
             <span className="finder-sidebar-item-label">最近使用</span>
           </div>
@@ -1393,7 +1449,7 @@ export default function ResourceLibrary() {
             <div key={`fav_${fav.key}`} data-fav-idx={idx}>
               {favDropIdx === idx && <div className="finder-sidebar-fav-drop-indicator" />}
               <div
-                className={`finder-sidebar-item ${selectedFolderKey === fav.key && !activeTagFilter ? 'finder-sidebar-item-active' : ''} ${favDragIdx === idx ? 'finder-sidebar-item-dragging' : ''}`}
+                className={`finder-sidebar-item ${specialView === 'all' && selectedFolderKey === fav.key && !activeTagFilter && !hasActiveSearch ? 'finder-sidebar-item-active' : ''} ${favDragIdx === idx ? 'finder-sidebar-item-dragging' : ''}`}
                 draggable
                 onDragStart={(e) => {
                   setFavDragIdx(idx);
@@ -1493,6 +1549,8 @@ export default function ResourceLibrary() {
           <div className="finder-toolbar-title">
             {hasActiveSearch
               ? `正在搜索“${normalizedKeyword}”`
+              : isRecentView
+              ? '最近使用'
               : activeTagFilter
               ? tagDefs.find((t) => t.id === activeTagFilter)?.name || '标签'
               : (currentFolder?.name || (scope === 'personal' ? '全部资料' : '组织资料'))}
@@ -1810,7 +1868,7 @@ export default function ResourceLibrary() {
                 </div>
               )}
               {currentChildren.length === 0 && !newFolderInline ? (
-                <div className="finder-empty"><Empty description={hasActiveSearch ? '无匹配资料' : '此文件夹为空，右键新建'} image={Empty.PRESENTED_IMAGE_SIMPLE} /></div>
+                <div className="finder-empty"><Empty description={hasActiveSearch ? '无匹配资料' : (isRecentView ? '近一个月暂无最近打开的文件' : '此文件夹为空，右键新建')} image={Empty.PRESENTED_IMAGE_SIMPLE} /></div>
               ) : (
                 displayChildren.map((item, idx) => {
                   const isSelected = selectedItemKeys.includes(item.key);
@@ -1836,7 +1894,7 @@ export default function ResourceLibrary() {
                         onClick={(e) => {
                           // 如果刚刚完成拖拽，不触发点击
                           if (isDraggingRef.current) return;
-                          handleItemClick(item.key, idx, e);
+                          handleItemClick(item, idx, e);
                         }}
                         onDoubleClick={() => handleDoubleClick(item)}
                       >
@@ -1993,6 +2051,14 @@ export default function ResourceLibrary() {
               <span className="finder-pathbar-segment finder-pathbar-segment-current">
                 <span className="finder-pathbar-segment-icon"><SearchOutlined /></span>
                 <span>{activeSearchDescription}</span>
+              </span>
+            </>
+          ) : isRecentView ? (
+            <>
+              <span className="finder-pathbar-sep">›</span>
+              <span className="finder-pathbar-segment finder-pathbar-segment-current">
+                <span className="finder-pathbar-segment-icon"><ClockCircleOutlined /></span>
+                <span>最近使用</span>
               </span>
             </>
           ) : viewMode === 'column' ? (

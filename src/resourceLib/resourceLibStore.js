@@ -78,11 +78,28 @@ const DEMO_CONTENT_TEXT_BY_KEY = {
   mk_r1: '市场分析报告覆盖用户画像、内容传播策略、React 官网投放页和线索转化。',
 };
 
+const DEMO_RECENT_OPENED_AT_BY_KEY = {
+  p_r11: '2026-06-05 18:20:00',
+  p_r13: '2026-06-04 09:12:00',
+  p_r1: '2026-05-30 14:05:00',
+  p_r3: '2026-05-24 11:30:00',
+  p_r9: '2026-05-21 16:45:00',
+  o_r2: '2026-05-29 16:40:00',
+  rd_r1: '2026-05-26 10:05:00',
+};
+
 function withDemoContentText(item) {
   if (!item || item.isFolder) return item;
-  if (item.contentText) return item;
-  const demoContentText = DEMO_CONTENT_TEXT_BY_KEY[item.key];
-  return demoContentText ? { ...item, contentText: demoContentText } : item;
+  let next = item;
+  if (!next.contentText) {
+    const demoContentText = DEMO_CONTENT_TEXT_BY_KEY[next.key];
+    if (demoContentText) next = { ...next, contentText: demoContentText };
+  }
+  if (!next.lastOpenedAt) {
+    const demoLastOpenedAt = DEMO_RECENT_OPENED_AT_BY_KEY[next.key];
+    if (demoLastOpenedAt) next = { ...next, lastOpenedAt: demoLastOpenedAt };
+  }
+  return next;
 }
 
 function hydrateSearchContent(data) {
@@ -361,6 +378,16 @@ export function moveItem(data, scope, itemKey, targetFolderKey) {
   const next = setLibraryList(data, scope, list.map((r) => 
     r.key === itemKey ? { ...r, parentKey: targetFolderKey, lastEdit: now() } : r
   ));
+  saveResourceLib(next);
+  return next;
+}
+
+// 标记资料最近打开时间
+export function markItemOpened(data, scope, key, openedAt = now()) {
+  const list = getLibraryList(data, scope);
+  const next = setLibraryList(data, scope, list.map((r) => (
+    r.key === key ? { ...r, lastOpenedAt: openedAt } : r
+  )));
   saveResourceLib(next);
   return next;
 }
