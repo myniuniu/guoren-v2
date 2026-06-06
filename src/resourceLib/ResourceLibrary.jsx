@@ -12,7 +12,7 @@ import {
   DownloadOutlined, ClockCircleOutlined,
   CloudOutlined, ShareAltOutlined, GlobalOutlined,
   QuestionCircleOutlined,
-  ThunderboltOutlined,
+  RobotOutlined, ToolOutlined,
   CaretDownOutlined, MoreOutlined, CaretRightOutlined,
   FileTextOutlined, FilePdfOutlined, FileImageOutlined,
   PlayCircleOutlined, SoundOutlined, TagsOutlined,
@@ -36,6 +36,7 @@ const DETAIL_PREVIEW_MIN_WIDTH = 320;
 const DETAIL_PREVIEW_MAX_WIDTH = 1120;
 const DETAIL_PREVIEW_MIN_LIST_WIDTH = 260;
 const DETAIL_PREVIEW_DEFAULT_RATIO = 0.5;
+const FOLDER_HOVER_TIP_DELAY = 1;
 const RESOURCE_LIB_HELP_TIPS = [
   '在文件夹上双击可进入文件夹。',
   '支持对文件、文件夹和空白区域使用鼠标右键操作。',
@@ -64,6 +65,7 @@ export default function ResourceLibrary() {
   const [addDialogParentKey, setAddDialogParentKey] = useState(null);
   const [parseDrawerOpen, setParseDrawerOpen] = useState(false);
   const [showAllSidebarTags, setShowAllSidebarTags] = useState(false);
+  const [folderHoverTip, setFolderHoverTip] = useState(null);
   const [favorites, setFavorites] = useState(() => {
     try {
       const initLibId = (data?.currentScope === 'organization' ? (data?.currentOrgId || 'org_default') : 'personal');
@@ -148,6 +150,7 @@ export default function ResourceLibrary() {
   const previewDragRef = useRef(null);
   const contentAreaRef = useRef(null);
   const searchBoxRef = useRef(null);
+  const folderHoverTipTimerRef = useRef(null);
   // 记录用户是否在列表视图下手动拖过，避免覆盖用户选择
   const previewListResizedRef = useRef(false);
   const handleSidebarResizeStart = useCallback((e) => {
@@ -206,6 +209,46 @@ export default function ResourceLibrary() {
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
   }, [previewWidth]);
+
+  const clearFolderHoverTipTimer = useCallback(() => {
+    if (!folderHoverTipTimerRef.current) return;
+    clearTimeout(folderHoverTipTimerRef.current);
+    folderHoverTipTimerRef.current = null;
+  }, []);
+
+  const getFolderHoverTipPosition = useCallback((clientX, clientY) => {
+    const tipWidth = 132;
+    const tipHeight = 34;
+    const viewportWidth = window.innerWidth || 0;
+    const viewportHeight = window.innerHeight || 0;
+    const nextX = Math.min(clientX + 14, Math.max(8, viewportWidth - tipWidth));
+    const nextY = Math.min(clientY + 18, Math.max(8, viewportHeight - tipHeight));
+    return { x: nextX, y: nextY };
+  }, []);
+
+  const handleFolderHoverEnter = useCallback((itemKey, event) => {
+    clearFolderHoverTipTimer();
+    const position = getFolderHoverTipPosition(event.clientX, event.clientY);
+    setFolderHoverTip({ key: itemKey, ...position, visible: false });
+    folderHoverTipTimerRef.current = window.setTimeout(() => {
+      setFolderHoverTip((prev) => (prev?.key === itemKey ? { ...prev, visible: true } : prev));
+      folderHoverTipTimerRef.current = null;
+    }, FOLDER_HOVER_TIP_DELAY * 1000);
+  }, [clearFolderHoverTipTimer, getFolderHoverTipPosition]);
+
+  const handleFolderHoverMove = useCallback((itemKey, event) => {
+    const position = getFolderHoverTipPosition(event.clientX, event.clientY);
+    setFolderHoverTip((prev) => (prev?.key === itemKey ? { ...prev, ...position } : prev));
+  }, [getFolderHoverTipPosition]);
+
+  const hideFolderHoverTip = useCallback((itemKey) => {
+    clearFolderHoverTipTimer();
+    setFolderHoverTip((prev) => {
+      if (!prev) return null;
+      if (itemKey && prev.key !== itemKey) return prev;
+      return null;
+    });
+  }, [clearFolderHoverTipTimer]);
 
   // 列表视图预览区默认更宽，用户手动拖过后不再覆盖
   useEffect(() => {
@@ -1623,6 +1666,14 @@ export default function ResourceLibrary() {
     };
   }, [searchPanelOpen]);
 
+  useEffect(() => () => {
+    clearFolderHoverTipTimer();
+  }, [clearFolderHoverTipTimer]);
+
+  useEffect(() => {
+    hideFolderHoverTip();
+  }, [hideFolderHoverTip, libraryId, normalizedKeyword, searchMode, selectedFolderKey, specialView, viewMode]);
+
   useEffect(() => {
     const visibleKeys = new Set(
       viewMode === 'column'
@@ -1969,11 +2020,11 @@ export default function ResourceLibrary() {
           <Dropdown menu={toolbarMoreMenu} trigger={['click']} overlayClassName="finder-toolbar-more-dropdown" placement="bottomLeft">
             <button
               type="button"
-              className="finder-toolbar-action-btn finder-toolbar-group-btn finder-toolbar-more-btn"
-              aria-label="操作"
-              title="操作"
-            >
-              <MoreOutlined />
+            className="finder-toolbar-action-btn finder-toolbar-group-btn finder-toolbar-more-btn"
+            aria-label="操作"
+            title="操作"
+          >
+              <ToolOutlined />
               <span>操作</span>
               <CaretDownOutlined className="finder-toolbar-more-btn-caret" />
             </button>
@@ -2013,7 +2064,7 @@ export default function ResourceLibrary() {
           {/* 操作按钮区 */}
           <div className="finder-toolbar-actions">
             <button className="finder-toolbar-action-btn finder-toolbar-group-btn finder-toolbar-parse-btn" onClick={() => setParseDrawerOpen(true)}>
-              <ThunderboltOutlined className="finder-toolbar-parse-btn-icon" />
+              <RobotOutlined className="finder-toolbar-parse-btn-icon" />
               <span>AI解析</span>
             </button>
           </div>
@@ -2323,105 +2374,124 @@ export default function ResourceLibrary() {
                   const depth = item._depth || 0;
                   const isExpanded = expandedFolders.has(item.key);
                   const rowMoreMenu = getItemMoreMenu(item, { includeFavorite: true });
-                  return (
-                    <Dropdown key={item.key} menu={getContextMenu(item, { includeFavorite: true })} trigger={['contextMenu']}>
-                      <div
-                        className={`finder-file-row ${isSelected ? 'finder-file-row-selected' : ''} ${item.isFolder && dragOverFolderKey === item.key ? 'finder-file-row-dragover' : ''}`}
-                        title={item.isFolder ? '双击进入文件夹' : undefined}
-                        draggable
-                        onDragStart={(e) => {
-                          isDraggingRef.current = true;
-                          e.dataTransfer.setData('application/json', JSON.stringify({ key: item.key, name: item.name, isFolder: item.isFolder, fileType: item.fileType }));
-                          e.dataTransfer.effectAllowed = 'copyLink';
-                        }}
-                        onDragEnd={() => {
-                          isDraggingRef.current = false;
-                        }}
-                        onDragOver={item.isFolder ? (e) => handleFolderDragOver(e, item.key) : undefined}
-                        onDragLeave={item.isFolder ? (e) => handleFolderDragLeave(e, item.key) : undefined}
-                        onDrop={item.isFolder ? (e) => handleFolderDrop(e, item.key) : undefined}
-                        onClick={(e) => {
-                          // 如果刚刚完成拖拽，不触发点击
-                          if (isDraggingRef.current) return;
-                          handleItemClick(item, idx, e);
-                        }}
-                        onDoubleClick={() => handleDoubleClick(item)}
+                  const rowContent = (
+                    <div
+                      className={`finder-file-row ${isSelected ? 'finder-file-row-selected' : ''} ${item.isFolder && dragOverFolderKey === item.key ? 'finder-file-row-dragover' : ''}`}
+                      draggable
+                      onMouseEnter={item.isFolder ? (e) => handleFolderHoverEnter(item.key, e) : undefined}
+                      onMouseMove={item.isFolder ? (e) => handleFolderHoverMove(item.key, e) : undefined}
+                      onMouseLeave={item.isFolder ? () => hideFolderHoverTip(item.key) : undefined}
+                      onDragStart={(e) => {
+                        isDraggingRef.current = true;
+                        hideFolderHoverTip(item.key);
+                        e.dataTransfer.setData('application/json', JSON.stringify({ key: item.key, name: item.name, isFolder: item.isFolder, fileType: item.fileType }));
+                        e.dataTransfer.effectAllowed = 'copyLink';
+                      }}
+                      onDragEnd={() => {
+                        isDraggingRef.current = false;
+                      }}
+                      onDragOver={item.isFolder ? (e) => handleFolderDragOver(e, item.key) : undefined}
+                      onDragLeave={item.isFolder ? (e) => handleFolderDragLeave(e, item.key) : undefined}
+                      onDrop={item.isFolder ? (e) => handleFolderDrop(e, item.key) : undefined}
+                      onClick={(e) => {
+                        // 如果刚刚完成拖拽，不触发点击
+                        if (isDraggingRef.current) return;
+                        hideFolderHoverTip(item.key);
+                        handleItemClick(item, idx, e);
+                      }}
+                      onDoubleClick={() => {
+                        hideFolderHoverTip(item.key);
+                        handleDoubleClick(item);
+                      }}
+                    >
+                      {/* 展开三角（详情视图专用） */}
+                      {viewMode === 'detail' && !hasActiveSearch && (
+                        <span
+                          className="finder-detail-expand-icon"
+                          style={{ marginLeft: depth * 16 }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!item.isFolder) return;
+                            setExpandedFolders((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(item.key)) next.delete(item.key);
+                              else next.add(item.key);
+                              return next;
+                            });
+                          }}
+                        >
+                          {item.isFolder ? (
+                            isExpanded
+                              ? <CaretDownOutlined style={{ fontSize: 10 }} />
+                              : <CaretRightOutlined style={{ fontSize: 10 }} />
+                          ) : null}
+                        </span>
+                      )}
+                      <span className="finder-file-icon">{renderFileIcon(item.fileType, { fontSize: 18 })}</span>
+                      <span className="finder-file-name" style={viewMode === 'detail' ? (nameColResized ? { width: detailColWidths.name - 28 - 16 - depth * 16, flex: 'none' } : { flex: 1, minWidth: 0, marginRight: 0 }) : undefined}>{item.name}</span>
+                      {/* hover 显示的操作区：+ 和三个点 */}
+                      <span
+                        className="finder-file-row-actions"
+                        style={viewMode === 'detail' ? {
+                          right: visibleColsTotalWidth + 20 + 12,
+                        } : { right: 20 }}
                       >
-                        {/* 展开三角（详情视图专用） */}
-                        {viewMode === 'detail' && !hasActiveSearch && (
-                          <span
-                            className="finder-detail-expand-icon"
-                            style={{ marginLeft: depth * 16 }}
+                        {item.isFolder && (
+                          <button
+                            type="button"
+                            className="finder-column-action-btn"
+                            aria-label="添加资料"
+                            title="添加资料"
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (!item.isFolder) return;
-                              setExpandedFolders((prev) => {
-                                const next = new Set(prev);
-                                if (next.has(item.key)) next.delete(item.key);
-                                else next.add(item.key);
-                                return next;
-                              });
+                              setAddDialogParentKey(item.key);
+                              setAddDialogOpen(true);
                             }}
                           >
-                            {item.isFolder ? (
-                              isExpanded
-                                ? <CaretDownOutlined style={{ fontSize: 10 }} />
-                                : <CaretRightOutlined style={{ fontSize: 10 }} />
-                            ) : null}
-                          </span>
+                            <PlusOutlined style={{ fontSize: 12 }} />
+                          </button>
                         )}
-                        <span className="finder-file-icon">{renderFileIcon(item.fileType, { fontSize: 18 })}</span>
-                        <span className="finder-file-name" style={viewMode === 'detail' ? (nameColResized ? { width: detailColWidths.name - 28 - 16 - depth * 16, flex: 'none' } : { flex: 1, minWidth: 0, marginRight: 0 }) : undefined}>{item.name}</span>
-                        {/* hover 显示的操作区：+ 和三个点 */}
-                        <span
-                          className="finder-file-row-actions"
-                          style={viewMode === 'detail' ? {
-                            right: visibleColsTotalWidth + 20 + 12,
-                          } : { right: 20 }}
-                        >
-                          {item.isFolder && (
-                            <button
-                              type="button"
-                              className="finder-column-action-btn"
-                              aria-label="添加资料"
-                              title="添加资料"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setAddDialogParentKey(item.key);
-                                setAddDialogOpen(true);
-                              }}
-                            >
-                              <PlusOutlined style={{ fontSize: 12 }} />
-                            </button>
-                          )}
-                          <Dropdown menu={rowMoreMenu} trigger={['click']}>
-                            <button
-                              type="button"
-                              className="finder-column-action-btn"
-                              aria-label="更多操作"
-                              title="更多操作"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <MoreOutlined style={{ fontSize: 14 }} />
-                            </button>
-                          </Dropdown>
-                        </span>
-                        {viewMode === 'detail' && visibleCols.map((colKey) => (
-                          <span
-                            key={colKey}
-                            className={`finder-detail-col-${colKey}`}
-                            style={{ width: detailColWidths[colKey] }}
+                        <Dropdown menu={rowMoreMenu} trigger={['click']}>
+                          <button
+                            type="button"
+                            className="finder-column-action-btn"
+                            aria-label="更多操作"
+                            title="更多操作"
+                            onClick={(e) => e.stopPropagation()}
                           >
-                            {renderColCell(colKey, item)}
-                          </span>
-                        ))}
-                        {item.isFolder && viewMode !== 'detail' && <span className="finder-file-chevron"><RightOutlined style={{ fontSize: 10 }} /></span>}
-                      </div>
+                            <MoreOutlined style={{ fontSize: 14 }} />
+                          </button>
+                        </Dropdown>
+                      </span>
+                      {viewMode === 'detail' && visibleCols.map((colKey) => (
+                        <span
+                          key={colKey}
+                          className={`finder-detail-col-${colKey}`}
+                          style={{ width: detailColWidths[colKey] }}
+                        >
+                          {renderColCell(colKey, item)}
+                        </span>
+                      ))}
+                      {item.isFolder && viewMode !== 'detail' && <span className="finder-file-chevron"><RightOutlined style={{ fontSize: 10 }} /></span>}
+                    </div>
+                  );
+                  return (
+                    <Dropdown key={item.key} menu={getContextMenu(item, { includeFavorite: true })} trigger={['contextMenu']}>
+                      {rowContent}
                     </Dropdown>
                   );
                 })
               )}
           </div>
+
+          {folderHoverTip?.visible && (
+            <div
+              className="finder-folder-hover-tip"
+              style={{ left: folderHoverTip.x, top: folderHoverTip.y }}
+            >
+              双击进入文件夹
+            </div>
+          )}
 
           {/* 预览面板拖拽调整宽度手柄 */}
           <div className="finder-preview-resize-handle" onMouseDown={handlePreviewResizeStart} />

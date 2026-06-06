@@ -4,7 +4,7 @@ import {
 } from 'antd';
 import {
   ReloadOutlined, EyeOutlined, SearchOutlined, FileTextOutlined, CheckCircleFilled,
-  ClockCircleFilled, SyncOutlined, CloseCircleFilled, PauseCircleFilled, ThunderboltOutlined,
+  ClockCircleFilled, SyncOutlined, CloseCircleFilled, PauseCircleFilled, RobotOutlined,
   FileSearchOutlined, FilePdfOutlined, FileImageOutlined, PlayCircleOutlined,
   SoundOutlined, FileWordOutlined, FileExcelOutlined, FilePptOutlined,
 } from '@ant-design/icons';
@@ -390,7 +390,7 @@ export default function ResourceParseStatus({ onBack }) {
     <div className="rps-container">
       <div className="rps-header">
         <div className="rps-title">
-          <ThunderboltOutlined style={{ color: '#722ed1' }} />
+          <RobotOutlined style={{ color: '#1677ff' }} />
           <span>资料 AI 解析状态</span>
         </div>
         <div className="rps-header-actions">

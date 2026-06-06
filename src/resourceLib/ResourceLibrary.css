@@ -597,7 +597,7 @@
 }
 
 .finder-toolbar-parse-btn-icon {
-  color: #722ed1;
+  color: #1677ff;
   font-size: 16px;
 }
 
@@ -1018,6 +1018,20 @@
 .finder-detail-col-resize-handle:active::before {
   width: 2px;
   background: #007aff;
+}
+
+.finder-folder-hover-tip {
+  position: fixed;
+  z-index: 1000;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(17, 24, 39, 0.92);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.22);
 }
 
 .finder-detail-col-name {
