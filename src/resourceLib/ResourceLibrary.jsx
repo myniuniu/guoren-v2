@@ -1240,17 +1240,29 @@ export default function ResourceLibrary() {
                           <span className="finder-column-item-name">{item.name}</span>
                           <span className="finder-column-item-actions">
                             {item.isFolder && (
-                              <button className="finder-column-action-btn" onClick={(e) => {
-                                e.stopPropagation();
-                                setAddDialogParentKey(item.key);
-                                setAddDialogOpen(true);
-                              }}>
-                                <PlusOutlined style={{ fontSize: 11 }} />
+                              <button
+                                type="button"
+                                className="finder-column-action-btn"
+                                aria-label="添加资料"
+                                title="添加资料"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setAddDialogParentKey(item.key);
+                                  setAddDialogOpen(true);
+                                }}
+                              >
+                                <PlusOutlined style={{ fontSize: 12 }} />
                               </button>
                             )}
                             <Dropdown menu={itemMoreMenu} trigger={['click']}>
-                              <button className="finder-column-action-btn" onClick={(e) => e.stopPropagation()}>
-                                <MoreOutlined style={{ fontSize: 13 }} />
+                              <button
+                                type="button"
+                                className="finder-column-action-btn"
+                                aria-label="更多操作"
+                                title="更多操作"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MoreOutlined style={{ fontSize: 14 }} />
                               </button>
                             </Dropdown>
                           </span>
@@ -1446,17 +1458,29 @@ export default function ResourceLibrary() {
                           } : { right: 20 }}
                         >
                           {item.isFolder && (
-                            <button className="finder-column-action-btn" onClick={(e) => {
-                              e.stopPropagation();
-                              setAddDialogParentKey(item.key);
-                              setAddDialogOpen(true);
-                            }}>
-                              <PlusOutlined style={{ fontSize: 11 }} />
+                            <button
+                              type="button"
+                              className="finder-column-action-btn"
+                              aria-label="添加资料"
+                              title="添加资料"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setAddDialogParentKey(item.key);
+                                setAddDialogOpen(true);
+                              }}
+                            >
+                              <PlusOutlined style={{ fontSize: 12 }} />
                             </button>
                           )}
                           <Dropdown menu={rowMoreMenu} trigger={['click']}>
-                            <button className="finder-column-action-btn" onClick={(e) => e.stopPropagation()}>
-                              <MoreOutlined style={{ fontSize: 13 }} />
+                            <button
+                              type="button"
+                              className="finder-column-action-btn"
+                              aria-label="更多操作"
+                              title="更多操作"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreOutlined style={{ fontSize: 14 }} />
                             </button>
                           </Dropdown>
                         </span>
