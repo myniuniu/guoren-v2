@@ -56,7 +56,7 @@ const buildParseInfo = (item) => {
   return { chunkCount, tokenCount, vectorDim, sizeKB, progress, errorMsg, parseStartedAt };
 };
 
-export default function ResourceParseStatus({ onBack }) {
+export default function ResourceParseStatus() {
   const [data, setData] = useState(loadResourceLib);
   const [keyword, setKeyword] = useState('');
   const [libFilter, setLibFilter] = useState('all');
@@ -249,9 +249,10 @@ export default function ResourceParseStatus({ onBack }) {
 
   const columns = [
     {
-      title: '资料名称',
+      title: '文件名称',
       dataIndex: 'name',
       key: 'name',
+      width: 240,
       render: (text, r) => (
         <span className="rps-name-cell">
           <FileTextOutlined style={{ color: '#86868b' }} />
@@ -272,7 +273,7 @@ export default function ResourceParseStatus({ onBack }) {
       width: 200,
       render: (_, r) => {
         const path = getItemPath(r);
-        return <span className="rps-muted" title={`${r.libraryName}${path}`}>{r.libraryName}{path}</span>;
+        return <span className="rps-muted" title={path}>{path}</span>;
       },
     },
     {
@@ -304,32 +305,16 @@ export default function ResourceParseStatus({ onBack }) {
       },
     },
     {
-      title: '文本片段',
-      key: 'chunks',
-      width: 100,
-      render: (_, r) => r._parse.chunkCount > 0
-        ? <span className="rps-num">{r._parse.chunkCount}</span>
-        : <span className="rps-muted">--</span>,
-    },
-    {
-      title: '向量数 / 维度',
-      key: 'vectors',
-      width: 130,
-      render: (_, r) => r._parse.chunkCount > 0
-        ? <span className="rps-num">{r._parse.chunkCount} <span className="rps-muted">/ {r._parse.vectorDim}</span></span>
-        : <span className="rps-muted">--</span>,
-    },
-    {
       title: '开始时间',
       key: 'parseStartedAt',
-      width: 160,
+      width: 180,
       render: (_, r) => <span className="rps-muted">{r._parse.parseStartedAt || '--'}</span>,
     },
     {
       title: '结束时间',
       dataIndex: 'lastEdit',
       key: 'parseFinishedAt',
-      width: 160,
+      width: 180,
       render: (t, r) => {
         const status = r.parseStatus || 'pending';
         if (status === 'pending' || status === 'parsing') return <span className="rps-muted">--</span>;
@@ -394,7 +379,6 @@ export default function ResourceParseStatus({ onBack }) {
           <span>资料 AI 解析状态</span>
         </div>
         <div className="rps-header-actions">
-          {onBack && <Button onClick={onBack}>返回</Button>}
           <Button type="primary" icon={<ReloadOutlined />} onClick={handleBatchRetry}>
             批量重试当前列表
           </Button>
@@ -425,7 +409,7 @@ export default function ResourceParseStatus({ onBack }) {
         <Input
           allowClear
           prefix={<SearchOutlined />}
-          placeholder="搜索资料名称"
+          placeholder="搜索文件名称"
           style={{ width: 240 }}
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
@@ -479,6 +463,7 @@ export default function ResourceParseStatus({ onBack }) {
         rowKey="key"
         columns={columns}
         dataSource={filtered}
+        scroll={{ x: 1290 }}
         size="middle"
         tableLayout="fixed"
         pagination={{ pageSize: 15, showSizeChanger: true }}

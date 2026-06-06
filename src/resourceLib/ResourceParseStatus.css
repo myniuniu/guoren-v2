@@ -10,13 +10,14 @@
 }
 .rps-container .ant-table-wrapper {
   width: 100%;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 .rps-container .ant-table {
   table-layout: auto;
 }
 .rps-container .ant-table-content {
-  overflow-x: hidden !important;
+  overflow-x: auto !important;
 }
 .rps-container .ant-table-wrapper .ant-table-container {
   width: 100%;
