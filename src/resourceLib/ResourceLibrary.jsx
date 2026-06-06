@@ -304,7 +304,6 @@ export default function ResourceLibrary() {
   const libraryId = getLibraryId(data, scope);
   const selectedFolderKey = data.selectedFolderKey?.[libraryId] ?? null;
   const organizations = getOrganizations(data);
-  const tagDefs = getTagDefinitions(data);
   const quickTagDefs = useMemo(
     () => tagDefs.filter((tag) => tag.quick),
     [tagDefs],
@@ -1134,15 +1133,15 @@ export default function ResourceLibrary() {
     if (tagDragIdx !== null && tagDropIdx !== null) {
       const draggedEntry = sidebarTagEntries[tagDragIdx];
       const unchangedDropPosition = tagDropIdx === tagDragIdx || tagDropIdx === tagDragIdx + 1;
-      const allSharedTags = getTagDefinitions(data);
-      const fromGlobal = allSharedTags.findIndex((at) => at.id === draggedEntry?.id);
+      const scopedTags = getTagDefinitions(data, scope);
+      const fromGlobal = scopedTags.findIndex((at) => at.id === draggedEntry?.id);
       const toItem = tagDropIdx < sidebarTagEntries.length ? sidebarTagEntries[tagDropIdx] : null;
       const lastVisibleItem = sidebarTagEntries[sidebarTagEntries.length - 1] || null;
       const toGlobal = toItem
-        ? allSharedTags.findIndex((at) => at.id === toItem.id)
-        : (lastVisibleItem ? allSharedTags.findIndex((at) => at.id === lastVisibleItem.id) + 1 : allSharedTags.length);
+        ? scopedTags.findIndex((at) => at.id === toItem.id)
+        : (lastVisibleItem ? scopedTags.findIndex((at) => at.id === lastVisibleItem.id) + 1 : scopedTags.length);
       if (!unchangedDropPosition && fromGlobal >= 0 && toGlobal >= 0) {
-        setData((d) => reorderTagDefinition(d, fromGlobal, toGlobal));
+        setData((d) => reorderTagDefinition(d, fromGlobal, toGlobal, scope));
       }
     }
 
@@ -1437,8 +1436,8 @@ export default function ResourceLibrary() {
   }, [scope]);
 
   const handleQuickTagToggle = useCallback((tagId, quick) => {
-    setData((d) => toggleTagQuickAccess(d, tagId, quick));
-  }, []);
+    setData((d) => toggleTagQuickAccess(d, tagId, quick, scope));
+  }, [scope]);
 
   const renderMenuTagDots = (item, { disabled = false } = {}) => {
     const itemTagIds = item?.tags || [];
@@ -1798,7 +1797,7 @@ export default function ResourceLibrary() {
           )}
         </div>
         <div className="rl-tag-picker-section-title">快捷标签</div>
-        <div className="rl-tag-picker-quick-hint">设为快捷标签后，会同时显示在个人库和组织库的文件菜单顶部，方便快速打标。</div>
+        <div className="rl-tag-picker-quick-hint">设为快捷标签后，会显示在当前资料库的文件菜单顶部，方便快速打标。</div>
         {quickTagDefs.length > 0 ? (
           <div className="rl-tag-picker-quick-list">
             {quickTagDefs.map((t) => {
@@ -2813,7 +2812,7 @@ export default function ResourceLibrary() {
         onOk={() => {
           const trimmed = newTagName.trim();
           if (!trimmed) { message.warning('标签名称不能为空'); return; }
-          setData((d) => addTagDefinition(d, { name: trimmed, color: typeof newTagColor === 'string' ? newTagColor : newTagColor.toHexString() }));
+          setData((d) => addTagDefinition(d, { name: trimmed, color: typeof newTagColor === 'string' ? newTagColor : newTagColor.toHexString() }, scope));
           setAddTagOpen(false);
           message.success(`标签「${trimmed}」已创建`);
         }}

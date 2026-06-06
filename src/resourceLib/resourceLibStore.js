@@ -1,6 +1,6 @@
 // 资料库本地存储（独立于 versionStore，避免耦合）
 const STORAGE_KEY = 'guoren_resource_lib';
-const DATA_VERSION = 12;
+const DATA_VERSION = 13;
 
 // macOS 访达风格预设标签（7色 + 自定义）
 const PRESET_TAGS = [
@@ -99,10 +99,35 @@ const LEGACY_ORGANIZATION_TAGS = [
 ];
 const LEGACY_ORGANIZATION_TAG_MAP = new Map(LEGACY_ORGANIZATION_TAGS.map((tag) => [tag.id, tag]));
 const LEGACY_ORGANIZATION_TAG_IDS = new Set(LEGACY_ORGANIZATION_TAGS.map((tag) => tag.id));
-const SHARED_DEFAULT_TAGS = [
-  ...PRESET_TAGS,
+const PRESET_TAG_IDS = new Set(PRESET_TAGS.map((tag) => tag.id));
+const PERSONAL_ONLY_TAG_IDS = new Set(PERSONAL_TEACHING_TAGS.map((tag) => tag.id));
+const PERSONAL_DEFAULT_TAGS = [
+  ...PRESET_TAGS.map((tag) => ({ ...tag, scope: 'personal' })),
   ...withDefaultQuickTags(PERSONAL_TEACHING_TAGS),
-  ...LEGACY_ORGANIZATION_TAGS.map((tag) => ({ ...tag, scope: 'shared', quick: false })),
+];
+const ORGANIZATION_DEFAULT_TAGS = [
+  ...PRESET_TAGS.map((tag) => ({ ...tag, scope: 'organization' })),
+  ...LEGACY_ORGANIZATION_TAGS.map((tag) => ({ ...tag, scope: 'organization', quick: false })),
+];
+const DEFAULT_ORGANIZATION_TAG_GROUPS = [
+  {
+    id: 'tag_group_doc_status',
+    name: '文档状态',
+    color: '#1677ff',
+    tagIds: ['tag_o_official', 'tag_o_draft', 'tag_o_archive', 'tag_o_urgent'],
+  },
+  {
+    id: 'tag_group_rd_flow',
+    name: '研发协作',
+    color: '#7c3aed',
+    tagIds: ['tag_rd_req', 'tag_rd_design', 'tag_rd_test'],
+  },
+  {
+    id: 'tag_group_market_work',
+    name: '市场运营',
+    color: '#f97316',
+    tagIds: ['tag_mk_promo', 'tag_mk_brand'],
+  },
 ];
 
 const AI_GENERAL_COURSES = [
@@ -175,6 +200,55 @@ function mergeTagDefinitions(...tagLists) {
   return merged;
 }
 
+function normalizeTagList(tagList = [], fallbackScope) {
+  return mergeTagDefinitions(
+    (tagList || [])
+      .filter((tag) => tag?.id)
+      .map((tag) => ({
+        ...tag,
+        scope: tag.scope || fallbackScope,
+        quick: Boolean(tag.quick),
+      })),
+  );
+}
+
+function normalizeTagGroupList(groupList = []) {
+  return (groupList || [])
+    .filter((group) => group?.id)
+    .map((group) => ({
+      id: group.id,
+      name: (group.name || '').trim() || '未命名标签组',
+      color: group.color || '#1677ff',
+      tagIds: dedupeTags(group.tagIds || []),
+    }));
+}
+
+function mergeTagGroupLists(...groupLists) {
+  const merged = [];
+  const indexById = new Map();
+
+  groupLists.flat().forEach((group) => {
+    if (!group?.id) return;
+    const normalized = normalizeTagGroupList([group])[0];
+    const existingIndex = indexById.get(normalized.id);
+    if (typeof existingIndex === 'undefined') {
+      merged.push(normalized);
+      indexById.set(normalized.id, merged.length - 1);
+      return;
+    }
+    merged[existingIndex] = {
+      ...merged[existingIndex],
+      ...normalized,
+      tagIds: dedupeTags([
+        ...(merged[existingIndex]?.tagIds || []),
+        ...(normalized.tagIds || []),
+      ]),
+    };
+  });
+
+  return merged;
+}
+
 function collectUsedTagIds(data = {}) {
   const usedTagIds = new Set();
   const orgItems = Object.values(data.organizations || {}).flatMap((items) => items || []);
@@ -183,6 +257,23 @@ function collectUsedTagIds(data = {}) {
     (item.tags || []).forEach((tagId) => usedTagIds.add(tagId));
   });
   return usedTagIds;
+}
+
+function collectUsedTagIdsByScope(data = {}) {
+  const personal = new Set();
+  const organization = new Set();
+
+  (data.personal || []).forEach((item) => {
+    (item.tags || []).forEach((tagId) => personal.add(tagId));
+  });
+
+  Object.values(data.organizations || {}).forEach((items) => {
+    (items || []).forEach((item) => {
+      (item.tags || []).forEach((tagId) => organization.add(tagId));
+    });
+  });
+
+  return { personal, organization };
 }
 
 function shouldKeepLegacyOrganizationTag(tag, usedTagIds) {
@@ -206,27 +297,67 @@ function collectLegacyOrganizationTags(defs, data = {}) {
     .filter((tag) => shouldKeepLegacyOrganizationTag(tag, usedTagIds));
 }
 
-function buildSharedTagDefinitions(defs, data = {}) {
-  if (!defs) return mergeTagDefinitions(SHARED_DEFAULT_TAGS);
-  if (Array.isArray(defs)) return mergeTagDefinitions(SHARED_DEFAULT_TAGS, defs);
-  const personalTags = Array.isArray(defs.personal) && defs.personal.length > 0
-    ? defs.personal
-    : SHARED_DEFAULT_TAGS;
+function buildLegacySharedTagDefinitions(defs, data = {}) {
+  if (!defs) return mergeTagDefinitions(PERSONAL_DEFAULT_TAGS, ORGANIZATION_DEFAULT_TAGS);
+  if (Array.isArray(defs)) return mergeTagDefinitions(PERSONAL_DEFAULT_TAGS, ORGANIZATION_DEFAULT_TAGS, defs);
+  const sharedPersonal = Array.isArray(defs.personal) ? defs.personal : [];
+  const sharedOrganization = Array.isArray(defs.organization) ? defs.organization : [];
   const legacyOrgTags = collectLegacyOrganizationTags(defs, data);
-  const merged = mergeTagDefinitions(SHARED_DEFAULT_TAGS, personalTags, legacyOrgTags);
-  return merged.length > 0 ? merged : mergeTagDefinitions(SHARED_DEFAULT_TAGS);
+  return mergeTagDefinitions(
+    PERSONAL_DEFAULT_TAGS,
+    ORGANIZATION_DEFAULT_TAGS,
+    sharedPersonal,
+    sharedOrganization,
+    legacyOrgTags,
+  );
 }
 
-function getUnifiedTagDefinitionState(data) {
+function getScopedTagDefinitionStateFromLegacy(data) {
+  const legacyTags = buildLegacySharedTagDefinitions(data?.tagDefinitions, data);
+  const { personal: personalUsedTagIds, organization: organizationUsedTagIds } = collectUsedTagIdsByScope(data);
+
+  return {
+    personal: normalizeTagList(
+      mergeTagDefinitions(
+        PERSONAL_DEFAULT_TAGS,
+        legacyTags.filter((tag) => PERSONAL_ONLY_TAG_IDS.has(tag.id) || personalUsedTagIds.has(tag.id)),
+      ),
+      'personal',
+    ),
+    organization: normalizeTagList(
+      mergeTagDefinitions(
+        ORGANIZATION_DEFAULT_TAGS,
+        legacyTags.filter((tag) => {
+          if (PERSONAL_ONLY_TAG_IDS.has(tag.id)) return false;
+          if (organizationUsedTagIds.has(tag.id)) return true;
+          return !personalUsedTagIds.has(tag.id);
+        }),
+      ),
+      'organization',
+    ),
+    groups: {
+      personal: [],
+      organization: mergeTagGroupLists(DEFAULT_ORGANIZATION_TAG_GROUPS),
+    },
+  };
+}
+
+function getScopedTagDefinitionState(data) {
   const defs = data.tagDefinitions;
-  const personal = buildSharedTagDefinitions(defs, data);
-  if (!defs || Array.isArray(defs)) {
-    return { personal, organizations: {} };
+  if (!defs || Array.isArray(defs) || !Array.isArray(defs.organization)) {
+    return getScopedTagDefinitionStateFromLegacy(data);
   }
   return {
-    ...defs,
-    personal,
-    organizations: {},
+    personal: Array.isArray(defs.personal)
+      ? normalizeTagList(defs.personal, 'personal')
+      : normalizeTagList(PERSONAL_DEFAULT_TAGS, 'personal'),
+    organization: Array.isArray(defs.organization)
+      ? normalizeTagList(defs.organization, 'organization')
+      : normalizeTagList(ORGANIZATION_DEFAULT_TAGS, 'organization'),
+    groups: {
+      personal: normalizeTagGroupList(defs.groups?.personal || []),
+      organization: normalizeTagGroupList(defs.groups?.organization || []),
+    },
   };
 }
 
@@ -544,10 +675,16 @@ const defaultData = {
     org_market: null,
   },
   // 标签定义：
-  //   personal: 个人库与组织库共用的一套标签/快捷标签配置
+  //   personal: 个人资料库使用的标签与快捷标签配置
+  //   organization: 组织资料库使用的标签与快捷标签配置
+  //   groups.organization: 组织标签组定义
   tagDefinitions: {
-    personal: mergeTagDefinitions(SHARED_DEFAULT_TAGS),
-    organizations: {},
+    personal: normalizeTagList(PERSONAL_DEFAULT_TAGS, 'personal'),
+    organization: normalizeTagList(ORGANIZATION_DEFAULT_TAGS, 'organization'),
+    groups: {
+      personal: [],
+      organization: mergeTagGroupLists(DEFAULT_ORGANIZATION_TAG_GROUPS),
+    },
   },
   activeTagFilter: null,
 };
@@ -607,12 +744,8 @@ function migrate(old) {
   } else if (old.organizations && typeof old.organizations === 'object') {
     next.organizations = { ...next.organizations, ...old.organizations };
   }
-  // 标签定义迁移：组织标签并入共享标签，保留已有快捷标签设置
-  if (old.tagDefinitions) {
-    next.tagDefinitions.personal = buildSharedTagDefinitions(old.tagDefinitions, old);
-  }
-  next.tagDefinitions.organizations = {};
-  next.tagDefinitions.personal = buildSharedTagDefinitions(next.tagDefinitions, next);
+  // 标签定义迁移：拆分为个人标签、组织标签与组织标签组
+  next.tagDefinitions = getScopedTagDefinitionState({ ...next, tagDefinitions: old.tagDefinitions });
   next.personal = stripInheritedTagsFromPersonalDemoFolders(next.personal);
   next.personal = applyPersonalTeachingRootTag(next.personal);
   // 选中文件夹迁移
@@ -742,39 +875,65 @@ export function setSelectedFolder(data, scope, folderKey) {
 
 // ====== 标签管理函数 ======
 
-// 获取标签定义：个人库与组织库现在共用同一套标签定义
-export function getTagDefinitions(data) {
-  const defs = data.tagDefinitions;
-  if (!defs) return mergeTagDefinitions(SHARED_DEFAULT_TAGS);
-  // 兼容旧版本（数组格式）
-  if (Array.isArray(defs)) return buildSharedTagDefinitions(defs, data);
-  if (Array.isArray(defs.personal) && (!defs.organizations || Object.keys(defs.organizations).length === 0)) {
-    return defs.personal;
-  }
-  return buildSharedTagDefinitions(defs, data);
+function getTagScopeKey(scope) {
+  return scope === 'personal' ? 'personal' : 'organization';
+}
+
+function cleanItemTagReferences(items = [], tagId) {
+  return items.map((item) => ({
+    ...item,
+    tags: (item.tags || []).filter((tid) => tid !== tagId),
+  }));
+}
+
+// 获取标签定义：按资料库范围返回对应标签
+export function getTagDefinitions(data, scope = 'organization') {
+  const defs = getScopedTagDefinitionState(data);
+  if (scope === 'personal') return defs.personal;
+  if (scope === 'organization') return defs.organization;
+  return mergeTagDefinitions(defs.organization, defs.personal);
+}
+
+export function getOrganizationTagDefinitions(data) {
+  return getTagDefinitions(data, 'organization');
+}
+
+export function getTagGroups(data, scope = 'organization') {
+  const defs = getScopedTagDefinitionState(data);
+  const scopeKey = getTagScopeKey(scope);
+  return defs.groups?.[scopeKey] || [];
+}
+
+export function getOrganizationTagGroups(data) {
+  return getTagGroups(data, 'organization');
 }
 
 // 获取标签所属范围（兼容旧调用）
 export function getTagOwner(data, tagId) {
-  if (getTagDefinitions(data).some((t) => t.id === tagId)) return 'shared';
+  const defs = getScopedTagDefinitionState(data);
+  const inPersonal = defs.personal.some((tag) => tag.id === tagId);
+  const inOrganization = defs.organization.some((tag) => tag.id === tagId);
+  if (inPersonal && inOrganization) return 'both';
+  if (inPersonal) return 'personal';
+  if (inOrganization) return 'organization';
   return null;
 }
 
 // 添加自定义标签
-export function addTagDefinition(data, tag) {
+export function addTagDefinition(data, tag, scope = 'organization') {
+  const scopeKey = getTagScopeKey(scope);
+  const defs = getScopedTagDefinitionState(data);
   const newTag = {
     id: `tag_custom_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-    scope: 'shared',
+    scope: scopeKey,
     quick: false,
     ...tag,
   };
-  const defs = getUnifiedTagDefinitionState(data);
   const next = {
     ...data,
     tagDefinitions: {
       ...defs,
-      personal: [...(defs.personal || []), newTag],
-      organizations: {},
+      [scopeKey]: [...(defs[scopeKey] || []), newTag],
     },
   };
   saveResourceLib(next);
@@ -782,41 +941,53 @@ export function addTagDefinition(data, tag) {
 }
 
 // 删除标签
-export function deleteTagDefinition(data, tagId) {
-  const isPreset = PRESET_TAGS.some((t) => t.id === tagId);
+export function deleteTagDefinition(data, tagId, scope = 'organization') {
+  const isPreset = PRESET_TAG_IDS.has(tagId);
   if (isPreset) return data;
-  const defs = getUnifiedTagDefinitionState(data);
-  const nextDefs = {
+
+  const scopeKey = getTagScopeKey(scope);
+  const defs = getScopedTagDefinitionState(data);
+  const nextTagDefinitions = {
     ...defs,
-    personal: (defs.personal || []).filter((t) => t.id !== tagId),
-    organizations: {},
+    [scopeKey]: (defs[scopeKey] || []).filter((tag) => tag.id !== tagId),
+    groups: {
+      ...(defs.groups || {}),
+      [scopeKey]: (defs.groups?.[scopeKey] || []).map((group) => ({
+        ...group,
+        tagIds: (group.tagIds || []).filter((tid) => tid !== tagId),
+      })),
+    },
   };
-  // 清除所有库（个人 + 全部组织）中的该标签引用
-  const cleanList = (items) => items.map((r) => ({
-    ...r,
-    tags: (r.tags || []).filter((tid) => tid !== tagId),
-  }));
-  const orgsData = data.organizations || {};
-  const cleanedOrgs = Object.fromEntries(Object.entries(orgsData).map(([k, v]) => [k, cleanList(v)]));
-  const next = {
-    ...data,
-    tagDefinitions: nextDefs,
-    personal: cleanList(data.personal || []),
-    organizations: cleanedOrgs,
-  };
+
+  const next = scopeKey === 'personal'
+    ? {
+        ...data,
+        activeTagFilter: data.activeTagFilter === tagId ? null : data.activeTagFilter,
+        tagDefinitions: nextTagDefinitions,
+        personal: cleanItemTagReferences(data.personal || [], tagId),
+      }
+    : {
+        ...data,
+        activeTagFilter: data.activeTagFilter === tagId ? null : data.activeTagFilter,
+        tagDefinitions: nextTagDefinitions,
+        organizations: Object.fromEntries(
+          Object.entries(data.organizations || {}).map(([orgId, items]) => [orgId, cleanItemTagReferences(items, tagId)]),
+        ),
+      };
+
   saveResourceLib(next);
   return next;
 }
 
 // 重命名标签
-export function renameTagDefinition(data, tagId, newName) {
-  const defs = getUnifiedTagDefinitionState(data);
+export function renameTagDefinition(data, tagId, newName, scope = 'organization') {
+  const scopeKey = getTagScopeKey(scope);
+  const defs = getScopedTagDefinitionState(data);
   const next = {
     ...data,
     tagDefinitions: {
       ...defs,
-      personal: (defs.personal || []).map((t) => (t.id === tagId ? { ...t, name: newName } : t)),
-      organizations: {},
+      [scopeKey]: (defs[scopeKey] || []).map((tag) => (tag.id === tagId ? { ...tag, name: newName } : tag)),
     },
   };
   saveResourceLib(next);
@@ -824,34 +995,34 @@ export function renameTagDefinition(data, tagId, newName) {
 }
 
 // 修改标签颜色
-export function updateTagColor(data, tagId, newColor) {
-  const defs = getUnifiedTagDefinitionState(data);
+export function updateTagColor(data, tagId, newColor, scope = 'organization') {
+  const scopeKey = getTagScopeKey(scope);
+  const defs = getScopedTagDefinitionState(data);
   const next = {
     ...data,
     tagDefinitions: {
       ...defs,
-      personal: (defs.personal || []).map((t) => (t.id === tagId ? { ...t, color: newColor } : t)),
-      organizations: {},
+      [scopeKey]: (defs[scopeKey] || []).map((tag) => (tag.id === tagId ? { ...tag, color: newColor } : tag)),
     },
   };
   saveResourceLib(next);
   return next;
 }
 
-export function toggleTagQuickAccess(data, tagId, quick) {
-  const defs = getUnifiedTagDefinitionState(data);
+export function toggleTagQuickAccess(data, tagId, quick, scope = 'organization') {
+  const scopeKey = getTagScopeKey(scope);
+  const defs = getScopedTagDefinitionState(data);
   let changed = false;
   const next = {
     ...data,
     tagDefinitions: {
       ...defs,
-      personal: (defs.personal || []).map((tag) => {
+      [scopeKey]: (defs[scopeKey] || []).map((tag) => {
         if (tag.id !== tagId) return tag;
         if (tag.quick === quick) return tag;
         changed = true;
         return { ...tag, quick };
       }),
-      organizations: {},
     },
   };
   if (!changed) return data;
@@ -860,9 +1031,10 @@ export function toggleTagQuickAccess(data, tagId, quick) {
 }
 
 // 标签拖动排序
-export function reorderTagDefinition(data, fromIdx, toIdx) {
-  const defs = getUnifiedTagDefinitionState(data);
-  const list = [...(defs.personal || [])];
+export function reorderTagDefinition(data, fromIdx, toIdx, scope = 'organization') {
+  const scopeKey = getTagScopeKey(scope);
+  const defs = getScopedTagDefinitionState(data);
+  const list = [...(defs[scopeKey] || [])];
   if (fromIdx < 0 || fromIdx >= list.length || toIdx < 0 || toIdx > list.length) return data;
   const [moved] = list.splice(fromIdx, 1);
   const insertAt = toIdx > fromIdx ? toIdx - 1 : toIdx;
@@ -871,8 +1043,69 @@ export function reorderTagDefinition(data, fromIdx, toIdx) {
     ...data,
     tagDefinitions: {
       ...defs,
-      personal: list,
-      organizations: {},
+      [scopeKey]: list,
+    },
+  };
+  saveResourceLib(next);
+  return next;
+}
+
+export function addTagGroup(data, group, scope = 'organization') {
+  const scopeKey = getTagScopeKey(scope);
+  const defs = getScopedTagDefinitionState(data);
+  const nextGroup = normalizeTagGroupList([{
+    id: `tag_group_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    ...group,
+  }])[0];
+  const next = {
+    ...data,
+    tagDefinitions: {
+      ...defs,
+      groups: {
+        ...(defs.groups || {}),
+        [scopeKey]: [...(defs.groups?.[scopeKey] || []), nextGroup],
+      },
+    },
+  };
+  saveResourceLib(next);
+  return next;
+}
+
+export function updateTagGroup(data, groupId, patch, scope = 'organization') {
+  const scopeKey = getTagScopeKey(scope);
+  const defs = getScopedTagDefinitionState(data);
+  let changed = false;
+  const nextGroups = (defs.groups?.[scopeKey] || []).map((group) => {
+    if (group.id !== groupId) return group;
+    changed = true;
+    return normalizeTagGroupList([{ ...group, ...patch }])[0];
+  });
+  if (!changed) return data;
+  const next = {
+    ...data,
+    tagDefinitions: {
+      ...defs,
+      groups: {
+        ...(defs.groups || {}),
+        [scopeKey]: nextGroups,
+      },
+    },
+  };
+  saveResourceLib(next);
+  return next;
+}
+
+export function deleteTagGroup(data, groupId, scope = 'organization') {
+  const scopeKey = getTagScopeKey(scope);
+  const defs = getScopedTagDefinitionState(data);
+  const next = {
+    ...data,
+    tagDefinitions: {
+      ...defs,
+      groups: {
+        ...(defs.groups || {}),
+        [scopeKey]: (defs.groups?.[scopeKey] || []).filter((group) => group.id !== groupId),
+      },
     },
   };
   saveResourceLib(next);
