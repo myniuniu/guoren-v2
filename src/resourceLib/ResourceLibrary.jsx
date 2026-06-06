@@ -57,8 +57,11 @@ export default function ResourceLibrary() {
   const [activeTagFilter, setActiveTagFilter] = useState(null);
   const [tagFilterContextFolderKeys, setTagFilterContextFolderKeys] = useState([]);
   const [selectedItemKeys, setSelectedItemKeys] = useState([]); // 多选
+  const [inlineRenameItemKey, setInlineRenameItemKey] = useState(null);
+  const [inlineRenameName, setInlineRenameName] = useState('');
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#FF3B30');
+  const [newFolderParentKey, setNewFolderParentKey] = useState(null);
   const [addTagOpen, setAddTagOpen] = useState(false);
   const [tagPickerTarget, setTagPickerTarget] = useState(null); // 分栏视图中标签管理目标item key
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -138,6 +141,7 @@ export default function ResourceLibrary() {
   const [newFolderInline, setNewFolderInline] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const newFolderInputRef = useRef(null);
+  const inlineRenameInputRef = useRef(null);
   const columnScrollRef = useRef(null);
   // 分栏视图状态：各层打开的文件夹 key 路径
   const [columnPath, setColumnPath] = useState([null]); // [null, folderKey1, folderKey2, ...]
@@ -404,6 +408,11 @@ export default function ResourceLibrary() {
     setSearchPanelOpen(false);
     setSelectedItemKeys([]);
     setTagFilterContextFolderKeys([]);
+    setInlineRenameItemKey(null);
+    setInlineRenameName('');
+    setNewFolderInline(false);
+    setNewFolderName('');
+    setNewFolderParentKey(null);
     setColumnPath([null]);
     setColumnSelectedItem(null);
     setNavHistory([null]);
@@ -424,6 +433,14 @@ export default function ResourceLibrary() {
   useEffect(() => {
     setShowAllSidebarTags(false);
   }, [activeTagFilter, columnPath, libraryId, normalizedKeyword, searchMode, selectedFolderKey, specialView, viewMode]);
+
+  useEffect(() => {
+    setInlineRenameItemKey(null);
+    setInlineRenameName('');
+    setNewFolderInline(false);
+    setNewFolderName('');
+    setNewFolderParentKey(null);
+  }, [libraryId, normalizedKeyword, searchMode, selectedFolderKey, specialView, viewMode]);
 
   useEffect(() => {
     if (!activeTagFilter && tagFilterContextFolderKeys.length > 0) {
@@ -886,24 +903,25 @@ export default function ResourceLibrary() {
   };
 
   const handleDelete = (key) => {
-    setData((d) => deleteItem(d, scope, key));
-    if (selectedFolderKey === key) navigateTo(null);
-    message.success('已删除');
+    const targetItem = list.find((item) => item.key === key);
+    const targetName = targetItem?.name || '该项目';
+    Modal.confirm({
+      title: '确认删除',
+      icon: null,
+      content: `确定要删除“${targetName}”吗？${targetItem?.isFolder ? '删除文件夹会同时删除其中全部内容。' : ''}`,
+      okText: '删除',
+      okButtonProps: { danger: true },
+      cancelText: '取消',
+      onOk: () => {
+        setData((d) => deleteItem(d, scope, key));
+        if (selectedFolderKey === key) navigateTo(null);
+        message.success('已删除');
+      },
+    });
   };
 
   const handleRename = (item) => {
-    let newName = item.name;
-    Modal.confirm({
-      title: '重命名',
-      icon: null,
-      content: <Input defaultValue={item.name} onChange={(e) => { newName = e.target.value; }} placeholder="请输入新名称" />,
-      onOk: () => {
-        const trimmed = (newName || '').trim();
-        if (!trimmed) { message.warning('名称不能为空'); return Promise.reject(); }
-        setData((d) => renameItem(d, scope, item.key, trimmed));
-        message.success('已重命名');
-      },
-    });
+    startInlineRename(item);
   };
 
   // ====== 侧栏快捷方式（拖拽收藏） ======
@@ -1316,23 +1334,70 @@ export default function ResourceLibrary() {
   };
 
   // ====== 快速新建文件夹 (内联) ======
-  const handleNewFolderInline = () => {
+  const handleNewFolderInline = (parentKey = selectedFolderKey) => {
+    setInlineRenameItemKey(null);
+    setInlineRenameName('');
     setNewFolderInline(true);
     setNewFolderName('未命名文件夹');
-    setTimeout(() => newFolderInputRef.current?.focus(), 50);
+    setNewFolderParentKey(parentKey);
+    setTimeout(() => {
+      newFolderInputRef.current?.focus();
+      newFolderInputRef.current?.select?.();
+    }, 50);
   };
 
   const confirmNewFolder = () => {
     const trimmed = newFolderName.trim();
     if (trimmed) {
       setData((d) => addItem(d, scope, {
-        name: trimmed, isFolder: true, parentKey: selectedFolderKey, fileType: 'folder', parseStatus: 'parsed',
+        name: trimmed,
+        isFolder: true,
+        parentKey: newFolderParentKey,
+        fileType: 'folder',
+        parseStatus: 'parsed',
       }));
       message.success(`文件夹「${trimmed}」已创建`);
     }
     setNewFolderInline(false);
     setNewFolderName('');
+    setNewFolderParentKey(null);
   };
+
+  const cancelInlineRename = useCallback(() => {
+    setInlineRenameItemKey(null);
+    setInlineRenameName('');
+  }, []);
+
+  const confirmInlineRename = useCallback(() => {
+    if (!inlineRenameItemKey) return;
+    const targetItem = list.find((item) => item.key === inlineRenameItemKey);
+    const trimmed = inlineRenameName.trim();
+
+    if (targetItem && trimmed && trimmed !== targetItem.name) {
+      setData((d) => renameItem(d, scope, targetItem.key, trimmed));
+      message.success('已重命名');
+    }
+
+    cancelInlineRename();
+  }, [cancelInlineRename, inlineRenameItemKey, inlineRenameName, list, scope]);
+
+  const startInlineRename = useCallback((item) => {
+    if (!item?.key) return;
+    hideFolderHoverTip(item.key);
+    setNewFolderInline(false);
+    setNewFolderName('');
+    setNewFolderParentKey(null);
+    setInlineRenameItemKey(item.key);
+    setInlineRenameName(item.name || '');
+    setSelectedItemKeys([item.key]);
+    if (viewMode === 'column') {
+      setColumnSelectedItem(item.isFolder ? null : item);
+    }
+    setTimeout(() => {
+      inlineRenameInputRef.current?.focus();
+      inlineRenameInputRef.current?.select?.();
+    }, 50);
+  }, [hideFolderHoverTip, viewMode]);
 
   // ====== Quick Look 预览（右侧面板常驻） ======
   const selectedItemKey = selectedItemKeys.length === 1 ? selectedItemKeys[0] : null;
@@ -1487,7 +1552,7 @@ export default function ResourceLibrary() {
       message.success('文件夹已创建');
       return;
     }
-    handleNewFolderInline();
+    handleNewFolderInline(currentBlankAreaParentKey);
   };
 
   const handleAddResourceAtCurrentLocation = () => {
@@ -1854,14 +1919,23 @@ export default function ResourceLibrary() {
                 aria-label="新建文件夹"
                 title="新建文件夹"
                 onClick={() => {
-                  setData((d) => addItem(d, scope, {
-                    name: '未命名文件夹',
-                    isFolder: true,
-                    parentKey: null,
-                    fileType: 'folder',
-                    parseStatus: 'parsed',
-                  }));
-                  message.success('文件夹已创建到根目录');
+                  if (viewMode === 'column') {
+                    setData((d) => addItem(d, scope, {
+                      name: '未命名文件夹',
+                      isFolder: true,
+                      parentKey: null,
+                      fileType: 'folder',
+                      parseStatus: 'parsed',
+                    }));
+                    message.success('文件夹已创建到根目录');
+                    return;
+                  }
+                  if (selectedFolderKey || hasActiveSearch || isRecentView || activeTagFilter) {
+                    navigateTo(null);
+                    setTimeout(() => handleNewFolderInline(null), 80);
+                    return;
+                  }
+                  handleNewFolderInline(null);
                 }}
               >
                 <FolderAddOutlined />
@@ -2189,13 +2263,14 @@ export default function ResourceLibrary() {
                       <div className="finder-column-empty">无匹配资料</div>
                     ) : items.map((item) => {
                       const isActive = columnPath[colIdx + 1] === item.key || (columnSelectedItem?.key === item.key);
+                      const isInlineRenaming = inlineRenameItemKey === item.key;
                       const itemMoreMenu = getItemMoreMenu(item);
 
                       return (
                         <Dropdown key={item.key} menu={getContextMenu(item)} trigger={['contextMenu']}>
                           <div
                             className={`finder-column-item ${isActive ? 'finder-column-item-active' : ''} ${selectedItemKeys.includes(item.key) && !isActive ? 'finder-column-item-selected' : ''} ${item.isFolder && dragOverFolderKey === item.key ? 'finder-column-item-dragover' : ''}`}
-                            draggable
+                            draggable={!isInlineRenaming}
                             onDragStart={(e) => {
                               isDraggingRef.current = true;
                               e.dataTransfer.setData('application/json', JSON.stringify({ key: item.key, name: item.name, isFolder: item.isFolder, fileType: item.fileType }));
@@ -2241,7 +2316,24 @@ export default function ResourceLibrary() {
                             }}
                           >
                             <span className="finder-column-item-icon">{renderFileIcon(item.fileType, { fontSize: 16 })}</span>
-                            <span className="finder-column-item-name">{item.name}</span>
+                            {isInlineRenaming ? (
+                              <Input
+                                ref={inlineRenameInputRef}
+                                className="finder-inline-input finder-column-item-name"
+                                value={inlineRenameName}
+                                onChange={(e) => setInlineRenameName(e.target.value)}
+                                onPressEnter={confirmInlineRename}
+                                onBlur={confirmInlineRename}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Escape') cancelInlineRename();
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                                onDoubleClick={(e) => e.stopPropagation()}
+                                size="small"
+                              />
+                            ) : (
+                              <span className="finder-column-item-name">{item.name}</span>
+                            )}
                             <span className="finder-column-item-actions">
                               {item.isFolder && (
                                 <button
@@ -2371,15 +2463,16 @@ export default function ResourceLibrary() {
               ) : (
                 displayChildren.map((item, idx) => {
                   const isSelected = selectedItemKeys.includes(item.key);
+                  const isInlineRenaming = inlineRenameItemKey === item.key;
                   const depth = item._depth || 0;
                   const isExpanded = expandedFolders.has(item.key);
                   const rowMoreMenu = getItemMoreMenu(item, { includeFavorite: true });
                   const rowContent = (
                     <div
                       className={`finder-file-row ${isSelected ? 'finder-file-row-selected' : ''} ${item.isFolder && dragOverFolderKey === item.key ? 'finder-file-row-dragover' : ''}`}
-                      draggable
-                      onMouseEnter={item.isFolder ? (e) => handleFolderHoverEnter(item.key, e) : undefined}
-                      onMouseMove={item.isFolder ? (e) => handleFolderHoverMove(item.key, e) : undefined}
+                      draggable={!isInlineRenaming}
+                      onMouseEnter={item.isFolder && !isInlineRenaming ? (e) => handleFolderHoverEnter(item.key, e) : undefined}
+                      onMouseMove={item.isFolder && !isInlineRenaming ? (e) => handleFolderHoverMove(item.key, e) : undefined}
                       onMouseLeave={item.isFolder ? () => hideFolderHoverTip(item.key) : undefined}
                       onDragStart={(e) => {
                         isDraggingRef.current = true;
@@ -2428,7 +2521,25 @@ export default function ResourceLibrary() {
                         </span>
                       )}
                       <span className="finder-file-icon">{renderFileIcon(item.fileType, { fontSize: 18 })}</span>
-                      <span className="finder-file-name" style={viewMode === 'detail' ? (nameColResized ? { width: detailColWidths.name - 28 - 16 - depth * 16, flex: 'none' } : { flex: 1, minWidth: 0, marginRight: 0 }) : undefined}>{item.name}</span>
+                      {isInlineRenaming ? (
+                        <Input
+                          ref={inlineRenameInputRef}
+                          className="finder-inline-input finder-file-name"
+                          value={inlineRenameName}
+                          onChange={(e) => setInlineRenameName(e.target.value)}
+                          onPressEnter={confirmInlineRename}
+                          onBlur={confirmInlineRename}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Escape') cancelInlineRename();
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          onDoubleClick={(e) => e.stopPropagation()}
+                          size="small"
+                          style={viewMode === 'detail' ? (nameColResized ? { width: detailColWidths.name - 28 - 16 - depth * 16, flex: 'none' } : { flex: 1, minWidth: 0, marginRight: 0 }) : { flex: 1 }}
+                        />
+                      ) : (
+                        <span className="finder-file-name" style={viewMode === 'detail' ? (nameColResized ? { width: detailColWidths.name - 28 - 16 - depth * 16, flex: 'none' } : { flex: 1, minWidth: 0, marginRight: 0 }) : undefined}>{item.name}</span>
+                      )}
                       {/* hover 显示的操作区：+ 和三个点 */}
                       <span
                         className="finder-file-row-actions"

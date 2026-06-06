@@ -185,33 +185,35 @@
   height: 22px;
   border: none;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.9);
+  background: transparent;
   color: #4b5563;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), inset 0 0 0 1px rgba(15, 23, 42, 0.12);
-  transition: background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
+  box-shadow: none;
+  transition: background 0.12s ease, color 0.12s ease, transform 0.12s ease;
+}
+
+.finder-sidebar-root-action-btn > .anticon {
+  font-size: 16px;
 }
 
 .finder-sidebar-root-action-btn:hover {
-  background: #fff;
+  background: rgba(15, 23, 42, 0.06);
   color: #1f2937;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12), inset 0 0 0 1px rgba(15, 23, 42, 0.18);
   transform: translateY(-1px);
 }
 
 .finder-sidebar-item-active .finder-sidebar-root-action-btn {
-  background: rgba(255, 255, 255, 0.92);
+  background: transparent;
   color: #374151;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), inset 0 0 0 1px rgba(15, 23, 42, 0.12);
+  box-shadow: none;
 }
 
 .finder-sidebar-item-active .finder-sidebar-root-action-btn:hover {
-  background: #fff;
+  background: rgba(15, 23, 42, 0.08);
   color: #111827;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.14), inset 0 0 0 1px rgba(15, 23, 42, 0.16);
 }
 
 /* ====== Library Switcher (库类型切换器) ====== */
@@ -828,7 +830,7 @@
   color: #fff !important;
 }
 
-.finder-file-row-selected .finder-file-name {
+.finder-file-row-selected .finder-file-name:not(.finder-inline-input) {
   color: #fff;
 }
 
@@ -1570,10 +1572,22 @@
 .finder-inline-input {
   border-radius: 4px !important;
   font-size: 12px !important;
+  color: #1d1d1f !important;
+  background: #fff !important;
+  caret-color: #1d1d1f;
 }
 
+.finder-inline-input.ant-input,
 .finder-inline-input .ant-input {
   font-size: 12px;
+  color: #1d1d1f !important;
+  background: #fff !important;
+}
+
+.finder-inline-input::placeholder,
+.finder-inline-input.ant-input::placeholder,
+.finder-inline-input .ant-input::placeholder {
+  color: #8e8e93 !important;
 }
 
 /* ====== Quick Look Preview Modal ====== */
