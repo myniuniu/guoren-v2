@@ -304,6 +304,7 @@ export default function ResourceLibrary() {
   const libraryId = getLibraryId(data, scope);
   const selectedFolderKey = data.selectedFolderKey?.[libraryId] ?? null;
   const organizations = getOrganizations(data);
+  const tagDefs = getTagDefinitions(data, scope);
   const quickTagDefs = useMemo(
     () => tagDefs.filter((tag) => tag.quick),
     [tagDefs],
