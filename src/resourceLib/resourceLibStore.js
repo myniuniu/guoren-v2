@@ -1,6 +1,6 @@
 // 资料库本地存储（独立于 versionStore，避免耦合）
 const STORAGE_KEY = 'guoren_resource_lib';
-const DATA_VERSION = 10;
+const DATA_VERSION = 12;
 
 // macOS 访达风格预设标签（7色 + 自定义）
 const PRESET_TAGS = [
@@ -63,6 +63,7 @@ const DEFAULT_ORGS = [
 ];
 
 const RESET_PERSONAL_TEACHING_DEMO_VERSION = 7;
+const PERSONAL_TEACHING_ROOT_TAG_ID = 'tag_p_ai_general';
 const DEFAULT_QUICK_TAG_IDS = new Set([
   'tag_p_courseware',
   'tag_p_teaching_plan',
@@ -73,6 +74,7 @@ const DEFAULT_QUICK_TAG_IDS = new Set([
 ]);
 
 const PERSONAL_TEACHING_TAGS = [
+  { id: PERSONAL_TEACHING_ROOT_TAG_ID, name: '人工智能通识', color: '#5AC8FA', scope: 'personal' },
   { id: 'tag_p_courseware', name: '课件', color: '#007AFF', scope: 'personal', quick: true },
   { id: 'tag_p_teaching_plan', name: '教学方案', color: '#34C759', scope: 'personal', quick: true },
   { id: 'tag_p_teaching_aid', name: '教辅', color: '#FF9500', scope: 'personal', quick: true },
@@ -100,6 +102,7 @@ const LEGACY_ORGANIZATION_TAG_IDS = new Set(LEGACY_ORGANIZATION_TAGS.map((tag) =
 const SHARED_DEFAULT_TAGS = [
   ...PRESET_TAGS,
   ...withDefaultQuickTags(PERSONAL_TEACHING_TAGS),
+  ...LEGACY_ORGANIZATION_TAGS.map((tag) => ({ ...tag, scope: 'shared', quick: false })),
 ];
 
 const AI_GENERAL_COURSES = [
@@ -205,12 +208,12 @@ function collectLegacyOrganizationTags(defs, data = {}) {
 
 function buildSharedTagDefinitions(defs, data = {}) {
   if (!defs) return mergeTagDefinitions(SHARED_DEFAULT_TAGS);
-  if (Array.isArray(defs)) return mergeTagDefinitions(defs);
+  if (Array.isArray(defs)) return mergeTagDefinitions(SHARED_DEFAULT_TAGS, defs);
   const personalTags = Array.isArray(defs.personal) && defs.personal.length > 0
     ? defs.personal
     : SHARED_DEFAULT_TAGS;
   const legacyOrgTags = collectLegacyOrganizationTags(defs, data);
-  const merged = mergeTagDefinitions(personalTags, legacyOrgTags);
+  const merged = mergeTagDefinitions(SHARED_DEFAULT_TAGS, personalTags, legacyOrgTags);
   return merged.length > 0 ? merged : mergeTagDefinitions(SHARED_DEFAULT_TAGS);
 }
 
@@ -252,6 +255,18 @@ function stripInheritedTagsFromPersonalDemoFolders(items = []) {
     ]);
     const nextTags = (item.tags || []).filter((tagId) => !inheritedTagIds.has(tagId));
     return nextTags.length === (item.tags || []).length ? item : { ...item, tags: nextTags };
+  });
+}
+
+function applyPersonalTeachingRootTag(items = []) {
+  return items.map((item) => {
+    if (!item?.isFolder || item.parentKey !== null) return item;
+    if (!/^p_course_(\d{2})$/.test(item.key || '')) return item;
+    if ((item.tags || []).includes(PERSONAL_TEACHING_ROOT_TAG_ID)) return item;
+    return {
+      ...item,
+      tags: dedupeTags([...(item.tags || []), PERSONAL_TEACHING_ROOT_TAG_ID]),
+    };
   });
 }
 
@@ -446,7 +461,7 @@ function buildPersonalTeachingDemo() {
       createTeachingFolder({
         key: folderKey,
         name: `第${course.id}课 ${course.title}`,
-        tags: [],
+        tags: [PERSONAL_TEACHING_ROOT_TAG_ID],
         daysAgo,
         hour: 8,
         minute: 50,
@@ -599,6 +614,7 @@ function migrate(old) {
   next.tagDefinitions.organizations = {};
   next.tagDefinitions.personal = buildSharedTagDefinitions(next.tagDefinitions, next);
   next.personal = stripInheritedTagsFromPersonalDemoFolders(next.personal);
+  next.personal = applyPersonalTeachingRootTag(next.personal);
   // 选中文件夹迁移
   if (old.selectedFolderKey) {
     next.selectedFolderKey = { ...next.selectedFolderKey, ...old.selectedFolderKey };

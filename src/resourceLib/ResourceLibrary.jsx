@@ -11,6 +11,7 @@ import {
   FolderFilled, DesktopOutlined,
   DownloadOutlined, ClockCircleOutlined,
   CloudOutlined, ShareAltOutlined, GlobalOutlined,
+  QuestionCircleOutlined,
   ThunderboltOutlined,
   CaretDownOutlined, MoreOutlined, CaretRightOutlined,
   FileTextOutlined, FilePdfOutlined, FileImageOutlined,
@@ -31,6 +32,15 @@ import ResourceParseStatus from './ResourceParseStatus.jsx';
 import './ResourceLibrary.css';
 
 const ROOT_PARENT_KEY = '__resource_lib_root__';
+const DETAIL_PREVIEW_MIN_WIDTH = 320;
+const DETAIL_PREVIEW_MAX_WIDTH = 1120;
+const DETAIL_PREVIEW_MIN_LIST_WIDTH = 260;
+const DETAIL_PREVIEW_DEFAULT_RATIO = 0.5;
+const RESOURCE_LIB_HELP_TIPS = [
+  '在文件夹上双击可进入文件夹。',
+  '支持对文件、文件夹和空白区域使用鼠标右键操作。',
+  '悬停行内按钮可快速添加资料或打开更多操作。',
+];
 
 export default function ResourceLibrary() {
   const [data, setData] = useState(() => loadResourceLib());
@@ -44,6 +54,7 @@ export default function ResourceLibrary() {
   const [addType, setAddType] = useState('file');
   const [addForm] = Form.useForm();
   const [activeTagFilter, setActiveTagFilter] = useState(null);
+  const [tagFilterContextFolderKeys, setTagFilterContextFolderKeys] = useState([]);
   const [selectedItemKeys, setSelectedItemKeys] = useState([]); // 多选
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#FF3B30');
@@ -133,7 +144,7 @@ export default function ResourceLibrary() {
   const [sidebarWidth, setSidebarWidth] = useState(200);
   const sidebarDragRef = useRef(null);
   // 预览面板宽度拖拽
-  const [previewWidth, setPreviewWidth] = useState(480);
+  const [previewWidth, setPreviewWidth] = useState(560);
   const previewDragRef = useRef(null);
   const contentAreaRef = useRef(null);
   const searchBoxRef = useRef(null);
@@ -167,13 +178,20 @@ export default function ResourceLibrary() {
     e.preventDefault();
     const startX = e.clientX;
     const startWidth = previewWidth;
+    previewListResizedRef.current = true;
     previewDragRef.current = { startX, startWidth };
     const onMouseMove = (ev) => {
       if (!previewDragRef.current) return;
       const delta = previewDragRef.current.startX - ev.clientX;
       const containerW = contentAreaRef.current?.getBoundingClientRect().width || 1600;
-      const upper = Math.max(800, Math.round(containerW - 240));
-      const newWidth = Math.max(280, Math.min(upper, previewDragRef.current.startWidth + delta));
+      const upper = Math.min(
+        DETAIL_PREVIEW_MAX_WIDTH,
+        Math.max(DETAIL_PREVIEW_MIN_WIDTH, Math.round(containerW - DETAIL_PREVIEW_MIN_LIST_WIDTH)),
+      );
+      const newWidth = Math.max(
+        DETAIL_PREVIEW_MIN_WIDTH,
+        Math.min(upper, previewDragRef.current.startWidth + delta),
+      );
       setPreviewWidth(newWidth);
     };
     const onMouseUp = () => {
@@ -189,14 +207,22 @@ export default function ResourceLibrary() {
     document.body.style.userSelect = 'none';
   }, [previewWidth]);
 
-  // 详情视图预览区默认占 70%（用户手动拖过后不再覆盖）
+  // 列表视图预览区默认更宽，用户手动拖过后不再覆盖
   useEffect(() => {
     if (viewMode !== 'detail' || previewListResizedRef.current) return;
     const el = contentAreaRef.current;
     if (!el) return;
     const w = el.getBoundingClientRect().width;
     if (w > 0) {
-      setPreviewWidth(Math.round(w * 0.7));
+      const upper = Math.min(
+        DETAIL_PREVIEW_MAX_WIDTH,
+        Math.max(DETAIL_PREVIEW_MIN_WIDTH, Math.round(w - DETAIL_PREVIEW_MIN_LIST_WIDTH)),
+      );
+      const nextWidth = Math.max(
+        DETAIL_PREVIEW_MIN_WIDTH,
+        Math.min(Math.round(w * DETAIL_PREVIEW_DEFAULT_RATIO), upper),
+      );
+      setPreviewWidth(nextWidth);
     }
   }, [viewMode]);
   // 分栏视图列宽拖拽
@@ -334,6 +360,7 @@ export default function ResourceLibrary() {
     setSpecialView('all');
     setSearchPanelOpen(false);
     setSelectedItemKeys([]);
+    setTagFilterContextFolderKeys([]);
     setColumnPath([null]);
     setColumnSelectedItem(null);
     setNavHistory([null]);
@@ -354,6 +381,16 @@ export default function ResourceLibrary() {
   useEffect(() => {
     setShowAllSidebarTags(false);
   }, [activeTagFilter, columnPath, libraryId, normalizedKeyword, searchMode, selectedFolderKey, specialView, viewMode]);
+
+  useEffect(() => {
+    if (!activeTagFilter && tagFilterContextFolderKeys.length > 0) {
+      setTagFilterContextFolderKeys([]);
+    }
+  }, [activeTagFilter, tagFilterContextFolderKeys.length]);
+
+  useEffect(() => {
+    setTagFilterContextFolderKeys([]);
+  }, [libraryId, normalizedKeyword, searchMode, selectedFolderKey, specialView, viewMode]);
 
   // 切换个人/组织库
   const handleScopeChange = (nextScope) => {
@@ -393,18 +430,110 @@ export default function ResourceLibrary() {
     return sortLibraryItems(list.filter((item) => item.parentKey === parentKey));
   }, [columnPath, hasActiveSearch, isRecentView, list, recentItems, searchResults, sortLibraryItems]);
 
+  const folderContextItemMap = useMemo(
+    () => new Map(list.map((item) => [item.key, item])),
+    [list],
+  );
+
+  const folderContextChildMap = useMemo(() => {
+    const childMap = new Map();
+    list.forEach((item) => {
+      const siblings = childMap.get(item.parentKey) || [];
+      siblings.push(item);
+      childMap.set(item.parentKey, siblings);
+    });
+    return childMap;
+  }, [list]);
+
+  const collectFolderContextItems = useCallback((folderKeys = []) => {
+    const selectedFolders = folderKeys
+      .map((key) => folderContextItemMap.get(key))
+      .filter((item) => item?.isFolder);
+
+    if (selectedFolders.length === 0) return [];
+
+    const collected = [];
+    const visited = new Set();
+    const visit = (item) => {
+      if (!item || visited.has(item.key)) return;
+      visited.add(item.key);
+      collected.push(item);
+      if (!item.isFolder) return;
+      (folderContextChildMap.get(item.key) || []).forEach(visit);
+    };
+
+    selectedFolders.forEach(visit);
+    return collected;
+  }, [folderContextChildMap, folderContextItemMap]);
+
+  const selectedFolderContextKeys = useMemo(() => {
+    if (viewMode !== 'detail' || selectedItemKeys.length === 0) return [];
+    return selectedItemKeys.filter((key) => folderContextItemMap.get(key)?.isFolder);
+  }, [folderContextItemMap, selectedItemKeys, viewMode]);
+
+  const selectedFolderContextItems = useMemo(() => {
+    if (selectedFolderContextKeys.length === 0) return [];
+    return collectFolderContextItems(selectedFolderContextKeys);
+  }, [collectFolderContextItems, selectedFolderContextKeys]);
+
+  const selectedFileContextItems = useMemo(() => {
+    if (viewMode !== 'detail' || selectedItemKeys.length === 0) return [];
+    const collected = [];
+    const visited = new Set();
+
+    const collectAncestors = (item) => {
+      let parentKey = item?.parentKey;
+      while (parentKey) {
+        const parent = folderContextItemMap.get(parentKey);
+        if (!parent?.isFolder) break;
+        if (!visited.has(parent.key)) {
+          visited.add(parent.key);
+          collected.push(parent);
+        }
+        parentKey = parent.parentKey;
+      }
+    };
+
+    selectedItemKeys.forEach((key) => {
+      const item = folderContextItemMap.get(key);
+      if (!item || item.isFolder || visited.has(item.key)) return;
+      visited.add(item.key);
+      collected.push(item);
+      collectAncestors(item);
+    });
+
+    return collected;
+  }, [folderContextItemMap, selectedItemKeys, viewMode]);
+
+  const persistedTagFilterContextItems = useMemo(() => {
+    if (viewMode !== 'detail' || !activeTagFilter || tagFilterContextFolderKeys.length === 0) return [];
+    return collectFolderContextItems(tagFilterContextFolderKeys);
+  }, [activeTagFilter, collectFolderContextItems, tagFilterContextFolderKeys, viewMode]);
+
   // 当前上下文下的子项
   const currentChildren = useMemo(() => {
     if (!activeTagFilter) return detailContextItems;
+    if (persistedTagFilterContextItems.length > 0) {
+      return sortLibraryItems(
+        persistedTagFilterContextItems.filter((item) => (item.tags || []).includes(activeTagFilter)),
+      );
+    }
     return detailContextItems.filter((item) => (item.tags || []).includes(activeTagFilter));
-  }, [activeTagFilter, detailContextItems]);
+  }, [activeTagFilter, detailContextItems, persistedTagFilterContextItems, sortLibraryItems]);
 
   const sidebarTagContextItems = useMemo(() => {
     if (viewMode === 'column') return columnContextItems;
+    if (activeTagFilter && persistedTagFilterContextItems.length > 0) return persistedTagFilterContextItems;
+    if (selectedFolderContextItems.length > 0) return selectedFolderContextItems;
+    if (selectedFileContextItems.length > 0) return selectedFileContextItems;
     return detailContextItems;
   }, [
+    activeTagFilter,
     columnContextItems,
     detailContextItems,
+    persistedTagFilterContextItems,
+    selectedFileContextItems,
+    selectedFolderContextItems,
     viewMode,
   ]);
 
@@ -525,6 +654,54 @@ export default function ResourceLibrary() {
     return path;
   }, [currentFolder, list]);
 
+  const activeTagFilterDef = useMemo(
+    () => tagDefs.find((tag) => tag.id === activeTagFilter) || null,
+    [activeTagFilter, tagDefs],
+  );
+
+  const tagFilterContextFolders = useMemo(
+    () => tagFilterContextFolderKeys
+      .map((key) => folderContextItemMap.get(key))
+      .filter((item) => item?.isFolder),
+    [folderContextItemMap, tagFilterContextFolderKeys],
+  );
+
+  const isTagFilterContextActive = viewMode === 'detail'
+    && !!activeTagFilter
+    && tagFilterContextFolders.length > 0;
+
+  const tagFilterContextLabel = useMemo(() => {
+    if (tagFilterContextFolders.length === 0) return '';
+    if (tagFilterContextFolders.length === 1) return tagFilterContextFolders[0].name;
+    return `${tagFilterContextFolders[0].name} 等 ${tagFilterContextFolders.length} 个文件夹`;
+  }, [tagFilterContextFolders]);
+
+  const buildFolderBreadcrumb = useCallback((folderKey) => {
+    const path = [];
+    let curr = folderContextItemMap.get(folderKey);
+    while (curr?.isFolder) {
+      path.unshift(curr);
+      curr = curr.parentKey ? folderContextItemMap.get(curr.parentKey) : null;
+    }
+    return path;
+  }, [folderContextItemMap]);
+
+  const tagFilterContextBreadcrumb = useMemo(() => {
+    if (!isTagFilterContextActive || tagFilterContextFolders.length !== 1) return [];
+    return buildFolderBreadcrumb(tagFilterContextFolders[0].key);
+  }, [buildFolderBreadcrumb, isTagFilterContextActive, tagFilterContextFolders]);
+
+  const restoreTagFilterContext = useCallback(() => {
+    const restoreKeys = tagFilterContextFolders.map((item) => item.key);
+    setActiveTagFilter(null);
+    setTagFilterContextFolderKeys([]);
+    setSelectedItemKeys(restoreKeys);
+    setColumnSelectedItem(null);
+  }, [tagFilterContextFolders]);
+
+  const canNavigateBack = navIndex > 0 || isTagFilterContextActive;
+  const canNavigateForward = navIndex < navHistory.length - 1;
+
   // ====== 操作 ======
   const navigateTo = (folderKey) => {
     setSpecialView('all');
@@ -551,12 +728,18 @@ export default function ResourceLibrary() {
   };
 
   const handleBack = () => {
+    if (isTagFilterContextActive) {
+      restoreTagFilterContext();
+      return;
+    }
     if (navIndex > 0) {
       const newIndex = navIndex - 1;
       setNavIndex(newIndex);
       setSpecialView('all');
       setData((d) => setSelectedFolder(d, scope, navHistory[newIndex]));
       setActiveTagFilter(null);
+      setSelectedItemKeys([]);
+      setColumnSelectedItem(null);
     }
   };
 
@@ -566,6 +749,9 @@ export default function ResourceLibrary() {
       setNavIndex(newIndex);
       setSpecialView('all');
       setData((d) => setSelectedFolder(d, scope, navHistory[newIndex]));
+      setActiveTagFilter(null);
+      setSelectedItemKeys([]);
+      setColumnSelectedItem(null);
     }
   };
 
@@ -729,7 +915,17 @@ export default function ResourceLibrary() {
   const openAdd = (type) => { setAddType(type); addForm.resetFields(); setAddOpen(true); };
 
   const handleTagFilter = (tagId) => {
-    setActiveTagFilter(activeTagFilter === tagId ? null : tagId);
+    const nextTagFilter = activeTagFilter === tagId ? null : tagId;
+    if (!nextTagFilter) {
+      if (isTagFilterContextActive) {
+        restoreTagFilterContext();
+        return;
+      }
+      setTagFilterContextFolderKeys([]);
+    } else if (selectedFolderContextKeys.length > 0) {
+      setTagFilterContextFolderKeys(selectedFolderContextKeys);
+    }
+    setActiveTagFilter(nextTagFilter);
     setSelectedItemKeys([]);
     setColumnSelectedItem(null);
   };
@@ -1094,6 +1290,10 @@ export default function ResourceLibrary() {
 
   const handleItemMenuAction = (item, key, { includeFavorite = false } = {}) => {
     const isFavorited = item.isFolder && favorites.some((f) => f.key === item.key);
+    if (key === 'enter' && item.isFolder) {
+      navigateTo(item.key);
+      return;
+    }
     if (key === 'addResource' && item.isFolder) {
       setAddDialogParentKey(item.key);
       setAddDialogOpen(true);
@@ -1122,6 +1322,10 @@ export default function ResourceLibrary() {
     const isFavorited = item.isFolder && favorites.some((f) => f.key === item.key);
     return {
       items: [
+        ...(item.isFolder ? [
+          { key: 'enter', icon: <RightOutlined />, label: '进入' },
+          { type: 'divider' },
+        ] : []),
         ...(includeAddResource && item.isFolder ? [
           { key: 'addResource', icon: <PlusOutlined />, label: '添加资料' },
           { type: 'divider' },
@@ -1654,10 +1858,10 @@ export default function ResourceLibrary() {
         {/* 工具栏 */}
         <div className="finder-toolbar">
           <div className="finder-toolbar-nav">
-            <button className="finder-toolbar-nav-btn" disabled={navIndex <= 0} onClick={handleBack}>
+            <button className="finder-toolbar-nav-btn" disabled={!canNavigateBack} onClick={handleBack}>
               <LeftOutlined />
             </button>
-            <button className="finder-toolbar-nav-btn" disabled={navIndex >= navHistory.length - 1} onClick={handleForward}>
+            <button className="finder-toolbar-nav-btn" disabled={!canNavigateForward} onClick={handleForward}>
               <RightOutlined />
             </button>
           </div>
@@ -1667,7 +1871,7 @@ export default function ResourceLibrary() {
               : isRecentView
               ? '最近使用'
               : activeTagFilter
-              ? tagDefs.find((t) => t.id === activeTagFilter)?.name || '标签'
+              ? `${activeTagFilterDef?.name || '标签'}${isTagFilterContextActive && tagFilterContextLabel ? ` · ${tagFilterContextLabel}` : ''}`
               : (currentFolder?.name || (scope === 'personal' ? '全部资料' : '组织资料'))}
           </div>
 
@@ -1762,6 +1966,27 @@ export default function ResourceLibrary() {
               </div>
             )}
           </div>
+
+          <Tooltip
+            placement="bottomRight"
+            overlayClassName="finder-toolbar-help-tooltip"
+            title={(
+              <div className="finder-toolbar-help-tip-list">
+                {RESOURCE_LIB_HELP_TIPS.map((tip) => (
+                  <div key={tip} className="finder-toolbar-help-tip-item">{tip}</div>
+                ))}
+              </div>
+            )}
+          >
+            <button
+              type="button"
+              className="finder-toolbar-action-btn finder-toolbar-help-btn"
+              aria-label="帮助"
+              title="帮助"
+            >
+              <QuestionCircleOutlined />
+            </button>
+          </Tooltip>
         </div>
 
         {hasActiveSearch && (
@@ -1782,6 +2007,23 @@ export default function ResourceLibrary() {
               内容
             </button>
             <span className="finder-search-summary-text">{activeSearchDescription}</span>
+            <span className="finder-search-summary-count">共 {currentChildren.length} 项</span>
+          </div>
+        )}
+
+        {!hasActiveSearch && isTagFilterContextActive && (
+          <div className="finder-search-summary-bar">
+            <span className="finder-search-summary-label">上下文：</span>
+            <button
+              type="button"
+              className="finder-search-summary-chip"
+              onClick={restoreTagFilterContext}
+            >
+              返回已选文件夹
+            </button>
+            <span className="finder-search-summary-text">
+              {`当前查看“${activeTagFilterDef?.name || '标签'}”在 ${tagFilterContextLabel} 中的相关内容`}
+            </span>
             <span className="finder-search-summary-count">共 {currentChildren.length} 项</span>
           </div>
         )}
@@ -1811,6 +2053,7 @@ export default function ResourceLibrary() {
                         <Dropdown key={item.key} menu={getContextMenu(item)} trigger={['contextMenu']}>
                           <div
                             className={`finder-column-item ${isActive ? 'finder-column-item-active' : ''} ${selectedItemKeys.includes(item.key) && !isActive ? 'finder-column-item-selected' : ''} ${item.isFolder && dragOverFolderKey === item.key ? 'finder-column-item-dragover' : ''}`}
+                            title={item.isFolder ? '双击进入文件夹' : undefined}
                             draggable
                             onDragStart={(e) => {
                               isDraggingRef.current = true;
@@ -1994,6 +2237,7 @@ export default function ResourceLibrary() {
                     <Dropdown key={item.key} menu={getContextMenu(item, { includeFavorite: true })} trigger={['contextMenu']}>
                       <div
                         className={`finder-file-row ${isSelected ? 'finder-file-row-selected' : ''} ${item.isFolder && dragOverFolderKey === item.key ? 'finder-file-row-dragover' : ''}`}
+                        title={item.isFolder ? '双击进入文件夹' : undefined}
                         draggable
                         onDragStart={(e) => {
                           isDraggingRef.current = true;
@@ -2176,6 +2420,62 @@ export default function ResourceLibrary() {
                 <span>最近使用</span>
               </span>
             </>
+          ) : viewMode === 'detail' && activeTagFilter ? (
+            <>
+              {isTagFilterContextActive ? (
+                tagFilterContextBreadcrumb.length > 0 ? (
+                  tagFilterContextBreadcrumb.map((seg, idx) => {
+                    const isContextFolder = idx === tagFilterContextBreadcrumb.length - 1;
+                    return (
+                      <span key={seg.key} style={{ display: 'contents' }}>
+                        <span className="finder-pathbar-sep">›</span>
+                        <span
+                          className="finder-pathbar-segment"
+                          onClick={() => {
+                            if (isContextFolder) {
+                              restoreTagFilterContext();
+                              return;
+                            }
+                            navigateTo(seg.key);
+                          }}
+                          title={isContextFolder ? '返回到已选文件夹' : undefined}
+                        >
+                          <span className="finder-pathbar-segment-icon"><FolderFilled style={{ color: '#4facfe', fontSize: 13 }} /></span>
+                          <span>{seg.name}</span>
+                        </span>
+                      </span>
+                    );
+                  })
+                ) : (
+                  <>
+                    <span className="finder-pathbar-sep">›</span>
+                    <span
+                      className="finder-pathbar-segment"
+                      onClick={restoreTagFilterContext}
+                      title="返回到已选文件夹"
+                    >
+                      <span className="finder-pathbar-segment-icon"><FolderFilled style={{ color: '#4facfe', fontSize: 13 }} /></span>
+                      <span>{tagFilterContextLabel || '已选文件夹'}</span>
+                    </span>
+                  </>
+                )
+              ) : (
+                breadcrumb.map((seg) => (
+                  <span key={seg.key} style={{ display: 'contents' }}>
+                    <span className="finder-pathbar-sep">›</span>
+                    <span className="finder-pathbar-segment" onClick={() => navigateTo(seg.key)}>
+                      <span className="finder-pathbar-segment-icon"><FolderFilled style={{ color: '#4facfe', fontSize: 13 }} /></span>
+                      <span>{seg.name}</span>
+                    </span>
+                  </span>
+                ))
+              )}
+              <span className="finder-pathbar-sep">›</span>
+              <span className="finder-pathbar-segment finder-pathbar-segment-current">
+                <span className="finder-pathbar-segment-icon"><TagsOutlined /></span>
+                <span>{activeTagFilterDef?.name || '标签'}</span>
+              </span>
+            </>
           ) : viewMode === 'column' ? (
             // 分栏视图：根据 columnPath 显示路径
             <>
@@ -2189,7 +2489,7 @@ export default function ResourceLibrary() {
                       setColumnPath(columnPath.slice(0, idx + 2));
                       setColumnSelectedItem(null);
                     }}>
-                      <span className="finder-pathbar-segment-icon"><FolderFilled style={{ color: '#4facfe', fontSize: 11 }} /></span>
+                      <span className="finder-pathbar-segment-icon"><FolderFilled style={{ color: '#4facfe', fontSize: 13 }} /></span>
                       <span>{folder.name}</span>
                     </span>
                   </span>
@@ -2199,7 +2499,7 @@ export default function ResourceLibrary() {
                 <span style={{ display: 'contents' }}>
                   <span className="finder-pathbar-sep">›</span>
                   <span className="finder-pathbar-segment finder-pathbar-segment-current">
-                    <span className="finder-pathbar-segment-icon">{renderFileIcon(columnSelectedItem.fileType, { fontSize: 11 })}</span>
+                    <span className="finder-pathbar-segment-icon">{renderFileIcon(columnSelectedItem.fileType, { fontSize: 13 })}</span>
                     <span>{columnSelectedItem.name}</span>
                   </span>
                 </span>
@@ -2211,7 +2511,7 @@ export default function ResourceLibrary() {
               <span key={seg.key} style={{ display: 'contents' }}>
                 <span className="finder-pathbar-sep">›</span>
                 <span className="finder-pathbar-segment" onClick={() => navigateTo(seg.key)}>
-                  <span className="finder-pathbar-segment-icon"><FolderFilled style={{ color: '#4facfe', fontSize: 11 }} /></span>
+                  <span className="finder-pathbar-segment-icon"><FolderFilled style={{ color: '#4facfe', fontSize: 13 }} /></span>
                   <span>{seg.name}</span>
                 </span>
               </span>

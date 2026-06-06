@@ -597,6 +597,39 @@
   flex-shrink: 0;
 }
 
+.finder-toolbar-help-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.finder-toolbar-help-btn:hover {
+  color: #374151;
+}
+
+.finder-toolbar-help-btn > .anticon {
+  font-size: 16px;
+}
+
+.finder-toolbar-help-tooltip .ant-tooltip-inner {
+  padding: 10px 12px;
+}
+
+.finder-toolbar-help-tip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 260px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.finder-toolbar-help-tip-item {
+  color: rgba(255, 255, 255, 0.92);
+}
+
 .finder-toolbar-search .ant-input-affix-wrapper {
   border-radius: 6px;
   background: rgba(0, 0, 0, 0.04);
@@ -1028,8 +1061,8 @@
 }
 
 .finder-preview-panel {
-  max-width: 800px;
-  min-width: 280px;
+  max-width: min(1120px, calc(100% - 260px));
+  min-width: 320px;
   flex-shrink: 0;
   overflow-y: auto;
   background: #fafafa;
@@ -1381,13 +1414,13 @@
 .finder-pathbar {
   display: flex;
   align-items: center;
-  height: 24px;
+  height: 32px;
   padding: 0 16px;
   background: rgba(246, 246, 246, 0.95);
   border-top: 1px solid #d4d4d4;
-  font-size: 11px;
+  font-size: 13px;
   color: #86868b;
-  gap: 4px;
+  gap: 6px;
   flex-shrink: 0;
   user-select: none;
   overflow: hidden;
@@ -1398,10 +1431,10 @@
 .finder-pathbar-segment {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   cursor: pointer;
-  padding: 1px 4px;
-  border-radius: 3px;
+  padding: 3px 6px;
+  border-radius: 4px;
 }
 
 .finder-pathbar-segment:hover {
@@ -1420,12 +1453,12 @@
 }
 
 .finder-pathbar-segment-icon {
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .finder-pathbar-sep {
   color: #c7c7c7;
-  font-size: 9px;
+  font-size: 11px;
 }
 
 /* ====== Empty State ====== */
