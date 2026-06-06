@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import {
-  Button, Input, Empty, Tooltip, Dropdown, Popover,
+  Button, Input, Empty, Tooltip, Dropdown,
   Modal, Form, Select, message, Upload, ColorPicker, Drawer,
 } from 'antd';
 import {
@@ -11,7 +11,7 @@ import {
   FolderFilled, DesktopOutlined,
   DownloadOutlined, ClockCircleOutlined,
   CloudOutlined, ShareAltOutlined, GlobalOutlined,
-  ExportOutlined, HighlightOutlined, SmileOutlined, ThunderboltOutlined,
+  ThunderboltOutlined,
   CaretDownOutlined, MoreOutlined, CaretRightOutlined,
   FileTextOutlined, FilePdfOutlined, FileImageOutlined,
   PlayCircleOutlined, SoundOutlined, TagsOutlined,
@@ -37,6 +37,8 @@ export default function ResourceLibrary() {
   const [scope, setScope] = useState(() => data?.currentScope || 'personal');
   const [currentOrgId, setCurrentOrgId] = useState(() => data?.currentOrgId || 'org_default');
   const [keyword, setKeyword] = useState('');
+  const [searchMode, setSearchMode] = useState('name'); // name | content
+  const [searchPanelOpen, setSearchPanelOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [addType, setAddType] = useState('file');
   const [addForm] = Form.useForm();
@@ -132,6 +134,7 @@ export default function ResourceLibrary() {
   const [previewWidth, setPreviewWidth] = useState(480);
   const previewDragRef = useRef(null);
   const contentAreaRef = useRef(null);
+  const searchBoxRef = useRef(null);
   // 记录用户是否在列表视图下手动拖过，避免覆盖用户选择
   const previewListResizedRef = useRef(false);
   const handleSidebarResizeStart = useCallback((e) => {
@@ -232,6 +235,66 @@ export default function ResourceLibrary() {
   // 标签随当前库自动切换：个人库->个人标签；组织库->组织标签
   const tagScope = scope === 'organization' ? 'organization' : 'personal';
   const currentTagDefs = tagScope === 'organization' ? orgTagDefs : personalTagDefs;
+  const normalizedKeyword = keyword.trim();
+  const hasActiveSearch = normalizedKeyword.length > 0;
+  const normalizedKeywordLower = normalizedKeyword.toLowerCase();
+
+  const sortLibraryItems = useCallback((items) => [...items].sort((a, b) => {
+    if (a.isFolder && !b.isFolder) return -1;
+    if (!a.isFolder && b.isFolder) return 1;
+    let cmp = 0;
+    switch (sortBy) {
+      case 'name': cmp = (a.name || '').localeCompare(b.name || '', 'zh'); break;
+      case 'kind': cmp = (a.fileType || '').localeCompare(b.fileType || ''); break;
+      case 'date': cmp = (a.lastEdit || '').localeCompare(b.lastEdit || ''); break;
+      case 'size': cmp = (a.size || 0) - (b.size || 0); break;
+      case 'tag': cmp = (a.tags || []).length - (b.tags || []).length; break;
+      default: cmp = 0;
+    }
+    return sortOrder === 'asc' ? cmp : -cmp;
+  }), [sortBy, sortOrder]);
+
+  const getItemContentSearchText = useCallback((item) => {
+    const tagNames = (item.tags || [])
+      .map((tagId) => tagDefs.find((tag) => tag.id === tagId)?.name)
+      .filter(Boolean)
+      .join(' ');
+    const chunkText = Array.isArray(item.contentChunks)
+      ? item.contentChunks.map((chunk) => (typeof chunk === 'string' ? chunk : chunk?.text || '')).join(' ')
+      : '';
+    return [
+      item.contentText,
+      item.summary,
+      item.description,
+      item.comment,
+      item.extractedText,
+      item.ocrText,
+      item.transcript,
+      item.noteText,
+      item.text,
+      chunkText,
+      tagNames,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+  }, [tagDefs]);
+
+  const matchesSearch = useCallback((item) => {
+    if (!hasActiveSearch) return true;
+    if (searchMode === 'content') {
+      return getItemContentSearchText(item).includes(normalizedKeywordLower);
+    }
+    return (item.name || '').toLowerCase().includes(normalizedKeywordLower);
+  }, [getItemContentSearchText, hasActiveSearch, normalizedKeywordLower, searchMode]);
+
+  const searchResults = useMemo(() => {
+    if (!hasActiveSearch) return [];
+    const source = activeTagFilter
+      ? list.filter((r) => (r.tags || []).includes(activeTagFilter))
+      : list;
+    return sortLibraryItems(source.filter(matchesSearch));
+  }, [activeTagFilter, hasActiveSearch, list, matchesSearch, sortLibraryItems]);
 
   // 库切换时：重新加载该库的收藏，清空选中/过滤/导航历史
   useEffect(() => {
@@ -241,6 +304,7 @@ export default function ResourceLibrary() {
     } catch { setFavorites([]); }
     setActiveTagFilter(null);
     setKeyword('');
+    setSearchPanelOpen(false);
     setSelectedItemKeys([]);
     setColumnPath([null]);
     setColumnSelectedItem(null);
@@ -271,55 +335,24 @@ export default function ResourceLibrary() {
 
   // 当前文件夹下的子项
   const currentChildren = useMemo(() => {
+    if (hasActiveSearch) return searchResults;
+
     let items;
     if (activeTagFilter) {
       items = list.filter((r) => (r.tags || []).includes(activeTagFilter));
     } else {
       items = list.filter((r) => r.parentKey === selectedFolderKey);
-      if (keyword.trim()) {
-        const kw = keyword.trim().toLowerCase();
-        items = items.filter((r) => r.name?.toLowerCase().includes(kw));
-      }
     }
-    // 排序
-    const sorted = [...items].sort((a, b) => {
-      // 文件夹永远排前面
-      if (a.isFolder && !b.isFolder) return -1;
-      if (!a.isFolder && b.isFolder) return 1;
-      let cmp = 0;
-      switch (sortBy) {
-        case 'name': cmp = (a.name || '').localeCompare(b.name || '', 'zh'); break;
-        case 'kind': cmp = (a.fileType || '').localeCompare(b.fileType || ''); break;
-        case 'date': cmp = (a.lastEdit || '').localeCompare(b.lastEdit || ''); break;
-        case 'size': cmp = (a.size || 0) - (b.size || 0); break;
-        case 'tag': cmp = (a.tags || []).length - (b.tags || []).length; break;
-        default: cmp = 0;
-      }
-      return sortOrder === 'asc' ? cmp : -cmp;
-    });
-    return sorted;
-  }, [list, selectedFolderKey, activeTagFilter, keyword, sortBy, sortOrder]);
+    return sortLibraryItems(items);
+  }, [activeTagFilter, hasActiveSearch, list, searchResults, selectedFolderKey, sortLibraryItems]);
 
   // 详情视图递归展开后的表示列表（带 depth 缩进）
   const displayChildren = useMemo(() => {
     if (viewMode !== 'detail') return currentChildren.map((it) => ({ ...it, _depth: 0 }));
+    if (hasActiveSearch) return currentChildren.map((it) => ({ ...it, _depth: 0 }));
     const result = [];
     const walk = (items, depth) => {
-      // 对同级进行排序（复用上面逻辑）
-      const sorted = [...items].sort((a, b) => {
-        if (a.isFolder && !b.isFolder) return -1;
-        if (!a.isFolder && b.isFolder) return 1;
-        let cmp = 0;
-        switch (sortBy) {
-          case 'name': cmp = (a.name || '').localeCompare(b.name || '', 'zh'); break;
-          case 'kind': cmp = (a.fileType || '').localeCompare(b.fileType || ''); break;
-          case 'date': cmp = (a.lastEdit || '').localeCompare(b.lastEdit || ''); break;
-          case 'size': cmp = (a.size || 0) - (b.size || 0); break;
-          case 'tag': cmp = (a.tags || []).length - (b.tags || []).length; break;
-          default: cmp = 0;
-        }
-        return sortOrder === 'asc' ? cmp : -cmp;
-      });
+      const sorted = sortLibraryItems(items);
       sorted.forEach((it) => {
         result.push({ ...it, _depth: depth });
         if (it.isFolder && expandedFolders.has(it.key)) {
@@ -330,7 +363,7 @@ export default function ResourceLibrary() {
     };
     walk(currentChildren, 0);
     return result;
-  }, [viewMode, currentChildren, expandedFolders, list, sortBy, sortOrder]);
+  }, [currentChildren, expandedFolders, hasActiveSearch, list, sortLibraryItems, viewMode]);
 
   // 详情视图可选列定义（顺序 = 菜单顺序）
   const COL_DEFS = [
@@ -710,7 +743,12 @@ export default function ResourceLibrary() {
   };
 
   const handleDoubleClick = (item) => {
-    if (item.isFolder) navigateTo(item.key);
+    if (!item.isFolder) return;
+    if (hasActiveSearch) {
+      setKeyword('');
+      setSearchPanelOpen(false);
+    }
+    navigateTo(item.key);
   };
 
   // ====== 拖放处理 ======
@@ -781,8 +819,39 @@ export default function ResourceLibrary() {
     }
   };
 
+  const clearListSelection = () => {
+    setSelectedItemKeys([]);
+  };
+
+  const handleListBlankClick = (e) => {
+    if (
+      e.target.closest('.finder-file-row')
+      || e.target.closest('.finder-detail-header')
+      || e.target.closest('.finder-inline-input')
+      || e.target.closest('.ant-dropdown')
+    ) return;
+    clearListSelection();
+  };
+
+  const handleColumnBlankClick = (e, colIdx) => {
+    if (
+      e.target.closest('.finder-column-item')
+      || e.target.closest('.finder-column-resize-handle')
+      || e.target.closest('.ant-dropdown')
+    ) return;
+    setSelectedItemKeys([]);
+    setColumnSelectedItem(null);
+    setColumnPath((prev) => prev.slice(0, Math.min(prev.length, colIdx + 1)));
+  };
+
   // ====== 分栏视图 - 点击文件夹时扩展列 ======
   const handleColumnFolderClick = (folderKey, colIndex) => {
+    if (hasActiveSearch) {
+      setKeyword('');
+      setSearchPanelOpen(false);
+      navigateTo(folderKey);
+      return;
+    }
     const newPath = columnPath.slice(0, colIndex + 1);
     newPath.push(folderKey);
     setColumnPath(newPath);
@@ -802,51 +871,31 @@ export default function ResourceLibrary() {
 
   // 分栏视图各列的子项
   const columnLevels = useMemo(() => {
+    if (hasActiveSearch) {
+      return [searchResults];
+    }
     // 标签筛选模式：第一列显示所有带该标签的项目
     if (activeTagFilter) {
       const taggedItems = list.filter((r) => (r.tags || []).includes(activeTagFilter));
-      const sorted = [...taggedItems].sort((a, b) => {
-        if (a.isFolder && !b.isFolder) return -1;
-        if (!a.isFolder && b.isFolder) return 1;
-        return (a.name || '').localeCompare(b.name || '', 'zh');
-      });
+      const sorted = sortLibraryItems(taggedItems);
       // 第一列显示标签结果，后续列按正常层级展开
       const levels = [sorted];
       for (let i = 1; i < columnPath.length; i++) {
         const parentKey = columnPath[i];
-        let items = list.filter((r) => r.parentKey === parentKey);
-        if (keyword.trim()) {
-          const kw = keyword.trim().toLowerCase();
-          items = items.filter((r) => r.name?.toLowerCase().includes(kw));
-        }
-        levels.push([...items].sort((a, b) => {
-          if (a.isFolder && !b.isFolder) return -1;
-          if (!a.isFolder && b.isFolder) return 1;
-          return (a.name || '').localeCompare(b.name || '', 'zh');
-        }));
+        const items = list.filter((r) => r.parentKey === parentKey);
+        levels.push(sortLibraryItems(items));
       }
       return levels;
     }
-    return columnPath.map((parentKey) => {
-      let items = list.filter((r) => r.parentKey === parentKey);
-      if (keyword.trim()) {
-        const kw = keyword.trim().toLowerCase();
-        items = items.filter((r) => r.name?.toLowerCase().includes(kw));
-      }
-      return [...items].sort((a, b) => {
-        if (a.isFolder && !b.isFolder) return -1;
-        if (!a.isFolder && b.isFolder) return 1;
-        return (a.name || '').localeCompare(b.name || '', 'zh');
-      });
-    });
-  }, [columnPath, list, keyword, activeTagFilter]);
+    return columnPath.map((parentKey) => sortLibraryItems(list.filter((r) => r.parentKey === parentKey)));
+  }, [activeTagFilter, columnPath, hasActiveSearch, list, searchResults, sortLibraryItems]);
 
   // 切换视图模式时同步 columnPath
   const handleViewModeChange = (mode) => {
     setViewMode(mode);
     if (mode === 'column') {
       // 从当前 breadcrumb 构建 columnPath
-      const path = [null, ...breadcrumb.map((b) => b.key)];
+      const path = hasActiveSearch ? [null] : [null, ...breadcrumb.map((b) => b.key)];
       setColumnPath(path);
       setColumnSelectedItem(null);
     }
@@ -877,6 +926,7 @@ export default function ResourceLibrary() {
     if (!selectedItemKey) return null;
     return list.find((r) => r.key === selectedItemKey) || null;
   }, [selectedItemKey, list]);
+  const toolbarMenuTargetItem = previewItem;
 
   // 选中文件夹的子项数量
   const previewFolderCount = useMemo(() => {
@@ -888,10 +938,22 @@ export default function ResourceLibrary() {
     ? (columnPath[columnPath.length - 1] ?? null)
     : selectedFolderKey;
 
-  const renderMenuTagDots = (item) => {
-    const itemTagIds = item.tags || [];
+  const renderCheckedMenuLabel = (checked, label) => (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minWidth: 116 }}>
+      <span style={{ width: 14, display: 'inline-block', textAlign: 'center', color: '#1677ff' }}>
+        {checked ? '✓' : ''}
+      </span>
+      <span>{label}</span>
+    </span>
+  );
+
+  const renderMenuTagDots = (item, { disabled = false } = {}) => {
+    const itemTagIds = item?.tags || [];
     return (
-      <div className="finder-menu-tags-row" onClick={(e) => e.stopPropagation()}>
+      <div
+        className={`finder-menu-tags-row ${disabled ? 'finder-menu-tags-row-disabled' : ''}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         {tagDefs.slice(0, 7).map((t) => {
           const hasTag = itemTagIds.includes(t.id);
           return (
@@ -901,6 +963,7 @@ export default function ResourceLibrary() {
               style={{ background: t.color, color: t.color }}
               onClick={(e) => {
                 e.stopPropagation();
+                if (disabled || !item) return;
                 if (hasTag) setData((d) => removeTagFromItem(d, scope, item.key, t.id));
                 else setData((d) => addTagToItem(d, scope, item.key, t.id));
               }}
@@ -971,6 +1034,120 @@ export default function ResourceLibrary() {
     getItemMoreMenu(item, { includeFavorite, includeAddResource: true })
   );
 
+  const handleCreateFolderAtCurrentLocation = () => {
+    if (viewMode === 'column') {
+      setData((d) => addItem(d, scope, {
+        name: '未命名文件夹',
+        isFolder: true,
+        parentKey: currentBlankAreaParentKey,
+        fileType: 'folder',
+        parseStatus: 'parsed',
+      }));
+      message.success('文件夹已创建');
+      return;
+    }
+    handleNewFolderInline();
+  };
+
+  const handleAddResourceAtCurrentLocation = () => {
+    setAddDialogParentKey(currentBlankAreaParentKey ?? ROOT_PARENT_KEY);
+    setAddDialogOpen(true);
+  };
+
+  const handleToolbarMenuAction = ({ key, domEvent }) => {
+    domEvent?.stopPropagation();
+
+    if (key === 'newFolder') {
+      handleCreateFolderAtCurrentLocation();
+      return;
+    }
+    if (key === 'addResource') {
+      handleAddResourceAtCurrentLocation();
+      return;
+    }
+    if (key === 'tags-manage') {
+      if (!toolbarMenuTargetItem) return;
+      setTagPickerTarget(toolbarMenuTargetItem.key);
+      return;
+    }
+    if (key === 'rename') {
+      if (!toolbarMenuTargetItem) return;
+      handleRename(toolbarMenuTargetItem);
+      return;
+    }
+    if (key === 'delete') {
+      if (!toolbarMenuTargetItem) return;
+      handleDelete(toolbarMenuTargetItem.key);
+      return;
+    }
+    if (key.startsWith('sort-')) {
+      const nextSort = key.slice(5);
+      if (nextSort === 'order-asc') setSortOrder('asc');
+      else if (nextSort === 'order-desc') setSortOrder('desc');
+      else setSortBy(nextSort);
+      return;
+    }
+    if (key === 'display-view-detail') {
+      handleViewModeChange('detail');
+      return;
+    }
+    if (key === 'display-view-column') {
+      handleViewModeChange('column');
+      return;
+    }
+    if (key.startsWith('display-col-')) {
+      const colKey = key.slice('display-col-'.length);
+      setVisibleCols((prev) => {
+        if (prev.includes(colKey)) return prev.filter((k) => k !== colKey);
+        const next = [...prev, colKey];
+        return COL_DEFS.map((c) => c.key).filter((k) => next.includes(k));
+      });
+    }
+  };
+
+  const toolbarMoreMenu = {
+    items: [
+      { key: 'newFolder', icon: <FolderAddOutlined />, label: '新建文件夹' },
+      { key: 'addResource', icon: <FileAddOutlined />, label: '添加资料' },
+      { type: 'divider' },
+      { key: 'tags-row', label: renderMenuTagDots(toolbarMenuTargetItem, { disabled: !toolbarMenuTargetItem }), disabled: !toolbarMenuTargetItem },
+      { key: 'tags-manage', icon: <TagsOutlined />, label: '标签…', disabled: !toolbarMenuTargetItem },
+      { type: 'divider' },
+      { key: 'rename', icon: <EditOutlined />, label: '重命名', disabled: !toolbarMenuTargetItem },
+      { key: 'delete', icon: <DeleteOutlined />, label: '删除', danger: true, disabled: !toolbarMenuTargetItem },
+      { type: 'divider' },
+      {
+        key: 'sort',
+        label: '排序方式',
+        children: [
+          { key: 'sort-name', label: renderCheckedMenuLabel(sortBy === 'name', '名称') },
+          { key: 'sort-date', label: renderCheckedMenuLabel(sortBy === 'date', '修改日期') },
+          { key: 'sort-size', label: renderCheckedMenuLabel(sortBy === 'size', '大小') },
+          { key: 'sort-kind', label: renderCheckedMenuLabel(sortBy === 'kind', '种类') },
+          { key: 'sort-tag', label: renderCheckedMenuLabel(sortBy === 'tag', '标签') },
+          { type: 'divider' },
+          { key: 'sort-order-asc', label: renderCheckedMenuLabel(sortOrder === 'asc', '升序') },
+          { key: 'sort-order-desc', label: renderCheckedMenuLabel(sortOrder === 'desc', '降序') },
+        ],
+      },
+      {
+        key: 'display',
+        label: '查看显示选项',
+        children: [
+          { key: 'display-view-detail', label: renderCheckedMenuLabel(viewMode === 'detail', '列表') },
+          { key: 'display-view-column', label: renderCheckedMenuLabel(viewMode === 'column', '分栏') },
+          { type: 'divider' },
+          ...COL_DEFS.map((col) => ({
+            key: `display-col-${col.key}`,
+            label: renderCheckedMenuLabel(visibleCols.includes(col.key), col.label),
+            disabled: viewMode !== 'detail',
+          })),
+        ],
+      },
+    ],
+    onClick: handleToolbarMenuAction,
+  };
+
   // 右键菜单 - 空白区域
   const bgContextMenu = {
     items: [
@@ -978,24 +1155,8 @@ export default function ResourceLibrary() {
       { key: 'addResource', icon: <FileAddOutlined />, label: '添加资料' },
     ],
     onClick: ({ key }) => {
-      if (key === 'newFolder') {
-        if (viewMode === 'column') {
-          setData((d) => addItem(d, scope, {
-            name: '未命名文件夹',
-            isFolder: true,
-            parentKey: currentBlankAreaParentKey,
-            fileType: 'folder',
-            parseStatus: 'parsed',
-          }));
-          message.success('文件夹已创建');
-        } else {
-          handleNewFolderInline();
-        }
-      }
-      if (key === 'addResource') {
-        setAddDialogParentKey(currentBlankAreaParentKey ?? ROOT_PARENT_KEY);
-        setAddDialogOpen(true);
-      }
+      if (key === 'newFolder') handleCreateFolderAtCurrentLocation();
+      if (key === 'addResource') handleAddResourceAtCurrentLocation();
       setBgMenuPos(null);
     },
   };
@@ -1043,17 +1204,47 @@ export default function ResourceLibrary() {
     };
   }, [bgMenuPos]);
 
-  // ====== 排序/分组菜单 ======
-  const sortMenu = {
-    items: [
-      { key: 'name', label: '名称' },
-      { key: 'kind', label: '种类' },
-      { key: 'date', label: '修改日期' },
-      { key: 'size', label: '大小' },
-      { key: 'tag', label: '标签' },
-    ],
-    selectedKeys: [sortBy],
-    onClick: ({ key }) => setSortBy(key),
+  useEffect(() => {
+    if (!searchPanelOpen) return undefined;
+
+    const handlePointerDown = (e) => {
+      if (searchBoxRef.current?.contains(e.target)) return;
+      setSearchPanelOpen(false);
+    };
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setSearchPanelOpen(false);
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown, true);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown, true);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [searchPanelOpen]);
+
+  useEffect(() => {
+    if (!hasActiveSearch) return;
+    const visibleKeys = new Set(searchResults.map((item) => item.key));
+    setSelectedItemKeys((prev) => prev.filter((key) => visibleKeys.has(key)));
+    setColumnSelectedItem((prev) => (prev && visibleKeys.has(prev.key) ? prev : null));
+  }, [hasActiveSearch, searchResults]);
+
+  const handleSearchChange = (e) => {
+    const nextKeyword = e.target.value;
+    setKeyword(nextKeyword);
+    setSearchPanelOpen(nextKeyword.trim().length > 0);
+    if (nextKeyword.trim().length === 0) {
+      setSelectedItemKeys([]);
+      setColumnSelectedItem(null);
+    }
+  };
+
+  const applySearchMode = (mode) => {
+    setSearchMode(mode);
+    if (normalizedKeyword) setSearchPanelOpen(false);
   };
 
   // ====== 标签选择 Popover 内容 ======
@@ -1102,6 +1293,10 @@ export default function ResourceLibrary() {
       </div>
     );
   };
+
+  const activeSearchDescription = searchMode === 'name'
+    ? `名称包含 “${normalizedKeyword}”`
+    : `内容包含 “${normalizedKeyword}”`;
 
   return (
     <>
@@ -1296,10 +1491,25 @@ export default function ResourceLibrary() {
             </button>
           </div>
           <div className="finder-toolbar-title">
-            {activeTagFilter
+            {hasActiveSearch
+              ? `正在搜索“${normalizedKeyword}”`
+              : activeTagFilter
               ? tagDefs.find((t) => t.id === activeTagFilter)?.name || '标签'
               : (currentFolder?.name || (scope === 'personal' ? '全部资料' : '组织资料'))}
           </div>
+
+          <Dropdown menu={toolbarMoreMenu} trigger={['click']} overlayClassName="finder-toolbar-more-dropdown" placement="bottomLeft">
+            <button
+              type="button"
+              className="finder-toolbar-action-btn finder-toolbar-group-btn finder-toolbar-more-btn"
+              aria-label="快捷操作"
+              title="快捷操作"
+            >
+              <MoreOutlined />
+              <span>快捷操作</span>
+              <CaretDownOutlined className="finder-toolbar-more-btn-caret" />
+            </button>
+          </Dropdown>
 
           {/* 视图切换按钮组：仅保留列表和分栏 */}
           <div className="finder-toolbar-views">
@@ -1332,54 +1542,76 @@ export default function ResourceLibrary() {
             </Tooltip>
           </div>
 
-          {/* 分组/排序按钮 */}
-          <Dropdown menu={sortMenu} trigger={['click']}>
-            <button className="finder-toolbar-action-btn finder-toolbar-group-btn">
-              <TagsOutlined style={{ fontSize: 13 }} />
-              <CaretDownOutlined style={{ fontSize: 8, marginLeft: 2 }} />
-            </button>
-          </Dropdown>
-
           {/* 操作按钮区 */}
           <div className="finder-toolbar-actions">
             <button className="finder-toolbar-action-btn finder-toolbar-group-btn finder-toolbar-parse-btn" onClick={() => setParseDrawerOpen(true)}>
               <ThunderboltOutlined className="finder-toolbar-parse-btn-icon" />
               <span>AI解析</span>
             </button>
-            <Tooltip title="分享">
-              <button className="finder-toolbar-action-btn" onClick={() => message.info('分享功能')}>
-                <ExportOutlined />
-              </button>
-            </Tooltip>
-            <Tooltip title="标记">
-              <button className="finder-toolbar-action-btn" onClick={() => message.info('标记功能')}>
-                <HighlightOutlined />
-              </button>
-            </Tooltip>
-            <Popover
-              content={selectedItemKeys.length > 0 ? renderTagPicker(selectedItemKeys[selectedItemKeys.length - 1]) : <span style={{ color: '#999', fontSize: 13 }}>请先选中一个文件</span>}
-              trigger="click"
-              title="标签"
-            >
-              <button className="finder-toolbar-action-btn finder-toolbar-group-btn">
-                <SmileOutlined />
-                <CaretDownOutlined style={{ fontSize: 8, marginLeft: 2 }} />
-              </button>
-            </Popover>
           </div>
 
           {/* 搜索框 */}
-          <div className="finder-toolbar-search">
+          <div className="finder-toolbar-search" ref={searchBoxRef}>
             <Input
               allowClear
               prefix={<SearchOutlined style={{ color: '#999', fontSize: 12 }} />}
-              placeholder="搜索"
+              placeholder="按文件名或内容搜索"
               value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
+              onChange={handleSearchChange}
+              onFocus={() => { if (normalizedKeyword) setSearchPanelOpen(true); }}
+              onClick={() => { if (normalizedKeyword) setSearchPanelOpen(true); }}
+              onPressEnter={() => setSearchPanelOpen(false)}
               size="small"
             />
+            {searchPanelOpen && hasActiveSearch && (
+              <div className="finder-search-panel">
+                <div className="finder-search-panel-section">
+                  <div className="finder-search-panel-title">文件名</div>
+                  <button
+                    type="button"
+                    className={`finder-search-panel-option ${searchMode === 'name' ? 'finder-search-panel-option-active' : ''}`}
+                    onClick={() => applySearchMode('name')}
+                  >
+                    名称包含 “{normalizedKeyword}”
+                  </button>
+                </div>
+                <div className="finder-search-panel-divider" />
+                <div className="finder-search-panel-section">
+                  <div className="finder-search-panel-title">内容</div>
+                  <button
+                    type="button"
+                    className={`finder-search-panel-option ${searchMode === 'content' ? 'finder-search-panel-option-active' : ''}`}
+                    onClick={() => applySearchMode('content')}
+                  >
+                    包含 “{normalizedKeyword}”
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
+
+        {hasActiveSearch && (
+          <div className="finder-search-summary-bar">
+            <span className="finder-search-summary-label">搜索：</span>
+            <button
+              type="button"
+              className={`finder-search-summary-chip ${searchMode === 'name' ? 'finder-search-summary-chip-active' : ''}`}
+              onClick={() => setSearchMode('name')}
+            >
+              文件名
+            </button>
+            <button
+              type="button"
+              className={`finder-search-summary-chip ${searchMode === 'content' ? 'finder-search-summary-chip-active' : ''}`}
+              onClick={() => setSearchMode('content')}
+            >
+              内容
+            </button>
+            <span className="finder-search-summary-text">{activeSearchDescription}</span>
+            <span className="finder-search-summary-count">共 {searchResults.length} 项</span>
+          </div>
+        )}
 
         {/* ===== 内容区域：文件列表 + 右侧预览面板 ===== */}
         <div className="finder-content-area" ref={contentAreaRef}>
@@ -1390,8 +1622,15 @@ export default function ResourceLibrary() {
                 {columnLevels.map((items, colIdx) => {
                   const colWidth = columnWidths[colIdx];
                   return (
-                  <div className="finder-column" key={colIdx} style={colWidth ? { width: colWidth, minWidth: colWidth, maxWidth: colWidth } : undefined}>
-                    {items.map((item) => {
+                  <div
+                    className="finder-column"
+                    key={colIdx}
+                    style={colWidth ? { width: colWidth, minWidth: colWidth, maxWidth: colWidth } : undefined}
+                    onClick={(e) => handleColumnBlankClick(e, colIdx)}
+                  >
+                    {items.length === 0 && colIdx === 0 && hasActiveSearch ? (
+                      <div className="finder-column-empty">无匹配资料</div>
+                    ) : items.map((item) => {
                       const isActive = columnPath[colIdx + 1] === item.key || (columnSelectedItem?.key === item.key);
                       const itemMoreMenu = getItemMoreMenu(item);
 
@@ -1526,6 +1765,7 @@ export default function ResourceLibrary() {
             onContextMenu={handleBgContextMenu}
             onDragOver={handleListDragOver}
             onDrop={handleListDrop}
+            onClick={handleListBlankClick}
           >
               {/* 详情模式表头 */}
               {viewMode === 'detail' && currentChildren.length > 0 && (
@@ -1570,7 +1810,7 @@ export default function ResourceLibrary() {
                 </div>
               )}
               {currentChildren.length === 0 && !newFolderInline ? (
-                <div className="finder-empty"><Empty description="此文件夹为空，右键新建" image={Empty.PRESENTED_IMAGE_SIMPLE} /></div>
+                <div className="finder-empty"><Empty description={hasActiveSearch ? '无匹配资料' : '此文件夹为空，右键新建'} image={Empty.PRESENTED_IMAGE_SIMPLE} /></div>
               ) : (
                 displayChildren.map((item, idx) => {
                   const isSelected = selectedItemKeys.includes(item.key);
@@ -1601,7 +1841,7 @@ export default function ResourceLibrary() {
                         onDoubleClick={() => handleDoubleClick(item)}
                       >
                         {/* 展开三角（详情视图专用） */}
-                        {viewMode === 'detail' && (
+                        {viewMode === 'detail' && !hasActiveSearch && (
                           <span
                             className="finder-detail-expand-icon"
                             style={{ marginLeft: depth * 16 }}
@@ -1747,7 +1987,15 @@ export default function ResourceLibrary() {
             <span className="finder-pathbar-segment-icon"><DesktopOutlined /></span>
             <span>{scope === 'personal' ? '个人资料库' : '组织资料库'}</span>
           </span>
-          {viewMode === 'column' ? (
+          {hasActiveSearch ? (
+            <>
+              <span className="finder-pathbar-sep">›</span>
+              <span className="finder-pathbar-segment finder-pathbar-segment-current">
+                <span className="finder-pathbar-segment-icon"><SearchOutlined /></span>
+                <span>{activeSearchDescription}</span>
+              </span>
+            </>
+          ) : viewMode === 'column' ? (
             // 分栏视图：根据 columnPath 显示路径
             <>
               {columnPath.slice(1).map((folderKey, idx) => {

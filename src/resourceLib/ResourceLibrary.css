@@ -543,19 +543,50 @@
 }
 
 .finder-toolbar-parse-btn {
-  padding: 0 10px;
-  gap: 6px;
-  font-size: 13px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 9px;
+  gap: 7px;
+  font-size: 14px;
   font-weight: 500;
 }
 
 .finder-toolbar-parse-btn-icon {
   color: #722ed1;
+  font-size: 16px;
+}
+
+.finder-toolbar-more-btn {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 9px;
+  gap: 7px;
   font-size: 14px;
+  font-weight: 500;
+}
+
+.finder-toolbar-more-btn > .anticon:not(.finder-toolbar-more-btn-caret) {
+  font-size: 16px;
+}
+
+.finder-toolbar-more-btn-caret {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.finder-toolbar-more-dropdown .ant-dropdown-menu {
+  min-width: 220px;
+}
+
+.finder-toolbar-more-dropdown .ant-dropdown-menu-item,
+.finder-toolbar-more-dropdown .ant-dropdown-menu-submenu-title {
+  font-size: 13px;
 }
 
 .finder-toolbar-search {
-  width: 260px;
+  width: 300px;
+  position: relative;
+  flex-shrink: 0;
 }
 
 .finder-toolbar-search .ant-input-affix-wrapper {
@@ -570,6 +601,118 @@
 .finder-toolbar-search .ant-input-affix-wrapper-focused {
   border-color: #007aff;
   background: #fff;
+}
+
+.finder-search-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16);
+  z-index: 30;
+  overflow: hidden;
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
+
+.finder-search-panel-section {
+  padding: 12px 14px;
+}
+
+.finder-search-panel-title {
+  font-size: 12px;
+  color: #9ca3af;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.finder-search-panel-option {
+  width: 100%;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  color: #1f2937;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.finder-search-panel-option:hover {
+  background: rgba(15, 23, 42, 0.05);
+}
+
+.finder-search-panel-option-active {
+  background: rgba(0, 122, 255, 0.1);
+  color: #0f4fbf;
+  font-weight: 600;
+}
+
+.finder-search-panel-divider {
+  height: 1px;
+  margin: 0 14px;
+  background: rgba(15, 23, 42, 0.08);
+}
+
+.finder-search-summary-bar {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  background: rgba(248, 248, 248, 0.96);
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.finder-search-summary-label {
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.finder-search-summary-chip {
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.05);
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+
+.finder-search-summary-chip:hover {
+  background: rgba(15, 23, 42, 0.08);
+  color: #374151;
+}
+
+.finder-search-summary-chip-active {
+  background: rgba(0, 122, 255, 0.12);
+  border-color: rgba(0, 122, 255, 0.18);
+  color: #0f4fbf;
+}
+
+.finder-search-summary-text {
+  min-width: 0;
+  flex: 1;
+  font-size: 13px;
+  color: #374151;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.finder-search-summary-count {
+  font-size: 12px;
+  color: #6b7280;
+  flex-shrink: 0;
 }
 
 /* ====== File List (文件列表 - list view) ====== */
@@ -669,6 +812,7 @@
   backdrop-filter: blur(10px);
   pointer-events: none;
   z-index: 2;
+  box-sizing: border-box;
   transition: opacity 0.14s ease, transform 0.14s ease, box-shadow 0.14s ease;
 }
 .finder-file-row:hover .finder-file-row-actions,
@@ -685,7 +829,7 @@
   box-shadow: none;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
-  padding: 0;
+  padding: 3px 6px;
 }
 .finder-file-row-selected .finder-file-row-actions .finder-column-action-btn {
   background: rgba(255, 255, 255, 0.14);
@@ -1083,6 +1227,8 @@
   color: #1d1d1f;
   border-radius: 6px;
   margin: 1px 6px;
+  min-height: 38px;
+  box-sizing: border-box;
   transition: background 0.1s;
 }
 
@@ -1158,6 +1304,8 @@
   backdrop-filter: blur(10px);
   pointer-events: none;
   transform: translateX(4px);
+  min-height: 28px;
+  box-sizing: border-box;
   transition: opacity 0.14s ease, transform 0.14s ease, box-shadow 0.14s ease;
 }
 
@@ -1176,7 +1324,7 @@
   box-shadow: none;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
-  padding: 0;
+  padding: 2px 4px;
 }
 
 .finder-column-action-btn {
@@ -1545,6 +1693,10 @@
   align-items: center;
   gap: 12px;
   padding: 2px 0 4px;
+}
+
+.finder-menu-tags-row-disabled {
+  opacity: 0.45;
 }
 
 .finder-menu-tag-dot {

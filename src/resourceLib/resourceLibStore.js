@@ -1,6 +1,6 @@
 // 资料库本地存储（独立于 versionStore，避免耦合）
 const STORAGE_KEY = 'guoren_resource_lib';
-const DATA_VERSION = 5;
+const DATA_VERSION = 6;
 
 // macOS 访达风格预设标签（7色 + 自定义）
 const PRESET_TAGS = [
@@ -61,6 +61,40 @@ const DEFAULT_ORGS = [
   { id: 'org_rd',      name: '研发部' },
   { id: 'org_market',  name: '市场部' },
 ];
+
+const DEMO_CONTENT_TEXT_BY_KEY = {
+  p_r1: '果仁空间 v3 规划包含 React 组件库改造、资料库交互优化、AI 解析工作台和演示流程设计。',
+  p_r3: '这是一篇关于 React Hooks、状态提升、组件拆分和前端工程规范的学习笔记。',
+  p_r8: '课程内容介绍积木编程基础、事件驱动、组件思维和交互式页面搭建。',
+  p_r9: '课堂内容涵盖人工智能基础、AIGC 入门、React 前端应用案例和课堂互动设计。',
+  p_r10: '平台课堂资料包含 AI 原生框架、知识库检索、React 页面搭建与自动化测试案例。',
+  p_r11: '方案正文涉及 Claude Skill 设计、React 控制台接入、RAG 检索流程和提示词编排。',
+  p_r13: 'DeepAgent 技术汇报介绍多智能体协作、React 可视化面板、向量检索和任务编排。',
+  p_r14: '文档内容涵盖 Skill 配置、工作流约束、组件化界面和知识片段召回策略。',
+  p_r15: '失败样例文档仍保留了摘要文本，内容涉及智能体编排、React 仪表盘和报告生成。',
+  o_r1: '员工手册正文包含入职制度、行为规范、内容安全要求和资料协作流程。',
+  o_r2: '发布会 PPT 内容包含产品路线、React 门户改版、AI 能力矩阵与商业化计划。',
+  rd_r1: '架构方案涉及 React 前端分层、微前端集成、向量搜索和解析服务治理。',
+  mk_r1: '市场分析报告覆盖用户画像、内容传播策略、React 官网投放页和线索转化。',
+};
+
+function withDemoContentText(item) {
+  if (!item || item.isFolder) return item;
+  if (item.contentText) return item;
+  const demoContentText = DEMO_CONTENT_TEXT_BY_KEY[item.key];
+  return demoContentText ? { ...item, contentText: demoContentText } : item;
+}
+
+function hydrateSearchContent(data) {
+  const hydrateList = (items = []) => items.map(withDemoContentText);
+  return {
+    ...data,
+    personal: hydrateList(data.personal),
+    organizations: Object.fromEntries(
+      Object.entries(data.organizations || {}).map(([orgId, items]) => [orgId, hydrateList(items)]),
+    ),
+  };
+}
 
 const defaultData = {
   _dataVersion: DATA_VERSION,
@@ -188,7 +222,7 @@ export function loadResourceLib() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed._dataVersion === DATA_VERSION) return parsed;
+      if (parsed._dataVersion === DATA_VERSION) return hydrateSearchContent(parsed);
       // 旧版本迁移
       const migrated = migrate(parsed);
       saveResourceLib(migrated);
@@ -197,8 +231,9 @@ export function loadResourceLib() {
   } catch (e) {
     console.error('Failed to load resource lib:', e);
   }
-  saveResourceLib(defaultData);
-  return JSON.parse(JSON.stringify(defaultData));
+  const seeded = hydrateSearchContent(JSON.parse(JSON.stringify(defaultData)));
+  saveResourceLib(seeded);
+  return seeded;
 }
 
 function migrate(old) {
@@ -232,7 +267,7 @@ function migrate(old) {
     next.selectedFolderKey = { ...next.selectedFolderKey, ...old.selectedFolderKey };
   }
   next._dataVersion = DATA_VERSION;
-  return next;
+  return hydrateSearchContent(next);
 }
 
 export function saveResourceLib(data) {
@@ -273,6 +308,7 @@ export function addItem(data, scope, item) {
     parseStatus: 'parsed',
     lastEdit: now(),
     tags: [],
+    contentText: '',
     ...item,
   };
   const list = getLibraryList(data, scope);
