@@ -162,6 +162,58 @@
   text-overflow: ellipsis;
 }
 
+.finder-sidebar-root-actions {
+  visibility: hidden;
+  opacity: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+}
+
+.finder-sidebar-item:hover .finder-sidebar-root-actions,
+.finder-sidebar-item:focus-within .finder-sidebar-root-actions {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.finder-sidebar-root-action-btn {
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #4b5563;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), inset 0 0 0 1px rgba(15, 23, 42, 0.12);
+  transition: background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
+}
+
+.finder-sidebar-root-action-btn:hover {
+  background: #fff;
+  color: #1f2937;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12), inset 0 0 0 1px rgba(15, 23, 42, 0.18);
+  transform: translateY(-1px);
+}
+
+.finder-sidebar-item-active .finder-sidebar-root-action-btn {
+  background: rgba(255, 255, 255, 0.92);
+  color: #374151;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), inset 0 0 0 1px rgba(15, 23, 42, 0.12);
+}
+
+.finder-sidebar-item-active .finder-sidebar-root-action-btn:hover {
+  background: #fff;
+  color: #111827;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.14), inset 0 0 0 1px rgba(15, 23, 42, 0.16);
+}
+
 /* ====== Library Switcher (库类型切换器) ====== */
 .finder-library-switcher {
   padding: 14px 14px 12px 14px;
@@ -251,8 +303,9 @@
   cursor: pointer;
   font-size: 13px;
   color: #1d1d1f;
-  transition: background 0.1s;
+  transition: background 0.1s, box-shadow 0.1s, color 0.1s;
   user-select: none;
+  position: relative;
 }
 
 .finder-tag-item:hover {
@@ -264,11 +317,26 @@
   color: inherit !important;
 }
 
+.finder-tag-item.finder-tag-item-drop-target {
+  background: rgba(52, 199, 89, 0.12) !important;
+  box-shadow: inset 0 0 0 1px rgba(52, 199, 89, 0.3);
+}
+
+.finder-tag-item.finder-tag-item-drop-target .finder-tag-label {
+  color: #166534;
+  font-weight: 600;
+}
+
+.finder-tag-item.finder-tag-item-drop-target .finder-tag-dot {
+  transform: scale(1.08);
+}
+
 .finder-tag-dot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
+  transition: transform 0.1s;
 }
 
 .finder-tag-label {
@@ -355,35 +423,90 @@
 .finder-toolbar-views {
   display: flex;
   align-items: center;
-  background: rgba(0, 0, 0, 0.04);
-  border-radius: 6px;
-  padding: 2px;
-  gap: 1px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 11px;
+  padding: 3px;
+  gap: 3px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 .finder-toolbar-view-btn {
-  width: 28px;
-  height: 24px;
+  width: 42px;
+  height: 34px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: 9px;
   border: none;
   background: transparent;
-  color: #666;
+  color: #6b7280;
   font-size: 14px;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
 .finder-toolbar-view-btn:hover {
-  color: #333;
+  background: rgba(15, 23, 42, 0.06);
+  color: #374151;
 }
 
 .finder-toolbar-view-btn-active {
-  background: #fff;
-  color: #1d1d1f;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: #ececec;
+  color: #1f2937;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.finder-toolbar-view-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.finder-toolbar-view-icon-list {
+  width: 20px;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.finder-toolbar-view-icon-list-row {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.finder-toolbar-view-icon-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.finder-toolbar-view-icon-line {
+  width: 13px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.finder-toolbar-view-icon-columns {
+  width: 22px;
+  height: 22px;
+  border: 2px solid currentColor;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.finder-toolbar-view-icon-column {
+  width: 6px;
+  height: 100%;
+  border-right: 2px solid currentColor;
+}
+
+.finder-toolbar-view-icon-column:last-child {
+  border-right: none;
 }
 
 .finder-toolbar-actions {
@@ -537,25 +660,32 @@
   transition: opacity 0.14s ease, transform 0.14s ease, box-shadow 0.14s ease;
 }
 .finder-file-row:hover .finder-file-row-actions,
-.finder-file-row:focus-within .finder-file-row-actions,
-.finder-file-row-selected .finder-file-row-actions {
+.finder-file-row:focus-within .finder-file-row-actions {
   visibility: visible;
   opacity: 1;
   transform: translate3d(0, -50%, 0);
   pointer-events: auto;
 }
-.finder-file-row-selected .finder-file-row-actions {
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.26);
+.finder-file-row-selected:hover .finder-file-row-actions,
+.finder-file-row-selected:focus-within .finder-file-row-actions {
+  background: transparent;
+  border-color: transparent;
   box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  padding: 0;
 }
 .finder-file-row-selected .finder-file-row-actions .finder-column-action-btn {
-  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: rgba(255, 255, 255, 0.96);
+  box-shadow: none;
 }
 .finder-file-row-selected .finder-file-row-actions .finder-column-action-btn:hover {
   background: rgba(255, 255, 255, 0.24);
-  border-color: rgba(255, 255, 255, 0.34);
+  border-color: rgba(255, 255, 255, 0.32);
   color: #fff;
+  box-shadow: none;
 }
 
 /* 详情视图展开三角 */
@@ -1027,14 +1157,14 @@
   pointer-events: auto;
 }
 
-.finder-column-item-active .finder-column-item-actions {
-  visibility: visible;
-  opacity: 1;
-  transform: translateX(0);
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.24);
+.finder-column-item-active:hover .finder-column-item-actions,
+.finder-column-item-active:focus-within .finder-column-item-actions {
+  background: transparent;
+  border-color: transparent;
   box-shadow: none;
-  pointer-events: auto;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  padding: 0;
 }
 
 .finder-column-action-btn {
@@ -1067,15 +1197,15 @@
 }
 
 .finder-column-item-active .finder-column-action-btn {
-  background: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.22);
   color: #fff;
   box-shadow: none;
 }
 
 .finder-column-item-active .finder-column-action-btn:hover {
   background: rgba(255, 255, 255, 0.26);
-  border-color: rgba(255, 255, 255, 0.36);
+  border-color: rgba(255, 255, 255, 0.32);
   color: #fff;
   box-shadow: none;
 }
@@ -1310,6 +1440,44 @@
   margin-bottom: 8px;
 }
 
+.rl-tag-picker-selected {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 8px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #f5f5f7;
+}
+
+.rl-tag-picker-token {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  color: #1d1d1f;
+  font-size: 13px;
+}
+
+.rl-tag-picker-token span:last-child {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rl-tag-picker-placeholder {
+  font-size: 13px;
+  color: #999;
+}
+
 .rl-tag-picker-list {
   display: flex;
   flex-direction: column;
@@ -1363,13 +1531,13 @@
 .finder-menu-tags-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 4px 0;
+  gap: 12px;
+  padding: 2px 0 4px;
 }
 
 .finder-menu-tag-dot {
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   display: inline-block;
   cursor: pointer;
@@ -1382,6 +1550,6 @@
 }
 
 .finder-menu-tag-dot-active {
-  border-color: #fff;
+  border-color: rgba(255, 255, 255, 0.96);
   box-shadow: 0 0 0 2px currentColor;
 }
