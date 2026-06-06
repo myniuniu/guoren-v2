@@ -325,6 +325,7 @@ export default function ResourceParseStatus() {
       title: '操作',
       key: 'action',
       width: 100,
+      fixed: 'right',
       render: (_, r) => {
         const status = r.parseStatus || 'pending';
         return (
