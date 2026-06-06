@@ -542,6 +542,18 @@
   gap: 0;
 }
 
+.finder-toolbar-parse-btn {
+  padding: 0 10px;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.finder-toolbar-parse-btn-icon {
+  color: #722ed1;
+  font-size: 14px;
+}
+
 .finder-toolbar-search {
   width: 260px;
 }

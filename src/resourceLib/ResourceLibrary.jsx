@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import {
   Button, Input, Empty, Tooltip, Dropdown, Popover,
-  Modal, Form, Select, message, Upload, ColorPicker,
+  Modal, Form, Select, message, Upload, ColorPicker, Drawer,
 } from 'antd';
 import {
   PlusOutlined, SearchOutlined,
@@ -11,7 +11,7 @@ import {
   FolderFilled, DesktopOutlined,
   DownloadOutlined, ClockCircleOutlined,
   CloudOutlined, ShareAltOutlined, GlobalOutlined,
-  ExportOutlined, HighlightOutlined, SmileOutlined,
+  ExportOutlined, HighlightOutlined, SmileOutlined, ThunderboltOutlined,
   CaretDownOutlined, MoreOutlined, CaretRightOutlined,
   FileTextOutlined, FilePdfOutlined, FileImageOutlined,
   PlayCircleOutlined, SoundOutlined, TagsOutlined,
@@ -27,6 +27,7 @@ import {
 import { renderFileIcon } from './resourceIcons.jsx';
 import { fileApi } from '../api/fileApi';
 import AddResourceDialog from './AddResourceDialog.jsx';
+import ResourceParseStatus from './ResourceParseStatus.jsx';
 import './ResourceLibrary.css';
 
 const ROOT_PARENT_KEY = '__resource_lib_root__';
@@ -47,6 +48,7 @@ export default function ResourceLibrary() {
   const [tagPickerTarget, setTagPickerTarget] = useState(null); // 分栏视图中标签管理目标item key
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [addDialogParentKey, setAddDialogParentKey] = useState(null);
+  const [parseDrawerOpen, setParseDrawerOpen] = useState(false);
   const [favorites, setFavorites] = useState(() => {
     try {
       const initLibId = (data?.currentScope === 'organization' ? (data?.currentOrgId || 'org_default') : 'personal');
@@ -1340,6 +1342,10 @@ export default function ResourceLibrary() {
 
           {/* 操作按钮区 */}
           <div className="finder-toolbar-actions">
+            <button className="finder-toolbar-action-btn finder-toolbar-group-btn finder-toolbar-parse-btn" onClick={() => setParseDrawerOpen(true)}>
+              <ThunderboltOutlined className="finder-toolbar-parse-btn-icon" />
+              <span>AI解析</span>
+            </button>
             <Tooltip title="分享">
               <button className="finder-toolbar-action-btn" onClick={() => message.info('分享功能')}>
                 <ExportOutlined />
@@ -1902,6 +1908,20 @@ export default function ResourceLibrary() {
           }
         }}
       />
+
+      <Drawer
+        open={parseDrawerOpen}
+        onClose={() => setParseDrawerOpen(false)}
+        placement="right"
+        width={1180}
+        destroyOnClose
+        styles={{
+          header: { display: 'none' },
+          body: { padding: 0 },
+        }}
+      >
+        <ResourceParseStatus onBack={() => setParseDrawerOpen(false)} />
+      </Drawer>
     </div>
     </>
   );
