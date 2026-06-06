@@ -650,8 +650,10 @@ export default function ResourceLibrary() {
     }
 
     if (!hasActiveSearch && !isRecentView && currentFolder) {
-      markSource([currentFolder], 'fromFolder');
-      markSource(detailContextItems, 'fromContent');
+      // 已进入文件夹时，不再把“当前文件夹自身”的标签计入上下文，
+      // 只展示该文件夹内容里的标签来源，避免侧栏重复强调当前文件夹标签。
+      markSource(detailContextItems.filter((item) => item.isFolder), 'fromFolder');
+      markSource(detailContextItems.filter((item) => !item.isFolder), 'fromContent');
       return sourceMap;
     }
 
