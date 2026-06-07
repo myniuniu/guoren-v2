@@ -859,23 +859,28 @@ export function moveItem(data, scope, itemKey, targetFolderKey) {
   const list = getLibraryList(data, scope);
   const item = list.find((r) => r.key === itemKey);
   if (!item) return data;
-  
+
+  const normalizedTargetFolderKey = targetFolderKey ?? null;
+  if ((item.parentKey ?? null) === normalizedTargetFolderKey) return data;
+
+  if (normalizedTargetFolderKey) {
+    const targetFolder = list.find((r) => r.key === normalizedTargetFolderKey);
+    if (!targetFolder?.isFolder) return data;
+  }
+
   // 防止将文件夹移动到自身或自身的子文件夹中
-  if (item.isFolder && targetFolderKey) {
-    const isDescendant = (parentKey, targetKey) => {
-      if (parentKey === targetKey) return true;
-      const parent = list.find((r) => r.key === parentKey);
-      if (!parent || !parent.parentKey) return false;
-      return isDescendant(parent.parentKey, targetKey);
-    };
-    if (isDescendant(targetFolderKey, itemKey)) {
-      return data; // 不允许移动到自己的子文件夹中
+  if (item.isFolder && normalizedTargetFolderKey) {
+    let currentParentKey = normalizedTargetFolderKey;
+    while (currentParentKey) {
+      if (currentParentKey === itemKey) return data;
+      const parent = list.find((r) => r.key === currentParentKey);
+      currentParentKey = parent?.parentKey ?? null;
     }
   }
-  
-  const next = setLibraryList(data, scope, list.map((r) => 
-    r.key === itemKey ? { ...r, parentKey: targetFolderKey, lastEdit: now() } : r
-  ));
+
+  const next = setLibraryList(data, scope, list.map((r) => (
+    r.key === itemKey ? { ...r, parentKey: normalizedTargetFolderKey, lastEdit: now() } : r
+  )));
   saveResourceLib(next);
   return next;
 }

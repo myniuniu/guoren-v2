@@ -1107,15 +1107,30 @@ export default function ResourceLibrary() {
     setColumnSelectedItem(null);
   };
 
-  const hasResourceDragPayload = (e) => Array.from(e.dataTransfer?.types || []).includes('application/json');
+  const hasResourceDragPayload = (e) => {
+    const dragTypes = Array.from(e.dataTransfer?.types || []);
+    return dragTypes.includes('application/json') || dragTypes.includes('text/plain');
+  };
 
   const getDraggedResourcePayload = (e) => {
     try {
       if (!hasResourceDragPayload(e)) return null;
       const raw = e.dataTransfer.getData('application/json');
-      if (!raw) return null;
-      const payload = JSON.parse(raw);
-      return payload?.key ? payload : null;
+      if (raw) {
+        const payload = JSON.parse(raw);
+        if (payload?.key) return payload;
+      }
+
+      const fallbackKey = (e.dataTransfer.getData('text/plain') || '').trim();
+      if (!fallbackKey) return null;
+      const draggedItem = list.find((item) => item.key === fallbackKey);
+      if (!draggedItem) return null;
+      return {
+        key: draggedItem.key,
+        name: draggedItem.name,
+        isFolder: draggedItem.isFolder,
+        fileType: draggedItem.fileType,
+      };
     } catch {
       return null;
     }
@@ -1125,6 +1140,22 @@ export default function ResourceLibrary() {
     setTagDropIdx(null);
     setTagDropTargetId(null);
   };
+
+  const startResourceDrag = useCallback((e, item) => {
+    if (!item?.key) return;
+    const payload = JSON.stringify({
+      key: item.key,
+      name: item.name,
+      isFolder: item.isFolder,
+      fileType: item.fileType,
+    });
+    isDraggingRef.current = true;
+    setContextMenuItemKey(null);
+    e.dataTransfer.setData('application/json', payload);
+    // Safari/WebKit 对 text/plain 的支持更稳定，顺带写一份。
+    e.dataTransfer.setData('text/plain', item.key);
+    e.dataTransfer.effectAllowed = 'all';
+  }, [setContextMenuItemKey]);
 
   const handleTagItemDragOver = (e, tagId, idx) => {
     e.preventDefault();
@@ -1246,10 +1277,14 @@ export default function ResourceLibrary() {
     isDraggingRef.current = false;
     
     try {
-      const draggedData = e.dataTransfer.getData('application/json');
-      if (!draggedData) return;
-      
-      const { key: itemKey, name, isFolder } = JSON.parse(draggedData);
+      const draggedItem = getDraggedResourcePayload(e);
+      if (!draggedItem) return;
+
+      const {
+        key: itemKey,
+        name,
+        isFolder,
+      } = draggedItem;
       if (!itemKey) return;
       
       // 不能将文件夹拖到自己里面
@@ -1257,7 +1292,14 @@ export default function ResourceLibrary() {
         message.warning('不能将文件夹移动到自己里面');
         return;
       }
-      
+
+      const sourceItem = list.find((item) => item.key === itemKey);
+      if (!sourceItem) return;
+      if ((sourceItem.parentKey ?? null) === (targetFolderKey ?? null)) {
+        message.info(`「${name}」已在该文件夹中`);
+        return;
+      }
+
       setData((d) => moveItem(d, scope, itemKey, targetFolderKey));
       message.success(`已将「${name}」移动到文件夹`);
     } catch (err) {
@@ -1273,13 +1315,22 @@ export default function ResourceLibrary() {
 
   const handleListDrop = (e) => {
     e.preventDefault();
+    isDraggingRef.current = false;
+    setDragOverFolderKey(null);
     try {
-      const draggedData = e.dataTransfer.getData('application/json');
-      if (!draggedData) return;
-      
-      const { key: itemKey, name } = JSON.parse(draggedData);
+      const draggedItem = getDraggedResourcePayload(e);
+      if (!draggedItem) return;
+
+      const { key: itemKey, name } = draggedItem;
       if (!itemKey) return;
-      
+
+      const sourceItem = list.find((item) => item.key === itemKey);
+      if (!sourceItem) return;
+      if ((sourceItem.parentKey ?? null) === (selectedFolderKey ?? null)) {
+        message.info(`「${name}」已在当前位置`);
+        return;
+      }
+
       // 移动到当前文件夹（selectedFolderKey）
       setData((d) => moveItem(d, scope, itemKey, selectedFolderKey));
       message.success(`已将「${name}」移动到当前位置`);
@@ -2381,9 +2432,7 @@ export default function ResourceLibrary() {
                             className={`finder-column-item ${isActive ? 'finder-column-item-active' : ''} ${selectedItemKeys.includes(item.key) && !isActive ? 'finder-column-item-selected' : ''} ${isContextMenuTarget ? 'finder-column-item-context-open' : ''} ${item.isFolder && dragOverFolderKey === item.key ? 'finder-column-item-dragover' : ''}`}
                             draggable={!isInlineRenaming}
                             onDragStart={(e) => {
-                              isDraggingRef.current = true;
-                              e.dataTransfer.setData('application/json', JSON.stringify({ key: item.key, name: item.name, isFolder: item.isFolder, fileType: item.fileType }));
-                              e.dataTransfer.effectAllowed = 'copyLink';
+                              startResourceDrag(e, item);
                             }}
                             onDragEnd={() => {
                               isDraggingRef.current = false;
@@ -2589,10 +2638,8 @@ export default function ResourceLibrary() {
                       onMouseMove={item.isFolder && !isInlineRenaming ? (e) => handleFolderHoverMove(item.key, e) : undefined}
                       onMouseLeave={item.isFolder ? () => hideFolderHoverTip(item.key) : undefined}
                       onDragStart={(e) => {
-                        isDraggingRef.current = true;
                         hideFolderHoverTip(item.key);
-                        e.dataTransfer.setData('application/json', JSON.stringify({ key: item.key, name: item.name, isFolder: item.isFolder, fileType: item.fileType }));
-                        e.dataTransfer.effectAllowed = 'copyLink';
+                        startResourceDrag(e, item);
                       }}
                       onDragEnd={() => {
                         isDraggingRef.current = false;
