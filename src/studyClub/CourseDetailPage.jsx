@@ -28,9 +28,7 @@ export default function CourseDetailPage() {
     if (!match) return;
     const courseId = match[1];
 
-    studyClubApi.getChannelDetail('super-individual').then((detail) => {
-      const courses = detail?.courses || [];
-      const found = courses.find((c) => c.id === courseId);
+    studyClubApi.getCourseDetail(courseId).then((found) => {
       if (found) setCourse(found);
     });
   }, []);

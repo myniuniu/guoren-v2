@@ -23,10 +23,7 @@ export default function InspireDetailPage() {
     if (!match) return;
     const itemId = match[1];
 
-    // 加载频道详情获取 inspire 数据
-    studyClubApi.getChannelDetail('super-individual').then((detail) => {
-      const inspire = detail?.aiSet?.items?.inspire || [];
-      const found = inspire.find((i) => i.id === itemId);
+    studyClubApi.getInspireDetail(itemId).then((found) => {
       if (found && found.detail) {
         setItem(found);
       }

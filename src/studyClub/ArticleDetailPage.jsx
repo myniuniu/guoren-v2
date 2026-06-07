@@ -33,9 +33,7 @@ export default function ArticleDetailPage() {
     if (!match) return;
     const articleId = match[1];
 
-    studyClubApi.getChannelDetail('super-individual').then((detail) => {
-      const articles = detail?.articles || [];
-      const found = articles.find((a) => a.id === articleId);
+    studyClubApi.getArticleDetail(articleId).then((found) => {
       if (found) setArticle(found);
     });
   }, []);
