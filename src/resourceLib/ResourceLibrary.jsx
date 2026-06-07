@@ -12,7 +12,7 @@ import {
   DownloadOutlined, ClockCircleOutlined,
   CloudOutlined, ShareAltOutlined, GlobalOutlined,
   QuestionCircleOutlined,
-  RobotOutlined, ToolOutlined,
+  RobotOutlined,
   CaretDownOutlined, MoreOutlined, CaretRightOutlined,
   FileTextOutlined, FilePdfOutlined, FileImageOutlined,
   PlayCircleOutlined, SoundOutlined, TagsOutlined,
@@ -37,11 +37,47 @@ const DETAIL_PREVIEW_MAX_WIDTH = 1120;
 const DETAIL_PREVIEW_MIN_LIST_WIDTH = 260;
 const DETAIL_PREVIEW_DEFAULT_RATIO = 0.5;
 const FOLDER_HOVER_TIP_DELAY = 1;
+const EDITABLE_PASTE_SELECTOR = [
+  'input',
+  'textarea',
+  '[contenteditable="true"]',
+  '[contenteditable=""]',
+  '.ant-input',
+  '.ant-input-affix-wrapper',
+  '.ant-select-selector',
+].join(', ');
 const RESOURCE_LIB_HELP_TIPS = [
   '在文件夹上双击可进入文件夹。',
   '支持对文件、文件夹和空白区域使用鼠标右键操作。',
   '悬停行内按钮可快速添加资料或打开更多操作。',
 ];
+
+function isEditablePasteTarget(target) {
+  return target instanceof Element && Boolean(target.closest(EDITABLE_PASTE_SELECTOR));
+}
+
+function collectClipboardFiles(clipboardData) {
+  if (!clipboardData) return [];
+
+  const files = [];
+  const seen = new Set();
+  const pushFile = (file) => {
+    if (!file || (typeof File !== 'undefined' && !(file instanceof File))) return;
+    const signature = [file.name, file.size, file.type, file.lastModified].join('__');
+    if (seen.has(signature)) return;
+    seen.add(signature);
+    files.push(file);
+  };
+
+  Array.from(clipboardData.files || []).forEach(pushFile);
+  Array.from(clipboardData.items || []).forEach((item) => {
+    if (item.kind !== 'file') return;
+    const file = item.getAsFile?.();
+    if (file) pushFile(file);
+  });
+
+  return files;
+}
 
 export default function ResourceLibrary() {
   const [data, setData] = useState(() => loadResourceLib());
@@ -72,6 +108,7 @@ export default function ResourceLibrary() {
   const [showAllSidebarTags, setShowAllSidebarTags] = useState(false);
   const [folderHoverTip, setFolderHoverTip] = useState(null);
   const [contextMenuItemKey, setContextMenuItemKey] = useState(null);
+  const [pendingNewFolder, setPendingNewFolder] = useState(null);
   const [favorites, setFavorites] = useState(() => {
     try {
       const initLibId = (data?.currentScope === 'organization' ? (data?.currentOrgId || 'org_default') : 'personal');
@@ -145,6 +182,7 @@ export default function ResourceLibrary() {
   const [newFolderName, setNewFolderName] = useState('');
   const newFolderInputRef = useRef(null);
   const inlineRenameInputRef = useRef(null);
+  const pendingRenameTriggerRef = useRef(null);
   const columnScrollRef = useRef(null);
   // 分栏视图状态：各层打开的文件夹 key 路径
   const [columnPath, setColumnPath] = useState([null]); // [null, folderKey1, folderKey2, ...]
@@ -352,6 +390,15 @@ export default function ResourceLibrary() {
   }, []);
 
   const sortLibraryItems = useCallback((items) => [...items].sort((a, b) => {
+    const pendingParentKey = pendingNewFolder?.parentKey ?? null;
+    if (
+      pendingNewFolder?.key
+      && (a.parentKey ?? null) === pendingParentKey
+      && (b.parentKey ?? null) === pendingParentKey
+    ) {
+      if (a.key === pendingNewFolder.key && b.key !== pendingNewFolder.key) return 1;
+      if (b.key === pendingNewFolder.key && a.key !== pendingNewFolder.key) return -1;
+    }
     if (a.isFolder && !b.isFolder) return -1;
     if (!a.isFolder && b.isFolder) return 1;
     let cmp = 0;
@@ -364,7 +411,7 @@ export default function ResourceLibrary() {
       default: cmp = 0;
     }
     return sortOrder === 'asc' ? cmp : -cmp;
-  }), [sortBy, sortOrder]);
+  }), [pendingNewFolder, sortBy, sortOrder]);
 
   const getItemContentSearchText = useCallback((item) => {
     const tagNames = (item.tags || [])
@@ -880,6 +927,7 @@ export default function ResourceLibrary() {
 
   // ====== 操作 ======
   const navigateTo = (folderKey) => {
+    clearPendingRenameTrigger();
     setSpecialView('all');
     setData((d) => setSelectedFolder(d, scope, folderKey));
     setActiveTagFilter(null);
@@ -904,6 +952,7 @@ export default function ResourceLibrary() {
   };
 
   const handleBack = () => {
+    clearPendingRenameTrigger();
     if (isTagFilterContextActive) {
       restoreTagFilterContext();
       return;
@@ -920,6 +969,7 @@ export default function ResourceLibrary() {
   };
 
   const handleForward = () => {
+    clearPendingRenameTrigger();
     if (navIndex < navHistory.length - 1) {
       const newIndex = navIndex + 1;
       setNavIndex(newIndex);
@@ -932,6 +982,7 @@ export default function ResourceLibrary() {
   };
 
   const openRecentView = () => {
+    clearPendingRenameTrigger();
     setSpecialView('recent');
     setActiveTagFilter(null);
     setKeyword('');
@@ -1141,8 +1192,25 @@ export default function ResourceLibrary() {
     setTagDropTargetId(null);
   };
 
+  const clearPendingRenameTrigger = useCallback(() => {
+    if (pendingRenameTriggerRef.current) {
+      clearTimeout(pendingRenameTriggerRef.current);
+      pendingRenameTriggerRef.current = null;
+    }
+  }, []);
+
+  const queueInlineRename = (item, delay = 220) => {
+    if (!item?.key) return;
+    clearPendingRenameTrigger();
+    pendingRenameTriggerRef.current = setTimeout(() => {
+      pendingRenameTriggerRef.current = null;
+      startInlineRename(item);
+    }, delay);
+  };
+
   const startResourceDrag = useCallback((e, item) => {
     if (!item?.key) return;
+    clearPendingRenameTrigger();
     const payload = JSON.stringify({
       key: item.key,
       name: item.name,
@@ -1155,7 +1223,7 @@ export default function ResourceLibrary() {
     // Safari/WebKit 对 text/plain 的支持更稳定，顺带写一份。
     e.dataTransfer.setData('text/plain', item.key);
     e.dataTransfer.effectAllowed = 'all';
-  }, [setContextMenuItemKey]);
+  }, [clearPendingRenameTrigger, setContextMenuItemKey]);
 
   const handleTagItemDragOver = (e, tagId, idx) => {
     e.preventDefault();
@@ -1223,18 +1291,27 @@ export default function ResourceLibrary() {
   const lastClickedIdx = useRef(null);
   const handleItemClick = (item, idx, e) => {
     if (e.metaKey || e.ctrlKey) {
+      clearPendingRenameTrigger();
       // Cmd/Ctrl + Click: toggle
       setSelectedItemKeys((prev) =>
         prev.includes(item.key) ? prev.filter((k) => k !== item.key) : [...prev, item.key]
       );
       lastClickedIdx.current = idx;
     } else if (e.shiftKey && lastClickedIdx.current !== null) {
+      clearPendingRenameTrigger();
       // Shift + Click: range select
       const start = Math.min(lastClickedIdx.current, idx);
       const end = Math.max(lastClickedIdx.current, idx);
       const rangeKeys = currentChildren.slice(start, end + 1).map((it) => it.key);
       setSelectedItemKeys(rangeKeys);
+    } else if (
+      selectedItemKeys.length === 1
+      && selectedItemKeys[0] === item.key
+      && inlineRenameItemKey !== item.key
+    ) {
+      queueInlineRename(item);
     } else {
+      clearPendingRenameTrigger();
       // 普通点击：单选
       setSelectedItemKeys([item.key]);
       lastClickedIdx.current = idx;
@@ -1243,6 +1320,7 @@ export default function ResourceLibrary() {
   };
 
   const handleDoubleClick = (item) => {
+    clearPendingRenameTrigger();
     if (!item.isFolder) return;
     if (hasActiveSearch) {
       setKeyword('');
@@ -1340,6 +1418,7 @@ export default function ResourceLibrary() {
   };
 
   const clearListSelection = () => {
+    clearPendingRenameTrigger();
     setSelectedItemKeys([]);
   };
 
@@ -1359,6 +1438,7 @@ export default function ResourceLibrary() {
       || e.target.closest('.finder-column-resize-handle')
       || e.target.closest('.ant-dropdown')
     ) return;
+    clearPendingRenameTrigger();
     setSelectedItemKeys([]);
     setColumnSelectedItem(null);
     setColumnPath((prev) => prev.slice(0, Math.min(prev.length, colIdx + 1)));
@@ -1366,6 +1446,7 @@ export default function ResourceLibrary() {
 
   // ====== 分栏视图 - 点击文件夹时扩展列 ======
   const handleColumnFolderClick = (folderKey, colIndex) => {
+    clearPendingRenameTrigger();
     if (hasActiveSearch) {
       setKeyword('');
       setSearchPanelOpen(false);
@@ -1383,6 +1464,7 @@ export default function ResourceLibrary() {
   };
 
   const handleColumnFileClick = (item, colIndex) => {
+    clearPendingRenameTrigger();
     // 截断后续列，选中该文件
     setColumnPath(columnPath.slice(0, colIndex + 1));
     setColumnSelectedItem(item);
@@ -1415,6 +1497,7 @@ export default function ResourceLibrary() {
 
   // 切换视图模式时同步 columnPath
   const handleViewModeChange = (mode) => {
+    clearPendingRenameTrigger();
     setViewMode(mode);
     if (mode === 'column') {
       // 从当前 breadcrumb 构建 columnPath
@@ -1423,6 +1506,35 @@ export default function ResourceLibrary() {
       setColumnSelectedItem(null);
     }
   };
+
+  const createFolderAndStartRename = useCallback((parentKey = null, options = {}) => {
+    const {
+      revealParentKey = null,
+      columnPathToOpen = null,
+      successMessage = '文件夹已创建',
+    } = options;
+    const folderKey = `${scope[0]}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const normalizedParentKey = parentKey ?? null;
+
+    setData((d) => addItem(d, scope, {
+      key: folderKey,
+      name: '未命名文件夹',
+      isFolder: true,
+      parentKey: normalizedParentKey,
+      fileType: 'folder',
+      parseStatus: 'parsed',
+    }));
+    setPendingNewFolder({
+      key: folderKey,
+      parentKey: normalizedParentKey,
+      revealParentKey,
+      columnPathToOpen,
+      shouldStartRename: true,
+    });
+    setContextMenuItemKey(null);
+    message.success(successMessage);
+    return folderKey;
+  }, [scope]);
 
   // ====== 快速新建文件夹 (内联) ======
   const handleNewFolderInline = (parentKey = selectedFolderKey) => {
@@ -1454,10 +1566,14 @@ export default function ResourceLibrary() {
     setNewFolderParentKey(null);
   };
 
-  const cancelInlineRename = useCallback(() => {
+  const cancelInlineRename = useCallback((itemKey = inlineRenameItemKey) => {
+    clearPendingRenameTrigger();
+    if (itemKey) {
+      setPendingNewFolder((prev) => (prev?.key === itemKey ? null : prev));
+    }
     setInlineRenameItemKey(null);
     setInlineRenameName('');
-  }, []);
+  }, [clearPendingRenameTrigger, inlineRenameItemKey]);
 
   const confirmInlineRename = useCallback(() => {
     if (!inlineRenameItemKey) return;
@@ -1469,11 +1585,12 @@ export default function ResourceLibrary() {
       message.success('已重命名');
     }
 
-    cancelInlineRename();
+    cancelInlineRename(inlineRenameItemKey);
   }, [cancelInlineRename, inlineRenameItemKey, inlineRenameName, list, scope]);
 
   const startInlineRename = useCallback((item) => {
     if (!item?.key) return;
+    clearPendingRenameTrigger();
     hideFolderHoverTip(item.key);
     setNewFolderInline(false);
     setNewFolderName('');
@@ -1488,7 +1605,38 @@ export default function ResourceLibrary() {
       inlineRenameInputRef.current?.focus();
       inlineRenameInputRef.current?.select?.();
     }, 50);
-  }, [hideFolderHoverTip, viewMode]);
+  }, [clearPendingRenameTrigger, hideFolderHoverTip, viewMode]);
+
+  useEffect(() => () => {
+    clearPendingRenameTrigger();
+  }, [clearPendingRenameTrigger]);
+
+  useEffect(() => {
+    if (!pendingNewFolder?.shouldStartRename) return;
+    const createdItem = list.find((item) => item.key === pendingNewFolder.key);
+    if (!createdItem) return;
+
+    if (viewMode === 'detail' && pendingNewFolder.revealParentKey) {
+      setExpandedFolders((prev) => {
+        if (prev.has(pendingNewFolder.revealParentKey)) return prev;
+        const next = new Set(prev);
+        next.add(pendingNewFolder.revealParentKey);
+        return next;
+      });
+    }
+
+    if (viewMode === 'column' && Array.isArray(pendingNewFolder.columnPathToOpen)) {
+      setColumnPath(pendingNewFolder.columnPathToOpen);
+      setColumnSelectedItem(null);
+    }
+
+    startInlineRename(createdItem);
+    setPendingNewFolder((prev) => (
+      prev?.key === createdItem.key
+        ? { ...prev, shouldStartRename: false }
+        : prev
+    ));
+  }, [list, pendingNewFolder, startInlineRename, viewMode]);
 
   // ====== Quick Look 预览（右侧面板常驻） ======
   const selectedItemKey = selectedItemKeys.length === 1 ? selectedItemKeys[0] : null;
@@ -1507,6 +1655,82 @@ export default function ResourceLibrary() {
   const currentBlankAreaParentKey = viewMode === 'column'
     ? (columnPath[columnPath.length - 1] ?? null)
     : selectedFolderKey;
+
+  const resolvePasteTarget = useCallback(() => {
+    const findFolder = (itemKey) => (
+      itemKey
+        ? list.find((item) => item.key === itemKey && item.isFolder) || null
+        : null
+    );
+
+    const contextTarget = findFolder(contextMenuItemKey);
+    if (contextTarget) {
+      return { parentKey: contextTarget.key, label: contextTarget.name };
+    }
+
+    if (selectedItemKeys.length === 1) {
+      const selectedFolder = findFolder(selectedItemKeys[0]);
+      if (selectedFolder) {
+        return { parentKey: selectedFolder.key, label: selectedFolder.name };
+      }
+    }
+
+    const currentTarget = findFolder(currentBlankAreaParentKey);
+    if (currentTarget) {
+      return { parentKey: currentTarget.key, label: currentTarget.name };
+    }
+
+    return { parentKey: null, label: '根目录' };
+  }, [contextMenuItemKey, currentBlankAreaParentKey, list, selectedItemKeys]);
+
+  const uploadFilesToLibrary = useCallback(async (files, { parentKey = null } = {}) => {
+    const normalizedFiles = Array.from(files || []).filter((file) => (
+      file && (typeof File === 'undefined' || file instanceof File)
+    ));
+    if (normalizedFiles.length === 0) {
+      return { successCount: 0, failureCount: 0 };
+    }
+
+    const hide = message.loading(`上传中 (${normalizedFiles.length})...`, 0);
+    let successCount = 0;
+    let failureCount = 0;
+
+    try {
+      for (const file of normalizedFiles) {
+        try {
+          const inferred = inferFileType(file.name);
+          const result = await fileApi.upload(file, 'resource-lib');
+          setData((prevData) => addItem(prevData, scope, {
+            name: file.name,
+            isFolder: false,
+            parentKey,
+            fileType: inferred,
+            url: result.url,
+            size: result.size,
+            mime: result.mime,
+            parseStatus: 'parsing',
+          }));
+          successCount += 1;
+        } catch {
+          failureCount += 1;
+          message.error(`「${file.name}」上传失败`);
+        }
+      }
+
+      if (successCount > 0 && parentKey && viewMode === 'detail' && !hasActiveSearch && !isRecentView && !activeTagFilter) {
+        setExpandedFolders((prev) => {
+          if (prev.has(parentKey)) return prev;
+          const next = new Set(prev);
+          next.add(parentKey);
+          return next;
+        });
+      }
+    } finally {
+      hide();
+    }
+
+    return { successCount, failureCount };
+  }, [activeTagFilter, hasActiveSearch, isRecentView, scope, viewMode]);
 
   const renderCheckedMenuLabel = (checked, label) => (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minWidth: 116 }}>
@@ -1563,7 +1787,10 @@ export default function ResourceLibrary() {
     );
   };
 
-  const handleItemMenuAction = (item, key, { includeFavorite = false } = {}) => {
+  const handleItemMenuAction = (item, key, {
+    includeFavorite = false,
+    columnPathToOpen = null,
+  } = {}) => {
     const isFavorited = item.isFolder && favorites.some((f) => f.key === item.key);
     if (key === 'enter' && item.isFolder) {
       navigateTo(item.key);
@@ -1574,10 +1801,10 @@ export default function ResourceLibrary() {
       setAddDialogOpen(true);
     }
     if (key === 'newFolder') {
-      setData((d) => addItem(d, scope, {
-        name: '未命名文件夹', isFolder: true, parentKey: item.key, fileType: 'folder', parseStatus: 'parsed',
-      }));
-      message.success('文件夹已创建');
+      createFolderAndStartRename(item.key, {
+        revealParentKey: viewMode === 'detail' ? item.key : null,
+        columnPathToOpen: viewMode === 'column' ? columnPathToOpen : null,
+      });
     }
     if (key === 'favorite' && includeFavorite && item.isFolder) {
       if (isFavorited) {
@@ -1593,7 +1820,11 @@ export default function ResourceLibrary() {
     if (key === 'tags-manage') setTagPickerTarget(item.key);
   };
 
-  const getItemMoreMenu = (item, { includeFavorite = false, includeAddResource = false } = {}) => {
+  const getItemMoreMenu = (item, {
+    includeFavorite = false,
+    includeAddResource = false,
+    columnPathToOpen = null,
+  } = {}) => {
     const isFavorited = item.isFolder && favorites.some((f) => f.key === item.key);
     return {
       items: [
@@ -1621,7 +1852,7 @@ export default function ResourceLibrary() {
       ],
       onClick: ({ key, domEvent }) => {
         domEvent?.stopPropagation();
-        handleItemMenuAction(item, key, { includeFavorite });
+        handleItemMenuAction(item, key, { includeFavorite, columnPathToOpen });
       },
     };
   };
@@ -1632,25 +1863,17 @@ export default function ResourceLibrary() {
   );
 
   const handleItemContextMenuOpenChange = useCallback((itemKey, open) => {
+    if (open) clearPendingRenameTrigger();
     setContextMenuItemKey((prev) => {
       if (open) return itemKey;
       return prev === itemKey ? null : prev;
     });
-  }, []);
+  }, [clearPendingRenameTrigger]);
 
   const handleCreateFolderAtCurrentLocation = () => {
-    if (viewMode === 'column') {
-      setData((d) => addItem(d, scope, {
-        name: '未命名文件夹',
-        isFolder: true,
-        parentKey: currentBlankAreaParentKey,
-        fileType: 'folder',
-        parseStatus: 'parsed',
-      }));
-      message.success('文件夹已创建');
-      return;
-    }
-    handleNewFolderInline(currentBlankAreaParentKey);
+    createFolderAndStartRename(currentBlankAreaParentKey, {
+      columnPathToOpen: viewMode === 'column' ? [...columnPath] : null,
+    });
   };
 
   const handleAddResourceAtCurrentLocation = () => {
@@ -1775,6 +1998,7 @@ export default function ResourceLibrary() {
       || e.target.closest('.finder-preview-content')
     ) return;
     e.preventDefault();
+    clearPendingRenameTrigger();
     setContextMenuItemKey(null);
     setBgMenuPos({ x: e.clientX, y: e.clientY });
   };
@@ -1834,6 +2058,37 @@ export default function ResourceLibrary() {
     clearFolderHoverTipTimer();
     clearTagPickerScrollTimer();
   }, [clearFolderHoverTipTimer, clearTagPickerScrollTimer]);
+
+  useEffect(() => {
+    const handlePaste = (event) => {
+      if (addOpen || addDialogOpen || addTagOpen || tagPickerTarget || parseDrawerOpen) return;
+      if (isEditablePasteTarget(event.target)) return;
+
+      const files = collectClipboardFiles(event.clipboardData);
+      if (files.length === 0) return;
+
+      const pasteTarget = resolvePasteTarget();
+      event.preventDefault();
+      setBgMenuPos(null);
+      setContextMenuItemKey(null);
+
+      void (async () => {
+        const { successCount, failureCount } = await uploadFilesToLibrary(files, { parentKey: pasteTarget.parentKey });
+        if (successCount > 0) {
+          message.success(
+            failureCount > 0
+              ? `已粘贴 ${successCount} 个文件到「${pasteTarget.label}」，${failureCount} 个失败`
+              : `已粘贴 ${successCount} 个文件到「${pasteTarget.label}」`,
+          );
+        }
+      })();
+    };
+
+    document.addEventListener('paste', handlePaste);
+    return () => {
+      document.removeEventListener('paste', handlePaste);
+    };
+  }, [addDialogOpen, addOpen, addTagOpen, parseDrawerOpen, resolvePasteTarget, tagPickerTarget, uploadFilesToLibrary]);
 
   useEffect(() => {
     hideFolderHoverTip();
@@ -2248,13 +2503,16 @@ export default function ResourceLibrary() {
           <Dropdown menu={toolbarMoreMenu} trigger={['click']} overlayClassName="finder-toolbar-more-dropdown" placement="bottomLeft">
             <button
               type="button"
-            className="finder-toolbar-action-btn finder-toolbar-group-btn finder-toolbar-more-btn"
-            aria-label="操作"
-            title="操作"
-          >
-              <ToolOutlined />
-              <span>操作</span>
-              <CaretDownOutlined className="finder-toolbar-more-btn-caret" />
+              className="finder-toolbar-action-btn finder-toolbar-icon-btn"
+              aria-label="操作"
+              title="操作"
+            >
+              <span className="finder-toolbar-action-combo" aria-hidden="true">
+                <span className="finder-toolbar-action-combo-circle">
+                  <MoreOutlined />
+                </span>
+                <CaretDownOutlined className="finder-toolbar-action-combo-caret" />
+              </span>
             </button>
           </Dropdown>
 
@@ -2291,9 +2549,14 @@ export default function ResourceLibrary() {
 
           {/* 操作按钮区 */}
           <div className="finder-toolbar-actions">
-            <button className="finder-toolbar-action-btn finder-toolbar-group-btn finder-toolbar-parse-btn" onClick={() => setParseDrawerOpen(true)}>
-              <RobotOutlined className="finder-toolbar-parse-btn-icon" />
-              <span>AI解析</span>
+            <button
+              type="button"
+              className="finder-toolbar-action-btn finder-toolbar-icon-btn"
+              aria-label="AI解析"
+              title="AI解析"
+              onClick={() => setParseDrawerOpen(true)}
+            >
+              <RobotOutlined />
             </button>
           </div>
 
@@ -2419,7 +2682,9 @@ export default function ResourceLibrary() {
                       const isActive = columnPath[colIdx + 1] === item.key || (columnSelectedItem?.key === item.key);
                       const isContextMenuTarget = contextMenuItemKey === item.key;
                       const isInlineRenaming = inlineRenameItemKey === item.key;
-                      const itemMoreMenu = getItemMoreMenu(item);
+                      const itemMoreMenu = getItemMoreMenu(item, {
+                        columnPathToOpen: [...columnPath.slice(0, colIdx + 1), item.key],
+                      });
 
                       return (
                         <Dropdown
@@ -2445,11 +2710,13 @@ export default function ResourceLibrary() {
                               if (isDraggingRef.current) return;
                               
                               if (e.metaKey || e.ctrlKey) {
+                                clearPendingRenameTrigger();
                                 // Cmd/Ctrl+Click: 切换选中
                                 setSelectedItemKeys((prev) =>
                                   prev.includes(item.key) ? prev.filter((k) => k !== item.key) : [...prev, item.key]
                                 );
                               } else if (e.shiftKey) {
+                                clearPendingRenameTrigger();
                                 // Shift+Click: 范围选
                                 const colItems = columnLevels[colIdx] || [];
                                 const curIdx = colItems.findIndex((it) => it.key === item.key);
@@ -2462,7 +2729,14 @@ export default function ResourceLibrary() {
                                 } else {
                                   setSelectedItemKeys([item.key]);
                                 }
+                              } else if (
+                                selectedItemKeys.length === 1
+                                && selectedItemKeys[0] === item.key
+                                && inlineRenameItemKey !== item.key
+                              ) {
+                                queueInlineRename(item);
                               } else {
+                                clearPendingRenameTrigger();
                                 // 普通点击
                                 setSelectedItemKeys([item.key]);
                                 if (item.isFolder) {
@@ -2471,6 +2745,9 @@ export default function ResourceLibrary() {
                                   handleColumnFileClick(item, colIdx);
                                 }
                               }
+                            }}
+                            onDoubleClick={() => {
+                              clearPendingRenameTrigger();
                             }}
                           >
                             <span className="finder-column-item-icon">{renderFileIcon(item.fileType, { fontSize: 16 })}</span>
@@ -2492,38 +2769,40 @@ export default function ResourceLibrary() {
                             ) : (
                               <span className="finder-column-item-name">{item.name}</span>
                             )}
-                            <span className="finder-column-item-actions">
-                              {item.isFolder && (
-                                <button
-                                  type="button"
-                                  className="finder-column-action-btn"
-                                  aria-label="添加资料"
-                                  title="添加资料"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setAddDialogParentKey(item.key);
-                                    setAddDialogOpen(true);
-                                  }}
+                            {!isInlineRenaming && (
+                              <span className="finder-column-item-actions">
+                                {item.isFolder && (
+                                  <button
+                                    type="button"
+                                    className="finder-column-action-btn"
+                                    aria-label="添加资料"
+                                    title="添加资料"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setAddDialogParentKey(item.key);
+                                      setAddDialogOpen(true);
+                                    }}
+                                  >
+                                    <PlusOutlined style={{ fontSize: 12 }} />
+                                  </button>
+                                )}
+                                <Dropdown
+                                  menu={itemMoreMenu}
+                                  trigger={['click']}
+                                  onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
                                 >
-                                  <PlusOutlined style={{ fontSize: 12 }} />
-                                </button>
-                              )}
-                              <Dropdown
-                                menu={itemMoreMenu}
-                                trigger={['click']}
-                                onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
-                              >
-                                <button
-                                  type="button"
-                                  className="finder-column-action-btn"
-                                  aria-label="更多操作"
-                                  title="更多操作"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <MoreOutlined style={{ fontSize: 14 }} />
-                                </button>
-                              </Dropdown>
-                            </span>
+                                  <button
+                                    type="button"
+                                    className="finder-column-action-btn"
+                                    aria-label="更多操作"
+                                    title="更多操作"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <MoreOutlined style={{ fontSize: 14 }} />
+                                  </button>
+                                </Dropdown>
+                              </span>
+                            )}
                             {item.isFolder && <RightOutlined className="finder-column-item-arrow" />}
                           </div>
                         </Dropdown>
@@ -2702,43 +2981,45 @@ export default function ResourceLibrary() {
                         <span className="finder-file-name" style={viewMode === 'detail' ? (nameColResized ? { width: detailColWidths.name - 28 - 16 - depth * 16, flex: 'none' } : { flex: 1, minWidth: 0, marginRight: 0 }) : undefined}>{item.name}</span>
                       )}
                       {/* hover 显示的操作区：+ 和三个点 */}
-                      <span
-                        className="finder-file-row-actions"
-                        style={viewMode === 'detail' ? {
-                          right: visibleColsTotalWidth + 20 + 12,
-                        } : { right: 20 }}
-                      >
-                        {item.isFolder && (
-                          <button
-                            type="button"
-                            className="finder-column-action-btn"
-                            aria-label="添加资料"
-                            title="添加资料"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setAddDialogParentKey(item.key);
-                              setAddDialogOpen(true);
-                            }}
-                          >
-                            <PlusOutlined style={{ fontSize: 12 }} />
-                          </button>
-                        )}
-                        <Dropdown
-                          menu={rowMoreMenu}
-                          trigger={['click']}
-                          onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
+                      {!isInlineRenaming && (
+                        <span
+                          className="finder-file-row-actions"
+                          style={viewMode === 'detail' ? {
+                            right: visibleColsTotalWidth + 20 + 12,
+                          } : { right: 20 }}
                         >
-                          <button
-                            type="button"
-                            className="finder-column-action-btn"
-                            aria-label="更多操作"
-                            title="更多操作"
-                            onClick={(e) => e.stopPropagation()}
+                          {item.isFolder && (
+                            <button
+                              type="button"
+                              className="finder-column-action-btn"
+                              aria-label="添加资料"
+                              title="添加资料"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setAddDialogParentKey(item.key);
+                                setAddDialogOpen(true);
+                              }}
+                            >
+                              <PlusOutlined style={{ fontSize: 12 }} />
+                            </button>
+                          )}
+                          <Dropdown
+                            menu={rowMoreMenu}
+                            trigger={['click']}
+                            onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
                           >
-                            <MoreOutlined style={{ fontSize: 14 }} />
-                          </button>
-                        </Dropdown>
-                      </span>
+                            <button
+                              type="button"
+                              className="finder-column-action-btn"
+                              aria-label="更多操作"
+                              title="更多操作"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreOutlined style={{ fontSize: 14 }} />
+                            </button>
+                          </Dropdown>
+                        </span>
+                      )}
                       {viewMode === 'detail' && visibleCols.map((colKey) => (
                         <span
                           key={colKey}
@@ -3050,31 +3331,14 @@ export default function ResourceLibrary() {
         }}
         onUpload={async (files) => {
           const parentKey = addDialogParentKey === ROOT_PARENT_KEY ? null : (addDialogParentKey ?? selectedFolderKey);
-          const hide = message.loading(`上传中 (${files.length})...`, 0);
-          try {
-            for (const file of files) {
-              try {
-                const inferred = inferFileType(file.name);
-                const r = await fileApi.upload(file, 'resource-lib');
-                setData((d) => addItem(d, scope, {
-                  name: file.name,
-                  isFolder: false,
-                  parentKey,
-                  fileType: inferred,
-                  url: r.url,
-                  size: r.size,
-                  mime: r.mime,
-                  parseStatus: 'parsing',
-                }));
-              } catch {
-                message.error(`「${file.name}」上传失败`);
-              }
-            }
-            hide();
-            setAddDialogParentKey(null);
-            message.success(`已上传 ${files.length} 个文件`);
-          } catch {
-            hide();
+          const { successCount, failureCount } = await uploadFilesToLibrary(files, { parentKey });
+          setAddDialogParentKey(null);
+          if (successCount > 0) {
+            message.success(
+              failureCount > 0
+                ? `已上传 ${successCount} 个文件，${failureCount} 个失败`
+                : `已上传 ${successCount} 个文件`,
+            );
           }
         }}
       />

@@ -587,6 +587,49 @@
   background: transparent;
 }
 
+.finder-toolbar-icon-btn {
+  width: 42px;
+  height: 34px;
+  border-radius: 9px;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.finder-toolbar-icon-btn:hover {
+  color: #374151;
+}
+
+.finder-toolbar-icon-btn > .anticon {
+  font-size: 16px;
+}
+
+.finder-toolbar-action-combo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.finder-toolbar-action-combo-circle {
+  width: 18px;
+  height: 18px;
+  border: 2px solid currentColor;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.finder-toolbar-action-combo-circle > .anticon {
+  font-size: 11px;
+}
+
+.finder-toolbar-action-combo-caret {
+  font-size: 10px;
+  transform: translateY(1px);
+}
+
 .finder-toolbar-group-btn {
   width: auto;
   padding: 0 6px;
