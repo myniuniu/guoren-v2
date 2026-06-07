@@ -109,6 +109,32 @@ const ORGANIZATION_DEFAULT_TAGS = [
   ...PRESET_TAGS.map((tag) => ({ ...tag, scope: 'organization' })),
   ...LEGACY_ORGANIZATION_TAGS.map((tag) => ({ ...tag, scope: 'organization', quick: false })),
 ];
+const DEFAULT_PERSONAL_TAG_GROUPS = [
+  {
+    id: 'tag_group_p_ai_course',
+    name: '课程主题',
+    color: '#5AC8FA',
+    tagIds: [PERSONAL_TEACHING_ROOT_TAG_ID],
+  },
+  {
+    id: 'tag_group_p_design',
+    name: '教学设计',
+    color: '#1677ff',
+    tagIds: ['tag_p_courseware', 'tag_p_teaching_plan', 'tag_p_teaching_aid'],
+  },
+  {
+    id: 'tag_group_p_activity',
+    name: '教学实施',
+    color: '#34c759',
+    tagIds: ['tag_p_activity', 'tag_p_assignment', 'tag_p_assessment', 'tag_p_experiment'],
+  },
+  {
+    id: 'tag_group_p_material',
+    name: '素材资源',
+    color: '#af52de',
+    tagIds: ['tag_p_case', 'tag_p_video'],
+  },
+];
 const DEFAULT_ORGANIZATION_TAG_GROUPS = [
   {
     id: 'tag_group_doc_status',
@@ -336,7 +362,7 @@ function getScopedTagDefinitionStateFromLegacy(data) {
       'organization',
     ),
     groups: {
-      personal: [],
+      personal: mergeTagGroupLists(DEFAULT_PERSONAL_TAG_GROUPS),
       organization: mergeTagGroupLists(DEFAULT_ORGANIZATION_TAG_GROUPS),
     },
   };
@@ -355,7 +381,9 @@ function getScopedTagDefinitionState(data) {
       ? normalizeTagList(defs.organization, 'organization')
       : normalizeTagList(ORGANIZATION_DEFAULT_TAGS, 'organization'),
     groups: {
-      personal: normalizeTagGroupList(defs.groups?.personal || []),
+      personal: Array.isArray(defs.groups?.personal) && defs.groups.personal.length > 0
+        ? normalizeTagGroupList(defs.groups.personal)
+        : mergeTagGroupLists(DEFAULT_PERSONAL_TAG_GROUPS),
       organization: normalizeTagGroupList(defs.groups?.organization || []),
     },
   };
@@ -682,7 +710,7 @@ const defaultData = {
     personal: normalizeTagList(PERSONAL_DEFAULT_TAGS, 'personal'),
     organization: normalizeTagList(ORGANIZATION_DEFAULT_TAGS, 'organization'),
     groups: {
-      personal: [],
+      personal: mergeTagGroupLists(DEFAULT_PERSONAL_TAG_GROUPS),
       organization: mergeTagGroupLists(DEFAULT_ORGANIZATION_TAG_GROUPS),
     },
   },

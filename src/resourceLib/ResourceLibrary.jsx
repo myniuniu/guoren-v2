@@ -23,7 +23,7 @@ import {
   loadResourceLib, addItem, renameItem, deleteItem, setSelectedFolder, inferFileType, moveItem,
   getTagDefinitions, addTagDefinition, reorderTagDefinition,
   addTagToItem, removeTagFromItem, toggleTagQuickAccess,
-  getLibraryList, getLibraryId, getOrganizations, setCurrentScope, setCurrentOrg, markItemOpened,
+  getLibraryList, getLibraryId, getOrganizations, getTagGroups, setCurrentScope, setCurrentOrg, markItemOpened,
 } from './resourceLibStore';
 import { renderFileIcon } from './resourceIcons.jsx';
 import { fileApi } from '../api/fileApi';
@@ -64,11 +64,14 @@ export default function ResourceLibrary() {
   const [newFolderParentKey, setNewFolderParentKey] = useState(null);
   const [addTagOpen, setAddTagOpen] = useState(false);
   const [tagPickerTarget, setTagPickerTarget] = useState(null); // 分栏视图中标签管理目标item key
+  const [tagPickerGroupFilter, setTagPickerGroupFilter] = useState('all');
+  const [tagPickerListScrollActive, setTagPickerListScrollActive] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [addDialogParentKey, setAddDialogParentKey] = useState(null);
   const [parseDrawerOpen, setParseDrawerOpen] = useState(false);
   const [showAllSidebarTags, setShowAllSidebarTags] = useState(false);
   const [folderHoverTip, setFolderHoverTip] = useState(null);
+  const [contextMenuItemKey, setContextMenuItemKey] = useState(null);
   const [favorites, setFavorites] = useState(() => {
     try {
       const initLibId = (data?.currentScope === 'organization' ? (data?.currentOrgId || 'org_default') : 'personal');
@@ -151,6 +154,7 @@ export default function ResourceLibrary() {
   const sidebarDragRef = useRef(null);
   // 预览面板宽度拖拽
   const [previewWidth, setPreviewWidth] = useState(560);
+  const tagPickerScrollTimerRef = useRef(null);
   const previewDragRef = useRef(null);
   const contentAreaRef = useRef(null);
   const searchBoxRef = useRef(null);
@@ -180,6 +184,21 @@ export default function ResourceLibrary() {
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
   }, [sidebarWidth]);
+
+  const clearTagPickerScrollTimer = useCallback(() => {
+    if (!tagPickerScrollTimerRef.current) return;
+    window.clearTimeout(tagPickerScrollTimerRef.current);
+    tagPickerScrollTimerRef.current = null;
+  }, []);
+
+  const handleTagPickerListScroll = useCallback(() => {
+    setTagPickerListScrollActive(true);
+    clearTagPickerScrollTimer();
+    tagPickerScrollTimerRef.current = window.setTimeout(() => {
+      setTagPickerListScrollActive(false);
+      tagPickerScrollTimerRef.current = null;
+    }, 640);
+  }, [clearTagPickerScrollTimer]);
 
   const handlePreviewResizeStart = useCallback((e) => {
     e.preventDefault();
@@ -305,6 +324,7 @@ export default function ResourceLibrary() {
   const selectedFolderKey = data.selectedFolderKey?.[libraryId] ?? null;
   const organizations = getOrganizations(data);
   const tagDefs = getTagDefinitions(data, scope);
+  const tagGroups = getTagGroups(data, scope);
   const quickTagDefs = useMemo(
     () => tagDefs.filter((tag) => tag.quick),
     [tagDefs],
@@ -451,6 +471,24 @@ export default function ResourceLibrary() {
   useEffect(() => {
     setTagFilterContextFolderKeys([]);
   }, [libraryId, normalizedKeyword, searchMode, selectedFolderKey, specialView, viewMode]);
+
+  useEffect(() => {
+    setTagPickerGroupFilter('all');
+    setTagPickerListScrollActive(false);
+    clearTagPickerScrollTimer();
+  }, [clearTagPickerScrollTimer, tagPickerTarget, scope]);
+
+  useEffect(() => {
+    if (tagPickerGroupFilter !== 'all' && !tagGroups.some((group) => group.id === tagPickerGroupFilter)) {
+      setTagPickerGroupFilter('all');
+    }
+  }, [tagGroups, tagPickerGroupFilter]);
+
+  useEffect(() => {
+    if (contextMenuItemKey && !list.some((item) => item.key === contextMenuItemKey)) {
+      setContextMenuItemKey(null);
+    }
+  }, [contextMenuItemKey, list]);
 
   // 切换个人/组织库
   const handleScopeChange = (nextScope) => {
@@ -1542,6 +1580,13 @@ export default function ResourceLibrary() {
     getItemMoreMenu(item, { includeFavorite, includeAddResource: true })
   );
 
+  const handleItemContextMenuOpenChange = useCallback((itemKey, open) => {
+    setContextMenuItemKey((prev) => {
+      if (open) return itemKey;
+      return prev === itemKey ? null : prev;
+    });
+  }, []);
+
   const handleCreateFolderAtCurrentLocation = () => {
     if (viewMode === 'column') {
       setData((d) => addItem(d, scope, {
@@ -1679,6 +1724,7 @@ export default function ResourceLibrary() {
       || e.target.closest('.finder-preview-content')
     ) return;
     e.preventDefault();
+    setContextMenuItemKey(null);
     setBgMenuPos({ x: e.clientX, y: e.clientY });
   };
 
@@ -1735,7 +1781,8 @@ export default function ResourceLibrary() {
 
   useEffect(() => () => {
     clearFolderHoverTipTimer();
-  }, [clearFolderHoverTipTimer]);
+    clearTagPickerScrollTimer();
+  }, [clearFolderHoverTipTimer, clearTagPickerScrollTimer]);
 
   useEffect(() => {
     hideFolderHoverTip();
@@ -1776,6 +1823,16 @@ export default function ResourceLibrary() {
     const item = list.find((r) => r.key === itemKey);
     const availableTagDefs = tagDefs;
     const itemTagIds = item?.tags || [];
+    const activeTagGroup = tagPickerGroupFilter === 'all'
+      ? null
+      : tagGroups.find((group) => group.id === tagPickerGroupFilter) || null;
+    const activeTagGroupTagIds = activeTagGroup ? new Set(activeTagGroup.tagIds || []) : null;
+    const visibleQuickTagDefs = activeTagGroupTagIds
+      ? quickTagDefs.filter((tag) => activeTagGroupTagIds.has(tag.id))
+      : quickTagDefs;
+    const visibleTagDefs = activeTagGroupTagIds
+      ? availableTagDefs.filter((tag) => activeTagGroupTagIds.has(tag.id))
+      : availableTagDefs;
     const selectedTags = (item?.tags || []).map((tagId) => (
       availableTagDefs.find((t) => t.id === tagId)
       || tagDefs.find((t) => t.id === tagId)
@@ -1797,11 +1854,40 @@ export default function ResourceLibrary() {
             <span className="rl-tag-picker-placeholder">选择或新建标签</span>
           )}
         </div>
+        {tagGroups.length > 0 && (
+          <>
+            <div className="rl-tag-picker-section-title rl-tag-picker-section-title-filter">按标签组筛选</div>
+            <div className="rl-tag-picker-group-list">
+              <button
+                type="button"
+                className={`rl-tag-picker-group-chip ${tagPickerGroupFilter === 'all' ? 'rl-tag-picker-group-chip-active' : ''}`}
+                onClick={() => setTagPickerGroupFilter('all')}
+              >
+                全部
+              </button>
+              {tagGroups.map((group) => {
+                const matchCount = availableTagDefs.filter((tag) => (group.tagIds || []).includes(tag.id)).length;
+                return (
+                  <button
+                    key={group.id}
+                    type="button"
+                    className={`rl-tag-picker-group-chip ${tagPickerGroupFilter === group.id ? 'rl-tag-picker-group-chip-active' : ''}`}
+                    onClick={() => setTagPickerGroupFilter(group.id)}
+                  >
+                    <span className="rl-tag-picker-group-chip-dot" style={{ background: group.color || '#1677ff' }} />
+                    <span>{group.name}</span>
+                    <span className="rl-tag-picker-group-chip-count">{matchCount}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
         <div className="rl-tag-picker-section-title">快捷标签</div>
         <div className="rl-tag-picker-quick-hint">设为快捷标签后，会显示在当前资料库的文件菜单顶部，方便快速打标。</div>
-        {quickTagDefs.length > 0 ? (
+        {visibleQuickTagDefs.length > 0 ? (
           <div className="rl-tag-picker-quick-list">
-            {quickTagDefs.map((t) => {
+            {visibleQuickTagDefs.map((t) => {
               const checked = itemTagIds.includes(t.id);
               return (
                 <button
@@ -1817,36 +1903,51 @@ export default function ResourceLibrary() {
             })}
           </div>
         ) : (
-          <div className="rl-tag-picker-quick-empty">将常用标签设为快捷标签后，这里可以一键给文件打标签。</div>
+          <div className="rl-tag-picker-quick-empty">
+            {activeTagGroup
+              ? `标签组「${activeTagGroup.name}」下暂无快捷标签。`
+              : '将常用标签设为快捷标签后，这里可以一键给文件打标签。'}
+          </div>
         )}
         <div className="rl-tag-picker-section-title">全部标签</div>
-        <div className="rl-tag-picker-list">
-          {availableTagDefs.map((t) => {
-            const checked = itemTagIds.includes(t.id);
-            return (
-              <div
-                key={t.id}
-                className={`rl-tag-picker-row ${checked ? 'rl-tag-picker-row-checked' : ''}`}
-                onClick={() => toggleItemTagSelection(itemKey, t.id, checked)}
-              >
-                <span className="rl-tag-dot" style={{ background: t.color }} />
-                <span className="rl-tag-picker-row-name">{t.name}</span>
-                <button
-                  type="button"
-                  className={`rl-tag-picker-row-quick-btn ${t.quick ? 'rl-tag-picker-row-quick-btn-active' : ''}`}
-                  title={t.quick ? '取消快捷标签' : '设为快捷标签'}
-                  aria-label={t.quick ? `取消快捷标签：${t.name}` : `设为快捷标签：${t.name}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleQuickTagToggle(t.id, !t.quick);
-                  }}
+        <div
+          className={`rl-tag-picker-list ${tagPickerListScrollActive ? 'rl-tag-picker-list-scroll-active' : ''}`}
+          onScroll={handleTagPickerListScroll}
+        >
+          {visibleTagDefs.length > 0 ? (
+            visibleTagDefs.map((t) => {
+              const checked = itemTagIds.includes(t.id);
+              return (
+                <div
+                  key={t.id}
+                  className={`rl-tag-picker-row ${checked ? 'rl-tag-picker-row-checked' : ''}`}
+                  onClick={() => toggleItemTagSelection(itemKey, t.id, checked)}
                 >
-                  {t.quick ? <StarFilled /> : <StarOutlined />}
-                </button>
-                {checked && <span className="rl-tag-picker-row-check">✓</span>}
-              </div>
-            );
-          })}
+                  <span className="rl-tag-dot" style={{ background: t.color }} />
+                  <span className="rl-tag-picker-row-name">{t.name}</span>
+                  <button
+                    type="button"
+                    className={`rl-tag-picker-row-quick-btn ${t.quick ? 'rl-tag-picker-row-quick-btn-active' : ''}`}
+                    title={t.quick ? '取消快捷标签' : '设为快捷标签'}
+                    aria-label={t.quick ? `取消快捷标签：${t.name}` : `设为快捷标签：${t.name}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleQuickTagToggle(t.id, !t.quick);
+                    }}
+                  >
+                    {t.quick ? <StarFilled /> : <StarOutlined />}
+                  </button>
+                  {checked && <span className="rl-tag-picker-row-check">✓</span>}
+                </div>
+              );
+            })
+          ) : (
+            <div className="rl-tag-picker-empty">
+              {activeTagGroup
+                ? `标签组「${activeTagGroup.name}」下暂无可选标签。`
+                : '当前资料库暂无可选标签。'}
+            </div>
+          )}
         </div>
         <div className="rl-tag-picker-actions">
           <Button size="small" icon={<PlusOutlined />} onClick={() => { setNewTagName(''); setNewTagColor('#FF3B30'); setAddTagOpen(true); }}>
@@ -2265,13 +2366,19 @@ export default function ResourceLibrary() {
                       <div className="finder-column-empty">无匹配资料</div>
                     ) : items.map((item) => {
                       const isActive = columnPath[colIdx + 1] === item.key || (columnSelectedItem?.key === item.key);
+                      const isContextMenuTarget = contextMenuItemKey === item.key;
                       const isInlineRenaming = inlineRenameItemKey === item.key;
                       const itemMoreMenu = getItemMoreMenu(item);
 
                       return (
-                        <Dropdown key={item.key} menu={getContextMenu(item)} trigger={['contextMenu']}>
+                        <Dropdown
+                          key={item.key}
+                          menu={getContextMenu(item)}
+                          trigger={['contextMenu']}
+                          onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
+                        >
                           <div
-                            className={`finder-column-item ${isActive ? 'finder-column-item-active' : ''} ${selectedItemKeys.includes(item.key) && !isActive ? 'finder-column-item-selected' : ''} ${item.isFolder && dragOverFolderKey === item.key ? 'finder-column-item-dragover' : ''}`}
+                            className={`finder-column-item ${isActive ? 'finder-column-item-active' : ''} ${selectedItemKeys.includes(item.key) && !isActive ? 'finder-column-item-selected' : ''} ${isContextMenuTarget ? 'finder-column-item-context-open' : ''} ${item.isFolder && dragOverFolderKey === item.key ? 'finder-column-item-dragover' : ''}`}
                             draggable={!isInlineRenaming}
                             onDragStart={(e) => {
                               isDraggingRef.current = true;
@@ -2352,7 +2459,11 @@ export default function ResourceLibrary() {
                                   <PlusOutlined style={{ fontSize: 12 }} />
                                 </button>
                               )}
-                              <Dropdown menu={itemMoreMenu} trigger={['click']}>
+                              <Dropdown
+                                menu={itemMoreMenu}
+                                trigger={['click']}
+                                onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
+                              >
                                 <button
                                   type="button"
                                   className="finder-column-action-btn"
@@ -2465,13 +2576,14 @@ export default function ResourceLibrary() {
               ) : (
                 displayChildren.map((item, idx) => {
                   const isSelected = selectedItemKeys.includes(item.key);
+                  const isContextMenuTarget = contextMenuItemKey === item.key;
                   const isInlineRenaming = inlineRenameItemKey === item.key;
                   const depth = item._depth || 0;
                   const isExpanded = expandedFolders.has(item.key);
                   const rowMoreMenu = getItemMoreMenu(item, { includeFavorite: true });
                   const rowContent = (
                     <div
-                      className={`finder-file-row ${isSelected ? 'finder-file-row-selected' : ''} ${item.isFolder && dragOverFolderKey === item.key ? 'finder-file-row-dragover' : ''}`}
+                      className={`finder-file-row ${isSelected ? 'finder-file-row-selected' : ''} ${isContextMenuTarget ? 'finder-file-row-context-open' : ''} ${item.isFolder && dragOverFolderKey === item.key ? 'finder-file-row-dragover' : ''}`}
                       draggable={!isInlineRenaming}
                       onMouseEnter={item.isFolder && !isInlineRenaming ? (e) => handleFolderHoverEnter(item.key, e) : undefined}
                       onMouseMove={item.isFolder && !isInlineRenaming ? (e) => handleFolderHoverMove(item.key, e) : undefined}
@@ -2564,7 +2676,11 @@ export default function ResourceLibrary() {
                             <PlusOutlined style={{ fontSize: 12 }} />
                           </button>
                         )}
-                        <Dropdown menu={rowMoreMenu} trigger={['click']}>
+                        <Dropdown
+                          menu={rowMoreMenu}
+                          trigger={['click']}
+                          onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
+                        >
                           <button
                             type="button"
                             className="finder-column-action-btn"
@@ -2589,7 +2705,12 @@ export default function ResourceLibrary() {
                     </div>
                   );
                   return (
-                    <Dropdown key={item.key} menu={getContextMenu(item, { includeFavorite: true })} trigger={['contextMenu']}>
+                    <Dropdown
+                      key={item.key}
+                      menu={getContextMenu(item, { includeFavorite: true })}
+                      trigger={['contextMenu']}
+                      onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
+                    >
                       {rowContent}
                     </Dropdown>
                   );
