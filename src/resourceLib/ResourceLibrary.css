@@ -1,8 +1,12 @@
 /* ====== macOS Finder Style Resource Library ====== */
 .finder-layout {
   display: flex;
+  flex: 1 1 auto;
   width: 100%;
-  height: 100vh;
+  max-width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
   background: #ffffff;
   overflow: hidden;
 }
@@ -18,6 +22,7 @@
   padding-top: 8px;
   overflow-x: hidden;
   overflow-y: auto;
+  min-height: 0;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -411,6 +416,7 @@
 .finder-main {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: #ffffff;
@@ -799,12 +805,15 @@
 .finder-content-area {
   flex: 1;
   display: flex;
+  min-width: 0;
+  min-height: 0;
   overflow: hidden;
 }
 
 .finder-file-list {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
   padding: 0;
@@ -1196,6 +1205,7 @@
 .finder-preview-panel {
   max-width: min(1120px, calc(100% - 260px));
   min-width: 320px;
+  min-height: 0;
   flex-shrink: 0;
   overflow-y: auto;
   background: #fafafa;
@@ -1340,6 +1350,7 @@
 .finder-column-scroll {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   display: flex;
   overflow-x: auto;
   overflow-y: hidden;
@@ -1348,6 +1359,7 @@
 .finder-column {
   min-width: 220px;
   max-width: 280px;
+  min-height: 0;
   flex-shrink: 0;
   border-right: 1px solid #e0e0e0;
   overflow-y: auto;
@@ -1568,6 +1580,7 @@
 .finder-column-preview {
   flex: 1;
   min-width: 280px;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: #fafafa;
