@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Input, Spin, message, Empty, Avatar, Tooltip } from 'antd';
+import { Button, Input, Spin, message, Empty, Avatar } from 'antd';
 import {
   SearchOutlined,
   PlusOutlined,
@@ -13,6 +13,62 @@ import { studyClubApi, STUDY_CLUB_TABS } from './api';
 import ChannelDetail from './ChannelDetail';
 import PlaygroundTab from './PlaygroundTab';
 import './StudyClubModule.css';
+
+function renderBannerVisual() {
+  return (
+    <div className="study-club-banner-cover">
+      <div className="study-club-banner-panel">
+        <div className="study-club-banner-panel-top" />
+        <div className="study-club-banner-panel-card">
+          <div className="study-club-banner-panel-avatar">👩</div>
+          <div className="study-club-banner-panel-lines">
+            <span />
+            <span />
+          </div>
+        </div>
+        <div className="study-club-banner-panel-actions">
+          <span />
+          <span />
+          <span />
+        </div>
+        <div className="study-club-banner-panel-list">
+          <i />
+          <i />
+          <i />
+        </div>
+      </div>
+      <div className="study-club-banner-wave" />
+      <div className="study-club-banner-star">✦</div>
+    </div>
+  );
+}
+
+function renderChannelVisual(channel) {
+  if (channel.id === 'senior-community') {
+    return (
+      <div className="study-club-card-visual study-club-card-visual-senior" aria-hidden="true">
+        <span className="study-club-card-visual-orb study-club-card-visual-orb-lg" />
+        <span className="study-club-card-visual-orb study-club-card-visual-orb-sm top" />
+        <span className="study-club-card-visual-orb study-club-card-visual-orb-sm bottom" />
+        <div className="study-club-card-visual-portrait">{channel.badge}</div>
+        <div className="study-club-card-visual-mini-avatar a">🙂</div>
+        <div className="study-club-card-visual-mini-avatar b">🧑</div>
+        <div className="study-club-card-visual-mini-avatar c">👩</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="study-club-card-visual study-club-card-visual-family" aria-hidden="true">
+      <div className="study-club-card-visual-board" />
+      <div className="study-club-card-visual-chip chip-a" />
+      <div className="study-club-card-visual-chip chip-b" />
+      <div className="study-club-card-visual-chip chip-c" />
+      <div className="study-club-card-visual-book">{channel.badge}</div>
+      <div className="study-club-card-visual-bubble">家校</div>
+    </div>
+  );
+}
 
 export default function StudyClubModule() {
   const [activeTab, setActiveTab] = useState('channel');
@@ -76,8 +132,11 @@ export default function StudyClubModule() {
       {/* 顶部导航 */}
       <div className="study-club-header">
         <div className="study-club-brand">
-          <div className="study-club-brand-logo">研</div>
-          研习社
+          <div className="study-club-brand-logo">飞</div>
+          <div className="study-club-brand-text">
+            <span className="study-club-brand-platform">飞书</span>
+            <span className="study-club-brand-product">飞行社</span>
+          </div>
         </div>
         <div className="study-club-tabs">
           {STUDY_CLUB_TABS.map((tab) => (
@@ -100,11 +159,12 @@ export default function StudyClubModule() {
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
           />
-          <Tooltip title="问答">
-            <Button shape="circle" icon={<QuestionCircleOutlined />} />
-          </Tooltip>
-          <Avatar size={32} icon={<UserOutlined />} style={{ background: '#1677ff' }} />
-          <Button type="primary" icon={<PlusOutlined />}>投稿</Button>
+          <button className="study-club-qa-link" type="button">
+            <QuestionCircleOutlined />
+            问答
+          </button>
+          <Avatar size={28} icon={<UserOutlined />} className="study-club-avatar" />
+          <Button type="primary" icon={<PlusOutlined />} className="study-club-publish-btn">投稿</Button>
         </div>
       </div>
 
@@ -124,7 +184,7 @@ export default function StudyClubModule() {
               <div className="study-club-banner">
                 <div className="study-club-banner-text">
                   <div className="study-club-banner-title">
-                    研习社 <em>AI Builder</em> 正在火热招募中
+                    {banner.title}
                   </div>
                   <div className="study-club-banner-subtitle">
                     {banner.subtitle}
@@ -140,7 +200,7 @@ export default function StudyClubModule() {
                     {banner.ctaText}
                   </Button>
                 </div>
-                <div className="study-club-banner-cover">🚀</div>
+                {renderBannerVisual()}
               </div>
             ) : null}
 
@@ -167,6 +227,7 @@ export default function StudyClubModule() {
                         <span>{ch.updatedDesc}</span>
                       </div>
                     </div>
+                    {renderChannelVisual(ch)}
                     <div className="study-club-card-bottom">
                       <Button
                         size="small"
@@ -184,7 +245,6 @@ export default function StudyClubModule() {
                         {ch.subscribersText} 人订阅
                       </span>
                     </div>
-                    <span className="study-club-card-decor">{ch.badge}</span>
                   </div>
                 ))}
               </div>

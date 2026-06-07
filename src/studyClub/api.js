@@ -4,20 +4,149 @@ const delay = (ms = 200) => new Promise((r) => setTimeout(r, ms));
 
 export const STUDY_CLUB_TABS = [{key:`home`,label:`首页`},{key:`playground`,label:`AI游乐园`},{key:`course`,label:`课程`},{key:`knowledge`,label:`知识`},{key:`template`,label:`模板`},{key:`channel`,label:`频道`},{key:`vip`,label:`AI 会员`,tag:`Pro+`},{key:`activity`,label:`活动`}];
 
-const MOCK_CHANNELS_DATA = [{id:`super-individual`,title:`超级个体空间站`,contentCount:32,updatedDesc:`3 天前更新`,subscribers:466,subscribersText:`466`,accent:`blue`,badge:`👨‍🚀`,highlighted:!0,tags:[`AI Builder`]},{id:`miaoda-ai`,title:`妙搭万物 AI 社区`,contentCount:76,updatedDesc:`3 天前更新`,subscribers:19e3,subscribersText:`1.9万`,accent:`cyan`,badge:`🧩`},{id:`feishu-classroom`,title:`飞书大讲堂`,contentCount:57,updatedDesc:`3 天前更新`,subscribers:196e3,subscribersText:`19.6万`,accent:`violet`,badge:`🎓`},{id:`waytoagi`,title:`WaytoAGI 共学社区`,contentCount:30,updatedDesc:`7 天前更新`,subscribers:16e3,subscribersText:`1.6万`,accent:`sky`,badge:`🤖`},{id:`pioneer`,title:`直击先进`,contentCount:181,updatedDesc:`7 天前更新`,subscribers:29e3,subscribersText:`2.9万`,accent:`amber`,badge:`▶️`},{id:`aily`,title:`飞书 aily 加油站`,contentCount:73,updatedDesc:`1 周前更新`,subscribers:2955,subscribersText:`2955`,accent:`rose`,badge:`💬`},{id:`feishu-new`,title:`上新了飞书`,contentCount:25,updatedDesc:`1 周前更新`,subscribers:7300,subscribersText:`7300`,accent:`pink`,badge:`✨`},{id:`mvp-table`,title:`多维表格 MVP 俱乐部`,contentCount:109,updatedDesc:`1 周前更新`,subscribers:41e3,subscribersText:`4.1万`,accent:`purple`,badge:`📊`},{id:`pm-community`,title:`飞书项目管理社区`,contentCount:38,updatedDesc:`2 周前更新`,subscribers:3e4,subscribersText:`3.0万`,accent:`mint`,badge:`🗂️`},{id:`openclaw`,title:`OpenClaw 养虾实验室`,contentCount:80,updatedDesc:`2 周前更新`,subscribers:57e3,subscribersText:`5.7万`,accent:`sea`,badge:`🦐`},{id:`doc-ai`,title:`飞书文档 AI 实验室`,contentCount:64,updatedDesc:`2 周前更新`,subscribers:12e3,subscribersText:`1.2万`,accent:`indigo`,badge:`📝`},{id:`design-club`,title:`飞书设计研习营`,contentCount:42,updatedDesc:`3 周前更新`,subscribers:8800,subscribersText:`8800`,accent:`teal`,badge:`🎨`}];
+const MOCK_CHANNELS_DATA = [
+  {
+    id: 'senior-community',
+    title: '老年社区',
+    contentCount: 46,
+    updatedDesc: '1 天前更新',
+    subscribers: 12800,
+    subscribersText: '1.3万',
+    accent: 'mint',
+    badge: '👵',
+    highlighted: !0,
+    tags: ['银龄友好'],
+  },
+  {
+    id: 'family-education',
+    title: '家庭教育社区',
+    contentCount: 52,
+    updatedDesc: '今天更新',
+    subscribers: 18600,
+    subscribersText: '1.9万',
+    accent: 'violet',
+    badge: '🏠',
+    highlighted: !0,
+    tags: ['家校共育'],
+  },
+];
 
-MOCK_CHANNELS_DATA.splice(4, 0, {
-  id: 'senior-community',
-  title: '老年社区',
-  contentCount: 46,
-  updatedDesc: '1 天前更新',
-  subscribers: 12800,
-  subscribersText: '1.3万',
-  accent: 'mint',
-  badge: '👵',
-  highlighted: !0,
-  tags: ['银龄友好'],
-});
+const MOCK_PLAYGROUND_ITEMS = {
+  workshop: [
+    {
+      id: 'play-workshop-1',
+      author: '陈阿姨',
+      title: '长者用药提醒台账',
+      views: '2.1k',
+      comments: 6,
+      cover: 'linear-gradient(135deg, #fff8e8 0%, #ffe8bd 100%)',
+      emoji: '💊',
+      avatarColor: '#ffb74d',
+    },
+    {
+      id: 'play-workshop-2',
+      author: '周老师',
+      title: '亲子阅读打卡助手',
+      views: '3.6k',
+      comments: 9,
+      cover: 'linear-gradient(135deg, #eef4ff 0%, #dbe8ff 100%)',
+      emoji: '📚',
+      avatarColor: '#5c6bc0',
+    },
+    {
+      id: 'play-workshop-3',
+      author: '王医生',
+      title: '探访服务排班看板',
+      views: '980',
+      comments: 2,
+      cover: 'linear-gradient(135deg, #ebf3ff 0%, #d7e6ff 100%)',
+      emoji: '🗓️',
+      avatarColor: '#42a5f5',
+    },
+    {
+      id: 'play-workshop-4',
+      author: '李老师',
+      title: '家校沟通周报生成器',
+      views: '2.7k',
+      comments: 5,
+      cover: 'linear-gradient(135deg, #fff3e8 0%, #ffd9bf 100%)',
+      emoji: '✉️',
+      avatarColor: '#ff8a65',
+    },
+  ],
+  agent: [
+    {
+      id: 'play-agent-1',
+      author: '周老师',
+      title: '家庭会议主持助手',
+      desc: '帮助家长拆解沟通议题、生成家庭会议提纲，并给出适龄表达建议。',
+      stars: 42,
+      views: '2.9k',
+      avatarColor: '#7c4dff',
+      thumbBg: 'linear-gradient(135deg, #f2ebff 0%, #e4d6ff 100%)',
+    },
+    {
+      id: 'play-agent-2',
+      author: '王医生',
+      title: '长者照护提醒官',
+      desc: '针对吃药、复诊、探访和异常上报提供适老化提醒模板。',
+      stars: 37,
+      views: '2.2k',
+      avatarColor: '#26a69a',
+      thumbBg: 'linear-gradient(135deg, #e7faf3 0%, #cfeede 100%)',
+    },
+    {
+      id: 'play-agent-3',
+      author: '林社工',
+      title: '社区活动协调员',
+      desc: '为报名、签到、接送和志愿者排班生成可执行流程。',
+      stars: 28,
+      views: '1.5k',
+      avatarColor: '#42a5f5',
+      thumbBg: 'linear-gradient(135deg, #eaf4ff 0%, #d6e7ff 100%)',
+    },
+    {
+      id: 'play-agent-4',
+      author: '李老师',
+      title: '作业陪伴教练',
+      desc: '把家庭辅导拆解成鼓励、提问和复盘三步，减少亲子对抗。',
+      stars: 56,
+      views: '4.1k',
+      avatarColor: '#ff7043',
+      thumbBg: 'linear-gradient(135deg, #fff0e8 0%, #ffd8c8 100%)',
+    },
+  ],
+  inspire: [
+    {
+      id: 'play-inspire-1',
+      author: '周宁',
+      avatar: '👩',
+      avatarColor: '#ffd180',
+      time: '2天前',
+      title: '把社区活动室做成大字版数字前台后，我们少接了三分之二的电话',
+      summary: '从字体、动线到代办入口，复盘一次真正被长者用起来的适老化改造。',
+      likes: 12,
+      stars: 38,
+      coverGradient: 'linear-gradient(135deg, #fff6df 0%, #ffe3b0 100%)',
+      coverTitle: '大字版数字前台\n如何真正被用起来',
+      coverDark: !1,
+    },
+    {
+      id: 'play-inspire-2',
+      author: '周老师',
+      avatar: '👩‍🏫',
+      avatarColor: '#c5cae9',
+      time: '1天前',
+      title: '让家庭作业不再变成争吵：一次家校共育表单改造记录',
+      summary: '把打卡、反馈和老师建议放进一个轻量闭环后，家长配合度和孩子完成率都明显提升。',
+      likes: 18,
+      stars: 45,
+      coverGradient: 'linear-gradient(135deg, #eef2ff 0%, #dfe7ff 100%)',
+      coverTitle: '家庭作业不再争吵\n家校表单改造记录',
+      coverDark: !1,
+    },
+  ],
+};
 
 const MOCK_CHANNEL_DETAILS = {"super-individual":{id:`super-individual`,title:`超级个体`,titleSecond:`空间站`,description:`一人进化成一支队伍的数字补给舱`,operator:{name:`徐佳倩`,avatar:`👩`},coverEmoji:`👨‍🚀`,tabs:[{key:`home`,label:`首页`},{key:`discuss`,label:`讨论区`,count:3},{key:`ai-set`,label:`AI 合集`,count:21},{key:`course`,label:`课程`,count:2},{key:`article`,label:`文章`,count:2},{key:`activity`,label:`活动`,count:7}],hotDiscussions:[{id:`d1`,author:`王子瑜`,time:`5天前`,from:`AI Builder实践加速营`,content:`🍱「AI 开放麦」首期直播 来啦！98 年餐饮外贸人，花 2000 块用妙搭干了别人 3 万开发费的活。他的工具折腾路线：WPS → 飞书多维表格 → 妙搭最终用妙搭搭出一套完整外贸应用，再配合 AI 处理国际贸易文件 —— 技术描…`,comments:6},{id:`d2`,author:`王子瑜`,time:`3天前`,from:`AI Builder实践加速营`,content:`「AI 开放麦」第二期来啦！听说本期干货满满～直播主题：1 人 2 周从 0 搭建，用妙搭造出产品验货系统特邀嘉宾：陆炜烨（广东美西科技有限公司–产品企划）还在为验货流程混乱、人工判定出错、单据整理头大？他原本分…`,comments:2},{id:`d3`,author:`徐佳倩`,time:`3天前`,from:`AI Builder实践加速营`,content:`请收下这张飞书 AI Builder Demo Day 邀请函🎫  5/22 周五 11:00-12:00｜线上研讨会🎙 产品能力介绍：官方产品团队带来飞书 AI Builder 介绍，重点不是"功能罗列"，而是这些能力如何…`,comments:0}],discussions:[{id:`p1`,author:`王子瑜`,time:`5天前`,from:`AI Builder实践加速营`,title:`🍱「AI 开放麦」首期直播 来袭！`,paragraphs:[`98 年餐饮外贸人，花 2000 块用妙搭干了别人 3 万开发费的活。`,`他的工具折腾路线：WPS → 飞书多维表格 → 妙搭`,`最终用妙搭搭出一套完整外贸应用，再配合 AI 处理国际贸易文件 —— 技术描述、合同核对、原产地证，做完扔给 AI 检查，自己终审即可。`,`结果：开发成本和工作时间省了至少 70%。`,`他说："工具没有最好的，只有适不适合的。"`,`扫码预约直播，听一个真实用户怎么借助 Vibe Coding 把外贸全流程跑通 👇`],poster:{gradient:`linear-gradient(135deg, #e9efff 0%, #d3e1ff 100%)`,titleLines:[`从多维表格到应用开发，`,`用妙搭和 AI 重构餐饮外贸工作流`],tag:`AI 开放麦｜直播`,guest:`纪云鹏`,guestDesc:`河北风好餐饮管理有限公司 · 运营经理`,metric:`70%`,metricDesc:`开发成本 & 工作时间`},replies:[{id:`r1`,author:`徐佳倩`,text:`哇哦，大期待！`},{id:`r2`,author:`徐徐`,text:`听说已经在用妙搭接单了，太强了[赞]`},{id:`r3`,author:`王子瑜`,text:`@徐佳倩 活动还预留了互动时间！欢迎大家一起来交流自己的场景、痛点或疑问哦～`}]},{id:`p2`,author:`王子瑜`,time:`3天前`,from:`AI Builder实践加速营`,title:`「AI 开放麦」第二期来啦！听说本期干货满满～`,paragraphs:[`直播主题：1 人 2 周从 0 搭建，用妙搭造出产品验货系统`,`特邀嘉宾：陆炜烨（广东美西科技有限公司–产品企划）`,`还在为验货流程混乱、人工判定出错、单据整理头大？这期直播会带你看到一个产品人怎么用妙搭 × AI 在两周内从 0 到 1 打造出一套可落地的验货系统。`],replies:[]},{id:`p3`,author:`徐佳倩`,time:`3天前`,from:`AI Builder实践加速营`,title:`请收下这张飞书 AI Builder Demo Day 邀请函🎫`,paragraphs:[`5/22 周五 11:00-12:00｜线上研讨会🎙`,`产品能力介绍：官方产品团队带来飞书 AI Builder 介绍，重点不是"功能罗列"，而是这些能力如何在企业场景中落地。`],replies:[]}],relatedGroups:[{id:`g1`,name:`AI Builder实践加速营`,desc:`AI 时代，真正的价值属于实践者。本群专注分享 AI 赋能业务的最佳实…`,count:-1,avatar:`🌌`}],aiSet:{categories:[{key:`workshop`,label:`AI 工坊`},{key:`agent`,label:`智能体`},{key:`inspire`,label:`灵感市集`}],items:{workshop:[{id:`a1`,author:`赵生刚`,title:`多组织下的人力资源管理系统`,views:`396`,comments:1,cover:`linear-gradient(135deg, #f8faff 0%, #eef3ff 100%)`,emoji:`📊`,avatarColor:`#4fc3f7`},{id:`a2`,author:`王子瑜`,title:`将图片转为"潦草"手绘风格`,views:`1.4k`,comments:0,cover:`linear-gradient(135deg, #fff8e6 0%, #fff0c2 100%)`,emoji:`🐱`,avatarColor:`#66bb6a`},{id:`a3`,author:`Leo`,title:`【技能】AI 短视频脚本生成器`,views:`5.7k`,comments:11,cover:`linear-gradient(135deg, #1a1f3a 0%, #3a2860 100%)`,emoji:`��`,dark:!0,avatarColor:`#ab47bc`},{id:`a4`,author:`华芮`,title:`【技能】— skill 永逸`,views:`5.8k`,comments:1,cover:`linear-gradient(135deg, #0d1124 0%, #1f2540 100%)`,emoji:`✨`,dark:!0,avatarColor:`#ef5350`},{id:`a5`,author:`影视飓风`,title:`【技能】项目导演日记`,views:`4.0k`,comments:0,cover:`linear-gradient(135deg, #f1f5ff 0%, #d6e0ff 100%)`,emoji:`🎬`,avatarColor:`#26a69a`,desc:`影视飓风同款项目管理工作流——说“记录一下”沉淀拍摄日志，说“复盘一下”自动生成阶段总结，让每一条现场笔记都不再丢失。`},{id:`a6`,author:`胡元奇`,title:`【技能】周报生成技能`,views:`3.4k`,comments:1,cover:`linear-gradient(135deg, #f8faff 0%, #eef3ff 100%)`,emoji:`📝`,avatarColor:`#42a5f5`},{id:`a7`,author:`影视飓风`,title:`提词器【影视飓风同款】`,views:`7.2k`,comments:4,cover:`linear-gradient(135deg, #1a237e 0%, #283593 100%)`,emoji:`🎤`,dark:!0,avatarColor:`#26a69a`},{id:`a8`,author:`CHONG JIA...`,title:`维生素评估工具`,views:`219`,comments:0,cover:`linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)`,emoji:`💊`,avatarColor:`#ff7043`},{id:`a9`,author:`宋利强`,title:`【技能】SKILL需求分析`,views:`2.3k`,comments:0,cover:`linear-gradient(135deg, #f1f5ff 0%, #dde6ff 100%)`,emoji:`📊`,avatarColor:`#5c6bc0`},{id:`a10`,author:`孔家锐`,title:`人员分布世界地图`,views:`193`,comments:0,cover:`linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)`,emoji:`🌍`,avatarColor:`#66bb6a`},{id:`a11`,author:`陈刚`,title:`【技能】班味清零师`,views:`787`,comments:0,cover:`linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%)`,emoji:`😌`,avatarColor:`#ef5350`,desc:`专为被工作掏空、浑身班味的职场人打造的专属松弛陪伴搭子。用于帮用户快速剥离上班的紧绷状态，彻底消解职场负面情绪（疲惫、焦虑、内耗、烦躁、委屈、愤怒等），10...`},{id:`a12`,author:`蒋斌`,title:`【技能】Seedance2.0-Shot...`,views:`723`,comments:0,cover:`linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)`,emoji:`🎮`,dark:!0,avatarColor:`#26c6da`},{id:`a13`,author:`王梦泽`,title:`【技能】风水大师：分析次日...`,views:`2.9k`,comments:0,cover:`linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%)`,emoji:`🧭`,avatarColor:`#8d6e63`},{id:`a14`,author:`王子瑜`,title:`飓风同款 AI 生产力工具落地...`,views:`621`,comments:0,cover:`linear-gradient(135deg, #e8eaf6 0%, #c5cae9 100%)`,emoji:`🚀`,avatarColor:`#66bb6a`},{id:`a15`,author:`庄工`,title:`【技能】需求文档PRD编写技能`,views:`423`,comments:2,cover:`linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%)`,emoji:`📝`,avatarColor:`#78909c`},{id:`a16`,author:`华芮`,title:`【技能】赋能Token`,views:`755`,comments:0,cover:`linear-gradient(135deg, #fbe9e7 0%, #ffccbc 100%)`,emoji:`🔑`,avatarColor:`#ef5350`,desc:`专为被工作掏空、浑身班味的职场人打造的专属松弛陪伴搭子。用于帮用户快速剥离上班的紧绷状态，彻底消解职场负面情绪（疲惫、焦虑、内耗、烦躁、委屈、愤怒等），10...`}],agent:[{id:`b1`,author:`徐佳倩`,title:`创新产品设计专家`,desc:`你是一位产品创新设计师，擅长消费品概念开发和用户体验设计。请基于【...`,stars:17,views:`1155`,avatarColor:`#7c4dff`,thumbBg:`linear-gradient(135deg, #f3e8ff 0%, #e8d5ff 100%)`},{id:`b2`,author:`王子瑜`,title:`vibe coding 必备的资深 UI 设计师`,desc:`角色设定 你是一位顶级的 Frontend Design Engineer (Vibe Coding 专家)...`,stars:13,views:`885`,avatarColor:`#ff7043`,thumbBg:`linear-gradient(135deg, #ffe8e0 0%, #ffd4c4 100%)`},{id:`b3`,author:`徐舒楠`,title:`《凡人修仙传》灵根测试`,desc:`###角色 你是《凡人修仙传》世界观中的灵根测试师，需根据用户提供的姓名、...`,stars:28,views:`6025`,avatarColor:`#42a5f5`,thumbBg:`linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)`},{id:`b4`,author:`徐佳倩`,title:`资深品牌战略专家`,desc:`你是一位资深品牌战略专家，精通品牌定位和营销传播。请为一个有【15年历...`,stars:17,views:`804`,avatarColor:`#7c4dff`,thumbBg:`linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 100%)`},{id:`b5`,author:`武玥`,title:`自拍秒变【职场形象照】`,desc:`角色 (Persona) 你是一个名【AI形象管家】的智能代理，你的专长是为企业和...`,stars:36,views:`7611`,avatarColor:`#66bb6a`,thumbBg:`linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)`},{id:`b6`,author:`徐佳倩`,title:`智能投资顾问`,desc:`1. 角色：你是一名专业的私人投资理财顾问。2. 目标：根据最新的国内外新闻...`,stars:15,views:`1220`,avatarColor:`#ef5350`,thumbBg:`linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%)`},{id:`b7`,author:`何周航`,title:`AI 思维教练`,desc:`你是一个专注于辅助个人思考的AI思维教练。你的目标是帮助用户深化思考、理...`,stars:48,views:`1079`,avatarColor:`#ef5350`,thumbBg:`linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)`},{id:`b8`,author:`王益新`,title:`提示词工程师`,desc:`角色：你是一个提示词工程师，负责根据给定的任务描述或现有提示，生成一个...`,stars:84,views:`2035`,avatarColor:`#26a69a`,thumbBg:`linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%)`},{id:`b9`,author:`杨泽仪`,title:`漫画带你学 AI`,desc:`# Role: AI 视觉化概念解构师 (AI Visual Explainer) ## 核心定位 你是一位擅长...`,stars:9,views:`575`,avatarColor:`#ffa726`,thumbBg:`linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%)`},{id:`b10`,author:`王益新`,title:`艺术签名大师`,desc:`你是一位专业的艺术签名设计师，能够根据用户姓名生成多种风格的艺术签名图...`,stars:3,views:`546`,avatarColor:`#8d6e63`,thumbBg:`linear-gradient(135deg, #efebe9 0%, #d7ccc8 100%)`},{id:`b11`,author:`武玥`,title:`AI 帮你"变废为宝"的智能修图助手`,desc:`##角色 你是一个专业的修图智能助手，能够根据用户需求对照片进行多种编辑...`,stars:12,views:`545`,avatarColor:`#66bb6a`,thumbBg:`linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)`},{id:`b12`,author:`徐佳倩`,title:`私人旅行顾问`,desc:`## 角色和目标 你是一位经验丰富的金牌旅游规划师，拥有广泛的全球旅游知识...`,stars:84,views:`4442`,avatarColor:`#7c4dff`,thumbBg:`linear-gradient(135deg, #e8eaf6 0%, #c5cae9 100%)`},{id:`b13`,author:`徐佳倩`,title:`你的公关专家：帮你快速应对公...`,desc:`##角色 你是一位顶级的商业战略顾问和公关危机处理专家，名叫"临危智囊"...`,stars:21,views:`1890`,avatarColor:`#7c4dff`,thumbBg:`linear-gradient(135deg, #f3e8ff 0%, #e8d5ff 100%)`},{id:`b14`,author:`王益新`,title:`OKR 框架梳理助手`,desc:`你是专业的 OKR 梳理助手，能依据用户提供的工作描述、任务目标或项目计划，...`,stars:42,views:`3210`,avatarColor:`#26a69a`,thumbBg:`linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%)`},{id:`b15`,author:`何周航`,title:`岗位胜任力分析专家`,desc:`你是一个专注于岗位胜任力分析与技能提升的智能体，根据用户提供的公司内部...`,stars:33,views:`2100`,avatarColor:`#ef5350`,thumbBg:`linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%)`}],inspire:[{id:`i1`,author:`陶鑫`,avatarColor:`#e6d4a8`,time:`3天前`,title:`如何开发一个高质量 Skill：从官方案例到飞书 CLI 实践`,summary:`本文讨论了如何开发一个高质量 Skill，从定义、开发模式到具体案例和开发流程等方面进行了详细阐述`,likes:3,stars:16,coverGradient:`linear-gradient(135deg, #1a237e 0%, #283593 100%)`,coverTitle:`如何开发一个\n高质量 Skill`,coverDark:!0},{id:`i2`,author:`大象`,avatar:`🐘`,time:`3天前`,title:`10分钟搞定本地AI：Ollama 零成本接入你的OpenClaw`,summary:`核心价值：手把手教你在自己的电脑上跑一个真正可用的AI模型，断网也能用、数据不上云、反应飞快`,likes:1,stars:14,coverGradient:`linear-gradient(135deg, #1b2838 0%, #2a3f55 100%)`,coverTitle:`10分钟搞定本地AI：\nOllama 零成本接入你的OpenClaw`,coverDark:!0},{id:`i3`,author:`玄清`,avatarColor:`#ff5252`,time:`4天前`,title:`Anthropic 出了一份 AI 创业手册`,summary:`Anthropic 发布了一份面向 AI 原生创始人的完整行动手册，覆盖从创意验证到规模化的四个核心阶段。手册揭示了 AI 时代最反直觉的五个洞见：技术与非技术创始人的边界消失、创始人角色从执行者变为编排者、零摩擦构建是最大陷阱、领域上下文是新护城河、规模化的是…`,likes:6,stars:115,coverGradient:`linear-gradient(135deg, #e3f0ff 0%, #c4dcf5 100%)`,coverTitle:`AI 原生创业生命周期：2026 重启版`,coverDark:!1},{id:`i4`,author:`Oli芬`,avatarColor:`#ffb74d`,time:`3天前`,title:`探索Prompt的本质，带你解析AI时代的魔法咒语`,summary:`Prompt 不是"咒语"，而是你给大模型的任务说明、上下文材料和行为约束。它决定模型要做什么、基于什么信息做、用什么方式输出、哪些事情不能做。当我们使用AI的时候，Prompt 的价值不是会写几句神奇指令，而是能把任务背景、业务规则、边界和输出标准表达清楚…`,likes:1,stars:9,coverGradient:`linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)`,coverTitle:`探索Prompt的本质，\n带你解析AI时代的魔法咒语`,coverDark:!1},{id:`i5`,author:`玄清`,avatarColor:`#ff5252`,time:`4天前`,title:`Anthropic发布创业手册：AI时代，每个阶段的玩法都变了【去广告版】`,summary:`AI降低了创业门槛，但同时让最常见的失败陷阱变得更深。本文拆解创业四阶段的底层逻辑，帮助小白看懂AI时代真正的创业规则。`,likes:6,stars:32,coverGradient:`linear-gradient(135deg, #e8eaf6 0%, #c5cae9 100%)`,coverTitle:`Anthropic刚发\n创业手册`,coverDark:!1}]}},aiWorkshop:[{id:`w1`,author:`肖遥`,title:`一人电商公司–商品管理系统`,views:`4.5k`,comments:9,cover:`linear-gradient(135deg, #fff5e6 0%, #ffe0c2 100%)`,emoji:`📦`},{id:`w2`,author:`肖遥`,title:`一人电商公司–竞品管理系统`,views:`853`,comments:0,cover:`linear-gradient(135deg, #efe6ff 0%, #d9c8ff 100%)`,emoji:`🏷️`},{id:`w3`,author:`纪金运`,title:`电商库存进出管理系统`,views:`9.9k`,comments:22,cover:`linear-gradient(135deg, #e6f0ff 0%, #c8d8ff 100%)`,emoji:`📊`},{id:`w4`,author:`绿育博`,title:`科技公司新品发布会报名页`,views:`1.6k`,comments:8,cover:`linear-gradient(135deg, #1a1f3a 0%, #3a2860 100%)`,emoji:`🚀`}],courses:[{id:`c1`,title:`一个餐饮外贸人的 AI 工具折腾史｜AI 开放麦 #EP01`,cover:`linear-gradient(135deg, #f0f4ff 0%, #e1ebff 100%)`,tag:`AI 开放麦`,liveTag:`直播`,chapters:2,learners:20,speaker:`一个餐饮外贸人的 AI 实战分享：商品采购与进销存管理`,detail:{description:`非技术背景的餐饮外贸从业者，独立用飞书妙搭搭建了完整的进销存系统，覆盖商品管理、采购、物流、报关、出入库全链路。`,tags:[`进阶级`,`飞书妙搭`,`飞书 aily`],progress:{current:0,total:2,status:`学习中`},toc:[{id:`ch1`,title:`分享妙记`,subtitle:`妙记`,icon:`📝`,required:!0},{id:`ch2`,title:`分享材料`,subtitle:`云文档`,icon:`📄`,required:!1,tag:`选修`}],incentive:{name:`飞行里程`,icon:`🚀`,points:20},channel:{name:`超级个体空间站`,desc:`一人进化成一支队伍的数字补给船`,subscribers:478,subscribed:!0,cover:`linear-gradient(135deg, #e3f0ff 0%, #c7d8ff 100%)`}}}],articles:[{id:`art1`,title:`保姆级教程：手把手教你 3 小时做出第一个微信小程序（配图+源码）`,author:`小机同学`,avatar:`🧑‍💻`,time:`3天前`,tags:[{text:`个人生活`,color:`orange`},{text:`通用场景`,color:`blue`}],summary:`手把手教你 3 小时做出第一个微信小程序`,likes:1,stars:24,thumbType:`doc`,thumb1:`linear-gradient(135deg, #fffaf0 0%, #fff3d6 100%)`,thumb2:`linear-gradient(135deg, #f4f7ff 0%, #e3ecff 100%)`,detail:{comments:3,favorites:43,desc:`手把手教你 3 小时做出第一个微信小程序`,toc:[{id:`t1`,text:`摘要`,level:1},{id:`t2`,text:`一、开局先拿“身份证”：注册账号 + 拿到那个关键AppID`,level:1},{id:`t2a`,text:`主体类型怎么选？`,level:2},{id:`t3`,text:`二、装上“作案工具”：微信开发者工具`,level:1},{id:`t4`,text:`三、新建项目（最关键的一步，盯紧了）`,level:1},{id:`t5`,text:`四、看懂小程序长啥样（四个文件就够了）`,level:1},{id:`t6`,text:`五、写第一个能点的页面（复制就行）`,level:1},{id:`t6a`,text:`第1步：改结构（index.wxml）`,level:2},{id:`t6b`,text:`第2步：改逻辑（index.js）`,level:2},{id:`t6c`,text:`第3步：改样式（index.wxss）`,level:2},{id:`t6d`,text:`保存后，立刻看左侧模拟器`,level:2},{id:`t7`,text:`六、用真机预览（在自己手机上打开）`,level:1},{id:`t8`,text:`七、发布上线（让别人也能搜到）`,level:1},{id:`t8a`,text:`第1步：上传代码`,level:2},{id:`t8b`,text:`第2步：去后台提交审核`,level:2}],body:[{type:`blockquote`,text:`你是不是也想过：“做个微信小程序，要不要学好几年前端？”
 实话告诉你：不用。
@@ -488,6 +617,446 @@ MOCK_CHANNEL_DETAILS['senior-community'] = {
   ],
 };
 
+MOCK_CHANNEL_DETAILS['family-education'] = {
+  id: 'family-education',
+  title: '家庭教育社区',
+  description: '围绕家校共育、亲子沟通和学习习惯培养的实践交流社区',
+  operator: { name: '家校共育组', avatar: '👩‍🏫' },
+  coverEmoji: '🏠',
+  tabs: [
+    { key: 'home', label: '首页' },
+    { key: 'discuss', label: '讨论区', count: 3 },
+    { key: 'ai-set', label: 'AI 合集', count: 4 },
+    { key: 'course', label: '课程', count: 2 },
+    { key: 'article', label: '文章', count: 2 },
+    { key: 'activity', label: '活动', count: 2 },
+  ],
+  hotDiscussions: [
+    {
+      id: 'family-hot-1',
+      author: '周老师',
+      time: '今天',
+      from: '家校沟通实践群',
+      content:
+        '把家长会反馈改成“孩子状态 + 家长问题 + 老师建议”三段式表单后，老师不用再逐条翻聊天记录，家长回复率也明显提高。',
+      comments: 11,
+    },
+    {
+      id: 'family-hot-2',
+      author: '李老师',
+      time: '1天前',
+      from: '亲子阅读共学群',
+      content:
+        '亲子阅读打卡加入“今天是谁先开口分享”这个问题后，很多家庭开始从催促打卡转向真正交流内容。',
+      comments: 7,
+    },
+    {
+      id: 'family-hot-3',
+      author: '张妈妈',
+      time: '2天前',
+      from: '家庭会议共创群',
+      content:
+        '我们试了每周一次 15 分钟家庭会议模板，孩子第一次愿意自己提“这周最想被表扬的事”，效果比单独说教好很多。',
+      comments: 6,
+    },
+  ],
+  discussions: [
+    {
+      id: 'family-post-1',
+      author: '周老师',
+      time: '今天',
+      from: '家校沟通实践群',
+      title: '有没有适合班主任的家校反馈周报模板？最好能兼顾“成绩之外的变化”',
+      paragraphs: [
+        '我们现在的周报太像成绩单，家长一看到就紧张，孩子也会抗拒。',
+        '想把它改成“本周亮点、需要协助的习惯、下周建议”三段式，让家长更容易配合。',
+        '如果能再带一个家长回执入口就更好了，避免老师一个个追问。',
+      ],
+      replies: [
+        { id: 'family-reply-1', author: '李老师', text: '建议每次只留一个“本周想重点协助的习惯”，家长执行成本会低很多。' },
+        { id: 'family-reply-2', author: '张妈妈', text: '家长回执可以改成“已知晓/需要老师联系”，不要让家长写太多。' },
+      ],
+    },
+    {
+      id: 'family-post-2',
+      author: '李老师',
+      time: '1天前',
+      from: '亲子阅读共学群',
+      title: '亲子阅读打卡怎么做，才不会变成家长拍照交作业？',
+      paragraphs: [
+        '我们试着把阅读打卡从“上传照片”改成“孩子复述一句、家长回应一句”。',
+        '孩子参与度提升了，但老师批改时间也变长了，想看看有没有更轻量的模板。',
+        '如果大家做过自动汇总或者周复盘，也欢迎一起交流。',
+      ],
+      replies: [
+        { id: 'family-reply-3', author: '周老师', text: '可以每周只抽一次详细反馈，其余时间只收关键词。' },
+      ],
+    },
+    {
+      id: 'family-post-3',
+      author: '张妈妈',
+      time: '2天前',
+      from: '家庭会议共创群',
+      title: '家庭会议到底是“讲道理”还是“听孩子说”？',
+      paragraphs: [
+        '我们以前开家庭会议基本是家长总结问题，孩子只负责点头。',
+        '最近尝试先让孩子说“这周最开心/最不开心的一件事”，冲突明显少了。',
+        '想知道大家有没有固定流程模板，能让家庭会议不跑偏。',
+      ],
+      replies: [],
+    },
+  ],
+  relatedGroups: [
+    {
+      id: 'family-group-1',
+      name: '家校沟通实践群',
+      desc: '班主任、家长和教研伙伴一起打磨高频、低负担的家校协作方式。',
+      count: '1.8k',
+      avatar: '🏫',
+    },
+    {
+      id: 'family-group-2',
+      name: '家庭会议共创群',
+      desc: '围绕亲子沟通、习惯养成和家庭规则协商沉淀可复用模板。',
+      count: '950',
+      avatar: '💬',
+    },
+  ],
+  aiSet: {
+    categories: [
+      { key: 'workshop', label: 'AI 工坊' },
+      { key: 'inspire', label: '灵感市集' },
+    ],
+    items: {
+      workshop: [
+        {
+          id: 'family-ai-1',
+          author: '周老师',
+          title: '亲子阅读打卡助手',
+          views: '3.6k',
+          comments: 9,
+          cover: 'linear-gradient(135deg, #eef4ff 0%, #dbe8ff 100%)',
+          emoji: '📚',
+          avatarColor: '#5c6bc0',
+        },
+        {
+          id: 'family-ai-2',
+          author: '李老师',
+          title: '家校沟通周报生成器',
+          views: '2.7k',
+          comments: 5,
+          cover: 'linear-gradient(135deg, #fff3e8 0%, #ffd9bf 100%)',
+          emoji: '✉️',
+          avatarColor: '#ff8a65',
+        },
+        {
+          id: 'family-ai-3',
+          author: '张妈妈',
+          title: '家庭会议记录板',
+          views: '1.9k',
+          comments: 4,
+          cover: 'linear-gradient(135deg, #f3edff 0%, #e2d7ff 100%)',
+          emoji: '🧭',
+          avatarColor: '#9575cd',
+        },
+      ],
+      inspire: [
+        {
+          id: 'family-inspire-1',
+          author: '周老师',
+          avatar: '👩‍🏫',
+          avatarColor: '#c5cae9',
+          time: '1天前',
+          editTime: '1天前编辑',
+          title: '让家庭作业不再变成争吵：一次家校共育表单改造记录',
+          summary: '把打卡、反馈和老师建议放进一个轻量闭环后，家长配合度和孩子完成率都明显提升。',
+          likes: 18,
+          stars: 45,
+          coverGradient: 'linear-gradient(135deg, #eef2ff 0%, #dfe7ff 100%)',
+          coverTitle: '家庭作业不再争吵\n家校表单改造记录',
+          coverDark: !1,
+          detail: {
+            abstract:
+              '家庭教育里最难的，往往不是内容本身，而是家长、孩子和老师在同一个流程里说不到一起去。',
+            info: '本文复盘了一次班级作业反馈表从“催交工具”升级为“协作工具”的改造过程。',
+            coreValue: '让老师少追问，让家长少焦虑，让孩子知道下一步怎么做。',
+            toc: [
+              { key: 'f1', text: '原来的作业反馈为什么总在放大冲突', level: 1 },
+              { key: 'f2', text: '三段式反馈怎么设计', level: 1 },
+              { key: 'f3', text: '家长回执怎样才不增加负担', level: 1 },
+              { key: 'f4', text: '上线后的变化', level: 1 },
+            ],
+            body: [
+              { type: 'heading', text: '原来的作业反馈为什么总在放大冲突' },
+              {
+                type: 'highlight',
+                text: '当反馈表只记录“有没有完成”，家长和孩子就很容易把对话变成追责。',
+              },
+              {
+                type: 'paragraph',
+                text: '我们改成“今天最顺的一件事、最卡的一件事、老师下一步建议”三段式之后，反馈更聚焦，情绪摩擦也下降了。',
+              },
+              { type: 'heading', text: '三段式反馈怎么设计' },
+              {
+                type: 'paragraph',
+                text: '每次只要求家长和孩子各写一句，老师只给一个可执行建议，避免信息量过大。',
+              },
+              {
+                type: 'image',
+                gradient: 'linear-gradient(135deg, #eef2ff 0%, #dbe6ff 100%)',
+                alt: '家校共育表单示意',
+              },
+              { type: 'heading', text: '上线后的变化' },
+              {
+                type: 'paragraph',
+                text: '一周后，按时回收率提升到 92%，老师单次整理反馈时间缩短了一半以上。',
+              },
+            ],
+            comments: [
+              {
+                id: 'family-comment-1',
+                author: '张妈妈',
+                avatar: '👩',
+                avatarColor: '#f8bbd0',
+                text: '老师只给一个建议这点太关键了，家长更容易照着做。',
+                time: '1天前',
+                isOp: !1,
+              },
+              {
+                id: 'family-comment-2',
+                author: '周老师',
+                avatar: '👩‍🏫',
+                avatarColor: '#c5cae9',
+                text: '如果需要模板，我可以把字段结构和回执逻辑整理出来。',
+                time: '1天前',
+                isOp: !0,
+              },
+            ],
+          },
+        },
+      ],
+    },
+  },
+  aiWorkshop: [
+    {
+      id: 'family-workshop-1',
+      author: '周老师',
+      title: '亲子阅读打卡助手',
+      views: '3.6k',
+      comments: 9,
+      cover: 'linear-gradient(135deg, #eef4ff 0%, #dbe8ff 100%)',
+      emoji: '📚',
+    },
+    {
+      id: 'family-workshop-2',
+      author: '李老师',
+      title: '家校沟通周报生成器',
+      views: '2.7k',
+      comments: 5,
+      cover: 'linear-gradient(135deg, #fff3e8 0%, #ffd9bf 100%)',
+      emoji: '✉️',
+    },
+    {
+      id: 'family-workshop-3',
+      author: '张妈妈',
+      title: '家庭会议记录板',
+      views: '1.9k',
+      comments: 4,
+      cover: 'linear-gradient(135deg, #f3edff 0%, #e2d7ff 100%)',
+      emoji: '🧭',
+    },
+  ],
+  courses: [
+    {
+      id: 'family-course-1',
+      title: '零基础搭建家校沟通周报',
+      cover: 'linear-gradient(135deg, #eef2ff 0%, #dfe7ff 100%)',
+      tag: '家校共育课',
+      liveTag: '回放',
+      chapters: 3,
+      learners: 48,
+      speaker: '班主任高频沟通流程实战',
+      detail: {
+        description: '把学生亮点、需要协助的习惯和下周建议放进一套轻量模板，降低老师和家长双方负担。',
+        tags: ['入门级', '家校沟通', '表单设计'],
+        progress: { current: 1, total: 3, status: '学习中' },
+        toc: [
+          { id: 'family-course-1-1', title: '周报结构怎么做减法', subtitle: '直播回放', icon: '🎥', required: !0 },
+          { id: 'family-course-1-2', title: '家长回执设计', subtitle: '案例拆解', icon: '🧩', required: !0 },
+          { id: 'family-course-1-3', title: '自动汇总与复盘', subtitle: '操作指引', icon: '📄', required: !1, tag: '选修' },
+        ],
+        incentive: { name: '共育积分', icon: '🌟', points: 16 },
+        channel: {
+          name: '家庭教育社区',
+          desc: '围绕家校共育与亲子沟通的实践交流社区',
+          subscribers: 18600,
+          subscribed: !0,
+          cover: 'linear-gradient(135deg, #eef2ff 0%, #dfe7ff 100%)',
+        },
+      },
+    },
+    {
+      id: 'family-course-2',
+      title: '家庭会议模板：15 分钟开出有效沟通',
+      cover: 'linear-gradient(135deg, #fff5e9 0%, #ffe2c5 100%)',
+      tag: '实战课',
+      chapters: 2,
+      learners: 31,
+      speaker: '亲子沟通结构化实践',
+      detail: {
+        description: '围绕“先听孩子说、再定下周一件事”的节奏，搭建一个家庭可持续执行的沟通模板。',
+        tags: ['亲子沟通', '习惯养成', '家庭会议'],
+        progress: { current: 0, total: 2, status: '学习中' },
+        toc: [
+          { id: 'family-course-2-1', title: '家庭会议标准流程', subtitle: '案例讲解', icon: '📝', required: !0 },
+          { id: 'family-course-2-2', title: '会后跟进表', subtitle: '云文档', icon: '📄', required: !0 },
+        ],
+        incentive: { name: '飞行里程', icon: '🚀', points: 12 },
+        channel: {
+          name: '家庭教育社区',
+          desc: '围绕家校共育与亲子沟通的实践交流社区',
+          subscribers: 18600,
+          subscribed: !0,
+          cover: 'linear-gradient(135deg, #fff5e9 0%, #ffe2c5 100%)',
+        },
+      },
+    },
+  ],
+  articles: [
+    {
+      id: 'family-art-1',
+      title: '家庭教育数字化清单：家长、孩子、老师如何共用一个反馈闭环',
+      author: '周老师',
+      avatar: '👩‍🏫',
+      time: '1天前',
+      tags: [
+        { text: '家校共育', color: 'orange' },
+        { text: '反馈设计', color: 'blue' },
+      ],
+      summary: '把家庭教育数字化从“多一个打卡工具”变成“少一点沟通摩擦”的设计清单。',
+      likes: 21,
+      stars: 62,
+      thumbType: 'doc',
+      thumb1: 'linear-gradient(135deg, #f3f6ff 0%, #e3ebff 100%)',
+      thumb2: 'linear-gradient(135deg, #fff7ef 0%, #ffe6cf 100%)',
+      detail: {
+        comments: 5,
+        favorites: 62,
+        desc: '聚焦作业反馈、阅读打卡和家长回执三个高频场景，拆解可落地的闭环设计。',
+        toc: [
+          { id: 'family-art-1-t1', text: '为什么家庭教育工具越多，沟通反而越累', level: 1 },
+          { id: 'family-art-1-t2', text: '反馈闭环的三段式结构', level: 1 },
+          { id: 'family-art-1-t3', text: '家长回执应该最少到什么程度', level: 1 },
+        ],
+        body: [
+          {
+            type: 'blockquote',
+            text:
+              '真正有效的家庭教育数字化，不是让每个人填更多表，而是让每个人更清楚自己下一步要做什么。',
+          },
+          { type: 'heading', text: '反馈闭环的三段式结构' },
+          {
+            type: 'list',
+            items: [
+              '先记录本周一个亮点',
+              '再聚焦一个最需要协助的问题',
+              '最后给出一个下周可执行动作',
+            ],
+          },
+          {
+            type: 'paragraph',
+            text: '当反馈只围绕一件重点展开时，家长更容易执行，孩子也更容易接收。',
+          },
+        ],
+        moreWorks: [
+          { title: '阅读打卡关键词模板', favorites: 33, likes: 10 },
+          { title: '家长回执最简版设计', favorites: 25, likes: 8 },
+        ],
+      },
+    },
+    {
+      id: 'family-art-2',
+      title: '亲子阅读打卡，如何从“完成任务”变成“真正交流”',
+      author: '李老师',
+      avatar: '👩',
+      time: '3天前',
+      tags: [
+        { text: '亲子阅读', color: 'orange' },
+        { text: '家庭沟通', color: 'blue' },
+      ],
+      summary: '当阅读打卡从上传照片变成复述与回应，孩子会更愿意表达，家长也更容易参与。',
+      likes: 13,
+      stars: 39,
+      thumbType: 'doc',
+      thumb1: 'linear-gradient(135deg, #eef4ff 0%, #dde8ff 100%)',
+      thumb2: 'linear-gradient(135deg, #fff4ea 0%, #ffe2ca 100%)',
+      detail: {
+        comments: 3,
+        favorites: 39,
+        desc: '拆解亲子阅读打卡的提问模板、记录频率和每周复盘方式。',
+        toc: [
+          { id: 'family-art-2-t1', text: '为什么拍照打卡最容易失真', level: 1 },
+          { id: 'family-art-2-t2', text: '一句复述 + 一句回应的结构', level: 1 },
+        ],
+        body: [
+          {
+            type: 'blockquote',
+            text:
+              '阅读真正留下来的，不是那张照片，而是孩子说过的话和家长听进去的那一刻。',
+          },
+          { type: 'heading', text: '一句复述 + 一句回应的结构' },
+          {
+            type: 'paragraph',
+            text: '先让孩子讲一句今天最记得的内容，再让家长回应一句自己的理解，足够轻量，也更容易形成习惯。',
+          },
+        ],
+        moreWorks: [
+          { title: '亲子阅读周复盘模板', favorites: 18, likes: 6 },
+          { title: '家长陪伴提问卡片', favorites: 22, likes: 7 },
+        ],
+      },
+    },
+  ],
+  activities: [
+    {
+      id: 'family-act-1',
+      badge: '报名中',
+      coverGradient: 'linear-gradient(135deg, #eef2ff 0%, #dfe7ff 100%)',
+      coverTitle: '家校共育共创营',
+      coverTitle2: '一起打磨\n低负担沟通模板',
+      coverDesc: '老师、家长和教研伙伴\n共建可复用反馈闭环',
+      coverEmoji: '🤝',
+      ctaText: '立即报名',
+      ctaStyle: 'pill-blue-solid',
+      coverLight: !0,
+      title: '家校共育共创营：两周做出一套班级反馈模板',
+      summary: '围绕作业反馈、家长回执和习惯培养，沉淀可直接落地的家校协作模板。',
+      status: 'active',
+      statusText: '正在报名',
+      date: '6月15日–6月28日',
+      hasRegister: !0,
+    },
+    {
+      id: 'family-act-2',
+      badge: '直播',
+      liveTime: '2026年6月20日 20:00',
+      coverGradient: 'linear-gradient(135deg, #fff5ea 0%, #ffe3c8 100%)',
+      coverTitle: '家庭会议公开课',
+      coverTitle2: '让孩子愿意说\n家长听得进去',
+      coverDesc: '拆解提问顺序、记录模板\n和会后跟进动作',
+      coverEmoji: '🎙️',
+      ctaText: '预约直播',
+      ctaStyle: 'pill-blue',
+      coverLight: !0,
+      title: '家庭会议公开课：15 分钟沟通模板',
+      summary: '用真实案例讲清楚如何让家庭会议从“训话场”变成“协商场”。',
+      status: 'active',
+      statusText: '即将开始',
+      date: '6月20日 20:00–21:00',
+    },
+  ],
+};
+
 function buildDefaultDetail(ch) {
   return {
     id: ch.id,
@@ -533,23 +1102,21 @@ function findChannelContent(getter) {
 
 function getSubscriptions() {
   try {
+    const defaults = {
+      'senior-community': true,
+      'family-education': true,
+    };
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      const defaults = {
-        'miaoda-ai': true,
-        'feishu-classroom': true,
-        'waytoagi': true,
-        'pioneer': true,
-        'aily': true,
-        'feishu-new': true,
-        'mvp-table': true,
-        'pm-community': true,
-        'openclaw': true,
-      };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(defaults));
       return defaults;
     }
-    return JSON.parse(raw) || {};
+    const parsed = JSON.parse(raw) || {};
+    const merged = { ...defaults, ...parsed };
+    if (JSON.stringify(merged) !== JSON.stringify(parsed)) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+    }
+    return merged;
   } catch {
     return {};
   }
@@ -569,10 +1136,11 @@ export const studyClubApi = {
   async getBanner() {
     await delay(80);
     return {
-      title: '研习社 AI Builder 正在火热招募中',
-      subtitle: '加入「超级个体空间站」',
-      desc: '成为超级个体，展示优秀实践，收获你的粉丝',
-      ctaText: '申请入驻',
+      title: '研习社新社区上线中',
+      subtitle: '老年社区 · 家庭教育社区',
+      desc: '聚焦银龄服务与家校共育，沉淀更贴近日常场景的可复用经验。',
+      ctaText: '进入社区',
+      coverEmoji: '🏡',
     };
   },
 
@@ -625,7 +1193,6 @@ export const studyClubApi = {
 
   async getPlaygroundItems(subKey = 'workshop') {
     await delay(150);
-    const detail = getStaticChannelDetail('super-individual');
-    return detail && detail.aiSet.items[subKey] || [];
+    return MOCK_PLAYGROUND_ITEMS[subKey] || [];
   },
 };
