@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import {
   Button, Input, Empty, Tooltip, Dropdown,
-  Modal, Form, Select, message, Upload, ColorPicker, Drawer,
+  Modal, Form, Select, message,
 } from 'antd';
 import {
   PlusOutlined, SearchOutlined,
@@ -26,9 +26,8 @@ import {
   getLibraryList, getLibraryId, getOrganizations, getTagGroups, setCurrentScope, setCurrentOrg, markItemOpened,
 } from './resourceLibStore';
 import { renderFileIcon } from './resourceIcons.jsx';
-import { fileApi } from '../api/fileApi';
-import AddResourceDialog from './AddResourceDialog.jsx';
-import ResourceParseStatus from './ResourceParseStatus.jsx';
+import ResourceLibraryOverlays from './ResourceLibraryOverlays.jsx';
+import useResourceLibraryFileImport from './useResourceLibraryFileImport';
 import './ResourceLibrary.css';
 
 const ROOT_PARENT_KEY = '__resource_lib_root__';
@@ -37,47 +36,11 @@ const DETAIL_PREVIEW_MAX_WIDTH = 1120;
 const DETAIL_PREVIEW_MIN_LIST_WIDTH = 260;
 const DETAIL_PREVIEW_DEFAULT_RATIO = 0.5;
 const FOLDER_HOVER_TIP_DELAY = 1;
-const EDITABLE_PASTE_SELECTOR = [
-  'input',
-  'textarea',
-  '[contenteditable="true"]',
-  '[contenteditable=""]',
-  '.ant-input',
-  '.ant-input-affix-wrapper',
-  '.ant-select-selector',
-].join(', ');
 const RESOURCE_LIB_HELP_TIPS = [
   '在文件夹上双击可进入文件夹。',
   '支持对文件、文件夹和空白区域使用鼠标右键操作。',
   '悬停行内按钮可快速添加资料或打开更多操作。',
 ];
-
-function isEditablePasteTarget(target) {
-  return target instanceof Element && Boolean(target.closest(EDITABLE_PASTE_SELECTOR));
-}
-
-function collectClipboardFiles(clipboardData) {
-  if (!clipboardData) return [];
-
-  const files = [];
-  const seen = new Set();
-  const pushFile = (file) => {
-    if (!file || (typeof File !== 'undefined' && !(file instanceof File))) return;
-    const signature = [file.name, file.size, file.type, file.lastModified].join('__');
-    if (seen.has(signature)) return;
-    seen.add(signature);
-    files.push(file);
-  };
-
-  Array.from(clipboardData.files || []).forEach(pushFile);
-  Array.from(clipboardData.items || []).forEach((item) => {
-    if (item.kind !== 'file') return;
-    const file = item.getAsFile?.();
-    if (file) pushFile(file);
-  });
-
-  return files;
-}
 
 export default function ResourceLibrary() {
   const [data, setData] = useState(() => loadResourceLib());
@@ -1655,82 +1618,26 @@ export default function ResourceLibrary() {
   const currentBlankAreaParentKey = viewMode === 'column'
     ? (columnPath[columnPath.length - 1] ?? null)
     : selectedFolderKey;
-
-  const resolvePasteTarget = useCallback(() => {
-    const findFolder = (itemKey) => (
-      itemKey
-        ? list.find((item) => item.key === itemKey && item.isFolder) || null
-        : null
-    );
-
-    const contextTarget = findFolder(contextMenuItemKey);
-    if (contextTarget) {
-      return { parentKey: contextTarget.key, label: contextTarget.name };
-    }
-
-    if (selectedItemKeys.length === 1) {
-      const selectedFolder = findFolder(selectedItemKeys[0]);
-      if (selectedFolder) {
-        return { parentKey: selectedFolder.key, label: selectedFolder.name };
-      }
-    }
-
-    const currentTarget = findFolder(currentBlankAreaParentKey);
-    if (currentTarget) {
-      return { parentKey: currentTarget.key, label: currentTarget.name };
-    }
-
-    return { parentKey: null, label: '根目录' };
-  }, [contextMenuItemKey, currentBlankAreaParentKey, list, selectedItemKeys]);
-
-  const uploadFilesToLibrary = useCallback(async (files, { parentKey = null } = {}) => {
-    const normalizedFiles = Array.from(files || []).filter((file) => (
-      file && (typeof File === 'undefined' || file instanceof File)
-    ));
-    if (normalizedFiles.length === 0) {
-      return { successCount: 0, failureCount: 0 };
-    }
-
-    const hide = message.loading(`上传中 (${normalizedFiles.length})...`, 0);
-    let successCount = 0;
-    let failureCount = 0;
-
-    try {
-      for (const file of normalizedFiles) {
-        try {
-          const inferred = inferFileType(file.name);
-          const result = await fileApi.upload(file, 'resource-lib');
-          setData((prevData) => addItem(prevData, scope, {
-            name: file.name,
-            isFolder: false,
-            parentKey,
-            fileType: inferred,
-            url: result.url,
-            size: result.size,
-            mime: result.mime,
-            parseStatus: 'parsing',
-          }));
-          successCount += 1;
-        } catch {
-          failureCount += 1;
-          message.error(`「${file.name}」上传失败`);
-        }
-      }
-
-      if (successCount > 0 && parentKey && viewMode === 'detail' && !hasActiveSearch && !isRecentView && !activeTagFilter) {
-        setExpandedFolders((prev) => {
-          if (prev.has(parentKey)) return prev;
-          const next = new Set(prev);
-          next.add(parentKey);
-          return next;
-        });
-      }
-    } finally {
-      hide();
-    }
-
-    return { successCount, failureCount };
-  }, [activeTagFilter, hasActiveSearch, isRecentView, scope, viewMode]);
+  const { uploadFilesToLibrary } = useResourceLibraryFileImport({
+    activeTagFilter,
+    addDialogOpen,
+    addOpen,
+    addTagOpen,
+    contextMenuItemKey,
+    currentBlankAreaParentKey,
+    hasActiveSearch,
+    isRecentView,
+    list,
+    parseDrawerOpen,
+    scope,
+    selectedItemKeys,
+    setBgMenuPos,
+    setContextMenuItemKey,
+    setData,
+    setExpandedFolders,
+    tagPickerTarget,
+    viewMode,
+  });
 
   const renderCheckedMenuLabel = (checked, label) => (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minWidth: 116 }}>
@@ -2060,37 +1967,6 @@ export default function ResourceLibrary() {
   }, [clearFolderHoverTipTimer, clearTagPickerScrollTimer]);
 
   useEffect(() => {
-    const handlePaste = (event) => {
-      if (addOpen || addDialogOpen || addTagOpen || tagPickerTarget || parseDrawerOpen) return;
-      if (isEditablePasteTarget(event.target)) return;
-
-      const files = collectClipboardFiles(event.clipboardData);
-      if (files.length === 0) return;
-
-      const pasteTarget = resolvePasteTarget();
-      event.preventDefault();
-      setBgMenuPos(null);
-      setContextMenuItemKey(null);
-
-      void (async () => {
-        const { successCount, failureCount } = await uploadFilesToLibrary(files, { parentKey: pasteTarget.parentKey });
-        if (successCount > 0) {
-          message.success(
-            failureCount > 0
-              ? `已粘贴 ${successCount} 个文件到「${pasteTarget.label}」，${failureCount} 个失败`
-              : `已粘贴 ${successCount} 个文件到「${pasteTarget.label}」`,
-          );
-        }
-      })();
-    };
-
-    document.addEventListener('paste', handlePaste);
-    return () => {
-      document.removeEventListener('paste', handlePaste);
-    };
-  }, [addDialogOpen, addOpen, addTagOpen, parseDrawerOpen, resolvePasteTarget, tagPickerTarget, uploadFilesToLibrary]);
-
-  useEffect(() => {
     hideFolderHoverTip();
   }, [hideFolderHoverTip, libraryId, normalizedKeyword, searchMode, selectedFolderKey, specialView, viewMode]);
 
@@ -2123,146 +1999,10 @@ export default function ResourceLibrary() {
     setSearchMode(mode);
     if (normalizedKeyword) setSearchPanelOpen(false);
   };
-
-  // ====== 标签选择 Popover 内容 ======
-  const renderTagPicker = (itemKey) => {
-    const item = list.find((r) => r.key === itemKey);
-    const availableTagDefs = tagDefs;
-    const itemTagIds = item?.tags || [];
-    const activeTagGroup = tagPickerGroupFilter === 'all'
-      ? null
-      : tagGroups.find((group) => group.id === tagPickerGroupFilter) || null;
-    const activeTagGroupTagIds = activeTagGroup ? new Set(activeTagGroup.tagIds || []) : null;
-    const visibleQuickTagDefs = activeTagGroupTagIds
-      ? quickTagDefs.filter((tag) => activeTagGroupTagIds.has(tag.id))
-      : quickTagDefs;
-    const visibleTagDefs = activeTagGroupTagIds
-      ? availableTagDefs.filter((tag) => activeTagGroupTagIds.has(tag.id))
-      : availableTagDefs;
-    const selectedTags = (item?.tags || []).map((tagId) => (
-      availableTagDefs.find((t) => t.id === tagId)
-      || tagDefs.find((t) => t.id === tagId)
-      || { id: tagId, name: tagId, color: '#8e8e93' }
-    ));
-
-    return (
-      <div className="rl-tag-picker">
-        <div className="rl-tag-picker-title">编辑标签</div>
-        <div className="rl-tag-picker-selected">
-          {selectedTags.length > 0 ? (
-            selectedTags.map((t) => (
-              <span key={t.id} className="rl-tag-picker-token">
-                <span className="rl-tag-dot" style={{ background: t.color }} />
-                <span>{t.name}</span>
-              </span>
-            ))
-          ) : (
-            <span className="rl-tag-picker-placeholder">选择或新建标签</span>
-          )}
-        </div>
-        {tagGroups.length > 0 && (
-          <>
-            <div className="rl-tag-picker-section-title rl-tag-picker-section-title-filter">按标签组筛选</div>
-            <div className="rl-tag-picker-group-list">
-              <button
-                type="button"
-                className={`rl-tag-picker-group-chip ${tagPickerGroupFilter === 'all' ? 'rl-tag-picker-group-chip-active' : ''}`}
-                onClick={() => setTagPickerGroupFilter('all')}
-              >
-                全部
-              </button>
-              {tagGroups.map((group) => {
-                const matchCount = availableTagDefs.filter((tag) => (group.tagIds || []).includes(tag.id)).length;
-                return (
-                  <button
-                    key={group.id}
-                    type="button"
-                    className={`rl-tag-picker-group-chip ${tagPickerGroupFilter === group.id ? 'rl-tag-picker-group-chip-active' : ''}`}
-                    onClick={() => setTagPickerGroupFilter(group.id)}
-                  >
-                    <span className="rl-tag-picker-group-chip-dot" style={{ background: group.color || '#1677ff' }} />
-                    <span>{group.name}</span>
-                    <span className="rl-tag-picker-group-chip-count">{matchCount}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </>
-        )}
-        <div className="rl-tag-picker-section-title">快捷标签</div>
-        <div className="rl-tag-picker-quick-hint">设为快捷标签后，会显示在当前资料库的文件菜单顶部，方便快速打标。</div>
-        {visibleQuickTagDefs.length > 0 ? (
-          <div className="rl-tag-picker-quick-list">
-            {visibleQuickTagDefs.map((t) => {
-              const checked = itemTagIds.includes(t.id);
-              return (
-                <button
-                  key={t.id}
-                  type="button"
-                  className={`rl-tag-picker-quick-chip ${checked ? 'rl-tag-picker-quick-chip-active' : ''}`}
-                  onClick={() => toggleItemTagSelection(itemKey, t.id, checked)}
-                >
-                  <span className="rl-tag-dot" style={{ background: t.color }} />
-                  <span>{t.name}</span>
-                </button>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="rl-tag-picker-quick-empty">
-            {activeTagGroup
-              ? `标签组「${activeTagGroup.name}」下暂无快捷标签。`
-              : '将常用标签设为快捷标签后，这里可以一键给文件打标签。'}
-          </div>
-        )}
-        <div className="rl-tag-picker-section-title">全部标签</div>
-        <div
-          className={`rl-tag-picker-list ${tagPickerListScrollActive ? 'rl-tag-picker-list-scroll-active' : ''}`}
-          onScroll={handleTagPickerListScroll}
-        >
-          {visibleTagDefs.length > 0 ? (
-            visibleTagDefs.map((t) => {
-              const checked = itemTagIds.includes(t.id);
-              return (
-                <div
-                  key={t.id}
-                  className={`rl-tag-picker-row ${checked ? 'rl-tag-picker-row-checked' : ''}`}
-                  onClick={() => toggleItemTagSelection(itemKey, t.id, checked)}
-                >
-                  <span className="rl-tag-dot" style={{ background: t.color }} />
-                  <span className="rl-tag-picker-row-name">{t.name}</span>
-                  <button
-                    type="button"
-                    className={`rl-tag-picker-row-quick-btn ${t.quick ? 'rl-tag-picker-row-quick-btn-active' : ''}`}
-                    title={t.quick ? '取消快捷标签' : '设为快捷标签'}
-                    aria-label={t.quick ? `取消快捷标签：${t.name}` : `设为快捷标签：${t.name}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleQuickTagToggle(t.id, !t.quick);
-                    }}
-                  >
-                    {t.quick ? <StarFilled /> : <StarOutlined />}
-                  </button>
-                  {checked && <span className="rl-tag-picker-row-check">✓</span>}
-                </div>
-              );
-            })
-          ) : (
-            <div className="rl-tag-picker-empty">
-              {activeTagGroup
-                ? `标签组「${activeTagGroup.name}」下暂无可选标签。`
-                : '当前资料库暂无可选标签。'}
-            </div>
-          )}
-        </div>
-        <div className="rl-tag-picker-actions">
-          <Button size="small" icon={<PlusOutlined />} onClick={() => { setNewTagName(''); setNewTagColor('#FF3B30'); setAddTagOpen(true); }}>
-            新建标签
-          </Button>
-        </div>
-      </div>
-    );
-  };
+  const tagPickerItem = useMemo(
+    () => (tagPickerTarget ? list.find((item) => item.key === tagPickerTarget) || null : null),
+    [list, tagPickerTarget],
+  );
 
   const activeSearchDescription = searchMode === 'name'
     ? `名称包含 “${normalizedKeyword}”`
@@ -3242,120 +2982,79 @@ export default function ResourceLibrary() {
         </div>
       </div>
 
-      {/* ===== 标签管理 Modal（分栏视图菜单触发） ===== */}
-      <Modal
-        title="编辑标签"
-        open={!!tagPickerTarget}
-        onCancel={() => setTagPickerTarget(null)}
-        footer={null}
-        destroyOnClose
-        width={320}
-      >
-        {tagPickerTarget && renderTagPicker(tagPickerTarget)}
-      </Modal>
-
-      {/* ===== 新建标签 Modal ===== */}
-      <Modal
-        title="新建自定义标签"
-        open={addTagOpen}
-        onCancel={() => setAddTagOpen(false)}
-        onOk={() => {
-          const trimmed = newTagName.trim();
-          if (!trimmed) { message.warning('标签名称不能为空'); return; }
-          setData((d) => addTagDefinition(d, { name: trimmed, color: typeof newTagColor === 'string' ? newTagColor : newTagColor.toHexString() }, scope));
-          setAddTagOpen(false);
-          message.success(`标签「${trimmed}」已创建`);
+      <ResourceLibraryOverlays
+        tagPicker={{
+          open: !!tagPickerTarget,
+          onClose: () => setTagPickerTarget(null),
+          item: tagPickerItem,
+          tagDefs,
+          quickTagDefs,
+          tagGroups,
+          groupFilter: tagPickerGroupFilter,
+          listScrollActive: tagPickerListScrollActive,
+          onGroupFilterChange: setTagPickerGroupFilter,
+          onListScroll: handleTagPickerListScroll,
+          onToggleItemTagSelection: toggleItemTagSelection,
+          onQuickTagToggle: handleQuickTagToggle,
+          onCreateTag: () => {
+            setNewTagName('');
+            setNewTagColor('#FF3B30');
+            setAddTagOpen(true);
+          },
         }}
-        okText="创建" cancelText="取消" destroyOnClose width={360}
-      >
-        <Form layout="vertical">
-          <Form.Item label="标签名称">
-            <Input value={newTagName} onChange={(e) => setNewTagName(e.target.value)} placeholder="例如：重要、待审核" />
-          </Form.Item>
-          <Form.Item label="标签颜色">
-            <ColorPicker value={newTagColor} onChange={(c) => setNewTagColor(c)} />
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      {/* ===== 添加资料 Modal ===== */}
-      <Modal
-        title={addType === 'folder' ? '新建文件夹' : '新建资料'}
-        open={addOpen} onCancel={() => setAddOpen(false)} onOk={handleAddSubmit}
-        okText="确定" cancelText="取消" destroyOnClose
-      >
-        <Form form={addForm} layout="vertical" preserve={false}>
-          <Form.Item label="名称" name="name" rules={[{ required: true, message: '请输入名称' }]}>
-            <Input placeholder={addType === 'folder' ? '请输入文件夹名称' : '请输入资料名称'} />
-          </Form.Item>
-          {addType === 'file' && (
-            <>
-              <Form.Item label="文件类型" name="fileType" tooltip="留空则按文件名后缀自动识别">
-                <Select allowClear placeholder="自动识别" options={[
-                  { value: 'pdf', label: 'PDF' }, { value: 'pptx', label: 'PPT' },
-                  { value: 'docx', label: 'Word' }, { value: 'xlsx', label: 'Excel' },
-                  { value: 'image', label: '图片' }, { value: 'video', label: '视频' },
-                  { value: 'audio', label: '音频' }, { value: 'other', label: '其他' },
-                ]} />
-              </Form.Item>
-              <Form.Item label="本地上传（可选）">
-                <Upload beforeUpload={async (file) => {
-                  const inferred = inferFileType(file.name);
-                  addForm.setFieldsValue({ name: file.name, fileType: inferred });
-                  const hide = message.loading('上传中...', 0);
-                  try {
-                    const r = await fileApi.upload(file, 'resource-lib');
-                    addForm.setFieldsValue({ url: r.url, size: r.size, mime: r.mime });
-                    hide(); message.success('上传成功');
-                  } catch { hide(); message.error('上传失败'); }
-                  return false;
-                }} maxCount={1}>
-                  <Button icon={<FileAddOutlined />}>选择文件</Button>
-                </Upload>
-              </Form.Item>
-              <Form.Item name="url" hidden><Input /></Form.Item>
-              <Form.Item name="size" hidden><Input /></Form.Item>
-              <Form.Item name="mime" hidden><Input /></Form.Item>
-            </>
-          )}
-          <div className="rl-add-tip">将创建到：<b>{currentFolder ? currentFolder.name : '根目录'}</b></div>
-        </Form>
-      </Modal>
-
-      {/* 添加资料对话框（点击 + 弹出） */}
-      <AddResourceDialog
-        open={addDialogOpen}
-        onClose={() => {
-          setAddDialogOpen(false);
-          setAddDialogParentKey(null);
+        addTag={{
+          open: addTagOpen,
+          onClose: () => setAddTagOpen(false),
+          onConfirm: () => {
+            const trimmed = newTagName.trim();
+            if (!trimmed) {
+              message.warning('标签名称不能为空');
+              return;
+            }
+            setData((d) => addTagDefinition(d, {
+              name: trimmed,
+              color: typeof newTagColor === 'string' ? newTagColor : newTagColor.toHexString(),
+            }, scope));
+            setAddTagOpen(false);
+            message.success(`标签「${trimmed}」已创建`);
+          },
+          name: newTagName,
+          onNameChange: setNewTagName,
+          color: newTagColor,
+          onColorChange: setNewTagColor,
         }}
-        onUpload={async (files) => {
-          const parentKey = addDialogParentKey === ROOT_PARENT_KEY ? null : (addDialogParentKey ?? selectedFolderKey);
-          const { successCount, failureCount } = await uploadFilesToLibrary(files, { parentKey });
-          setAddDialogParentKey(null);
-          if (successCount > 0) {
-            message.success(
-              failureCount > 0
-                ? `已上传 ${successCount} 个文件，${failureCount} 个失败`
-                : `已上传 ${successCount} 个文件`,
-            );
-          }
+        createEntry={{
+          open: addOpen,
+          onClose: () => setAddOpen(false),
+          onConfirm: handleAddSubmit,
+          type: addType,
+          form: addForm,
+          currentFolderName: currentFolder ? currentFolder.name : '根目录',
+        }}
+        resourceImport={{
+          open: addDialogOpen,
+          onClose: () => {
+            setAddDialogOpen(false);
+            setAddDialogParentKey(null);
+          },
+          onUpload: async (files) => {
+            const parentKey = addDialogParentKey === ROOT_PARENT_KEY ? null : (addDialogParentKey ?? selectedFolderKey);
+            const { successCount, failureCount } = await uploadFilesToLibrary(files, { parentKey });
+            setAddDialogParentKey(null);
+            if (successCount > 0) {
+              message.success(
+                failureCount > 0
+                  ? `已上传 ${successCount} 个文件，${failureCount} 个失败`
+                  : `已上传 ${successCount} 个文件`,
+              );
+            }
+          },
+        }}
+        parseDrawer={{
+          open: parseDrawerOpen,
+          onClose: () => setParseDrawerOpen(false),
         }}
       />
-
-      <Drawer
-        open={parseDrawerOpen}
-        onClose={() => setParseDrawerOpen(false)}
-        placement="right"
-        width={1180}
-        destroyOnClose
-        styles={{
-          header: { display: 'none' },
-          body: { padding: 0 },
-        }}
-      >
-        <ResourceParseStatus onBack={() => setParseDrawerOpen(false)} />
-      </Drawer>
     </div>
     </>
   );
