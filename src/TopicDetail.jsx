@@ -240,6 +240,9 @@ function TopicDetail({ topicTitle, onBack }) {
   const fileCount = resources.filter((r) => !r.isFolder).length;
   const currentListItems = selectedFolder ? folderChildren : rootItems;
   const currentListParentKey = selectedFolderKey || null;
+  const previewParentFolder = previewItem?.parentKey
+    ? resources.find((resource) => resource.key === previewItem.parentKey && resource.isFolder) || null
+    : null;
   const tagPickerItem = tagPickerTarget
     ? resources.find((resource) => resource.key === tagPickerTarget) || null
     : null;
@@ -626,6 +629,7 @@ function TopicDetail({ topicTitle, onBack }) {
   const handleSelectFolder = (folderKey) => {
     setContextMenuItemKey(null);
     setBgMenuPos(null);
+    setPreviewItem(null);
     setSelectedFolderKey(folderKey);
     setExpandedFolders((prev) => {
       const next = new Set(prev);
@@ -638,6 +642,7 @@ function TopicDetail({ topicTitle, onBack }) {
     if (!resource || resource.isFolder) return;
     setContextMenuItemKey(null);
     setBgMenuPos(null);
+    setSelectedFolderKey(resource.parentKey || null);
     setPreviewItem(resource);
   };
 
@@ -1366,7 +1371,69 @@ function TopicDetail({ topicTitle, onBack }) {
           </div>
 
           <div className="detail-right-panel">
-            {selectedFolder ? (
+            {previewItem ? (
+              <>
+                <div className="folder-info topic-preview-header">
+                  <div className="folder-info-left">
+                    <div className="folder-big-icon topic-preview-header-icon">
+                      {renderFileIcon(getTopicResourceFileType(previewItem), { fontSize: 34 })}
+                    </div>
+                    <div className="folder-meta">
+                      <div className="folder-name">{previewItem.name}</div>
+                      <div className="folder-desc">
+                        {getResourceTypeLabel(previewItem, getTopicResourceFileType(previewItem))}
+                        {' · '}
+                        {previewItem.owner || '--'}
+                        {' · '}
+                        {previewItem.lastEdit || '--'}
+                      </div>
+                      <div className="folder-desc">
+                        {previewParentFolder ? `所在文件夹：${previewParentFolder.name}` : '位于根目录'}
+                      </div>
+                      {tagConfig ? (
+                        <div className="folder-tag-section">
+                          <div className="folder-tag-row">
+                            <span className="folder-tag-label">标签</span>
+                            {renderResourceTagText(previewItem) || <span className="topic-tags-empty">未设置标签</span>}
+                            {isDraft ? (
+                              <Button size="small" icon={<TagsOutlined />} onClick={() => handleOpenTagPicker(previewItem.key)}>
+                                编辑标签
+                              </Button>
+                            ) : null}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                  <div className="folder-info-right">
+                    <Button size="small" onClick={() => setPreviewItem(null)}>
+                      {previewParentFolder ? '返回文件夹' : '返回概览'}
+                    </Button>
+                  </div>
+                </div>
+                <div className="topic-preview-panel">
+                  <div className="topic-preview-content topic-preview-content-inline">
+                    <div className="topic-preview-body">
+                      {renderPreviewContent(previewItem)}
+                    </div>
+                    <div className="topic-preview-footer">
+                      <div className="topic-preview-name">{previewItem.name}</div>
+                      <div className="topic-preview-meta-row">
+                        <span>{getResourceTypeLabel(previewItem, getTopicResourceFileType(previewItem))}</span>
+                        <span>{previewItem.owner || '--'}</span>
+                        <span>{previewItem.lastEdit || '--'}</span>
+                      </div>
+                      {tagConfig ? (
+                        <div className="topic-preview-tags-row">
+                          <span className="topic-preview-footer-label">标签</span>
+                          {renderPreviewTagTokens(previewItem)}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : selectedFolder ? (
               <>
                 <div className="folder-info">
                   <div className="folder-info-left">
@@ -1464,38 +1531,6 @@ function TopicDetail({ topicTitle, onBack }) {
         onClose={closeAddResourceModal}
         onAdd={handleAddResource}
       />
-
-      <Modal
-        title={previewItem ? `预览：${previewItem.name}` : '预览'}
-        open={!!previewItem}
-        onCancel={() => setPreviewItem(null)}
-        footer={null}
-        width={860}
-        destroyOnClose
-        className="topic-preview-modal"
-      >
-        {previewItem ? (
-          <div className="topic-preview-content">
-            <div className="topic-preview-body">
-              {renderPreviewContent(previewItem)}
-            </div>
-            <div className="topic-preview-footer">
-              <div className="topic-preview-name">{previewItem.name}</div>
-              <div className="topic-preview-meta-row">
-                <span>{getResourceTypeLabel(previewItem, getTopicResourceFileType(previewItem))}</span>
-                <span>{previewItem.owner || '--'}</span>
-                <span>{previewItem.lastEdit || '--'}</span>
-              </div>
-              {tagConfig ? (
-                <div className="topic-preview-tags-row">
-                  <span className="topic-preview-footer-label">标签</span>
-                  {renderPreviewTagTokens(previewItem)}
-                </div>
-              ) : null}
-            </div>
-          </div>
-        ) : null}
-      </Modal>
 
       <Modal
         title="编辑标签"

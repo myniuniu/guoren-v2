@@ -863,8 +863,10 @@
   margin: 0;
 }
 
-.topic-preview-modal .ant-modal-body {
-  padding: 0;
+.topic-preview-panel {
+  display: flex;
+  flex: 1;
+  min-height: 0;
 }
 
 .topic-preview-content {
@@ -874,6 +876,14 @@
   background: #f7f8fa;
 }
 
+.topic-preview-content-inline {
+  flex: 1;
+  min-height: 0;
+  border: 1px solid #e7eaef;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
 .topic-preview-body {
   display: flex;
   flex: 1;
@@ -881,6 +891,17 @@
   justify-content: center;
   padding: 28px;
   overflow: auto;
+}
+
+.topic-preview-header-icon {
+  width: 52px;
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #f7f9fc 0%, #eef3f8 100%);
+  color: #4b5563;
 }
 
 .topic-preview-image {
