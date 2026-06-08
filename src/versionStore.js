@@ -1,6 +1,35 @@
 const STORAGE_KEY = 'guoren_version_data';
 const DATA_VERSION = 8; // 增加版本号，当默认数据结构变化时递增，自动重置本地存储
 
+function cloneData(data) {
+  return JSON.parse(JSON.stringify(data));
+}
+
+function resolveStorageKey(scopeKey = 'default') {
+  return scopeKey === 'default' ? STORAGE_KEY : `${STORAGE_KEY}:${scopeKey}`;
+}
+
+function withRuntimeMeta(data, storageKey) {
+  return {
+    ...data,
+    _dataVersion: DATA_VERSION,
+    _storageKey: storageKey,
+  };
+}
+
+function nowText() {
+  return new Date()
+    .toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
+    .replace(/\//g, '-');
+}
+
 // 默认初始数据
 const defaultData = {
   versions: [
@@ -88,28 +117,41 @@ const defaultData = {
 };
 
 // 从 localStorage 加载数据
-export function loadFromStorage() {
+export function loadFromStorage(options = {}) {
+  const resolved =
+    typeof options === 'string'
+      ? { scopeKey: options }
+      : options;
+  const scopeKey = resolved.scopeKey || 'default';
+  const storageKey = resolveStorageKey(scopeKey);
+  const initialData = cloneData(
+    typeof resolved.initialData === 'function'
+      ? resolved.initialData()
+      : resolved.initialData || defaultData
+  );
+
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed._dataVersion === DATA_VERSION) {
-        return parsed;
+        return withRuntimeMeta(parsed, storageKey);
       }
     }
   } catch (e) {
     console.error('Failed to load version data from localStorage:', e);
   }
-  // 版本不匹配或无数据，初始化并写入
-  const initial = { ...defaultData, _dataVersion: DATA_VERSION };
-  saveToStorage(initial);
-  return initial;
+
+  const seeded = withRuntimeMeta(initialData, storageKey);
+  saveToStorage(seeded);
+  return seeded;
 }
 
 // 保存到 localStorage
 export function saveToStorage(data) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    const storageKey = data._storageKey || resolveStorageKey();
+    localStorage.setItem(storageKey, JSON.stringify(data));
   } catch (e) {
     console.error('Failed to save version data to localStorage:', e);
   }
@@ -140,32 +182,45 @@ export function createNewVersion(data) {
   }
 
   const activeVersion = data.versions.find((v) => v.status === 'active');
-  // 生成 key 映射，确保 parentKey 关系不断裂
   const keyMap = new Map();
+
   if (activeVersion) {
-    activeVersion.resources.forEach((r) => {
-      keyMap.set(r.key, `r_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
+    activeVersion.resources.forEach((resource) => {
+      keyMap.set(
+        resource.key,
+        `r_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+      );
     });
   }
+
   const inheritedResources = activeVersion
-    ? activeVersion.resources.map((r) => ({
-        ...r,
-        key: keyMap.get(r.key),
-        parentKey: r.parentKey ? keyMap.get(r.parentKey) || r.parentKey : null,
+    ? activeVersion.resources.map((resource) => ({
+        ...resource,
+        key: keyMap.get(resource.key),
+        parentKey: resource.parentKey ? keyMap.get(resource.parentKey) || resource.parentKey : null,
       }))
     : [];
+
+  const inheritedAssessment = activeVersion?.assessment
+    ? cloneData(activeVersion.assessment)
+    : { totalHours: 0, passScore: 60, certificate: false, rules: [] };
+
+  if (Array.isArray(inheritedAssessment.rules)) {
+    inheritedAssessment.rules = inheritedAssessment.rules.map((rule) => ({
+      ...rule,
+      folderKey: rule.folderKey ? keyMap.get(rule.folderKey) || rule.folderKey : rule.folderKey,
+    }));
+  }
 
   const newVersion = {
     id: `v${Date.now()}`,
     name: `版本 ${data.versions.length + 1}`,
     status: 'draft',
-    createdAt: new Date().toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\//g, '-'),
+    createdAt: nowText(),
     publishedAt: null,
     resources: inheritedResources,
-    assessment: activeVersion?.assessment
-      ? JSON.parse(JSON.stringify(activeVersion.assessment))
-      : { totalHours: 0, passScore: 60, certificate: false, rules: [] },
-    assessmentChat: [],
+    assessment: inheritedAssessment,
+    assessmentChat: activeVersion?.assessmentChat ? cloneData(activeVersion.assessmentChat) : [],
   };
 
   const newData = {
@@ -179,14 +234,13 @@ export function createNewVersion(data) {
 
 // 发布版本（新发布的版本变为 active，之前的 active 变为 published/失效）
 export function publishVersion(data, versionId) {
-  const now = new Date().toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\//g, '-');
+  const now = nowText();
   const newData = {
     ...data,
     versions: data.versions.map((v) => {
       if (v.id === versionId) {
         return { ...v, status: 'active', publishedAt: now };
       }
-      // 之前生效的版本降为 published（已失效）
       if (v.status === 'active') {
         return { ...v, status: 'published' };
       }
@@ -208,7 +262,7 @@ export function addResource(data, versionId, resource) {
     isFolder: resource.isFolder || false,
     parentKey: resource.parentKey || null,
     owner: 'zhanghl',
-    lastEdit: new Date().toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\//g, '-'),
+    lastEdit: nowText(),
   };
 
   const newData = {
@@ -232,10 +286,10 @@ export function updateResource(data, versionId, resourceKey, updates) {
       v.id === versionId
         ? {
             ...v,
-            resources: v.resources.map((r) =>
-              r.key === resourceKey
-                ? { ...r, ...updates, lastEdit: new Date().toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\//g, '-') }
-                : r
+            resources: v.resources.map((resource) =>
+              resource.key === resourceKey
+                ? { ...resource, ...updates, lastEdit: nowText() }
+                : resource
             ),
           }
         : v
@@ -250,12 +304,11 @@ export function deleteResource(data, versionId, resourceKey) {
   const version = data.versions.find((v) => v.id === versionId);
   if (!version || version.status !== 'draft') return data;
 
-  // 递归收集要删除的 key
   const keysToDelete = new Set();
   function collectKeys(key) {
     keysToDelete.add(key);
-    version.resources.forEach((r) => {
-      if (r.parentKey === key) collectKeys(r.key);
+    version.resources.forEach((resource) => {
+      if (resource.parentKey === key) collectKeys(resource.key);
     });
   }
   collectKeys(resourceKey);
@@ -264,7 +317,7 @@ export function deleteResource(data, versionId, resourceKey) {
     ...data,
     versions: data.versions.map((v) =>
       v.id === versionId
-        ? { ...v, resources: v.resources.filter((r) => !keysToDelete.has(r.key)) }
+        ? { ...v, resources: v.resources.filter((resource) => !keysToDelete.has(resource.key)) }
         : v
     ),
   };
@@ -284,13 +337,14 @@ export function deleteVersion(data, versionId) {
   const version = data.versions.find((v) => v.id === versionId);
   if (!version) return data;
   if (version.status === 'active') return { ...data, error: '不能删除当前生效版本' };
+
   const newVersions = data.versions.filter((v) => v.id !== versionId);
-  // 如果删除的是当前查看的版本，切换到生效版本或第一个版本
   let newCurrentId = data.currentVersionId;
   if (newCurrentId === versionId) {
     const active = newVersions.find((v) => v.status === 'active');
     newCurrentId = active ? active.id : newVersions[0]?.id;
   }
+
   const newData = { ...data, versions: newVersions, currentVersionId: newCurrentId };
   saveToStorage(newData);
   return newData;

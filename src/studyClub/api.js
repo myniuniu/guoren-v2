@@ -1,3 +1,5 @@
+import { getMappedChannelDetail, getMappedChannelSummary } from './adminTopicMapping';
+
 const STORAGE_KEY = 'guoren_study_club_subscriptions';
 
 const delay = (ms = 200) => new Promise((r) => setTimeout(r, ms));
@@ -1089,9 +1091,36 @@ function getStaticChannelDetail(id) {
   return MOCK_CHANNEL_DETAILS[id] || buildDefaultDetail(channel);
 }
 
+function getResolvedChannelSummary(channel) {
+  if (!channel || !channel.id) return null;
+  const mappedSummary = getMappedChannelSummary(channel.id, channel);
+  return mappedSummary ? { ...channel, ...mappedSummary } : channel;
+}
+
+function getResolvedChannelDetail(id) {
+  const rawChannel = MOCK_CHANNELS_DATA.find((item) => item.id === id);
+  if (!rawChannel) return null;
+  const channel = getResolvedChannelSummary(rawChannel);
+  const staticDetail = getStaticChannelDetail(id);
+  const mappedDetail = getMappedChannelDetail(id, channel, staticDetail);
+  if (!mappedDetail) {
+    return {
+      ...staticDetail,
+      contentCount: channel.contentCount,
+      updatedDesc: channel.updatedDesc,
+    };
+  }
+  return {
+    ...staticDetail,
+    ...mappedDetail,
+    contentCount: channel.contentCount,
+    updatedDesc: channel.updatedDesc,
+  };
+}
+
 function findChannelContent(getter) {
   for (const channel of MOCK_CHANNELS_DATA) {
-    const detail = getStaticChannelDetail(channel.id);
+    const detail = getResolvedChannelDetail(channel.id);
     const item = getter(detail);
     if (item) {
       return item;
@@ -1130,7 +1159,10 @@ export const studyClubApi = {
   async listChannels() {
     await delay();
     const subs = getSubscriptions();
-    return MOCK_CHANNELS_DATA.map((ch) => ({ ...ch, subscribed: !!subs[ch.id] }));
+    return MOCK_CHANNELS_DATA.map((channel) => {
+      const resolved = getResolvedChannelSummary(channel);
+      return { ...resolved, subscribed: !!subs[channel.id] };
+    });
   },
 
   async getBanner() {
@@ -1155,10 +1187,11 @@ export const studyClubApi = {
   async getChannelDetail(id) {
     await delay(180);
     const subs = getSubscriptions();
-    const ch = MOCK_CHANNELS_DATA.find((c) => c.id === id);
-    if (!ch) return null;
+    const rawChannel = MOCK_CHANNELS_DATA.find((c) => c.id === id);
+    if (!rawChannel) return null;
+    const ch = getResolvedChannelSummary(rawChannel);
     return {
-      ...getStaticChannelDetail(id),
+      ...getResolvedChannelDetail(id),
       contentCount: ch.contentCount,
       updatedDesc: ch.updatedDesc,
       subscribers: ch.subscribers,

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Layout, Menu, Input, Button, Card, Dropdown, Tag, Tooltip } from 'antd';
+import { useState } from 'react';
+import { Layout, Menu, Input, Button, Card, Dropdown, Tag } from 'antd';
 import {
   HomeOutlined,
   SearchOutlined,
@@ -58,11 +58,20 @@ import DevDocsPage from './appCenter/DevDocsPage';
 import DevBackendPage from './appCenter/DevBackendPage';
 import DmsModule from './dms/DmsModule';
 import IntegrationModule from './integration/IntegrationModule';
+import MessagesModule from './messages/MessagesModule';
+import { getMappedChannelSummary } from './studyClub/adminTopicMapping';
 import './App.css';
 
 const { Sider, Header, Content } = Layout;
 
-const cardData = [
+function getInitialHashPage() {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+  return window.location.hash.replace('#', '');
+}
+
+const defaultCardData = [
   { title: '心理健康学习', subtitle: '暂无', visibility: '公开', count: 8 },
   { title: '人工智能学习', subtitle: '暂无', visibility: '公开', count: 5 },
   { title: '人工智能学习专题', subtitle: '暂无', visibility: '公开', count: 11 },
@@ -76,6 +85,20 @@ const cardData = [
   { title: '教师AIGC：课堂练习与评估生成', subtitle: '教师AIGC：课堂练习与评估生成', visibility: '公开', count: 0 },
   { title: 'python实训1', subtitle: '暂无', visibility: '公开', count: 4 },
 ];
+
+function getSceneCardDataMap() {
+  const seniorSummary = getMappedChannelSummary('senior-community') || {};
+  return {
+    'study-club-channel': [
+      {
+        title: '老年社区',
+        subtitle: '围绕智慧助老、康养服务和社区陪伴的银龄共创空间',
+        visibility: '公开',
+        count: seniorSummary.contentCount || 0,
+      },
+    ],
+  };
+}
 
 const menuItems = [
   {
@@ -95,6 +118,7 @@ const menuItems = [
     children: [
       { key: 'my-learning-space', icon: <DesktopOutlined />, label: '我的学习空间' },
       { key: 'workshop', icon: <TeamOutlined />, label: '研讨会' },
+      { key: 'study-club-channel', icon: <RocketOutlined />, label: '研习社-频道' },
     ],
   },
   {
@@ -119,7 +143,7 @@ const menuItems = [
 
 // Left icon bar items
 const iconBarItems = [
-  { key: 'my-space', icon: <AppstoreOutlined />, label: '我的空间', active: true },
+  { key: 'my-space', icon: <AppstoreOutlined />, label: '空间', active: true },
   { key: 'cloud-disk', icon: <CloudOutlined />, label: '云盘' },
   { key: 'resource-lib', icon: <BookOutlined />, label: '资料库' },
   { key: 'resource-parse', icon: <ScanOutlined />, label: '资料解析' },
@@ -153,18 +177,12 @@ const iconBarItems = [
 
 function App() {
   const [selectedKeys, setSelectedKeys] = useState(['home']);
-  const [activeIconKey, setActiveIconKey] = useState('my-space');
-  const [currentPage, setCurrentPage] = useState('home'); // 'home', 'detail', or 'workflow'
+  const [activeIconKey, setActiveIconKey] = useState(() => getInitialHashPage() || 'my-space');
+  const [currentPage, setCurrentPage] = useState(() => getInitialHashPage() || 'home'); // 'home', 'detail', or 'workflow'
   const [selectedTopic, setSelectedTopic] = useState(null);
-
-  // 支持 hash 路由直接打开对应页面
-  useEffect(() => {
-    const hash = window.location.hash.replace('#', '');
-    if (hash) {
-      setCurrentPage(hash);
-      setActiveIconKey(hash);
-    }
-  }, []);
+  const activeSceneKey = selectedKeys[0] || 'home';
+  const sceneCardDataMap = getSceneCardDataMap();
+  const visibleCardData = sceneCardDataMap[activeSceneKey] || defaultCardData;
 
   const handleCardClick = (card) => {
     setSelectedTopic(card.title);
@@ -180,6 +198,8 @@ function App() {
     setActiveIconKey(key);
     if (key === 'workflow') {
       setCurrentPage('workflow');
+    } else if (key === 'messages') {
+      setCurrentPage('messages');
     } else if (key === 'process-management') {
       setCurrentPage('process-management');
     } else if (key === 'leave') {
@@ -219,6 +239,7 @@ function App() {
     } else if (key === 'integration') {
       setCurrentPage('integration');
     } else if (
+      currentPage === 'messages' ||
       currentPage === 'workflow' ||
       currentPage === 'process-management' ||
       currentPage === 'leave' ||
@@ -278,7 +299,9 @@ function App() {
       </div>
 
       {/* Page Content */}
-      {currentPage === 'workflow' ? (
+      {currentPage === 'messages' ? (
+        <MessagesModule />
+      ) : currentPage === 'workflow' ? (
         <LeaveWorkflow onBack={handleBackToHome} />
       ) : currentPage === 'process-management' ? (
         <ProcessManagement />
@@ -354,7 +377,7 @@ function App() {
             {/* Content */}
             <Content className="app-content">
               <div className="card-grid">
-                {cardData.map((card, index) => (
+                {visibleCardData.map((card, index) => (
                   <Card
                     key={index}
                     className="scene-card"

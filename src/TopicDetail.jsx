@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, Table, Popconfirm, Input, Dropdown, Tag, message } from 'antd';
 import {
   HomeOutlined,
@@ -40,6 +40,7 @@ import {
   updateAssessment,
   updateAssessmentChat,
 } from './versionStore';
+import { getTopicAdminConfig } from './studyClub/adminTopicMapping';
 import './TopicDetail.css';
 
 // 根据类型获取图标
@@ -59,10 +60,22 @@ function getResourceIcon(type) {
   }
 }
 
+function loadTopicVersionData(topicConfig) {
+  if (topicConfig) {
+    return loadFromStorage({
+      scopeKey: topicConfig.storageScopeKey,
+      initialData: topicConfig.initialDataFactory,
+    });
+  }
+  return loadFromStorage();
+}
+
 function TopicDetail({ topicTitle, onBack }) {
+  const topicAdminConfig = getTopicAdminConfig(topicTitle);
+  const topicStorageScopeKey = topicAdminConfig?.storageScopeKey || 'default';
   const [activeTab, setActiveTab] = useState('knowledge');
   const [modalOpen, setModalOpen] = useState(false);
-  const [versionData, setVersionData] = useState(() => loadFromStorage());
+  const [versionData, setVersionData] = useState(() => loadTopicVersionData(topicAdminConfig));
   const [editingKey, setEditingKey] = useState(null);
   const [editingName, setEditingName] = useState('');
   // 文件夹相关状态
@@ -70,6 +83,18 @@ function TopicDetail({ topicTitle, onBack }) {
   const [selectedFolderKey, setSelectedFolderKey] = useState(null);
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
+
+  useEffect(() => {
+    setVersionData(loadTopicVersionData(topicAdminConfig));
+    setActiveTab('knowledge');
+    setModalOpen(false);
+    setEditingKey(null);
+    setEditingName('');
+    setExpandedFolders(new Set());
+    setSelectedFolderKey(null);
+    setCreatingFolder(false);
+    setNewFolderName('');
+  }, [topicTitle, topicStorageScopeKey]);
 
   const currentVersion = getCurrentVersion(versionData);
   const versions = getVersions(versionData);
@@ -354,6 +379,11 @@ function TopicDetail({ topicTitle, onBack }) {
         <div className="detail-header-left">
           <HomeOutlined className="detail-home-icon" onClick={onBack} />
           <span className="detail-title">{topicTitle}</span>
+          {topicAdminConfig ? (
+            <Tag color="blue" style={{ marginLeft: 10, borderRadius: 999, padding: '0 10px' }}>
+              研习社频道后台
+            </Tag>
+          ) : null}
         </div>
         <div className="detail-header-center">
           <div className="detail-tabs">
