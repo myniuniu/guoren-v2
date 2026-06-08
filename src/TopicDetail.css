@@ -740,6 +740,10 @@
   background: #f8fafc;
 }
 
+.topic-file-row-selected {
+  background: #007aff !important;
+}
+
 .topic-file-row:last-child {
   border-bottom: none;
 }
@@ -800,6 +804,20 @@
   font-weight: 500;
 }
 
+.topic-file-row-selected .topic-file-name,
+.topic-file-row-selected .topic-file-name-folder,
+.topic-file-row-selected .topic-file-col-owner,
+.topic-file-row-selected .topic-file-col-edit,
+.topic-file-row-selected .topic-file-col-tags,
+.topic-file-row-selected .topic-tags-text,
+.topic-file-row-selected .topic-tags-empty {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.topic-file-row-selected .topic-file-icon {
+  color: rgba(255, 255, 255, 0.92);
+}
+
 .topic-file-col-tags .topic-tags-inline {
   max-width: 100%;
 }
@@ -830,6 +848,20 @@
   opacity: 1;
   pointer-events: auto;
   transform: translate3d(0, -50%, 0);
+}
+
+.topic-file-row-selected .topic-action-btn {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: none;
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.topic-file-row-selected .topic-action-btn:hover {
+  background: rgba(255, 255, 255, 0.24);
+  border-color: rgba(255, 255, 255, 0.32);
+  box-shadow: none;
+  color: #fff;
 }
 
 .topic-file-row-context-open .topic-action-btn {

@@ -156,6 +156,7 @@ function TopicDetail({ topicTitle, onBack }) {
   const [versionData, setVersionData] = useState(() => loadTopicVersionData(topicAdminConfig));
   const [expandedFolders, setExpandedFolders] = useState(new Set());
   const [selectedFolderKey, setSelectedFolderKey] = useState(null);
+  const [selectedItemKey, setSelectedItemKey] = useState(null);
   const [addResourceParentKey, setAddResourceParentKey] = useState(undefined);
   const [inlineRenameItemKey, setInlineRenameItemKey] = useState(null);
   const [inlineRenameName, setInlineRenameName] = useState('');
@@ -170,6 +171,7 @@ function TopicDetail({ topicTitle, onBack }) {
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#1677ff');
   const inlineRenameInputRef = useRef(null);
+  const pendingRenameTimerRef = useRef(null);
   const tagPickerScrollTimerRef = useRef(null);
 
   useEffect(() => {
@@ -179,6 +181,7 @@ function TopicDetail({ topicTitle, onBack }) {
     setPreviewItem(null);
     setExpandedFolders(new Set());
     setSelectedFolderKey(null);
+    setSelectedItemKey(null);
     setAddResourceParentKey(undefined);
     setInlineRenameItemKey(null);
     setInlineRenameName('');
@@ -253,13 +256,47 @@ function TopicDetail({ topicTitle, onBack }) {
     tagPickerScrollTimerRef.current = null;
   };
 
-  useEffect(() => () => clearTagPickerScrollTimer(), []);
+  const clearPendingRenameTrigger = () => {
+    if (!pendingRenameTimerRef.current) return;
+    window.clearTimeout(pendingRenameTimerRef.current);
+    pendingRenameTimerRef.current = null;
+  };
+
+  useEffect(() => () => {
+    clearTagPickerScrollTimer();
+    clearPendingRenameTrigger();
+  }, []);
 
   useEffect(() => {
     if (tagPickerGroupFilter !== 'all' && !tagGroups.some((group) => group.id === tagPickerGroupFilter)) {
       setTagPickerGroupFilter('all');
     }
   }, [tagGroups, tagPickerGroupFilter]);
+
+  useEffect(() => {
+    if (selectedFolderKey && !resources.some((resource) => resource.key === selectedFolderKey && resource.isFolder)) {
+      setSelectedFolderKey(null);
+    }
+    if (selectedItemKey && !resources.some((resource) => resource.key === selectedItemKey)) {
+      setSelectedItemKey(null);
+    }
+    if (contextMenuItemKey && !resources.some((resource) => resource.key === contextMenuItemKey)) {
+      setContextMenuItemKey(null);
+    }
+    if (inlineRenameItemKey && !resources.some((resource) => resource.key === inlineRenameItemKey)) {
+      setInlineRenameItemKey(null);
+      setInlineRenameName('');
+    }
+    if (!previewItem) return;
+    const matchedPreviewItem = resources.find((resource) => resource.key === previewItem.key) || null;
+    if (!matchedPreviewItem) {
+      setPreviewItem(null);
+      return;
+    }
+    if (matchedPreviewItem !== previewItem) {
+      setPreviewItem(matchedPreviewItem);
+    }
+  }, [contextMenuItemKey, inlineRenameItemKey, previewItem, resources, selectedFolderKey, selectedItemKey]);
 
   const getResourceTagIds = (resource) => {
     if (!resource || !tagConfig) return [];
@@ -424,6 +461,7 @@ function TopicDetail({ topicTitle, onBack }) {
       message.warning('当前版本不可编辑');
       return;
     }
+    clearPendingRenameTrigger();
     setTagPickerTarget(resourceKey);
     setTagPickerGroupFilter('all');
   };
@@ -525,6 +563,7 @@ function TopicDetail({ topicTitle, onBack }) {
   };
 
   const closeAddResourceModal = () => {
+    clearPendingRenameTrigger();
     setModalOpen(false);
     setAddResourceParentKey(undefined);
   };
@@ -534,6 +573,7 @@ function TopicDetail({ topicTitle, onBack }) {
       message.warning('当前版本已发布，请新建版本后再添加资料');
       return;
     }
+    clearPendingRenameTrigger();
     setAddResourceParentKey(parentKey ?? null);
     setModalOpen(true);
   };
@@ -561,6 +601,7 @@ function TopicDetail({ topicTitle, onBack }) {
     if (resourceKey === selectedFolderKey) setSelectedFolderKey(null);
     if (resourceKey === previewItem?.key) setPreviewItem(null);
     if (resourceKey === tagPickerTarget) setTagPickerTarget(null);
+    if (resourceKey === selectedItemKey) setSelectedItemKey(null);
     if (resourceKey === inlineRenameItemKey) {
       setInlineRenameItemKey(null);
       setInlineRenameName('');
@@ -574,6 +615,7 @@ function TopicDetail({ topicTitle, onBack }) {
       if (!isDraft) message.warning('当前版本不可编辑');
       return;
     }
+    clearPendingRenameTrigger();
     Modal.confirm({
       title: '确认删除',
       icon: null,
@@ -586,6 +628,7 @@ function TopicDetail({ topicTitle, onBack }) {
   };
 
   const cancelInlineRename = () => {
+    clearPendingRenameTrigger();
     setInlineRenameItemKey(null);
     setInlineRenameName('');
   };
@@ -610,11 +653,22 @@ function TopicDetail({ topicTitle, onBack }) {
       message.warning('当前版本不可编辑');
       return;
     }
+    clearPendingRenameTrigger();
     setBgMenuPos(null);
     setContextMenuItemKey(null);
+    setSelectedItemKey(item.key);
     setInlineRenameItemKey(item.key);
     setInlineRenameName(item.name || '');
     setInlineRenameSurface(surface);
+  };
+
+  const queueInlineRename = (item, surface = 'list', delay = 220) => {
+    if (!item?.key || !isDraft) return;
+    clearPendingRenameTrigger();
+    pendingRenameTimerRef.current = window.setTimeout(() => {
+      pendingRenameTimerRef.current = null;
+      startInlineRename(item, surface);
+    }, delay);
   };
 
   const toggleFolder = (folderKey) => {
@@ -627,9 +681,11 @@ function TopicDetail({ topicTitle, onBack }) {
   };
 
   const handleSelectFolder = (folderKey) => {
+    clearPendingRenameTrigger();
     setContextMenuItemKey(null);
     setBgMenuPos(null);
     setPreviewItem(null);
+    setSelectedItemKey(folderKey);
     setSelectedFolderKey(folderKey);
     setExpandedFolders((prev) => {
       const next = new Set(prev);
@@ -640,10 +696,25 @@ function TopicDetail({ topicTitle, onBack }) {
 
   const handleOpenPreview = (resource) => {
     if (!resource || resource.isFolder) return;
+    clearPendingRenameTrigger();
     setContextMenuItemKey(null);
     setBgMenuPos(null);
+    setSelectedItemKey(resource.key);
     setSelectedFolderKey(resource.parentKey || null);
     setPreviewItem(resource);
+  };
+
+  const handleActivateItem = (item, surface = 'list') => {
+    if (!item) return;
+    if (selectedItemKey === item.key && inlineRenameItemKey !== item.key) {
+      queueInlineRename(item, surface);
+      return;
+    }
+    if (item.isFolder) {
+      handleSelectFolder(item.key);
+      return;
+    }
+    handleOpenPreview(item);
   };
 
   const createFolderAndStartRename = (parentKey = currentListParentKey, surface = 'list') => {
@@ -676,6 +747,7 @@ function TopicDetail({ topicTitle, onBack }) {
 
   const handleItemContextMenuOpenChange = (itemKey, open) => {
     if (open) {
+      clearPendingRenameTrigger();
       setBgMenuPos(null);
       setContextMenuItemKey(itemKey);
       return;
@@ -750,6 +822,7 @@ function TopicDetail({ topicTitle, onBack }) {
     const itemSelector = surface === 'tree' ? '.project-item' : '.topic-file-row, .topic-file-list-header';
     if (event.target.closest(itemSelector)) return;
     event.preventDefault();
+    clearPendingRenameTrigger();
     setContextMenuItemKey(null);
     setBgMenuSurface(surface);
     setBgMenuPos({ x: event.clientX, y: event.clientY });
@@ -807,12 +880,12 @@ function TopicDetail({ topicTitle, onBack }) {
 
   const renderTreeItem = (item) => {
     const rowMenu = getItemMoreMenu(item, 'tree');
+    const isSelected = selectedItemKey === item.key;
     const isContextOpen = contextMenuItemKey === item.key;
     const isInlineRenaming = inlineRenameItemKey === item.key && inlineRenameSurface === 'tree';
 
     if (item.isFolder) {
       const isExpanded = expandedFolders.has(item.key);
-      const isSelected = selectedFolderKey === item.key;
       const children = getChildren(item.key);
       return (
         <div key={item.key} className="tree-folder-group">
@@ -823,7 +896,7 @@ function TopicDetail({ topicTitle, onBack }) {
           >
             <div
               className={`project-item project-item-folder ${isSelected ? 'project-item-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''}`}
-              onClick={() => handleSelectFolder(item.key)}
+              onClick={() => handleActivateItem(item, 'tree')}
             >
               <span
                 className="project-item-arrow"
@@ -906,8 +979,8 @@ function TopicDetail({ topicTitle, onBack }) {
         onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
       >
         <div
-          className={`project-item project-item-child ${isContextOpen ? 'project-item-context-open' : ''}`}
-          onClick={() => handleOpenPreview(item)}
+          className={`project-item project-item-child ${isSelected ? 'project-item-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''}`}
+          onClick={() => handleActivateItem(item, 'tree')}
         >
           <span className="project-item-icon">{getResourceIcon(item.type)}</span>
           {isInlineRenaming ? (
@@ -954,6 +1027,7 @@ function TopicDetail({ topicTitle, onBack }) {
 
   const renderListRow = (item) => {
     const rowMenu = getItemMoreMenu(item, 'list');
+    const isSelected = selectedItemKey === item.key;
     const isContextOpen = contextMenuItemKey === item.key;
     const isInlineRenaming = inlineRenameItemKey === item.key && inlineRenameSurface === 'list';
 
@@ -965,11 +1039,8 @@ function TopicDetail({ topicTitle, onBack }) {
         onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
       >
         <div
-          className={`topic-file-row ${isContextOpen ? 'topic-file-row-context-open' : ''}`}
-          onClick={() => {
-            if (item.isFolder) handleSelectFolder(item.key);
-            else handleOpenPreview(item);
-          }}
+          className={`topic-file-row ${isSelected ? 'topic-file-row-selected' : ''} ${isContextOpen ? 'topic-file-row-context-open' : ''}`}
+          onClick={() => handleActivateItem(item, 'list')}
         >
           <div className="topic-file-col topic-file-col-name">
             <span className="topic-file-icon">
