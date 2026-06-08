@@ -3,11 +3,9 @@ import { Avatar, Badge, Button, Empty, Input, Tag, Tooltip } from 'antd';
 import {
   EllipsisOutlined,
   LinkOutlined,
-  MessageOutlined,
   PlusOutlined,
   PushpinFilled,
   ReadOutlined,
-  SearchOutlined,
   SendOutlined,
   TeamOutlined,
   UserOutlined,
@@ -205,13 +203,6 @@ function getTimeLabel() {
   });
 }
 
-function getTypeCount(conversations, type) {
-  if (type === 'all') {
-    return conversations.length;
-  }
-  return conversations.filter((item) => item.type === type).length;
-}
-
 function getAvatarStyle(background) {
   return {
     background,
@@ -222,27 +213,11 @@ function getAvatarStyle(background) {
 
 function MessagesModule() {
   const [conversations, setConversations] = useState(INITIAL_CONVERSATIONS);
-  const [activeType, setActiveType] = useState('all');
-  const [keyword, setKeyword] = useState('');
   const [selectedId, setSelectedId] = useState('topic-genai');
   const [drafts, setDrafts] = useState({});
 
-  const filters = ['all', 'topic', 'direct', 'group'];
-  const normalizedKeyword = keyword.trim().toLowerCase();
-  const filteredConversations = conversations.filter((item) => {
-    const matchesType = activeType === 'all' || item.type === activeType;
-    if (!matchesType) {
-      return false;
-    }
-    if (!normalizedKeyword) {
-      return true;
-    }
-    const searchable = [item.title, item.subtitle, item.preview].join(' ').toLowerCase();
-    return searchable.includes(normalizedKeyword);
-  });
-
   const selectedConversation =
-    filteredConversations.find((item) => item.id === selectedId) || filteredConversations[0] || null;
+    conversations.find((item) => item.id === selectedId) || conversations[0] || null;
   const selectedMeta = selectedConversation ? TYPE_META[selectedConversation.type] : null;
   const activeConversationId = selectedConversation?.id || '';
   const currentDraft = drafts[activeConversationId] || '';
@@ -319,7 +294,7 @@ function MessagesModule() {
         onClick={() => setSelectedId(item.id)}
       >
         <div className="messages-conversation-avatar-wrap">
-          <Avatar size={42} style={getAvatarStyle(item.avatarColor)}>
+          <Avatar size={36} style={getAvatarStyle(item.avatarColor)}>
             {item.avatarText}
           </Avatar>
           {item.unread > 0 ? (
@@ -338,7 +313,6 @@ function MessagesModule() {
             </div>
             <span className="messages-conversation-time">{item.time}</span>
           </div>
-          <div className="messages-conversation-subtitle">{item.subtitle}</div>
           <div className="messages-conversation-bottom">
             <Tag bordered={false} className={`messages-type-tag messages-type-tag-${item.type}`}>
               {meta.icon}
@@ -357,7 +331,7 @@ function MessagesModule() {
         <article key={post.id} className="messages-topic-card">
           <div className="messages-topic-card-header">
             <div className="messages-topic-card-author">
-              <Avatar size={34} style={getAvatarStyle(conversation.avatarColor)}>
+              <Avatar size={30} style={getAvatarStyle(conversation.avatarColor)}>
                 {post.author.slice(0, 1)}
               </Avatar>
               <div>
@@ -370,7 +344,7 @@ function MessagesModule() {
                 <div className="messages-topic-card-time">{post.time}</div>
               </div>
             </div>
-            <Button type="text" shape="circle" icon={<EllipsisOutlined />} />
+            <Button type="text" shape="circle" icon={<EllipsisOutlined />} className="messages-icon-btn" />
           </div>
           {post.title ? <div className="messages-topic-card-title">{post.title}</div> : null}
           <div className="messages-topic-card-content">{post.content}</div>
@@ -399,7 +373,7 @@ function MessagesModule() {
           className={`messages-chat-row ${message.self ? 'is-self' : ''}`}
         >
           {!message.self ? (
-            <Avatar size={34} style={getAvatarStyle(conversation.avatarColor)}>
+            <Avatar size={30} style={getAvatarStyle(conversation.avatarColor)}>
               {message.sender.slice(0, 1)}
             </Avatar>
           ) : null}
@@ -420,45 +394,13 @@ function MessagesModule() {
       <aside className="messages-sidebar">
         <div className="messages-sidebar-header">
           <div className="messages-sidebar-title-row">
-            <div>
-              <div className="messages-sidebar-title">消息</div>
-              <div className="messages-sidebar-subtitle">统一查看话题、单聊和群组会话</div>
-            </div>
-            <Button type="primary" shape="circle" icon={<PlusOutlined />} />
-          </div>
-          <Input
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            placeholder="搜索会话名称或最近消息"
-            prefix={<SearchOutlined />}
-            className="messages-search"
-            allowClear
-          />
-          <div className="messages-filter-list">
-            {filters.map((type) => {
-              const meta = type === 'all'
-                ? { label: '全部', icon: <MessageOutlined /> }
-                : TYPE_META[type];
-              return (
-                <button
-                  key={type}
-                  type="button"
-                  className={`messages-filter-chip ${activeType === type ? 'is-active' : ''}`}
-                  onClick={() => setActiveType(type)}
-                >
-                  <span className="messages-filter-chip-label">
-                    {meta.icon}
-                    <span>{meta.label}</span>
-                  </span>
-                  <span className="messages-filter-chip-count">{getTypeCount(conversations, type)}</span>
-                </button>
-              );
-            })}
+            <div className="messages-sidebar-title">消息</div>
+            <Button type="primary" shape="circle" icon={<PlusOutlined />} className="messages-sidebar-plus-btn" />
           </div>
         </div>
         <div className="messages-conversation-list">
-          {filteredConversations.length ? (
-            filteredConversations.map(renderSidebarItem)
+          {conversations.length ? (
+            conversations.map(renderSidebarItem)
           ) : (
             <Empty
               image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -475,7 +417,7 @@ function MessagesModule() {
             <header className="messages-thread-header">
               <div className="messages-thread-header-main">
                 <div className="messages-thread-title-row">
-                  <Avatar size={44} style={getAvatarStyle(selectedConversation.avatarColor)}>
+                  <Avatar size={38} style={getAvatarStyle(selectedConversation.avatarColor)}>
                     {selectedConversation.avatarText}
                   </Avatar>
                   <div>
@@ -491,8 +433,8 @@ function MessagesModule() {
                 </div>
               </div>
               <div className="messages-thread-actions">
-                <Button type="text" shape="circle" icon={<LinkOutlined />} />
-                <Button type="text" shape="circle" icon={<EllipsisOutlined />} />
+                <Button type="text" shape="circle" icon={<LinkOutlined />} className="messages-icon-btn" />
+                <Button type="text" shape="circle" icon={<EllipsisOutlined />} className="messages-icon-btn" />
               </div>
             </header>
 
@@ -503,7 +445,7 @@ function MessagesModule() {
             <footer className="messages-composer">
               <div className="messages-composer-box">
                 <Input.TextArea
-                  autoSize={{ minRows: 2, maxRows: 4 }}
+                  autoSize={{ minRows: 1, maxRows: 4 }}
                   value={currentDraft}
                   onChange={(e) => handleDraftChange(e.target.value)}
                   placeholder={selectedMeta.placeholder}
@@ -513,6 +455,7 @@ function MessagesModule() {
                   type="primary"
                   shape="circle"
                   icon={<SendOutlined />}
+                  className="messages-send-btn"
                   disabled={!currentDraft.trim()}
                   onClick={handleSend}
                 />
