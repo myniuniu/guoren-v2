@@ -9,7 +9,8 @@ import {
   SafetyCertificateOutlined,
   FileSearchOutlined,
   FolderOutlined,
-  FolderOpenOutlined,
+  FolderFilled,
+  FolderOpenFilled,
   CaretDownOutlined,
   CaretRightOutlined,
   SettingOutlined,
@@ -30,16 +31,16 @@ import AssessmentFlowView from './AssessmentFlowView';
 function getResourceIcon(type) {
   switch (type) {
     case 'video':
-      return <PlayCircleOutlined style={{ color: '#9b59b6' }} />;
+      return <PlayCircleOutlined style={{ color: '#7d8797' }} />;
     case 'activity':
-      return <AppstoreOutlined style={{ color: '#f5a623' }} />;
+      return <AppstoreOutlined style={{ color: '#f59e0b' }} />;
     case 'survey':
     case 'vote':
     case 'exam':
     case 'register':
-      return <EditOutlined style={{ color: '#52c41a' }} />;
+      return <EditOutlined style={{ color: '#3b82f6' }} />;
     default:
-      return <FileTextOutlined style={{ color: '#4facfe' }} />;
+      return <FileTextOutlined style={{ color: '#98a2b3' }} />;
   }
 }
 
@@ -141,7 +142,7 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
   const [overviewMode, setOverviewMode] = useState('flow'); // list | flow
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
-  const [leftWidth, setLeftWidth] = useState(280);
+  const [leftWidth, setLeftWidth] = useState(360);
   const [rightWidth, setRightWidth] = useState(360);
   const messagesEndRef = useRef(null);
 
@@ -273,7 +274,7 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
     message.success('文件夹创建成功');
   };
 
-  const renderTreeItem = (item, depth) => {
+  const renderTreeItem = (item) => {
     // 拖拽到画布：写入 dataTransfer
     const handleDragStart = (e) => {
       e.dataTransfer.setData('application/assessment-resource', JSON.stringify({
@@ -303,14 +304,14 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
             </span>
             <span className="project-item-icon">
               {isExpanded
-                ? <FolderOpenOutlined style={{ color: '#4facfe' }} />
-                : <FolderOutlined style={{ color: '#4facfe' }} />}
+                ? <FolderOpenFilled style={{ color: '#56a8f5' }} />
+                : <FolderFilled style={{ color: '#56a8f5' }} />}
             </span>
             <span className="project-item-title">{item.name}</span>
           </div>
           {isExpanded && (
             <div className="tree-children">
-              {children.map((child) => renderTreeItem(child, depth + 1))}
+              {children.map((child) => renderTreeItem(child))}
             </div>
           )}
         </div>
@@ -593,7 +594,7 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
               {rootItems.length === 0 && !creatingFolder ? (
                 <div className="project-empty">暂无资料</div>
               ) : (
-                rootItems.map((item) => renderTreeItem(item, 0))
+                rootItems.map((item) => renderTreeItem(item))
               )}
             </div>
           </div>

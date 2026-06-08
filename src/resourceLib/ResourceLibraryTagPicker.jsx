@@ -6,11 +6,13 @@ export default function ResourceLibraryTagPicker({
   tagDefs,
   quickTagDefs,
   tagGroups,
+  quickComboDefs = [],
   activeGroupFilter,
   listScrollActive,
   onGroupFilterChange,
   onListScroll,
   onToggleItemTagSelection,
+  onApplyQuickCombo,
   onQuickTagToggle,
   onCreateTag,
 }) {
@@ -23,6 +25,9 @@ export default function ResourceLibraryTagPicker({
   const visibleQuickTagDefs = activeTagGroupTagIds
     ? quickTagDefs.filter((tag) => activeTagGroupTagIds.has(tag.id))
     : quickTagDefs;
+  const visibleQuickComboDefs = activeTagGroupTagIds
+    ? quickComboDefs.filter((combo) => (combo.tagIds || []).some((tagId) => activeTagGroupTagIds.has(tagId)))
+    : quickComboDefs;
   const visibleTagDefs = activeTagGroupTagIds
     ? tagDefs.filter((tag) => activeTagGroupTagIds.has(tag.id))
     : tagDefs;
@@ -104,6 +109,43 @@ export default function ResourceLibraryTagPicker({
             : '将常用标签设为快捷标签后，这里可以一键给文件打标签。'}
         </div>
       )}
+      {visibleQuickComboDefs.length > 0 && typeof onApplyQuickCombo === 'function' ? (
+        <>
+          <div className="rl-tag-picker-section-title">组合快捷操作</div>
+          <div className="rl-tag-picker-quick-hint">一键应用多枚标签，适合频道分级这类固定分类场景。</div>
+          <div className="rl-tag-picker-quick-list">
+            {visibleQuickComboDefs.map((combo) => {
+              const comboTagIds = combo.tagIds || [];
+              const checked = comboTagIds.length > 0 && comboTagIds.every((tagId) => itemTagIds.includes(tagId));
+              return (
+                <button
+                  key={combo.id}
+                  type="button"
+                  className={`rl-tag-picker-quick-chip rl-tag-picker-combo-chip ${checked ? 'rl-tag-picker-quick-chip-active' : ''}`}
+                  onClick={() => {
+                    if (!itemKey) return;
+                    onApplyQuickCombo(itemKey, combo);
+                  }}
+                >
+                  <span className="rl-tag-picker-combo-dots">
+                    {comboTagIds.slice(0, 3).map((tagId) => {
+                      const tag = tagDefs.find((itemTag) => itemTag.id === tagId);
+                      return (
+                        <span
+                          key={tagId}
+                          className="rl-tag-dot"
+                          style={{ background: tag?.color || '#8e8e93' }}
+                        />
+                      );
+                    })}
+                  </span>
+                  <span>{combo.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      ) : null}
       <div className="rl-tag-picker-section-title">全部标签</div>
       <div
         className={`rl-tag-picker-list ${listScrollActive ? 'rl-tag-picker-list-scroll-active' : ''}`}

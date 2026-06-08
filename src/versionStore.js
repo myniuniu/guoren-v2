@@ -219,6 +219,8 @@ export function createNewVersion(data) {
     createdAt: nowText(),
     publishedAt: null,
     resources: inheritedResources,
+    tagDefinitions: activeVersion?.tagDefinitions ? cloneData(activeVersion.tagDefinitions) : [],
+    tagGroups: activeVersion?.tagGroups ? cloneData(activeVersion.tagGroups) : [],
     assessment: inheritedAssessment,
     assessmentChat: activeVersion?.assessmentChat ? cloneData(activeVersion.assessmentChat) : [],
   };
@@ -368,6 +370,20 @@ export function updateAssessmentChat(data, versionId, chat) {
     ...data,
     versions: data.versions.map((v) =>
       v.id === versionId ? { ...v, assessmentChat: chat } : v
+    ),
+  };
+  saveToStorage(newData);
+  return newData;
+}
+
+export function updateVersionTagLibrary(data, versionId, patch) {
+  const version = data.versions.find((v) => v.id === versionId);
+  if (!version || version.status !== 'draft') return data;
+
+  const newData = {
+    ...data,
+    versions: data.versions.map((v) =>
+      v.id === versionId ? { ...v, ...patch } : v
     ),
   };
   saveToStorage(newData);

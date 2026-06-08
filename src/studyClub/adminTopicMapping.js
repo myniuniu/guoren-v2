@@ -21,6 +21,51 @@ const SECTION_KEYS = {
   activities: 'activities',
 };
 
+const CHANNEL_TAG_CONFIG = {
+  definitions: [
+    { id: 'tag_channel_course', name: '课程', color: '#007AFF', quick: true },
+    { id: 'tag_channel_article', name: '文章', color: '#34C759', quick: true },
+    { id: 'tag_channel_level_1', name: '1级', color: '#FF9500', quick: true },
+    { id: 'tag_channel_level_2', name: '2级', color: '#AF52DE' },
+    { id: 'tag_channel_level_3', name: '3级', color: '#FF2D55' },
+    { id: 'tag_channel_level_4', name: '4级', color: '#8E8E93' },
+  ],
+  groups: [
+    {
+      id: 'tag_group_channel_type',
+      name: '内容类型',
+      color: '#1677ff',
+      tagIds: ['tag_channel_course', 'tag_channel_article'],
+      exclusive: true,
+    },
+    {
+      id: 'tag_group_channel_level',
+      name: '内容级别',
+      color: '#f97316',
+      tagIds: ['tag_channel_level_1', 'tag_channel_level_2', 'tag_channel_level_3', 'tag_channel_level_4'],
+      exclusive: true,
+    },
+  ],
+  quickCombos: [
+    { id: 'tag_combo_channel_course_1', name: '1级课程', tagIds: ['tag_channel_level_1', 'tag_channel_course'] },
+    { id: 'tag_combo_channel_course_2', name: '2级课程', tagIds: ['tag_channel_level_2', 'tag_channel_course'] },
+    { id: 'tag_combo_channel_course_3', name: '3级课程', tagIds: ['tag_channel_level_3', 'tag_channel_course'] },
+    { id: 'tag_combo_channel_course_4', name: '4级课程', tagIds: ['tag_channel_level_4', 'tag_channel_course'] },
+    { id: 'tag_combo_channel_article_1', name: '1级文章', tagIds: ['tag_channel_level_1', 'tag_channel_article'] },
+    { id: 'tag_combo_channel_article_2', name: '2级文章', tagIds: ['tag_channel_level_2', 'tag_channel_article'] },
+    { id: 'tag_combo_channel_article_3', name: '3级文章', tagIds: ['tag_channel_level_3', 'tag_channel_article'] },
+    { id: 'tag_combo_channel_article_4', name: '4级文章', tagIds: ['tag_channel_level_4', 'tag_channel_article'] },
+  ],
+  legacyNameMap: {
+    课程: 'tag_channel_course',
+    文章: 'tag_channel_article',
+    '1级': 'tag_channel_level_1',
+    '2级': 'tag_channel_level_2',
+    '3级': 'tag_channel_level_3',
+    '4级': 'tag_channel_level_4',
+  },
+};
+
 const WORKSHOP_COVERS = [
   'linear-gradient(135deg, #fff8e8 0%, #ffe8bd 100%)',
   'linear-gradient(135deg, #e9f8ef 0%, #cfeeda 100%)',
@@ -64,7 +109,7 @@ const ACTIVITY_COVERS = [
 ];
 const AVATAR_COLORS = ['#ffb74d', '#66bb6a', '#42a5f5', '#7c4dff', '#ef5350'];
 
-function createFolder(key, name, mappingKey, owner, lastEdit) {
+function createFolder(key, name, mappingKey, owner, lastEdit, extra = {}) {
   return {
     key,
     name,
@@ -73,6 +118,7 @@ function createFolder(key, name, mappingKey, owner, lastEdit) {
     mappingKey,
     owner,
     lastEdit,
+    ...extra,
   };
 }
 
@@ -452,8 +498,12 @@ function createSeniorCommunityAdminData() {
     createFolder('senior-workshop', 'AI工坊', SECTION_KEYS.workshop, '银龄服务组', '2026-06-06 15:10:00'),
     createFolder('senior-agent', 'AI合集-智能体', SECTION_KEYS.agent, '银龄服务组', '2026-06-01 10:00:00'),
     createFolder('senior-inspire', 'AI合集-灵感市集', SECTION_KEYS.inspire, '银龄服务组', '2026-06-05 18:10:00'),
-    createFolder('senior-courses', '课程', SECTION_KEYS.courses, '银龄服务组', '2026-06-04 20:30:00'),
-    createFolder('senior-articles', '文章', SECTION_KEYS.articles, '银龄服务组', '2026-06-04 14:30:00'),
+    createFolder('senior-courses', '课程', SECTION_KEYS.courses, '银龄服务组', '2026-06-04 20:30:00', {
+      tags: ['tag_channel_course'],
+    }),
+    createFolder('senior-articles', '文章', SECTION_KEYS.articles, '银龄服务组', '2026-06-04 14:30:00', {
+      tags: ['tag_channel_article'],
+    }),
     createFolder('senior-activities', '活动', SECTION_KEYS.activities, '银龄服务组', '2026-06-03 10:30:00'),
 
     createItem(
@@ -836,6 +886,8 @@ function createSeniorCommunityAdminData() {
         createdAt: '2026-06-01 09:00:00',
         publishedAt: '2026-06-01 09:00:00',
         resources,
+        tagDefinitions: CHANNEL_TAG_CONFIG.definitions,
+        tagGroups: CHANNEL_TAG_CONFIG.groups,
         assessment: { totalHours: 0, passScore: 60, certificate: false, rules: [] },
         assessmentChat: [],
       },
@@ -852,6 +904,7 @@ const CHANNEL_ADMIN_CONFIGS = {
     description: '围绕智慧助老、康养服务和社区陪伴的银龄共创空间',
     operator: { name: '银龄服务组', avatar: '👵' },
     coverEmoji: '👵',
+    tagConfig: CHANNEL_TAG_CONFIG,
     initialDataFactory: createSeniorCommunityAdminData,
   },
 };
@@ -957,6 +1010,7 @@ export function getTopicAdminConfig(topicTitle) {
     initialDataFactory: config.initialDataFactory,
     channelId: config.channelId,
     topicTitle: config.topicTitle,
+    tagConfig: config.tagConfig || null,
   };
 }
 

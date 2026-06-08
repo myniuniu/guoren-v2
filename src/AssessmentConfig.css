@@ -2,8 +2,10 @@
 .assessment-layout {
   display: grid;
   /* grid-template-columns 由组件内联 style 控制，支持拖拽和折叠 */
-  height: calc(100vh - 56px);
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
+  background: #fff;
 }
 
 /* 左栏复用 TopicDetail.css 的 .detail-left-panel 样式，覆盖固定宽度 */
@@ -28,13 +30,13 @@
   left: 50%;
   transform: translateX(-50%);
   width: 1px;
-  background: #e8e8e8;
+  background: #eceef2;
 }
 .resize-handle:hover {
-  background: rgba(79, 172, 254, 0.18);
+  background: rgba(86, 168, 245, 0.12);
 }
 .resize-handle:hover::before {
-  background: #4facfe;
+  background: #56a8f5;
   width: 2px;
 }
 .resize-handle-disabled {
@@ -48,22 +50,22 @@
   flex-direction: column;
   align-items: center;
   padding: 12px 0;
-  background: #fafafa;
-  border-right: 1px solid #f0f0f0;
+  background: #f7f8fa;
+  border-right: 1px solid #e7eaef;
   cursor: pointer;
   transition: background 0.15s;
   user-select: none;
 }
 .collapsed-right {
   border-right: none;
-  border-left: 1px solid #f0f0f0;
+  border-left: 1px solid #e7eaef;
 }
 .collapsed-panel:hover {
-  background: #f0f7ff;
+  background: #edf4ff;
 }
 .collapsed-icon {
   font-size: 16px;
-  color: #4facfe;
+  color: #56a8f5;
   margin-bottom: 8px;
 }
 .collapsed-label {
@@ -90,8 +92,8 @@
 }
 .panel-collapse-icon:hover,
 .chat-collapse-icon:hover {
-  color: #4facfe;
-  background: #f0f7ff;
+  color: #56a8f5;
+  background: #edf4ff;
 }
 .chat-collapse-icon {
   margin-left: auto;
@@ -102,7 +104,7 @@
   overflow-y: auto;
   padding: 24px;
   background: #fff;
-  border-left: 1px solid #f0f0f0;
+  border-left: 1px solid #e7eaef;
 }
 
 .config-summary {
