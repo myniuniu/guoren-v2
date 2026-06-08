@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Avatar, Badge, Button, Dropdown, Empty, Input, Popover, Tooltip } from 'antd';
 import {
   CloseOutlined,
@@ -51,6 +51,30 @@ const SEND_MODE_META = {
     prefix: '【静默】',
   },
 };
+
+const DEFAULT_SIDEBAR_WIDTH = 360;
+const MIN_SIDEBAR_WIDTH = 248;
+const MAX_SIDEBAR_WIDTH = 520;
+const MIN_THREAD_WIDTH = 420;
+const SIDEBAR_KEYBOARD_STEP = 16;
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function getMaxSidebarWidth(containerWidth) {
+  if (!containerWidth) {
+    return MAX_SIDEBAR_WIDTH;
+  }
+  return Math.min(
+    MAX_SIDEBAR_WIDTH,
+    Math.max(MIN_SIDEBAR_WIDTH, containerWidth - MIN_THREAD_WIDTH),
+  );
+}
+
+function clampSidebarWidth(nextWidth, containerWidth) {
+  return clamp(nextWidth, MIN_SIDEBAR_WIDTH, getMaxSidebarWidth(containerWidth));
+}
 
 const INITIAL_CONVERSATIONS = [
   {
@@ -332,7 +356,14 @@ function MessagesModule() {
   const [composerExpanded, setComposerExpanded] = useState(false);
   const [formatEnabled, setFormatEnabled] = useState(false);
   const [sendMode, setSendMode] = useState('normal');
+  const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
+  const [isResizingSidebar, setIsResizingSidebar] = useState(false);
+  const moduleRef = useRef(null);
   const composerInputRef = useRef(null);
+  const resizeStateRef = useRef({
+    startX: 0,
+    startWidth: DEFAULT_SIDEBAR_WIDTH,
+  });
 
   const selectedConversation =
     conversations.find((item) => item.id === selectedId) || conversations[0] || null;
@@ -342,6 +373,56 @@ function MessagesModule() {
     ? (selectedConversation.posts || []).find((post) => post.id === activeTopicThread) || null
     : null;
   const currentDraft = drafts[activeConversationId] || '';
+
+  const getClampedSidebarWidth = (nextWidth) => {
+    return clampSidebarWidth(nextWidth, moduleRef.current?.clientWidth || 0);
+  };
+
+  const adjustSidebarWidth = (delta) => {
+    setSidebarWidth((prev) => getClampedSidebarWidth(prev + delta));
+  };
+
+  useEffect(() => {
+    const handleWindowResize = () => {
+      setSidebarWidth((prev) => clampSidebarWidth(prev, moduleRef.current?.clientWidth || 0));
+    };
+
+    handleWindowResize();
+    window.addEventListener('resize', handleWindowResize);
+    return () => {
+      window.removeEventListener('resize', handleWindowResize);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isResizingSidebar) {
+      return undefined;
+    }
+
+    const handlePointerMove = (event) => {
+      const { startX, startWidth } = resizeStateRef.current;
+      const delta = event.clientX - startX;
+      setSidebarWidth(clampSidebarWidth(startWidth + delta, moduleRef.current?.clientWidth || 0));
+    };
+
+    const stopResizing = () => {
+      setIsResizingSidebar(false);
+    };
+
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', stopResizing);
+    window.addEventListener('pointercancel', stopResizing);
+
+    return () => {
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', stopResizing);
+      window.removeEventListener('pointercancel', stopResizing);
+    };
+  }, [isResizingSidebar]);
 
   const handleDraftChange = (value) => {
     setDrafts((prev) => ({
@@ -557,6 +638,30 @@ function MessagesModule() {
   const handleConversationSelect = (conversationId) => {
     setSelectedId(conversationId);
     setActiveTopicThread(null);
+  };
+
+  const handleSidebarResizeStart = (event) => {
+    if (window.matchMedia('(max-width: 960px)').matches) {
+      return;
+    }
+    event.preventDefault();
+    resizeStateRef.current = {
+      startX: event.clientX,
+      startWidth: sidebarWidth,
+    };
+    setIsResizingSidebar(true);
+  };
+
+  const handleSidebarResizeKeyDown = (event) => {
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      adjustSidebarWidth(-SIDEBAR_KEYBOARD_STEP);
+      return;
+    }
+    if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      adjustSidebarWidth(SIDEBAR_KEYBOARD_STEP);
+    }
   };
 
   const handleSend = () => {
@@ -945,11 +1050,16 @@ function MessagesModule() {
           key={message.id}
           className={`messages-chat-row ${message.self ? 'is-self' : ''}`}
         >
-          {!message.self ? (
-            <Avatar size={30} style={getAvatarStyle(conversation.avatarColor)}>
-              {message.sender.slice(0, 1)}
-            </Avatar>
-          ) : null}
+          <Avatar
+            size={30}
+            style={getAvatarStyle(
+              message.self
+                ? 'linear-gradient(135deg, #5f8cff 0%, #63c8ff 100%)'
+                : conversation.avatarColor,
+            )}
+          >
+            {(message.self ? '你' : message.sender).slice(0, 1)}
+          </Avatar>
           <div className="messages-chat-bubble-wrap">
             <div className="messages-chat-meta">
               <span>{message.sender}</span>
@@ -963,7 +1073,11 @@ function MessagesModule() {
   );
 
   return (
-    <div className="messages-module">
+    <div
+      ref={moduleRef}
+      className={`messages-module ${isResizingSidebar ? 'is-resizing' : ''}`}
+      style={{ '--messages-sidebar-width': `${sidebarWidth}px` }}
+    >
       <aside className="messages-sidebar">
         <div className="messages-sidebar-header">
           <div className="messages-sidebar-title-row">
@@ -983,6 +1097,19 @@ function MessagesModule() {
           )}
         </div>
       </aside>
+
+      <div
+        role="separator"
+        aria-label="调整会话列表宽度"
+        aria-orientation="vertical"
+        aria-valuemin={MIN_SIDEBAR_WIDTH}
+        aria-valuemax={MAX_SIDEBAR_WIDTH}
+        aria-valuenow={sidebarWidth}
+        tabIndex={0}
+        className="messages-sidebar-resizer"
+        onPointerDown={handleSidebarResizeStart}
+        onKeyDown={handleSidebarResizeKeyDown}
+      />
 
       <section className="messages-content">
         {selectedConversation ? (
