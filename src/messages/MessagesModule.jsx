@@ -1,17 +1,25 @@
 import { useRef, useState } from 'react';
 import { Avatar, Badge, Button, Dropdown, Empty, Input, Popover, Tooltip } from 'antd';
 import {
+  CloseOutlined,
   DownOutlined,
   EllipsisOutlined,
   FullscreenExitOutlined,
   FullscreenOutlined,
+  LikeFilled,
+  LikeOutlined,
   LinkOutlined,
+  MessageOutlined,
+  MoreOutlined,
   PlusCircleOutlined,
   PlusOutlined,
   PushpinFilled,
   ScissorOutlined,
   SendOutlined,
+  ShareAltOutlined,
   SmileOutlined,
+  StarFilled,
+  StarOutlined,
 } from '@ant-design/icons';
 import './MessagesModule.css';
 
@@ -60,34 +68,127 @@ const INITIAL_CONVERSATIONS = [
     posts: [
       {
         id: 'post-1',
-        author: '代言君',
+        author: '沧海九票',
         authorRole: '话题发起人',
-        time: '6月8日 09:28',
-        title: '代码部·听海轩',
-        content:
-          '作为 LangChain Ambassador，听海轩分享了 LangChain 六大社区会议、信息量拆解和 AI 大模型趋势的一些观察，方便后续整理成专题卡。',
+        time: '6月5日 09:40',
+        avatarText: '沧',
+        avatarColor: 'linear-gradient(135deg, #a77950 0%, #e7c39f 100%)',
+        pinnedNotice: '沧海九票 Pin 了这个话题',
+        title: '🦜 LangChain VIP 闭门会纪要 06.02（8 图见下方）',
+        contentSections: [
+          '作为 LangChain Ambassador 刚参加了 LangChain 六月社区会议，信息量炸裂💥 四大重磅功能一次看👇',
+          '🤖 Managed Deep Agents\nCLI 一键部署，Agent 配置模型 + 工具 + Subagent\n自动创建 Context Hub，支持 MCP 服务器\n几秒钟从零到生产！',
+          '🖥️ Code Interpreter\n基于 QuickJS 的轻量 JS 运行时，Figma 同款技术\n默认无网络无文件系统访问，安全隔离\nAgent 能写代码批量调用 50 个工具！',
+          '🔒 Sandboxes\n隔离环境默认可控，脚本执行、抓取和文件处理可以拆到独立沙箱里跑。\n结合 Code Interpreter 后，Agent 的执行边界更清晰，也更适合团队协作。',
+        ],
+        collapsedSections: 3,
+        replyPreview: {
+          hiddenCount: 7,
+          earlierItems: [
+            { id: 'reply-early-1', author: 'Kevin', text: '我先整理一版中文文档结构，晚上丢出来。' },
+          ],
+          items: [
+            { id: 'reply-1', author: 'wlet kevin（PM）', text: '老登们，我们一起做 langsmith 攻略' },
+            { id: 'reply-2', author: '沧海九票', text: '@wlet kevin（PM） 官方是允许我们搭建中文文档站的，确实可以搞一个' },
+          ],
+        },
+        threadDetail: {
+          pageTitle: 'LangChain VIP 闭门会纪要 06.02（8 图见下方） 作为 LangChain Ambassador 刚参加了 LangChain 六月社区会议，信息量炸裂',
+          sourceLabel: '来自：GenAI 听海轩',
+          galleryItems: [
+            {
+              id: 'gallery-1',
+              eyebrow: '开源爆发 & 流式传输',
+              title: 'Agent 集成能力跃迁',
+              bullets: ['Managed Deep Agents 一键部署', 'Subagent 组合能力抬升', 'Context Hub 自动创建'],
+            },
+            {
+              id: 'gallery-2',
+              eyebrow: '关键技术洞察',
+              title: '六大核心趋势判断',
+              bullets: ['Code Interpreter 隔离执行', 'MCP 服务编排成熟', '沙箱与权限边界更清晰'],
+            },
+          ],
+          comments: [
+            { id: 'thread-reply-1', author: '地方九', time: '6月5日 09:08', text: '不知道这次图片显示是不是不了指路图' },
+            { id: 'thread-reply-2', author: '四五张', time: '6月5日 10:13', text: '海艺老师访谈的页面不见了' },
+            { id: 'thread-reply-3', author: '沧海九票', time: '6月5日 10:23', text: '@周正贤 我那张图截图直接贴上来' },
+            { id: 'thread-reply-4', author: '快谈co', time: '6月5日 10:40', text: '感觉这次会在圈内上了，开源的扩张我最关心 code interpreter' },
+            { id: 'thread-reply-5', author: 'wlet kevin（PM）', time: '6月5日 15:18', text: '自动化评估 Agent 真的有了？' },
+            { id: 'thread-reply-6', author: '沧海九票', time: '6月5日 17:33', text: '@wlet kevin（PM） LangSmith Engine 不单评估还会挂载 协议（甚至 pr）' },
+            { id: 'thread-reply-7', author: 'wlet kevin（PM）', time: '6月6日 08:13', text: '老登们，我们一起做 langsmith 攻略' },
+            { id: 'thread-reply-8', author: '沧海九票', time: '6月6日 09:17', text: '@wlet kevin（PM） 官方是允许我们搭建中文文档站的，确实可以搞一个', highlighted: true },
+          ],
+        },
+        threadSubscribed: false,
+        liked: false,
+        starred: false,
       },
       {
         id: 'post-2',
         author: '司 玥',
         authorRole: '参与者',
         time: '6月8日 14:21',
-        content:
+        avatarText: '司',
+        avatarColor: 'linear-gradient(135deg, #7e89ff 0%, #8dc6ff 100%)',
+        title: '分享一篇视频 coding 访谈',
+        contentSections: [
           '分享一篇文章，大家对视频 coding 下面这句提问印象很深：速度管理型的人际交流其实更像是信息编排。',
+        ],
         linkCard: {
           domain: 'mp.weixin.qq.com',
           title: '乔布斯Boss聊“你在 Vibe Coding 时遇到卡住怎么办？”',
           desc: '从 Prompt、架构拆解到反馈闭环，适合拿来做团队内部共识讨论。',
         },
+        replyPreview: {
+          hiddenCount: 0,
+          items: [
+            { id: 'reply-3', author: '地方九', text: '这篇很适合拿来做团队内部讨论，我晚点整理要点。' },
+          ],
+        },
+        threadDetail: {
+          pageTitle: '分享一篇视频 coding 访谈 · 讨论详情',
+          sourceLabel: '来自：GenAI 听海轩',
+          comments: [
+            { id: 'thread-reply-9', author: '地方九', time: '6月8日 14:35', text: '这篇很适合拿来做团队内部讨论，我晚点整理要点。' },
+          ],
+        },
+        threadSubscribed: true,
+        liked: true,
+        starred: false,
       },
       {
         id: 'post-3',
         author: '地方九',
         authorRole: '参与者',
         time: '6月8日 09:40',
+        avatarText: '地',
+        avatarColor: 'linear-gradient(135deg, #36b39f 0%, #73d5b7 100%)',
         title: '关于 LangChain VIP 和代码部的补充',
-        content:
-          'Managed Deep Agents、Subagent CLI、MCP 服务编排和 Code Interpreter 都值得做一轮梳理。尤其是多 Agent 协同时，默认无损优先级、权限模型和上下文隔离，后续可以单独拉清单。',
+        contentSections: [
+          'Managed Deep Agents、Subagent CLI、MCP 服务编排和 Code Interpreter 都值得做一轮梳理。',
+          '尤其是多 Agent 协同时，默认无损优先级、权限模型和上下文隔离，后续可以单独拉清单。',
+        ],
+        replyPreview: {
+          hiddenCount: 2,
+          earlierItems: [
+            { id: 'reply-4', author: '和光', text: '我补一个安全边界说明，避免大家误解 Code Interpreter 的权限。' },
+          ],
+          items: [
+            { id: 'reply-5', author: '黑仁', text: '这个话题后面可以拆成一页专题，信息量已经够了。' },
+          ],
+        },
+        threadDetail: {
+          pageTitle: '关于 LangChain VIP 和代码部的补充 · 讨论详情',
+          sourceLabel: '来自：GenAI 听海轩',
+          comments: [
+            { id: 'thread-reply-10', author: '和光', time: '6月8日 09:48', text: '我补一个安全边界说明，避免大家误解 Code Interpreter 的权限。' },
+            { id: 'thread-reply-11', author: '黑仁', time: '6月8日 10:05', text: '这个话题后面可以拆成一页专题，信息量已经够了。' },
+          ],
+        },
+        threadSubscribed: false,
+        liked: false,
+        starred: true,
       },
     ],
   },
@@ -226,6 +327,8 @@ function MessagesModule() {
   const [conversations, setConversations] = useState(INITIAL_CONVERSATIONS);
   const [selectedId, setSelectedId] = useState('topic-genai');
   const [drafts, setDrafts] = useState({});
+  const [expandedTopicPosts, setExpandedTopicPosts] = useState({});
+  const [activeTopicThread, setActiveTopicThread] = useState(null);
   const [composerExpanded, setComposerExpanded] = useState(false);
   const [formatEnabled, setFormatEnabled] = useState(false);
   const [sendMode, setSendMode] = useState('normal');
@@ -235,6 +338,9 @@ function MessagesModule() {
     conversations.find((item) => item.id === selectedId) || conversations[0] || null;
   const selectedMeta = selectedConversation ? TYPE_META[selectedConversation.type] : null;
   const activeConversationId = selectedConversation?.id || '';
+  const activeTopicThreadPost = selectedConversation?.type === 'topic'
+    ? (selectedConversation.posts || []).find((post) => post.id === activeTopicThread) || null
+    : null;
   const currentDraft = drafts[activeConversationId] || '';
 
   const handleDraftChange = (value) => {
@@ -317,6 +423,142 @@ function MessagesModule() {
     onClick: () => setSendMode(key),
   }));
 
+  const buildReplyPreviewFromComments = (comments) => {
+    const normalized = comments.map((item) => ({
+      id: item.id,
+      author: item.author,
+      text: item.text,
+    }));
+    return {
+      hiddenCount: Math.max(0, normalized.length - 2),
+      earlierItems: normalized.slice(0, -2),
+      items: normalized.slice(-2),
+    };
+  };
+
+  const buildTopicThreadDetail = (post) => post.threadDetail || {
+    pageTitle: `${post.title || post.contentSections?.[0] || '话题详情'} · 讨论详情`,
+    galleryItems: [],
+    comments: [
+      ...(post.replyPreview?.earlierItems || []),
+      ...(post.replyPreview?.items || []),
+    ].map((item, index) => ({
+      ...item,
+      time: item.time || `6月8日 0${index + 8}:00`,
+    })),
+  };
+
+  const updateActiveTopicPost = (postId, updater) => {
+    setConversations((prev) => prev.map((conversation) => {
+      if (conversation.id !== activeConversationId || conversation.type !== 'topic') {
+        return conversation;
+      }
+      return {
+        ...conversation,
+        posts: (conversation.posts || []).map((post) => (
+          post.id === postId ? updater(post) : post
+        )),
+      };
+    }));
+  };
+
+  const toggleTopicPostExpanded = (postId) => {
+    setExpandedTopicPosts((prev) => ({
+      ...prev,
+      [postId]: !prev[postId],
+    }));
+  };
+
+  const handleTopicLike = (postId) => {
+    updateActiveTopicPost(postId, (post) => ({
+      ...post,
+      liked: !post.liked,
+    }));
+  };
+
+  const handleTopicStar = (postId) => {
+    updateActiveTopicPost(postId, (post) => ({
+      ...post,
+      starred: !post.starred,
+    }));
+  };
+
+  const handleTopicThreadSubscribe = (postId) => {
+    updateActiveTopicPost(postId, (post) => ({
+      ...post,
+      threadSubscribed: !post.threadSubscribed,
+    }));
+  };
+
+  const updateActiveTopicThreadComment = (commentId, updater) => {
+    if (!activeTopicThread) {
+      return;
+    }
+    updateActiveTopicPost(activeTopicThread, (post) => {
+      const threadDetail = buildTopicThreadDetail(post);
+      return {
+        ...post,
+        threadDetail: {
+          ...threadDetail,
+          comments: (threadDetail.comments || []).map((comment) => (
+            comment.id === commentId ? updater(comment) : comment
+          )),
+        },
+      };
+    });
+  };
+
+  const openTopicThread = (post, focusReply = false) => {
+    setActiveTopicThread(post.id);
+    if (focusReply) {
+      requestAnimationFrame(() => {
+        focusComposer();
+      });
+    }
+  };
+
+  const handleTopicReply = (post) => {
+    setActiveTopicThread(post.id);
+    requestAnimationFrame(() => {
+      insertDraftText(`@${post.author} `);
+      focusComposer();
+    });
+  };
+
+  const handleTopicShare = (post) => {
+    const sharedText = post.title || post.contentSections?.[0] || '分享这个话题';
+    const nextSnippet = `[分享自 ${selectedConversation?.title}] ${sharedText}\n`;
+    setDrafts((prev) => ({
+      ...prev,
+      [activeConversationId]: `${prev[activeConversationId] || ''}${nextSnippet}`,
+    }));
+  };
+
+  const handleTopicThreadCommentLike = (commentId) => {
+    updateActiveTopicThreadComment(commentId, (comment) => ({
+      ...comment,
+      liked: !comment.liked,
+    }));
+  };
+
+  const handleTopicThreadCommentReply = (comment) => {
+    insertDraftText(`@${comment.author} `);
+    focusComposer();
+  };
+
+  const handleTopicThreadCommentQuote = (comment) => {
+    const quotedText = `> ${comment.author}: ${comment.text}\n`;
+    setDrafts((prev) => ({
+      ...prev,
+      [activeConversationId]: `${prev[activeConversationId] || ''}${quotedText}`,
+    }));
+  };
+
+  const handleConversationSelect = (conversationId) => {
+    setSelectedId(conversationId);
+    setActiveTopicThread(null);
+  };
+
   const handleSend = () => {
     const text = currentDraft.trim();
     if (!selectedConversation || !text) {
@@ -325,6 +567,49 @@ function MessagesModule() {
 
     const outgoingText = normalizedOutgoingText(text);
     const updatedTime = getTimeLabel();
+
+    if (selectedConversation.type === 'topic' && activeTopicThread) {
+      setConversations((prev) => prev.map((conversation) => {
+        if (conversation.id !== selectedConversation.id) {
+          return conversation;
+        }
+        return {
+          ...conversation,
+          preview: outgoingText,
+          time: updatedTime,
+          posts: (conversation.posts || []).map((post) => {
+            if (post.id !== activeTopicThread) {
+              return post;
+            }
+            const nextComments = [
+              ...(buildTopicThreadDetail(post).comments || []),
+              {
+                id: `thread-reply-${Date.now()}`,
+                author: '你',
+                time: '刚刚',
+                text: outgoingText,
+                highlighted: true,
+              },
+            ];
+            return {
+              ...post,
+              replyPreview: buildReplyPreviewFromComments(nextComments),
+              threadDetail: {
+                ...buildTopicThreadDetail(post),
+                comments: nextComments,
+              },
+            };
+          }),
+        };
+      }));
+
+      setDrafts((prev) => ({
+        ...prev,
+        [activeConversationId]: '',
+      }));
+      return;
+    }
+
     setConversations((prev) => {
       const target = prev.find((item) => item.id === selectedConversation.id);
       if (!target) {
@@ -342,8 +627,17 @@ function MessagesModule() {
               id: `post-${Date.now()}`,
               author: '你',
               authorRole: '参与者',
+              avatarText: '你',
+              avatarColor: 'linear-gradient(135deg, #5f8cff 0%, #63c8ff 100%)',
               time: '刚刚',
-              content: outgoingText,
+              contentSections: outgoingText.split(/\n{2,}/).filter(Boolean),
+              threadSubscribed: false,
+              liked: false,
+              starred: false,
+              replyPreview: {
+                hiddenCount: 0,
+                items: [],
+              },
             },
           ],
         }
@@ -379,7 +673,7 @@ function MessagesModule() {
         key={item.id}
         type="button"
         className={`messages-conversation-item ${activeConversationId === item.id ? 'is-active' : ''}`}
-        onClick={() => setSelectedId(item.id)}
+        onClick={() => handleConversationSelect(item.id)}
       >
         <div className="messages-conversation-avatar-wrap">
           <Avatar size={36} style={getAvatarStyle(item.avatarColor)}>
@@ -412,26 +706,55 @@ function MessagesModule() {
   const renderTopicStream = (conversation) => (
     <div className="messages-topic-stream">
       {conversation.posts.map((post) => (
-        <article key={post.id} className="messages-topic-card">
+        <article
+          key={post.id}
+          className={`messages-topic-card ${post.pinnedNotice ? 'is-featured' : ''}`}
+        >
+          {post.pinnedNotice ? (
+            <div className="messages-topic-card-pinline">
+              <PushpinFilled />
+              <span>{post.pinnedNotice}</span>
+            </div>
+          ) : null}
           <div className="messages-topic-card-header">
             <div className="messages-topic-card-author">
-              <Avatar size={30} style={getAvatarStyle(conversation.avatarColor)}>
-                {post.author.slice(0, 1)}
+              <Avatar size={30} style={getAvatarStyle(post.avatarColor || conversation.avatarColor)}>
+                {(post.avatarText || post.author).slice(0, 1)}
               </Avatar>
               <div>
                 <div className="messages-topic-card-author-row">
                   <span className="messages-topic-card-author-name">{post.author}</span>
-                  {post.authorRole ? (
-                    <span className="messages-topic-card-role">{post.authorRole}</span>
-                  ) : null}
+                  <span className="messages-topic-card-time-inline">{post.time}</span>
                 </div>
-                <div className="messages-topic-card-time">{post.time}</div>
+                {post.authorRole ? (
+                  <div className="messages-topic-card-role-line">{post.authorRole}</div>
+                ) : null}
               </div>
             </div>
-            <Button type="text" shape="circle" icon={<EllipsisOutlined />} className="messages-icon-btn" />
+            <Button type="text" shape="circle" icon={<MoreOutlined />} className="messages-icon-btn" />
           </div>
           {post.title ? <div className="messages-topic-card-title">{post.title}</div> : null}
-          <div className="messages-topic-card-content">{post.content}</div>
+          <div className="messages-topic-card-content">
+            {(expandedTopicPosts[post.id]
+              ? (post.contentSections || [])
+              : (post.contentSections || []).slice(0, post.collapsedSections || post.contentSections?.length || 0)
+            ).map((section, index) => (
+              <div key={`${post.id}-section-${index}`} className="messages-topic-card-section">
+                {section}
+              </div>
+            ))}
+          </div>
+          {(post.contentSections || []).length > (post.collapsedSections || post.contentSections?.length || 0) ? (
+            <div className="messages-topic-card-expand-wrap">
+              <button
+                type="button"
+                className="messages-topic-card-expand"
+                onClick={() => toggleTopicPostExpanded(post.id)}
+              >
+                {expandedTopicPosts[post.id] ? '收起' : '展开'}
+              </button>
+            </div>
+          ) : null}
           {post.linkCard ? (
             <div className="messages-link-card">
               <div className="messages-link-card-domain">{post.linkCard.domain}</div>
@@ -439,15 +762,181 @@ function MessagesModule() {
               <div className="messages-link-card-desc">{post.linkCard.desc}</div>
             </div>
           ) : null}
+          {post.replyPreview ? (
+            <div className="messages-topic-replies">
+              {post.replyPreview.hiddenCount > 0 || (post.replyPreview.earlierItems || []).length > 0 ? (
+                <button
+                  type="button"
+                  className="messages-topic-replies-more"
+                  onClick={() => openTopicThread(post)}
+                >
+                  {`查看更早 ${post.replyPreview.hiddenCount || (post.replyPreview.earlierItems || []).length} 条回复`}
+                </button>
+              ) : null}
+              {(post.replyPreview.items || []).length ? (
+                <button
+                  type="button"
+                  className="messages-topic-replies-box messages-topic-replies-box-link"
+                  onClick={() => openTopicThread(post)}
+                >
+                  {(post.replyPreview.items || []).map((reply) => (
+                    <div key={reply.id} className="messages-topic-reply-item">
+                      <span className="messages-topic-reply-author">{reply.author}：</span>
+                      <span className="messages-topic-reply-text">{reply.text}</span>
+                    </div>
+                  ))}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
           <div className="messages-topic-card-actions">
-            <span>评论</span>
-            <span>转发</span>
-            <span>收藏</span>
+            <button
+              type="button"
+              className={`messages-topic-action-btn ${post.liked ? 'is-active' : ''}`}
+              onClick={() => handleTopicLike(post.id)}
+            >
+              {post.liked ? <LikeFilled /> : <LikeOutlined />}
+            </button>
+            <button
+              type="button"
+              className={`messages-topic-action-btn ${activeTopicThread === post.id ? 'is-active' : ''}`}
+              onClick={() => handleTopicReply(post)}
+            >
+              <MessageOutlined />
+            </button>
+            <button
+              type="button"
+              className="messages-topic-action-btn"
+              onClick={() => handleTopicShare(post)}
+            >
+              <ShareAltOutlined />
+            </button>
+            <button
+              type="button"
+              className={`messages-topic-action-btn ${post.starred ? 'is-active' : ''}`}
+              onClick={() => handleTopicStar(post.id)}
+            >
+              {post.starred ? <StarFilled /> : <StarOutlined />}
+            </button>
           </div>
         </article>
       ))}
     </div>
   );
+
+  const renderTopicThreadDetail = (post) => {
+    const threadDetail = buildTopicThreadDetail(post);
+    return (
+      <>
+        <header className="messages-topic-detail-header">
+          <div className="messages-topic-detail-header-main">
+            <div className="messages-topic-detail-title-group">
+              <div className="messages-topic-detail-title">{threadDetail.pageTitle}</div>
+              {threadDetail.sourceLabel ? (
+                <div className="messages-topic-detail-source">{threadDetail.sourceLabel}</div>
+              ) : null}
+            </div>
+          </div>
+          <div className="messages-topic-detail-actions">
+            <Tooltip title="转发话题">
+              <button
+                type="button"
+                className="messages-topic-detail-action-btn"
+                onClick={() => handleTopicShare(post)}
+              >
+                <ShareAltOutlined />
+              </button>
+            </Tooltip>
+            <Tooltip title={post.threadSubscribed ? '取消订阅' : '订阅'}>
+              <button
+                type="button"
+                className={`messages-topic-detail-action-btn ${post.threadSubscribed ? 'is-active' : ''}`}
+                onClick={() => handleTopicThreadSubscribe(post.id)}
+              >
+                {post.threadSubscribed ? <StarFilled /> : <StarOutlined />}
+              </button>
+            </Tooltip>
+            <Tooltip title="关闭">
+              <button
+                type="button"
+                className="messages-topic-detail-action-btn"
+                onClick={() => setActiveTopicThread(null)}
+              >
+                <CloseOutlined />
+              </button>
+            </Tooltip>
+          </div>
+        </header>
+        <div className="messages-topic-detail-scroll">
+          {post.pinnedNotice ? (
+            <div className="messages-topic-card-pinline">
+              <PushpinFilled />
+              <span>{post.pinnedNotice}</span>
+            </div>
+          ) : null}
+          {(threadDetail.galleryItems || []).length ? (
+            <div className="messages-topic-detail-stage">
+              <div className="messages-topic-detail-gallery">
+                {(threadDetail.galleryItems || []).map((item, index) => (
+                  <article key={item.id || index} className="messages-topic-detail-poster">
+                    <div className="messages-topic-detail-poster-eyebrow">{item.eyebrow}</div>
+                    <div className="messages-topic-detail-poster-title">{item.title}</div>
+                    <div className="messages-topic-detail-poster-list">
+                      {(item.bullets || []).map((bullet, bulletIndex) => (
+                        <div key={`${item.id || index}-bullet-${bulletIndex}`} className="messages-topic-detail-poster-bullet">
+                          {bullet}
+                        </div>
+                      ))}
+                    </div>
+                  </article>
+                ))}
+              </div>
+              <div className="messages-topic-detail-canvas" />
+            </div>
+          ) : null}
+          <div className="messages-topic-detail-comments">
+            {(threadDetail.comments || []).map((comment) => (
+              <div
+                key={comment.id}
+                className={`messages-topic-detail-comment ${comment.highlighted ? 'is-highlighted' : ''}`}
+              >
+                <div className="messages-topic-detail-comment-meta">
+                  <span className="messages-topic-detail-comment-author">{comment.author}</span>
+                  <span>{comment.time}</span>
+                </div>
+                <div className="messages-topic-detail-comment-body">
+                  <div className="messages-topic-detail-comment-text">{comment.text}</div>
+                  <div className="messages-topic-detail-comment-actions">
+                    <button
+                      type="button"
+                      className={`messages-topic-detail-comment-action ${comment.liked ? 'is-active' : ''}`}
+                      onClick={() => handleTopicThreadCommentLike(comment.id)}
+                    >
+                      {comment.liked ? <LikeFilled /> : <LikeOutlined />}
+                    </button>
+                    <button
+                      type="button"
+                      className="messages-topic-detail-comment-action"
+                      onClick={() => handleTopicThreadCommentReply(comment)}
+                    >
+                      <MessageOutlined />
+                    </button>
+                    <button
+                      type="button"
+                      className="messages-topic-detail-comment-action"
+                      onClick={() => handleTopicThreadCommentQuote(comment)}
+                    >
+                      <MoreOutlined />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </>
+    );
+  };
 
   const renderChatStream = (conversation) => (
     <div className="messages-chat-stream">
@@ -498,29 +987,59 @@ function MessagesModule() {
       <section className="messages-content">
         {selectedConversation ? (
           <div className="messages-thread-panel">
-            <header className="messages-thread-header">
-              <div className="messages-thread-header-main">
-                <div className="messages-thread-title-row">
-                  <Avatar size={38} style={getAvatarStyle(selectedConversation.avatarColor)}>
-                    {selectedConversation.avatarText}
-                  </Avatar>
-                  <div>
-                    <div className="messages-thread-title-line">
-                      <h2>{selectedConversation.title}</h2>
+            {selectedConversation.type === 'topic' ? (
+              activeTopicThreadPost ? (
+                renderTopicThreadDetail(activeTopicThreadPost)
+              ) : (
+                <>
+                  <header className="messages-thread-header">
+                    <div className="messages-thread-header-main">
+                      <div className="messages-thread-title-row">
+                        <Avatar size={38} style={getAvatarStyle(selectedConversation.avatarColor)}>
+                          {selectedConversation.avatarText}
+                        </Avatar>
+                        <div>
+                          <div className="messages-thread-title-line">
+                            <h2>{selectedConversation.title}</h2>
+                          </div>
+                          <div className="messages-thread-subtitle">{selectedConversation.description}</div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="messages-thread-subtitle">{selectedConversation.description}</div>
-                  </div>
-                </div>
-              </div>
-              <div className="messages-thread-actions">
-                <Button type="text" shape="circle" icon={<LinkOutlined />} className="messages-icon-btn" />
-                <Button type="text" shape="circle" icon={<EllipsisOutlined />} className="messages-icon-btn" />
-              </div>
-            </header>
+                    <div className="messages-thread-actions">
+                      <Button type="text" shape="circle" icon={<LinkOutlined />} className="messages-icon-btn" />
+                      <Button type="text" shape="circle" icon={<EllipsisOutlined />} className="messages-icon-btn" />
+                    </div>
+                  </header>
 
-            {selectedConversation.type === 'topic'
-              ? renderTopicStream(selectedConversation)
-              : renderChatStream(selectedConversation)}
+                  {renderTopicStream(selectedConversation)}
+                </>
+              )
+            ) : (
+              <>
+                <header className="messages-thread-header">
+                  <div className="messages-thread-header-main">
+                    <div className="messages-thread-title-row">
+                      <Avatar size={38} style={getAvatarStyle(selectedConversation.avatarColor)}>
+                        {selectedConversation.avatarText}
+                      </Avatar>
+                      <div>
+                        <div className="messages-thread-title-line">
+                          <h2>{selectedConversation.title}</h2>
+                        </div>
+                        <div className="messages-thread-subtitle">{selectedConversation.description}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="messages-thread-actions">
+                    <Button type="text" shape="circle" icon={<LinkOutlined />} className="messages-icon-btn" />
+                    <Button type="text" shape="circle" icon={<EllipsisOutlined />} className="messages-icon-btn" />
+                  </div>
+                </header>
+
+                {renderChatStream(selectedConversation)}
+              </>
+            )}
 
             <footer className="messages-composer">
               <div className={`messages-composer-box ${composerExpanded ? 'is-expanded' : ''}`}>
