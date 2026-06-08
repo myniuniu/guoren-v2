@@ -260,11 +260,11 @@ export function addResource(data, versionId, resource) {
 
   const newResource = {
     ...resource,
-    key: `r_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    key: resource.key || `r_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     isFolder: resource.isFolder || false,
     parentKey: resource.parentKey || null,
-    owner: 'zhanghl',
-    lastEdit: nowText(),
+    owner: resource.owner || 'zhanghl',
+    lastEdit: resource.lastEdit || nowText(),
   };
 
   const newData = {

@@ -3,10 +3,9 @@ import {
   Button,
   ColorPicker,
   Dropdown,
+  Empty,
   Input,
   Modal,
-  Popconfirm,
-  Table,
   Tag,
   message,
 } from 'antd';
@@ -18,8 +17,11 @@ import {
   CommentOutlined,
   DeleteOutlined,
   EditOutlined,
+  EyeOutlined,
+  FileAddOutlined,
   AppstoreOutlined,
   FolderFilled,
+  FolderAddOutlined,
   FolderOpenFilled,
   FolderOutlined,
   HomeOutlined,
@@ -27,6 +29,7 @@ import {
   MoreOutlined,
   PlayCircleOutlined,
   PlusOutlined,
+  RightOutlined,
   SendOutlined,
   SoundOutlined,
   SwapOutlined,
@@ -151,18 +154,22 @@ function TopicDetail({ topicTitle, onBack }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [previewItem, setPreviewItem] = useState(null);
   const [versionData, setVersionData] = useState(() => loadTopicVersionData(topicAdminConfig));
-  const [editingKey, setEditingKey] = useState(null);
-  const [editingName, setEditingName] = useState('');
   const [expandedFolders, setExpandedFolders] = useState(new Set());
   const [selectedFolderKey, setSelectedFolderKey] = useState(null);
-  const [creatingFolder, setCreatingFolder] = useState(false);
-  const [newFolderName, setNewFolderName] = useState('');
+  const [addResourceParentKey, setAddResourceParentKey] = useState(undefined);
+  const [inlineRenameItemKey, setInlineRenameItemKey] = useState(null);
+  const [inlineRenameName, setInlineRenameName] = useState('');
+  const [inlineRenameSurface, setInlineRenameSurface] = useState('list');
+  const [contextMenuItemKey, setContextMenuItemKey] = useState(null);
+  const [bgMenuPos, setBgMenuPos] = useState(null);
+  const [bgMenuSurface, setBgMenuSurface] = useState('list');
   const [tagPickerTarget, setTagPickerTarget] = useState(null);
   const [tagPickerGroupFilter, setTagPickerGroupFilter] = useState('all');
   const [tagPickerListScrollActive, setTagPickerListScrollActive] = useState(false);
   const [addTagOpen, setAddTagOpen] = useState(false);
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#1677ff');
+  const inlineRenameInputRef = useRef(null);
   const tagPickerScrollTimerRef = useRef(null);
 
   useEffect(() => {
@@ -170,12 +177,15 @@ function TopicDetail({ topicTitle, onBack }) {
     setActiveTab('knowledge');
     setModalOpen(false);
     setPreviewItem(null);
-    setEditingKey(null);
-    setEditingName('');
     setExpandedFolders(new Set());
     setSelectedFolderKey(null);
-    setCreatingFolder(false);
-    setNewFolderName('');
+    setAddResourceParentKey(undefined);
+    setInlineRenameItemKey(null);
+    setInlineRenameName('');
+    setInlineRenameSurface('list');
+    setContextMenuItemKey(null);
+    setBgMenuPos(null);
+    setBgMenuSurface('list');
     setTagPickerTarget(null);
     setTagPickerGroupFilter('all');
     setTagPickerListScrollActive(false);
@@ -228,6 +238,8 @@ function TopicDetail({ topicTitle, onBack }) {
   const folderChildren = selectedFolder ? getChildren(selectedFolderKey) : [];
   const folderCount = resources.filter((r) => r.isFolder).length;
   const fileCount = resources.filter((r) => !r.isFolder).length;
+  const currentListItems = selectedFolder ? folderChildren : rootItems;
+  const currentListParentKey = selectedFolderKey || null;
   const tagPickerItem = tagPickerTarget
     ? resources.find((resource) => resource.key === tagPickerTarget) || null
     : null;
@@ -463,49 +475,14 @@ function TopicDetail({ topicTitle, onBack }) {
     setVersionData(newData);
   };
 
-  const handleAddResource = (resource) => {
-    if (!isDraft) {
-      message.warning('当前版本已发布，请新建版本后再添加资料');
-      return;
-    }
-    const newData = addResource(versionData, currentVersion.id, {
-      ...resource,
-      parentKey: selectedFolderKey || null,
-    });
-    setVersionData(newData);
-    message.success('资料添加成功');
-  };
-
-  const handleDeleteResource = (resourceKey) => {
-    const newData = deleteResource(versionData, currentVersion.id, resourceKey);
-    setVersionData(newData);
-    if (resourceKey === selectedFolderKey) setSelectedFolderKey(null);
-    if (resourceKey === previewItem?.key) setPreviewItem(null);
-    if (resourceKey === tagPickerTarget) setTagPickerTarget(null);
-    message.success('资料已删除');
-  };
-
-  const handleStartEdit = (record) => {
-    setEditingKey(record.key);
-    setEditingName(record.name);
-  };
-
-  const handleSaveEdit = (resourceKey) => {
-    if (!editingName.trim()) {
-      message.warning('名称不能为空');
-      return;
-    }
-    const newData = updateResource(versionData, currentVersion.id, resourceKey, { name: editingName.trim() });
-    setVersionData(newData);
-    setEditingKey(null);
-    setEditingName('');
-    message.success('资料已更新');
-  };
-
-  const handleCancelEdit = () => {
-    setEditingKey(null);
-    setEditingName('');
-  };
+  useEffect(() => {
+    if (!inlineRenameItemKey) return undefined;
+    const timer = window.setTimeout(() => {
+      inlineRenameInputRef.current?.focus?.();
+      inlineRenameInputRef.current?.select?.();
+    }, 40);
+    return () => window.clearTimeout(timer);
+  }, [inlineRenameItemKey, inlineRenameSurface]);
 
   const handleCreateVersion = () => {
     const newData = createNewVersion(versionData);
@@ -544,6 +521,99 @@ function TopicDetail({ topicTitle, onBack }) {
     message.success('已回退到指定版本，该版本现已生效');
   };
 
+  const closeAddResourceModal = () => {
+    setModalOpen(false);
+    setAddResourceParentKey(undefined);
+  };
+
+  const openAddResourceModal = (parentKey = currentListParentKey) => {
+    if (!isDraft) {
+      message.warning('当前版本已发布，请新建版本后再添加资料');
+      return;
+    }
+    setAddResourceParentKey(parentKey ?? null);
+    setModalOpen(true);
+  };
+
+  const handleAddResource = (resource) => {
+    if (!isDraft) {
+      message.warning('当前版本已发布，请新建版本后再添加资料');
+      return;
+    }
+    const parentKey = typeof addResourceParentKey === 'undefined'
+      ? currentListParentKey
+      : addResourceParentKey;
+    const newData = addResource(versionData, currentVersion.id, {
+      ...resource,
+      parentKey: parentKey ?? null,
+    });
+    setVersionData(newData);
+    setAddResourceParentKey(undefined);
+    message.success('资料添加成功');
+  };
+
+  const removeResource = (resourceKey) => {
+    const newData = deleteResource(versionData, currentVersion.id, resourceKey);
+    setVersionData(newData);
+    if (resourceKey === selectedFolderKey) setSelectedFolderKey(null);
+    if (resourceKey === previewItem?.key) setPreviewItem(null);
+    if (resourceKey === tagPickerTarget) setTagPickerTarget(null);
+    if (resourceKey === inlineRenameItemKey) {
+      setInlineRenameItemKey(null);
+      setInlineRenameName('');
+    }
+    if (resourceKey === contextMenuItemKey) setContextMenuItemKey(null);
+    message.success('资料已删除');
+  };
+
+  const requestDeleteResource = (resource) => {
+    if (!resource || !isDraft) {
+      if (!isDraft) message.warning('当前版本不可编辑');
+      return;
+    }
+    Modal.confirm({
+      title: '确认删除',
+      icon: null,
+      content: `确定要删除“${resource.name}”吗？${resource.isFolder ? '删除文件夹会同时删除其中全部内容。' : ''}`,
+      okText: '删除',
+      okButtonProps: { danger: true },
+      cancelText: '取消',
+      onOk: () => removeResource(resource.key),
+    });
+  };
+
+  const cancelInlineRename = () => {
+    setInlineRenameItemKey(null);
+    setInlineRenameName('');
+  };
+
+  const confirmInlineRename = () => {
+    if (!inlineRenameItemKey) return;
+    const target = resources.find((item) => item.key === inlineRenameItemKey);
+    const trimmed = inlineRenameName.trim();
+
+    if (target && trimmed && trimmed !== target.name) {
+      const newData = updateResource(versionData, currentVersion.id, target.key, { name: trimmed });
+      setVersionData(newData);
+      message.success('已重命名');
+    }
+
+    cancelInlineRename();
+  };
+
+  const startInlineRename = (item, surface = 'list') => {
+    if (!item?.key) return;
+    if (!isDraft) {
+      message.warning('当前版本不可编辑');
+      return;
+    }
+    setBgMenuPos(null);
+    setContextMenuItemKey(null);
+    setInlineRenameItemKey(item.key);
+    setInlineRenameName(item.name || '');
+    setInlineRenameSurface(surface);
+  };
+
   const toggleFolder = (folderKey) => {
     setExpandedFolders((prev) => {
       const next = new Set(prev);
@@ -554,6 +624,8 @@ function TopicDetail({ topicTitle, onBack }) {
   };
 
   const handleSelectFolder = (folderKey) => {
+    setContextMenuItemKey(null);
+    setBgMenuPos(null);
     setSelectedFolderKey(folderKey);
     setExpandedFolders((prev) => {
       const next = new Set(prev);
@@ -564,170 +636,254 @@ function TopicDetail({ topicTitle, onBack }) {
 
   const handleOpenPreview = (resource) => {
     if (!resource || resource.isFolder) return;
+    setContextMenuItemKey(null);
+    setBgMenuPos(null);
     setPreviewItem(resource);
   };
 
-  const handleCreateFolder = () => {
+  const createFolderAndStartRename = (parentKey = currentListParentKey, surface = 'list') => {
     if (!isDraft) {
       message.warning('当前版本不可编辑');
       return;
     }
-    setCreatingFolder(true);
-    setNewFolderName('');
-  };
-
-  const handleSaveNewFolder = () => {
-    const name = newFolderName.trim();
-    if (!name) {
-      message.warning('文件夹名称不能为空');
-      return;
-    }
+    const folderKey = `r_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const newData = addResource(versionData, currentVersion.id, {
-      name,
+      key: folderKey,
+      name: '未命名文件夹',
       isFolder: true,
-      parentKey: selectedFolderKey || null,
+      parentKey: parentKey ?? null,
     });
     setVersionData(newData);
-    setCreatingFolder(false);
-    message.success('文件夹创建成功');
+    if (parentKey) {
+      setExpandedFolders((prev) => {
+        const next = new Set(prev);
+        next.add(parentKey);
+        return next;
+      });
+    }
+    setBgMenuPos(null);
+    setContextMenuItemKey(null);
+    setInlineRenameItemKey(folderKey);
+    setInlineRenameName('未命名文件夹');
+    setInlineRenameSurface(surface);
+    message.success('文件夹已创建');
   };
 
-  const columns = [
-    {
-      title: '名称',
-      dataIndex: 'name',
-      key: 'name',
-      render: (text, record) => {
-        if (editingKey === record.key) {
-          return (
-            <div className="file-name-cell">
-              <span className="file-icon">
-                {record.isFolder ? <FolderOutlined style={{ color: '#4facfe' }} /> : getResourceIcon(record.type)}
-              </span>
-              <Input
-                value={editingName}
-                onChange={(event) => setEditingName(event.target.value)}
-                onPressEnter={() => handleSaveEdit(record.key)}
-                size="small"
-                style={{ width: 240 }}
-                autoFocus
-              />
-              <Button size="small" type="link" onClick={() => handleSaveEdit(record.key)}>保存</Button>
-              <Button size="small" type="link" onClick={handleCancelEdit}>取消</Button>
-            </div>
-          );
-        }
-        return (
-          <div
-            className="file-name-cell file-name-cell-clickable"
-            onClick={() => {
-              if (record.isFolder) handleSelectFolder(record.key);
-              else handleOpenPreview(record);
-            }}
-          >
-            <span className="file-icon">
-              {record.isFolder ? <FolderOutlined style={{ color: '#4facfe' }} /> : getResourceIcon(record.type)}
-            </span>
-            <span className="file-name-text" style={record.isFolder ? { color: '#1677ff' } : {}}>
-              {text}
-            </span>
-          </div>
-        );
+  const handleItemContextMenuOpenChange = (itemKey, open) => {
+    if (open) {
+      setBgMenuPos(null);
+      setContextMenuItemKey(itemKey);
+      return;
+    }
+    setContextMenuItemKey((prev) => (prev === itemKey ? null : prev));
+  };
+
+  const handleItemMenuAction = (item, key, surface = 'list') => {
+    if (!item) return;
+    if (key === 'enter' && item.isFolder) {
+      handleSelectFolder(item.key);
+      return;
+    }
+    if (key === 'preview' && !item.isFolder) {
+      handleOpenPreview(item);
+      return;
+    }
+    if (key === 'addResource' && item.isFolder) {
+      openAddResourceModal(item.key);
+      return;
+    }
+    if (key === 'newFolder' && item.isFolder) {
+      createFolderAndStartRename(item.key, surface);
+      return;
+    }
+    if (key === 'rename') {
+      startInlineRename(item, surface);
+      return;
+    }
+    if (key === 'delete') {
+      requestDeleteResource(item);
+      return;
+    }
+    if (key === 'tags-manage') {
+      handleOpenTagPicker(item.key);
+    }
+  };
+
+  const getItemMoreMenu = (item, surface = 'list') => {
+    const items = [
+      item.isFolder
+        ? { key: 'enter', icon: <RightOutlined />, label: '进入' }
+        : { key: 'preview', icon: <EyeOutlined />, label: '预览' },
+      { type: 'divider' },
+      ...(item.isFolder
+        ? [
+            { key: 'addResource', icon: <FileAddOutlined />, label: '添加资料', disabled: !isDraft },
+            { key: 'newFolder', icon: <FolderAddOutlined />, label: '新建文件夹', disabled: !isDraft },
+            { type: 'divider' },
+          ]
+        : []),
+      ...(tagConfig
+        ? [
+            { key: 'tags-manage', icon: <TagsOutlined />, label: '编辑标签', disabled: !isDraft },
+            { type: 'divider' },
+          ]
+        : []),
+      { key: 'rename', icon: <EditOutlined />, label: '重命名', disabled: !isDraft },
+      { key: 'delete', icon: <DeleteOutlined />, label: '删除', danger: true, disabled: !isDraft },
+    ];
+
+    return {
+      items,
+      onClick: ({ key, domEvent }) => {
+        domEvent?.stopPropagation();
+        handleItemMenuAction(item, key, surface);
       },
+    };
+  };
+
+  const handleBgContextMenu = (event, surface = 'list') => {
+    const itemSelector = surface === 'tree' ? '.project-item' : '.topic-file-row, .topic-file-list-header';
+    if (event.target.closest(itemSelector)) return;
+    event.preventDefault();
+    setContextMenuItemKey(null);
+    setBgMenuSurface(surface);
+    setBgMenuPos({ x: event.clientX, y: event.clientY });
+  };
+
+  const handleCreateFolderAtCurrentLocation = (surface = 'list') => {
+    createFolderAndStartRename(surface === 'tree' ? null : currentListParentKey, surface);
+  };
+
+  const handleAddResourceAtCurrentLocation = (surface = 'list') => {
+    openAddResourceModal(surface === 'tree' ? null : currentListParentKey);
+  };
+
+  useEffect(() => {
+    if (!bgMenuPos) return undefined;
+
+    const isInsideBgMenu = (target) => target instanceof Element && !!target.closest('.ant-dropdown');
+
+    const handlePointerDown = (event) => {
+      if (isInsideBgMenu(event.target)) return;
+      setBgMenuPos(null);
+    };
+
+    const handleDocumentContextMenu = (event) => {
+      if (isInsideBgMenu(event.target)) return;
+      setBgMenuPos(null);
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') setBgMenuPos(null);
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown, true);
+    document.addEventListener('contextmenu', handleDocumentContextMenu, true);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown, true);
+      document.removeEventListener('contextmenu', handleDocumentContextMenu, true);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [bgMenuPos]);
+
+  const bgContextMenu = {
+    items: [
+      { key: 'newFolder', icon: <FolderAddOutlined />, label: '新建文件夹', disabled: !isDraft },
+      { key: 'addResource', icon: <FileAddOutlined />, label: '添加资料', disabled: !isDraft },
+    ],
+    onClick: ({ key }) => {
+      if (key === 'newFolder') handleCreateFolderAtCurrentLocation(bgMenuSurface);
+      if (key === 'addResource') handleAddResourceAtCurrentLocation(bgMenuSurface);
+      setBgMenuPos(null);
     },
-    ...(tagConfig
-      ? [
-          {
-            title: '标签',
-            key: 'tags',
-            width: 200,
-            render: (_, record) => renderResourceTagText(record) || <span className="topic-tags-empty">-</span>,
-          },
-        ]
-      : []),
-    {
-      title: '所有者',
-      dataIndex: 'owner',
-      key: 'owner',
-      width: 120,
-    },
-    {
-      title: '最近编辑',
-      dataIndex: 'lastEdit',
-      key: 'lastEdit',
-      width: 200,
-    },
-    ...(isDraft
-      ? [
-          {
-            title: '操作',
-            key: 'action',
-            width: tagConfig ? 184 : 120,
-            render: (_, record) => (
-              <div className="action-cell" onClick={(event) => event.stopPropagation()}>
-                <Button
-                  type="link"
-                  size="small"
-                  icon={<EditOutlined />}
-                  onClick={() => handleStartEdit(record)}
-                >
-                  编辑
-                </Button>
-                {tagConfig ? (
-                  <Button
-                    type="link"
-                    size="small"
-                    icon={<TagsOutlined />}
-                    onClick={() => handleOpenTagPicker(record.key)}
-                  >
-                    标签
-                  </Button>
-                ) : null}
-                <Popconfirm
-                  title={record.isFolder ? '删除文件夹将同时删除其下所有内容，确认？' : '确认删除该资料？'}
-                  onConfirm={() => handleDeleteResource(record.key)}
-                  okText="确认"
-                  cancelText="取消"
-                >
-                  <Button type="link" size="small" danger icon={<DeleteOutlined />}>
-                    删除
-                  </Button>
-                </Popconfirm>
-              </div>
-            ),
-          },
-        ]
-      : []),
-  ];
+  };
 
   const renderTreeItem = (item) => {
+    const rowMenu = getItemMoreMenu(item, 'tree');
+    const isContextOpen = contextMenuItemKey === item.key;
+    const isInlineRenaming = inlineRenameItemKey === item.key && inlineRenameSurface === 'tree';
+
     if (item.isFolder) {
       const isExpanded = expandedFolders.has(item.key);
       const isSelected = selectedFolderKey === item.key;
       const children = getChildren(item.key);
       return (
         <div key={item.key} className="tree-folder-group">
-          <div
-            className={`project-item project-item-folder ${isSelected ? 'project-item-selected' : ''}`}
-            onClick={() => handleSelectFolder(item.key)}
+          <Dropdown
+            menu={rowMenu}
+            trigger={['contextMenu']}
+            onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
           >
-            <span
-              className="project-item-arrow"
-              onClick={(event) => {
-                event.stopPropagation();
-                toggleFolder(item.key);
-              }}
+            <div
+              className={`project-item project-item-folder ${isSelected ? 'project-item-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''}`}
+              onClick={() => handleSelectFolder(item.key)}
             >
-              {isExpanded ? <CaretDownOutlined /> : <CaretRightOutlined />}
-            </span>
-            <span className="project-item-icon">
-              {isExpanded
-                ? <FolderOpenFilled style={{ color: '#56a8f5' }} />
-                : <FolderFilled style={{ color: '#56a8f5' }} />}
-            </span>
-            <span className="project-item-title">{item.name}</span>
-            {renderResourceTagDots(item)}
-          </div>
+              <span
+                className="project-item-arrow"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  toggleFolder(item.key);
+                }}
+              >
+                {isExpanded ? <CaretDownOutlined /> : <CaretRightOutlined />}
+              </span>
+              <span className="project-item-icon">
+                {isExpanded
+                  ? <FolderOpenFilled style={{ color: '#56a8f5' }} />
+                  : <FolderFilled style={{ color: '#56a8f5' }} />}
+              </span>
+              {isInlineRenaming ? (
+                <Input
+                  ref={inlineRenameInputRef}
+                  className="topic-inline-input topic-tree-inline-input"
+                  value={inlineRenameName}
+                  onChange={(event) => setInlineRenameName(event.target.value)}
+                  onPressEnter={confirmInlineRename}
+                  onBlur={confirmInlineRename}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Escape') cancelInlineRename();
+                  }}
+                  onClick={(event) => event.stopPropagation()}
+                  onDoubleClick={(event) => event.stopPropagation()}
+                  size="small"
+                />
+              ) : (
+                <span className="project-item-title">{item.name}</span>
+              )}
+              {!isInlineRenaming ? renderResourceTagDots(item) : null}
+              {!isInlineRenaming ? (
+                <span className="topic-tree-item-actions" onClick={(event) => event.stopPropagation()}>
+                  {isDraft ? (
+                    <button
+                      type="button"
+                      className="topic-action-btn"
+                      aria-label="添加资料"
+                      title="添加资料"
+                      onClick={() => openAddResourceModal(item.key)}
+                    >
+                      <PlusOutlined style={{ fontSize: 12 }} />
+                    </button>
+                  ) : null}
+                  <Dropdown
+                    menu={rowMenu}
+                    trigger={['click']}
+                    onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
+                  >
+                    <button
+                      type="button"
+                      className="topic-action-btn"
+                      aria-label="更多操作"
+                      title="更多操作"
+                    >
+                      <MoreOutlined style={{ fontSize: 14 }} />
+                    </button>
+                  </Dropdown>
+                </span>
+              ) : null}
+            </div>
+          </Dropdown>
           {isExpanded && (
             <div className="tree-children">
               {children.map((child) => renderTreeItem(child))}
@@ -738,15 +894,141 @@ function TopicDetail({ topicTitle, onBack }) {
     }
 
     return (
-      <div
+      <Dropdown
         key={item.key}
-        className="project-item project-item-child"
-        onClick={() => handleOpenPreview(item)}
+        menu={rowMenu}
+        trigger={['contextMenu']}
+        onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
       >
-        <span className="project-item-icon">{getResourceIcon(item.type)}</span>
-        <span className="project-item-title">{item.name}</span>
-        {renderResourceTagDots(item)}
-      </div>
+        <div
+          className={`project-item project-item-child ${isContextOpen ? 'project-item-context-open' : ''}`}
+          onClick={() => handleOpenPreview(item)}
+        >
+          <span className="project-item-icon">{getResourceIcon(item.type)}</span>
+          {isInlineRenaming ? (
+            <Input
+              ref={inlineRenameInputRef}
+              className="topic-inline-input topic-tree-inline-input"
+              value={inlineRenameName}
+              onChange={(event) => setInlineRenameName(event.target.value)}
+              onPressEnter={confirmInlineRename}
+              onBlur={confirmInlineRename}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') cancelInlineRename();
+              }}
+              onClick={(event) => event.stopPropagation()}
+              onDoubleClick={(event) => event.stopPropagation()}
+              size="small"
+            />
+          ) : (
+            <span className="project-item-title">{item.name}</span>
+          )}
+          {!isInlineRenaming ? renderResourceTagDots(item) : null}
+          {!isInlineRenaming ? (
+            <span className="topic-tree-item-actions" onClick={(event) => event.stopPropagation()}>
+              <Dropdown
+                menu={rowMenu}
+                trigger={['click']}
+                onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
+              >
+                <button
+                  type="button"
+                  className="topic-action-btn"
+                  aria-label="更多操作"
+                  title="更多操作"
+                >
+                  <MoreOutlined style={{ fontSize: 14 }} />
+                </button>
+              </Dropdown>
+            </span>
+          ) : null}
+        </div>
+      </Dropdown>
+    );
+  };
+
+  const renderListRow = (item) => {
+    const rowMenu = getItemMoreMenu(item, 'list');
+    const isContextOpen = contextMenuItemKey === item.key;
+    const isInlineRenaming = inlineRenameItemKey === item.key && inlineRenameSurface === 'list';
+
+    return (
+      <Dropdown
+        key={item.key}
+        menu={rowMenu}
+        trigger={['contextMenu']}
+        onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
+      >
+        <div
+          className={`topic-file-row ${isContextOpen ? 'topic-file-row-context-open' : ''}`}
+          onClick={() => {
+            if (item.isFolder) handleSelectFolder(item.key);
+            else handleOpenPreview(item);
+          }}
+        >
+          <div className="topic-file-col topic-file-col-name">
+            <span className="topic-file-icon">
+              {item.isFolder
+                ? <FolderFilled style={{ color: '#56a8f5' }} />
+                : getResourceIcon(item.type)}
+            </span>
+            {isInlineRenaming ? (
+              <Input
+                ref={inlineRenameInputRef}
+                className="topic-inline-input topic-file-inline-input"
+                value={inlineRenameName}
+                onChange={(event) => setInlineRenameName(event.target.value)}
+                onPressEnter={confirmInlineRename}
+                onBlur={confirmInlineRename}
+                onKeyDown={(event) => {
+                  if (event.key === 'Escape') cancelInlineRename();
+                }}
+                onClick={(event) => event.stopPropagation()}
+                onDoubleClick={(event) => event.stopPropagation()}
+                size="small"
+              />
+            ) : (
+              <span className={`topic-file-name ${item.isFolder ? 'topic-file-name-folder' : ''}`}>{item.name}</span>
+            )}
+            {!isInlineRenaming ? (
+              <span className="topic-file-row-actions" onClick={(event) => event.stopPropagation()}>
+                {item.isFolder && isDraft ? (
+                  <button
+                    type="button"
+                    className="topic-action-btn"
+                    aria-label="添加资料"
+                    title="添加资料"
+                    onClick={() => openAddResourceModal(item.key)}
+                  >
+                    <PlusOutlined style={{ fontSize: 12 }} />
+                  </button>
+                ) : null}
+                <Dropdown
+                  menu={rowMenu}
+                  trigger={['click']}
+                  onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
+                >
+                  <button
+                    type="button"
+                    className="topic-action-btn"
+                    aria-label="更多操作"
+                    title="更多操作"
+                  >
+                    <MoreOutlined style={{ fontSize: 14 }} />
+                  </button>
+                </Dropdown>
+              </span>
+            ) : null}
+          </div>
+          {tagConfig ? (
+            <div className="topic-file-col topic-file-col-tags">
+              {renderResourceTagText(item) || <span className="topic-tags-empty">-</span>}
+            </div>
+          ) : null}
+          <div className="topic-file-col topic-file-col-owner">{item.owner || '--'}</div>
+          <div className="topic-file-col topic-file-col-edit">{item.lastEdit || '--'}</div>
+        </div>
+      </Dropdown>
     );
   };
 
@@ -987,6 +1269,19 @@ function TopicDetail({ topicTitle, onBack }) {
         </div>
       </div>
 
+      {bgMenuPos ? (
+        <Dropdown
+          menu={bgContextMenu}
+          open
+          onOpenChange={(open) => {
+            if (!open) setBgMenuPos(null);
+          }}
+          trigger={[]}
+        >
+          <span style={{ position: 'fixed', left: bgMenuPos.x, top: bgMenuPos.y, width: 1, height: 1 }} />
+        </Dropdown>
+      ) : null}
+
       {activeTab === 'assessment' ? (
         <AssessmentConfig
           assessment={currentVersion?.assessment}
@@ -995,7 +1290,7 @@ function TopicDetail({ topicTitle, onBack }) {
           isDraft={isDraft}
           onUpdateAssessment={handleUpdateAssessment}
           onUpdateChat={handleUpdateAssessmentChat}
-          onOpenAddModal={() => setModalOpen(true)}
+          onOpenAddModal={() => openAddResourceModal(null)}
           onCreateFolder={(name) => {
             const newData = addResource(versionData, currentVersion.id, {
               name,
@@ -1021,7 +1316,7 @@ function TopicDetail({ topicTitle, onBack }) {
             <div className="panel-actions">
               <div
                 className={`panel-action-btn ${!isDraft ? 'panel-action-btn-disabled' : ''}`}
-                onClick={() => isDraft && setModalOpen(true)}
+                onClick={() => isDraft && openAddResourceModal(currentListParentKey)}
               >
                 <PlusOutlined style={{ fontSize: 12 }} />
                 <span>添加资料</span>
@@ -1032,17 +1327,24 @@ function TopicDetail({ topicTitle, onBack }) {
               </div>
             </div>
 
-            <div className="project-section">
+            <div className="project-section" onContextMenu={(event) => handleBgContextMenu(event, 'tree')}>
               <div className="project-header">
                 <span className="project-title">项目</span>
                 <Dropdown
                   menu={{
                     items: [
                       {
+                        key: 'add-resource',
+                        icon: <FileAddOutlined />,
+                        label: '添加资料',
+                        onClick: () => openAddResourceModal(null),
+                        disabled: !isDraft,
+                      },
+                      {
                         key: 'new-folder',
-                        icon: <FolderOutlined />,
+                        icon: <FolderAddOutlined />,
                         label: '新建文件夹',
-                        onClick: handleCreateFolder,
+                        onClick: () => createFolderAndStartRename(null, 'tree'),
                         disabled: !isDraft,
                       },
                     ],
@@ -1053,29 +1355,8 @@ function TopicDetail({ topicTitle, onBack }) {
                 </Dropdown>
               </div>
 
-              {creatingFolder && (
-                <div className="new-folder-form">
-                  <div className="new-folder-row">
-                    <FolderOutlined style={{ color: '#4facfe', fontSize: 14 }} />
-                    <Input
-                      size="small"
-                      placeholder="输入文件夹名称"
-                      value={newFolderName}
-                      onChange={(event) => setNewFolderName(event.target.value)}
-                      onPressEnter={handleSaveNewFolder}
-                      autoFocus
-                      style={{ flex: 1 }}
-                    />
-                  </div>
-                  <div className="new-folder-actions">
-                    <Button size="small" onClick={() => setCreatingFolder(false)}>取消</Button>
-                    <Button size="small" type="primary" onClick={handleSaveNewFolder}>创建</Button>
-                  </div>
-                </div>
-              )}
-
               <div className="project-list">
-                {rootItems.length === 0 && !creatingFolder ? (
+                {rootItems.length === 0 ? (
                   <div className="project-empty">暂无资料</div>
                 ) : (
                   rootItems.map((item) => renderTreeItem(item))
@@ -1112,18 +1393,30 @@ function TopicDetail({ topicTitle, onBack }) {
                   </div>
                   <div className="folder-info-right">
                     <Button size="small" onClick={() => setSelectedFolderKey(null)}>返回概览</Button>
-                    <Button icon={<PlusOutlined />} disabled={!isDraft} onClick={() => setModalOpen(true)}>添加资料</Button>
+                    <Button icon={<PlusOutlined />} disabled={!isDraft} onClick={() => openAddResourceModal(currentListParentKey)}>添加资料</Button>
                   </div>
                 </div>
-                <Table
-                  columns={columns}
-                  dataSource={folderChildren}
-                  pagination={false}
-                  className="file-table"
-                  size="middle"
-                  locale={{ emptyText: '文件夹为空，点击“添加资料”按钮添加' }}
-                  rowClassName={(record) => (record.isFolder ? 'folder-row' : 'file-preview-row')}
-                />
+                <div
+                  className={`topic-file-list ${tagConfig ? 'topic-file-list-with-tags' : 'topic-file-list-no-tags'}`}
+                  onContextMenu={(event) => handleBgContextMenu(event, 'list')}
+                >
+                  <div className="topic-file-list-header">
+                    <div className="topic-file-col topic-file-col-name">名称</div>
+                    {tagConfig ? <div className="topic-file-col topic-file-col-tags">标签</div> : null}
+                    <div className="topic-file-col topic-file-col-owner">所有者</div>
+                    <div className="topic-file-col topic-file-col-edit">最近编辑</div>
+                  </div>
+                  {currentListItems.length === 0 ? (
+                    <div className="topic-file-empty">
+                      <Empty
+                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                        description="此文件夹为空，右键新建或添加资料"
+                      />
+                    </div>
+                  ) : (
+                    currentListItems.map((item) => renderListRow(item))
+                  )}
+                </div>
               </>
             ) : (
               <>
@@ -1135,19 +1428,31 @@ function TopicDetail({ topicTitle, onBack }) {
                       <div className="folder-desc">{fileCount} 个文件 {folderCount} 个文件夹</div>
                     </div>
                   </div>
-                  <Button className="add-resource-btn" icon={<PlusOutlined />} disabled={!isDraft} onClick={() => setModalOpen(true)}>
+                  <Button className="add-resource-btn" icon={<PlusOutlined />} disabled={!isDraft} onClick={() => openAddResourceModal(null)}>
                     添加资料
                   </Button>
                 </div>
-                <Table
-                  columns={columns}
-                  dataSource={resources.filter((resource) => resource.parentKey === null && !resource.isFolder)}
-                  pagination={false}
-                  className="file-table"
-                  size="middle"
-                  locale={{ emptyText: '暂无资料，点击“添加资料”按钮添加' }}
-                  rowClassName={() => 'file-preview-row'}
-                />
+                <div
+                  className={`topic-file-list ${tagConfig ? 'topic-file-list-with-tags' : 'topic-file-list-no-tags'}`}
+                  onContextMenu={(event) => handleBgContextMenu(event, 'list')}
+                >
+                  <div className="topic-file-list-header">
+                    <div className="topic-file-col topic-file-col-name">名称</div>
+                    {tagConfig ? <div className="topic-file-col topic-file-col-tags">标签</div> : null}
+                    <div className="topic-file-col topic-file-col-owner">所有者</div>
+                    <div className="topic-file-col topic-file-col-edit">最近编辑</div>
+                  </div>
+                  {currentListItems.length === 0 ? (
+                    <div className="topic-file-empty">
+                      <Empty
+                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                        description="暂无资料，右键新建文件夹或添加资料"
+                      />
+                    </div>
+                  ) : (
+                    currentListItems.map((item) => renderListRow(item))
+                  )}
+                </div>
               </>
             )}
           </div>
@@ -1156,7 +1461,7 @@ function TopicDetail({ topicTitle, onBack }) {
 
       <AddResourceModal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={closeAddResourceModal}
         onAdd={handleAddResource}
       />
 
