@@ -1,35 +1,46 @@
-import { useState } from 'react';
-import { Avatar, Badge, Button, Empty, Input, Tag, Tooltip } from 'antd';
+import { useRef, useState } from 'react';
+import { Avatar, Badge, Button, Dropdown, Empty, Input, Popover, Tooltip } from 'antd';
 import {
+  DownOutlined,
   EllipsisOutlined,
+  FullscreenExitOutlined,
+  FullscreenOutlined,
   LinkOutlined,
+  PlusCircleOutlined,
   PlusOutlined,
   PushpinFilled,
-  ReadOutlined,
+  ScissorOutlined,
   SendOutlined,
-  TeamOutlined,
-  UserOutlined,
+  SmileOutlined,
 } from '@ant-design/icons';
 import './MessagesModule.css';
 
 const TYPE_META = {
   topic: {
-    label: '话题',
-    icon: <ReadOutlined />,
-    accent: '#d4a72c',
     placeholder: '补充一条话题动态...',
   },
   direct: {
-    label: '单聊',
-    icon: <UserOutlined />,
-    accent: '#33a06f',
     placeholder: '发送一条私聊消息...',
   },
   group: {
-    label: '群组',
-    icon: <TeamOutlined />,
-    accent: '#3772ff',
     placeholder: '向群里发送消息...',
+  },
+};
+
+const QUICK_EMOJIS = ['😀', '👍', '🔥', '🎯', '👏', '✅', '🤝', '🚀'];
+
+const SEND_MODE_META = {
+  normal: {
+    label: '普通发送',
+    prefix: '',
+  },
+  urgent: {
+    label: '加急发送',
+    prefix: '【加急】',
+  },
+  silent: {
+    label: '静默发送',
+    prefix: '【静默】',
   },
 };
 
@@ -215,6 +226,10 @@ function MessagesModule() {
   const [conversations, setConversations] = useState(INITIAL_CONVERSATIONS);
   const [selectedId, setSelectedId] = useState('topic-genai');
   const [drafts, setDrafts] = useState({});
+  const [composerExpanded, setComposerExpanded] = useState(false);
+  const [formatEnabled, setFormatEnabled] = useState(false);
+  const [sendMode, setSendMode] = useState('normal');
+  const composerInputRef = useRef(null);
 
   const selectedConversation =
     conversations.find((item) => item.id === selectedId) || conversations[0] || null;
@@ -229,12 +244,86 @@ function MessagesModule() {
     }));
   };
 
+  const focusComposer = () => {
+    const nativeTextArea = composerInputRef.current?.resizableTextArea?.textArea;
+    nativeTextArea?.focus();
+  };
+
+  const insertDraftText = (snippet) => {
+    const nativeTextArea = composerInputRef.current?.resizableTextArea?.textArea;
+    if (!nativeTextArea) {
+      handleDraftChange(`${currentDraft}${snippet}`);
+      return;
+    }
+
+    const start = nativeTextArea.selectionStart ?? currentDraft.length;
+    const end = nativeTextArea.selectionEnd ?? currentDraft.length;
+    const nextValue = `${currentDraft.slice(0, start)}${snippet}${currentDraft.slice(end)}`;
+    handleDraftChange(nextValue);
+
+    requestAnimationFrame(() => {
+      const textArea = composerInputRef.current?.resizableTextArea?.textArea;
+      if (!textArea) {
+        return;
+      }
+      const nextCursor = start + snippet.length;
+      textArea.focus();
+      textArea.setSelectionRange(nextCursor, nextCursor);
+    });
+  };
+
+  const normalizedOutgoingText = (text) => {
+    const prefix = SEND_MODE_META[sendMode]?.prefix;
+    return prefix ? `${prefix}${text}` : text;
+  };
+
+  const emojiPopoverContent = (
+    <div className="messages-emoji-panel">
+      {QUICK_EMOJIS.map((emoji) => (
+        <button
+          key={emoji}
+          type="button"
+          className="messages-emoji-btn"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => insertDraftText(emoji)}
+        >
+          {emoji}
+        </button>
+      ))}
+    </div>
+  );
+
+  const quickInsertItems = [
+    {
+      key: 'file',
+      label: '插入文件',
+      onClick: () => insertDraftText('[文件] '),
+    },
+    {
+      key: 'card',
+      label: '插入名片',
+      onClick: () => insertDraftText('[名片] '),
+    },
+    {
+      key: 'todo',
+      label: '插入待办',
+      onClick: () => insertDraftText('[待办] '),
+    },
+  ];
+
+  const sendModeItems = Object.entries(SEND_MODE_META).map(([key, meta]) => ({
+    key,
+    label: meta.label,
+    onClick: () => setSendMode(key),
+  }));
+
   const handleSend = () => {
     const text = currentDraft.trim();
     if (!selectedConversation || !text) {
       return;
     }
 
+    const outgoingText = normalizedOutgoingText(text);
     const updatedTime = getTimeLabel();
     setConversations((prev) => {
       const target = prev.find((item) => item.id === selectedConversation.id);
@@ -245,7 +334,7 @@ function MessagesModule() {
       const updatedConversation = target.type === 'topic'
         ? {
           ...target,
-          preview: text,
+          preview: outgoingText,
           time: updatedTime,
           posts: [
             ...target.posts,
@@ -254,13 +343,13 @@ function MessagesModule() {
               author: '你',
               authorRole: '参与者',
               time: '刚刚',
-              content: text,
+              content: outgoingText,
             },
           ],
         }
         : {
           ...target,
-          preview: text,
+          preview: outgoingText,
           time: updatedTime,
           messages: [
             ...(target.messages || []),
@@ -269,7 +358,7 @@ function MessagesModule() {
               sender: '你',
               self: true,
               time: '刚刚',
-              content: text,
+              content: outgoingText,
             },
           ],
         };
@@ -285,7 +374,6 @@ function MessagesModule() {
   };
 
   const renderSidebarItem = (item) => {
-    const meta = TYPE_META[item.type];
     return (
       <button
         key={item.id}
@@ -314,10 +402,6 @@ function MessagesModule() {
             <span className="messages-conversation-time">{item.time}</span>
           </div>
           <div className="messages-conversation-bottom">
-            <Tag bordered={false} className={`messages-type-tag messages-type-tag-${item.type}`}>
-              {meta.icon}
-              <span>{meta.label}</span>
-            </Tag>
             <span className="messages-conversation-preview">{item.preview}</span>
           </div>
         </div>
@@ -423,10 +507,6 @@ function MessagesModule() {
                   <div>
                     <div className="messages-thread-title-line">
                       <h2>{selectedConversation.title}</h2>
-                      <Tag bordered={false} className={`messages-type-tag messages-type-tag-${selectedConversation.type}`}>
-                        {selectedMeta.icon}
-                        <span>{selectedMeta.label}</span>
-                      </Tag>
                     </div>
                     <div className="messages-thread-subtitle">{selectedConversation.description}</div>
                   </div>
@@ -443,22 +523,104 @@ function MessagesModule() {
               : renderChatStream(selectedConversation)}
 
             <footer className="messages-composer">
-              <div className="messages-composer-box">
+              <div className={`messages-composer-box ${composerExpanded ? 'is-expanded' : ''}`}>
                 <Input.TextArea
-                  autoSize={{ minRows: 1, maxRows: 4 }}
+                  ref={composerInputRef}
+                  autoSize={composerExpanded ? { minRows: 4, maxRows: 8 } : { minRows: 1, maxRows: 4 }}
                   value={currentDraft}
                   onChange={(e) => handleDraftChange(e.target.value)}
-                  placeholder={selectedMeta.placeholder}
+                  placeholder={
+                    formatEnabled
+                      ? `${selectedMeta.placeholder} 支持表情、@提及和快捷模板`
+                      : selectedMeta.placeholder
+                  }
                   className="messages-composer-input"
                 />
-                <Button
-                  type="primary"
-                  shape="circle"
-                  icon={<SendOutlined />}
-                  className="messages-send-btn"
-                  disabled={!currentDraft.trim()}
-                  onClick={handleSend}
-                />
+                <div className="messages-composer-toolbar">
+                  <Tooltip title={formatEnabled ? '关闭文本增强' : '文本增强'}>
+                    <button
+                      type="button"
+                      className={`messages-toolbar-btn messages-toolbar-btn-aa ${formatEnabled ? 'is-active' : ''}`}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        setFormatEnabled((prev) => !prev);
+                        focusComposer();
+                      }}
+                    >
+                      <span className="messages-toolbar-aa">Aa</span>
+                    </button>
+                  </Tooltip>
+                  <Popover content={emojiPopoverContent} trigger="click" placement="topRight">
+                    <button
+                      type="button"
+                      className="messages-toolbar-btn"
+                      onMouseDown={(e) => e.preventDefault()}
+                    >
+                      <SmileOutlined />
+                    </button>
+                  </Popover>
+                  <Tooltip title="提及成员">
+                    <button
+                      type="button"
+                      className="messages-toolbar-btn"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => insertDraftText('@')}
+                    >
+                      <span className="messages-toolbar-at">@</span>
+                    </button>
+                  </Tooltip>
+                  <Tooltip title="插入剪贴内容">
+                    <button
+                      type="button"
+                      className="messages-toolbar-btn"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => insertDraftText('[剪贴内容] ')}
+                    >
+                      <ScissorOutlined />
+                    </button>
+                  </Tooltip>
+                  <Dropdown menu={{ items: quickInsertItems }} trigger={['click']} placement="topRight">
+                    <button
+                      type="button"
+                      className="messages-toolbar-btn"
+                      onMouseDown={(e) => e.preventDefault()}
+                    >
+                      <PlusCircleOutlined />
+                    </button>
+                  </Dropdown>
+                  <Tooltip title={composerExpanded ? '收起输入区' : '展开输入区'}>
+                    <button
+                      type="button"
+                      className={`messages-toolbar-btn ${composerExpanded ? 'is-active' : ''}`}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => setComposerExpanded((prev) => !prev)}
+                    >
+                      {composerExpanded ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
+                    </button>
+                  </Tooltip>
+                  <div className="messages-send-group">
+                    <Tooltip title={SEND_MODE_META[sendMode].label}>
+                      <button
+                        type="button"
+                        className="messages-toolbar-btn messages-toolbar-send"
+                        disabled={!currentDraft.trim()}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={handleSend}
+                      >
+                        <SendOutlined />
+                      </button>
+                    </Tooltip>
+                    <Dropdown menu={{ items: sendModeItems }} trigger={['click']} placement="topRight">
+                      <button
+                        type="button"
+                        className="messages-toolbar-btn messages-toolbar-caret"
+                        onMouseDown={(e) => e.preventDefault()}
+                      >
+                        <DownOutlined />
+                      </button>
+                    </Dropdown>
+                  </div>
+                </div>
               </div>
             </footer>
           </div>
