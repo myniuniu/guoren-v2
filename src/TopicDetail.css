@@ -822,7 +822,9 @@
 }
 
 .topic-file-row-selected {
-  background: #007aff !important;
+  background: var(--td-selected) !important;
+  box-shadow: inset 0 0 0 1px #cfdef0;
+  z-index: 1;
 }
 
 .topic-file-row:last-child {
@@ -922,17 +924,25 @@
 }
 
 .topic-file-row-selected .topic-file-name,
-.topic-file-row-selected .topic-file-name-folder,
 .topic-file-row-selected .topic-file-col-owner,
 .topic-file-row-selected .topic-file-col-edit,
 .topic-file-row-selected .topic-file-col-tags,
-.topic-file-row-selected .topic-tags-text,
+.topic-file-row-selected .topic-tags-text {
+  color: #303846;
+}
+
+.topic-file-row-selected .topic-file-name-folder {
+  color: #2d7fe3;
+}
+
+.topic-file-row-selected .topic-file-col-owner,
+.topic-file-row-selected .topic-file-col-edit,
 .topic-file-row-selected .topic-tags-empty {
-  color: rgba(255, 255, 255, 0.92);
+  color: #667085;
 }
 
 .topic-file-row-selected .topic-file-icon {
-  color: rgba(255, 255, 255, 0.92);
+  color: #8a94a6;
 }
 
 .topic-file-col-tags .topic-tags-inline {
@@ -968,17 +978,17 @@
 }
 
 .topic-file-row-selected .topic-action-btn {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.24);
   box-shadow: none;
-  color: rgba(255, 255, 255, 0.96);
+  color: rgba(43, 52, 64, 0.82);
 }
 
 .topic-file-row-selected .topic-action-btn:hover {
-  background: rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.28);
   border-color: rgba(255, 255, 255, 0.32);
   box-shadow: none;
-  color: #fff;
+  color: #1f2937;
 }
 
 .topic-file-row-context-open .topic-action-btn {

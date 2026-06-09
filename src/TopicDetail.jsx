@@ -2024,9 +2024,11 @@ function TopicDetail({ topicTitle, onBack }) {
                       ) : null}
                     </div>
                   </div>
-                  <Button size="small" onClick={() => setPreviewItem(null)}>
-                    {previewParentFolder ? '返回文件夹' : '返回概览'}
-                  </Button>
+                  {previewParentFolder ? (
+                    <Button size="small" onClick={() => setPreviewItem(null)}>
+                      返回文件夹
+                    </Button>
+                  ) : null}
                 </div>
                 <div className="topic-preview-main-content">
                   <div className="topic-preview-body topic-preview-body-main">
@@ -2062,7 +2064,6 @@ function TopicDetail({ topicTitle, onBack }) {
                         </div>
                       </div>
                       <div className="folder-info-right">
-                        <Button size="small" onClick={() => setSelectedFolderKey(null)}>返回概览</Button>
                         <Button icon={<PlusOutlined />} disabled={!isDraft} onClick={() => openAddResourceModal(currentListParentKey)}>添加资料</Button>
                       </div>
                     </div>

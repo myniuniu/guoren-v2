@@ -7,6 +7,11 @@
   height: 100%;
   min-width: 0;
   min-height: 0;
+  --finder-selected-bg: #dbe7f5;
+  --finder-selected-border: #cfdef0;
+  --finder-selected-text: #303846;
+  --finder-selected-meta: #667085;
+  --finder-selected-accent: #2d7fe3;
   background: #ffffff;
   overflow: hidden;
 }
@@ -145,8 +150,9 @@
 }
 
 .finder-sidebar-item-active {
-  background: rgba(0, 0, 0, 0.1) !important;
-  color: inherit !important;
+  background: var(--finder-selected-bg) !important;
+  color: #1d1d1f !important;
+  box-shadow: inset 0 0 0 1px var(--finder-selected-border);
   border-radius: 6px;
 }
 
@@ -878,20 +884,22 @@
 }
 
 .finder-file-row-selected {
-  background: #007aff !important;
-  color: #fff !important;
+  background: var(--finder-selected-bg) !important;
+  color: var(--finder-selected-text) !important;
+  box-shadow: inset 0 0 0 1px var(--finder-selected-border);
+  z-index: 1;
 }
 
 .finder-file-row-selected .finder-file-name:not(.finder-inline-input) {
-  color: #fff;
+  color: var(--finder-selected-text);
 }
 
 .finder-file-row-selected .finder-file-chevron {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--finder-selected-meta);
 }
 
 .finder-file-row-selected .finder-file-meta {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--finder-selected-meta);
 }
 
 .finder-file-row-context-open,
@@ -915,7 +923,7 @@
 }
 
 .finder-file-row-dragover.finder-file-row-selected {
-  background: rgba(0, 122, 255, 0.3) !important;
+  background: rgba(0, 122, 255, 0.2) !important;
 }
 
 .finder-file-icon {
@@ -966,15 +974,15 @@
   padding: 0;
 }
 .finder-file-row-selected .finder-file-row-actions .finder-column-action-btn {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.22);
-  color: rgba(255, 255, 255, 0.96);
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.24);
+  color: rgba(43, 52, 64, 0.82);
   box-shadow: none;
 }
 .finder-file-row-selected .finder-file-row-actions .finder-column-action-btn:hover {
-  background: rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.28);
   border-color: rgba(255, 255, 255, 0.32);
-  color: #fff;
+  color: #1f2937;
   box-shadow: none;
 }
 
@@ -1010,10 +1018,10 @@
   background: rgba(0, 0, 0, 0.06);
 }
 .finder-file-row-selected .finder-detail-expand-icon {
-  color: rgba(255, 255, 255, 0.9);
+  color: #86868b;
 }
 .finder-file-row-selected .finder-detail-expand-icon:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(15, 23, 42, 0.06);
 }
 
 .finder-file-tags {
@@ -1163,7 +1171,7 @@
 .finder-file-row-selected .finder-detail-col-version,
 .finder-file-row-selected .finder-detail-col-comment,
 .finder-file-row-selected .finder-detail-col-tags {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--finder-selected-meta);
 }
 
 .finder-file-row-context-open .finder-file-name:not(.finder-inline-input),
@@ -1459,20 +1467,21 @@
 }
 
 .finder-column-item-active {
-  background: #007aff;
-  color: #fff;
+  background: var(--finder-selected-bg);
+  color: #1d1d1f;
+  box-shadow: inset 0 0 0 1px var(--finder-selected-border);
 }
 
 .finder-column-item-selected {
-  background: rgba(0, 122, 255, 0.15);
+  background: rgba(219, 231, 245, 0.7);
 }
 
 .finder-column-item-selected:hover {
-  background: rgba(0, 122, 255, 0.22);
+  background: var(--finder-selected-bg);
 }
 
 .finder-column-item-active:hover {
-  background: #0066e0;
+  background: var(--finder-selected-bg);
 }
 
 .finder-column-item-context-open,
@@ -1494,7 +1503,7 @@
 }
 
 .finder-column-item-active .finder-column-item-icon {
-  color: #fff;
+  color: var(--finder-selected-accent);
 }
 
 .finder-column-item-name {
@@ -1513,7 +1522,7 @@
 
 .finder-column-item-active .finder-column-item-arrow {
   opacity: 1;
-  color: #fff;
+  color: #98a2b3;
 }
 
 /* 行内 hover 操作按钮 */
@@ -1575,16 +1584,16 @@
 }
 
 .finder-column-item-active .finder-column-action-btn {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.22);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.24);
+  color: rgba(43, 52, 64, 0.82);
   box-shadow: none;
 }
 
 .finder-column-item-active .finder-column-action-btn:hover {
-  background: rgba(255, 255, 255, 0.26);
+  background: rgba(255, 255, 255, 0.28);
   border-color: rgba(255, 255, 255, 0.32);
-  color: #fff;
+  color: #1f2937;
   box-shadow: none;
 }
 
@@ -1616,7 +1625,7 @@
 }
 
 .finder-column-item-dragover.finder-column-item-active {
-  background: rgba(0, 122, 255, 0.4) !important;
+  background: rgba(0, 122, 255, 0.24) !important;
 }
 
 /* 分栏视图内的预览区域（紧跟最后一列，填满剩余空间） */
