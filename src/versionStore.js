@@ -301,6 +301,122 @@ export function updateResource(data, versionId, resourceKey, updates) {
   return newData;
 }
 
+function getResourceSubtreeKeySet(resources, rootKey) {
+  const subtreeKeys = new Set();
+  const visit = (key) => {
+    subtreeKeys.add(key);
+    resources.forEach((resource) => {
+      if (resource.parentKey === key) visit(resource.key);
+    });
+  };
+  visit(rootKey);
+  return subtreeKeys;
+}
+
+function findResourceSubtreeEndIndex(resources, rootKey) {
+  const subtreeKeys = getResourceSubtreeKeySet(resources, rootKey);
+  let lastIndex = -1;
+  resources.forEach((resource, index) => {
+    if (subtreeKeys.has(resource.key)) {
+      lastIndex = index;
+    }
+  });
+  return lastIndex;
+}
+
+// 移动资料：支持拖拽到文件夹以及同级排序
+export function moveResource(data, versionId, resourceKey, targetParentKey, targetIndex = null) {
+  const version = data.versions.find((v) => v.id === versionId);
+  if (!version || version.status !== 'draft') return data;
+
+  const resources = version.resources || [];
+  const item = resources.find((resource) => resource.key === resourceKey);
+  if (!item) return data;
+
+  const normalizedTargetParentKey = targetParentKey ?? null;
+  if (normalizedTargetParentKey) {
+    const targetFolder = resources.find((resource) => resource.key === normalizedTargetParentKey);
+    if (!targetFolder?.isFolder) return data;
+  }
+
+  if (item.isFolder && normalizedTargetParentKey) {
+    let currentParentKey = normalizedTargetParentKey;
+    while (currentParentKey) {
+      if (currentParentKey === resourceKey) return data;
+      const parent = resources.find((resource) => resource.key === currentParentKey);
+      currentParentKey = parent?.parentKey ?? null;
+    }
+  }
+
+  const movingSubtreeKeys = getResourceSubtreeKeySet(resources, resourceKey);
+  const movingResources = resources.filter((resource) => movingSubtreeKeys.has(resource.key));
+  const remainingResources = resources.filter((resource) => !movingSubtreeKeys.has(resource.key));
+  const targetSiblings = remainingResources.filter(
+    (resource) => (resource.parentKey ?? null) === normalizedTargetParentKey,
+  );
+  const normalizedTargetIndex = targetIndex == null
+    ? targetSiblings.length
+    : Math.max(0, Math.min(targetIndex, targetSiblings.length));
+
+  if ((item.parentKey ?? null) === normalizedTargetParentKey) {
+    const currentSiblingKeys = resources
+      .filter((resource) => (resource.parentKey ?? null) === normalizedTargetParentKey)
+      .map((resource) => resource.key);
+    const nextSiblingKeys = [
+      ...targetSiblings.slice(0, normalizedTargetIndex).map((resource) => resource.key),
+      resourceKey,
+      ...targetSiblings.slice(normalizedTargetIndex).map((resource) => resource.key),
+    ];
+    if (
+      currentSiblingKeys.length === nextSiblingKeys.length
+      && currentSiblingKeys.every((key, index) => key === nextSiblingKeys[index])
+    ) {
+      return data;
+    }
+  }
+
+  let insertionIndex = remainingResources.length;
+  if (targetSiblings.length > 0) {
+    if (normalizedTargetIndex < targetSiblings.length) {
+      insertionIndex = remainingResources.findIndex(
+        (resource) => resource.key === targetSiblings[normalizedTargetIndex].key,
+      );
+      if (insertionIndex < 0) insertionIndex = remainingResources.length;
+    } else {
+      insertionIndex = findResourceSubtreeEndIndex(
+        remainingResources,
+        targetSiblings[targetSiblings.length - 1].key,
+      ) + 1;
+    }
+  } else if (normalizedTargetParentKey) {
+    const parentEndIndex = findResourceSubtreeEndIndex(remainingResources, normalizedTargetParentKey);
+    if (parentEndIndex >= 0) {
+      insertionIndex = parentEndIndex + 1;
+    }
+  }
+
+  const movedResources = movingResources.map((resource, index) => (
+    index === 0
+      ? { ...resource, parentKey: normalizedTargetParentKey, lastEdit: nowText() }
+      : resource
+  ));
+
+  const nextResources = [
+    ...remainingResources.slice(0, insertionIndex),
+    ...movedResources,
+    ...remainingResources.slice(insertionIndex),
+  ];
+
+  const newData = {
+    ...data,
+    versions: data.versions.map((v) => (
+      v.id === versionId ? { ...v, resources: nextResources } : v
+    )),
+  };
+  saveToStorage(newData);
+  return newData;
+}
+
 // 删除资料（仅 draft，删除文件夹时递归级联删除所有后代）
 export function deleteResource(data, versionId, resourceKey) {
   const version = data.versions.find((v) => v.id === versionId);

@@ -49,6 +49,7 @@ import {
   getCurrentVersion,
   getVersions,
   loadFromStorage,
+  moveResource,
   publishVersion,
   rollbackVersion,
   switchVersion,
@@ -131,10 +132,17 @@ function getResourceTypeLabel(resource, fileType) {
 
 function buildPreviewParagraphs(name) {
   return [
-    `这是「${name}」的预览示意区域，当前用于演示在空间主题内点击文件后的浏览流程。`,
-    '后续可以按真实文件类型接入在线预览、内容转码、文本解析或第三方文档服务。',
-    '现在先保留轻量的占位内容，方便确认交互入口、布局和信息展示方式。',
+    `《${name}》围绕当前主题整理了背景说明、关键动作和执行要点，适合直接在空间内浏览。`,
+    '内容会随着后台主题版本同步更新，方便在知识模式内持续维护和查看。',
+    '如需进一步补充，可继续在当前版本中更新资料名称、标签或内容结构。',
   ];
+}
+
+function getDefaultLeftPanelWidth() {
+  if (typeof window === 'undefined') return 360;
+  if (window.innerWidth <= 1120) return 308;
+  if (window.innerWidth <= 1360) return 332;
+  return 360;
 }
 
 function loadTopicVersionData(topicConfig) {
@@ -154,6 +162,7 @@ function TopicDetail({ topicTitle, onBack }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [previewItem, setPreviewItem] = useState(null);
   const [versionData, setVersionData] = useState(() => loadTopicVersionData(topicAdminConfig));
+  const [leftPanelWidth, setLeftPanelWidth] = useState(() => getDefaultLeftPanelWidth());
   const [expandedFolders, setExpandedFolders] = useState(new Set());
   const [selectedFolderKey, setSelectedFolderKey] = useState(null);
   const [selectedItemKey, setSelectedItemKey] = useState(null);
@@ -164,21 +173,30 @@ function TopicDetail({ topicTitle, onBack }) {
   const [contextMenuItemKey, setContextMenuItemKey] = useState(null);
   const [bgMenuPos, setBgMenuPos] = useState(null);
   const [bgMenuSurface, setBgMenuSurface] = useState('list');
+  const [dragOverFolderKey, setDragOverFolderKey] = useState(null);
+  const [dragOverItemKey, setDragOverItemKey] = useState(null);
+  const [dragOverSurface, setDragOverSurface] = useState(null);
+  const [dropIndicator, setDropIndicator] = useState(null);
+  const [draggingItemKey, setDraggingItemKey] = useState(null);
   const [tagPickerTarget, setTagPickerTarget] = useState(null);
   const [tagPickerGroupFilter, setTagPickerGroupFilter] = useState('all');
   const [tagPickerListScrollActive, setTagPickerListScrollActive] = useState(false);
   const [addTagOpen, setAddTagOpen] = useState(false);
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#1677ff');
+  const detailBodyRef = useRef(null);
   const inlineRenameInputRef = useRef(null);
   const pendingRenameTimerRef = useRef(null);
   const tagPickerScrollTimerRef = useRef(null);
+  const isDraggingRef = useRef(false);
+  const dragPayloadRef = useRef(null);
 
   useEffect(() => {
     setVersionData(loadTopicVersionData(topicAdminConfig));
     setActiveTab('knowledge');
     setModalOpen(false);
     setPreviewItem(null);
+    setLeftPanelWidth(getDefaultLeftPanelWidth());
     setExpandedFolders(new Set());
     setSelectedFolderKey(null);
     setSelectedItemKey(null);
@@ -189,6 +207,11 @@ function TopicDetail({ topicTitle, onBack }) {
     setContextMenuItemKey(null);
     setBgMenuPos(null);
     setBgMenuSurface('list');
+    setDragOverFolderKey(null);
+    setDragOverItemKey(null);
+    setDragOverSurface(null);
+    setDropIndicator(null);
+    setDraggingItemKey(null);
     setTagPickerTarget(null);
     setTagPickerGroupFilter('all');
     setTagPickerListScrollActive(false);
@@ -262,9 +285,123 @@ function TopicDetail({ topicTitle, onBack }) {
     pendingRenameTimerRef.current = null;
   };
 
+  const clearDragState = () => {
+    setDragOverFolderKey(null);
+    setDragOverItemKey(null);
+    setDragOverSurface(null);
+    setDropIndicator(null);
+    setDraggingItemKey(null);
+  };
+
+  const hasResourceDragPayload = (event) => {
+    if (dragPayloadRef.current?.key) return true;
+    const dragTypes = Array.from(event.dataTransfer?.types || []);
+    return dragTypes.includes('application/json') || dragTypes.includes('text/plain');
+  };
+
+  const getDraggedResourcePayload = (event) => {
+    try {
+      if (dragPayloadRef.current?.key) {
+        const currentDragItem = resources.find((resource) => resource.key === dragPayloadRef.current.key);
+        if (currentDragItem) {
+          return {
+            key: currentDragItem.key,
+            name: currentDragItem.name,
+            isFolder: currentDragItem.isFolder,
+          };
+        }
+        return dragPayloadRef.current;
+      }
+      if (!hasResourceDragPayload(event)) return null;
+      const raw = event.dataTransfer.getData('application/json');
+      if (raw) {
+        const payload = JSON.parse(raw);
+        if (payload?.key) return payload;
+      }
+
+      const fallbackKey = (event.dataTransfer.getData('text/plain') || '').trim();
+      if (!fallbackKey) return null;
+      const draggedItem = resources.find((resource) => resource.key === fallbackKey);
+      if (!draggedItem) return null;
+      return {
+        key: draggedItem.key,
+        name: draggedItem.name,
+        isFolder: draggedItem.isFolder,
+      };
+    } catch {
+      return null;
+    }
+  };
+
+  const startResourceDrag = (event, item) => {
+    if (!item?.key || inlineRenameItemKey === item.key) return;
+    clearPendingRenameTrigger();
+    setContextMenuItemKey(null);
+    setBgMenuPos(null);
+    setSelectedItemKey(item.key);
+    setDraggingItemKey(item.key);
+    isDraggingRef.current = true;
+    const dragPayload = {
+      key: item.key,
+      name: item.name,
+      isFolder: item.isFolder,
+    };
+    dragPayloadRef.current = dragPayload;
+    const payload = JSON.stringify(dragPayload);
+    event.dataTransfer.setData('application/json', payload);
+    event.dataTransfer.setData('text/plain', item.key);
+    event.dataTransfer.effectAllowed = 'move';
+  };
+
+  const finishResourceDrag = () => {
+    isDraggingRef.current = false;
+    window.setTimeout(() => {
+      dragPayloadRef.current = null;
+      clearDragState();
+    }, 0);
+  };
+
+  const handleSidebarResizeStart = (event) => {
+    event.preventDefault();
+    const startX = event.clientX;
+    const startWidth = leftPanelWidth;
+    const containerWidth = detailBodyRef.current?.getBoundingClientRect().width || window.innerWidth;
+    const minWidth = 280;
+    const minRightWidth = 320;
+    const maxWidth = Math.max(minWidth, containerWidth - minRightWidth);
+
+    const handlePointerMove = (moveEvent) => {
+      const delta = moveEvent.clientX - startX;
+      const nextWidth = Math.max(minWidth, Math.min(maxWidth, startWidth + delta));
+      setLeftPanelWidth(nextWidth);
+    };
+
+    const handlePointerUp = () => {
+      document.body.style.cursor = '';
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+    };
+
+    document.body.style.cursor = 'col-resize';
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+  };
+
   useEffect(() => () => {
     clearTagPickerScrollTimer();
     clearPendingRenameTrigger();
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const containerWidth = detailBodyRef.current?.getBoundingClientRect().width || window.innerWidth;
+      const minLeftWidth = 280;
+      const minRightWidth = 320;
+      const maxWidth = Math.max(minLeftWidth, containerWidth - minRightWidth);
+      setLeftPanelWidth((prev) => Math.min(prev, maxWidth));
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {
@@ -283,6 +420,18 @@ function TopicDetail({ topicTitle, onBack }) {
     if (contextMenuItemKey && !resources.some((resource) => resource.key === contextMenuItemKey)) {
       setContextMenuItemKey(null);
     }
+    if (draggingItemKey && !resources.some((resource) => resource.key === draggingItemKey)) {
+      setDraggingItemKey(null);
+    }
+    if (dragOverFolderKey && !resources.some((resource) => resource.key === dragOverFolderKey && resource.isFolder)) {
+      setDragOverFolderKey(null);
+    }
+    if (dragOverItemKey && !resources.some((resource) => resource.key === dragOverItemKey)) {
+      setDragOverItemKey(null);
+    }
+    if (dropIndicator?.itemKey && !resources.some((resource) => resource.key === dropIndicator.itemKey)) {
+      setDropIndicator(null);
+    }
     if (inlineRenameItemKey && !resources.some((resource) => resource.key === inlineRenameItemKey)) {
       setInlineRenameItemKey(null);
       setInlineRenameName('');
@@ -296,7 +445,19 @@ function TopicDetail({ topicTitle, onBack }) {
     if (matchedPreviewItem !== previewItem) {
       setPreviewItem(matchedPreviewItem);
     }
-  }, [contextMenuItemKey, inlineRenameItemKey, previewItem, resources, selectedFolderKey, selectedItemKey]);
+  }, [
+    contextMenuItemKey,
+    dragOverFolderKey,
+    dragOverItemKey,
+    dragOverSurface,
+    draggingItemKey,
+    dropIndicator,
+    inlineRenameItemKey,
+    previewItem,
+    resources,
+    selectedFolderKey,
+    selectedItemKey,
+  ]);
 
   const getResourceTagIds = (resource) => {
     if (!resource || !tagConfig) return [];
@@ -369,6 +530,124 @@ function TopicDetail({ topicTitle, onBack }) {
           </span>
         ))}
       </div>
+    );
+  };
+
+  const getPreviewOutlineEntries = (resource) => {
+    const tocEntries = resource?.meta?.detail?.toc;
+    if (!Array.isArray(tocEntries)) return [];
+    return tocEntries
+      .map((entry) => entry?.text || entry?.title || entry?.subtitle || '')
+      .filter(Boolean);
+  };
+
+  const getPreviewSummary = (resource, fileType) => {
+    const detail = resource?.meta?.detail || {};
+    return (
+      detail.description ||
+      detail.desc ||
+      detail.abstract ||
+      detail.info ||
+      resource?.meta?.summary ||
+      resource?.meta?.content ||
+      (fileType === 'video' ? `${resource?.name || '当前资料'}的视频内容。` : '') ||
+      ''
+    );
+  };
+
+  const getPreviewBodyBlocks = (resource) => {
+    const detailBody = resource?.meta?.detail?.body;
+    if (Array.isArray(detailBody) && detailBody.length > 0) return detailBody;
+    if (Array.isArray(resource?.meta?.paragraphs) && resource.meta.paragraphs.length > 0) {
+      return resource.meta.paragraphs.map((paragraph) => ({ type: 'paragraph', text: paragraph }));
+    }
+    return buildPreviewParagraphs(resource?.name || '当前资料').map((paragraph) => ({
+      type: 'paragraph',
+      text: paragraph,
+    }));
+  };
+
+  const renderDocumentPreview = (resource, fileType) => {
+    const outlineEntries = getPreviewOutlineEntries(resource);
+    const summary = getPreviewSummary(resource, fileType);
+    const bodyBlocks = getPreviewBodyBlocks(resource);
+
+    const renderBodyBlock = (block, index) => {
+      if (typeof block === 'string') {
+        return <p key={index} className="topic-preview-doc-paragraph">{block}</p>;
+      }
+      if (!block || typeof block !== 'object') return null;
+
+      if (block.type === 'heading') {
+        return <h2 key={index} className="topic-preview-doc-heading">{block.text}</h2>;
+      }
+
+      if (block.type === 'blockquote') {
+        return (
+          <blockquote key={index} className="topic-preview-doc-quote">
+            {block.text}
+          </blockquote>
+        );
+      }
+
+      if (block.type === 'highlight') {
+        return (
+          <div key={index} className="topic-preview-doc-highlight">
+            {block.text}
+          </div>
+        );
+      }
+
+      if (block.type === 'list') {
+        return (
+          <ul key={index} className="topic-preview-doc-list">
+            {(block.items || []).map((itemText, itemIndex) => (
+              <li key={`${itemText}-${itemIndex}`}>{itemText}</li>
+            ))}
+          </ul>
+        );
+      }
+
+      if (block.type === 'image') {
+        return (
+          <div
+            key={index}
+            className="topic-preview-doc-image"
+            style={{ background: block.gradient || 'linear-gradient(135deg, #eef5ff 0%, #dce7ff 100%)' }}
+          >
+            <span>{block.alt || resource.name}</span>
+          </div>
+        );
+      }
+
+      if (block.type === 'link') {
+        return (
+          <div key={index} className="topic-preview-doc-link">
+            <span>{block.text || '链接'}</span>
+            <span>{block.url}</span>
+          </div>
+        );
+      }
+
+      return <p key={index} className="topic-preview-doc-paragraph">{block.text || ''}</p>;
+    };
+
+    return (
+      <article className="topic-preview-document">
+        <div className="topic-preview-document-kicker">{getResourceTypeLabel(resource, fileType)}</div>
+        <h1 className="topic-preview-document-title">{resource.name}</h1>
+        {summary ? <p className="topic-preview-document-summary">{summary}</p> : null}
+        {outlineEntries.length > 0 ? (
+          <div className="topic-preview-document-outline">
+            {outlineEntries.slice(0, 8).map((entry, entryIndex) => (
+              <span key={`${entry}-${entryIndex}`} className="topic-preview-document-outline-chip">{entry}</span>
+            ))}
+          </div>
+        ) : null}
+        <div className="topic-preview-document-body">
+          {bodyBlocks.map(renderBodyBlock)}
+        </div>
+      </article>
     );
   };
 
@@ -710,11 +989,251 @@ function TopicDetail({ topicTitle, onBack }) {
       queueInlineRename(item, surface);
       return;
     }
+    clearPendingRenameTrigger();
+    setSelectedItemKey(item.key);
+    if (surface === 'list') {
+      if (item.isFolder) {
+        setPreviewItem(null);
+        return;
+      }
+      handleOpenPreview(item);
+      return;
+    }
     if (item.isFolder) {
       handleSelectFolder(item.key);
       return;
     }
     handleOpenPreview(item);
+  };
+
+  const handleListItemDoubleClick = (item) => {
+    if (!item?.isFolder) return;
+    clearPendingRenameTrigger();
+    handleSelectFolder(item.key);
+  };
+
+  const moveDraggedResource = (draggedItem, targetParentKey, targetIndex = null) => {
+    if (!isDraft) {
+      message.warning('当前版本不可编辑');
+      return false;
+    }
+    if (!draggedItem?.key) return false;
+    const nextData = moveResource(
+      versionData,
+      currentVersion.id,
+      draggedItem.key,
+      targetParentKey,
+      targetIndex,
+    );
+    if (nextData === versionData) return false;
+    setVersionData(nextData);
+    if (targetParentKey) {
+      setExpandedFolders((prev) => {
+        const next = new Set(prev);
+        next.add(targetParentKey);
+        return next;
+      });
+    }
+    return true;
+  };
+
+  const resolveListRowDropMode = (event, item) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const offsetY = event.clientY - rect.top;
+    const edgeThreshold = Math.min(14, rect.height * 0.24);
+    const folderEdgeThreshold = Math.min(8, Math.max(5, rect.height * 0.18));
+    const isFolderDropZone = item.isFolder
+      && offsetY > folderEdgeThreshold
+      && offsetY < rect.height - folderEdgeThreshold;
+    if (isFolderDropZone) {
+      return { type: 'folder' };
+    }
+    return { type: 'reorder', position: offsetY < rect.height / 2 ? 'before' : 'after' };
+  };
+
+  const getSiblingDropIndex = (draggedKey, targetKey, position) => {
+    const siblings = currentListItems.filter((item) => item.key !== draggedKey);
+    const targetIndex = siblings.findIndex((item) => item.key === targetKey);
+    if (targetIndex < 0) return null;
+    return position === 'before' ? targetIndex : targetIndex + 1;
+  };
+
+  const handleListRowDragOver = (event, item) => {
+    if (!hasResourceDragPayload(event)) return;
+    const draggedItem = getDraggedResourcePayload(event);
+    if (!draggedItem?.key || draggedItem.key === item.key) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const dropMode = resolveListRowDropMode(event, item);
+    setDragOverItemKey(item.key);
+    if (dropMode.type === 'folder') {
+      setDragOverFolderKey(item.key);
+      setDragOverSurface(null);
+      setDropIndicator(null);
+    } else {
+      setDragOverFolderKey(null);
+      setDragOverSurface(null);
+      setDropIndicator({ itemKey: item.key, position: dropMode.position, surface: 'list' });
+    }
+    event.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleListRowDragLeave = (event, itemKey) => {
+    if (event.currentTarget.contains(event.relatedTarget)) return;
+    if (dragOverFolderKey === itemKey) setDragOverFolderKey(null);
+    if (dragOverItemKey === itemKey) setDragOverItemKey(null);
+    if (dropIndicator?.itemKey === itemKey && dropIndicator?.surface === 'list') setDropIndicator(null);
+  };
+
+  const handleListRowDrop = (event, targetItem) => {
+    if (!hasResourceDragPayload(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const draggedItem = getDraggedResourcePayload(event);
+    const dropMode = resolveListRowDropMode(event, targetItem);
+    finishResourceDrag();
+    if (!draggedItem?.key || draggedItem.key === targetItem.key) return;
+
+    if (dropMode.type === 'folder') {
+      const moved = moveDraggedResource(draggedItem, targetItem.key, null);
+      if (moved) {
+        message.success(`已将「${draggedItem.name}」移动到「${targetItem.name}」`);
+      }
+      return;
+    }
+
+    const targetIndex = getSiblingDropIndex(draggedItem.key, targetItem.key, dropMode.position);
+    if (targetIndex == null) return;
+    moveDraggedResource(draggedItem, currentListParentKey, targetIndex);
+  };
+
+  const handleListDragOver = (event) => {
+    if (!hasResourceDragPayload(event)) return;
+    event.preventDefault();
+    if (!event.target.closest('.topic-file-row')) {
+      setDragOverSurface('list');
+      setDragOverFolderKey(null);
+      setDragOverItemKey(null);
+      setDropIndicator(null);
+    }
+    event.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleListDragLeave = (event) => {
+    if (event.currentTarget.contains(event.relatedTarget)) return;
+    clearDragState();
+  };
+
+  const handleListDrop = (event) => {
+    if (event.target.closest('.topic-file-row')) return;
+    if (!hasResourceDragPayload(event)) return;
+    event.preventDefault();
+    const draggedItem = getDraggedResourcePayload(event);
+    finishResourceDrag();
+    if (!draggedItem?.key) return;
+    const moved = moveDraggedResource(draggedItem, currentListParentKey, null);
+    if (moved) {
+      message.success(`已将「${draggedItem.name}」移动到${selectedFolder ? '当前文件夹' : '根目录'}`);
+    }
+  };
+
+  const resolveTreeRowDropMode = (event, item) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const offsetY = event.clientY - rect.top;
+    const edgeThreshold = Math.min(14, rect.height * 0.24);
+    const folderEdgeThreshold = Math.min(8, Math.max(5, rect.height * 0.18));
+    const isFolderDropZone = item.isFolder
+      && offsetY > folderEdgeThreshold
+      && offsetY < rect.height - folderEdgeThreshold;
+    if (isFolderDropZone) {
+      return { type: 'folder' };
+    }
+    return { type: 'reorder', position: offsetY < rect.height / 2 ? 'before' : 'after' };
+  };
+
+  const getTreeSiblingDropIndex = (draggedKey, targetItem, position) => {
+    const parentKey = targetItem?.parentKey ?? null;
+    const siblings = resources.filter(
+      (resource) => (resource.parentKey ?? null) === parentKey && resource.key !== draggedKey,
+    );
+    const targetIndex = siblings.findIndex((resource) => resource.key === targetItem.key);
+    if (targetIndex < 0) return null;
+    return position === 'before' ? targetIndex : targetIndex + 1;
+  };
+
+  const handleTreeFolderDragOver = (event, targetItem) => {
+    if (!hasResourceDragPayload(event)) return;
+    const draggedItem = getDraggedResourcePayload(event);
+    if (!draggedItem?.key || draggedItem.key === targetItem?.key) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const dropMode = resolveTreeRowDropMode(event, targetItem);
+    setDragOverItemKey(targetItem.key);
+    setDragOverSurface(null);
+    if (dropMode.type === 'folder') {
+      setDragOverFolderKey(targetItem.key);
+      setDropIndicator(null);
+    } else {
+      setDragOverFolderKey(null);
+      setDropIndicator({ itemKey: targetItem.key, position: dropMode.position, surface: 'tree' });
+    }
+    event.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleTreeFolderDragLeave = (event, itemKey) => {
+    if (event.currentTarget.contains(event.relatedTarget)) return;
+    if (dragOverFolderKey === itemKey) setDragOverFolderKey(null);
+    if (dragOverItemKey === itemKey) setDragOverItemKey(null);
+    if (dropIndicator?.itemKey === itemKey && dropIndicator?.surface === 'tree') setDropIndicator(null);
+  };
+
+  const handleTreeFolderDrop = (event, targetItem) => {
+    if (!hasResourceDragPayload(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const draggedItem = getDraggedResourcePayload(event);
+    const dropMode = resolveTreeRowDropMode(event, targetItem);
+    finishResourceDrag();
+    if (!draggedItem?.key || draggedItem.key === targetItem.key) return;
+    if (dropMode.type === 'folder') {
+      const moved = moveDraggedResource(draggedItem, targetItem.key, null);
+      if (moved) {
+        message.success(`已将「${draggedItem.name}」移动到「${targetItem.name}」`);
+      }
+      return;
+    }
+    const targetIndex = getTreeSiblingDropIndex(draggedItem.key, targetItem, dropMode.position);
+    if (targetIndex == null) return;
+    moveDraggedResource(draggedItem, targetItem.parentKey ?? null, targetIndex);
+  };
+
+  const handleTreeRootDragOver = (event) => {
+    if (event.target.closest('.project-item')) return;
+    if (!hasResourceDragPayload(event)) return;
+    event.preventDefault();
+    setDragOverSurface('tree');
+    setDragOverFolderKey(null);
+    setDragOverItemKey(null);
+    setDropIndicator(null);
+    event.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleTreeRootDragLeave = (event) => {
+    if (event.currentTarget.contains(event.relatedTarget)) return;
+    clearDragState();
+  };
+
+  const handleTreeRootDrop = (event) => {
+    if (event.target.closest('.project-item')) return;
+    if (!hasResourceDragPayload(event)) return;
+    event.preventDefault();
+    const draggedItem = getDraggedResourcePayload(event);
+    finishResourceDrag();
+    if (!draggedItem?.key) return;
+    const moved = moveDraggedResource(draggedItem, null, null);
+    if (moved) {
+      message.success(`已将「${draggedItem.name}」移动到根目录`);
+    }
   };
 
   const createFolderAndStartRename = (parentKey = currentListParentKey, surface = 'list') => {
@@ -883,6 +1402,11 @@ function TopicDetail({ topicTitle, onBack }) {
     const isSelected = selectedItemKey === item.key;
     const isContextOpen = contextMenuItemKey === item.key;
     const isInlineRenaming = inlineRenameItemKey === item.key && inlineRenameSurface === 'tree';
+    const isDragOverFolder = dragOverFolderKey === item.key;
+    const isDragging = draggingItemKey === item.key;
+    const treeDropPosition = dropIndicator?.itemKey === item.key && dropIndicator?.surface === 'tree'
+      ? dropIndicator.position
+      : null;
 
     if (item.isFolder) {
       const isExpanded = expandedFolders.has(item.key);
@@ -895,8 +1419,17 @@ function TopicDetail({ topicTitle, onBack }) {
             onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
           >
             <div
-              className={`project-item project-item-folder ${isSelected ? 'project-item-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''}`}
-              onClick={() => handleActivateItem(item, 'tree')}
+              className={`project-item project-item-folder ${isSelected ? 'project-item-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''} ${isDragOverFolder ? 'project-item-dragover' : ''} ${isDragging ? 'project-item-dragging' : ''} ${treeDropPosition === 'before' ? 'project-item-drop-before' : ''} ${treeDropPosition === 'after' ? 'project-item-drop-after' : ''}`}
+              draggable={!isInlineRenaming}
+              onDragStart={(event) => startResourceDrag(event, item)}
+              onDragEnd={finishResourceDrag}
+              onDragOver={(event) => handleTreeFolderDragOver(event, item)}
+              onDragLeave={(event) => handleTreeFolderDragLeave(event, item.key)}
+              onDrop={(event) => handleTreeFolderDrop(event, item)}
+              onClick={() => {
+                if (isDraggingRef.current) return;
+                handleActivateItem(item, 'tree');
+              }}
             >
               <span
                 className="project-item-arrow"
@@ -979,8 +1512,17 @@ function TopicDetail({ topicTitle, onBack }) {
         onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
       >
         <div
-          className={`project-item project-item-child ${isSelected ? 'project-item-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''}`}
-          onClick={() => handleActivateItem(item, 'tree')}
+          className={`project-item project-item-child ${isSelected ? 'project-item-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''} ${isDragging ? 'project-item-dragging' : ''} ${treeDropPosition === 'before' ? 'project-item-drop-before' : ''} ${treeDropPosition === 'after' ? 'project-item-drop-after' : ''}`}
+          draggable={!isInlineRenaming}
+          onDragStart={(event) => startResourceDrag(event, item)}
+          onDragEnd={finishResourceDrag}
+          onDragOver={(event) => handleTreeFolderDragOver(event, item)}
+          onDragLeave={(event) => handleTreeFolderDragLeave(event, item.key)}
+          onDrop={(event) => handleTreeFolderDrop(event, item)}
+          onClick={() => {
+            if (isDraggingRef.current) return;
+            handleActivateItem(item, 'tree');
+          }}
         >
           <span className="project-item-icon">{getResourceIcon(item.type)}</span>
           {isInlineRenaming ? (
@@ -1030,6 +1572,11 @@ function TopicDetail({ topicTitle, onBack }) {
     const isSelected = selectedItemKey === item.key;
     const isContextOpen = contextMenuItemKey === item.key;
     const isInlineRenaming = inlineRenameItemKey === item.key && inlineRenameSurface === 'list';
+    const isDragOverFolder = dragOverFolderKey === item.key;
+    const isDragging = draggingItemKey === item.key;
+    const dropPosition = dropIndicator?.itemKey === item.key && dropIndicator?.surface === 'list'
+      ? dropIndicator.position
+      : null;
 
     return (
       <Dropdown
@@ -1039,8 +1586,21 @@ function TopicDetail({ topicTitle, onBack }) {
         onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
       >
         <div
-          className={`topic-file-row ${isSelected ? 'topic-file-row-selected' : ''} ${isContextOpen ? 'topic-file-row-context-open' : ''}`}
-          onClick={() => handleActivateItem(item, 'list')}
+          className={`topic-file-row ${isSelected ? 'topic-file-row-selected' : ''} ${isContextOpen ? 'topic-file-row-context-open' : ''} ${isDragOverFolder ? 'topic-file-row-dragover' : ''} ${isDragging ? 'topic-file-row-dragging' : ''} ${dropPosition === 'before' ? 'topic-file-row-drop-before' : ''} ${dropPosition === 'after' ? 'topic-file-row-drop-after' : ''}`}
+          draggable={!isInlineRenaming}
+          onDragStart={(event) => startResourceDrag(event, item)}
+          onDragEnd={finishResourceDrag}
+          onDragOver={(event) => handleListRowDragOver(event, item)}
+          onDragLeave={(event) => handleListRowDragLeave(event, item.key)}
+          onDrop={(event) => handleListRowDrop(event, item)}
+          onClick={() => {
+            if (isDraggingRef.current) return;
+            handleActivateItem(item, 'list');
+          }}
+          onDoubleClick={() => {
+            if (isDraggingRef.current) return;
+            handleListItemDoubleClick(item);
+          }}
         >
           <div className="topic-file-col topic-file-col-name">
             <span className="topic-file-icon">
@@ -1110,7 +1670,8 @@ function TopicDetail({ topicTitle, onBack }) {
 
   const renderPreviewContent = (item) => {
     const fileType = getTopicResourceFileType(item);
-    const docParagraphs = buildPreviewParagraphs(item.name);
+    const previewSummary = getPreviewSummary(item, fileType);
+    const outlineEntries = getPreviewOutlineEntries(item);
 
     if (fileType === 'image') {
       return item.url ? (
@@ -1118,27 +1679,16 @@ function TopicDetail({ topicTitle, onBack }) {
       ) : (
         <div className="topic-preview-placeholder">
           {renderFileIcon('image', { fontSize: 88 })}
-          <div>图片预览示意</div>
-          <div className="topic-preview-subtle">后续可替换为真实图片内容流。</div>
+          <div className="topic-preview-video-title">{item.name}</div>
+          {previewSummary ? <div className="topic-preview-subtle">{previewSummary}</div> : null}
         </div>
       );
     }
 
     if (fileType === 'pdf') {
-      return item.url ? (
-        <iframe src={item.url} className="topic-preview-iframe" title="PDF 预览" />
-      ) : (
-        <div className="topic-preview-sheet">
-          <div className="topic-preview-sheet-head">
-            <span>PDF 预览示意</span>
-            <span>第 1 / 12 页</span>
-          </div>
-          <div className="topic-preview-sheet-title">{item.name}</div>
-          {docParagraphs.map((paragraph, index) => (
-            <p key={index} className="topic-preview-sheet-paragraph">{paragraph}</p>
-          ))}
-        </div>
-      );
+      return item.url
+        ? <iframe src={item.url} className="topic-preview-iframe" title="PDF 预览" />
+        : renderDocumentPreview(item, fileType);
     }
 
     if (fileType === 'video') {
@@ -1147,8 +1697,8 @@ function TopicDetail({ topicTitle, onBack }) {
       ) : (
         <div className="topic-preview-video-card">
           {renderFileIcon('video', { fontSize: 84 })}
-          <div className="topic-preview-video-title">视频预览示意</div>
-          <div className="topic-preview-subtle">可接入转码封面、播放进度和时间轴摘要。</div>
+          <div className="topic-preview-video-title">{item.name}</div>
+          {previewSummary ? <div className="topic-preview-subtle">{previewSummary}</div> : null}
         </div>
       );
     }
@@ -1157,12 +1707,14 @@ function TopicDetail({ topicTitle, onBack }) {
       return (
         <div className="topic-preview-audio-card">
           <SoundOutlined className="topic-preview-audio-icon" />
+          <div className="topic-preview-video-title">{item.name}</div>
           <div className="topic-preview-audio-wave">
             {Array.from({ length: 18 }).map((_, index) => (
               <span key={index} style={{ height: `${18 + ((index * 7) % 26)}px` }} />
             ))}
           </div>
-          <div className="topic-preview-subtle">音频预览示意，可后续补充播放控制与转写片段。</div>
+          {item.url ? <audio src={item.url} controls className="topic-preview-audio-player" /> : null}
+          {previewSummary ? <div className="topic-preview-subtle">{previewSummary}</div> : null}
         </div>
       );
     }
@@ -1170,10 +1722,10 @@ function TopicDetail({ topicTitle, onBack }) {
     if (fileType === 'pptx') {
       return (
         <div className="topic-preview-slide-deck">
-          {[1, 2, 3].map((page) => (
-            <div key={page} className="topic-preview-slide">
-              <div className="topic-preview-slide-index">0{page}</div>
-              <div className="topic-preview-slide-title">{item.name}</div>
+          {(outlineEntries.length > 0 ? outlineEntries.slice(0, 3) : [item.name, '核心要点', '执行建议']).map((entry, index) => (
+            <div key={`${entry}-${index}`} className="topic-preview-slide">
+              <div className="topic-preview-slide-index">{String(index + 1).padStart(2, '0')}</div>
+              <div className="topic-preview-slide-title">{entry}</div>
               <div className="topic-preview-slide-line" />
               <div className="topic-preview-slide-line topic-preview-slide-line-short" />
             </div>
@@ -1196,31 +1748,29 @@ function TopicDetail({ topicTitle, onBack }) {
             <span>当前文件标题</span>
           </div>
           <div className="topic-preview-grid-row">
-            <span>所有者</span>
-            <span>{item.owner || '--'}</span>
-            <span>用于示意表格内容区</span>
+            <span>标签</span>
+            <span>{getResourceTags(item).map((tag) => tag.name).join('、') || '--'}</span>
+            <span>已绑定到该资料的标签</span>
           </div>
           <div className="topic-preview-grid-row">
             <span>更新时间</span>
             <span>{item.lastEdit || '--'}</span>
-            <span>后续可展示真实单元格</span>
+            <span>最新内容更新时间</span>
+          </div>
+          <div className="topic-preview-grid-row">
+            <span>摘要</span>
+            <span>{previewSummary || '--'}</span>
+            <span>右侧主区域直接显示的内容说明</span>
           </div>
         </div>
       );
     }
 
-    return (
-      <div className="topic-preview-sheet">
-        <div className="topic-preview-sheet-head">
-          <span>{getResourceTypeLabel(item, fileType)}</span>
-          <span>示意预览</span>
-        </div>
-        <div className="topic-preview-sheet-title">{item.name}</div>
-        {docParagraphs.map((paragraph, index) => (
-          <p key={index} className="topic-preview-sheet-paragraph">{paragraph}</p>
-        ))}
-      </div>
-    );
+    if (fileType === 'note' && item.url) {
+      return <iframe src={item.url} className="topic-preview-iframe" title={item.name} />;
+    }
+
+    return renderDocumentPreview(item, fileType);
   };
 
   return (
@@ -1377,8 +1927,8 @@ function TopicDetail({ topicTitle, onBack }) {
           }}
         />
       ) : (
-        <div className="detail-body">
-          <div className="detail-left-panel">
+        <div className="detail-body" ref={detailBodyRef}>
+          <div className="detail-left-panel" style={{ width: leftPanelWidth, minWidth: leftPanelWidth }}>
             <div className="panel-header">
               <span className="panel-title">资料</span>
               <MoreOutlined className="panel-more-icon" />
@@ -1403,7 +1953,13 @@ function TopicDetail({ topicTitle, onBack }) {
               </div>
             </div>
 
-            <div className="project-section" onContextMenu={(event) => handleBgContextMenu(event, 'tree')}>
+            <div
+              className={`project-section ${dragOverSurface === 'tree' ? 'project-section-dragover' : ''}`}
+              onContextMenu={(event) => handleBgContextMenu(event, 'tree')}
+              onDragOver={handleTreeRootDragOver}
+              onDragLeave={handleTreeRootDragLeave}
+              onDrop={handleTreeRootDrop}
+            >
               <div className="project-header">
                 <span className="project-title">项目</span>
                 <Dropdown
@@ -1441,155 +1997,120 @@ function TopicDetail({ topicTitle, onBack }) {
             </div>
           </div>
 
+          <div className="topic-sidebar-resize-handle" onMouseDown={handleSidebarResizeStart} />
+
           <div className="detail-right-panel">
             {previewItem ? (
-              <>
-                <div className="folder-info topic-preview-header">
-                  <div className="folder-info-left">
-                    <div className="folder-big-icon topic-preview-header-icon">
-                      {renderFileIcon(getTopicResourceFileType(previewItem), { fontSize: 34 })}
-                    </div>
-                    <div className="folder-meta">
-                      <div className="folder-name">{previewItem.name}</div>
-                      <div className="folder-desc">
-                        {getResourceTypeLabel(previewItem, getTopicResourceFileType(previewItem))}
-                        {' · '}
-                        {previewItem.owner || '--'}
-                        {' · '}
-                        {previewItem.lastEdit || '--'}
+              <div className="topic-preview-main">
+                <div className="topic-preview-main-head">
+                  <div className="topic-preview-main-head-left">
+                    <span className="topic-preview-main-icon">
+                      {renderFileIcon(getTopicResourceFileType(previewItem), { fontSize: 18 })}
+                    </span>
+                    <div className="topic-preview-main-copy">
+                      <div className="topic-preview-main-breadcrumb">
+                        {previewParentFolder ? previewParentFolder.name : currentVersion?.name || '资料'}
                       </div>
-                      <div className="folder-desc">
-                        {previewParentFolder ? `所在文件夹：${previewParentFolder.name}` : '位于根目录'}
-                      </div>
-                      {tagConfig ? (
-                        <div className="folder-tag-section">
-                          <div className="folder-tag-row">
-                            <span className="folder-tag-label">标签</span>
-                            {renderResourceTagText(previewItem) || <span className="topic-tags-empty">未设置标签</span>}
-                            {isDraft ? (
-                              <Button size="small" icon={<TagsOutlined />} onClick={() => handleOpenTagPicker(previewItem.key)}>
-                                编辑标签
-                              </Button>
-                            ) : null}
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-                  <div className="folder-info-right">
-                    <Button size="small" onClick={() => setPreviewItem(null)}>
-                      {previewParentFolder ? '返回文件夹' : '返回概览'}
-                    </Button>
-                  </div>
-                </div>
-                <div className="topic-preview-panel">
-                  <div className="topic-preview-content topic-preview-content-inline">
-                    <div className="topic-preview-body">
-                      {renderPreviewContent(previewItem)}
-                    </div>
-                    <div className="topic-preview-footer">
-                      <div className="topic-preview-name">{previewItem.name}</div>
-                      <div className="topic-preview-meta-row">
+                      <div className="topic-preview-main-title">{previewItem.name}</div>
+                      <div className="topic-preview-main-meta">
                         <span>{getResourceTypeLabel(previewItem, getTopicResourceFileType(previewItem))}</span>
                         <span>{previewItem.owner || '--'}</span>
                         <span>{previewItem.lastEdit || '--'}</span>
                       </div>
                       {tagConfig ? (
-                        <div className="topic-preview-tags-row">
-                          <span className="topic-preview-footer-label">标签</span>
+                        <div className="topic-preview-main-tags">
                           {renderPreviewTagTokens(previewItem)}
                         </div>
                       ) : null}
                     </div>
                   </div>
-                </div>
-              </>
-            ) : selectedFolder ? (
-              <>
-                <div className="folder-info">
-                  <div className="folder-info-left">
-                    <div className="folder-big-icon"><FolderFilled /></div>
-                    <div className="folder-meta">
-                      <div className="folder-name">{selectedFolder.name}</div>
-                      <div className="folder-desc">
-                        {folderChildren.filter((child) => !child.isFolder).length} 个文件 {folderChildren.filter((child) => child.isFolder).length} 个文件夹
-                      </div>
-                      {tagConfig ? (
-                        <div className="folder-tag-section">
-                          <div className="folder-tag-row">
-                            <span className="folder-tag-label">标签</span>
-                            {renderResourceTagText(selectedFolder) || <span className="topic-tags-empty">未设置标签</span>}
-                            {isDraft ? (
-                              <Button size="small" icon={<TagsOutlined />} onClick={() => handleOpenTagPicker(selectedFolder.key)}>
-                                编辑标签
-                              </Button>
-                            ) : null}
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-                  <div className="folder-info-right">
-                    <Button size="small" onClick={() => setSelectedFolderKey(null)}>返回概览</Button>
-                    <Button icon={<PlusOutlined />} disabled={!isDraft} onClick={() => openAddResourceModal(currentListParentKey)}>添加资料</Button>
-                  </div>
-                </div>
-                <div
-                  className={`topic-file-list ${tagConfig ? 'topic-file-list-with-tags' : 'topic-file-list-no-tags'}`}
-                  onContextMenu={(event) => handleBgContextMenu(event, 'list')}
-                >
-                  <div className="topic-file-list-header">
-                    <div className="topic-file-col topic-file-col-name">名称</div>
-                    {tagConfig ? <div className="topic-file-col topic-file-col-tags">标签</div> : null}
-                    <div className="topic-file-col topic-file-col-owner">所有者</div>
-                    <div className="topic-file-col topic-file-col-edit">最近编辑</div>
-                  </div>
-                  {currentListItems.length === 0 ? (
-                    <div className="topic-file-empty">
-                      <Empty
-                        image={Empty.PRESENTED_IMAGE_SIMPLE}
-                        description="此文件夹为空，右键新建或添加资料"
-                      />
-                    </div>
-                  ) : (
-                    currentListItems.map((item) => renderListRow(item))
-                  )}
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="folder-info">
-                  <div className="folder-info-left">
-                    <div className="folder-big-icon"><FolderFilled /></div>
-                    <div className="folder-meta">
-                      <div className="folder-name">{currentVersion?.name || '资料'}</div>
-                      <div className="folder-desc">{fileCount} 个文件 {folderCount} 个文件夹</div>
-                    </div>
-                  </div>
-                  <Button className="add-resource-btn" icon={<PlusOutlined />} disabled={!isDraft} onClick={() => openAddResourceModal(null)}>
-                    添加资料
+                  <Button size="small" onClick={() => setPreviewItem(null)}>
+                    {previewParentFolder ? '返回文件夹' : '返回概览'}
                   </Button>
                 </div>
-                <div
-                  className={`topic-file-list ${tagConfig ? 'topic-file-list-with-tags' : 'topic-file-list-no-tags'}`}
-                  onContextMenu={(event) => handleBgContextMenu(event, 'list')}
-                >
-                  <div className="topic-file-list-header">
-                    <div className="topic-file-col topic-file-col-name">名称</div>
-                    {tagConfig ? <div className="topic-file-col topic-file-col-tags">标签</div> : null}
-                    <div className="topic-file-col topic-file-col-owner">所有者</div>
-                    <div className="topic-file-col topic-file-col-edit">最近编辑</div>
+                <div className="topic-preview-main-content">
+                  <div className="topic-preview-body topic-preview-body-main">
+                    {renderPreviewContent(previewItem)}
                   </div>
-                  {currentListItems.length === 0 ? (
-                    <div className="topic-file-empty">
-                      <Empty
-                        image={Empty.PRESENTED_IMAGE_SIMPLE}
-                        description="暂无资料，右键新建文件夹或添加资料"
-                      />
+                </div>
+              </div>
+            ) : (
+              <>
+                {selectedFolder ? (
+                  <>
+                    <div className="folder-info">
+                      <div className="folder-info-left">
+                        <div className="folder-big-icon"><FolderFilled /></div>
+                        <div className="folder-meta">
+                          <div className="folder-name">{selectedFolder.name}</div>
+                          <div className="folder-desc">
+                            {folderChildren.filter((child) => !child.isFolder).length} 个文件 {folderChildren.filter((child) => child.isFolder).length} 个文件夹
+                          </div>
+                          {tagConfig ? (
+                            <div className="folder-tag-section">
+                              <div className="folder-tag-row">
+                                <span className="folder-tag-label">标签</span>
+                                {renderResourceTagText(selectedFolder) || <span className="topic-tags-empty">未设置标签</span>}
+                                {isDraft ? (
+                                  <Button size="small" icon={<TagsOutlined />} onClick={() => handleOpenTagPicker(selectedFolder.key)}>
+                                    编辑标签
+                                  </Button>
+                                ) : null}
+                              </div>
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                      <div className="folder-info-right">
+                        <Button size="small" onClick={() => setSelectedFolderKey(null)}>返回概览</Button>
+                        <Button icon={<PlusOutlined />} disabled={!isDraft} onClick={() => openAddResourceModal(currentListParentKey)}>添加资料</Button>
+                      </div>
                     </div>
-                  ) : (
-                    currentListItems.map((item) => renderListRow(item))
-                  )}
+                  </>
+                ) : (
+                  <>
+                    <div className="folder-info">
+                      <div className="folder-info-left">
+                        <div className="folder-big-icon"><FolderFilled /></div>
+                        <div className="folder-meta">
+                          <div className="folder-name">{currentVersion?.name || '资料'}</div>
+                          <div className="folder-desc">{fileCount} 个文件 {folderCount} 个文件夹</div>
+                        </div>
+                      </div>
+                      <Button className="add-resource-btn" icon={<PlusOutlined />} disabled={!isDraft} onClick={() => openAddResourceModal(null)}>
+                        添加资料
+                      </Button>
+                    </div>
+                  </>
+                )}
+
+                <div className="topic-right-content">
+                  <div className="topic-file-list-wrap">
+                    <div
+                      className={`topic-file-list ${tagConfig ? 'topic-file-list-with-tags' : 'topic-file-list-no-tags'} ${dragOverSurface === 'list' ? 'topic-file-list-dragover' : ''}`}
+                      onContextMenu={(event) => handleBgContextMenu(event, 'list')}
+                      onDragOver={handleListDragOver}
+                      onDragLeave={handleListDragLeave}
+                      onDrop={handleListDrop}
+                    >
+                      <div className="topic-file-list-header">
+                        <div className="topic-file-col topic-file-col-name">名称</div>
+                        {tagConfig ? <div className="topic-file-col topic-file-col-tags">标签</div> : null}
+                        <div className="topic-file-col topic-file-col-owner">所有者</div>
+                        <div className="topic-file-col topic-file-col-edit">最近编辑</div>
+                      </div>
+                      {currentListItems.length === 0 ? (
+                        <div className="topic-file-empty">
+                          <Empty
+                            image={Empty.PRESENTED_IMAGE_SIMPLE}
+                            description={selectedFolder ? '此文件夹为空，右键新建或添加资料' : '暂无资料，右键新建文件夹或添加资料'}
+                          />
+                        </div>
+                      ) : (
+                        currentListItems.map((item) => renderListRow(item))
+                      )}
+                    </div>
+                  </div>
                 </div>
               </>
             )}
