@@ -78,6 +78,17 @@
   padding-top: 16px;
 }
 
+.aq-subtabs .ant-tabs-nav {
+  margin-bottom: 0;
+}
+
+.aq-subtab-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 16px;
+}
+
 .aq-toolbar {
   display: flex;
   align-items: center;
@@ -85,11 +96,33 @@
   flex-wrap: wrap;
 }
 
+.aq-tenant-toolbar {
+  align-items: flex-start;
+}
+
 .aq-toolbar-right {
   margin-left: auto;
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.aq-tenant-brief {
+  min-width: 0;
+  flex: 1;
+}
+
+.aq-tenant-brief-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #172033;
+}
+
+.aq-tenant-brief-desc {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #7b8598;
 }
 
 .aq-identity-cell {
@@ -212,5 +245,9 @@
     margin-left: 0;
     width: 100%;
     justify-content: flex-end;
+  }
+
+  .aq-tenant-toolbar {
+    flex-direction: column;
   }
 }

@@ -185,6 +185,7 @@ function App() {
   const [selectedKeys, setSelectedKeys] = useState(['home']);
   const [activeIconKey, setActiveIconKey] = useState(() => getInitialHashPage() || 'my-space');
   const [currentPage, setCurrentPage] = useState(() => getInitialHashPage() || 'home'); // 'home', 'detail', or 'workflow'
+  const [agentQuotaEntryTab, setAgentQuotaEntryTab] = useState('plans');
   const [selectedTopic, setSelectedTopic] = useState(null);
   const activeSceneKey = selectedKeys[0] || 'home';
   const sceneCardDataMap = getSceneCardDataMap();
@@ -198,6 +199,12 @@ function App() {
   const handleBackToHome = () => {
     setCurrentPage('home');
     setSelectedTopic(null);
+  };
+
+  const openAgentQuotaPage = (tab = 'plans') => {
+    setActiveIconKey('agent-quota');
+    setAgentQuotaEntryTab(tab);
+    setCurrentPage('agent-quota');
   };
 
   const handleIconBarClick = (key) => {
@@ -233,7 +240,7 @@ function App() {
     } else if (key === 'learning-analytics') {
       setCurrentPage('learning-analytics');
     } else if (key === 'agent-quota') {
-      setCurrentPage('agent-quota');
+      openAgentQuotaPage('plans');
     } else if (key === 'online-dev') {
       setCurrentPage('online-dev');
     } else if (key === 'quick-build') {
@@ -343,9 +350,9 @@ function App() {
       ) : currentPage === 'study-club' ? (
         <StudyClubModule />
       ) : currentPage === 'learning-analytics' ? (
-        <ModelStatisticsModule />
+        <ModelStatisticsModule onNavigateToQuota={openAgentQuotaPage} />
       ) : currentPage === 'agent-quota' ? (
-        <AgentQuotaModule />
+        <AgentQuotaModule initialTab={agentQuotaEntryTab} />
       ) : currentPage === 'online-dev' ? (
         <OnlineDevModule />
       ) : currentPage === 'quick-build' ? (

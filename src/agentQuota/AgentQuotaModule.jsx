@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Badge,
@@ -20,6 +20,7 @@ import {
   message,
 } from 'antd';
 import {
+  ApartmentOutlined,
   CopyOutlined,
   EditOutlined,
   PlusOutlined,
@@ -29,6 +30,7 @@ import {
   SettingOutlined,
   TeamOutlined,
   ThunderboltOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
 import './AgentQuotaModule.css';
 
@@ -46,8 +48,8 @@ const PLAN_STATUS_OPTIONS = [
 const PLAN_SCOPE_OPTIONS = [
   { label: '个人试用', value: 'PERSONAL_TRIAL' },
   { label: '部门标准', value: 'DEPARTMENT' },
-  { label: '企业专业版', value: 'ENTERPRISE' },
-  { label: '旗舰租户版', value: 'TENANT_PREMIUM' },
+  { label: '当前租户标准', value: 'ENTERPRISE' },
+  { label: '高活跃业务组', value: 'TENANT_PREMIUM' },
 ];
 
 const RESET_CYCLE_OPTIONS = [
@@ -60,7 +62,7 @@ const RESET_CYCLE_OPTIONS = [
 const USER_GROUP_OPTIONS = [
   { label: '访客', value: 'VISITOR' },
   { label: '注册用户', value: 'REGISTERED' },
-  { label: '企业成员', value: 'MEMBER' },
+  { label: '租户成员', value: 'MEMBER' },
   { label: '部门管理员', value: 'DEPT_ADMIN' },
   { label: '租户管理员', value: 'TENANT_ADMIN' },
 ];
@@ -113,7 +115,7 @@ const INITIAL_PLAN_TEMPLATES = [
   },
   {
     id: 'plan-enterprise',
-    name: '企业专业版',
+    name: '当前租户标准版',
     scope: 'ENTERPRISE',
     status: 'ACTIVE',
     resetCycle: 'MONTHLY',
@@ -127,13 +129,13 @@ const INITIAL_PLAN_TEMPLATES = [
     freeTokenPerUser: 65000,
     freeAgentCreatePerUser: 2,
     freeSkillGeneratePerUser: 5,
-    description: '面向主力企业租户，支持自定义技能、自定义智能体和更高免费额度。',
+    description: '适用于当前租户的主力协作团队，支持自定义技能、自定义智能体和更高免费额度。',
     updatedAt: '2026-06-10 09:15',
     updatedBy: '张洪磊',
   },
   {
     id: 'plan-premium',
-    name: '旗舰租户版',
+    name: '高活跃业务版',
     scope: 'TENANT_PREMIUM',
     status: 'DRAFT',
     resetCycle: 'MONTHLY',
@@ -147,104 +149,232 @@ const INITIAL_PLAN_TEMPLATES = [
     freeTokenPerUser: 150000,
     freeAgentCreatePerUser: 4,
     freeSkillGeneratePerUser: 10,
-    description: '面向高并发、高复用租户的旗舰套餐模板，适合后续扩容和专属运营。',
+    description: '适用于高并发、高复用业务组，适合后续扩容和重点运营。',
     updatedAt: '2026-06-07 19:10',
     updatedBy: '王子瑜',
   },
 ];
 
-const INITIAL_TENANT_BINDINGS = [
+const INITIAL_CURRENT_TENANT_QUOTA = {
+  id: 'quota-current',
+  scopeType: 'CURRENT',
+  targetName: '华东教育集团',
+  owner: '张洪磊',
+  seatCount: 386,
+  planId: 'plan-enterprise',
+  skillUsageLimit: 22000,
+  tokenLimit: 12000000,
+  agentCreateLimit: 80,
+  skillGenerateLimit: 160,
+  allowCustomSkill: true,
+  allowCustomAgent: true,
+  freeSkillUsagePerUser: 120,
+  freeTokenPerUser: 65000,
+  freeAgentCreatePerUser: 2,
+  freeSkillGeneratePerUser: 5,
+  skillUsageUsed: 16420,
+  tokenUsed: 8360000,
+  agentCreated: 52,
+  skillGenerated: 118,
+  updatedAt: '2026-06-10 09:45',
+  updatedBy: '张洪磊',
+};
+
+const INITIAL_DEPARTMENT_BINDINGS = [
   {
-    id: 'binding-1',
-    tenantName: '华东教育集团',
-    owner: '张洪磊',
-    seatCount: 380,
-    planId: 'plan-enterprise',
-    skillUsageLimit: 22000,
-    tokenLimit: 12000000,
-    agentCreateLimit: 80,
-    skillGenerateLimit: 160,
+    id: 'binding-dept-1',
+    scopeType: 'DEPARTMENT',
+    targetName: '客户成功部',
+    owner: '王子瑜',
+    seatCount: 38,
+    planId: 'plan-dept',
+    skillUsageLimit: 5200,
+    tokenLimit: 3100000,
+    agentCreateLimit: 16,
+    skillGenerateLimit: 26,
     allowCustomSkill: true,
-    allowCustomAgent: true,
-    freeSkillUsagePerUser: 120,
-    freeTokenPerUser: 65000,
-    freeAgentCreatePerUser: 2,
-    freeSkillGeneratePerUser: 5,
-    skillUsageUsed: 16420,
-    tokenUsed: 8360000,
-    agentCreated: 52,
-    skillGenerated: 118,
-    updatedAt: '2026-06-10 09:45',
+    allowCustomAgent: false,
+    freeSkillUsagePerUser: 45,
+    freeTokenPerUser: 28000,
+    freeAgentCreatePerUser: 1,
+    freeSkillGeneratePerUser: 2,
+    skillUsageUsed: 3980,
+    tokenUsed: 2480000,
+    agentCreated: 11,
+    skillGenerated: 21,
+    updatedAt: '2026-06-10 09:20',
     updatedBy: '张洪磊',
   },
   {
-    id: 'binding-2',
-    tenantName: '银龄服务中心',
-    owner: '徐佳倩',
-    seatCount: 168,
-    planId: 'plan-dept',
-    skillUsageLimit: 5800,
-    tokenLimit: 3600000,
-    agentCreateLimit: 20,
-    skillGenerateLimit: 36,
+    id: 'binding-dept-2',
+    scopeType: 'DEPARTMENT',
+    targetName: '智能应用组',
+    owner: '张洪磊',
+    seatCount: 26,
+    planId: 'plan-enterprise',
+    skillUsageLimit: 7600,
+    tokenLimit: 4200000,
+    agentCreateLimit: 24,
+    skillGenerateLimit: 46,
     allowCustomSkill: true,
-    allowCustomAgent: false,
-    freeSkillUsagePerUser: 50,
-    freeTokenPerUser: 32000,
-    freeAgentCreatePerUser: 1,
-    freeSkillGeneratePerUser: 2,
-    skillUsageUsed: 4120,
-    tokenUsed: 2890000,
-    agentCreated: 14,
-    skillGenerated: 27,
-    updatedAt: '2026-06-09 18:20',
-    updatedBy: '徐佳倩',
+    allowCustomAgent: true,
+    freeSkillUsagePerUser: 80,
+    freeTokenPerUser: 42000,
+    freeAgentCreatePerUser: 2,
+    freeSkillGeneratePerUser: 4,
+    skillUsageUsed: 5640,
+    tokenUsed: 3320000,
+    agentCreated: 18,
+    skillGenerated: 35,
+    updatedAt: '2026-06-10 09:35',
+    updatedBy: '张洪磊',
   },
   {
-    id: 'binding-3',
-    tenantName: '智学课堂云',
-    owner: '王子瑜',
-    seatCount: 92,
+    id: 'binding-dept-3',
+    scopeType: 'DEPARTMENT',
+    targetName: '交付运营部',
+    owner: '赵敏',
+    seatCount: 29,
+    planId: 'plan-dept',
+    skillUsageLimit: 4600,
+    tokenLimit: 2700000,
+    agentCreateLimit: 12,
+    skillGenerateLimit: 18,
+    allowCustomSkill: true,
+    allowCustomAgent: false,
+    freeSkillUsagePerUser: 38,
+    freeTokenPerUser: 26000,
+    freeAgentCreatePerUser: 1,
+    freeSkillGeneratePerUser: 2,
+    skillUsageUsed: 2840,
+    tokenUsed: 1760000,
+    agentCreated: 8,
+    skillGenerated: 12,
+    updatedAt: '2026-06-09 18:10',
+    updatedBy: '赵敏',
+  },
+  {
+    id: 'binding-dept-4',
+    scopeType: 'DEPARTMENT',
+    targetName: '品牌市场部',
+    owner: '徐佳倩',
+    seatCount: 21,
     planId: 'plan-trial',
-    skillUsageLimit: 600,
-    tokenLimit: 260000,
-    agentCreateLimit: 4,
-    skillGenerateLimit: 6,
+    skillUsageLimit: 1200,
+    tokenLimit: 820000,
+    agentCreateLimit: 5,
+    skillGenerateLimit: 8,
     allowCustomSkill: false,
     allowCustomAgent: false,
     freeSkillUsagePerUser: 20,
     freeTokenPerUser: 12000,
     freeAgentCreatePerUser: 0,
     freeSkillGeneratePerUser: 1,
-    skillUsageUsed: 528,
-    tokenUsed: 213000,
-    agentCreated: 3,
-    skillGenerated: 5,
-    updatedAt: '2026-06-08 14:05',
+    skillUsageUsed: 980,
+    tokenUsed: 638000,
+    agentCreated: 4,
+    skillGenerated: 6,
+    updatedAt: '2026-06-08 14:50',
+    updatedBy: '徐佳倩',
+  },
+];
+
+const INITIAL_PERSONAL_BINDINGS = [
+  {
+    id: 'binding-user-1',
+    scopeType: 'PERSONAL',
+    targetName: '赵敏',
+    deptName: '交付运营部',
+    roleLabel: '部门管理员',
+    planId: 'plan-dept',
+    skillUsageLimit: 280,
+    tokenLimit: 180000,
+    agentCreateLimit: 3,
+    skillGenerateLimit: 4,
+    allowCustomSkill: true,
+    allowCustomAgent: false,
+    freeSkillUsagePerUser: 30,
+    freeTokenPerUser: 18000,
+    freeAgentCreatePerUser: 1,
+    freeSkillGeneratePerUser: 1,
+    skillUsageUsed: 224,
+    tokenUsed: 136000,
+    agentCreated: 2,
+    skillGenerated: 3,
+    updatedAt: '2026-06-10 08:55',
+    updatedBy: '张洪磊',
+  },
+  {
+    id: 'binding-user-2',
+    scopeType: 'PERSONAL',
+    targetName: '李昕',
+    deptName: '产品研发中心',
+    roleLabel: '研发负责人',
+    planId: 'plan-enterprise',
+    skillUsageLimit: 420,
+    tokenLimit: 260000,
+    agentCreateLimit: 5,
+    skillGenerateLimit: 8,
+    allowCustomSkill: true,
+    allowCustomAgent: true,
+    freeSkillUsagePerUser: 60,
+    freeTokenPerUser: 32000,
+    freeAgentCreatePerUser: 1,
+    freeSkillGeneratePerUser: 2,
+    skillUsageUsed: 336,
+    tokenUsed: 208000,
+    agentCreated: 4,
+    skillGenerated: 6,
+    updatedAt: '2026-06-10 08:30',
+    updatedBy: '张洪磊',
+  },
+  {
+    id: 'binding-user-3',
+    scopeType: 'PERSONAL',
+    targetName: '王子瑜',
+    deptName: '客户成功部',
+    roleLabel: '一线运营',
+    planId: 'plan-trial',
+    skillUsageLimit: 180,
+    tokenLimit: 120000,
+    agentCreateLimit: 1,
+    skillGenerateLimit: 2,
+    allowCustomSkill: false,
+    allowCustomAgent: false,
+    freeSkillUsagePerUser: 18,
+    freeTokenPerUser: 10000,
+    freeAgentCreatePerUser: 0,
+    freeSkillGeneratePerUser: 1,
+    skillUsageUsed: 132,
+    tokenUsed: 76000,
+    agentCreated: 1,
+    skillGenerated: 1,
+    updatedAt: '2026-06-09 17:20',
     updatedBy: '王子瑜',
   },
   {
-    id: 'binding-4',
-    tenantName: '星海交付平台',
-    owner: '赵敏',
-    seatCount: 245,
-    planId: 'plan-enterprise',
-    skillUsageLimit: 26000,
-    tokenLimit: 15000000,
-    agentCreateLimit: 90,
-    skillGenerateLimit: 180,
-    allowCustomSkill: true,
-    allowCustomAgent: true,
-    freeSkillUsagePerUser: 130,
-    freeTokenPerUser: 72000,
-    freeAgentCreatePerUser: 2,
-    freeSkillGeneratePerUser: 6,
-    skillUsageUsed: 17480,
-    tokenUsed: 10160000,
-    agentCreated: 61,
-    skillGenerated: 124,
-    updatedAt: '2026-06-10 10:30',
-    updatedBy: '赵敏',
+    id: 'binding-user-4',
+    scopeType: 'PERSONAL',
+    targetName: '徐佳倩',
+    deptName: '品牌市场部',
+    roleLabel: '运营专员',
+    planId: 'plan-trial',
+    skillUsageLimit: 150,
+    tokenLimit: 96000,
+    agentCreateLimit: 1,
+    skillGenerateLimit: 2,
+    allowCustomSkill: false,
+    allowCustomAgent: false,
+    freeSkillUsagePerUser: 16,
+    freeTokenPerUser: 9000,
+    freeAgentCreatePerUser: 0,
+    freeSkillGeneratePerUser: 1,
+    skillUsageUsed: 118,
+    tokenUsed: 64000,
+    agentCreated: 0,
+    skillGenerated: 1,
+    updatedAt: '2026-06-09 16:05',
+    updatedBy: '徐佳倩',
   },
 ];
 
@@ -283,7 +413,7 @@ const INITIAL_FREE_POLICIES = [
   },
   {
     id: 'policy-member',
-    name: '企业成员赠送策略',
+    name: '当前租户成员赠送策略',
     userGroup: 'MEMBER',
     resetCycle: 'MONTHLY',
     freeSkillUsagePerUser: 60,
@@ -293,7 +423,7 @@ const INITIAL_FREE_POLICIES = [
     allowCustomSkill: true,
     allowCustomAgent: false,
     isDefault: true,
-    description: '适用于企业成员默认免费额度，结合套餐模板生效。',
+    description: '适用于当前租户成员默认免费额度，结合套餐模板生效。',
     updatedAt: '2026-06-10 08:30',
     updatedBy: '张洪磊',
   },
@@ -336,6 +466,15 @@ function getUsageColor(rate) {
   if (rate >= 90) return '#ff4d4f';
   if (rate >= 75) return '#faad14';
   return '#52c41a';
+}
+
+function getMaxQuotaRate(record) {
+  return Math.max(
+    record.skillUsageLimit ? record.skillUsageUsed / record.skillUsageLimit : 0,
+    record.tokenLimit ? record.tokenUsed / record.tokenLimit : 0,
+    record.agentCreateLimit ? record.agentCreated / record.agentCreateLimit : 0,
+    record.skillGenerateLimit ? record.skillGenerated / record.skillGenerateLimit : 0,
+  );
 }
 
 function renderUsageProgress(used, limit, formatter) {
@@ -432,10 +571,12 @@ function defaultPolicyFormValues() {
   };
 }
 
-export default function AgentQuotaModule() {
+export default function AgentQuotaModule({ initialTab = 'plans' }) {
   const [activeTab, setActiveTab] = useState('plans');
   const [plans, setPlans] = useState(INITIAL_PLAN_TEMPLATES);
-  const [tenantBindings, setTenantBindings] = useState(INITIAL_TENANT_BINDINGS);
+  const [currentTenantQuota, setCurrentTenantQuota] = useState(INITIAL_CURRENT_TENANT_QUOTA);
+  const [departmentBindings, setDepartmentBindings] = useState(INITIAL_DEPARTMENT_BINDINGS);
+  const [personalBindings, setPersonalBindings] = useState(INITIAL_PERSONAL_BINDINGS);
   const [freePolicies, setFreePolicies] = useState(INITIAL_FREE_POLICIES);
 
   const [planKeyword, setPlanKeyword] = useState('');
@@ -451,6 +592,7 @@ export default function AgentQuotaModule() {
   const [bindingModalOpen, setBindingModalOpen] = useState(false);
   const [bindingModalMode, setBindingModalMode] = useState('create');
   const [editingBinding, setEditingBinding] = useState(null);
+  const [bindingScope, setBindingScope] = useState('DEPARTMENT');
 
   const [policyModalOpen, setPolicyModalOpen] = useState(false);
   const [policyModalMode, setPolicyModalMode] = useState('create');
@@ -462,44 +604,43 @@ export default function AgentQuotaModule() {
 
   const selectedBindingPlanId = Form.useWatch('planId', bindingForm);
 
+  useEffect(() => {
+    setActiveTab(initialTab || 'plans');
+  }, [initialTab]);
+
   const planMap = useMemo(() => new Map(plans.map((item) => [item.id, item])), [plans]);
   const selectedBindingPlan = selectedBindingPlanId ? planMap.get(selectedBindingPlanId) : null;
 
-  const tenantRows = useMemo(() => {
-    return tenantBindings.map((item) => ({
-      ...item,
-      planName: planMap.get(item.planId)?.name || '未绑定模板',
-      planStatus: planMap.get(item.planId)?.status,
-    }));
-  }, [tenantBindings, planMap]);
+  function attachPlanInfo(record) {
+    return {
+      ...record,
+      planName: planMap.get(record.planId)?.name || '未绑定模板',
+      planStatus: planMap.get(record.planId)?.status,
+    };
+  }
+
+  const currentTenantRow = useMemo(() => attachPlanInfo(currentTenantQuota), [currentTenantQuota, planMap]);
+  const departmentRows = useMemo(() => departmentBindings.map(attachPlanInfo), [departmentBindings, planMap]);
+  const personalRows = useMemo(() => personalBindings.map(attachPlanInfo), [personalBindings, planMap]);
 
   const summary = useMemo(() => {
     const enabledPlans = plans.filter((item) => item.status === 'ACTIVE');
-    const riskTenants = tenantRows.filter((item) => {
-      const maxRate = Math.max(
-        item.skillUsageLimit ? item.skillUsageUsed / item.skillUsageLimit : 0,
-        item.tokenLimit ? item.tokenUsed / item.tokenLimit : 0,
-        item.agentCreateLimit ? item.agentCreated / item.agentCreateLimit : 0,
-        item.skillGenerateLimit ? item.skillGenerated / item.skillGenerateLimit : 0,
-      );
-      return maxRate >= 0.8;
-    }).length;
-
-    const monthlyFreeTokens = tenantRows.reduce(
-      (sum, item) => sum + normalizeNumber(item.freeTokenPerUser) * normalizeNumber(item.seatCount),
-      0,
-    );
+    const quotaObjects = [currentTenantRow, ...departmentRows, ...personalRows];
+    const riskObjects = quotaObjects.filter((item) => getMaxQuotaRate(item) >= 0.8).length;
+    const monthlyFreeTokens = normalizeNumber(currentTenantRow.freeTokenPerUser) * normalizeNumber(currentTenantRow.seatCount);
 
     return {
       totalPlans: plans.length,
       enabledPlans: enabledPlans.length,
-      coveredTenants: tenantRows.length,
+      currentTenantMembers: currentTenantRow.seatCount,
+      departmentQuotaCount: departmentRows.length,
+      personalQuotaCount: personalRows.length,
       monthlyFreeTokens,
       customSkillPlans: enabledPlans.filter((item) => item.allowCustomSkill).length,
       customAgentPlans: enabledPlans.filter((item) => item.allowCustomAgent).length,
-      riskTenants,
+      riskObjects,
     };
-  }, [plans, tenantRows]);
+  }, [plans, currentTenantRow, departmentRows, personalRows]);
 
   const filteredPlans = useMemo(() => {
     return plans.filter((item) => {
@@ -513,17 +654,29 @@ export default function AgentQuotaModule() {
     });
   }, [plans, planKeyword, planStatusFilter]);
 
-  const filteredTenantRows = useMemo(() => {
-    return tenantRows.filter((item) => {
+  const filteredDepartmentRows = useMemo(() => {
+    return departmentRows.filter((item) => {
       const keyword = bindingKeyword.trim().toLowerCase();
       if (keyword) {
-        const haystack = `${item.tenantName} ${item.owner} ${item.planName}`.toLowerCase();
+        const haystack = `${item.targetName} ${item.owner || ''} ${item.planName} ${item.deptName || ''} ${item.roleLabel || ''}`.toLowerCase();
         if (!haystack.includes(keyword)) return false;
       }
       if (bindingPlanFilter && item.planId !== bindingPlanFilter) return false;
       return true;
     });
-  }, [tenantRows, bindingKeyword, bindingPlanFilter]);
+  }, [departmentRows, bindingKeyword, bindingPlanFilter]);
+
+  const filteredPersonalRows = useMemo(() => {
+    return personalRows.filter((item) => {
+      const keyword = bindingKeyword.trim().toLowerCase();
+      if (keyword) {
+        const haystack = `${item.targetName} ${item.deptName || ''} ${item.roleLabel || ''} ${item.planName}`.toLowerCase();
+        if (!haystack.includes(keyword)) return false;
+      }
+      if (bindingPlanFilter && item.planId !== bindingPlanFilter) return false;
+      return true;
+    });
+  }, [personalRows, bindingKeyword, bindingPlanFilter]);
 
   const filteredPolicies = useMemo(() => {
     return freePolicies.filter((item) => {
@@ -655,30 +808,54 @@ export default function AgentQuotaModule() {
     message.success(nextStatus === 'ACTIVE' ? '套餐模板已启用' : '套餐模板已停用');
   }
 
-  function openCreateBinding() {
+  function openCreateBinding(scopeType = 'DEPARTMENT') {
     const defaultPlan = plans.find((item) => item.status === 'ACTIVE') || plans[0];
+    setBindingScope(scopeType);
     setBindingModalMode('create');
     setEditingBinding(null);
-    bindingForm.setFieldsValue({
-      tenantName: '',
-      owner: '',
-      seatCount: 100,
-      skillUsageUsed: 0,
-      tokenUsed: 0,
-      agentCreated: 0,
-      skillGenerated: 0,
-      ...buildPlanDefaults(defaultPlan),
-    });
+    bindingForm.resetFields();
+
+    if (scopeType === 'PERSONAL') {
+      bindingForm.setFieldsValue({
+        targetName: '',
+        deptName: '',
+        roleLabel: '',
+        owner: undefined,
+        seatCount: undefined,
+        skillUsageUsed: 0,
+        tokenUsed: 0,
+        agentCreated: 0,
+        skillGenerated: 0,
+        ...buildPlanDefaults(defaultPlan),
+      });
+    } else {
+      bindingForm.setFieldsValue({
+        targetName: scopeType === 'CURRENT' ? currentTenantRow.targetName : '',
+        owner: scopeType === 'CURRENT' ? currentTenantRow.owner : '',
+        seatCount: scopeType === 'CURRENT' ? currentTenantRow.seatCount : 20,
+        deptName: undefined,
+        roleLabel: undefined,
+        skillUsageUsed: 0,
+        tokenUsed: 0,
+        agentCreated: 0,
+        skillGenerated: 0,
+        ...buildPlanDefaults(defaultPlan),
+      });
+    }
     setBindingModalOpen(true);
   }
 
   function openEditBinding(record) {
+    setBindingScope(record.scopeType);
     setBindingModalMode('edit');
     setEditingBinding(record);
+    bindingForm.resetFields();
     bindingForm.setFieldsValue({
-      tenantName: record.tenantName,
+      targetName: record.targetName,
       owner: record.owner,
       seatCount: record.seatCount,
+      deptName: record.deptName,
+      roleLabel: record.roleLabel,
       planId: record.planId,
       skillUsageLimit: record.skillUsageLimit,
       tokenLimit: record.tokenLimit,
@@ -711,9 +888,12 @@ export default function AgentQuotaModule() {
     try {
       const values = await bindingForm.validateFields();
       const payload = {
-        tenantName: values.tenantName,
+        scopeType: bindingScope,
+        targetName: values.targetName,
         owner: values.owner,
-        seatCount: normalizeNumber(values.seatCount),
+        seatCount: bindingScope === 'PERSONAL' ? 1 : normalizeNumber(values.seatCount),
+        deptName: values.deptName,
+        roleLabel: values.roleLabel,
         planId: values.planId,
         skillUsageLimit: normalizeNumber(values.skillUsageLimit),
         tokenLimit: normalizeNumber(values.tokenLimit),
@@ -734,17 +914,32 @@ export default function AgentQuotaModule() {
       };
 
       if (bindingModalMode === 'edit' && editingBinding) {
-        setTenantBindings((prev) => prev.map((item) => (item.id === editingBinding.id ? { ...item, ...payload } : item)));
-        message.success('租户配额已更新');
+        if (bindingScope === 'CURRENT') {
+          setCurrentTenantQuota((prev) => ({ ...prev, ...payload }));
+          message.success('当前租户配额已更新');
+        } else if (bindingScope === 'DEPARTMENT') {
+          setDepartmentBindings((prev) => prev.map((item) => (item.id === editingBinding.id ? { ...item, ...payload } : item)));
+          message.success('部门配额已更新');
+        } else {
+          setPersonalBindings((prev) => prev.map((item) => (item.id === editingBinding.id ? { ...item, ...payload } : item)));
+          message.success('个人配额已更新');
+        }
       } else {
-        setTenantBindings((prev) => [
-          {
-            id: `binding-${Date.now()}`,
-            ...payload,
-          },
-          ...prev,
-        ]);
-        message.success('租户配额已创建');
+        const nextRecord = {
+          id: `binding-${Date.now()}`,
+          ...payload,
+        };
+
+        if (bindingScope === 'DEPARTMENT') {
+          setDepartmentBindings((prev) => [nextRecord, ...prev]);
+          message.success('部门配额已创建');
+        } else if (bindingScope === 'PERSONAL') {
+          setPersonalBindings((prev) => [nextRecord, ...prev]);
+          message.success('个人配额已创建');
+        } else {
+          setCurrentTenantQuota((prev) => ({ ...prev, ...nextRecord }));
+          message.success('当前租户配额已创建');
+        }
       }
       setBindingModalOpen(false);
     } catch (error) {
@@ -834,15 +1029,29 @@ export default function AgentQuotaModule() {
       icon: <SettingOutlined style={{ color: '#1677ff' }} />,
     },
     {
-      key: 'tenants',
-      title: '覆盖租户',
-      value: summary.coveredTenants,
-      suffix: '个',
+      key: 'members',
+      title: '当前租户成员',
+      value: summary.currentTenantMembers,
+      suffix: '人',
       icon: <TeamOutlined style={{ color: '#52c41a' }} />,
     },
     {
+      key: 'departments',
+      title: '部门配额',
+      value: summary.departmentQuotaCount,
+      suffix: '个部门',
+      icon: <ApartmentOutlined style={{ color: '#722ed1' }} />,
+    },
+    {
+      key: 'persons',
+      title: '个人配额',
+      value: summary.personalQuotaCount,
+      suffix: '人',
+      icon: <UserOutlined style={{ color: '#13c2c2' }} />,
+    },
+    {
       key: 'free-tokens',
-      title: '月度免费 Token',
+      title: '月度免费 Token 池',
       value: formatCompact(summary.monthlyFreeTokens),
       suffix: '',
       icon: <ThunderboltOutlined style={{ color: '#fa8c16' }} />,
@@ -863,8 +1072,8 @@ export default function AgentQuotaModule() {
     },
     {
       key: 'risk',
-      title: '临近阈值租户',
-      value: summary.riskTenants,
+      title: '临近阈值对象',
+      value: summary.riskObjects,
       suffix: '个',
       icon: <ThunderboltOutlined style={{ color: '#ff4d4f' }} />,
     },
@@ -976,16 +1185,16 @@ export default function AgentQuotaModule() {
     },
   ];
 
-  const tenantColumns = [
+  const currentTenantColumns = [
     {
-      title: '租户',
-      dataIndex: 'tenantName',
-      key: 'tenantName',
+      title: '当前租户',
+      dataIndex: 'targetName',
+      key: 'targetName',
       width: 200,
       fixed: 'left',
       render: (_, record) => (
         <div className="aq-identity-cell">
-          <div className="aq-identity-title">{record.tenantName}</div>
+          <div className="aq-identity-title">{record.targetName}</div>
           <div className="aq-identity-desc">负责人：{record.owner} · {formatNumber(record.seatCount)} 人</div>
         </div>
       ),
@@ -1038,6 +1247,186 @@ export default function AgentQuotaModule() {
     },
     {
       title: '每用户免费配额',
+      key: 'free-quota',
+      width: 260,
+      render: (_, record) => renderFreeQuotaCell(record),
+    },
+    {
+      title: '最近更新',
+      key: 'updated',
+      width: 160,
+      render: (_, record) => (
+        <div className="aq-updated-cell">
+          <span>{record.updatedAt}</span>
+          <span>{record.updatedBy}</span>
+        </div>
+      ),
+    },
+    {
+      title: '操作',
+      key: 'action',
+      width: 100,
+      fixed: 'right',
+      render: (_, record) => (
+        <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openEditBinding(record)}>
+          编辑
+        </Button>
+      ),
+    },
+  ];
+
+  const departmentColumns = [
+    {
+      title: '部门',
+      dataIndex: 'targetName',
+      key: 'targetName',
+      width: 220,
+      fixed: 'left',
+      render: (_, record) => (
+        <div className="aq-identity-cell">
+          <div className="aq-identity-title">{record.targetName}</div>
+          <div className="aq-identity-desc">负责人：{record.owner} · {formatNumber(record.seatCount)} 人</div>
+        </div>
+      ),
+    },
+    {
+      title: '绑定套餐',
+      key: 'plan',
+      width: 160,
+      render: (_, record) => (
+        <div className="aq-tag-stack">
+          <Tag color="blue">{record.planName}</Tag>
+          {renderStatusTag(record.planStatus || 'DRAFT')}
+        </div>
+      ),
+    },
+    {
+      title: '技能使用次数',
+      key: 'skill-usage',
+      width: 220,
+      render: (_, record) => renderUsageProgress(record.skillUsageUsed, record.skillUsageLimit, (value) => `${formatNumber(value)} 次`),
+    },
+    {
+      title: 'Token 使用数量',
+      key: 'token-usage',
+      width: 220,
+      render: (_, record) => renderUsageProgress(record.tokenUsed, record.tokenLimit, (value) => formatCompact(value)),
+    },
+    {
+      title: '智能体创建数量',
+      key: 'agent-created',
+      width: 220,
+      render: (_, record) => renderUsageProgress(record.agentCreated, record.agentCreateLimit, (value) => `${formatNumber(value)} 个`),
+    },
+    {
+      title: '技能生成数量',
+      key: 'skill-generated',
+      width: 220,
+      render: (_, record) => renderUsageProgress(record.skillGenerated, record.skillGenerateLimit, (value) => `${formatNumber(value)} 次`),
+    },
+    {
+      title: '自定义能力',
+      key: 'custom',
+      width: 180,
+      render: (_, record) => (
+        <div className="aq-tag-stack">
+          {renderSupportTag(record.allowCustomSkill, '支持自定义技能', '禁用自定义技能')}
+          {renderSupportTag(record.allowCustomAgent, '支持自定义智能体', '禁用自定义智能体')}
+        </div>
+      ),
+    },
+    {
+      title: '每用户免费配额',
+      key: 'free-quota',
+      width: 260,
+      render: (_, record) => renderFreeQuotaCell(record),
+    },
+    {
+      title: '最近更新',
+      key: 'updated',
+      width: 160,
+      render: (_, record) => (
+        <div className="aq-updated-cell">
+          <span>{record.updatedAt}</span>
+          <span>{record.updatedBy}</span>
+        </div>
+      ),
+    },
+    {
+      title: '操作',
+      key: 'action',
+      width: 100,
+      fixed: 'right',
+      render: (_, record) => (
+        <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openEditBinding(record)}>
+          编辑
+        </Button>
+      ),
+    },
+  ];
+
+  const personalColumns = [
+    {
+      title: '个人',
+      dataIndex: 'targetName',
+      key: 'targetName',
+      width: 200,
+      fixed: 'left',
+      render: (_, record) => (
+        <div className="aq-identity-cell">
+          <div className="aq-identity-title">{record.targetName}</div>
+          <div className="aq-identity-desc">{record.deptName} · {record.roleLabel}</div>
+        </div>
+      ),
+    },
+    {
+      title: '绑定套餐',
+      key: 'plan',
+      width: 160,
+      render: (_, record) => (
+        <div className="aq-tag-stack">
+          <Tag color="blue">{record.planName}</Tag>
+          {renderStatusTag(record.planStatus || 'DRAFT')}
+        </div>
+      ),
+    },
+    {
+      title: '技能使用次数',
+      key: 'skill-usage',
+      width: 220,
+      render: (_, record) => renderUsageProgress(record.skillUsageUsed, record.skillUsageLimit, (value) => `${formatNumber(value)} 次`),
+    },
+    {
+      title: 'Token 使用数量',
+      key: 'token-usage',
+      width: 220,
+      render: (_, record) => renderUsageProgress(record.tokenUsed, record.tokenLimit, (value) => formatCompact(value)),
+    },
+    {
+      title: '智能体创建数量',
+      key: 'agent-created',
+      width: 220,
+      render: (_, record) => renderUsageProgress(record.agentCreated, record.agentCreateLimit, (value) => `${formatNumber(value)} 个`),
+    },
+    {
+      title: '技能生成数量',
+      key: 'skill-generated',
+      width: 220,
+      render: (_, record) => renderUsageProgress(record.skillGenerated, record.skillGenerateLimit, (value) => `${formatNumber(value)} 次`),
+    },
+    {
+      title: '自定义能力',
+      key: 'custom',
+      width: 180,
+      render: (_, record) => (
+        <div className="aq-tag-stack">
+          {renderSupportTag(record.allowCustomSkill, '支持自定义技能', '禁用自定义技能')}
+          {renderSupportTag(record.allowCustomAgent, '支持自定义智能体', '禁用自定义智能体')}
+        </div>
+      ),
+    },
+    {
+      title: '人均免费配额',
       key: 'free-quota',
       width: 260,
       render: (_, record) => renderFreeQuotaCell(record),
@@ -1220,47 +1609,160 @@ export default function AgentQuotaModule() {
       key: 'tenant',
       label: (
         <span>
-          租户配额
-          <Badge count={filteredTenantRows.length} size="small" style={{ marginInlineStart: 8 }} />
+          当前租户配额
+          <Badge count={1 + departmentRows.length + personalRows.length} size="small" style={{ marginInlineStart: 8 }} />
         </span>
       ),
       children: (
         <div className="aq-tab-panel">
-          <Card className="aq-toolbar-card" bordered={false}>
-            <div className="aq-toolbar">
-              <Input
-                allowClear
-                prefix={<SearchOutlined style={{ color: '#98a2b3' }} />}
-                placeholder="搜索租户名称、负责人或套餐"
-                value={bindingKeyword}
-                onChange={(e) => setBindingKeyword(e.target.value)}
-                style={{ width: 280 }}
-              />
-              <Select
-                allowClear
-                placeholder="套餐模板"
-                value={bindingPlanFilter}
-                onChange={setBindingPlanFilter}
-                options={planOptionList}
-                style={{ width: 220 }}
-              />
-              <div className="aq-toolbar-right">
-                <Button icon={<ReloadOutlined />} onClick={resetBindingFilters}>重置筛选</Button>
-                <Button type="primary" icon={<PlusOutlined />} onClick={openCreateBinding}>分配租户配额</Button>
-              </div>
-            </div>
-          </Card>
+          <Alert
+            className="aq-inline-alert"
+            type="info"
+            showIcon
+            message={`当前租户：${currentTenantRow.targetName}`}
+            description="当前租户总配额用于控制整体资源池；部门配额用于控制组织采纳和部门消耗；个人配额用于对重点成员做额外收紧或放宽。"
+          />
 
-          <Card className="aq-table-card" bordered={false}>
-            <Table
-              rowKey="id"
-              size="small"
-              columns={tenantColumns}
-              dataSource={filteredTenantRows}
-              pagination={false}
-              scroll={{ x: 1860 }}
-            />
-          </Card>
+          <Tabs
+            className="aq-subtabs"
+            items={[
+              {
+                key: 'current',
+                label: (
+                  <span>
+                    当前租户
+                    <Badge count={1} size="small" style={{ marginInlineStart: 8 }} />
+                  </span>
+                ),
+                children: (
+                  <div className="aq-subtab-panel">
+                    <Card className="aq-toolbar-card" bordered={false}>
+                      <div className="aq-toolbar aq-tenant-toolbar">
+                        <div className="aq-tenant-brief">
+                          <div className="aq-tenant-brief-title">总配额优先级最高</div>
+                          <div className="aq-tenant-brief-desc">
+                            当前租户总配额优先于部门和个人配额，决定技能使用次数、Token、智能体创建、技能生成和人均免费额度的上限。
+                          </div>
+                        </div>
+                        <div className="aq-toolbar-right">
+                          <Button type="primary" icon={<EditOutlined />} onClick={() => openEditBinding(currentTenantRow)}>
+                            编辑当前租户配额
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+
+                    <Card className="aq-table-card" bordered={false}>
+                      <Table
+                        rowKey="id"
+                        size="small"
+                        columns={currentTenantColumns}
+                        dataSource={[currentTenantRow]}
+                        pagination={false}
+                        scroll={{ x: 1860 }}
+                      />
+                    </Card>
+                  </div>
+                ),
+              },
+              {
+                key: 'department',
+                label: (
+                  <span>
+                    部门配额
+                    <Badge count={filteredDepartmentRows.length} size="small" style={{ marginInlineStart: 8 }} />
+                  </span>
+                ),
+                children: (
+                  <div className="aq-subtab-panel">
+                    <Card className="aq-toolbar-card" bordered={false}>
+                      <div className="aq-toolbar">
+                        <Input
+                          allowClear
+                          prefix={<SearchOutlined style={{ color: '#98a2b3' }} />}
+                          placeholder="搜索部门名称、负责人或套餐"
+                          value={bindingKeyword}
+                          onChange={(e) => setBindingKeyword(e.target.value)}
+                          style={{ width: 280 }}
+                        />
+                        <Select
+                          allowClear
+                          placeholder="套餐模板"
+                          value={bindingPlanFilter}
+                          onChange={setBindingPlanFilter}
+                          options={planOptionList}
+                          style={{ width: 220 }}
+                        />
+                        <div className="aq-toolbar-right">
+                          <Button icon={<ReloadOutlined />} onClick={resetBindingFilters}>重置筛选</Button>
+                          <Button type="primary" icon={<PlusOutlined />} onClick={() => openCreateBinding('DEPARTMENT')}>新增部门配额</Button>
+                        </div>
+                      </div>
+                    </Card>
+
+                    <Card className="aq-table-card" bordered={false}>
+                      <Table
+                        rowKey="id"
+                        size="small"
+                        columns={departmentColumns}
+                        dataSource={filteredDepartmentRows}
+                        pagination={false}
+                        scroll={{ x: 1860 }}
+                      />
+                    </Card>
+                  </div>
+                ),
+              },
+              {
+                key: 'personal',
+                label: (
+                  <span>
+                    个人配额
+                    <Badge count={filteredPersonalRows.length} size="small" style={{ marginInlineStart: 8 }} />
+                  </span>
+                ),
+                children: (
+                  <div className="aq-subtab-panel">
+                    <Card className="aq-toolbar-card" bordered={false}>
+                      <div className="aq-toolbar">
+                        <Input
+                          allowClear
+                          prefix={<SearchOutlined style={{ color: '#98a2b3' }} />}
+                          placeholder="搜索用户姓名、部门或套餐"
+                          value={bindingKeyword}
+                          onChange={(e) => setBindingKeyword(e.target.value)}
+                          style={{ width: 280 }}
+                        />
+                        <Select
+                          allowClear
+                          placeholder="套餐模板"
+                          value={bindingPlanFilter}
+                          onChange={setBindingPlanFilter}
+                          options={planOptionList}
+                          style={{ width: 220 }}
+                        />
+                        <div className="aq-toolbar-right">
+                          <Button icon={<ReloadOutlined />} onClick={resetBindingFilters}>重置筛选</Button>
+                          <Button type="primary" icon={<PlusOutlined />} onClick={() => openCreateBinding('PERSONAL')}>新增个人配额</Button>
+                        </div>
+                      </div>
+                    </Card>
+
+                    <Card className="aq-table-card" bordered={false}>
+                      <Table
+                        rowKey="id"
+                        size="small"
+                        columns={personalColumns}
+                        dataSource={filteredPersonalRows}
+                        pagination={false}
+                        scroll={{ x: 1840 }}
+                      />
+                    </Card>
+                  </div>
+                ),
+              },
+            ]}
+          />
         </div>
       ),
     },
@@ -1306,6 +1808,18 @@ export default function AgentQuotaModule() {
     },
   ];
 
+  const isPersonalBinding = bindingScope === 'PERSONAL';
+  const isCurrentBinding = bindingScope === 'CURRENT';
+  const bindingModalTitle = bindingModalMode === 'edit'
+    ? isCurrentBinding
+      ? '编辑当前租户配额'
+      : isPersonalBinding
+        ? '编辑个人配额'
+        : '编辑部门配额'
+    : isPersonalBinding
+      ? '新增个人配额'
+      : '新增部门配额';
+
   return (
     <div className="agent-quota-module">
       <div className="aq-header">
@@ -1316,7 +1830,7 @@ export default function AgentQuotaModule() {
             <Tag color="gold">Mock 配置</Tag>
           </div>
           <div className="aq-subtitle">
-            配置技能使用次数、Token 使用数量、智能体创建数量、技能生成数量，以及自定义技能 / 自定义智能体开关和每用户免费配额。
+            面向当前租户管理员，配置当前租户总配额、部门配额、个人配额，以及自定义技能 / 自定义智能体开关和每用户免费额度。
           </div>
         </div>
         <Space>
@@ -1348,7 +1862,7 @@ export default function AgentQuotaModule() {
           type="info"
           showIcon
           message="配额生效顺序"
-          description="租户配额优先于套餐模板，免费配额策略用于控制每个用户的赠送额度。当前页面已支持配置技能使用次数、Token、智能体创建、技能生成、自定义能力以及人均免费额度。"
+          description="当前租户总配额优先于部门配额，部门配额优先于个人配额；套餐模板用于快速带入默认额度，免费配额策略用于控制每个用户的赠送额度。"
         />
 
         <Tabs
@@ -1374,7 +1888,7 @@ export default function AgentQuotaModule() {
               name="name"
               rules={[{ required: true, message: '请输入套餐名称' }]}
             >
-              <Input placeholder="例如：企业专业版" />
+              <Input placeholder="例如：当前租户标准版" />
             </Form.Item>
             <Form.Item
               label="适用范围"
@@ -1442,27 +1956,56 @@ export default function AgentQuotaModule() {
 
       <Modal
         open={bindingModalOpen}
-        title={bindingModalMode === 'edit' ? '编辑租户配额' : '分配租户配额'}
+        title={bindingModalTitle}
         onCancel={() => setBindingModalOpen(false)}
         onOk={handleBindingSubmit}
         width={980}
         destroyOnClose
       >
         <Form form={bindingForm} layout="vertical">
-          <div className="aq-form-grid aq-form-grid-4">
-            <Form.Item label="租户名称" name="tenantName" rules={[{ required: true, message: '请输入租户名称' }]}>
-              <Input placeholder="例如：华东教育集团" />
-            </Form.Item>
-            <Form.Item label="负责人" name="owner" rules={[{ required: true, message: '请输入负责人' }]}>
-              <Input placeholder="例如：张洪磊" />
-            </Form.Item>
-            <Form.Item label="成员数" name="seatCount" rules={[{ required: true, message: '请输入成员数' }]}>
-              <InputNumber min={0} style={{ width: '100%' }} />
-            </Form.Item>
-            <Form.Item label="套餐模板" name="planId" rules={[{ required: true, message: '请选择套餐模板' }]}>
-              <Select options={planOptionList} onChange={handleBindingPlanChange} />
-            </Form.Item>
-          </div>
+          {isPersonalBinding ? (
+            <div className="aq-form-grid aq-form-grid-4">
+              <Form.Item label="用户姓名" name="targetName" rules={[{ required: true, message: '请输入用户姓名' }]}>
+                <Input placeholder="例如：赵敏" />
+              </Form.Item>
+              <Form.Item label="所属部门" name="deptName" rules={[{ required: true, message: '请输入所属部门' }]}>
+                <Input placeholder="例如：交付运营部" />
+              </Form.Item>
+              <Form.Item label="岗位 / 身份" name="roleLabel" rules={[{ required: true, message: '请输入岗位或身份' }]}>
+                <Input placeholder="例如：部门管理员" />
+              </Form.Item>
+              <Form.Item label="套餐模板" name="planId" rules={[{ required: true, message: '请选择套餐模板' }]}>
+                <Select options={planOptionList} onChange={handleBindingPlanChange} />
+              </Form.Item>
+            </div>
+          ) : (
+            <div className="aq-form-grid aq-form-grid-4">
+              <Form.Item
+                label={isCurrentBinding ? '当前租户名称' : '部门名称'}
+                name="targetName"
+                rules={[{ required: true, message: isCurrentBinding ? '请输入当前租户名称' : '请输入部门名称' }]}
+              >
+                <Input placeholder={isCurrentBinding ? '例如：华东教育集团' : '例如：客户成功部'} />
+              </Form.Item>
+              <Form.Item
+                label={isCurrentBinding ? '租户负责人' : '部门负责人'}
+                name="owner"
+                rules={[{ required: true, message: isCurrentBinding ? '请输入租户负责人' : '请输入部门负责人' }]}
+              >
+                <Input placeholder="例如：张洪磊" />
+              </Form.Item>
+              <Form.Item
+                label={isCurrentBinding ? '成员数' : '部门人数'}
+                name="seatCount"
+                rules={[{ required: true, message: isCurrentBinding ? '请输入成员数' : '请输入部门人数' }]}
+              >
+                <InputNumber min={0} style={{ width: '100%' }} />
+              </Form.Item>
+              <Form.Item label="套餐模板" name="planId" rules={[{ required: true, message: '请选择套餐模板' }]}>
+                <Select options={planOptionList} onChange={handleBindingPlanChange} />
+              </Form.Item>
+            </div>
+          )}
 
           {selectedBindingPlan ? (
             <Alert
