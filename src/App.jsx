@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Layout, Menu, Input, Button, Card, Dropdown, Tag } from 'antd';
 import {
   HomeOutlined,
@@ -67,6 +67,7 @@ import { getMappedChannelSummary } from './studyClub/adminTopicMapping';
 import './App.css';
 
 const { Sider, Header, Content } = Layout;
+const EMPTY_MENU_INDICATOR = { x: 0, y: 0, width: 0, height: 0, opacity: 0 };
 
 function getInitialHashPage() {
   if (typeof window === 'undefined') {
@@ -187,9 +188,90 @@ function App() {
   const [currentPage, setCurrentPage] = useState(() => getInitialHashPage() || 'home'); // 'home', 'detail', or 'workflow'
   const [agentQuotaEntryTab, setAgentQuotaEntryTab] = useState('plans');
   const [selectedTopic, setSelectedTopic] = useState(null);
+  const [iconBarIndicatorStyle, setIconBarIndicatorStyle] = useState(EMPTY_MENU_INDICATOR);
+  const [siderMenuIndicatorStyle, setSiderMenuIndicatorStyle] = useState(EMPTY_MENU_INDICATOR);
+  const iconBarListRef = useRef(null);
+  const iconBarItemRefs = useRef(new Map());
+  const siderMenuShellRef = useRef(null);
   const activeSceneKey = selectedKeys[0] || 'home';
   const sceneCardDataMap = getSceneCardDataMap();
   const visibleCardData = sceneCardDataMap[activeSceneKey] || defaultCardData;
+
+  const setIconBarItemRef = useCallback((key, node) => {
+    if (node) {
+      iconBarItemRefs.current.set(key, node);
+      return;
+    }
+    iconBarItemRefs.current.delete(key);
+  }, []);
+
+  const updateIndicatorPosition = useCallback((container, target, setter) => {
+    if (!container || !target) {
+      setter((prev) => (prev.opacity === 0 ? prev : { ...prev, opacity: 0 }));
+      return;
+    }
+
+    const containerRect = container.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const nextStyle = {
+      x: targetRect.left - containerRect.left,
+      y: targetRect.top - containerRect.top,
+      width: targetRect.width,
+      height: targetRect.height,
+      opacity: 1,
+    };
+
+    setter((prev) => {
+      const unchanged = ['x', 'y', 'width', 'height', 'opacity']
+        .every((key) => Math.abs((prev[key] || 0) - (nextStyle[key] || 0)) < 0.5);
+      return unchanged ? prev : nextStyle;
+    });
+  }, []);
+
+  const updateIconBarIndicator = useCallback(() => {
+    updateIndicatorPosition(
+      iconBarListRef.current,
+      iconBarItemRefs.current.get(activeIconKey) || null,
+      setIconBarIndicatorStyle,
+    );
+  }, [activeIconKey, updateIndicatorPosition]);
+
+  const updateSiderMenuIndicator = useCallback(() => {
+    const container = siderMenuShellRef.current;
+    const target = container?.querySelector('.ant-menu-item-selected:not(.new-scene-item)') || null;
+    updateIndicatorPosition(container, target, setSiderMenuIndicatorStyle);
+  }, [selectedKeys, updateIndicatorPosition]);
+
+  useLayoutEffect(() => {
+    const frameId = window.requestAnimationFrame(() => {
+      updateIconBarIndicator();
+      updateSiderMenuIndicator();
+    });
+    return () => window.cancelAnimationFrame(frameId);
+  }, [activeIconKey, selectedKeys, updateIconBarIndicator, updateSiderMenuIndicator]);
+
+  useEffect(() => {
+    const handleViewportChange = () => {
+      updateIconBarIndicator();
+      updateSiderMenuIndicator();
+    };
+
+    window.addEventListener('resize', handleViewportChange);
+
+    const observer = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(handleViewportChange)
+      : null;
+
+    if (observer) {
+      if (iconBarListRef.current) observer.observe(iconBarListRef.current);
+      if (siderMenuShellRef.current) observer.observe(siderMenuShellRef.current);
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleViewportChange);
+      observer?.disconnect();
+    };
+  }, [updateIconBarIndicator, updateSiderMenuIndicator]);
 
   const handleCardClick = (card) => {
     setSelectedTopic(card.title);
@@ -306,10 +388,20 @@ function App() {
             <UserOutlined />
           </div>
         </div>
-        <div className="icon-bar-list">
+        <div className="icon-bar-list" ref={iconBarListRef}>
+          <div
+            className={`icon-bar-liquid-indicator ${iconBarIndicatorStyle.opacity ? 'is-visible' : ''}`}
+            style={{
+              width: `${iconBarIndicatorStyle.width}px`,
+              height: `${iconBarIndicatorStyle.height}px`,
+              transform: `translate3d(${iconBarIndicatorStyle.x}px, ${iconBarIndicatorStyle.y}px, 0)`,
+              opacity: iconBarIndicatorStyle.opacity,
+            }}
+          />
           {iconBarItems.map((item) => (
             <div
               key={item.key}
+              ref={(node) => setIconBarItemRef(item.key, node)}
               className={`icon-bar-item ${activeIconKey === item.key ? 'icon-bar-item-active' : ''}`}
               onClick={() => handleIconBarClick(item.key)}
             >
@@ -374,13 +466,24 @@ function App() {
           {/* Scene Sidebar */}
           <Sider width={220} className="app-sider">
             <div className="sider-top">
-              <Menu
-                mode="inline"
-                selectedKeys={selectedKeys}
-                onClick={(e) => setSelectedKeys([e.key])}
-                items={menuItems}
-                className="sider-menu"
-              />
+              <div className="sider-menu-shell" ref={siderMenuShellRef}>
+                <div
+                  className={`sider-menu-liquid-indicator ${siderMenuIndicatorStyle.opacity ? 'is-visible' : ''}`}
+                  style={{
+                    width: `${siderMenuIndicatorStyle.width}px`,
+                    height: `${siderMenuIndicatorStyle.height}px`,
+                    transform: `translate3d(${siderMenuIndicatorStyle.x}px, ${siderMenuIndicatorStyle.y}px, 0)`,
+                    opacity: siderMenuIndicatorStyle.opacity,
+                  }}
+                />
+                <Menu
+                  mode="inline"
+                  selectedKeys={selectedKeys}
+                  onClick={(e) => setSelectedKeys([e.key])}
+                  items={menuItems}
+                  className="sider-menu"
+                />
+              </div>
             </div>
           </Sider>
 
