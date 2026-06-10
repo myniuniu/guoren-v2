@@ -9,6 +9,7 @@ import {
   TeamOutlined,
   ExperimentOutlined,
   ThunderboltOutlined,
+  RobotOutlined,
   BarChartOutlined,
   CloudOutlined,
   BookOutlined,
@@ -59,6 +60,7 @@ import DevBackendPage from './appCenter/DevBackendPage';
 import DmsModule from './dms/DmsModule';
 import IntegrationModule from './integration/IntegrationModule';
 import MessagesModule from './messages/MessagesModule';
+import AgentQuotaModule from './agentQuota/AgentQuotaModule';
 import ModelStatisticsModule from './modelStatistics/ModelStatisticsModule';
 import SolutionManagementModule from './solution/SolutionManagementModule';
 import { getMappedChannelSummary } from './studyClub/adminTopicMapping';
@@ -168,6 +170,7 @@ const iconBarItems = [
   { key: 'tasks', icon: <AppstoreOutlined />, label: '任务' },
   { key: 'lucky-backend', icon: <SettingOutlined />, label: 'lucky后台' },
   { key: 'learning-analytics', icon: <BarChartOutlined />, label: '模型统计' },
+  { key: 'agent-quota', icon: <RobotOutlined />, label: '智能体配额' },
   { key: 'online-dev', icon: <CodeOutlined />, label: '在线开发' },
   { key: 'quick-build', icon: <ThunderboltOutlined />, label: '智搭' },
   { key: 'page-designer', icon: <LayoutOutlined />, label: '页面设计' },
@@ -229,6 +232,8 @@ function App() {
       setCurrentPage('study-club');
     } else if (key === 'learning-analytics') {
       setCurrentPage('learning-analytics');
+    } else if (key === 'agent-quota') {
+      setCurrentPage('agent-quota');
     } else if (key === 'online-dev') {
       setCurrentPage('online-dev');
     } else if (key === 'quick-build') {
@@ -261,6 +266,7 @@ function App() {
       currentPage === 'archive' ||
       currentPage === 'study-club' ||
       currentPage === 'learning-analytics' ||
+      currentPage === 'agent-quota' ||
       currentPage === 'online-dev' ||
       currentPage === 'quick-build' ||
       currentPage === 'page-designer' ||
@@ -338,6 +344,8 @@ function App() {
         <StudyClubModule />
       ) : currentPage === 'learning-analytics' ? (
         <ModelStatisticsModule />
+      ) : currentPage === 'agent-quota' ? (
+        <AgentQuotaModule />
       ) : currentPage === 'online-dev' ? (
         <OnlineDevModule />
       ) : currentPage === 'quick-build' ? (
