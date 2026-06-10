@@ -41,6 +41,7 @@ const RESOURCE_LIB_HELP_TIPS = [
   '支持对文件、文件夹和空白区域使用鼠标右键操作。',
   '悬停行内按钮可快速添加资料或打开更多操作。',
 ];
+const FINDER_LIQUID_MENU_OVERLAY_CLASS = 'finder-liquid-glass-menu';
 
 export default function ResourceLibrary() {
   const [data, setData] = useState(() => loadResourceLib());
@@ -2024,12 +2025,22 @@ export default function ResourceLibrary() {
   const activeSearchDescription = searchMode === 'name'
     ? `名称包含 “${normalizedKeyword}”`
     : `内容包含 “${normalizedKeyword}”`;
+  const buildMenuOverlayClassName = useCallback(
+    (extraClassName = '') => [FINDER_LIQUID_MENU_OVERLAY_CLASS, extraClassName].filter(Boolean).join(' '),
+    [],
+  );
 
   return (
     <>
     {/* 背景右键菜单(脱离布局流) */}
     {bgMenuPos && (
-      <Dropdown menu={bgContextMenu} open onOpenChange={(v) => { if (!v) setBgMenuPos(null); }} trigger={[]}>
+      <Dropdown
+        menu={bgContextMenu}
+        open
+        onOpenChange={(v) => { if (!v) setBgMenuPos(null); }}
+        trigger={[]}
+        overlayClassName={buildMenuOverlayClassName()}
+      >
         <span style={{ position: 'fixed', left: bgMenuPos.x, top: bgMenuPos.y, width: 1, height: 1 }} />
       </Dropdown>
     )}
@@ -2131,7 +2142,11 @@ export default function ResourceLibrary() {
           {favorites.map((fav, idx) => (
             <div key={`fav_${fav.key}`} data-fav-idx={idx}>
               {favDropIdx === idx && <div className="finder-sidebar-fav-drop-indicator" />}
-              <Dropdown menu={getFavoriteMoreMenu(fav)} trigger={['contextMenu']}>
+              <Dropdown
+                menu={getFavoriteMoreMenu(fav)}
+                trigger={['contextMenu']}
+                overlayClassName={buildMenuOverlayClassName()}
+              >
                 <div
                   className={`finder-sidebar-item ${specialView === 'all' && selectedFolderKey === fav.key && !activeTagFilter && !hasActiveSearch ? 'finder-sidebar-item-active' : ''} ${favDragIdx === idx ? 'finder-sidebar-item-dragging' : ''}`}
                   draggable
@@ -2150,6 +2165,7 @@ export default function ResourceLibrary() {
                   <Dropdown
                     trigger={['click']}
                     menu={getFavoriteMoreMenu(fav)}
+                    overlayClassName={buildMenuOverlayClassName()}
                   >
                     <span className="finder-sidebar-fav-more" onClick={(e) => e.stopPropagation()}><MoreOutlined /></span>
                   </Dropdown>
@@ -2253,7 +2269,12 @@ export default function ResourceLibrary() {
               : (currentFolder?.name || (scope === 'personal' ? '全部资料' : '组织资料'))}
           </div>
 
-          <Dropdown menu={toolbarMoreMenu} trigger={['click']} overlayClassName="finder-toolbar-more-dropdown" placement="bottomLeft">
+          <Dropdown
+            menu={toolbarMoreMenu}
+            trigger={['click']}
+            overlayClassName={buildMenuOverlayClassName('finder-toolbar-more-dropdown')}
+            placement="bottomLeft"
+          >
             <button
               type="button"
               className="finder-toolbar-action-btn finder-toolbar-icon-btn"
@@ -2445,6 +2466,7 @@ export default function ResourceLibrary() {
                           menu={getContextMenu(item)}
                           trigger={['contextMenu']}
                           onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
+                          overlayClassName={buildMenuOverlayClassName()}
                         >
                           <div
                             className={`finder-column-item ${isActive ? 'finder-column-item-active' : ''} ${selectedItemKeys.includes(item.key) && !isActive ? 'finder-column-item-selected' : ''} ${isContextMenuTarget ? 'finder-column-item-context-open' : ''} ${item.isFolder && dragOverFolderKey === item.key ? 'finder-column-item-dragover' : ''}`}
@@ -2543,6 +2565,7 @@ export default function ResourceLibrary() {
                                   menu={itemMoreMenu}
                                   trigger={['click']}
                                   onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
+                                  overlayClassName={buildMenuOverlayClassName()}
                                 >
                                   <button
                                     type="button"
@@ -2612,7 +2635,11 @@ export default function ResourceLibrary() {
           >
               {/* 详情模式表头 */}
               {viewMode === 'detail' && currentChildren.length > 0 && (
-                <Dropdown menu={colVisibilityMenu} trigger={['contextMenu']}>
+                <Dropdown
+                  menu={colVisibilityMenu}
+                  trigger={['contextMenu']}
+                  overlayClassName={buildMenuOverlayClassName()}
+                >
                   <div className="finder-detail-header">
                     <span className={`finder-detail-col-name finder-detail-col-sortable ${sortBy === 'name' ? 'finder-detail-col-active' : ''}`} style={nameColResized ? { width: detailColWidths.name, flex: 'none' } : { flex: 1, minWidth: 200 }} onClick={() => handleHeaderSort('name')}>
                       名称{sortBy === 'name' && <span className="finder-detail-col-arrow">{sortOrder === 'asc' ? '▲' : '▼'}</span>}
@@ -2760,6 +2787,7 @@ export default function ResourceLibrary() {
                             menu={rowMoreMenu}
                             trigger={['click']}
                             onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
+                            overlayClassName={buildMenuOverlayClassName()}
                           >
                             <button
                               type="button"
@@ -2791,6 +2819,7 @@ export default function ResourceLibrary() {
                       menu={getContextMenu(item, { includeFavorite: true })}
                       trigger={['contextMenu']}
                       onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
+                      overlayClassName={buildMenuOverlayClassName()}
                     >
                       {rowContent}
                     </Dropdown>

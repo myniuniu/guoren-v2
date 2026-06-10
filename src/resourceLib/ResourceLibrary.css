@@ -685,6 +685,150 @@
   font-size: 13px;
 }
 
+.finder-liquid-glass-menu.ant-dropdown {
+  padding: 10px 0;
+}
+
+.finder-liquid-glass-menu .ant-dropdown-menu,
+.finder-toolbar-more-dropdown .ant-dropdown-menu-submenu-popup .ant-dropdown-menu {
+  position: relative;
+  overflow: hidden;
+  padding: 8px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(255, 255, 255, 0.78) 56%, rgba(248, 248, 249, 0.72) 100%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.56) 0%, rgba(255, 255, 255, 0.24) 44%, rgba(255, 255, 255, 0.14) 100%);
+  box-shadow:
+    0 26px 54px rgba(15, 23, 42, 0.16),
+    0 10px 24px rgba(15, 23, 42, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.24);
+  backdrop-filter: blur(28px) saturate(175%) brightness(1.06);
+  -webkit-backdrop-filter: blur(28px) saturate(175%) brightness(1.06);
+}
+
+.finder-liquid-glass-menu .ant-dropdown-menu::before,
+.finder-toolbar-more-dropdown .ant-dropdown-menu-submenu-popup .ant-dropdown-menu::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0) 42%),
+    radial-gradient(circle at 82% 100%, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0) 34%),
+    linear-gradient(140deg, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0.04) 42%, rgba(255, 255, 255, 0.14) 100%);
+  pointer-events: none;
+}
+
+.finder-liquid-glass-menu .ant-dropdown-menu::after,
+.finder-toolbar-more-dropdown .ant-dropdown-menu-submenu-popup .ant-dropdown-menu::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  pointer-events: none;
+}
+
+.finder-liquid-glass-menu .ant-dropdown-menu > *,
+.finder-toolbar-more-dropdown .ant-dropdown-menu-submenu-popup .ant-dropdown-menu > * {
+  position: relative;
+  z-index: 1;
+}
+
+.finder-liquid-glass-menu .ant-dropdown-menu-item,
+.finder-liquid-glass-menu .ant-dropdown-menu-submenu-title,
+.finder-toolbar-more-dropdown .ant-dropdown-menu-submenu-popup .ant-dropdown-menu-item,
+.finder-toolbar-more-dropdown .ant-dropdown-menu-submenu-popup .ant-dropdown-menu-submenu-title {
+  min-height: 36px;
+  margin: 2px 0;
+  border-radius: 12px;
+  padding: 8px 12px;
+  color: #122033;
+  font-size: 13px;
+  font-weight: 500;
+  transition:
+    background 0.14s ease,
+    box-shadow 0.14s ease,
+    transform 0.14s ease,
+    color 0.14s ease;
+}
+
+.finder-liquid-glass-menu .ant-dropdown-menu-item:hover,
+.finder-liquid-glass-menu .ant-dropdown-menu-submenu-title:hover,
+.finder-toolbar-more-dropdown .ant-dropdown-menu-submenu-popup .ant-dropdown-menu-item:hover,
+.finder-toolbar-more-dropdown .ant-dropdown-menu-submenu-popup .ant-dropdown-menu-submenu-title:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78) 0%, rgba(248, 248, 249, 0.46) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 10px 18px rgba(148, 163, 184, 0.14);
+}
+
+.finder-liquid-glass-menu .ant-dropdown-menu-item:active,
+.finder-liquid-glass-menu .ant-dropdown-menu-submenu-title:active,
+.finder-toolbar-more-dropdown .ant-dropdown-menu-submenu-popup .ant-dropdown-menu-item:active,
+.finder-toolbar-more-dropdown .ant-dropdown-menu-submenu-popup .ant-dropdown-menu-submenu-title:active {
+  transform: translateY(1px);
+}
+
+.finder-liquid-glass-menu .ant-dropdown-menu-item .anticon,
+.finder-liquid-glass-menu .ant-dropdown-menu-submenu-title .anticon,
+.finder-toolbar-more-dropdown .ant-dropdown-menu-submenu-popup .ant-dropdown-menu-item .anticon,
+.finder-toolbar-more-dropdown .ant-dropdown-menu-submenu-popup .ant-dropdown-menu-submenu-title .anticon {
+  color: rgba(31, 41, 55, 0.76);
+  font-size: 14px;
+}
+
+.finder-liquid-glass-menu .ant-dropdown-menu-submenu-arrow,
+.finder-toolbar-more-dropdown .ant-dropdown-menu-submenu-popup .ant-dropdown-menu-submenu-arrow {
+  color: rgba(55, 65, 81, 0.68);
+}
+
+.finder-liquid-glass-menu .ant-dropdown-menu-item-group-title,
+.finder-toolbar-more-dropdown .ant-dropdown-menu-submenu-popup .ant-dropdown-menu-item-group-title {
+  padding: 8px 12px 4px;
+  color: rgba(71, 85, 105, 0.72);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.finder-liquid-glass-menu .ant-dropdown-menu-item-divider,
+.finder-toolbar-more-dropdown .ant-dropdown-menu-submenu-popup .ant-dropdown-menu-item-divider {
+  margin: 6px 10px;
+  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.42), transparent);
+}
+
+.finder-liquid-glass-menu .ant-dropdown-menu-item-danger,
+.finder-liquid-glass-menu .ant-dropdown-menu-item-danger .anticon,
+.finder-liquid-glass-menu .ant-dropdown-menu-item-danger .ant-dropdown-menu-title-content,
+.finder-toolbar-more-dropdown .ant-dropdown-menu-submenu-popup .ant-dropdown-menu-item-danger,
+.finder-toolbar-more-dropdown .ant-dropdown-menu-submenu-popup .ant-dropdown-menu-item-danger .anticon,
+.finder-toolbar-more-dropdown .ant-dropdown-menu-submenu-popup .ant-dropdown-menu-item-danger .ant-dropdown-menu-title-content {
+  color: #b42318 !important;
+}
+
+.finder-liquid-glass-menu .ant-dropdown-menu-item-danger:hover,
+.finder-toolbar-more-dropdown .ant-dropdown-menu-submenu-popup .ant-dropdown-menu-item-danger:hover {
+  background: linear-gradient(180deg, rgba(255, 245, 245, 0.82) 0%, rgba(255, 233, 233, 0.5) 100%);
+}
+
+.finder-liquid-glass-menu .ant-dropdown-menu-item-disabled,
+.finder-liquid-glass-menu .ant-dropdown-menu-submenu-disabled,
+.finder-toolbar-more-dropdown .ant-dropdown-menu-submenu-popup .ant-dropdown-menu-item-disabled,
+.finder-toolbar-more-dropdown .ant-dropdown-menu-submenu-popup .ant-dropdown-menu-submenu-disabled {
+  opacity: 0.46;
+}
+
+.finder-liquid-glass-menu .ant-dropdown-menu-item-disabled:hover,
+.finder-liquid-glass-menu .ant-dropdown-menu-submenu-disabled:hover,
+.finder-toolbar-more-dropdown .ant-dropdown-menu-submenu-popup .ant-dropdown-menu-item-disabled:hover,
+.finder-toolbar-more-dropdown .ant-dropdown-menu-submenu-popup .ant-dropdown-menu-submenu-disabled:hover {
+  background: transparent;
+  box-shadow: none;
+}
+
 .finder-toolbar-search {
   width: 300px;
   position: relative;
@@ -2185,9 +2329,23 @@
   transition: border-color 0.12s ease, background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
 }
 
+.finder-liquid-glass-menu .finder-menu-quick-tag {
+  border-color: rgba(255, 255, 255, 0.44);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.64) 0%, rgba(255, 255, 255, 0.32) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.56);
+  color: #223046;
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+}
+
 .finder-menu-quick-tag:hover {
   border-color: rgba(0, 122, 255, 0.18);
   background: #f8fbff;
+}
+
+.finder-liquid-glass-menu .finder-menu-quick-tag:hover {
+  border-color: rgba(15, 23, 42, 0.12);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78) 0%, rgba(249, 249, 250, 0.42) 100%);
 }
 
 .finder-menu-quick-tag:disabled {
@@ -2199,6 +2357,14 @@
   background: #f0f7ff;
   color: #0f4fbf;
   box-shadow: inset 0 0 0 1px rgba(0, 122, 255, 0.06);
+}
+
+.finder-liquid-glass-menu .finder-menu-quick-tag-active {
+  border-color: rgba(15, 23, 42, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.82) 0%, rgba(245, 247, 250, 0.56) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 0 0 1px rgba(0, 122, 255, 0.06);
 }
 
 .finder-menu-quick-tag-dot {
