@@ -1063,6 +1063,23 @@ export default function ResourceLibrary() {
     });
   };
 
+  const getFavoriteMoreMenu = (fav) => ({
+    items: [
+      { key: 'rename', icon: <EditOutlined />, label: '重命名' },
+      { type: 'divider' },
+      { key: 'remove', icon: <DeleteOutlined />, label: '从边栏移除', danger: true },
+    ],
+    onClick: ({ key, domEvent }) => {
+      domEvent?.stopPropagation();
+      if (key === 'rename') {
+        renameFavorite(fav);
+      }
+      if (key === 'remove') {
+        removeFavorite(fav.key);
+      }
+    },
+  });
+
   const renameSidebarFolder = (folder) => {
     let newName = folder.name;
     Modal.confirm({
@@ -2114,34 +2131,30 @@ export default function ResourceLibrary() {
           {favorites.map((fav, idx) => (
             <div key={`fav_${fav.key}`} data-fav-idx={idx}>
               {favDropIdx === idx && <div className="finder-sidebar-fav-drop-indicator" />}
-              <div
-                className={`finder-sidebar-item ${specialView === 'all' && selectedFolderKey === fav.key && !activeTagFilter && !hasActiveSearch ? 'finder-sidebar-item-active' : ''} ${favDragIdx === idx ? 'finder-sidebar-item-dragging' : ''}`}
-                draggable
-                onDragStart={(e) => {
-                  setFavDragIdx(idx);
-                  e.dataTransfer.setData('application/json', JSON.stringify(fav));
-                  e.dataTransfer.effectAllowed = 'move';
-                }}
-                onDragEnd={() => { setFavDragIdx(null); setFavDropIdx(null); }}
-                onClick={() => { if (fav.isFolder) navigateTo(fav.key); }}
-              >
-                <span className="finder-sidebar-item-icon" style={{ color: fav.isFolder ? '#4facfe' : '#8e8e93' }}>
-                  {fav.isFolder ? <FolderFilled /> : renderFileIcon(fav.fileType, { fontSize: 14 })}
-                </span>
-                <span className="finder-sidebar-item-label">{fav.name}</span>
-                <Dropdown
-                  trigger={['click']}
-                  menu={{
-                    items: [
-                      { key: 'rename', icon: <EditOutlined />, label: '重命名', onClick: ({ domEvent }) => { domEvent.stopPropagation(); renameFavorite(fav); } },
-                      { type: 'divider' },
-                      { key: 'remove', icon: <DeleteOutlined />, label: '从边栏移除', danger: true, onClick: ({ domEvent }) => { domEvent.stopPropagation(); removeFavorite(fav.key); } },
-                    ],
+              <Dropdown menu={getFavoriteMoreMenu(fav)} trigger={['contextMenu']}>
+                <div
+                  className={`finder-sidebar-item ${specialView === 'all' && selectedFolderKey === fav.key && !activeTagFilter && !hasActiveSearch ? 'finder-sidebar-item-active' : ''} ${favDragIdx === idx ? 'finder-sidebar-item-dragging' : ''}`}
+                  draggable
+                  onDragStart={(e) => {
+                    setFavDragIdx(idx);
+                    e.dataTransfer.setData('application/json', JSON.stringify(fav));
+                    e.dataTransfer.effectAllowed = 'move';
                   }}
+                  onDragEnd={() => { setFavDragIdx(null); setFavDropIdx(null); }}
+                  onClick={() => { if (fav.isFolder) navigateTo(fav.key); }}
                 >
-                  <span className="finder-sidebar-fav-more" onClick={(e) => e.stopPropagation()}><MoreOutlined /></span>
-                </Dropdown>
-              </div>
+                  <span className="finder-sidebar-item-icon" style={{ color: fav.isFolder ? '#4facfe' : '#8e8e93' }}>
+                    {fav.isFolder ? <FolderFilled /> : renderFileIcon(fav.fileType, { fontSize: 14 })}
+                  </span>
+                  <span className="finder-sidebar-item-label">{fav.name}</span>
+                  <Dropdown
+                    trigger={['click']}
+                    menu={getFavoriteMoreMenu(fav)}
+                  >
+                    <span className="finder-sidebar-fav-more" onClick={(e) => e.stopPropagation()}><MoreOutlined /></span>
+                  </Dropdown>
+                </div>
+              </Dropdown>
             </div>
           ))}
           {favDropIdx === favorites.length && favorites.length > 0 && <div className="finder-sidebar-fav-drop-indicator" />}
