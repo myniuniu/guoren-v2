@@ -59,6 +59,8 @@ import DevBackendPage from './appCenter/DevBackendPage';
 import DmsModule from './dms/DmsModule';
 import IntegrationModule from './integration/IntegrationModule';
 import MessagesModule from './messages/MessagesModule';
+import ModelStatisticsModule from './modelStatistics/ModelStatisticsModule';
+import SolutionManagementModule from './solution/SolutionManagementModule';
 import { getMappedChannelSummary } from './studyClub/adminTopicMapping';
 import './App.css';
 
@@ -165,12 +167,13 @@ const iconBarItems = [
   { key: 'lab', icon: <ExperimentOutlined />, label: '实验室' },
   { key: 'tasks', icon: <AppstoreOutlined />, label: '任务' },
   { key: 'lucky-backend', icon: <SettingOutlined />, label: 'lucky后台' },
-  { key: 'learning-analytics', icon: <BarChartOutlined />, label: '学情分析' },
+  { key: 'learning-analytics', icon: <BarChartOutlined />, label: '模型统计' },
   { key: 'online-dev', icon: <CodeOutlined />, label: '在线开发' },
   { key: 'quick-build', icon: <ThunderboltOutlined />, label: '智搭' },
   { key: 'page-designer', icon: <LayoutOutlined />, label: '页面设计' },
   { key: 'tag-management', icon: <TagsOutlined />, label: '标签管理' },
   { key: 'app-center', icon: <AppstoreOutlined />, label: '应用中心' },
+  { key: 'solution-management', icon: <AppstoreOutlined />, label: '解决方案' },
   { key: 'dms', icon: <FileTextOutlined />, label: '文档管理' },
   { key: 'integration', icon: <PartitionOutlined />, label: '三方对接' }
 ];
@@ -224,6 +227,8 @@ function App() {
       setCurrentPage('archive');
     } else if (key === 'study-club') {
       setCurrentPage('study-club');
+    } else if (key === 'learning-analytics') {
+      setCurrentPage('learning-analytics');
     } else if (key === 'online-dev') {
       setCurrentPage('online-dev');
     } else if (key === 'quick-build') {
@@ -234,6 +239,8 @@ function App() {
       setCurrentPage('tag-management');
     } else if (key === 'app-center') {
       setCurrentPage('app-center');
+    } else if (key === 'solution-management') {
+      setCurrentPage('solution-management');
     } else if (key === 'dms') {
       setCurrentPage('dms');
     } else if (key === 'integration') {
@@ -253,11 +260,13 @@ function App() {
       currentPage === 'resource-parse' ||
       currentPage === 'archive' ||
       currentPage === 'study-club' ||
+      currentPage === 'learning-analytics' ||
       currentPage === 'online-dev' ||
       currentPage === 'quick-build' ||
       currentPage === 'page-designer' ||
       currentPage === 'tag-management' ||
       currentPage === 'app-center' ||
+      currentPage === 'solution-management' ||
       currentPage === 'dms' ||
       currentPage === 'integration'
     ) {
@@ -327,6 +336,8 @@ function App() {
         <ArchiveModule />
       ) : currentPage === 'study-club' ? (
         <StudyClubModule />
+      ) : currentPage === 'learning-analytics' ? (
+        <ModelStatisticsModule />
       ) : currentPage === 'online-dev' ? (
         <OnlineDevModule />
       ) : currentPage === 'quick-build' ? (
@@ -337,6 +348,8 @@ function App() {
         <TagManagement />
       ) : currentPage === 'app-center' ? (
         <AppCenterModule />
+      ) : currentPage === 'solution-management' ? (
+        <SolutionManagementModule />
       ) : currentPage === 'dms' ? (
         <DmsModule />
       ) : currentPage === 'integration' ? (

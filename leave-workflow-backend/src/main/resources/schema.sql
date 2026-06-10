@@ -252,3 +252,91 @@ CREATE TABLE IF NOT EXISTS dms_doc_tag (
   PRIMARY KEY (document_id, tag_id)
 );
 CREATE INDEX IF NOT EXISTS idx_dms_doc_tag_tag ON dms_doc_tag(tag_id);
+
+-- ============================================================
+-- 租户 + 解决方案 + 应用目录
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS tenant (
+  id            VARCHAR(36) PRIMARY KEY,
+  tenant_code   VARCHAR(64) NOT NULL,
+  name          VARCHAR(128) NOT NULL,
+  contact_name  VARCHAR(64),
+  contact_phone VARCHAR(32),
+  industry      VARCHAR(64),
+  status        VARCHAR(16) DEFAULT 'ACTIVE',
+  remark        VARCHAR(512),
+  create_time   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  update_time   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  deleted       TINYINT DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_tenant_code   ON tenant(tenant_code);
+CREATE INDEX IF NOT EXISTS idx_tenant_name   ON tenant(name);
+CREATE INDEX IF NOT EXISTS idx_tenant_status ON tenant(status);
+
+CREATE TABLE IF NOT EXISTS app_catalog (
+  id           VARCHAR(36) PRIMARY KEY,
+  app_code     VARCHAR(64) NOT NULL,
+  name         VARCHAR(128) NOT NULL,
+  category     VARCHAR(64),
+  description  VARCHAR(1024),
+  icon         VARCHAR(256),
+  status       VARCHAR(16) DEFAULT 'ACTIVE',
+  create_time  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  update_time  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  deleted      TINYINT DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_app_catalog_code   ON app_catalog(app_code);
+CREATE INDEX IF NOT EXISTS idx_app_catalog_name   ON app_catalog(name);
+CREATE INDEX IF NOT EXISTS idx_app_catalog_status ON app_catalog(status);
+
+CREATE TABLE IF NOT EXISTS solution (
+  id            VARCHAR(36) PRIMARY KEY,
+  solution_code VARCHAR(64) NOT NULL,
+  name          VARCHAR(128) NOT NULL,
+  tenant_id     VARCHAR(36) NOT NULL,
+  description   VARCHAR(1024),
+  status        VARCHAR(16) DEFAULT 'DRAFT',
+  owner         VARCHAR(64),
+  go_live_date  DATE,
+  create_time   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  update_time   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  deleted       TINYINT DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_solution_code      ON solution(solution_code);
+CREATE INDEX IF NOT EXISTS idx_solution_tenant_id ON solution(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_solution_status    ON solution(status);
+
+CREATE TABLE IF NOT EXISTS solution_app (
+  id               VARCHAR(36) PRIMARY KEY,
+  solution_id      VARCHAR(36) NOT NULL,
+  app_id           VARCHAR(36) NOT NULL,
+  sort_no          INT DEFAULT 0,
+  deploy_status    VARCHAR(16) DEFAULT 'TODO',
+  install_required TINYINT DEFAULT 1,
+  remark           VARCHAR(512),
+  create_time      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  update_time      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_solution_app_solution_app ON solution_app(solution_id, app_id);
+CREATE INDEX IF NOT EXISTS idx_solution_app_solution_id ON solution_app(solution_id);
+CREATE INDEX IF NOT EXISTS idx_solution_app_app_id      ON solution_app(app_id);
+
+CREATE TABLE IF NOT EXISTS solution_app_config (
+  id             VARCHAR(36) PRIMARY KEY,
+  solution_app_id VARCHAR(36) NOT NULL,
+  config_key     VARCHAR(64) NOT NULL,
+  config_name    VARCHAR(128) NOT NULL,
+  value_type     VARCHAR(32) DEFAULT 'STRING',
+  required       TINYINT DEFAULT 0,
+  default_value  CLOB,
+  current_value  CLOB,
+  options_json   CLOB,
+  placeholder    VARCHAR(256),
+  description    VARCHAR(512),
+  sort_no        INT DEFAULT 0,
+  create_time    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  update_time    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_solution_app_config_key ON solution_app_config(solution_app_id, config_key);
+CREATE INDEX IF NOT EXISTS idx_solution_app_config_app_id ON solution_app_config(solution_app_id);
