@@ -46,10 +46,10 @@ const PLAN_STATUS_OPTIONS = [
 ];
 
 const PLAN_SCOPE_OPTIONS = [
-  { label: '个人试用', value: 'PERSONAL_TRIAL' },
-  { label: '部门标准', value: 'DEPARTMENT' },
-  { label: '当前租户标准', value: 'ENTERPRISE' },
-  { label: '高活跃业务组', value: 'TENANT_PREMIUM' },
+  { label: '个人基础', value: 'PERSONAL_BASE' },
+  { label: '部门标准', value: 'DEPARTMENT_STANDARD' },
+  { label: '当前租户标准', value: 'TENANT_STANDARD' },
+  { label: '重点部门', value: 'KEY_DEPARTMENT' },
 ];
 
 const RESET_CYCLE_OPTIONS = [
@@ -60,8 +60,6 @@ const RESET_CYCLE_OPTIONS = [
 ];
 
 const USER_GROUP_OPTIONS = [
-  { label: '访客', value: 'VISITOR' },
-  { label: '注册用户', value: 'REGISTERED' },
   { label: '租户成员', value: 'MEMBER' },
   { label: '部门管理员', value: 'DEPT_ADMIN' },
   { label: '租户管理员', value: 'TENANT_ADMIN' },
@@ -74,9 +72,9 @@ const USER_GROUP_LABEL_MAP = Object.fromEntries(USER_GROUP_OPTIONS.map((item) =>
 
 const INITIAL_PLAN_TEMPLATES = [
   {
-    id: 'plan-trial',
-    name: '个人试用版',
-    scope: 'PERSONAL_TRIAL',
+    id: 'plan-personal-base',
+    name: '个人基础版',
+    scope: 'PERSONAL_BASE',
     status: 'ACTIVE',
     resetCycle: 'MONTHLY',
     skillUsageLimit: 300,
@@ -89,14 +87,14 @@ const INITIAL_PLAN_TEMPLATES = [
     freeTokenPerUser: 12000,
     freeAgentCreatePerUser: 0,
     freeSkillGeneratePerUser: 1,
-    description: '面向个人体验和试用用户，适合验证技能和智能体基础能力。',
+    description: '适用于当前租户内的新成员和低频使用者，用于控制个人试运行成本。',
     updatedAt: '2026-06-08 11:20',
     updatedBy: '徐佳倩',
   },
   {
-    id: 'plan-dept',
+    id: 'plan-department-standard',
     name: '部门标准版',
-    scope: 'DEPARTMENT',
+    scope: 'DEPARTMENT_STANDARD',
     status: 'ACTIVE',
     resetCycle: 'MONTHLY',
     skillUsageLimit: 5000,
@@ -109,14 +107,14 @@ const INITIAL_PLAN_TEMPLATES = [
     freeTokenPerUser: 28000,
     freeAgentCreatePerUser: 1,
     freeSkillGeneratePerUser: 2,
-    description: '适用于部门协作，开放自定义技能，控制智能体创建节奏。',
+    description: '适用于当前租户内常规业务部门，开放自定义技能，控制智能体创建节奏。',
     updatedAt: '2026-06-09 16:40',
     updatedBy: '赵敏',
   },
   {
-    id: 'plan-enterprise',
+    id: 'plan-tenant-standard',
     name: '当前租户标准版',
-    scope: 'ENTERPRISE',
+    scope: 'TENANT_STANDARD',
     status: 'ACTIVE',
     resetCycle: 'MONTHLY',
     skillUsageLimit: 22000,
@@ -134,9 +132,9 @@ const INITIAL_PLAN_TEMPLATES = [
     updatedBy: '张洪磊',
   },
   {
-    id: 'plan-premium',
-    name: '高活跃业务版',
-    scope: 'TENANT_PREMIUM',
+    id: 'plan-key-department',
+    name: '重点部门增强版',
+    scope: 'KEY_DEPARTMENT',
     status: 'DRAFT',
     resetCycle: 'MONTHLY',
     skillUsageLimit: 60000,
@@ -149,7 +147,7 @@ const INITIAL_PLAN_TEMPLATES = [
     freeTokenPerUser: 150000,
     freeAgentCreatePerUser: 4,
     freeSkillGeneratePerUser: 10,
-    description: '适用于高并发、高复用业务组，适合后续扩容和重点运营。',
+    description: '适用于当前租户内高并发、高复用的重点部门，便于集中扩容和重点运营。',
     updatedAt: '2026-06-07 19:10',
     updatedBy: '王子瑜',
   },
@@ -161,7 +159,7 @@ const INITIAL_CURRENT_TENANT_QUOTA = {
   targetName: '华东教育集团',
   owner: '张洪磊',
   seatCount: 386,
-  planId: 'plan-enterprise',
+  planId: 'plan-tenant-standard',
   skillUsageLimit: 22000,
   tokenLimit: 12000000,
   agentCreateLimit: 80,
@@ -187,7 +185,7 @@ const INITIAL_DEPARTMENT_BINDINGS = [
     targetName: '客户成功部',
     owner: '王子瑜',
     seatCount: 38,
-    planId: 'plan-dept',
+    planId: 'plan-department-standard',
     skillUsageLimit: 5200,
     tokenLimit: 3100000,
     agentCreateLimit: 16,
@@ -211,7 +209,7 @@ const INITIAL_DEPARTMENT_BINDINGS = [
     targetName: '智能应用组',
     owner: '张洪磊',
     seatCount: 26,
-    planId: 'plan-enterprise',
+    planId: 'plan-key-department',
     skillUsageLimit: 7600,
     tokenLimit: 4200000,
     agentCreateLimit: 24,
@@ -235,7 +233,7 @@ const INITIAL_DEPARTMENT_BINDINGS = [
     targetName: '交付运营部',
     owner: '赵敏',
     seatCount: 29,
-    planId: 'plan-dept',
+    planId: 'plan-department-standard',
     skillUsageLimit: 4600,
     tokenLimit: 2700000,
     agentCreateLimit: 12,
@@ -259,7 +257,7 @@ const INITIAL_DEPARTMENT_BINDINGS = [
     targetName: '品牌市场部',
     owner: '徐佳倩',
     seatCount: 21,
-    planId: 'plan-trial',
+    planId: 'plan-department-standard',
     skillUsageLimit: 1200,
     tokenLimit: 820000,
     agentCreateLimit: 5,
@@ -286,7 +284,7 @@ const INITIAL_PERSONAL_BINDINGS = [
     targetName: '赵敏',
     deptName: '交付运营部',
     roleLabel: '部门管理员',
-    planId: 'plan-dept',
+    planId: 'plan-department-standard',
     skillUsageLimit: 280,
     tokenLimit: 180000,
     agentCreateLimit: 3,
@@ -310,7 +308,7 @@ const INITIAL_PERSONAL_BINDINGS = [
     targetName: '李昕',
     deptName: '产品研发中心',
     roleLabel: '研发负责人',
-    planId: 'plan-enterprise',
+    planId: 'plan-tenant-standard',
     skillUsageLimit: 420,
     tokenLimit: 260000,
     agentCreateLimit: 5,
@@ -334,7 +332,7 @@ const INITIAL_PERSONAL_BINDINGS = [
     targetName: '王子瑜',
     deptName: '客户成功部',
     roleLabel: '一线运营',
-    planId: 'plan-trial',
+    planId: 'plan-personal-base',
     skillUsageLimit: 180,
     tokenLimit: 120000,
     agentCreateLimit: 1,
@@ -358,7 +356,7 @@ const INITIAL_PERSONAL_BINDINGS = [
     targetName: '徐佳倩',
     deptName: '品牌市场部',
     roleLabel: '运营专员',
-    planId: 'plan-trial',
+    planId: 'plan-personal-base',
     skillUsageLimit: 150,
     tokenLimit: 96000,
     agentCreateLimit: 1,
@@ -380,40 +378,8 @@ const INITIAL_PERSONAL_BINDINGS = [
 
 const INITIAL_FREE_POLICIES = [
   {
-    id: 'policy-visitor',
-    name: '访客体验策略',
-    userGroup: 'VISITOR',
-    resetCycle: 'DAILY',
-    freeSkillUsagePerUser: 5,
-    freeTokenPerUser: 3000,
-    freeAgentCreatePerUser: 0,
-    freeSkillGeneratePerUser: 0,
-    allowCustomSkill: false,
-    allowCustomAgent: false,
-    isDefault: true,
-    description: '仅提供轻量体验，不支持创建和生成型能力。',
-    updatedAt: '2026-06-07 10:15',
-    updatedBy: '王子瑜',
-  },
-  {
-    id: 'policy-registered',
-    name: '注册用户基础策略',
-    userGroup: 'REGISTERED',
-    resetCycle: 'MONTHLY',
-    freeSkillUsagePerUser: 20,
-    freeTokenPerUser: 12000,
-    freeAgentCreatePerUser: 0,
-    freeSkillGeneratePerUser: 1,
-    allowCustomSkill: false,
-    allowCustomAgent: false,
-    isDefault: true,
-    description: '适用于未签约用户的基础试用配额。',
-    updatedAt: '2026-06-09 09:10',
-    updatedBy: '徐佳倩',
-  },
-  {
     id: 'policy-member',
-    name: '当前租户成员赠送策略',
+    name: '租户成员默认策略',
     userGroup: 'MEMBER',
     resetCycle: 'MONTHLY',
     freeSkillUsagePerUser: 60,
@@ -423,8 +389,40 @@ const INITIAL_FREE_POLICIES = [
     allowCustomSkill: true,
     allowCustomAgent: false,
     isDefault: true,
-    description: '适用于当前租户成员默认免费额度，结合套餐模板生效。',
+    description: '适用于当前租户成员的默认免费额度，结合配额方案生效。',
     updatedAt: '2026-06-10 08:30',
+    updatedBy: '张洪磊',
+  },
+  {
+    id: 'policy-dept-admin',
+    name: '部门管理员增强策略',
+    userGroup: 'DEPT_ADMIN',
+    resetCycle: 'MONTHLY',
+    freeSkillUsagePerUser: 90,
+    freeTokenPerUser: 60000,
+    freeAgentCreatePerUser: 2,
+    freeSkillGeneratePerUser: 3,
+    allowCustomSkill: true,
+    allowCustomAgent: false,
+    isDefault: true,
+    description: '适用于租内部门管理员，便于承担推广、培训和治理动作。',
+    updatedAt: '2026-06-10 09:10',
+    updatedBy: '张洪磊',
+  },
+  {
+    id: 'policy-tenant-admin',
+    name: '租户管理员策略',
+    userGroup: 'TENANT_ADMIN',
+    resetCycle: 'MONTHLY',
+    freeSkillUsagePerUser: 180,
+    freeTokenPerUser: 120000,
+    freeAgentCreatePerUser: 3,
+    freeSkillGeneratePerUser: 5,
+    allowCustomSkill: true,
+    allowCustomAgent: true,
+    isDefault: true,
+    description: '适用于当前租户管理员，用于配置、巡检和治理场景的额外额度保障。',
+    updatedAt: '2026-06-10 09:25',
     updatedBy: '张洪磊',
   },
 ];
@@ -538,7 +536,7 @@ function buildPlanDefaults(plan) {
 function defaultPlanFormValues() {
   return {
     name: '',
-    scope: 'ENTERPRISE',
+    scope: 'TENANT_STANDARD',
     status: 'ACTIVE',
     resetCycle: 'MONTHLY',
     skillUsageLimit: 10000,
@@ -558,13 +556,13 @@ function defaultPlanFormValues() {
 function defaultPolicyFormValues() {
   return {
     name: '',
-    userGroup: 'REGISTERED',
+    userGroup: 'MEMBER',
     resetCycle: 'MONTHLY',
-    freeSkillUsagePerUser: 20,
-    freeTokenPerUser: 12000,
-    freeAgentCreatePerUser: 0,
-    freeSkillGeneratePerUser: 1,
-    allowCustomSkill: false,
+    freeSkillUsagePerUser: 60,
+    freeTokenPerUser: 36000,
+    freeAgentCreatePerUser: 1,
+    freeSkillGeneratePerUser: 2,
+    allowCustomSkill: true,
     allowCustomAgent: false,
     isDefault: false,
     description: '',
@@ -786,7 +784,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
 
       if (planModalMode === 'edit' && editingPlan) {
         setPlans((prev) => prev.map((item) => (item.id === editingPlan.id ? { ...item, ...payload } : item)));
-        message.success('套餐模板已更新');
+        message.success('配额方案已更新');
       } else {
         setPlans((prev) => [
           {
@@ -795,7 +793,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
           },
           ...prev,
         ]);
-        message.success(planModalMode === 'copy' ? '套餐模板副本已创建' : '套餐模板已创建');
+        message.success(planModalMode === 'copy' ? '配额方案副本已创建' : '配额方案已创建');
       }
       setPlanModalOpen(false);
     } catch (error) {
@@ -805,7 +803,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
 
   function handlePlanStatusChange(record, nextStatus) {
     setPlans((prev) => prev.map((item) => (item.id === record.id ? { ...item, status: nextStatus, updatedAt: NOW_TEXT, updatedBy: CURRENT_OPERATOR } : item)));
-    message.success(nextStatus === 'ACTIVE' ? '套餐模板已启用' : '套餐模板已停用');
+    message.success(nextStatus === 'ACTIVE' ? '配额方案已启用' : '配额方案已停用');
   }
 
   function openCreateBinding(scopeType = 'DEPARTMENT') {
@@ -881,7 +879,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
     bindingForm.setFieldsValue({
       ...buildPlanDefaults(nextPlan),
     });
-    message.info('已按套餐模板带入默认额度，可继续单独调整。');
+    message.info('已按配额方案带入默认额度，可继续单独调整。');
   }
 
   async function handleBindingSubmit() {
@@ -1023,7 +1021,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
   const summaryCards = [
     {
       key: 'plans',
-      title: '启用套餐模板',
+      title: '启用配额方案',
       value: summary.enabledPlans,
       suffix: `/ ${summary.totalPlans}`,
       icon: <SettingOutlined style={{ color: '#1677ff' }} />,
@@ -1060,14 +1058,14 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
       key: 'custom-skill',
       title: '支持自定义技能',
       value: summary.customSkillPlans,
-      suffix: '个套餐',
+      suffix: '个方案',
       icon: <RobotOutlined style={{ color: '#722ed1' }} />,
     },
     {
       key: 'custom-agent',
       title: '支持自定义智能体',
       value: summary.customAgentPlans,
-      suffix: '个套餐',
+      suffix: '个方案',
       icon: <RobotOutlined style={{ color: '#13c2c2' }} />,
     },
     {
@@ -1081,7 +1079,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
 
   const planColumns = [
     {
-      title: '套餐模板',
+      title: '配额方案',
       dataIndex: 'name',
       key: 'name',
       width: 220,
@@ -1094,7 +1092,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
       ),
     },
     {
-      title: '适用范围',
+      title: '适用层级',
       dataIndex: 'scope',
       key: 'scope',
       width: 120,
@@ -1163,7 +1161,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
           </Button>
           {record.status === 'ACTIVE' ? (
             <Popconfirm
-              title="确认停用该套餐模板？"
+              title="确认停用该配额方案？"
               onConfirm={() => handlePlanStatusChange(record, 'DISABLED')}
             >
               <Button type="link" size="small" danger>
@@ -1172,7 +1170,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
             </Popconfirm>
           ) : (
             <Popconfirm
-              title="确认启用该套餐模板？"
+              title="确认启用该配额方案？"
               onConfirm={() => handlePlanStatusChange(record, 'ACTIVE')}
             >
               <Button type="link" size="small">
@@ -1200,7 +1198,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
       ),
     },
     {
-      title: '绑定套餐',
+      title: '绑定方案',
       key: 'plan',
       width: 160,
       render: (_, record) => (
@@ -1290,7 +1288,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
       ),
     },
     {
-      title: '绑定套餐',
+      title: '绑定方案',
       key: 'plan',
       width: 160,
       render: (_, record) => (
@@ -1380,7 +1378,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
       ),
     },
     {
-      title: '绑定套餐',
+      title: '绑定方案',
       key: 'plan',
       width: 160,
       render: (_, record) => (
@@ -1470,7 +1468,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
       ),
     },
     {
-      title: '用户群体',
+      title: '租内身份',
       dataIndex: 'userGroup',
       key: 'userGroup',
       width: 130,
@@ -1561,7 +1559,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
       key: 'plans',
       label: (
         <span>
-          套餐模板
+          配额方案
           <Badge count={filteredPlans.length} size="small" style={{ marginInlineStart: 8 }} />
         </span>
       ),
@@ -1572,7 +1570,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
               <Input
                 allowClear
                 prefix={<SearchOutlined style={{ color: '#98a2b3' }} />}
-                placeholder="搜索套餐名称或说明"
+                placeholder="搜索方案名称或说明"
                 value={planKeyword}
                 onChange={(e) => setPlanKeyword(e.target.value)}
                 style={{ width: 260 }}
@@ -1587,7 +1585,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
               />
               <div className="aq-toolbar-right">
                 <Button icon={<ReloadOutlined />} onClick={resetPlanFilters}>重置筛选</Button>
-                <Button type="primary" icon={<PlusOutlined />} onClick={openCreatePlan}>新建套餐模板</Button>
+                <Button type="primary" icon={<PlusOutlined />} onClick={openCreatePlan}>新建配额方案</Button>
               </div>
             </div>
           </Card>
@@ -1680,14 +1678,14 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
                         <Input
                           allowClear
                           prefix={<SearchOutlined style={{ color: '#98a2b3' }} />}
-                          placeholder="搜索部门名称、负责人或套餐"
+                          placeholder="搜索部门名称、负责人或方案"
                           value={bindingKeyword}
                           onChange={(e) => setBindingKeyword(e.target.value)}
                           style={{ width: 280 }}
                         />
                         <Select
                           allowClear
-                          placeholder="套餐模板"
+                          placeholder="配额方案"
                           value={bindingPlanFilter}
                           onChange={setBindingPlanFilter}
                           options={planOptionList}
@@ -1728,14 +1726,14 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
                         <Input
                           allowClear
                           prefix={<SearchOutlined style={{ color: '#98a2b3' }} />}
-                          placeholder="搜索用户姓名、部门或套餐"
+                          placeholder="搜索用户姓名、部门或方案"
                           value={bindingKeyword}
                           onChange={(e) => setBindingKeyword(e.target.value)}
                           style={{ width: 280 }}
                         />
                         <Select
                           allowClear
-                          placeholder="套餐模板"
+                          placeholder="配额方案"
                           value={bindingPlanFilter}
                           onChange={setBindingPlanFilter}
                           options={planOptionList}
@@ -1776,12 +1774,20 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
       ),
       children: (
         <div className="aq-tab-panel">
+          <Alert
+            className="aq-inline-alert"
+            type="info"
+            showIcon
+            message="免费配额策略只作用于当前租户内部身份"
+            description="当前页只配置租户成员、部门管理员、租户管理员的人均赠送额度，不处理租外试用对象。"
+          />
+
           <Card className="aq-toolbar-card" bordered={false}>
             <div className="aq-toolbar">
               <Input
                 allowClear
                 prefix={<SearchOutlined style={{ color: '#98a2b3' }} />}
-                placeholder="搜索策略名称或用户群体"
+                placeholder="搜索策略名称或租内身份"
                 value={policyKeyword}
                 onChange={(e) => setPolicyKeyword(e.target.value)}
                 style={{ width: 280 }}
@@ -1830,7 +1836,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
             <Tag color="gold">Mock 配置</Tag>
           </div>
           <div className="aq-subtitle">
-            面向当前租户管理员，配置当前租户总配额、部门配额、个人配额，以及自定义技能 / 自定义智能体开关和每用户免费额度。
+            面向当前租户管理员，配置租内配额方案、当前租户总配额、部门配额、个人配额，以及自定义技能 / 自定义智能体开关和每用户免费额度。
           </div>
         </div>
         <Space>
@@ -1838,7 +1844,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
             刷新
           </Button>
           <Button type="primary" icon={<PlusOutlined />} onClick={openCreatePlan}>
-            新建套餐模板
+            新建配额方案
           </Button>
         </Space>
       </div>
@@ -1862,7 +1868,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
           type="info"
           showIcon
           message="配额生效顺序"
-          description="当前租户总配额优先于部门配额，部门配额优先于个人配额；套餐模板用于快速带入默认额度，免费配额策略用于控制每个用户的赠送额度。"
+          description="当前租户总配额优先于部门配额，部门配额优先于个人配额；配额方案用于快速带入默认额度，免费配额策略用于控制租内不同身份的人均赠送额度。"
         />
 
         <Tabs
@@ -1875,7 +1881,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
 
       <Modal
         open={planModalOpen}
-        title={planModalMode === 'edit' ? '编辑套餐模板' : planModalMode === 'copy' ? '复制套餐模板' : '新建套餐模板'}
+        title={planModalMode === 'edit' ? '编辑配额方案' : planModalMode === 'copy' ? '复制配额方案' : '新建配额方案'}
         onCancel={() => setPlanModalOpen(false)}
         onOk={handlePlanSubmit}
         width={900}
@@ -1884,16 +1890,16 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
         <Form form={planForm} layout="vertical">
           <div className="aq-form-grid aq-form-grid-3">
             <Form.Item
-              label="套餐名称"
+              label="方案名称"
               name="name"
-              rules={[{ required: true, message: '请输入套餐名称' }]}
+              rules={[{ required: true, message: '请输入方案名称' }]}
             >
               <Input placeholder="例如：当前租户标准版" />
             </Form.Item>
             <Form.Item
-              label="适用范围"
+              label="适用层级"
               name="scope"
-              rules={[{ required: true, message: '请选择适用范围' }]}
+              rules={[{ required: true, message: '请选择适用层级' }]}
             >
               <Select options={PLAN_SCOPE_OPTIONS} />
             </Form.Item>
@@ -1948,7 +1954,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
             </Form.Item>
           </div>
 
-          <Form.Item label="套餐说明" name="description">
+          <Form.Item label="方案说明" name="description">
             <TextArea rows={3} placeholder="可填写适用场景、限制说明和运营备注" />
           </Form.Item>
         </Form>
@@ -1974,7 +1980,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
               <Form.Item label="岗位 / 身份" name="roleLabel" rules={[{ required: true, message: '请输入岗位或身份' }]}>
                 <Input placeholder="例如：部门管理员" />
               </Form.Item>
-              <Form.Item label="套餐模板" name="planId" rules={[{ required: true, message: '请选择套餐模板' }]}>
+              <Form.Item label="配额方案" name="planId" rules={[{ required: true, message: '请选择配额方案' }]}>
                 <Select options={planOptionList} onChange={handleBindingPlanChange} />
               </Form.Item>
             </div>
@@ -2001,7 +2007,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
               >
                 <InputNumber min={0} style={{ width: '100%' }} />
               </Form.Item>
-              <Form.Item label="套餐模板" name="planId" rules={[{ required: true, message: '请选择套餐模板' }]}>
+              <Form.Item label="配额方案" name="planId" rules={[{ required: true, message: '请选择配额方案' }]}>
                 <Select options={planOptionList} onChange={handleBindingPlanChange} />
               </Form.Item>
             </div>
@@ -2013,7 +2019,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
               type="success"
               showIcon
               message={`已选择：${selectedBindingPlan.name}`}
-              description={`模板默认值：技能 ${formatNumber(selectedBindingPlan.skillUsageLimit)} 次，Token ${formatCompact(selectedBindingPlan.tokenLimit)}，智能体 ${formatNumber(selectedBindingPlan.agentCreateLimit)} 个，技能生成 ${formatNumber(selectedBindingPlan.skillGenerateLimit)} 次。`}
+              description={`方案默认值：技能 ${formatNumber(selectedBindingPlan.skillUsageLimit)} 次，Token ${formatCompact(selectedBindingPlan.tokenLimit)}，智能体 ${formatNumber(selectedBindingPlan.agentCreateLimit)} 个，技能生成 ${formatNumber(selectedBindingPlan.skillGenerateLimit)} 次。`}
             />
           ) : null}
 
@@ -2084,9 +2090,9 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
         <Form form={policyForm} layout="vertical">
           <div className="aq-form-grid aq-form-grid-3">
             <Form.Item label="策略名称" name="name" rules={[{ required: true, message: '请输入策略名称' }]}>
-              <Input placeholder="例如：注册用户基础策略" />
+              <Input placeholder="例如：租户成员默认策略" />
             </Form.Item>
-            <Form.Item label="用户群体" name="userGroup" rules={[{ required: true, message: '请选择用户群体' }]}>
+            <Form.Item label="租内身份" name="userGroup" rules={[{ required: true, message: '请选择租内身份' }]}>
               <Select options={USER_GROUP_OPTIONS} />
             </Form.Item>
             <Form.Item label="重置周期" name="resetCycle" rules={[{ required: true, message: '请选择重置周期' }]}>
@@ -2122,7 +2128,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
           </div>
 
           <Form.Item label="策略说明" name="description">
-            <TextArea rows={3} placeholder="填写适用范围、限制条件或领取说明" />
+            <TextArea rows={3} placeholder="填写适用身份、限制条件或发放说明" />
           </Form.Item>
         </Form>
       </Modal>
