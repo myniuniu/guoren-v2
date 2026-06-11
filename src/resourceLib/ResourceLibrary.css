@@ -435,7 +435,7 @@
   align-items: center;
   height: 52px;
   padding: 0 16px;
-  background: rgba(246, 246, 246, 0.95);
+  background: #ffffff;
   border-bottom: 1px solid #d4d4d4;
   gap: 12px;
   flex-shrink: 0;
