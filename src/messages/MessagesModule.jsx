@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Avatar, Badge, Button, Dropdown, Empty, Input, Popover, Tooltip } from 'antd';
 import {
   CloseOutlined,
@@ -57,6 +57,7 @@ const MIN_SIDEBAR_WIDTH = 248;
 const MAX_SIDEBAR_WIDTH = 520;
 const MIN_THREAD_WIDTH = 420;
 const SIDEBAR_KEYBOARD_STEP = 16;
+const EMPTY_CONVERSATION_INDICATOR = { x: 0, y: 0, width: 0, height: 0, opacity: 0 };
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
@@ -358,7 +359,10 @@ function MessagesModule() {
   const [sendMode, setSendMode] = useState('normal');
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
   const [isResizingSidebar, setIsResizingSidebar] = useState(false);
+  const [conversationIndicatorStyle, setConversationIndicatorStyle] = useState(EMPTY_CONVERSATION_INDICATOR);
   const moduleRef = useRef(null);
+  const conversationListRef = useRef(null);
+  const conversationItemRefs = useRef(new Map());
   const composerInputRef = useRef(null);
   const resizeStateRef = useRef({
     startX: 0,
@@ -381,6 +385,42 @@ function MessagesModule() {
   const adjustSidebarWidth = (delta) => {
     setSidebarWidth((prev) => getClampedSidebarWidth(prev + delta));
   };
+
+  const setConversationItemRef = useCallback((conversationId, node) => {
+    if (node) {
+      conversationItemRefs.current.set(conversationId, node);
+      return;
+    }
+    conversationItemRefs.current.delete(conversationId);
+  }, []);
+
+  const updateConversationIndicator = useCallback(() => {
+    const container = conversationListRef.current;
+    const target = conversationItemRefs.current.get(activeConversationId) || null;
+
+    if (!container || !target) {
+      setConversationIndicatorStyle((prev) => (
+        prev.opacity === 0 ? prev : { ...prev, opacity: 0 }
+      ));
+      return;
+    }
+
+    const containerRect = container.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const nextStyle = {
+      x: targetRect.left - containerRect.left + container.scrollLeft,
+      y: targetRect.top - containerRect.top + container.scrollTop,
+      width: targetRect.width,
+      height: targetRect.height,
+      opacity: 1,
+    };
+
+    setConversationIndicatorStyle((prev) => {
+      const unchanged = ['x', 'y', 'width', 'height', 'opacity']
+        .every((key) => Math.abs((prev[key] || 0) - (nextStyle[key] || 0)) < 0.5);
+      return unchanged ? prev : nextStyle;
+    });
+  }, [activeConversationId]);
 
   useEffect(() => {
     const handleWindowResize = () => {
@@ -423,6 +463,39 @@ function MessagesModule() {
       window.removeEventListener('pointercancel', stopResizing);
     };
   }, [isResizingSidebar]);
+
+  useLayoutEffect(() => {
+    const frameId = window.requestAnimationFrame(() => {
+      updateConversationIndicator();
+    });
+    return () => window.cancelAnimationFrame(frameId);
+  }, [activeConversationId, conversations, sidebarWidth, updateConversationIndicator]);
+
+  useEffect(() => {
+    const handleConversationListViewportChange = () => {
+      updateConversationIndicator();
+    };
+
+    const list = conversationListRef.current;
+    window.addEventListener('resize', handleConversationListViewportChange);
+    list?.addEventListener('scroll', handleConversationListViewportChange, { passive: true });
+
+    const observer = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(handleConversationListViewportChange)
+      : null;
+
+    if (observer) {
+      if (list) observer.observe(list);
+      const activeItem = conversationItemRefs.current.get(activeConversationId);
+      if (activeItem) observer.observe(activeItem);
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleConversationListViewportChange);
+      list?.removeEventListener('scroll', handleConversationListViewportChange);
+      observer?.disconnect();
+    };
+  }, [activeConversationId, updateConversationIndicator]);
 
   const handleDraftChange = (value) => {
     setDrafts((prev) => ({
@@ -776,6 +849,7 @@ function MessagesModule() {
     return (
       <button
         key={item.id}
+        ref={(node) => setConversationItemRef(item.id, node)}
         type="button"
         className={`messages-conversation-item ${activeConversationId === item.id ? 'is-active' : ''}`}
         onClick={() => handleConversationSelect(item.id)}
@@ -1085,7 +1159,16 @@ function MessagesModule() {
             <Button type="primary" shape="circle" icon={<PlusOutlined />} className="messages-sidebar-plus-btn" />
           </div>
         </div>
-        <div className="messages-conversation-list">
+        <div className="messages-conversation-list" ref={conversationListRef}>
+          <div
+            className={`messages-conversation-liquid-indicator ${conversationIndicatorStyle.opacity ? 'is-visible' : ''}`}
+            style={{
+              width: `${conversationIndicatorStyle.width}px`,
+              height: `${conversationIndicatorStyle.height}px`,
+              transform: `translate3d(${conversationIndicatorStyle.x}px, ${conversationIndicatorStyle.y}px, 0)`,
+              opacity: conversationIndicatorStyle.opacity,
+            }}
+          />
           {conversations.length ? (
             conversations.map(renderSidebarItem)
           ) : (
@@ -1196,7 +1279,7 @@ function MessagesModule() {
                       <span className="messages-toolbar-aa">Aa</span>
                     </button>
                   </Tooltip>
-                  <Popover content={emojiPopoverContent} trigger="click" placement="topRight">
+                  <Popover content={emojiPopoverContent} trigger="click" placement="topRight" overlayClassName="messages-liquid-popover">
                     <button
                       type="button"
                       className="messages-toolbar-btn"
@@ -1225,7 +1308,7 @@ function MessagesModule() {
                       <ScissorOutlined />
                     </button>
                   </Tooltip>
-                  <Dropdown menu={{ items: quickInsertItems }} trigger={['click']} placement="topRight">
+                  <Dropdown menu={{ items: quickInsertItems }} trigger={['click']} placement="topRight" overlayClassName="messages-liquid-dropdown">
                     <button
                       type="button"
                       className="messages-toolbar-btn"
@@ -1256,7 +1339,7 @@ function MessagesModule() {
                         <SendOutlined />
                       </button>
                     </Tooltip>
-                    <Dropdown menu={{ items: sendModeItems }} trigger={['click']} placement="topRight">
+                    <Dropdown menu={{ items: sendModeItems }} trigger={['click']} placement="topRight" overlayClassName="messages-liquid-dropdown">
                       <button
                         type="button"
                         className="messages-toolbar-btn messages-toolbar-caret"

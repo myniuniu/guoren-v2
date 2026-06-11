@@ -1127,6 +1127,14 @@
 .finder-file-row-selected:focus-within .finder-file-row-actions {
   padding: 0;
 }
+.finder-file-row-context-open .finder-file-row-actions,
+.finder-file-row-context-open:hover .finder-file-row-actions,
+.finder-file-row-context-open:focus-within .finder-file-row-actions {
+  visibility: hidden;
+  opacity: 0;
+  transform: translate3d(6px, -50%, 0);
+  pointer-events: none;
+}
 .finder-file-row-selected .finder-file-row-actions .finder-column-action-btn {
   background: rgba(255, 255, 255, 0.18);
   border-color: rgba(255, 255, 255, 0.24);
@@ -1717,6 +1725,14 @@
 .finder-column-item-active:hover .finder-column-item-actions,
 .finder-column-item-active:focus-within .finder-column-item-actions {
   padding: 0;
+}
+.finder-column-item-context-open .finder-column-item-actions,
+.finder-column-item-context-open:hover .finder-column-item-actions,
+.finder-column-item-context-open:focus-within .finder-column-item-actions {
+  visibility: hidden;
+  opacity: 0;
+  transform: translateX(4px);
+  pointer-events: none;
 }
 
 .finder-column-action-btn {
