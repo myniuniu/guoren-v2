@@ -27,6 +27,8 @@ import {
 import './AssessmentConfig.css';
 import AssessmentFlowView from './AssessmentFlowView';
 
+const ASSESSMENT_DROPDOWN_OVERLAY_CLASS = 'finder-liquid-glass-menu';
+
 // 根据类型获取图标
 function getResourceIcon(type) {
   switch (type) {
@@ -567,7 +569,7 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
           <div className="project-section">
             <div className="project-header">
               <span className="project-title">项目</span>
-              <Dropdown menu={{ items: [
+              <Dropdown overlayClassName={ASSESSMENT_DROPDOWN_OVERLAY_CLASS} menu={{ items: [
                 { key: 'new-folder', icon: <FolderOutlined />, label: '新建文件夹', onClick: handleCreateFolder, disabled: !isDraft },
               ] }} trigger={['click']}>
                 <MoreOutlined className="project-more-icon" />

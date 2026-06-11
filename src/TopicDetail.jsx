@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   Button,
   ColorPicker,
@@ -60,6 +60,9 @@ import {
 } from './versionStore';
 import { getTopicAdminConfig } from './studyClub/adminTopicMapping';
 import './TopicDetail.css';
+
+const EMPTY_TAB_INDICATOR = { x: 0, y: 0, width: 0, height: 0, opacity: 0 };
+const TOPIC_DROPDOWN_OVERLAY_CLASS = 'finder-liquid-glass-menu';
 
 function getResourceIcon(type) {
   switch (type) {
@@ -184,7 +187,10 @@ function TopicDetail({ topicTitle, onBack }) {
   const [addTagOpen, setAddTagOpen] = useState(false);
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#1677ff');
+  const [tabIndicatorStyle, setTabIndicatorStyle] = useState(EMPTY_TAB_INDICATOR);
   const detailBodyRef = useRef(null);
+  const detailTabsRef = useRef(null);
+  const detailTabRefs = useRef(new Map());
   const inlineRenameInputRef = useRef(null);
   const pendingRenameTimerRef = useRef(null);
   const tagPickerScrollTimerRef = useRef(null);
@@ -218,6 +224,7 @@ function TopicDetail({ topicTitle, onBack }) {
     setAddTagOpen(false);
     setNewTagName('');
     setNewTagColor('#1677ff');
+    setTabIndicatorStyle(EMPTY_TAB_INDICATOR);
   }, [topicTitle, topicStorageScopeKey]);
 
   const currentVersion = getCurrentVersion(versionData);
@@ -784,6 +791,70 @@ function TopicDetail({ topicTitle, onBack }) {
     { key: 'practice', label: '实训模式' },
     { key: 'assessment', label: '考核配置模式' },
   ];
+
+  const setDetailTabRef = useCallback((key, node) => {
+    if (node) {
+      detailTabRefs.current.set(key, node);
+      return;
+    }
+    detailTabRefs.current.delete(key);
+  }, []);
+
+  const updateTabIndicator = useCallback(() => {
+    const container = detailTabsRef.current;
+    const target = detailTabRefs.current.get(activeTab) || null;
+
+    if (!container || !target) {
+      setTabIndicatorStyle((prev) => (prev.opacity === 0 ? prev : { ...prev, opacity: 0 }));
+      return;
+    }
+
+    const containerRect = container.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const nextStyle = {
+      x: targetRect.left - containerRect.left,
+      y: targetRect.top - containerRect.top,
+      width: targetRect.width,
+      height: targetRect.height,
+      opacity: 1,
+    };
+
+    setTabIndicatorStyle((prev) => {
+      const unchanged = ['x', 'y', 'width', 'height', 'opacity']
+        .every((key) => Math.abs((prev[key] || 0) - (nextStyle[key] || 0)) < 0.5);
+      return unchanged ? prev : nextStyle;
+    });
+  }, [activeTab]);
+
+  useLayoutEffect(() => {
+    const frameId = window.requestAnimationFrame(() => {
+      updateTabIndicator();
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [activeTab, updateTabIndicator]);
+
+  useEffect(() => {
+    const handleViewportChange = () => {
+      updateTabIndicator();
+    };
+
+    window.addEventListener('resize', handleViewportChange);
+
+    const observer = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(handleViewportChange)
+      : null;
+
+    if (observer) {
+      if (detailTabsRef.current) observer.observe(detailTabsRef.current);
+      detailTabRefs.current.forEach((node) => observer.observe(node));
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleViewportChange);
+      observer?.disconnect();
+    };
+  }, [activeTab, updateTabIndicator]);
 
   const handleUpdateAssessment = (assessment) => {
     const newData = updateAssessment(versionData, currentVersion.id, assessment);
@@ -1414,6 +1485,7 @@ function TopicDetail({ topicTitle, onBack }) {
       return (
         <div key={item.key} className="tree-folder-group">
           <Dropdown
+            overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
             menu={rowMenu}
             trigger={['contextMenu']}
             onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
@@ -1478,6 +1550,7 @@ function TopicDetail({ topicTitle, onBack }) {
                     </button>
                   ) : null}
                   <Dropdown
+                    overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
                     menu={rowMenu}
                     trigger={['click']}
                     onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
@@ -1507,6 +1580,7 @@ function TopicDetail({ topicTitle, onBack }) {
     return (
       <Dropdown
         key={item.key}
+        overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
         menu={rowMenu}
         trigger={['contextMenu']}
         onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
@@ -1547,6 +1621,7 @@ function TopicDetail({ topicTitle, onBack }) {
           {!isInlineRenaming ? (
             <span className="topic-tree-item-actions" onClick={(event) => event.stopPropagation()}>
               <Dropdown
+                overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
                 menu={rowMenu}
                 trigger={['click']}
                 onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
@@ -1581,6 +1656,7 @@ function TopicDetail({ topicTitle, onBack }) {
     return (
       <Dropdown
         key={item.key}
+        overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
         menu={rowMenu}
         trigger={['contextMenu']}
         onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
@@ -1640,6 +1716,7 @@ function TopicDetail({ topicTitle, onBack }) {
                   </button>
                 ) : null}
                 <Dropdown
+                  overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
                   menu={rowMenu}
                   trigger={['click']}
                   onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
@@ -1786,10 +1863,20 @@ function TopicDetail({ topicTitle, onBack }) {
           ) : null}
         </div>
         <div className="detail-header-center">
-          <div className="detail-tabs">
+          <div className="detail-tabs" ref={detailTabsRef}>
+            <div
+              className={`detail-tabs-liquid-indicator ${tabIndicatorStyle.opacity ? 'is-visible' : ''}`}
+              style={{
+                width: `${tabIndicatorStyle.width}px`,
+                height: `${tabIndicatorStyle.height}px`,
+                transform: `translate3d(${tabIndicatorStyle.x}px, ${tabIndicatorStyle.y}px, 0)`,
+                opacity: tabIndicatorStyle.opacity,
+              }}
+            />
             {tabs.map((tab) => (
               <div
                 key={tab.key}
+                ref={(node) => setDetailTabRef(tab.key, node)}
                 className={`detail-tab ${activeTab === tab.key ? 'detail-tab-active' : ''}`}
                 onClick={() => setActiveTab(tab.key)}
               >
@@ -1800,6 +1887,7 @@ function TopicDetail({ topicTitle, onBack }) {
         </div>
         <div className="detail-header-right">
           <Dropdown
+            overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
             menu={{
               items: [
                 {
@@ -1897,6 +1985,7 @@ function TopicDetail({ topicTitle, onBack }) {
 
       {bgMenuPos ? (
         <Dropdown
+          overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
           menu={bgContextMenu}
           open
           onOpenChange={(open) => {
@@ -1963,6 +2052,7 @@ function TopicDetail({ topicTitle, onBack }) {
               <div className="project-header">
                 <span className="project-title">项目</span>
                 <Dropdown
+                  overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
                   menu={{
                     items: [
                       {

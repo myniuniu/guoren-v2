@@ -7,11 +7,11 @@
   height: 100%;
   min-width: 0;
   min-height: 0;
-  --finder-selected-bg: #dbe7f5;
-  --finder-selected-border: #cfdef0;
+  --finder-selected-bg: #f5f5f5;
+  --finder-selected-border: #e4e4e7;
   --finder-selected-text: #303846;
   --finder-selected-meta: #667085;
-  --finder-selected-accent: #2d7fe3;
+  --finder-selected-accent: #8a94a6;
   background: #ffffff;
   overflow: hidden;
 }
@@ -1048,15 +1048,15 @@
 
 .finder-file-row-context-open,
 .finder-file-row-selected.finder-file-row-context-open {
-  background: #f3f8ff !important;
+  background: #f7f7f8 !important;
   color: #1d1d1f !important;
-  box-shadow: inset 0 0 0 2px #1677ff;
+  box-shadow: inset 0 0 0 1px #e4e4e7;
   border-radius: 8px;
   z-index: 1;
 }
 
 .finder-file-row-context-open:hover {
-  background: #edf5ff !important;
+  background: #f3f4f6 !important;
 }
 
 /* 拖放目标高亮 */
@@ -1079,6 +1079,16 @@
   margin-right: 8px;
   flex-shrink: 0;
   font-size: 16px;
+}
+
+.finder-file-row-selected .finder-file-icon,
+.finder-file-row-context-open .finder-file-icon {
+  color: var(--finder-selected-accent) !important;
+}
+
+.finder-file-row-selected .finder-file-icon .anticon,
+.finder-file-row-context-open .finder-file-icon .anticon {
+  color: var(--finder-selected-accent) !important;
 }
 
 .finder-file-name {
@@ -1140,8 +1150,8 @@
 .finder-file-row-context-open .finder-file-row-actions .finder-column-action-btn:hover {
   background: #fff;
   color: #111827;
-  border-color: rgba(0, 122, 255, 0.24);
-  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.16);
+  border-color: rgba(224, 227, 232, 0.96);
+  box-shadow: 0 4px 12px rgba(148, 163, 184, 0.14);
 }
 
 /* 详情视图展开三角 */
@@ -1617,7 +1627,7 @@
 }
 
 .finder-column-item-selected {
-  background: rgba(219, 231, 245, 0.7);
+  background: rgba(245, 245, 245, 0.92);
 }
 
 .finder-column-item-selected:hover {
@@ -1631,13 +1641,13 @@
 .finder-column-item-context-open,
 .finder-column-item-active.finder-column-item-context-open,
 .finder-column-item-selected.finder-column-item-context-open {
-  background: #f0f7ff;
+  background: #f7f7f8;
   color: #1d1d1f;
-  box-shadow: inset 0 0 0 2px #1677ff;
+  box-shadow: inset 0 0 0 1px #e4e4e7;
 }
 
 .finder-column-item-context-open:hover {
-  background: #e8f3ff;
+  background: #f3f4f6;
 }
 
 .finder-column-item-icon {
@@ -1648,6 +1658,17 @@
 
 .finder-column-item-active .finder-column-item-icon {
   color: var(--finder-selected-accent);
+}
+
+.finder-column-item-selected .finder-column-item-icon,
+.finder-column-item-context-open .finder-column-item-icon {
+  color: var(--finder-selected-accent);
+}
+
+.finder-column-item-active .finder-column-item-icon .anticon,
+.finder-column-item-selected .finder-column-item-icon .anticon,
+.finder-column-item-context-open .finder-column-item-icon .anticon {
+  color: var(--finder-selected-accent) !important;
 }
 
 .finder-column-item-name {
@@ -1717,8 +1738,8 @@
 .finder-column-action-btn:hover {
   background: #fff;
   color: #111827;
-  border-color: rgba(0, 122, 255, 0.24);
-  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.16);
+  border-color: rgba(224, 227, 232, 0.96);
+  box-shadow: 0 4px 12px rgba(148, 163, 184, 0.14);
   transform: translateY(-1px);
 }
 
@@ -1757,8 +1778,8 @@
 .finder-column-item-context-open .finder-column-action-btn:hover {
   background: #fff;
   color: #111827;
-  border-color: rgba(0, 122, 255, 0.24);
-  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.16);
+  border-color: rgba(224, 227, 232, 0.96);
+  box-shadow: 0 4px 12px rgba(148, 163, 184, 0.14);
 }
 
 /* 分栏视图拖放目标高亮 */
