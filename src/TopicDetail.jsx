@@ -274,6 +274,9 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
   const detailThemeStyle = sceneTheme
     ? {
         '--td-accent': sceneTheme.accentColor || '#56a8f5',
+        '--td-accent-soft': hexToRgba(sceneTheme.accentColor || '#56a8f5', 0.14),
+        '--td-accent-strong': hexToRgba(sceneTheme.accentColor || '#56a8f5', 0.24),
+        '--td-accent-glow': hexToRgba(sceneTheme.accentColor || '#56a8f5', 0.36),
         '--td-panel-bg': `linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.92) 58%, rgba(250, 251, 252, 0.9) 100%), linear-gradient(135deg, ${hexToRgba(sceneTheme.coverStart, 0.18)} 0%, ${hexToRgba(sceneTheme.coverEnd, 0.14)} 100%)`,
       }
     : undefined;

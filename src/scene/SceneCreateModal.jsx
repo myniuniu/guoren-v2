@@ -1,11 +1,8 @@
 import { useEffect, useMemo } from 'react';
 import { Form, Input, Modal, Select, Tag } from 'antd';
 import {
-  SCENE_MENU_OPTIONS,
-  SCENE_STATUS_OPTIONS,
   SCENE_VISIBILITY_OPTIONS,
   TOOL_OPTIONS,
-  getSceneMenuLabel,
   getSceneTypeLabel,
 } from './api';
 import './SceneCreateModal.css';
@@ -117,6 +114,18 @@ export default function SceneCreateModal({
         >
           <Input />
         </Form.Item>
+        <Form.Item name="menuKey" hidden>
+          <Input />
+        </Form.Item>
+        <Form.Item name="owner" hidden>
+          <Input />
+        </Form.Item>
+        <Form.Item name="status" hidden>
+          <Input />
+        </Form.Item>
+        <Form.Item name="topicCount" hidden>
+          <Input />
+        </Form.Item>
 
         <div className="scene-create-layout">
           <div className="scene-create-template-panel">
@@ -150,7 +159,7 @@ export default function SceneCreateModal({
                         {template.builtIn ? <Tag color="gold">内置</Tag> : null}
                       </div>
                       <div className="scene-create-template-card-meta">
-                        {getSceneTypeLabel(template.sceneType)} · 默认归类 {getSceneMenuLabel(template.defaultMenuKey)}
+                        {getSceneTypeLabel(template.sceneType)}
                       </div>
                       <div className="scene-create-template-card-desc">{template.description}</div>
                       <div className="scene-create-template-card-foot">
@@ -182,22 +191,9 @@ export default function SceneCreateModal({
               <Form.Item label="场景编码" name="sceneCode">
                 <Input placeholder="留空则自动生成" />
               </Form.Item>
-              <Form.Item label="归类栏目" name="menuKey" rules={[{ required: true, message: '请选择归类栏目' }]}>
-                <Select options={SCENE_MENU_OPTIONS} />
-              </Form.Item>
-              <Form.Item label="可见范围" name="visibility">
+              <Form.Item className="scene-create-form-span-2" label="可见范围" name="visibility">
                 <Select options={SCENE_VISIBILITY_OPTIONS} />
               </Form.Item>
-              <Form.Item label="负责人" name="owner">
-                <Input placeholder="例如：张老师 / 培训中心" />
-              </Form.Item>
-              <Form.Item label="状态" name="status">
-                <Select options={SCENE_STATUS_OPTIONS} />
-              </Form.Item>
-              <Form.Item label="主题数" name="topicCount">
-                <Input type="number" min={0} />
-              </Form.Item>
-              <div />
               <Form.Item className="scene-create-form-span-2" label="场景简介" name="description">
                 <TextArea rows={4} placeholder="填写场景简介，用于首页卡片和空间说明。" />
               </Form.Item>
