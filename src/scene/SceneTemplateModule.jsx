@@ -55,6 +55,10 @@ const MODE_TAB_HINT_MAP = {
   practice: '用于实训任务、项目练习和过程产出；停用后该页签不会出现在主题中。',
   assessment: '用于考试、量规、评阅等考核配置；启用后会进入专用的考核配置页。',
 };
+const TOPIC_THEME_MODE_OPTIONS = [
+  { value: 'DEFAULT', label: '默认浅灰白' },
+  { value: 'SCENE', label: '跟随场景色' },
+];
 
 function getErrorMessage(error, fallback = '操作失败') {
   return error?.message || fallback;
@@ -100,6 +104,10 @@ function getRoleDataScopeLabel(value) {
 
 function getVersionCreateModeLabel(value) {
   return VERSION_CREATE_MODE_OPTIONS.find((item) => item.value === value)?.label || value || '-';
+}
+
+function getTopicThemeModeLabel(value) {
+  return TOPIC_THEME_MODE_OPTIONS.find((item) => item.value === value)?.label || value || '-';
 }
 
 function countEnabledTools(template) {
@@ -186,6 +194,7 @@ function SceneTemplatePreview({ template, sceneCount }) {
       <div className="scene-template-preview-section">
         <div className="scene-template-preview-section-title">主题模式与文案</div>
         <div className="scene-template-inline-meta">
+          <span>详情页主题：{getTopicThemeModeLabel(template.theme?.topicThemeMode || 'DEFAULT')}</span>
           <span>资料区：{template.topicPage.resourcePanelTitle}</span>
           <span>新增按钮：{template.topicPage.addResourceLabel}</span>
           <span>主页模板：{template.homepage.templateName}</span>
@@ -852,6 +861,9 @@ export default function SceneTemplateModule() {
                       </Form.Item>
                       <Form.Item label="表情符号" name={['theme', 'emoji']}>
                         <Input placeholder="例如：📘" />
+                      </Form.Item>
+                      <Form.Item label="详情页主题" name={['theme', 'topicThemeMode']}>
+                        <Select options={TOPIC_THEME_MODE_OPTIONS} />
                       </Form.Item>
                       <Form.Item label="封面起始色" name={['theme', 'coverStart']}>
                         <Input placeholder="#3568ff" />

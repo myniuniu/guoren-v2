@@ -271,7 +271,9 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
   const addResourceLabel = currentModeConfig?.addResourceLabel || sceneConfig?.topicPage?.addResourceLabel || '添加资料';
   const appLabel = currentModeConfig?.appLabel || sceneConfig?.topicPage?.appLabel || '应用';
   const emptyStateText = currentModeConfig?.emptyStateText || sceneConfig?.topicPage?.emptyStateText || '暂无资料，右键新建文件夹或添加资料';
+  const useSceneTopicTheme = (sceneTheme?.topicThemeMode || 'DEFAULT') === 'SCENE';
   const detailThemeStyle = sceneTheme
+    && useSceneTopicTheme
     ? {
         '--td-accent': sceneTheme.accentColor || '#56a8f5',
         '--td-accent-soft': hexToRgba(sceneTheme.accentColor || '#56a8f5', 0.14),

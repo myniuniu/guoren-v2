@@ -486,6 +486,7 @@ function normalizeTemplate(input = {}) {
     theme: {
       badgeText: trimToNull(input.theme?.badgeText) || getSceneTypeLabel(sceneType),
       emoji: trimToNull(input.theme?.emoji) || '🧩',
+      topicThemeMode: trimToNull(input.theme?.topicThemeMode) || 'DEFAULT',
       coverStart: trimToNull(input.theme?.coverStart) || '#4f8cff',
       coverEnd: trimToNull(input.theme?.coverEnd) || '#7ee4ff',
       accentColor: trimToNull(input.theme?.accentColor) || '#3b82f6',
