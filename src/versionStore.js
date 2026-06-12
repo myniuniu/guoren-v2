@@ -1,3 +1,5 @@
+import { formatVersionName, normalizeVersioningConfig } from './scene/store';
+
 const STORAGE_KEY = 'guoren_version_data';
 const DATA_VERSION = 8; // 增加版本号，当默认数据结构变化时递增，自动重置本地存储
 
@@ -172,40 +174,60 @@ export function getActiveVersion(data) {
   return data.versions.find((v) => v.status === 'active') || null;
 }
 
-// 最大版本数量
-const MAX_VERSIONS = 5;
+export function isVersionEditable(version, versioningConfig) {
+  if (!version) return false;
+  const rules = normalizeVersioningConfig(versioningConfig);
+  if (!rules.enabled) return true;
+  return version.status === 'draft';
+}
+
+function buildEmptyAssessment() {
+  return { totalHours: 0, passScore: 60, certificate: false, rules: [] };
+}
+
+function cloneResourcesWithNewKeys(resources = []) {
+  const keyMap = new Map();
+  resources.forEach((resource) => {
+    keyMap.set(
+      resource.key,
+      `r_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+    );
+  });
+
+  return resources.map((resource) => ({
+    ...resource,
+    key: keyMap.get(resource.key),
+    parentKey: resource.parentKey ? keyMap.get(resource.parentKey) || resource.parentKey : null,
+  }));
+}
 
 // 新建版本（继承当前生效版本的资料）
-export function createNewVersion(data) {
-  if (data.versions.length >= MAX_VERSIONS) {
-    return { ...data, error: `最多支持 ${MAX_VERSIONS} 个版本，请删除旧版本后再创建` };
+export function createNewVersion(data, versioningConfig) {
+  const rules = normalizeVersioningConfig(versioningConfig);
+  if (!rules.enabled) {
+    return { ...data, error: '当前场景未开启版本管理' };
+  }
+  if (data.versions.length >= rules.maxVersions) {
+    return { ...data, error: `最多支持 ${rules.maxVersions} 个版本，请删除旧版本后再创建` };
   }
 
-  const activeVersion = data.versions.find((v) => v.status === 'active');
-  const keyMap = new Map();
-
-  if (activeVersion) {
-    activeVersion.resources.forEach((resource) => {
-      keyMap.set(
-        resource.key,
-        `r_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
-      );
-    });
-  }
-
-  const inheritedResources = activeVersion
-    ? activeVersion.resources.map((resource) => ({
-        ...resource,
-        key: keyMap.get(resource.key),
-        parentKey: resource.parentKey ? keyMap.get(resource.parentKey) || resource.parentKey : null,
-      }))
+  const activeVersion = data.versions.find((v) => v.status === 'active') || getCurrentVersion(data);
+  const shouldCopyActive = rules.createMode === 'COPY_ACTIVE';
+  const inheritedResources = shouldCopyActive && activeVersion
+    ? cloneResourcesWithNewKeys(activeVersion.resources)
     : [];
-
-  const inheritedAssessment = activeVersion?.assessment
+  const inheritedAssessment = shouldCopyActive && activeVersion?.assessment
     ? cloneData(activeVersion.assessment)
-    : { totalHours: 0, passScore: 60, certificate: false, rules: [] };
+    : buildEmptyAssessment();
 
   if (Array.isArray(inheritedAssessment.rules)) {
+    const keyMap = new Map();
+    if (shouldCopyActive && activeVersion) {
+      activeVersion.resources.forEach((resource, index) => {
+        const nextResource = inheritedResources[index];
+        if (nextResource) keyMap.set(resource.key, nextResource.key);
+      });
+    }
     inheritedAssessment.rules = inheritedAssessment.rules.map((rule) => ({
       ...rule,
       folderKey: rule.folderKey ? keyMap.get(rule.folderKey) || rule.folderKey : rule.folderKey,
@@ -214,15 +236,15 @@ export function createNewVersion(data) {
 
   const newVersion = {
     id: `v${Date.now()}`,
-    name: `版本 ${data.versions.length + 1}`,
+    name: formatVersionName(rules.namePattern, data.versions.length + 1),
     status: 'draft',
     createdAt: nowText(),
     publishedAt: null,
     resources: inheritedResources,
-    tagDefinitions: activeVersion?.tagDefinitions ? cloneData(activeVersion.tagDefinitions) : [],
-    tagGroups: activeVersion?.tagGroups ? cloneData(activeVersion.tagGroups) : [],
+    tagDefinitions: shouldCopyActive && activeVersion?.tagDefinitions ? cloneData(activeVersion.tagDefinitions) : [],
+    tagGroups: shouldCopyActive && activeVersion?.tagGroups ? cloneData(activeVersion.tagGroups) : [],
     assessment: inheritedAssessment,
-    assessmentChat: activeVersion?.assessmentChat ? cloneData(activeVersion.assessmentChat) : [],
+    assessmentChat: shouldCopyActive && activeVersion?.assessmentChat ? cloneData(activeVersion.assessmentChat) : [],
   };
 
   const newData = {
@@ -235,7 +257,11 @@ export function createNewVersion(data) {
 }
 
 // 发布版本（新发布的版本变为 active，之前的 active 变为 published/失效）
-export function publishVersion(data, versionId) {
+export function publishVersion(data, versionId, versioningConfig) {
+  const rules = normalizeVersioningConfig(versioningConfig);
+  if (!rules.enabled) {
+    return { ...data, error: '当前场景未开启版本管理' };
+  }
   const now = nowText();
   const newData = {
     ...data,
@@ -254,9 +280,9 @@ export function publishVersion(data, versionId) {
 }
 
 // 添加资料（仅 draft，支持指定 parentKey）
-export function addResource(data, versionId, resource) {
+export function addResource(data, versionId, resource, versioningConfig) {
   const version = data.versions.find((v) => v.id === versionId);
-  if (!version || version.status !== 'draft') return data;
+  if (!isVersionEditable(version, versioningConfig)) return data;
 
   const newResource = {
     ...resource,
@@ -278,9 +304,9 @@ export function addResource(data, versionId, resource) {
 }
 
 // 更新资料（仅 draft）
-export function updateResource(data, versionId, resourceKey, updates) {
+export function updateResource(data, versionId, resourceKey, updates, versioningConfig) {
   const version = data.versions.find((v) => v.id === versionId);
-  if (!version || version.status !== 'draft') return data;
+  if (!isVersionEditable(version, versioningConfig)) return data;
 
   const newData = {
     ...data,
@@ -325,9 +351,9 @@ function findResourceSubtreeEndIndex(resources, rootKey) {
 }
 
 // 移动资料：支持拖拽到文件夹以及同级排序
-export function moveResource(data, versionId, resourceKey, targetParentKey, targetIndex = null) {
+export function moveResource(data, versionId, resourceKey, targetParentKey, targetIndex = null, versioningConfig) {
   const version = data.versions.find((v) => v.id === versionId);
-  if (!version || version.status !== 'draft') return data;
+  if (!isVersionEditable(version, versioningConfig)) return data;
 
   const resources = version.resources || [];
   const item = resources.find((resource) => resource.key === resourceKey);
@@ -418,9 +444,9 @@ export function moveResource(data, versionId, resourceKey, targetParentKey, targ
 }
 
 // 删除资料（仅 draft，删除文件夹时递归级联删除所有后代）
-export function deleteResource(data, versionId, resourceKey) {
+export function deleteResource(data, versionId, resourceKey, versioningConfig) {
   const version = data.versions.find((v) => v.id === versionId);
-  if (!version || version.status !== 'draft') return data;
+  if (!isVersionEditable(version, versioningConfig)) return data;
 
   const keysToDelete = new Set();
   function collectKeys(key) {
@@ -451,10 +477,17 @@ export function switchVersion(data, versionId) {
 }
 
 // 删除版本（仅允许删除草稿或已失效的版本）
-export function deleteVersion(data, versionId) {
+export function deleteVersion(data, versionId, versioningConfig) {
+  const rules = normalizeVersioningConfig(versioningConfig);
+  if (!rules.enabled) {
+    return { ...data, error: '当前场景未开启版本管理' };
+  }
   const version = data.versions.find((v) => v.id === versionId);
   if (!version) return data;
   if (version.status === 'active') return { ...data, error: '不能删除当前生效版本' };
+  if (version.status === 'published' && !rules.allowDeletePublished) {
+    return { ...data, error: '当前模板不允许删除已失效版本' };
+  }
 
   const newVersions = data.versions.filter((v) => v.id !== versionId);
   let newCurrentId = data.currentVersionId;
@@ -492,9 +525,9 @@ export function updateAssessmentChat(data, versionId, chat) {
   return newData;
 }
 
-export function updateVersionTagLibrary(data, versionId, patch) {
+export function updateVersionTagLibrary(data, versionId, patch, versioningConfig) {
   const version = data.versions.find((v) => v.id === versionId);
-  if (!version || version.status !== 'draft') return data;
+  if (!isVersionEditable(version, versioningConfig)) return data;
 
   const newData = {
     ...data,
@@ -507,7 +540,14 @@ export function updateVersionTagLibrary(data, versionId, patch) {
 }
 
 // 回退版本：将指定的已发布版本重新设为生效，当前生效的版本降为已发布
-export function rollbackVersion(data, targetVersionId) {
+export function rollbackVersion(data, targetVersionId, versioningConfig) {
+  const rules = normalizeVersioningConfig(versioningConfig);
+  if (!rules.enabled) {
+    return { ...data, error: '当前场景未开启版本管理' };
+  }
+  if (!rules.allowRollback) {
+    return { ...data, error: '当前模板未开启版本回退' };
+  }
   const targetVersion = data.versions.find((v) => v.id === targetVersionId);
   if (!targetVersion || targetVersion.status === 'draft') return data;
 

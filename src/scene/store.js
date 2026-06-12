@@ -90,6 +90,38 @@ export const HOME_INTRO_MODE_OPTIONS = [
   { value: 'AI_OR_MANUAL', label: '人工 / AI 均可' },
 ];
 
+export const ROLE_FUNCTION_PERMISSION_OPTIONS = [
+  { value: 'TOPIC_EDIT', label: '主题配置管理' },
+  { value: 'RESOURCE_CREATE', label: '新增资料' },
+  { value: 'RESOURCE_EDIT', label: '资料编辑' },
+  { value: 'RESOURCE_DELETE', label: '资料删除' },
+  { value: 'TOOL_USE', label: '工具使用' },
+  { value: 'LIVE_ACTIVITY_MANAGE', label: '直播/活动管理' },
+  { value: 'ASSESSMENT_CONFIG', label: '考核配置' },
+  { value: 'RESULT_SUBMIT', label: '成果提交' },
+  { value: 'RESULT_REVIEW', label: '评阅反馈' },
+  { value: 'COMMENT_INTERACT', label: '互动评论' },
+  { value: 'MEMBER_MANAGE', label: '成员管理' },
+  { value: 'DATA_EXPORT', label: '数据导出' },
+];
+
+export const ROLE_DATA_SCOPE_OPTIONS = [
+  { value: 'ALL', label: '全部数据' },
+  { value: 'ASSIGNED', label: '授权范围' },
+  { value: 'OWN', label: '本人负责 / 创建' },
+  { value: 'PARTICIPATED', label: '参与内容' },
+  { value: 'PUBLIC', label: '公开内容' },
+];
+
+export const ROLE_DATA_ACCESS_AREA_OPTIONS = [
+  { value: 'TOPIC_METADATA', label: '主题元数据' },
+  { value: 'RESOURCE_AREA', label: '资料区' },
+  { value: 'RESULT_AREA', label: '创作结果区' },
+  { value: 'ASSESSMENT_DATA', label: '考核与评阅数据' },
+  { value: 'MEMBER_DATA', label: '成员信息' },
+  { value: 'OPERATION_DATA', label: '运营报表' },
+];
+
 export const MODE_TAB_PRESET_OPTIONS = [
   { value: 'knowledge', label: '知识模式' },
   { value: 'ai', label: 'AI模式' },
@@ -97,9 +129,82 @@ export const MODE_TAB_PRESET_OPTIONS = [
   { value: 'assessment', label: '考核配置模式' },
 ];
 
+export const VERSION_CREATE_MODE_OPTIONS = [
+  { value: 'COPY_ACTIVE', label: '继承当前版本内容' },
+  { value: 'EMPTY', label: '创建空白版本' },
+];
+
 const MODE_TAB_LABEL_MAP = Object.fromEntries(
   MODE_TAB_PRESET_OPTIONS.map((item) => [item.value, item.label]),
 );
+
+const DEFAULT_VERSIONING_CONFIG = Object.freeze({
+  enabled: true,
+  maxVersions: 5,
+  namePattern: '版本 {index}',
+  createMode: 'COPY_ACTIVE',
+  allowRollback: true,
+  allowDeletePublished: true,
+  description: '',
+});
+
+const BUILT_IN_ROLE_AUTHORIZATION = {
+  'TEACHING:teacher': {
+    functionalPermissions: ['TOPIC_EDIT', 'RESOURCE_CREATE', 'RESOURCE_EDIT', 'TOOL_USE', 'LIVE_ACTIVITY_MANAGE', 'ASSESSMENT_CONFIG', 'RESULT_REVIEW'],
+    dataAccessScope: 'ALL',
+    dataAccessAreas: ['TOPIC_METADATA', 'RESOURCE_AREA', 'RESULT_AREA', 'ASSESSMENT_DATA'],
+  },
+  'TEACHING:student': {
+    functionalPermissions: ['TOOL_USE', 'RESULT_SUBMIT', 'COMMENT_INTERACT'],
+    dataAccessScope: 'PARTICIPATED',
+    dataAccessAreas: ['RESOURCE_AREA', 'RESULT_AREA', 'ASSESSMENT_DATA'],
+  },
+  'RESEARCH:leader': {
+    functionalPermissions: ['TOPIC_EDIT', 'RESOURCE_CREATE', 'RESOURCE_EDIT', 'TOOL_USE', 'LIVE_ACTIVITY_MANAGE', 'ASSESSMENT_CONFIG', 'MEMBER_MANAGE', 'DATA_EXPORT'],
+    dataAccessScope: 'ALL',
+    dataAccessAreas: ['TOPIC_METADATA', 'RESOURCE_AREA', 'RESULT_AREA', 'ASSESSMENT_DATA', 'MEMBER_DATA'],
+  },
+  'RESEARCH:teacher': {
+    functionalPermissions: ['RESOURCE_CREATE', 'RESOURCE_EDIT', 'TOOL_USE', 'RESULT_SUBMIT', 'COMMENT_INTERACT'],
+    dataAccessScope: 'PARTICIPATED',
+    dataAccessAreas: ['RESOURCE_AREA', 'RESULT_AREA', 'TOPIC_METADATA'],
+  },
+  'RESEARCH:expert': {
+    functionalPermissions: ['TOOL_USE', 'RESULT_REVIEW', 'COMMENT_INTERACT'],
+    dataAccessScope: 'ASSIGNED',
+    dataAccessAreas: ['RESOURCE_AREA', 'RESULT_AREA', 'ASSESSMENT_DATA'],
+  },
+  'TRAINING:admin': {
+    functionalPermissions: ['TOPIC_EDIT', 'RESOURCE_CREATE', 'RESOURCE_EDIT', 'LIVE_ACTIVITY_MANAGE', 'ASSESSMENT_CONFIG', 'MEMBER_MANAGE', 'DATA_EXPORT'],
+    dataAccessScope: 'ALL',
+    dataAccessAreas: ['TOPIC_METADATA', 'RESOURCE_AREA', 'RESULT_AREA', 'ASSESSMENT_DATA', 'MEMBER_DATA', 'OPERATION_DATA'],
+  },
+  'TRAINING:reviewer': {
+    functionalPermissions: ['TOOL_USE', 'RESULT_REVIEW', 'COMMENT_INTERACT'],
+    dataAccessScope: 'ASSIGNED',
+    dataAccessAreas: ['RESOURCE_AREA', 'RESULT_AREA', 'ASSESSMENT_DATA'],
+  },
+  'TRAINING:student': {
+    functionalPermissions: ['TOOL_USE', 'RESULT_SUBMIT', 'COMMENT_INTERACT'],
+    dataAccessScope: 'PARTICIPATED',
+    dataAccessAreas: ['RESOURCE_AREA', 'RESULT_AREA', 'ASSESSMENT_DATA'],
+  },
+  'COMMUNITY:operator': {
+    functionalPermissions: ['TOPIC_EDIT', 'RESOURCE_CREATE', 'RESOURCE_EDIT', 'LIVE_ACTIVITY_MANAGE', 'MEMBER_MANAGE', 'COMMENT_INTERACT', 'DATA_EXPORT'],
+    dataAccessScope: 'ALL',
+    dataAccessAreas: ['TOPIC_METADATA', 'RESOURCE_AREA', 'RESULT_AREA', 'MEMBER_DATA', 'OPERATION_DATA'],
+  },
+  'COMMUNITY:member': {
+    functionalPermissions: ['RESOURCE_CREATE', 'RESOURCE_EDIT', 'TOOL_USE', 'RESULT_SUBMIT', 'COMMENT_INTERACT'],
+    dataAccessScope: 'OWN',
+    dataAccessAreas: ['RESOURCE_AREA', 'RESULT_AREA'],
+  },
+  'COMMUNITY:observer': {
+    functionalPermissions: ['TOOL_USE', 'COMMENT_INTERACT'],
+    dataAccessScope: 'PUBLIC',
+    dataAccessAreas: ['RESOURCE_AREA', 'RESULT_AREA'],
+  },
+};
 
 function clone(data) {
   return JSON.parse(JSON.stringify(data));
@@ -196,66 +301,107 @@ function getModeTabDefaultLabel(key) {
   return MODE_TAB_LABEL_MAP[key] || null;
 }
 
-function buildCustomModeKey(seed) {
-  return `custom_mode_${seed}`;
+function getDefaultRoleAuthorization(sceneType, roleKey) {
+  return BUILT_IN_ROLE_AUTHORIZATION[`${sceneType}:${roleKey}`] || null;
 }
 
-function ensureUniqueModeKey(rawKey, index, usedKeys) {
-  const baseKey = trimToNull(rawKey) || buildCustomModeKey(index + 1);
-  let nextKey = baseKey;
-  let suffix = 2;
-
-  while (usedKeys.has(nextKey)) {
-    nextKey = `${baseKey}_${suffix}`;
-    suffix += 1;
-  }
-
-  usedKeys.add(nextKey);
-  return nextKey;
-}
-
-function normalizeModeTab(modeTab, index, usedKeys) {
-  const rawKey = trimToNull(modeTab?.key);
-  const key = ensureUniqueModeKey(rawKey, index, usedKeys);
-
+function normalizeModeTab(modeTab, preset, index) {
   return {
-    id: modeTab?.id || createId(`mode_${index}`),
-    key,
-    label: trimToNull(modeTab?.label) || getModeTabDefaultLabel(rawKey) || getModeTabDefaultLabel(key) || `模式${index + 1}`,
+    id: modeTab?.id || `mode_${preset.value}_${index + 1}`,
+    key: preset.value,
+    label: trimToNull(modeTab?.label) || getModeTabDefaultLabel(preset.value) || preset.label || `模式${index + 1}`,
     enabled: modeTab?.enabled !== false,
+    resourcePanelTitle: trimToNull(modeTab?.resourcePanelTitle) || '',
+    addResourceLabel: trimToNull(modeTab?.addResourceLabel) || '',
+    appLabel: trimToNull(modeTab?.appLabel) || '',
+    emptyStateText: trimToNull(modeTab?.emptyStateText) || '',
   };
 }
 
-function createModeTabs(labels = {}) {
-  return MODE_TAB_PRESET_OPTIONS.map((item, index) => ({
-    id: `mode_${item.value}_${index + 1}`,
+function createModeTabs(labels = {}, modeConfigs = {}) {
+  return MODE_TAB_PRESET_OPTIONS.map((item, index) => normalizeModeTab({
+    ...(modeConfigs[item.value] || {}),
     key: item.value,
-    label: labels[item.value] || item.label,
-    enabled: labels[item.value] === false ? false : true,
-  }));
+    label: labels[item.value] || modeConfigs[item.value]?.label || item.label,
+    enabled: modeConfigs[item.value]?.enabled !== false,
+  }, item, index));
 }
 
 function ensureModeTabs(modeTabs) {
-  if (!Array.isArray(modeTabs)) {
-    return createModeTabs();
-  }
-
-  const usedKeys = new Set();
-  return modeTabs
-    .filter((item) => item !== null && typeof item !== 'undefined')
-    .map((item, index) => normalizeModeTab(item, index, usedKeys));
+  const hasConfiguredTabs = Array.isArray(modeTabs);
+  const byKey = new Map(
+    (hasConfiguredTabs ? modeTabs : [])
+      .filter((item) => item !== null && typeof item !== 'undefined')
+      .map((item) => [item?.key, item]),
+  );
+  return MODE_TAB_PRESET_OPTIONS.map((item, index) => normalizeModeTab(
+    byKey.get(item.value) || (hasConfiguredTabs ? { key: item.value, enabled: false } : null),
+    item,
+    index,
+  ));
 }
 
-function normalizeRole(role, index) {
+export function normalizeVersioningConfig(input = {}) {
+  const maxVersions = Number.parseInt(input?.maxVersions, 10);
+  return {
+    enabled: input?.enabled !== false,
+    maxVersions: Number.isFinite(maxVersions)
+      ? Math.min(Math.max(maxVersions, 1), 20)
+      : DEFAULT_VERSIONING_CONFIG.maxVersions,
+    namePattern: trimToNull(input?.namePattern) || DEFAULT_VERSIONING_CONFIG.namePattern,
+    createMode: VERSION_CREATE_MODE_OPTIONS.some((item) => item.value === input?.createMode)
+      ? input.createMode
+      : DEFAULT_VERSIONING_CONFIG.createMode,
+    allowRollback: input?.allowRollback !== false,
+    allowDeletePublished: input?.allowDeletePublished !== false,
+    description: trimToNull(input?.description) || '',
+  };
+}
+
+export function formatVersionName(namePattern, index) {
+  const pattern = trimToNull(namePattern) || DEFAULT_VERSIONING_CONFIG.namePattern;
+  const versionIndex = Number.isFinite(Number(index)) ? Number(index) : 1;
+  if (pattern.includes('{index}')) {
+    return pattern.replace(/\{index\}/g, String(versionIndex));
+  }
+  return `${pattern} ${versionIndex}`;
+}
+
+function normalizeRole(role, index, sceneType, builtIn) {
   const roleKey = trimToNull(role?.key) || `role_${index + 1}`;
+  const defaultAuthorization = builtIn ? getDefaultRoleAuthorization(sceneType, roleKey) : null;
   return {
     id: role?.id || roleKey,
     key: roleKey,
     name: trimToNull(role?.name) || `角色${index + 1}`,
     description: trimToNull(role?.description) || '',
     agentName: trimToNull(role?.agentName) || '',
+    functionalPermissions: Array.isArray(role?.functionalPermissions)
+      ? role.functionalPermissions.filter(Boolean)
+      : (defaultAuthorization?.functionalPermissions || []),
     permissionSummary: trimToNull(role?.permissionSummary) || '',
+    dataAccessScope: Object.prototype.hasOwnProperty.call(role || {}, 'dataAccessScope')
+      ? (trimToNull(role?.dataAccessScope) || 'ASSIGNED')
+      : (defaultAuthorization?.dataAccessScope || 'ASSIGNED'),
+    dataAccessAreas: Array.isArray(role?.dataAccessAreas)
+      ? role.dataAccessAreas.filter(Boolean)
+      : (defaultAuthorization?.dataAccessAreas || []),
     scopeSummary: trimToNull(role?.scopeSummary) || '',
+  };
+}
+
+export function createRoleDraft(seed = 1) {
+  return {
+    id: `role_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    key: '',
+    name: `角色${seed}`,
+    description: '',
+    agentName: '',
+    functionalPermissions: ['TOOL_USE'],
+    permissionSummary: '',
+    dataAccessScope: 'ASSIGNED',
+    dataAccessAreas: ['RESOURCE_AREA'],
+    scopeSummary: '',
   };
 }
 
@@ -314,7 +460,10 @@ function normalizeAgent(agent, index) {
 
 function normalizeTemplate(input = {}) {
   const sceneType = trimToNull(input.sceneType) || 'CUSTOM';
-  const roles = (Array.isArray(input.roles) ? input.roles : []).map(normalizeRole);
+  const builtIn = Boolean(input.builtIn);
+  const roles = (Array.isArray(input.roles) ? input.roles : []).map((role, index) => (
+    normalizeRole(role, index, sceneType, builtIn)
+  ));
   const roleIdMap = new Map();
   roles.forEach((role) => {
     roleIdMap.set(role.id, role.id);
@@ -333,7 +482,7 @@ function normalizeTemplate(input = {}) {
     defaultMenuKey: trimToNull(input.defaultMenuKey) || defaultMenuKeyByType(sceneType),
     description: trimToNull(input.description) || '',
     status: trimToNull(input.status) || 'ACTIVE',
-    builtIn: Boolean(input.builtIn),
+    builtIn,
     theme: {
       badgeText: trimToNull(input.theme?.badgeText) || getSceneTypeLabel(sceneType),
       emoji: trimToNull(input.theme?.emoji) || '🧩',
@@ -386,6 +535,7 @@ function normalizeTemplate(input = {}) {
       resourceScope: trimToNull(input.recommendation?.resourceScope) || '',
       description: trimToNull(input.recommendation?.description) || '',
     },
+    versioning: normalizeVersioningConfig(input.versioning),
     createdAt: input.createdAt || nowIso(),
     updatedAt: input.updatedAt || nowIso(),
   };
@@ -478,7 +628,10 @@ function buildPresetTemplates() {
           key: 'teacher',
           name: '教师',
           agentName: 'AI助教',
+          functionalPermissions: ['TOPIC_EDIT', 'RESOURCE_CREATE', 'RESOURCE_EDIT', 'TOOL_USE', 'LIVE_ACTIVITY_MANAGE', 'ASSESSMENT_CONFIG', 'RESULT_REVIEW'],
           permissionSummary: '可管理主题、资料、作业和课堂工具',
+          dataAccessScope: 'ALL',
+          dataAccessAreas: ['TOPIC_METADATA', 'RESOURCE_AREA', 'RESULT_AREA', 'ASSESSMENT_DATA'],
           scopeSummary: '拥有全部资料和主题的编辑权限',
           description: '负责授课、布置任务和过程指导。',
         },
@@ -486,7 +639,10 @@ function buildPresetTemplates() {
           key: 'student',
           name: '学生',
           agentName: '学习助手',
+          functionalPermissions: ['TOOL_USE', 'RESULT_SUBMIT', 'COMMENT_INTERACT'],
           permissionSummary: '可查看资料、提交练习、参与互动',
+          dataAccessScope: 'PARTICIPATED',
+          dataAccessAreas: ['RESOURCE_AREA', 'RESULT_AREA', 'ASSESSMENT_DATA'],
           scopeSummary: '仅可访问教学公开内容与个人任务',
           description: '参与课程学习和课堂活动。',
         },
@@ -568,7 +724,10 @@ function buildPresetTemplates() {
           key: 'leader',
           name: '教研负责人',
           agentName: 'AI教研助手',
+          functionalPermissions: ['TOPIC_EDIT', 'RESOURCE_CREATE', 'RESOURCE_EDIT', 'TOOL_USE', 'LIVE_ACTIVITY_MANAGE', 'ASSESSMENT_CONFIG', 'MEMBER_MANAGE', 'DATA_EXPORT'],
           permissionSummary: '维护议题、阶段目标和成果产出',
+          dataAccessScope: 'ALL',
+          dataAccessAreas: ['TOPIC_METADATA', 'RESOURCE_AREA', 'RESULT_AREA', 'ASSESSMENT_DATA', 'MEMBER_DATA'],
           scopeSummary: '可管理全部主题与资料结构',
           description: '负责教研活动组织与成果验收。',
         },
@@ -576,7 +735,10 @@ function buildPresetTemplates() {
           key: 'teacher',
           name: '参与教师',
           agentName: '备课助手',
+          functionalPermissions: ['RESOURCE_CREATE', 'RESOURCE_EDIT', 'TOOL_USE', 'RESULT_SUBMIT', 'COMMENT_INTERACT'],
           permissionSummary: '参与研讨、提交材料、共创文档',
+          dataAccessScope: 'PARTICIPATED',
+          dataAccessAreas: ['RESOURCE_AREA', 'RESULT_AREA', 'TOPIC_METADATA'],
           scopeSummary: '可编辑参与议题下的资料与文档',
           description: '围绕课堂问题共创方案。',
         },
@@ -584,7 +746,10 @@ function buildPresetTemplates() {
           key: 'expert',
           name: '专家顾问',
           agentName: '点评助手',
+          functionalPermissions: ['TOOL_USE', 'RESULT_REVIEW', 'COMMENT_INTERACT'],
           permissionSummary: '可评阅资料、提供建议与结论',
+          dataAccessScope: 'ASSIGNED',
+          dataAccessAreas: ['RESOURCE_AREA', 'RESULT_AREA', 'ASSESSMENT_DATA'],
           scopeSummary: '可查看全部资料并在评审区评论',
           description: '提供专业点评与外部建议。',
         },
@@ -666,7 +831,10 @@ function buildPresetTemplates() {
           key: 'admin',
           name: '管理员',
           agentName: '培训运营助手',
+          functionalPermissions: ['TOPIC_EDIT', 'RESOURCE_CREATE', 'RESOURCE_EDIT', 'LIVE_ACTIVITY_MANAGE', 'ASSESSMENT_CONFIG', 'MEMBER_MANAGE', 'DATA_EXPORT'],
           permissionSummary: '维护课程、学员、考试与培训规则',
+          dataAccessScope: 'ALL',
+          dataAccessAreas: ['TOPIC_METADATA', 'RESOURCE_AREA', 'RESULT_AREA', 'ASSESSMENT_DATA', 'MEMBER_DATA', 'OPERATION_DATA'],
           scopeSummary: '拥有全部目录与工具权限',
           description: '负责培训组织和过程管理。',
         },
@@ -674,7 +842,10 @@ function buildPresetTemplates() {
           key: 'reviewer',
           name: '评阅老师',
           agentName: '评阅助手',
+          functionalPermissions: ['TOOL_USE', 'RESULT_REVIEW', 'COMMENT_INTERACT'],
           permissionSummary: '查看指定资料夹、批注并完成评阅',
+          dataAccessScope: 'ASSIGNED',
+          dataAccessAreas: ['RESOURCE_AREA', 'RESULT_AREA', 'ASSESSMENT_DATA'],
           scopeSummary: '仅对被授权的试卷或成果文件夹拥有评阅权限',
           description: '负责考试评阅与成果点评。',
         },
@@ -682,7 +853,10 @@ function buildPresetTemplates() {
           key: 'student',
           name: '学员',
           agentName: '学习教练',
+          functionalPermissions: ['TOOL_USE', 'RESULT_SUBMIT', 'COMMENT_INTERACT'],
           permissionSummary: '学习课程、参与直播、提交作业与考试',
+          dataAccessScope: 'PARTICIPATED',
+          dataAccessAreas: ['RESOURCE_AREA', 'RESULT_AREA', 'ASSESSMENT_DATA'],
           scopeSummary: '仅访问开放给学员的课程与任务',
           description: '参加培训活动并完成考核。',
         },
@@ -766,7 +940,10 @@ function buildPresetTemplates() {
           key: 'operator',
           name: '运营者',
           agentName: '运营助手',
+          functionalPermissions: ['TOPIC_EDIT', 'RESOURCE_CREATE', 'RESOURCE_EDIT', 'LIVE_ACTIVITY_MANAGE', 'MEMBER_MANAGE', 'COMMENT_INTERACT', 'DATA_EXPORT'],
           permissionSummary: '维护频道内容、活动、标签和推荐位',
+          dataAccessScope: 'ALL',
+          dataAccessAreas: ['TOPIC_METADATA', 'RESOURCE_AREA', 'RESULT_AREA', 'MEMBER_DATA', 'OPERATION_DATA'],
           scopeSummary: '可管理全部议题、活动和精选内容',
           description: '负责社区频道运营与活动策划。',
         },
@@ -774,7 +951,10 @@ function buildPresetTemplates() {
           key: 'member',
           name: '共创成员',
           agentName: '灵感助手',
+          functionalPermissions: ['RESOURCE_CREATE', 'RESOURCE_EDIT', 'TOOL_USE', 'RESULT_SUBMIT', 'COMMENT_INTERACT'],
           permissionSummary: '参与讨论、提交内容、报名活动',
+          dataAccessScope: 'OWN',
+          dataAccessAreas: ['RESOURCE_AREA', 'RESULT_AREA'],
           scopeSummary: '可编辑自己参与的共创内容',
           description: '围绕社区议题持续产出内容。',
         },
@@ -782,7 +962,10 @@ function buildPresetTemplates() {
           key: 'observer',
           name: '观察员',
           agentName: '洞察助手',
+          functionalPermissions: ['TOOL_USE', 'COMMENT_INTERACT'],
           permissionSummary: '浏览内容、参与投票和反馈',
+          dataAccessScope: 'PUBLIC',
+          dataAccessAreas: ['RESOURCE_AREA', 'RESULT_AREA'],
           scopeSummary: '仅查看开放内容与公开活动',
           description: '负责收集反馈和观察社区趋势。',
         },
@@ -947,6 +1130,7 @@ export function createTemplateDraft(sceneType = 'CUSTOM') {
   return normalizeTemplate({
     sceneType,
     status: 'ACTIVE',
+    roles: [createRoleDraft(1)],
     topicPage: {
       modeTabs: createModeTabs(),
     },
@@ -1095,7 +1279,7 @@ export function buildSceneInitialVersionData(sceneOrTemplate) {
     versions: [
       {
         id: 'v1',
-        name: '版本 1',
+        name: formatVersionName(template.versioning?.namePattern, 1),
         status: 'active',
         createdAt: nowText(),
         publishedAt: nowText(),

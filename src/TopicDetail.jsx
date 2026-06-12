@@ -48,6 +48,7 @@ import {
   deleteVersion,
   getCurrentVersion,
   getVersions,
+  isVersionEditable,
   loadFromStorage,
   moveResource,
   publishVersion,
@@ -58,7 +59,7 @@ import {
   updateResource,
   updateVersionTagLibrary,
 } from './versionStore';
-import { buildSceneInitialVersionData } from './scene/api';
+import { buildSceneInitialVersionData, normalizeVersioningConfig } from './scene/api';
 import { getTopicAdminConfig } from './studyClub/adminTopicMapping';
 import './TopicDetail.css';
 
@@ -251,13 +252,25 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
   const versions = getVersions(versionData);
   const isDraft = currentVersion?.status === 'draft';
   const isActive = currentVersion?.status === 'active';
+  const versioningConfig = useMemo(
+    () => normalizeVersioningConfig(sceneConfig?.versioning),
+    [sceneConfig],
+  );
+  const versioningEnabled = versioningConfig.enabled !== false;
+  const canEditCurrentVersion = isVersionEditable(currentVersion, versioningConfig);
   const resources = currentVersion?.resources || [];
   const tagConfig = topicAdminConfig?.tagConfig || null;
   const sceneTheme = sceneConfig?.theme || null;
-  const resourcePanelTitle = sceneConfig?.topicPage?.resourcePanelTitle || '资料';
-  const addResourceLabel = sceneConfig?.topicPage?.addResourceLabel || '添加资料';
-  const appLabel = sceneConfig?.topicPage?.appLabel || '应用';
-  const emptyStateText = sceneConfig?.topicPage?.emptyStateText || '暂无资料，右键新建文件夹或添加资料';
+  const currentModeConfig = useMemo(() => {
+    const configuredModes = Array.isArray(sceneConfig?.topicPage?.modeTabs)
+      ? sceneConfig.topicPage.modeTabs
+      : [];
+    return configuredModes.find((item) => item?.key === activeTab) || null;
+  }, [activeTab, sceneConfig]);
+  const resourcePanelTitle = currentModeConfig?.resourcePanelTitle || sceneConfig?.topicPage?.resourcePanelTitle || '资料';
+  const addResourceLabel = currentModeConfig?.addResourceLabel || sceneConfig?.topicPage?.addResourceLabel || '添加资料';
+  const appLabel = currentModeConfig?.appLabel || sceneConfig?.topicPage?.appLabel || '应用';
+  const emptyStateText = currentModeConfig?.emptyStateText || sceneConfig?.topicPage?.emptyStateText || '暂无资料，右键新建文件夹或添加资料';
   const detailThemeStyle = sceneTheme
     ? {
         '--td-accent': sceneTheme.accentColor || '#56a8f5',
@@ -703,7 +716,7 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
     const nextData = updateResource(versionData, currentVersion.id, resourceKey, {
       tags: sanitizedTags,
       folderTags: null,
-    });
+    }, versioningConfig);
     setVersionData(nextData);
   };
 
@@ -722,7 +735,7 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
   };
 
   const toggleItemTagSelection = (itemKey, tagId, checked) => {
-    if (!isDraft) {
+    if (!canEditCurrentVersion) {
       message.warning('当前版本不可编辑');
       return;
     }
@@ -736,7 +749,7 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
   };
 
   const handleApplyQuickCombo = (itemKey, combo) => {
-    if (!isDraft) {
+    if (!canEditCurrentVersion) {
       message.warning('当前版本不可编辑');
       return;
     }
@@ -758,7 +771,7 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
   };
 
   const handleQuickTagToggle = (tagId, quick) => {
-    if (!isDraft) {
+    if (!canEditCurrentVersion) {
       message.warning('当前版本不可编辑');
       return;
     }
@@ -768,13 +781,13 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
     const nextData = updateVersionTagLibrary(versionData, currentVersion.id, {
       tagDefinitions: nextDefs,
       tagGroups,
-    });
+    }, versioningConfig);
     setVersionData(nextData);
   };
 
   const handleOpenTagPicker = (resourceKey) => {
     if (!tagConfig) return;
-    if (!isDraft) {
+    if (!canEditCurrentVersion) {
       message.warning('当前版本不可编辑');
       return;
     }
@@ -789,7 +802,7 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
       message.warning('标签名称不能为空');
       return;
     }
-    if (!isDraft) {
+    if (!canEditCurrentVersion) {
       message.warning('当前版本不可编辑');
       return;
     }
@@ -808,7 +821,7 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
     const nextData = updateVersionTagLibrary(versionData, currentVersion.id, {
       tagDefinitions: nextDefs,
       tagGroups,
-    });
+    }, versioningConfig);
     setVersionData(nextData);
     setAddTagOpen(false);
     setNewTagName('');
@@ -928,17 +941,25 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
   }, [inlineRenameItemKey, inlineRenameSurface]);
 
   const handleCreateVersion = () => {
-    const newData = createNewVersion(versionData);
+    const newData = createNewVersion(versionData, versioningConfig);
     if (newData.error) {
       message.warning(newData.error);
       return;
     }
     setVersionData(newData);
-    message.success('新版本已创建，已继承上一版本的资料');
+    message.success(
+      versioningConfig.createMode === 'EMPTY'
+        ? '新版本已创建，请从空白版本开始配置'
+        : '新版本已创建，已继承上一版本的资料',
+    );
   };
 
   const handlePublishVersion = (versionId) => {
-    const newData = publishVersion(versionData, versionId);
+    const newData = publishVersion(versionData, versionId, versioningConfig);
+    if (newData.error) {
+      message.warning(newData.error);
+      return;
+    }
     setVersionData(newData);
     message.success('版本已发布，资料已锁定不可修改');
   };
@@ -949,7 +970,7 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
   };
 
   const handleDeleteVersion = (versionId) => {
-    const newData = deleteVersion(versionData, versionId);
+    const newData = deleteVersion(versionData, versionId, versioningConfig);
     if (newData.error) {
       message.warning(newData.error);
       return;
@@ -959,7 +980,11 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
   };
 
   const handleRollbackVersion = (versionId) => {
-    const newData = rollbackVersion(versionData, versionId);
+    const newData = rollbackVersion(versionData, versionId, versioningConfig);
+    if (newData.error) {
+      message.warning(newData.error);
+      return;
+    }
     setVersionData(newData);
     message.success('已回退到指定版本，该版本现已生效');
   };
@@ -971,8 +996,8 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
   };
 
   const openAddResourceModal = (parentKey = currentListParentKey) => {
-    if (!isDraft) {
-      message.warning('当前版本已发布，请新建版本后再添加资料');
+    if (!canEditCurrentVersion) {
+      message.warning(versioningEnabled ? '当前版本已发布，请新建版本后再添加资料' : '当前内容不可编辑');
       return;
     }
     clearPendingRenameTrigger();
@@ -981,8 +1006,8 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
   };
 
   const handleAddResource = (resource) => {
-    if (!isDraft) {
-      message.warning('当前版本已发布，请新建版本后再添加资料');
+    if (!canEditCurrentVersion) {
+      message.warning(versioningEnabled ? '当前版本已发布，请新建版本后再添加资料' : '当前内容不可编辑');
       return;
     }
     const parentKey = typeof addResourceParentKey === 'undefined'
@@ -991,14 +1016,14 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
     const newData = addResource(versionData, currentVersion.id, {
       ...resource,
       parentKey: parentKey ?? null,
-    });
+    }, versioningConfig);
     setVersionData(newData);
     setAddResourceParentKey(undefined);
     message.success('资料添加成功');
   };
 
   const removeResource = (resourceKey) => {
-    const newData = deleteResource(versionData, currentVersion.id, resourceKey);
+    const newData = deleteResource(versionData, currentVersion.id, resourceKey, versioningConfig);
     setVersionData(newData);
     if (resourceKey === selectedFolderKey) setSelectedFolderKey(null);
     if (resourceKey === previewItem?.key) setPreviewItem(null);
@@ -1013,8 +1038,8 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
   };
 
   const requestDeleteResource = (resource) => {
-    if (!resource || !isDraft) {
-      if (!isDraft) message.warning('当前版本不可编辑');
+    if (!resource || !canEditCurrentVersion) {
+      if (!canEditCurrentVersion) message.warning('当前版本不可编辑');
       return;
     }
     clearPendingRenameTrigger();
@@ -1041,7 +1066,7 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
     const trimmed = inlineRenameName.trim();
 
     if (target && trimmed && trimmed !== target.name) {
-      const newData = updateResource(versionData, currentVersion.id, target.key, { name: trimmed });
+      const newData = updateResource(versionData, currentVersion.id, target.key, { name: trimmed }, versioningConfig);
       setVersionData(newData);
       message.success('已重命名');
     }
@@ -1051,7 +1076,7 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
 
   const startInlineRename = (item, surface = 'list') => {
     if (!item?.key) return;
-    if (!isDraft) {
+    if (!canEditCurrentVersion) {
       message.warning('当前版本不可编辑');
       return;
     }
@@ -1065,7 +1090,7 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
   };
 
   const queueInlineRename = (item, surface = 'list', delay = 220) => {
-    if (!item?.key || !isDraft) return;
+    if (!item?.key || !canEditCurrentVersion) return;
     clearPendingRenameTrigger();
     pendingRenameTimerRef.current = window.setTimeout(() => {
       pendingRenameTimerRef.current = null;
@@ -1136,7 +1161,7 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
   };
 
   const moveDraggedResource = (draggedItem, targetParentKey, targetIndex = null) => {
-    if (!isDraft) {
+    if (!canEditCurrentVersion) {
       message.warning('当前版本不可编辑');
       return false;
     }
@@ -1147,6 +1172,7 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
       draggedItem.key,
       targetParentKey,
       targetIndex,
+      versioningConfig,
     );
     if (nextData === versionData) return false;
     setVersionData(nextData);
@@ -1360,7 +1386,7 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
   };
 
   const createFolderAndStartRename = (parentKey = currentListParentKey, surface = 'list') => {
-    if (!isDraft) {
+    if (!canEditCurrentVersion) {
       message.warning('当前版本不可编辑');
       return;
     }
@@ -1370,7 +1396,7 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
       name: '未命名文件夹',
       isFolder: true,
       parentKey: parentKey ?? null,
-    });
+    }, versioningConfig);
     setVersionData(newData);
     if (parentKey) {
       setExpandedFolders((prev) => {
@@ -1436,19 +1462,19 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
       { type: 'divider' },
       ...(item.isFolder
         ? [
-            { key: 'addResource', icon: <FileAddOutlined />, label: addResourceLabel, disabled: !isDraft },
-            { key: 'newFolder', icon: <FolderAddOutlined />, label: '新建文件夹', disabled: !isDraft },
+            { key: 'addResource', icon: <FileAddOutlined />, label: addResourceLabel, disabled: !canEditCurrentVersion },
+            { key: 'newFolder', icon: <FolderAddOutlined />, label: '新建文件夹', disabled: !canEditCurrentVersion },
             { type: 'divider' },
           ]
         : []),
       ...(tagConfig
         ? [
-            { key: 'tags-manage', icon: <TagsOutlined />, label: '编辑标签', disabled: !isDraft },
+            { key: 'tags-manage', icon: <TagsOutlined />, label: '编辑标签', disabled: !canEditCurrentVersion },
             { type: 'divider' },
           ]
         : []),
-      { key: 'rename', icon: <EditOutlined />, label: '重命名', disabled: !isDraft },
-      { key: 'delete', icon: <DeleteOutlined />, label: '删除', danger: true, disabled: !isDraft },
+      { key: 'rename', icon: <EditOutlined />, label: '重命名', disabled: !canEditCurrentVersion },
+      { key: 'delete', icon: <DeleteOutlined />, label: '删除', danger: true, disabled: !canEditCurrentVersion },
     ];
 
     return {
@@ -1510,8 +1536,8 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
 
   const bgContextMenu = {
     items: [
-      { key: 'newFolder', icon: <FolderAddOutlined />, label: '新建文件夹', disabled: !isDraft },
-      { key: 'addResource', icon: <FileAddOutlined />, label: addResourceLabel, disabled: !isDraft },
+      { key: 'newFolder', icon: <FolderAddOutlined />, label: '新建文件夹', disabled: !canEditCurrentVersion },
+      { key: 'addResource', icon: <FileAddOutlined />, label: addResourceLabel, disabled: !canEditCurrentVersion },
     ],
     onClick: ({ key }) => {
       if (key === 'newFolder') handleCreateFolderAtCurrentLocation(bgMenuSurface);
@@ -1590,7 +1616,7 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
               {!isInlineRenaming ? renderResourceTagDots(item) : null}
               {!isInlineRenaming ? (
                 <span className="topic-tree-item-actions" onClick={(event) => event.stopPropagation()}>
-                  {isDraft ? (
+                  {canEditCurrentVersion ? (
                     <button
                       type="button"
                       className="topic-action-btn"
@@ -1756,7 +1782,7 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
             )}
             {!isInlineRenaming ? (
               <span className="topic-file-row-actions" onClick={(event) => event.stopPropagation()}>
-                {item.isFolder && isDraft ? (
+                {item.isFolder && canEditCurrentVersion ? (
                   <button
                     type="button"
                     className="topic-action-btn"
@@ -1952,98 +1978,101 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
           </div>
         </div>
         <div className="detail-header-right">
-          <Dropdown
-            overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
-            menu={{
-              items: [
-                {
-                  key: 'current',
-                  label: (
-                    <span className="version-dropdown-current">
-                      当前：{currentVersion?.name}
-                      <Tag color={isDraft ? 'orange' : isActive ? 'green' : 'default'} style={{ marginLeft: 8, fontSize: 11 }}>
-                        {isDraft ? '草稿' : isActive ? '生效中' : '已失效'}
-                      </Tag>
-                    </span>
-                  ),
-                  disabled: true,
-                },
-                { type: 'divider' },
-                ...versions.map((version) => {
-                  const statusLabel = version.status === 'active' ? '生效中' : version.status === 'published' ? '已失效' : '草稿';
-                  const statusColor = version.status === 'active' ? 'green' : version.status === 'published' ? 'default' : 'orange';
-                  const canDelete = version.status !== 'active';
-                  return {
-                    key: `switch-${version.id}`,
-                    icon: version.id === currentVersion?.id ? <CheckCircleOutlined /> : <SwapOutlined />,
+          {versioningEnabled ? (
+            <Dropdown
+              overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
+              menu={{
+                items: [
+                  {
+                    key: 'current',
                     label: (
-                      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                        <span onClick={() => handleSwitchVersion(version.id)} style={{ flex: 1 }}>
-                          {version.name}
-                          <Tag color={statusColor} style={{ marginLeft: 8, fontSize: 10 }}>
-                            {statusLabel}
-                          </Tag>
-                        </span>
-                        {canDelete && (
-                          <DeleteOutlined
-                            style={{ color: '#ff4d4f', fontSize: 12, marginLeft: 8 }}
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              handleDeleteVersion(version.id);
-                            }}
-                          />
-                        )}
+                      <span className="version-dropdown-current">
+                        当前：{currentVersion?.name}
+                        <Tag color={isDraft ? 'orange' : isActive ? 'green' : 'default'} style={{ marginLeft: 8, fontSize: 11 }}>
+                          {isDraft ? '草稿' : isActive ? '生效中' : '已失效'}
+                        </Tag>
                       </span>
                     ),
-                    onClick: () => handleSwitchVersion(version.id),
-                  };
-                }),
-                { type: 'divider' },
-                {
-                  key: 'new-version',
-                  icon: <PlusOutlined />,
-                  label: '新建版本',
-                  onClick: handleCreateVersion,
-                },
-                ...(isDraft
-                  ? [
-                      {
-                        key: 'publish',
-                        icon: <SendOutlined />,
-                        label: '发布当前版本',
-                        onClick: () => handlePublishVersion(currentVersion.id),
-                      },
-                    ]
-                  : []),
-                ...(currentVersion?.status === 'published'
-                  ? [
-                      {
-                        key: 'rollback',
-                        icon: <SwapOutlined />,
-                        label: '回退到此版本（设为生效）',
-                        onClick: () => handleRollbackVersion(currentVersion.id),
-                      },
-                    ]
-                  : []),
-              ],
-            }}
-            trigger={['click']}
-            placement="bottomRight"
-          >
-            <Button
-              className="version-header-btn"
-              icon={<BranchesOutlined />}
-              size="small"
+                    disabled: true,
+                  },
+                  { type: 'divider' },
+                  ...versions.map((version) => {
+                    const statusLabel = version.status === 'active' ? '生效中' : version.status === 'published' ? '已失效' : '草稿';
+                    const statusColor = version.status === 'active' ? 'green' : version.status === 'published' ? 'default' : 'orange';
+                    const canDelete = version.status !== 'active'
+                      && (version.status !== 'published' || versioningConfig.allowDeletePublished);
+                    return {
+                      key: `switch-${version.id}`,
+                      icon: version.id === currentVersion?.id ? <CheckCircleOutlined /> : <SwapOutlined />,
+                      label: (
+                        <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                          <span onClick={() => handleSwitchVersion(version.id)} style={{ flex: 1 }}>
+                            {version.name}
+                            <Tag color={statusColor} style={{ marginLeft: 8, fontSize: 10 }}>
+                              {statusLabel}
+                            </Tag>
+                          </span>
+                          {canDelete ? (
+                            <DeleteOutlined
+                              style={{ color: '#ff4d4f', fontSize: 12, marginLeft: 8 }}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handleDeleteVersion(version.id);
+                              }}
+                            />
+                          ) : null}
+                        </span>
+                      ),
+                      onClick: () => handleSwitchVersion(version.id),
+                    };
+                  }),
+                  { type: 'divider' },
+                  {
+                    key: 'new-version',
+                    icon: <PlusOutlined />,
+                    label: '新建版本',
+                    onClick: handleCreateVersion,
+                  },
+                  ...(isDraft
+                    ? [
+                        {
+                          key: 'publish',
+                          icon: <SendOutlined />,
+                          label: '发布当前版本',
+                          onClick: () => handlePublishVersion(currentVersion.id),
+                        },
+                      ]
+                    : []),
+                  ...(currentVersion?.status === 'published' && versioningConfig.allowRollback
+                    ? [
+                        {
+                          key: 'rollback',
+                          icon: <SwapOutlined />,
+                          label: '回退到此版本（设为生效）',
+                          onClick: () => handleRollbackVersion(currentVersion.id),
+                        },
+                      ]
+                    : []),
+                ],
+              }}
+              trigger={['click']}
+              placement="bottomRight"
             >
-              {currentVersion?.name}
-              <Tag
-                color={isDraft ? 'orange' : isActive ? 'green' : 'default'}
-                className="version-header-tag"
+              <Button
+                className="version-header-btn"
+                icon={<BranchesOutlined />}
+                size="small"
               >
-                {isDraft ? '草稿' : isActive ? '生效中' : '已失效'}
-              </Tag>
-            </Button>
-          </Dropdown>
+                {currentVersion?.name}
+                <Tag
+                  color={isDraft ? 'orange' : isActive ? 'green' : 'default'}
+                  className="version-header-tag"
+                >
+                  {isDraft ? '草稿' : isActive ? '生效中' : '已失效'}
+                </Tag>
+              </Button>
+            </Dropdown>
+          ) : null}
           <UserOutlined className="header-icon" />
           <CommentOutlined className="header-icon" />
         </div>
@@ -2068,7 +2097,7 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
           assessment={currentVersion?.assessment}
           assessmentChat={currentVersion?.assessmentChat}
           resources={resources}
-          isDraft={isDraft}
+          isDraft={canEditCurrentVersion}
           onUpdateAssessment={handleUpdateAssessment}
           onUpdateChat={handleUpdateAssessmentChat}
           onOpenAddModal={() => openAddResourceModal(null)}
@@ -2077,7 +2106,7 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
               name,
               isFolder: true,
               parentKey: null,
-            });
+            }, versioningConfig);
             setVersionData(newData);
           }}
         />
@@ -2096,8 +2125,8 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
 
             <div className="panel-actions">
               <div
-                className={`panel-action-btn ${!isDraft ? 'panel-action-btn-disabled' : ''}`}
-                onClick={() => isDraft && openAddResourceModal(currentListParentKey)}
+                className={`panel-action-btn ${!canEditCurrentVersion ? 'panel-action-btn-disabled' : ''}`}
+                onClick={() => canEditCurrentVersion && openAddResourceModal(currentListParentKey)}
               >
                 <PlusOutlined style={{ fontSize: 12 }} />
                 <span>{addResourceLabel}</span>
@@ -2126,14 +2155,14 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
                         icon: <FileAddOutlined />,
                         label: addResourceLabel,
                         onClick: () => openAddResourceModal(null),
-                        disabled: !isDraft,
+                        disabled: !canEditCurrentVersion,
                       },
                       {
                         key: 'new-folder',
                         icon: <FolderAddOutlined />,
                         label: '新建文件夹',
                         onClick: () => createFolderAndStartRename(null, 'tree'),
-                        disabled: !isDraft,
+                        disabled: !canEditCurrentVersion,
                       },
                     ],
                   }}
@@ -2209,7 +2238,7 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
                               <div className="folder-tag-row">
                                 <span className="folder-tag-label">标签</span>
                                 {renderResourceTagText(selectedFolder) || <span className="topic-tags-empty">未设置标签</span>}
-                                {isDraft ? (
+                                {canEditCurrentVersion ? (
                                   <Button size="small" icon={<TagsOutlined />} onClick={() => handleOpenTagPicker(selectedFolder.key)}>
                                     编辑标签
                                   </Button>
@@ -2220,7 +2249,7 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
                         </div>
                       </div>
                       <div className="folder-info-right">
-                        <Button icon={<PlusOutlined />} disabled={!isDraft} onClick={() => openAddResourceModal(currentListParentKey)}>{addResourceLabel}</Button>
+                        <Button icon={<PlusOutlined />} disabled={!canEditCurrentVersion} onClick={() => openAddResourceModal(currentListParentKey)}>{addResourceLabel}</Button>
                       </div>
                     </div>
                   </>
@@ -2234,7 +2263,7 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
                           <div className="folder-desc">{fileCount} 个文件 {folderCount} 个文件夹</div>
                         </div>
                       </div>
-                      <Button className="add-resource-btn" icon={<PlusOutlined />} disabled={!isDraft} onClick={() => openAddResourceModal(null)}>
+                      <Button className="add-resource-btn" icon={<PlusOutlined />} disabled={!canEditCurrentVersion} onClick={() => openAddResourceModal(null)}>
                         {addResourceLabel}
                       </Button>
                     </div>

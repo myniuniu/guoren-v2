@@ -5,6 +5,7 @@ import {
   Empty,
   Form,
   Input,
+  InputNumber,
   Popconfirm,
   Select,
   Space,
@@ -29,11 +30,16 @@ import {
   HOME_INTRO_MODE_OPTIONS,
   METADATA_FIELD_TYPE_OPTIONS,
   MODE_TAB_PRESET_OPTIONS,
+  ROLE_DATA_ACCESS_AREA_OPTIONS,
+  ROLE_DATA_SCOPE_OPTIONS,
+  ROLE_FUNCTION_PERMISSION_OPTIONS,
   SCENE_MENU_OPTIONS,
   SCENE_TYPE_OPTIONS,
   TEMPLATE_STATUS_OPTIONS,
   TOOL_OPTIONS,
   TOOL_PLACEMENT_OPTIONS,
+  VERSION_CREATE_MODE_OPTIONS,
+  createRoleDraft,
   createTemplateDraft,
   getSceneStoreChangeEventName,
   getSceneTypeLabel,
@@ -43,7 +49,12 @@ import '../system/SystemModule.css';
 import './SceneTemplateModule.css';
 
 const { TextArea } = Input;
-const CUSTOM_MODE_VALUE = '__custom__';
+const MODE_TAB_HINT_MAP = {
+  knowledge: '用于知识资料、课程内容等展示；停用后该页签不会出现在主题中。',
+  ai: '用于 AI 问答、辅学、共创助手等内容；停用后该页签不会出现在主题中。',
+  practice: '用于实训任务、项目练习和过程产出；停用后该页签不会出现在主题中。',
+  assessment: '用于考试、量规、评阅等考核配置；启用后会进入专用的考核配置页。',
+};
 
 function getErrorMessage(error, fallback = '操作失败') {
   return error?.message || fallback;
@@ -76,45 +87,26 @@ function getEntryMethodLabel(method) {
   return ENTRY_METHOD_OPTIONS.find((item) => item.value === method)?.label || method;
 }
 
+function getOptionLabels(options, values) {
+  const labelMap = new Map(options.map((item) => [item.value, item.label]));
+  return (Array.isArray(values) ? values : [])
+    .map((value) => labelMap.get(value) || value)
+    .filter(Boolean);
+}
+
+function getRoleDataScopeLabel(value) {
+  return ROLE_DATA_SCOPE_OPTIONS.find((item) => item.value === value)?.label || value || '-';
+}
+
+function getVersionCreateModeLabel(value) {
+  return VERSION_CREATE_MODE_OPTIONS.find((item) => item.value === value)?.label || value || '-';
+}
+
 function countEnabledTools(template) {
   return new Set([
     ...(template?.toolAreas?.resourceAreaTools || []),
     ...(template?.toolAreas?.resultAreaTools || []),
   ]).size;
-}
-
-function getModePresetLabel(modeKey) {
-  return MODE_TAB_PRESET_OPTIONS.find((item) => item.value === modeKey)?.label || '';
-}
-
-function isCustomModeKey(modeKey) {
-  return Boolean(modeKey) && !MODE_TAB_PRESET_OPTIONS.some((item) => item.value === modeKey);
-}
-
-function buildCustomModeKey(modeTabs = []) {
-  const existingKeys = new Set(
-    modeTabs
-      .map((item) => item?.key)
-      .filter(Boolean),
-  );
-  let index = Math.max(modeTabs.length, 0) + 1;
-  let nextKey = `custom_mode_${index}`;
-
-  while (existingKeys.has(nextKey)) {
-    index += 1;
-    nextKey = `custom_mode_${index}`;
-  }
-
-  return nextKey;
-}
-
-function createCustomModeTab(modeTabs = []) {
-  return {
-    id: `mode_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-    key: buildCustomModeKey(modeTabs),
-    label: '自定义模式',
-    enabled: true,
-  };
 }
 
 function SceneTemplatePreview({ template, sceneCount }) {
@@ -151,9 +143,42 @@ function SceneTemplatePreview({ template, sceneCount }) {
 
       <div className="scene-template-preview-section">
         <div className="scene-template-preview-section-title">角色限定</div>
-        <div className="scene-template-tag-wrap">
+        <div className="scene-template-role-grid">
           {template.roles.map((role) => (
-            <Tag key={role.id}>{role.name}</Tag>
+            <div key={role.id} className="scene-template-role-card">
+              <div className="scene-template-role-head">
+                <strong>{role.name}</strong>
+                {role.agentName ? <Tag color="cyan">{role.agentName}</Tag> : null}
+              </div>
+              <div className="scene-template-role-desc">{role.description || '未填写角色说明'}</div>
+              <div className="scene-template-role-meta">
+                <span>功能授权</span>
+                <div className="scene-template-tag-wrap">
+                  {getOptionLabels(ROLE_FUNCTION_PERMISSION_OPTIONS, role.functionalPermissions).length > 0
+                    ? getOptionLabels(ROLE_FUNCTION_PERMISSION_OPTIONS, role.functionalPermissions).map((label) => (
+                        <Tag key={`${role.id}_${label}`} color="blue">{label}</Tag>
+                      ))
+                    : <span className="scene-template-role-empty">未配置</span>}
+                </div>
+              </div>
+              <div className="scene-template-role-meta">
+                <span>数据访问</span>
+                <div className="scene-template-tag-wrap">
+                  <Tag color="geekblue">{getRoleDataScopeLabel(role.dataAccessScope)}</Tag>
+                  {getOptionLabels(ROLE_DATA_ACCESS_AREA_OPTIONS, role.dataAccessAreas).length > 0
+                    ? getOptionLabels(ROLE_DATA_ACCESS_AREA_OPTIONS, role.dataAccessAreas).map((label) => (
+                        <Tag key={`${role.id}_data_${label}`}>{label}</Tag>
+                      ))
+                    : <span className="scene-template-role-empty">未配置数据域</span>}
+                </div>
+              </div>
+              {role.permissionSummary ? (
+                <div className="scene-template-role-note">功能说明：{role.permissionSummary}</div>
+              ) : null}
+              {role.scopeSummary ? (
+                <div className="scene-template-role-note">访问说明：{role.scopeSummary}</div>
+              ) : null}
+            </div>
           ))}
         </div>
       </div>
@@ -223,6 +248,29 @@ function SceneTemplatePreview({ template, sceneCount }) {
       </div>
 
       <div className="scene-template-preview-section">
+        <div className="scene-template-preview-section-title">版本管理</div>
+        <div className="scene-template-inline-meta">
+          <span>{template.versioning?.enabled !== false ? '启用版本管理' : '不启用版本管理'}</span>
+          {template.versioning?.enabled !== false ? (
+            <>
+              <span>最多 {template.versioning?.maxVersions || 5} 个版本</span>
+              <span>{getVersionCreateModeLabel(template.versioning?.createMode)}</span>
+            </>
+          ) : null}
+        </div>
+        {template.versioning?.enabled !== false ? (
+          <div className="scene-template-tag-wrap">
+            {template.versioning?.allowRollback ? <Tag color="blue">允许回退</Tag> : <Tag>不允许回退</Tag>}
+            {template.versioning?.allowDeletePublished ? <Tag color="blue">允许删除历史版本</Tag> : <Tag>历史版本不可删</Tag>}
+            <Tag>{template.versioning?.namePattern || '版本 {index}'}</Tag>
+          </div>
+        ) : null}
+        {template.versioning?.description ? (
+          <div className="scene-template-role-note">规则说明：{template.versioning.description}</div>
+        ) : null}
+      </div>
+
+      <div className="scene-template-preview-section">
         <div className="scene-template-preview-section-title">状态规则与智能体</div>
         <div className="scene-template-preview-list">
           {(template.statusRules || []).map((rule) => (
@@ -263,26 +311,31 @@ export default function SceneTemplateModule() {
   const [saving, setSaving] = useState(false);
 
   const [templateForm] = Form.useForm();
-  const watchedModeTabsValue = Form.useWatch(['topicPage', 'modeTabs'], templateForm);
-  const watchedRolesValue = Form.useWatch('roles', templateForm);
-  const watchedMetadataFieldsValue = Form.useWatch('metadataFields', templateForm);
-  const watchedToolConfigsValue = Form.useWatch('toolConfigs', templateForm);
-  const watchedFolderTypesValue = Form.useWatch('folderTypes', templateForm);
-  const watchedStatusRulesValue = Form.useWatch('statusRules', templateForm);
-  const watchedAgentsValue = Form.useWatch('agents', templateForm);
-  const watchedModeTabs = useMemo(() => watchedModeTabsValue || [], [watchedModeTabsValue]);
+  const watchedRolesValue = Form.useWatch('roles', { form: templateForm, preserve: true });
+  const watchedMetadataFieldsValue = Form.useWatch('metadataFields', { form: templateForm, preserve: true });
+  const watchedToolConfigsValue = Form.useWatch('toolConfigs', { form: templateForm, preserve: true });
+  const watchedFolderTypesValue = Form.useWatch('folderTypes', { form: templateForm, preserve: true });
+  const watchedStatusRulesValue = Form.useWatch('statusRules', { form: templateForm, preserve: true });
+  const watchedAgentsValue = Form.useWatch('agents', { form: templateForm, preserve: true });
+  const watchedVersioningValue = Form.useWatch('versioning', { form: templateForm, preserve: true });
   const watchedRoles = useMemo(() => watchedRolesValue || [], [watchedRolesValue]);
   const watchedMetadataFields = useMemo(() => watchedMetadataFieldsValue || [], [watchedMetadataFieldsValue]);
   const watchedToolConfigs = useMemo(() => watchedToolConfigsValue || [], [watchedToolConfigsValue]);
   const watchedFolderTypes = useMemo(() => watchedFolderTypesValue || [], [watchedFolderTypesValue]);
   const watchedStatusRules = useMemo(() => watchedStatusRulesValue || [], [watchedStatusRulesValue]);
   const watchedAgents = useMemo(() => watchedAgentsValue || [], [watchedAgentsValue]);
+  const watchedVersioning = useMemo(() => watchedVersioningValue || {}, [watchedVersioningValue]);
   const roleOptions = useMemo(
     () => watchedRoles
       .filter((role) => role?.id && role?.name)
       .map((role) => ({ value: role.id, label: role.name })),
     [watchedRoles],
   );
+  const roleSummary = useMemo(() => ({
+    total: watchedRoles.length,
+    withFunctionalPermissions: watchedRoles.filter((role) => (role?.functionalPermissions || []).length > 0).length,
+    withDataAccess: watchedRoles.filter((role) => (role?.dataAccessAreas || []).length > 0).length,
+  }), [watchedRoles]);
 
   const sceneCountMap = useMemo(() => {
     return scenes.reduce((map, item) => {
@@ -358,7 +411,21 @@ export default function SceneTemplateModule() {
   useEffect(() => {
     if (!drawerOpen || !editingTemplate) return;
     templateForm.setFieldsValue(editingTemplate);
-  }, [drawerOpen, editingTemplate, templateForm]);
+    if ((!editingTemplate.roles || editingTemplate.roles.length === 0) && !isExistingEditing) {
+      templateForm.setFieldValue('roles', [createRoleDraft(1)]);
+    }
+  }, [drawerOpen, editingTemplate, isExistingEditing, templateForm]);
+
+  function appendRole() {
+    const currentRoles = templateForm.getFieldValue('roles') || [];
+    templateForm.setFieldValue('roles', [...currentRoles, createRoleDraft(currentRoles.length + 1)]);
+  }
+
+  function removeRole(index) {
+    const currentRoles = [...(templateForm.getFieldValue('roles') || [])];
+    currentRoles.splice(index, 1);
+    templateForm.setFieldValue('roles', currentRoles);
+  }
 
   function openCreateDrawer() {
     const draft = createTemplateDraft('CUSTOM');
@@ -378,59 +445,13 @@ export default function SceneTemplateModule() {
     setDrawerOpen(true);
   }
 
-  function setModeTabs(nextModeTabs) {
-    templateForm.setFieldValue(['topicPage', 'modeTabs'], nextModeTabs);
-  }
-
-  function handleAddModeTab() {
-    setModeTabs([...watchedModeTabs, createCustomModeTab(watchedModeTabs)]);
-  }
-
-  function handleRemoveModeTab(index) {
-    if (watchedModeTabs.length <= 1) {
-      message.warning('至少保留一个主题模式');
-      return;
-    }
-    const nextModeTabs = [...watchedModeTabs];
-    nextModeTabs.splice(index, 1);
-    setModeTabs(nextModeTabs);
-  }
-
-  function handleChangeModeType(index, nextModeType) {
-    const nextModeTabs = [...watchedModeTabs];
-    const currentMode = nextModeTabs[index] || {};
-    const currentDefaultLabel = getModePresetLabel(currentMode.key) || '自定义模式';
-    const nextKey = nextModeType === CUSTOM_MODE_VALUE
-      ? (isCustomModeKey(currentMode.key) ? currentMode.key : buildCustomModeKey(nextModeTabs))
-      : nextModeType;
-    const nextDefaultLabel = getModePresetLabel(nextKey) || '自定义模式';
-
-    nextModeTabs[index] = {
-      ...currentMode,
-      id: currentMode.id || `mode_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      key: nextKey,
-      label: !currentMode.label || currentMode.label === currentDefaultLabel ? nextDefaultLabel : currentMode.label,
-      enabled: currentMode.enabled !== false,
-    };
-
-    setModeTabs(nextModeTabs);
-  }
-
   async function handleSaveTemplate() {
     setSaving(true);
     try {
       const values = await templateForm.validateFields();
       const modeTabs = Array.isArray(values.topicPage?.modeTabs) ? values.topicPage.modeTabs : [];
-      if (modeTabs.length === 0) {
-        message.error('至少保留一个主题模式');
-        return;
-      }
-      const duplicateModeKey = modeTabs
-        .map((item) => String(item?.key || '').trim())
-        .filter(Boolean)
-        .find((key, index, list) => list.indexOf(key) !== index);
-      if (duplicateModeKey) {
-        message.error(`主题模式标识重复：${duplicateModeKey}`);
+      if (modeTabs.filter((item) => item?.enabled !== false).length === 0) {
+        message.error('至少启用一个主题模式');
         return;
       }
       const saved = await sceneApi.saveTemplate({
@@ -753,210 +774,10 @@ export default function SceneTemplateModule() {
                 ),
               },
               {
-                key: 'theme',
-                label: '主题样式',
+                key: 'metadata',
+                label: '主题元数据',
                 children: (
                   <div className="scene-template-drawer-section">
-                    <div className="scene-template-form-grid">
-                      <Form.Item label="模板角标" name={['theme', 'badgeText']}>
-                        <Input placeholder="例如：课堂教学" />
-                      </Form.Item>
-                      <Form.Item label="表情符号" name={['theme', 'emoji']}>
-                        <Input placeholder="例如：📘" />
-                      </Form.Item>
-                      <Form.Item label="封面起始色" name={['theme', 'coverStart']}>
-                        <Input placeholder="#3568ff" />
-                      </Form.Item>
-                      <Form.Item label="封面结束色" name={['theme', 'coverEnd']}>
-                        <Input placeholder="#6fd6ff" />
-                      </Form.Item>
-                      <Form.Item label="强调色" name={['theme', 'accentColor']}>
-                        <Input placeholder="#2f64f2" />
-                      </Form.Item>
-                      <Form.Item label="首页短提示" name={['theme', 'surfaceHint']}>
-                        <Input placeholder="例如：课件、作业、互动" />
-                      </Form.Item>
-                      <Form.Item className="scene-template-form-span-2" label="主页主标题" name={['theme', 'heroTitle']}>
-                        <Input placeholder="例如：以课程、作业和课堂互动为核心的教学空间" />
-                      </Form.Item>
-                      <Form.Item className="scene-template-form-span-2" label="主页副标题" name={['theme', 'heroSubtitle']}>
-                        <TextArea rows={3} placeholder="说明该场景的主题风格、定位和能力范围" />
-                      </Form.Item>
-                      <Form.Item label="左侧资料区标题" name={['topicPage', 'resourcePanelTitle']}>
-                        <Input placeholder="例如：课程资料" />
-                      </Form.Item>
-                      <Form.Item label="新增资料按钮文案" name={['topicPage', 'addResourceLabel']}>
-                        <Input placeholder="例如：添加课件" />
-                      </Form.Item>
-                      <Form.Item label="应用区按钮文案" name={['topicPage', 'appLabel']}>
-                        <Input placeholder="例如：教学工具" />
-                      </Form.Item>
-                      <Form.Item label="空状态文案" name={['topicPage', 'emptyStateText']}>
-                        <Input placeholder="例如：暂无课件，可先创建课程目录" />
-                      </Form.Item>
-                    </div>
-
-                    <div className="scene-template-subsection-title with-action">
-                      <span>主题模式标签</span>
-                      <Button size="small" icon={<PlusOutlined />} onClick={handleAddModeTab}>
-                        添加模式
-                      </Button>
-                    </div>
-                    <div className="scene-template-mode-grid">
-                      {watchedModeTabs.map((mode, index) => {
-                        const currentModeType = !mode?.key || isCustomModeKey(mode.key)
-                          ? CUSTOM_MODE_VALUE
-                          : mode.key;
-                        const usedPresetKeys = new Set(
-                          watchedModeTabs
-                            .filter((_, modeIndex) => modeIndex !== index)
-                            .map((item) => item?.key)
-                            .filter((modeKey) => MODE_TAB_PRESET_OPTIONS.some((option) => option.value === modeKey)),
-                        );
-
-                        return (
-                          <div key={mode?.id || index} className="scene-template-mode-card">
-                            <div className="scene-template-list-card-head">
-                              <strong>模式 {index + 1}</strong>
-                              <Button
-                                type="link"
-                                danger
-                                icon={<DeleteOutlined />}
-                                onClick={() => handleRemoveModeTab(index)}
-                              >
-                                删除
-                              </Button>
-                            </div>
-                            <div className="scene-template-form-grid">
-                              <Form.Item name={['topicPage', 'modeTabs', index, 'id']} hidden>
-                                <Input />
-                              </Form.Item>
-                              {currentModeType === CUSTOM_MODE_VALUE ? null : (
-                                <Form.Item name={['topicPage', 'modeTabs', index, 'key']} hidden>
-                                  <Input />
-                                </Form.Item>
-                              )}
-                              <Form.Item label="模式用途">
-                                <Select
-                                  value={currentModeType || CUSTOM_MODE_VALUE}
-                                  onChange={(value) => handleChangeModeType(index, value)}
-                                  options={[
-                                    ...MODE_TAB_PRESET_OPTIONS.map((item) => ({
-                                      value: item.value,
-                                      label: item.label,
-                                      disabled: usedPresetKeys.has(item.value),
-                                    })),
-                                    { value: CUSTOM_MODE_VALUE, label: '自定义模式' },
-                                  ]}
-                                />
-                              </Form.Item>
-                              {currentModeType === CUSTOM_MODE_VALUE ? (
-                                <Form.Item
-                                  label="模式标识"
-                                  name={['topicPage', 'modeTabs', index, 'key']}
-                                  rules={[{ required: true, message: '请输入模式标识' }]}
-                                >
-                                  <Input placeholder="例如：co_creation" />
-                                </Form.Item>
-                              ) : (
-                                <Form.Item label="内部标识">
-                                  <Input value={mode?.key} disabled />
-                                </Form.Item>
-                              )}
-                              <Form.Item
-                                label="展示名称"
-                                name={['topicPage', 'modeTabs', index, 'label']}
-                                rules={[{ required: true, message: '请输入模式名称' }]}
-                              >
-                                <Input placeholder="输入展示名称" />
-                              </Form.Item>
-                              <Form.Item label="启用" name={['topicPage', 'modeTabs', index, 'enabled']} valuePropName="checked">
-                                <Switch />
-                              </Form.Item>
-                            </div>
-                            <div className="scene-template-mode-hint">
-                              {mode?.key === 'assessment'
-                                ? '该模式会进入考核配置页，适合考试、评阅、量规等配置类场景。'
-                                : '新增或重命名后的模式会作为普通主题页模式展示。'}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ),
-              },
-              {
-                key: 'roles',
-                label: '角色与字段',
-                children: (
-                  <div className="scene-template-drawer-section">
-                    <div className="scene-template-subsection-title with-action">
-                      <span>角色限定</span>
-                      <Button
-                        size="small"
-                        icon={<PlusOutlined />}
-                        onClick={() => {
-                          const nextRoles = [...watchedRoles, {
-                            id: `role_${Date.now()}`,
-                            key: '',
-                            name: '',
-                            description: '',
-                            agentName: '',
-                            permissionSummary: '',
-                            scopeSummary: '',
-                          }];
-                          templateForm.setFieldsValue({ roles: nextRoles });
-                        }}
-                      >
-                        添加角色
-                      </Button>
-                    </div>
-
-                    {watchedRoles.map((role, index) => (
-                      <div key={role?.id || index} className="scene-template-list-card">
-                        <div className="scene-template-list-card-head">
-                          <strong>角色 {index + 1}</strong>
-                          <Button
-                            type="link"
-                            danger
-                            icon={<DeleteOutlined />}
-                            onClick={() => {
-                              const nextRoles = [...watchedRoles];
-                              nextRoles.splice(index, 1);
-                              templateForm.setFieldsValue({ roles: nextRoles });
-                            }}
-                          >
-                            删除
-                          </Button>
-                        </div>
-                        <div className="scene-template-form-grid">
-                          <Form.Item label="角色标识" name={['roles', index, 'key']}>
-                            <Input placeholder="例如：teacher" />
-                          </Form.Item>
-                          <Form.Item label="角色名称" name={['roles', index, 'name']}>
-                            <Input placeholder="例如：教师" />
-                          </Form.Item>
-                          <Form.Item label="绑定智能体" name={['roles', index, 'agentName']}>
-                            <Input placeholder="例如：AI助教" />
-                          </Form.Item>
-                          <Form.Item label="权限摘要" name={['roles', index, 'permissionSummary']}>
-                            <Input placeholder="例如：可管理主题、资料和作业" />
-                          </Form.Item>
-                          <Form.Item label="范围限制" name={['roles', index, 'scopeSummary']}>
-                            <Input placeholder="例如：仅访问学员开放内容" />
-                          </Form.Item>
-                          <div />
-                          <Form.Item className="scene-template-form-span-2" label="角色说明" name={['roles', index, 'description']}>
-                            <TextArea rows={2} placeholder="说明该角色在场景中的职责" />
-                          </Form.Item>
-                          <Form.Item name={['roles', index, 'id']} hidden>
-                            <Input />
-                          </Form.Item>
-                        </div>
-                      </div>
-                    ))}
-
                     <div className="scene-template-subsection-title with-action">
                       <span>主题元数据</span>
                       <Button
@@ -1012,6 +833,273 @@ export default function SceneTemplateModule() {
                             <TextArea rows={2} placeholder="说明该字段在场景中的业务含义" />
                           </Form.Item>
                           <Form.Item name={['metadataFields', index, 'id']} hidden>
+                            <Input />
+                          </Form.Item>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ),
+              },
+              {
+                key: 'theme',
+                label: '主题样式',
+                children: (
+                  <div className="scene-template-drawer-section">
+                    <div className="scene-template-form-grid">
+                      <Form.Item label="模板角标" name={['theme', 'badgeText']}>
+                        <Input placeholder="例如：课堂教学" />
+                      </Form.Item>
+                      <Form.Item label="表情符号" name={['theme', 'emoji']}>
+                        <Input placeholder="例如：📘" />
+                      </Form.Item>
+                      <Form.Item label="封面起始色" name={['theme', 'coverStart']}>
+                        <Input placeholder="#3568ff" />
+                      </Form.Item>
+                      <Form.Item label="封面结束色" name={['theme', 'coverEnd']}>
+                        <Input placeholder="#6fd6ff" />
+                      </Form.Item>
+                      <Form.Item label="强调色" name={['theme', 'accentColor']}>
+                        <Input placeholder="#2f64f2" />
+                      </Form.Item>
+                      <Form.Item label="首页短提示" name={['theme', 'surfaceHint']}>
+                        <Input placeholder="例如：课件、作业、互动" />
+                      </Form.Item>
+                      <Form.Item className="scene-template-form-span-2" label="主页主标题" name={['theme', 'heroTitle']}>
+                        <Input placeholder="例如：以课程、作业和课堂互动为核心的教学空间" />
+                      </Form.Item>
+                      <Form.Item className="scene-template-form-span-2" label="主页副标题" name={['theme', 'heroSubtitle']}>
+                        <TextArea rows={3} placeholder="说明该场景的主题风格、定位和能力范围" />
+                      </Form.Item>
+                      <Form.Item label="左侧资料区标题" name={['topicPage', 'resourcePanelTitle']}>
+                        <Input placeholder="例如：课程资料" />
+                      </Form.Item>
+                      <Form.Item label="新增资料按钮文案" name={['topicPage', 'addResourceLabel']}>
+                        <Input placeholder="例如：添加课件" />
+                      </Form.Item>
+                      <Form.Item label="应用区按钮文案" name={['topicPage', 'appLabel']}>
+                        <Input placeholder="例如：教学工具" />
+                      </Form.Item>
+                      <Form.Item label="空状态文案" name={['topicPage', 'emptyStateText']}>
+                        <Input placeholder="例如：暂无课件，可先创建课程目录" />
+                      </Form.Item>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: 'modeTabs',
+                label: '主题模式',
+                children: (
+                  <div className="scene-template-mode-page">
+                    <div className="scene-template-mode-grid">
+                      {MODE_TAB_PRESET_OPTIONS.map((mode, index) => (
+                        <div key={mode.value} className="scene-template-mode-card">
+                          <Form.Item name={['topicPage', 'modeTabs', index, 'id']} hidden>
+                            <Input />
+                          </Form.Item>
+                          <Form.Item name={['topicPage', 'modeTabs', index, 'key']} hidden>
+                            <Input />
+                          </Form.Item>
+                          <div className="scene-template-list-card-head">
+                            <strong>{mode.label}</strong>
+                            <div className="scene-template-mode-toggle">
+                              <span>启用</span>
+                              <Form.Item name={['topicPage', 'modeTabs', index, 'enabled']} valuePropName="checked" noStyle>
+                                <Switch />
+                              </Form.Item>
+                            </div>
+                          </div>
+                          <div className="scene-template-form-grid">
+                            <Form.Item
+                              label="页签名称"
+                              name={['topicPage', 'modeTabs', index, 'label']}
+                              rules={[{ required: true, message: '请输入页签名称' }]}
+                            >
+                              <Input placeholder={mode.label} />
+                            </Form.Item>
+                            <div className="scene-template-mode-hint">
+                              {MODE_TAB_HINT_MAP[mode.value] || '可修改名称和模式内文案配置。'}
+                            </div>
+                            <Form.Item label="资料区标题" name={['topicPage', 'modeTabs', index, 'resourcePanelTitle']}>
+                              <Input placeholder="留空则使用上方默认资料区标题" />
+                            </Form.Item>
+                            <Form.Item label="新增资料按钮" name={['topicPage', 'modeTabs', index, 'addResourceLabel']}>
+                              <Input placeholder="留空则使用上方默认新增按钮文案" />
+                            </Form.Item>
+                            <Form.Item label="应用区按钮" name={['topicPage', 'modeTabs', index, 'appLabel']}>
+                              <Input placeholder="留空则使用上方默认应用区按钮文案" />
+                            </Form.Item>
+                            <div />
+                            <Form.Item
+                              className="scene-template-form-span-2"
+                              label="空状态文案"
+                              name={['topicPage', 'modeTabs', index, 'emptyStateText']}
+                            >
+                              <TextArea rows={2} placeholder="留空则使用上方默认空状态文案" />
+                            </Form.Item>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: 'roles',
+                label: '角色限定',
+                children: (
+                  <div className="scene-template-drawer-section">
+                    <div className="scene-template-subsection-title with-action">
+                      <span>角色限定</span>
+                      {watchedRoles.length > 0 ? (
+                        <Button size="small" icon={<PlusOutlined />} onClick={appendRole}>
+                          添加角色
+                        </Button>
+                      ) : null}
+                    </div>
+
+                    <div className="scene-template-role-summary">
+                      <div className="scene-template-role-summary-item">
+                        <span>角色数</span>
+                        <strong>{roleSummary.total}</strong>
+                      </div>
+                      <div className="scene-template-role-summary-item">
+                        <span>已配功能授权</span>
+                        <strong>{roleSummary.withFunctionalPermissions}</strong>
+                      </div>
+                      <div className="scene-template-role-summary-item">
+                        <span>已配数据访问</span>
+                        <strong>{roleSummary.withDataAccess}</strong>
+                      </div>
+                    </div>
+
+                    {watchedRoles.length === 0 ? (
+                      <div className="scene-template-role-empty-panel">
+                        <div className="scene-template-role-empty-copy">
+                          <strong>先创建角色，再配置权限和数据访问范围</strong>
+                          <span>每个角色都可以绑定智能体，单独设置功能授权和数据访问授权。</span>
+                        </div>
+                        <Button
+                          type="primary"
+                          icon={<PlusOutlined />}
+                          onClick={() => templateForm.setFieldValue('roles', [createRoleDraft(1)])}
+                        >
+                          创建首个角色
+                        </Button>
+                      </div>
+                    ) : null}
+
+                    {watchedRoles.map((role, index) => (
+                      <div key={role?.id || index} className="scene-template-list-card">
+                        <div className="scene-template-list-card-head">
+                          <strong>角色 {index + 1}</strong>
+                          <Button
+                            type="link"
+                            danger
+                            icon={<DeleteOutlined />}
+                            onClick={() => removeRole(index)}
+                          >
+                            删除
+                          </Button>
+                        </div>
+                        <div className="scene-template-form-grid">
+                          <Form.Item label="角色标识" name={['roles', index, 'key']}>
+                            <Input placeholder="例如：teacher" />
+                          </Form.Item>
+                          <Form.Item label="角色名称" name={['roles', index, 'name']}>
+                            <Input placeholder="例如：教师" />
+                          </Form.Item>
+                          <Form.Item label="绑定智能体" name={['roles', index, 'agentName']}>
+                            <Input placeholder="例如：AI助教" />
+                          </Form.Item>
+                          <Form.Item className="scene-template-form-span-2" label="功能授权" name={['roles', index, 'functionalPermissions']}>
+                            <Select mode="multiple" options={ROLE_FUNCTION_PERMISSION_OPTIONS} placeholder="选择该角色可使用的功能能力" />
+                          </Form.Item>
+                          <Form.Item label="数据访问范围" name={['roles', index, 'dataAccessScope']}>
+                            <Select options={ROLE_DATA_SCOPE_OPTIONS} />
+                          </Form.Item>
+                          <Form.Item label="可访问数据" name={['roles', index, 'dataAccessAreas']}>
+                            <Select mode="multiple" options={ROLE_DATA_ACCESS_AREA_OPTIONS} placeholder="选择该角色可查看的数据域" />
+                          </Form.Item>
+                          <Form.Item label="功能补充说明" name={['roles', index, 'permissionSummary']}>
+                            <Input placeholder="例如：可管理主题、资料和作业" />
+                          </Form.Item>
+                          <Form.Item label="数据访问说明" name={['roles', index, 'scopeSummary']}>
+                            <Input placeholder="例如：仅访问学员开放内容" />
+                          </Form.Item>
+                          <Form.Item className="scene-template-form-span-2" label="角色说明" name={['roles', index, 'description']}>
+                            <TextArea rows={2} placeholder="说明该角色在场景中的职责" />
+                          </Form.Item>
+                          <Form.Item name={['roles', index, 'id']} hidden>
+                            <Input />
+                          </Form.Item>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ),
+              },
+              {
+                key: 'agents',
+                label: '智能体配置',
+                children: (
+                  <div className="scene-template-drawer-section">
+                    <div className="scene-template-subsection-title with-action">
+                      <span>智能体配置</span>
+                      <Button
+                        size="small"
+                        icon={<PlusOutlined />}
+                        onClick={() => {
+                          const nextAgents = [...watchedAgents, {
+                            id: `agent_${Date.now()}`,
+                            name: '',
+                            roleIds: [],
+                            knowledgeSource: '',
+                            prompt: '',
+                            avatar: '',
+                          }];
+                          templateForm.setFieldsValue({ agents: nextAgents });
+                        }}
+                      >
+                        添加智能体
+                      </Button>
+                    </div>
+
+                    {watchedAgents.map((agent, index) => (
+                      <div key={agent?.id || index} className="scene-template-list-card">
+                        <div className="scene-template-list-card-head">
+                          <strong>智能体 {index + 1}</strong>
+                          <Button
+                            type="link"
+                            danger
+                            icon={<DeleteOutlined />}
+                            onClick={() => {
+                              const nextAgents = [...watchedAgents];
+                              nextAgents.splice(index, 1);
+                              templateForm.setFieldsValue({ agents: nextAgents });
+                            }}
+                          >
+                            删除
+                          </Button>
+                        </div>
+                        <div className="scene-template-form-grid">
+                          <Form.Item label="名称" name={['agents', index, 'name']}>
+                            <Input placeholder="例如：AI助教" />
+                          </Form.Item>
+                          <Form.Item label="头像 / emoji" name={['agents', index, 'avatar']}>
+                            <Input placeholder="例如：🤖" />
+                          </Form.Item>
+                          <Form.Item label="限定角色" name={['agents', index, 'roleIds']}>
+                            <Select mode="multiple" options={roleOptions} placeholder="可使用该智能体的角色" />
+                          </Form.Item>
+                          <Form.Item label="知识来源" name={['agents', index, 'knowledgeSource']}>
+                            <Input placeholder="例如：课程资料 / 议题池" />
+                          </Form.Item>
+                          <Form.Item className="scene-template-form-span-2" label="系统提示词 / 能力说明" name={['agents', index, 'prompt']}>
+                            <TextArea rows={3} placeholder="描述这个智能体的能力、提示词方向和边界" />
+                          </Form.Item>
+                          <Form.Item name={['agents', index, 'id']} hidden>
                             <Input />
                           </Form.Item>
                         </div>
@@ -1164,6 +1252,57 @@ export default function SceneTemplateModule() {
                 ),
               },
               {
+                key: 'versioning',
+                label: '版本管理',
+                children: (
+                  <div className="scene-template-drawer-section">
+                    <div className="scene-template-subsection-title">
+                      <span>版本管理</span>
+                    </div>
+
+                    <div className="scene-template-list-card">
+                      <div className="scene-template-form-grid">
+                        <Form.Item label="启用版本管理" name={['versioning', 'enabled']} valuePropName="checked">
+                          <Switch />
+                        </Form.Item>
+                        <div className="scene-template-mode-hint">
+                          关闭后主题内不显示版本切换入口，当前内容直接在单份资料上维护。
+                        </div>
+                        {watchedVersioning.enabled !== false ? (
+                          <>
+                            <Form.Item label="最多版本数" name={['versioning', 'maxVersions']}>
+                              <InputNumber min={1} max={20} precision={0} style={{ width: '100%' }} />
+                            </Form.Item>
+                            <Form.Item label="新建版本规则" name={['versioning', 'createMode']}>
+                              <Select options={VERSION_CREATE_MODE_OPTIONS} />
+                            </Form.Item>
+                            <Form.Item label="版本名称规则" name={['versioning', 'namePattern']}>
+                              <Input placeholder="例如：版本 {index}" />
+                            </Form.Item>
+                            <Form.Item label="允许回退历史版本" name={['versioning', 'allowRollback']} valuePropName="checked">
+                              <Switch />
+                            </Form.Item>
+                            <Form.Item label="允许删除已失效版本" name={['versioning', 'allowDeletePublished']} valuePropName="checked">
+                              <Switch />
+                            </Form.Item>
+                            <div className="scene-template-mode-hint">
+                              支持使用 <code>{'{index}'}</code> 作为版本序号占位符，例如 <code>第 {'{index}'} 版</code>。
+                            </div>
+                            <Form.Item className="scene-template-form-span-2" label="版本规则说明" name={['versioning', 'description']}>
+                              <TextArea rows={2} placeholder="说明这个场景下的版本发布、回退和维护规范" />
+                            </Form.Item>
+                          </>
+                        ) : (
+                          <Form.Item className="scene-template-form-span-2" label="关闭说明" name={['versioning', 'description']}>
+                            <TextArea rows={2} placeholder="例如：该场景不需要多版本，直接维护当前内容即可" />
+                          </Form.Item>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ),
+              },
+              {
                 key: 'rules',
                 label: '规则与进入',
                 children: (
@@ -1227,67 +1366,6 @@ export default function SceneTemplateModule() {
                             <TextArea rows={2} placeholder="说明该状态下允许的操作和限制" />
                           </Form.Item>
                           <Form.Item name={['statusRules', index, 'id']} hidden>
-                            <Input />
-                          </Form.Item>
-                        </div>
-                      </div>
-                    ))}
-
-                    <div className="scene-template-subsection-title with-action">
-                      <span>智能体配置</span>
-                      <Button
-                        size="small"
-                        icon={<PlusOutlined />}
-                        onClick={() => {
-                          const nextAgents = [...watchedAgents, {
-                            id: `agent_${Date.now()}`,
-                            name: '',
-                            roleIds: [],
-                            knowledgeSource: '',
-                            prompt: '',
-                            avatar: '',
-                          }];
-                          templateForm.setFieldsValue({ agents: nextAgents });
-                        }}
-                      >
-                        添加智能体
-                      </Button>
-                    </div>
-
-                    {watchedAgents.map((agent, index) => (
-                      <div key={agent?.id || index} className="scene-template-list-card">
-                        <div className="scene-template-list-card-head">
-                          <strong>智能体 {index + 1}</strong>
-                          <Button
-                            type="link"
-                            danger
-                            icon={<DeleteOutlined />}
-                            onClick={() => {
-                              const nextAgents = [...watchedAgents];
-                              nextAgents.splice(index, 1);
-                              templateForm.setFieldsValue({ agents: nextAgents });
-                            }}
-                          >
-                            删除
-                          </Button>
-                        </div>
-                        <div className="scene-template-form-grid">
-                          <Form.Item label="名称" name={['agents', index, 'name']}>
-                            <Input placeholder="例如：AI助教" />
-                          </Form.Item>
-                          <Form.Item label="头像 / emoji" name={['agents', index, 'avatar']}>
-                            <Input placeholder="例如：🤖" />
-                          </Form.Item>
-                          <Form.Item label="限定角色" name={['agents', index, 'roleIds']}>
-                            <Select mode="multiple" options={roleOptions} placeholder="可使用该智能体的角色" />
-                          </Form.Item>
-                          <Form.Item label="知识来源" name={['agents', index, 'knowledgeSource']}>
-                            <Input placeholder="例如：课程资料 / 议题池" />
-                          </Form.Item>
-                          <Form.Item className="scene-template-form-span-2" label="系统提示词 / 能力说明" name={['agents', index, 'prompt']}>
-                            <TextArea rows={3} placeholder="描述这个智能体的能力、提示词方向和边界" />
-                          </Form.Item>
-                          <Form.Item name={['agents', index, 'id']} hidden>
                             <Input />
                           </Form.Item>
                         </div>
