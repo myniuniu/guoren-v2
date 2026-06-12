@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Layout, Menu, Input, Button, Card, Dropdown, Tag } from 'antd';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Layout, Menu, Input, Button, Card, Dropdown, Empty, Modal, Tag, message } from 'antd';
 import {
   HomeOutlined,
   SearchOutlined,
@@ -63,7 +63,9 @@ import MessagesModule from './messages/MessagesModule';
 import AgentQuotaModule from './agentQuota/AgentQuotaModule';
 import ModelStatisticsModule from './modelStatistics/ModelStatisticsModule';
 import SolutionManagementModule from './solution/SolutionManagementModule';
-import { getMappedChannelSummary } from './studyClub/adminTopicMapping';
+import SceneTemplateModule from './scene/SceneTemplateModule';
+import SceneCreateModal from './scene/SceneCreateModal';
+import { getSceneStoreChangeEventName, getSceneTypeLabel, getSceneVisibilityLabel, sceneApi } from './scene/api';
 import './App.css';
 
 const { Sider, Header, Content } = Layout;
@@ -76,33 +78,8 @@ function getInitialHashPage() {
   return window.location.hash.replace('#', '');
 }
 
-const defaultCardData = [
-  { title: '心理健康学习', subtitle: '暂无', visibility: '公开', count: 8 },
-  { title: '人工智能学习', subtitle: '暂无', visibility: '公开', count: 5 },
-  { title: '人工智能学习专题', subtitle: '暂无', visibility: '公开', count: 11 },
-  { title: '积木编程第二课', subtitle: '暂无', visibility: '公开', count: 2 },
-  { title: '人工智能通识学习', subtitle: '暂无', visibility: '公开', count: 7 },
-  { title: '心理健康课程', subtitle: '暂无', visibility: '公开', count: 9 },
-  { title: '美丽校园', subtitle: '暂无', visibility: '公开', count: 4 },
-  { title: '积木编程第一课', subtitle: '暂无', visibility: '公开', count: 11 },
-  { title: '人工智能教育变革系列课程', subtitle: '包含周建设教授...及AI相关研究方法课程', visibility: '公开', count: 11 },
-  { title: '语文组-课堂教学质量教研会', subtitle: '暂无', visibility: '公开', count: 0 },
-  { title: '教师AIGC：课堂练习与评估生成', subtitle: '教师AIGC：课堂练习与评估生成', visibility: '公开', count: 0 },
-  { title: 'python实训1', subtitle: '暂无', visibility: '公开', count: 4 },
-];
-
-function getSceneCardDataMap() {
-  const seniorSummary = getMappedChannelSummary('senior-community') || {};
-  return {
-    'study-club-channel': [
-      {
-        title: '老年社区',
-        subtitle: '围绕智慧助老、康养服务和社区陪伴的银龄共创空间',
-        visibility: '公开',
-        count: seniorSummary.contentCount || 0,
-      },
-    ],
-  };
+function getSceneTheme(scene) {
+  return scene?.templateSnapshot?.theme || {};
 }
 
 const menuItems = [
@@ -177,6 +154,7 @@ const iconBarItems = [
   { key: 'page-designer', icon: <LayoutOutlined />, label: '页面设计' },
   { key: 'tag-management', icon: <TagsOutlined />, label: '标签管理' },
   { key: 'app-center', icon: <AppstoreOutlined />, label: '应用中心' },
+  { key: 'scene-template', icon: <DesktopOutlined />, label: '场景模板' },
   { key: 'solution-management', icon: <AppstoreOutlined />, label: '解决方案' },
   { key: 'dms', icon: <FileTextOutlined />, label: '文档管理' },
   { key: 'integration', icon: <PartitionOutlined />, label: '三方对接' }
@@ -187,15 +165,53 @@ function App() {
   const [activeIconKey, setActiveIconKey] = useState(() => getInitialHashPage() || 'my-space');
   const [currentPage, setCurrentPage] = useState(() => getInitialHashPage() || 'home'); // 'home', 'detail', or 'workflow'
   const [agentQuotaEntryTab, setAgentQuotaEntryTab] = useState('plans');
-  const [selectedTopic, setSelectedTopic] = useState(null);
+  const [selectedScene, setSelectedScene] = useState(null);
+  const [sceneTemplates, setSceneTemplates] = useState([]);
+  const [scenes, setScenes] = useState([]);
+  const [sceneKeyword, setSceneKeyword] = useState('');
+  const [sceneDataLoading, setSceneDataLoading] = useState(true);
+  const [sceneModalOpen, setSceneModalOpen] = useState(false);
+  const [sceneEditing, setSceneEditing] = useState(null);
   const [iconBarIndicatorStyle, setIconBarIndicatorStyle] = useState(EMPTY_MENU_INDICATOR);
   const [siderMenuIndicatorStyle, setSiderMenuIndicatorStyle] = useState(EMPTY_MENU_INDICATOR);
   const iconBarListRef = useRef(null);
   const iconBarItemRefs = useRef(new Map());
   const siderMenuShellRef = useRef(null);
   const activeSceneKey = selectedKeys[0] || 'home';
-  const sceneCardDataMap = getSceneCardDataMap();
-  const visibleCardData = sceneCardDataMap[activeSceneKey] || defaultCardData;
+  const visibleScenes = useMemo(() => {
+    const normalizedKeyword = sceneKeyword.trim().toLowerCase();
+    return scenes.filter((scene) => {
+      if (activeSceneKey !== 'home' && scene.menuKey !== activeSceneKey) return false;
+      if (!normalizedKeyword) return true;
+      const haystack = `${scene.name} ${scene.templateName} ${scene.description || ''}`.toLowerCase();
+      return haystack.includes(normalizedKeyword);
+    });
+  }, [activeSceneKey, sceneKeyword, scenes]);
+
+  const loadSceneHomeData = useCallback(async (withLoading = true) => {
+    if (withLoading) {
+      setSceneDataLoading(true);
+    }
+    try {
+      await sceneApi.seed();
+      const [nextTemplates, nextScenes] = await Promise.all([
+        sceneApi.listTemplates(),
+        sceneApi.listScenes(),
+      ]);
+      setSceneTemplates(nextTemplates);
+      setScenes(nextScenes);
+      setSelectedScene((prev) => {
+        if (!prev?.id) return prev;
+        return nextScenes.find((item) => item.id === prev.id) || null;
+      });
+    } catch (error) {
+      message.error(error?.message || '加载场景数据失败');
+    } finally {
+      if (withLoading) {
+        setSceneDataLoading(false);
+      }
+    }
+  }, []);
 
   const setIconBarItemRef = useCallback((key, node) => {
     if (node) {
@@ -240,7 +256,7 @@ function App() {
     const container = siderMenuShellRef.current;
     const target = container?.querySelector('.ant-menu-item-selected:not(.new-scene-item)') || null;
     updateIndicatorPosition(container, target, setSiderMenuIndicatorStyle);
-  }, [selectedKeys, updateIndicatorPosition]);
+  }, [updateIndicatorPosition]);
 
   useLayoutEffect(() => {
     const frameId = window.requestAnimationFrame(() => {
@@ -273,20 +289,81 @@ function App() {
     };
   }, [updateIconBarIndicator, updateSiderMenuIndicator]);
 
-  const handleCardClick = (card) => {
-    setSelectedTopic(card.title);
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      loadSceneHomeData();
+    }, 0);
+    const eventName = getSceneStoreChangeEventName();
+    const handleStoreChange = () => {
+      loadSceneHomeData(false);
+    };
+    window.addEventListener(eventName, handleStoreChange);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener(eventName, handleStoreChange);
+    };
+  }, [loadSceneHomeData]);
+
+  const handleCardClick = (scene) => {
+    setSelectedScene(scene);
     setCurrentPage('detail');
   };
 
   const handleBackToHome = () => {
     setCurrentPage('home');
-    setSelectedTopic(null);
+    setSelectedScene(null);
   };
 
   const openAgentQuotaPage = (tab = 'plans') => {
     setActiveIconKey('agent-quota');
     setAgentQuotaEntryTab(tab);
     setCurrentPage('agent-quota');
+  };
+
+  const openCreateSceneModal = () => {
+    setSceneEditing(null);
+    setSceneModalOpen(true);
+  };
+
+  const openEditSceneModal = (scene) => {
+    setSceneEditing(scene);
+    setSceneModalOpen(true);
+  };
+
+  const handleSceneSave = async (values) => {
+    try {
+      const saved = await sceneApi.saveScene(values);
+      setSceneModalOpen(false);
+      setSceneEditing(null);
+      setSelectedKeys([saved.menuKey || 'home']);
+      await loadSceneHomeData(false);
+      message.success(values.id ? '场景已更新' : '场景已创建');
+    } catch (error) {
+      message.error(error?.message || '保存场景失败');
+    }
+  };
+
+  const handleDeleteScene = (scene) => {
+    if (!scene?.id) return;
+    Modal.confirm({
+      title: '删除场景',
+      content: `确定删除“${scene.name}”吗？该场景下的本地内容数据也会一并清除。`,
+      okText: '删除',
+      okButtonProps: { danger: true },
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          await sceneApi.removeScene(scene.id);
+          if (selectedScene?.id === scene.id) {
+            handleBackToHome();
+          }
+          await loadSceneHomeData(false);
+          message.success('场景已删除');
+        } catch (error) {
+          message.error(error?.message || '删除场景失败');
+        }
+      },
+    });
   };
 
   const handleIconBarClick = (key) => {
@@ -333,6 +410,8 @@ function App() {
       setCurrentPage('tag-management');
     } else if (key === 'app-center') {
       setCurrentPage('app-center');
+    } else if (key === 'scene-template') {
+      setCurrentPage('scene-template');
     } else if (key === 'solution-management') {
       setCurrentPage('solution-management');
     } else if (key === 'dms') {
@@ -340,6 +419,7 @@ function App() {
     } else if (key === 'integration') {
       setCurrentPage('integration');
     } else if (
+      currentPage === 'detail' ||
       currentPage === 'messages' ||
       currentPage === 'workflow' ||
       currentPage === 'process-management' ||
@@ -361,6 +441,7 @@ function App() {
       currentPage === 'page-designer' ||
       currentPage === 'tag-management' ||
       currentPage === 'app-center' ||
+      currentPage === 'scene-template' ||
       currentPage === 'solution-management' ||
       currentPage === 'dms' ||
       currentPage === 'integration'
@@ -455,6 +536,8 @@ function App() {
         <TagManagement />
       ) : currentPage === 'app-center' ? (
         <AppCenterModule />
+      ) : currentPage === 'scene-template' ? (
+        <SceneTemplateModule />
       ) : currentPage === 'solution-management' ? (
         <SolutionManagementModule />
       ) : currentPage === 'dms' ? (
@@ -479,7 +562,13 @@ function App() {
                 <Menu
                   mode="inline"
                   selectedKeys={selectedKeys}
-                  onClick={(e) => setSelectedKeys([e.key])}
+                  onClick={(e) => {
+                    if (e.key === 'new-scene') {
+                      openCreateSceneModal();
+                      return;
+                    }
+                    setSelectedKeys([e.key]);
+                  }}
                   items={menuItems}
                   className="sider-menu"
                 />
@@ -494,67 +583,139 @@ function App() {
               <div className="header-title">果仁-沉浸式AI学习空间</div>
               <div className="header-actions">
                 <Input
-                  placeholder="搜索主题名称..."
+                  placeholder="搜索场景名称..."
                   prefix={<SearchOutlined style={{ color: '#bbb' }} />}
                   className="search-input"
+                  value={sceneKeyword}
+                  onChange={(event) => setSceneKeyword(event.target.value)}
                   allowClear
                 />
-                <Button type="primary" icon={<PlusOutlined />} className="new-topic-btn">
-                  新建主题
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  className="new-topic-btn"
+                  onClick={openCreateSceneModal}
+                >
+                  新建场景
                 </Button>
               </div>
             </Header>
 
             {/* Content */}
             <Content className="app-content">
-              <div className="card-grid">
-                {visibleCardData.map((card, index) => (
-                  <Card
-                    key={index}
-                    className="scene-card"
-                    hoverable
-                    variant="borderless"
-                    styles={{ body: { padding: 0 } }}
-                    onClick={() => handleCardClick(card)}
-                  >
-                    <div className="card-cover">
-                      <div className="wave-bg">
-                        <svg className="wave-svg" viewBox="0 0 400 120" preserveAspectRatio="none">
-                          <path d="M0,60 C100,20 150,100 250,50 C300,30 350,80 400,40 L400,120 L0,120 Z" fill="rgba(255,255,255,0.18)" />
-                          <path d="M0,80 C80,50 160,100 240,70 C320,40 360,90 400,60 L400,120 L0,120 Z" fill="rgba(255,255,255,0.12)" />
-                          <path d="M0,95 C60,75 120,110 200,88 C280,66 340,98 400,82 L400,120 L0,120 Z" fill="rgba(255,255,255,0.08)" />
-                        </svg>
-                      </div>
-                      <Dropdown
-                        menu={{ items: [{ key: '1', label: '编辑' }, { key: '2', label: '删除' }] }}
-                        placement="bottomRight"
+              {sceneDataLoading ? (
+                <div className="scene-empty-state">场景加载中...</div>
+              ) : visibleScenes.length === 0 ? (
+                <div className="scene-empty-state">
+                  <Empty
+                    description={activeSceneKey === 'home' ? '暂无场景，先创建一个模板化场景。' : '当前栏目暂无场景，先新建一个。'}
+                  />
+                </div>
+              ) : (
+                <div className="card-grid">
+                  {visibleScenes.map((scene) => {
+                    const theme = getSceneTheme(scene);
+                    const roleList = (scene.templateSnapshot?.roles || []).slice(0, 3);
+                    return (
+                      <Card
+                        key={scene.id}
+                        className="scene-card"
+                        hoverable
+                        variant="borderless"
+                        styles={{ body: { padding: 0 } }}
+                        onClick={() => handleCardClick(scene)}
                       >
-                        <Button
-                          type="text"
-                          className="card-more-btn"
-                          icon={<EllipsisOutlined />}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </Dropdown>
-                    </div>
-                    <div className="card-body">
-                      <div className="card-title" title={card.title}>{card.title}</div>
-                      <div className="card-subtitle">{card.subtitle}</div>
-                      <div className="card-footer">
-                        <Tag className="visibility-tag">{card.visibility}</Tag>
-                        <span className="card-count">{card.count}个内容</span>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
+                        <div className="card-cover">
+                          <div
+                            className="wave-bg"
+                            style={{
+                              background: `linear-gradient(135deg, ${theme.coverStart || '#667eea'} 0%, ${theme.coverEnd || '#00f2fe'} 100%)`,
+                            }}
+                          >
+                            <div className="card-cover-copy">
+                              <span className="card-cover-badge">{theme.badgeText || getSceneTypeLabel(scene.sceneType)}</span>
+                              <div className="card-cover-title">{theme.heroTitle || scene.templateName}</div>
+                              <div className="card-cover-hint">{theme.surfaceHint || scene.templateName}</div>
+                            </div>
+                            <div className="card-cover-emoji">{theme.emoji || '🧩'}</div>
+                            <svg className="wave-svg" viewBox="0 0 400 120" preserveAspectRatio="none">
+                              <path d="M0,60 C100,20 150,100 250,50 C300,30 350,80 400,40 L400,120 L0,120 Z" fill="rgba(255,255,255,0.18)" />
+                              <path d="M0,80 C80,50 160,100 240,70 C320,40 360,90 400,60 L400,120 L0,120 Z" fill="rgba(255,255,255,0.12)" />
+                              <path d="M0,95 C60,75 120,110 200,88 C280,66 340,98 400,82 L400,120 L0,120 Z" fill="rgba(255,255,255,0.08)" />
+                            </svg>
+                          </div>
+                          <Dropdown
+                            menu={{
+                              items: [
+                                { key: 'edit', label: '编辑场景' },
+                                { key: 'delete', label: '删除场景', danger: true },
+                              ],
+                              onClick: ({ key, domEvent }) => {
+                                domEvent.stopPropagation();
+                                if (key === 'edit') {
+                                  openEditSceneModal(scene);
+                                } else if (key === 'delete') {
+                                  handleDeleteScene(scene);
+                                }
+                              },
+                            }}
+                            placement="bottomRight"
+                          >
+                            <Button
+                              type="text"
+                              className="card-more-btn"
+                              icon={<EllipsisOutlined />}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </Dropdown>
+                        </div>
+                        <div className="card-body">
+                          <div className="card-title" title={scene.name}>{scene.name}</div>
+                          <div className="card-subtitle">{scene.description || theme.heroSubtitle || '未填写场景描述'}</div>
+                          <div className="scene-card-meta-line">
+                            <span>{scene.templateName}</span>
+                            <span>{getSceneTypeLabel(scene.sceneType)}</span>
+                          </div>
+                          <div className="scene-role-list">
+                            {roleList.map((role) => (
+                              <span key={role.id} className="scene-role-pill">{role.name}</span>
+                            ))}
+                          </div>
+                          <div className="card-footer">
+                            <Tag className="visibility-tag">{getSceneVisibilityLabel(scene.visibility)}</Tag>
+                            <span className="card-count">{scene.topicCount} 个主题</span>
+                          </div>
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
             </Content>
           </Layout>
         </>
-      ) : (
-        <TopicDetail topicTitle={selectedTopic} onBack={handleBackToHome} />
-      )
-      }
+      ) : currentPage === 'detail' && selectedScene ? (
+        <TopicDetail
+          topicTitle={selectedScene.name}
+          onBack={handleBackToHome}
+          sceneConfig={selectedScene.templateSnapshot}
+          storageScopeKey={selectedScene.storageScopeKey}
+          sceneDescription={selectedScene.description}
+          sceneTypeLabel={getSceneTypeLabel(selectedScene.sceneType)}
+        />
+      ) : null}
+
+      <SceneCreateModal
+        open={sceneModalOpen}
+        templates={sceneTemplates}
+        initialValues={sceneEditing}
+        defaultMenuKey={activeSceneKey !== 'home' ? activeSceneKey : undefined}
+        onCancel={() => {
+          setSceneModalOpen(false);
+          setSceneEditing(null);
+        }}
+        onSubmit={handleSceneSave}
+      />
     </Layout>
   );
 }

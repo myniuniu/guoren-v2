@@ -58,6 +58,7 @@ import {
   updateResource,
   updateVersionTagLibrary,
 } from './versionStore';
+import { buildSceneInitialVersionData } from './scene/api';
 import { getTopicAdminConfig } from './studyClub/adminTopicMapping';
 import './TopicDetail.css';
 
@@ -141,6 +142,19 @@ function buildPreviewParagraphs(name) {
   ];
 }
 
+function hexToRgba(hex, alpha) {
+  if (typeof hex !== 'string') return `rgba(86, 168, 245, ${alpha})`;
+  const normalized = hex.replace('#', '');
+  if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
+    return `rgba(86, 168, 245, ${alpha})`;
+  }
+  const value = Number.parseInt(normalized, 16);
+  const r = (value >> 16) & 255;
+  const g = (value >> 8) & 255;
+  const b = value & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 function getDefaultLeftPanelWidth() {
   if (typeof window === 'undefined') return 360;
   if (window.innerWidth <= 1120) return 308;
@@ -148,7 +162,13 @@ function getDefaultLeftPanelWidth() {
   return 360;
 }
 
-function loadTopicVersionData(topicConfig) {
+function loadTopicVersionData(topicConfig, sceneConfig, storageScopeKey) {
+  if (sceneConfig) {
+    return loadFromStorage({
+      scopeKey: storageScopeKey || 'default',
+      initialData: () => buildSceneInitialVersionData(sceneConfig),
+    });
+  }
   if (topicConfig) {
     return loadFromStorage({
       scopeKey: topicConfig.storageScopeKey,
@@ -158,13 +178,13 @@ function loadTopicVersionData(topicConfig) {
   return loadFromStorage();
 }
 
-function TopicDetail({ topicTitle, onBack }) {
-  const topicAdminConfig = getTopicAdminConfig(topicTitle);
-  const topicStorageScopeKey = topicAdminConfig?.storageScopeKey || 'default';
+function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, sceneDescription, sceneTypeLabel }) {
+  const topicAdminConfig = sceneConfig ? null : getTopicAdminConfig(topicTitle);
+  const topicStorageScopeKey = storageScopeKey || topicAdminConfig?.storageScopeKey || 'default';
   const [activeTab, setActiveTab] = useState('knowledge');
   const [modalOpen, setModalOpen] = useState(false);
   const [previewItem, setPreviewItem] = useState(null);
-  const [versionData, setVersionData] = useState(() => loadTopicVersionData(topicAdminConfig));
+  const [versionData, setVersionData] = useState(() => loadTopicVersionData(topicAdminConfig, sceneConfig, topicStorageScopeKey));
   const [leftPanelWidth, setLeftPanelWidth] = useState(() => getDefaultLeftPanelWidth());
   const [expandedFolders, setExpandedFolders] = useState(new Set());
   const [selectedFolderKey, setSelectedFolderKey] = useState(null);
@@ -198,7 +218,7 @@ function TopicDetail({ topicTitle, onBack }) {
   const dragPayloadRef = useRef(null);
 
   useEffect(() => {
-    setVersionData(loadTopicVersionData(topicAdminConfig));
+    setVersionData(loadTopicVersionData(topicAdminConfig, sceneConfig, topicStorageScopeKey));
     setActiveTab('knowledge');
     setModalOpen(false);
     setPreviewItem(null);
@@ -225,7 +245,7 @@ function TopicDetail({ topicTitle, onBack }) {
     setNewTagName('');
     setNewTagColor('#1677ff');
     setTabIndicatorStyle(EMPTY_TAB_INDICATOR);
-  }, [topicTitle, topicStorageScopeKey]);
+  }, [sceneConfig, topicAdminConfig, topicStorageScopeKey, topicTitle]);
 
   const currentVersion = getCurrentVersion(versionData);
   const versions = getVersions(versionData);
@@ -233,6 +253,17 @@ function TopicDetail({ topicTitle, onBack }) {
   const isActive = currentVersion?.status === 'active';
   const resources = currentVersion?.resources || [];
   const tagConfig = topicAdminConfig?.tagConfig || null;
+  const sceneTheme = sceneConfig?.theme || null;
+  const resourcePanelTitle = sceneConfig?.topicPage?.resourcePanelTitle || '资料';
+  const addResourceLabel = sceneConfig?.topicPage?.addResourceLabel || '添加资料';
+  const appLabel = sceneConfig?.topicPage?.appLabel || '应用';
+  const emptyStateText = sceneConfig?.topicPage?.emptyStateText || '暂无资料，右键新建文件夹或添加资料';
+  const detailThemeStyle = sceneTheme
+    ? {
+        '--td-accent': sceneTheme.accentColor || '#56a8f5',
+        '--td-panel-bg': `linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.92) 58%, rgba(250, 251, 252, 0.9) 100%), linear-gradient(135deg, ${hexToRgba(sceneTheme.coverStart, 0.18)} 0%, ${hexToRgba(sceneTheme.coverEnd, 0.14)} 100%)`,
+      }
+    : undefined;
   const tagDefs = currentVersion?.tagDefinitions?.length
     ? currentVersion.tagDefinitions
     : tagConfig?.definitions || [];
@@ -785,12 +816,33 @@ function TopicDetail({ topicTitle, onBack }) {
     message.success(`标签「${trimmedName}」已创建`);
   };
 
-  const tabs = [
-    { key: 'knowledge', label: '知识模式' },
-    { key: 'ai', label: 'AI模式' },
-    { key: 'practice', label: '实训模式' },
-    { key: 'assessment', label: '考核配置模式' },
-  ];
+  const tabs = useMemo(() => {
+    const hasConfiguredTabs = Array.isArray(sceneConfig?.topicPage?.modeTabs);
+    const configuredTabs = hasConfiguredTabs
+      ? sceneConfig.topicPage.modeTabs.filter((item) => item.enabled !== false)
+      : [];
+    if (hasConfiguredTabs) {
+      return configuredTabs.map((item, index) => ({
+        key: item.key,
+        label: item.label || item.key || `模式 ${index + 1}`,
+      }));
+    }
+    return [
+      { key: 'knowledge', label: '知识模式' },
+      { key: 'ai', label: 'AI模式' },
+      { key: 'practice', label: '实训模式' },
+      { key: 'assessment', label: '考核配置模式' },
+    ];
+  }, [sceneConfig]);
+
+  useEffect(() => {
+    if (tabs.length === 0) {
+      setActiveTab('');
+      return;
+    }
+    if (tabs.some((tab) => tab.key === activeTab)) return;
+    setActiveTab(tabs[0].key);
+  }, [activeTab, tabs]);
 
   const setDetailTabRef = useCallback((key, node) => {
     if (node) {
@@ -1384,7 +1436,7 @@ function TopicDetail({ topicTitle, onBack }) {
       { type: 'divider' },
       ...(item.isFolder
         ? [
-            { key: 'addResource', icon: <FileAddOutlined />, label: '添加资料', disabled: !isDraft },
+            { key: 'addResource', icon: <FileAddOutlined />, label: addResourceLabel, disabled: !isDraft },
             { key: 'newFolder', icon: <FolderAddOutlined />, label: '新建文件夹', disabled: !isDraft },
             { type: 'divider' },
           ]
@@ -1459,7 +1511,7 @@ function TopicDetail({ topicTitle, onBack }) {
   const bgContextMenu = {
     items: [
       { key: 'newFolder', icon: <FolderAddOutlined />, label: '新建文件夹', disabled: !isDraft },
-      { key: 'addResource', icon: <FileAddOutlined />, label: '添加资料', disabled: !isDraft },
+      { key: 'addResource', icon: <FileAddOutlined />, label: addResourceLabel, disabled: !isDraft },
     ],
     onClick: ({ key }) => {
       if (key === 'newFolder') handleCreateFolderAtCurrentLocation(bgMenuSurface);
@@ -1542,8 +1594,8 @@ function TopicDetail({ topicTitle, onBack }) {
                     <button
                       type="button"
                       className="topic-action-btn"
-                      aria-label="添加资料"
-                      title="添加资料"
+                      aria-label={addResourceLabel}
+                      title={addResourceLabel}
                       onClick={() => openAddResourceModal(item.key)}
                     >
                       <PlusOutlined style={{ fontSize: 12 }} />
@@ -1708,8 +1760,8 @@ function TopicDetail({ topicTitle, onBack }) {
                   <button
                     type="button"
                     className="topic-action-btn"
-                    aria-label="添加资料"
-                    title="添加资料"
+                    aria-label={addResourceLabel}
+                    title={addResourceLabel}
                     onClick={() => openAddResourceModal(item.key)}
                   >
                     <PlusOutlined style={{ fontSize: 12 }} />
@@ -1851,11 +1903,25 @@ function TopicDetail({ topicTitle, onBack }) {
   };
 
   return (
-    <div className="topic-detail">
+    <div className="topic-detail" style={detailThemeStyle}>
       <div className="detail-header">
         <div className="detail-header-left">
           <HomeOutlined className="detail-home-icon" onClick={onBack} />
-          <span className="detail-title">{topicTitle}</span>
+          <span className="detail-title" title={sceneDescription || topicTitle}>{topicTitle}</span>
+          {sceneConfig ? (
+            <Tag
+              style={{
+                marginLeft: 10,
+                borderRadius: 999,
+                padding: '0 10px',
+                color: sceneTheme?.accentColor || '#1677ff',
+                borderColor: hexToRgba(sceneTheme?.accentColor || '#1677ff', 0.24),
+                background: hexToRgba(sceneTheme?.accentColor || '#1677ff', 0.12),
+              }}
+            >
+              {sceneTheme?.badgeText || sceneTypeLabel || '场景模板'}
+            </Tag>
+          ) : null}
           {topicAdminConfig ? (
             <Tag color="blue" style={{ marginLeft: 10, borderRadius: 999, padding: '0 10px' }}>
               研习社频道后台
@@ -2019,7 +2085,7 @@ function TopicDetail({ topicTitle, onBack }) {
         <div className="detail-body" ref={detailBodyRef}>
           <div className="detail-left-panel" style={{ width: leftPanelWidth, minWidth: leftPanelWidth }}>
             <div className="panel-header">
-              <span className="panel-title">资料</span>
+              <span className="panel-title">{resourcePanelTitle}</span>
               <MoreOutlined className="panel-more-icon" />
             </div>
 
@@ -2034,11 +2100,11 @@ function TopicDetail({ topicTitle, onBack }) {
                 onClick={() => isDraft && openAddResourceModal(currentListParentKey)}
               >
                 <PlusOutlined style={{ fontSize: 12 }} />
-                <span>添加资料</span>
+                <span>{addResourceLabel}</span>
               </div>
               <div className="panel-action-btn">
                 <AppstoreOutlined style={{ fontSize: 12 }} />
-                <span>应用</span>
+                <span>{appLabel}</span>
               </div>
             </div>
 
@@ -2058,7 +2124,7 @@ function TopicDetail({ topicTitle, onBack }) {
                       {
                         key: 'add-resource',
                         icon: <FileAddOutlined />,
-                        label: '添加资料',
+                        label: addResourceLabel,
                         onClick: () => openAddResourceModal(null),
                         disabled: !isDraft,
                       },
@@ -2079,7 +2145,7 @@ function TopicDetail({ topicTitle, onBack }) {
 
               <div className="project-list">
                 {rootItems.length === 0 ? (
-                  <div className="project-empty">暂无资料</div>
+                  <div className="project-empty">暂无{resourcePanelTitle}</div>
                 ) : (
                   rootItems.map((item) => renderTreeItem(item))
                 )}
@@ -2093,16 +2159,16 @@ function TopicDetail({ topicTitle, onBack }) {
             {previewItem ? (
               <div className="topic-preview-main">
                 <div className="topic-preview-main-head">
-                  <div className="topic-preview-main-head-left">
-                    <span className="topic-preview-main-icon">
-                      {renderFileIcon(getTopicResourceFileType(previewItem), { fontSize: 18 })}
-                    </span>
-                    <div className="topic-preview-main-copy">
-                      <div className="topic-preview-main-breadcrumb">
-                        {previewParentFolder ? previewParentFolder.name : currentVersion?.name || '资料'}
-                      </div>
-                      <div className="topic-preview-main-title">{previewItem.name}</div>
-                      <div className="topic-preview-main-meta">
+                    <div className="topic-preview-main-head-left">
+                      <span className="topic-preview-main-icon">
+                        {renderFileIcon(getTopicResourceFileType(previewItem), { fontSize: 18 })}
+                      </span>
+                      <div className="topic-preview-main-copy">
+                        <div className="topic-preview-main-breadcrumb">
+                          {previewParentFolder ? previewParentFolder.name : currentVersion?.name || resourcePanelTitle}
+                        </div>
+                        <div className="topic-preview-main-title">{previewItem.name}</div>
+                        <div className="topic-preview-main-meta">
                         <span>{getResourceTypeLabel(previewItem, getTopicResourceFileType(previewItem))}</span>
                         <span>{previewItem.owner || '--'}</span>
                         <span>{previewItem.lastEdit || '--'}</span>
@@ -2154,7 +2220,7 @@ function TopicDetail({ topicTitle, onBack }) {
                         </div>
                       </div>
                       <div className="folder-info-right">
-                        <Button icon={<PlusOutlined />} disabled={!isDraft} onClick={() => openAddResourceModal(currentListParentKey)}>添加资料</Button>
+                        <Button icon={<PlusOutlined />} disabled={!isDraft} onClick={() => openAddResourceModal(currentListParentKey)}>{addResourceLabel}</Button>
                       </div>
                     </div>
                   </>
@@ -2164,12 +2230,12 @@ function TopicDetail({ topicTitle, onBack }) {
                       <div className="folder-info-left">
                         <div className="folder-big-icon"><FolderFilled /></div>
                         <div className="folder-meta">
-                          <div className="folder-name">{currentVersion?.name || '资料'}</div>
+                          <div className="folder-name">{currentVersion?.name || resourcePanelTitle}</div>
                           <div className="folder-desc">{fileCount} 个文件 {folderCount} 个文件夹</div>
                         </div>
                       </div>
                       <Button className="add-resource-btn" icon={<PlusOutlined />} disabled={!isDraft} onClick={() => openAddResourceModal(null)}>
-                        添加资料
+                        {addResourceLabel}
                       </Button>
                     </div>
                   </>
@@ -2194,7 +2260,7 @@ function TopicDetail({ topicTitle, onBack }) {
                         <div className="topic-file-empty">
                           <Empty
                             image={Empty.PRESENTED_IMAGE_SIMPLE}
-                            description={selectedFolder ? '此文件夹为空，右键新建或添加资料' : '暂无资料，右键新建文件夹或添加资料'}
+                            description={selectedFolder ? `此${resourcePanelTitle}目录为空，可继续添加内容` : emptyStateText}
                           />
                         </div>
                       ) : (

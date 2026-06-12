@@ -524,6 +524,18 @@
   overflow-y: auto;
 }
 
+.scene-empty-state {
+  min-height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #dbe1ea;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  color: #64748b;
+  font-size: 14px;
+}
+
 .card-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -560,10 +572,54 @@
 .wave-bg {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #4facfe 40%, #00f2fe 100%);
   position: relative;
   display: flex;
   align-items: flex-end;
+}
+
+.card-cover-copy {
+  position: absolute;
+  inset: 14px 16px auto 16px;
+  z-index: 1;
+  display: grid;
+  gap: 8px;
+}
+
+.card-cover-badge {
+  display: inline-flex;
+  width: fit-content;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.96);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  backdrop-filter: blur(8px);
+}
+
+.card-cover-title {
+  max-width: 240px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.card-cover-hint {
+  max-width: 240px;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.card-cover-emoji {
+  position: absolute;
+  right: 14px;
+  bottom: 6px;
+  z-index: 1;
+  font-size: 46px;
+  opacity: 0.28;
 }
 
 .wave-svg {
@@ -637,6 +693,34 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.scene-card-meta-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.scene-role-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 28px;
+  margin-bottom: 12px;
+}
+
+.scene-role-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4338ca;
+  font-size: 11px;
+  font-weight: 500;
 }
 
 .visibility-tag {
