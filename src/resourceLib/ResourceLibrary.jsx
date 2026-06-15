@@ -56,6 +56,11 @@ const isInteractiveRowTarget = (target) => (
   && !!target.closest('button, input, textarea, .ant-dropdown, .finder-inline-input, .finder-column-action-btn, .finder-detail-expand-icon')
 );
 
+const isRowDragHandleTarget = (target) => (
+  target instanceof HTMLElement
+  && !!target.closest('.finder-file-icon, .finder-column-item-icon')
+);
+
 export default function ResourceLibrary() {
   const [data, setData] = useState(() => loadResourceLib());
   const [scope, setScope] = useState(() => data?.currentScope || 'personal');
@@ -72,6 +77,9 @@ export default function ResourceLibrary() {
   const [selectedItemKeys, setSelectedItemKeys] = useState([]); // 多选
   const swipeSelectionRef = useRef(null);
   const suppressClickSelectionRef = useRef(false);
+  const suppressNextItemClickRef = useRef(false);
+  const suppressNextContextMenuRef = useRef(false);
+  const suppressContextMenuTimerRef = useRef(null);
   const [inlineRenameItemKey, setInlineRenameItemKey] = useState(null);
   const [inlineRenameName, setInlineRenameName] = useState('');
   const [newTagName, setNewTagName] = useState('');
@@ -1506,6 +1514,7 @@ export default function ResourceLibrary() {
     document.removeEventListener('mousemove', gesture.onMouseMove, true);
     document.removeEventListener('mouseup', gesture.onMouseUp, true);
     swipeSelectionRef.current = null;
+    document.body.style.userSelect = '';
     if (gesture.activated) {
       window.setTimeout(() => {
         suppressClickSelectionRef.current = false;
@@ -1534,9 +1543,12 @@ export default function ResourceLibrary() {
       || event.ctrlKey
       || event.shiftKey
       || isInteractiveRowTarget(event.target)
+      || isRowDragHandleTarget(event.target)
     ) return;
 
     stopSwipeSelection();
+    suppressClickSelectionRef.current = false;
+    document.body.style.userSelect = 'none';
 
     const gesture = {
       activated: false,
@@ -1588,8 +1600,59 @@ export default function ResourceLibrary() {
     stopSwipeSelection();
   }, [stopSwipeSelection]);
 
+  const clearSuppressContextMenu = useCallback(() => {
+    if (suppressContextMenuTimerRef.current) {
+      window.clearTimeout(suppressContextMenuTimerRef.current);
+      suppressContextMenuTimerRef.current = null;
+    }
+    suppressNextContextMenuRef.current = false;
+  }, []);
+
+  const markSuppressContextMenu = useCallback((event) => {
+    clearSuppressContextMenu();
+    if (event.button === 0 && event.ctrlKey) {
+      suppressNextContextMenuRef.current = true;
+      suppressContextMenuTimerRef.current = window.setTimeout(() => {
+        suppressNextContextMenuRef.current = false;
+        suppressContextMenuTimerRef.current = null;
+      }, 320);
+    }
+  }, [clearSuppressContextMenu]);
+
+  const handleItemContextMenu = useCallback((e) => {
+    if (!suppressNextContextMenuRef.current) return;
+    clearSuppressContextMenu();
+    e.preventDefault();
+    e.stopPropagation();
+  }, [clearSuppressContextMenu]);
+
+  const handleCtrlMouseSelection = useCallback((item, idx, event, { view = 'detail', colIdx = null } = {}) => {
+    if (
+      event.button !== 0
+      || !event.ctrlKey
+      || event.metaKey
+      || event.shiftKey
+      || isInteractiveRowTarget(event.target)
+    ) return false;
+
+    clearPendingRenameTrigger();
+    markSuppressContextMenu(event);
+    suppressNextItemClickRef.current = true;
+    event.preventDefault();
+
+    setSelectedItemKeys((prev) => (
+      prev.includes(item.key) ? prev.filter((key) => key !== item.key) : [...prev, item.key]
+    ));
+    lastClickedRef.current = { view, colIdx, idx };
+    return true;
+  }, [clearPendingRenameTrigger, markSuppressContextMenu]);
+
   // 多选点击处理（Cmd+Click 切换选中，Shift+Click 范围选，普通点击单选）
   const handleItemClick = (item, idx, e) => {
+    if (suppressNextItemClickRef.current) {
+      suppressNextItemClickRef.current = false;
+      return;
+    }
     if (suppressClickSelectionRef.current) return;
     if (e.metaKey || e.ctrlKey) {
       clearPendingRenameTrigger();
@@ -1963,12 +2026,18 @@ export default function ResourceLibrary() {
   );
 
   const handleItemContextMenuOpenChange = useCallback((itemKey, open) => {
-    if (open) clearPendingRenameTrigger();
+    if (open) {
+      clearPendingRenameTrigger();
+      if (suppressNextContextMenuRef.current) {
+        clearSuppressContextMenu();
+        return;
+      }
+    }
     setContextMenuItemKey((prev) => {
       if (open) return itemKey;
       return prev === itemKey ? null : prev;
     });
-  }, [clearPendingRenameTrigger]);
+  }, [clearPendingRenameTrigger, clearSuppressContextMenu]);
 
   const handleCreateFolderAtCurrentLocation = () => {
     createFolderAndStartRename(currentBlankAreaParentKey, {
@@ -2089,6 +2158,11 @@ export default function ResourceLibrary() {
   };
 
   const handleBgContextMenu = (e) => {
+    if (suppressNextContextMenuRef.current) {
+      clearSuppressContextMenu();
+      e.preventDefault();
+      return;
+    }
     // 只在点击空白处触发，不在文件行上触发
     if (
       e.target.closest('.finder-file-row')
@@ -2606,32 +2680,6 @@ export default function ResourceLibrary() {
           </Tooltip>
         </div>
 
-        {selectedItemCount > 0 && (
-          <div className="finder-selection-summary-bar">
-            <span className="finder-selection-summary-label">已选：</span>
-            <span className="finder-selection-summary-text">
-              {selectedItemCount === 1
-                ? `1 个项目`
-                : `${selectedItemCount} 个项目`}
-            </span>
-            <Button
-              size="small"
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() => handleDelete(selectedItemKeys)}
-            >
-              删除所选
-            </Button>
-            <Button
-              size="small"
-              onClick={clearCurrentSelection}
-            >
-              清除选择
-            </Button>
-            <span className="finder-selection-summary-hint">Cmd/Ctrl + A 全选，Delete 删除</span>
-          </div>
-        )}
-
         {hasActiveSearch && (
           <div className="finder-search-summary-bar">
             <span className="finder-search-summary-label">搜索：</span>
@@ -2700,6 +2748,7 @@ export default function ResourceLibrary() {
                         <Dropdown
                           key={item.key}
                           menu={getContextMenu(item)}
+                          open={contextMenuItemKey === item.key}
                           trigger={['contextMenu']}
                           onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
                           overlayClassName={buildMenuOverlayClassName()}
@@ -2710,9 +2759,13 @@ export default function ResourceLibrary() {
                             data-item-index={itemIdx}
                             data-item-key={item.key}
                             draggable={!isInlineRenaming}
-                            onMouseDown={(e) => startSwipeSelection(e, itemIdx, { view: 'column', colIdx })}
+                            onMouseDown={(e) => {
+                              if (handleCtrlMouseSelection(item, itemIdx, e, { view: 'column', colIdx })) return;
+                              startSwipeSelection(e, itemIdx, { view: 'column', colIdx });
+                            }}
+                            onContextMenu={handleItemContextMenu}
                             onDragStart={(e) => {
-                              if (swipeSelectionRef.current?.activated) {
+                              if (swipeSelectionRef.current) {
                                 e.preventDefault();
                                 return;
                               }
@@ -2942,12 +2995,16 @@ export default function ResourceLibrary() {
                       data-item-index={idx}
                       data-item-key={item.key}
                       draggable={!isInlineRenaming}
-                      onMouseDown={(e) => startSwipeSelection(e, idx, { view: 'detail' })}
+                      onMouseDown={(e) => {
+                        if (handleCtrlMouseSelection(item, idx, e, { view: 'detail' })) return;
+                        startSwipeSelection(e, idx, { view: 'detail' });
+                      }}
+                      onContextMenu={handleItemContextMenu}
                       onMouseEnter={item.isFolder && !isInlineRenaming ? (e) => handleFolderHoverEnter(item.key, e) : undefined}
                       onMouseMove={item.isFolder && !isInlineRenaming ? (e) => handleFolderHoverMove(item.key, e) : undefined}
                       onMouseLeave={item.isFolder ? () => hideFolderHoverTip(item.key) : undefined}
                       onDragStart={(e) => {
-                        if (swipeSelectionRef.current?.activated) {
+                        if (swipeSelectionRef.current) {
                           e.preventDefault();
                           return;
                         }
@@ -3071,6 +3128,7 @@ export default function ResourceLibrary() {
                     <Dropdown
                       key={item.key}
                       menu={getContextMenu(item, { includeFavorite: true })}
+                      open={contextMenuItemKey === item.key}
                       trigger={['contextMenu']}
                       onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
                       overlayClassName={buildMenuOverlayClassName()}

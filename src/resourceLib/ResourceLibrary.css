@@ -994,36 +994,6 @@
   flex-shrink: 0;
 }
 
-.finder-selection-summary-bar {
-  min-height: 42px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 16px;
-  background: rgba(0, 122, 255, 0.06);
-  border-bottom: 1px solid rgba(0, 122, 255, 0.12);
-  flex-shrink: 0;
-}
-
-.finder-selection-summary-label {
-  color: #4b5563;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.finder-selection-summary-text {
-  font-size: 13px;
-  color: #111827;
-  font-weight: 600;
-}
-
-.finder-selection-summary-hint {
-  margin-left: auto;
-  color: #6b7280;
-  font-size: 12px;
-  white-space: nowrap;
-}
-
 /* ====== File List (文件列表 - list view) ====== */
 .finder-content-area {
   flex: 1;
