@@ -840,18 +840,25 @@ export function renameItem(data, scope, key, name) {
   return next;
 }
 
-// 删除（文件夹则递归级联删除）
-export function deleteItem(data, scope, key) {
+// 批量删除（文件夹则递归级联删除）
+export function deleteItems(data, scope, keys = []) {
   const list = getLibraryList(data, scope);
+  const targetKeys = Array.from(new Set((keys || []).filter(Boolean)));
+  if (targetKeys.length === 0) return data;
   const toDel = new Set();
   const collect = (k) => {
     toDel.add(k);
     list.forEach((r) => { if (r.parentKey === k) collect(r.key); });
   };
-  collect(key);
+  targetKeys.forEach(collect);
   const next = setLibraryList(data, scope, list.filter((r) => !toDel.has(r.key)));
   saveResourceLib(next);
   return next;
+}
+
+// 删除单项
+export function deleteItem(data, scope, key) {
+  return deleteItems(data, scope, [key]);
 }
 
 // 移动项目到目标文件夹

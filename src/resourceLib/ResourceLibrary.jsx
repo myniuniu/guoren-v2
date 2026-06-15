@@ -20,7 +20,7 @@ import {
   StarOutlined, StarFilled,
 } from '@ant-design/icons';
 import {
-  loadResourceLib, addItem, renameItem, deleteItem, setSelectedFolder, inferFileType, moveItem,
+  loadResourceLib, addItem, renameItem, deleteItems, setSelectedFolder, inferFileType, moveItem,
   getTagDefinitions, addTagDefinition, reorderTagDefinition,
   addTagToItem, removeTagFromItem, toggleTagQuickAccess,
   getLibraryList, getLibraryId, getOrganizations, getTagGroups, setCurrentScope, setCurrentOrg, markItemOpened,
@@ -36,12 +36,25 @@ const DETAIL_PREVIEW_MAX_WIDTH = 1120;
 const DETAIL_PREVIEW_MIN_LIST_WIDTH = 260;
 const DETAIL_PREVIEW_DEFAULT_RATIO = 0.5;
 const FOLDER_HOVER_TIP_DELAY = 1;
+const SWIPE_SELECT_ACTIVATION_DISTANCE = 6;
 const RESOURCE_LIB_HELP_TIPS = [
   '在文件夹上双击可进入文件夹。',
+  '支持 Cmd/Ctrl + Click、Shift + Click、Cmd/Ctrl + A 多选，Delete 批量删除。',
+  '按住鼠标在列表中滑动可连续多选。',
   '支持对文件、文件夹和空白区域使用鼠标右键操作。',
   '悬停行内按钮可快速添加资料或打开更多操作。',
 ];
 const FINDER_LIQUID_MENU_OVERLAY_CLASS = 'finder-liquid-glass-menu';
+
+const isEditableTarget = (target) => (
+  target instanceof HTMLElement
+  && !!target.closest('input, textarea, [contenteditable="true"], .ant-input, .ant-select, .ant-modal, .finder-inline-input')
+);
+
+const isInteractiveRowTarget = (target) => (
+  target instanceof HTMLElement
+  && !!target.closest('button, input, textarea, .ant-dropdown, .finder-inline-input, .finder-column-action-btn, .finder-detail-expand-icon')
+);
 
 export default function ResourceLibrary() {
   const [data, setData] = useState(() => loadResourceLib());
@@ -57,6 +70,8 @@ export default function ResourceLibrary() {
   const [activeTagFilter, setActiveTagFilter] = useState(null);
   const [tagFilterContextFolderKeys, setTagFilterContextFolderKeys] = useState([]);
   const [selectedItemKeys, setSelectedItemKeys] = useState([]); // 多选
+  const swipeSelectionRef = useRef(null);
+  const suppressClickSelectionRef = useRef(false);
   const [inlineRenameItemKey, setInlineRenameItemKey] = useState(null);
   const [inlineRenameName, setInlineRenameName] = useState('');
   const [newTagName, setNewTagName] = useState('');
@@ -543,6 +558,11 @@ export default function ResourceLibrary() {
     () => new Map(list.map((item) => [item.key, item])),
     [list],
   );
+  const selectedItems = useMemo(
+    () => selectedItemKeys.map((key) => folderContextItemMap.get(key)).filter(Boolean),
+    [folderContextItemMap, selectedItemKeys],
+  );
+  const selectedItemCount = selectedItems.length;
 
   const folderContextChildMap = useMemo(() => {
     const childMap = new Map();
@@ -957,23 +977,56 @@ export default function ResourceLibrary() {
     setData((d) => setSelectedFolder(d, scope, null));
   };
 
-  const handleDelete = (key) => {
-    const targetItem = list.find((item) => item.key === key);
-    const targetName = targetItem?.name || '该项目';
+  const collectDeleteCascadeKeys = useCallback((keys = []) => {
+    const pendingKeys = Array.from(new Set((keys || []).filter(Boolean)));
+    const collected = new Set();
+
+    const visit = (itemKey) => {
+      if (!itemKey || collected.has(itemKey)) return;
+      collected.add(itemKey);
+      (folderContextChildMap.get(itemKey) || []).forEach((child) => visit(child.key));
+    };
+
+    pendingKeys.forEach(visit);
+    return collected;
+  }, [folderContextChildMap]);
+
+  const handleDelete = useCallback((target) => {
+    const targetKeys = Array.from(new Set((Array.isArray(target) ? target : [target]).filter(Boolean)));
+    if (targetKeys.length === 0) return;
+
+    const targetItems = targetKeys
+      .map((key) => folderContextItemMap.get(key))
+      .filter(Boolean);
+    if (targetItems.length === 0) return;
+
+    const folderCount = targetItems.filter((item) => item.isFolder).length;
+    const deletingKeys = collectDeleteCascadeKeys(targetKeys);
+    const shouldResetFolderContext = selectedFolderKey ? deletingKeys.has(selectedFolderKey) : false;
+    const content = targetItems.length === 1
+      ? `确定要删除“${targetItems[0].name}”吗？${targetItems[0].isFolder ? '删除文件夹会同时删除其中全部内容。' : ''}`
+      : `确定要删除已选中的 ${targetItems.length} 个项目吗？${folderCount > 0 ? `其中包含 ${folderCount} 个文件夹，删除后会同时移除其全部内容。` : ''}`;
+
     Modal.confirm({
       title: '确认删除',
       icon: null,
-      content: `确定要删除“${targetName}”吗？${targetItem?.isFolder ? '删除文件夹会同时删除其中全部内容。' : ''}`,
+      content,
       okText: '删除',
       okButtonProps: { danger: true },
       cancelText: '取消',
       onOk: () => {
-        setData((d) => deleteItem(d, scope, key));
-        if (selectedFolderKey === key) navigateTo(null);
-        message.success('已删除');
+        setData((d) => deleteItems(d, scope, targetKeys));
+        setContextMenuItemKey((prev) => (prev && deletingKeys.has(prev) ? null : prev));
+        if (shouldResetFolderContext) {
+          navigateTo(null);
+        } else {
+          setSelectedItemKeys((prev) => prev.filter((key) => !deletingKeys.has(key)));
+          setColumnSelectedItem((prev) => (prev && deletingKeys.has(prev.key) ? null : prev));
+        }
+        message.success(targetItems.length === 1 ? '已删除' : `已删除 ${targetItems.length} 项`);
       },
     });
-  };
+  }, [collectDeleteCascadeKeys, folderContextItemMap, navigateTo, scope, selectedFolderKey]);
 
   const handleRename = (item) => {
     startInlineRename(item);
@@ -1180,6 +1233,12 @@ export default function ResourceLibrary() {
     }
   }, []);
 
+  const clearCurrentSelection = useCallback(() => {
+    clearPendingRenameTrigger();
+    setSelectedItemKeys([]);
+    setColumnSelectedItem(null);
+  }, [clearPendingRenameTrigger]);
+
   const queueInlineRename = (item, delay = 220) => {
     if (!item?.key) return;
     clearPendingRenameTrigger();
@@ -1266,38 +1325,6 @@ export default function ResourceLibrary() {
 
     clearTagDragState();
     setTagDragIdx(null);
-  };
-
-  // 多选点击处理（Cmd+Click 切换选中，Shift+Click 范围选，普通点击单选）
-  const lastClickedIdx = useRef(null);
-  const handleItemClick = (item, idx, e) => {
-    if (e.metaKey || e.ctrlKey) {
-      clearPendingRenameTrigger();
-      // Cmd/Ctrl + Click: toggle
-      setSelectedItemKeys((prev) =>
-        prev.includes(item.key) ? prev.filter((k) => k !== item.key) : [...prev, item.key]
-      );
-      lastClickedIdx.current = idx;
-    } else if (e.shiftKey && lastClickedIdx.current !== null) {
-      clearPendingRenameTrigger();
-      // Shift + Click: range select
-      const start = Math.min(lastClickedIdx.current, idx);
-      const end = Math.max(lastClickedIdx.current, idx);
-      const rangeKeys = currentChildren.slice(start, end + 1).map((it) => it.key);
-      setSelectedItemKeys(rangeKeys);
-    } else if (
-      selectedItemKeys.length === 1
-      && selectedItemKeys[0] === item.key
-      && inlineRenameItemKey !== item.key
-    ) {
-      queueInlineRename(item);
-    } else {
-      clearPendingRenameTrigger();
-      // 普通点击：单选
-      setSelectedItemKeys([item.key]);
-      lastClickedIdx.current = idx;
-      recordItemOpened(item);
-    }
   };
 
   const handleDoubleClick = (item) => {
@@ -1399,8 +1426,7 @@ export default function ResourceLibrary() {
   };
 
   const clearListSelection = () => {
-    clearPendingRenameTrigger();
-    setSelectedItemKeys([]);
+    clearCurrentSelection();
   };
 
   const handleListBlankClick = (e) => {
@@ -1419,9 +1445,7 @@ export default function ResourceLibrary() {
       || e.target.closest('.finder-column-resize-handle')
       || e.target.closest('.ant-dropdown')
     ) return;
-    clearPendingRenameTrigger();
-    setSelectedItemKeys([]);
-    setColumnSelectedItem(null);
+    clearCurrentSelection();
     setColumnPath((prev) => prev.slice(0, Math.min(prev.length, colIdx + 1)));
   };
 
@@ -1475,6 +1499,126 @@ export default function ResourceLibrary() {
       return items;
     });
   }, [activeTagFilter, columnContextItems, columnPath, hasActiveSearch, isRecentView, list, recentItems, searchResults, sortLibraryItems]);
+
+  const stopSwipeSelection = useCallback(() => {
+    const gesture = swipeSelectionRef.current;
+    if (!gesture) return;
+    document.removeEventListener('mousemove', gesture.onMouseMove, true);
+    document.removeEventListener('mouseup', gesture.onMouseUp, true);
+    swipeSelectionRef.current = null;
+    if (gesture.activated) {
+      window.setTimeout(() => {
+        suppressClickSelectionRef.current = false;
+      }, 0);
+    }
+  }, []);
+
+  const lastClickedRef = useRef({ view: 'detail', colIdx: null, idx: null });
+
+  const updateSwipeSelectionRange = useCallback((gesture, nextIndex) => {
+    const items = gesture.view === 'column'
+      ? (columnLevels[gesture.colIdx] || [])
+      : displayChildren;
+    if (!items[nextIndex]) return;
+    const start = Math.min(gesture.anchorIndex, nextIndex);
+    const end = Math.max(gesture.anchorIndex, nextIndex);
+    setSelectedItemKeys(items.slice(start, end + 1).map((entry) => entry.key));
+    setColumnSelectedItem(null);
+    lastClickedRef.current = { view: gesture.view, colIdx: gesture.colIdx, idx: nextIndex };
+  }, [columnLevels, displayChildren]);
+
+  const startSwipeSelection = useCallback((event, idx, { view = 'detail', colIdx = null } = {}) => {
+    if (
+      event.button !== 0
+      || event.metaKey
+      || event.ctrlKey
+      || event.shiftKey
+      || isInteractiveRowTarget(event.target)
+    ) return;
+
+    stopSwipeSelection();
+
+    const gesture = {
+      activated: false,
+      anchorIndex: idx,
+      colIdx,
+      startX: event.clientX,
+      startY: event.clientY,
+      view,
+    };
+
+    const onMouseMove = (moveEvent) => {
+      const currentGesture = swipeSelectionRef.current;
+      if (!currentGesture) return;
+
+      const deltaX = Math.abs(moveEvent.clientX - currentGesture.startX);
+      const deltaY = Math.abs(moveEvent.clientY - currentGesture.startY);
+      if (!currentGesture.activated && deltaX < SWIPE_SELECT_ACTIVATION_DISTANCE && deltaY < SWIPE_SELECT_ACTIVATION_DISTANCE) {
+        return;
+      }
+
+      const hoveredElement = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY);
+      const selector = currentGesture.view === 'column'
+        ? `.finder-column-item[data-column-index="${currentGesture.colIdx}"]`
+        : '.finder-file-row[data-item-index]';
+      const targetRow = hoveredElement instanceof Element ? hoveredElement.closest(selector) : null;
+      if (!targetRow) return;
+
+      const nextIndex = Number(targetRow.getAttribute('data-item-index'));
+      if (Number.isNaN(nextIndex)) return;
+
+      if (!currentGesture.activated) {
+        currentGesture.activated = true;
+        suppressClickSelectionRef.current = true;
+      }
+
+      updateSwipeSelectionRange(currentGesture, nextIndex);
+    };
+
+    const onMouseUp = () => {
+      stopSwipeSelection();
+    };
+
+    swipeSelectionRef.current = { ...gesture, onMouseMove, onMouseUp };
+    document.addEventListener('mousemove', onMouseMove, true);
+    document.addEventListener('mouseup', onMouseUp, true);
+  }, [stopSwipeSelection, updateSwipeSelectionRange]);
+
+  useEffect(() => () => {
+    stopSwipeSelection();
+  }, [stopSwipeSelection]);
+
+  // 多选点击处理（Cmd+Click 切换选中，Shift+Click 范围选，普通点击单选）
+  const handleItemClick = (item, idx, e) => {
+    if (suppressClickSelectionRef.current) return;
+    if (e.metaKey || e.ctrlKey) {
+      clearPendingRenameTrigger();
+      // Cmd/Ctrl + Click: toggle
+      setSelectedItemKeys((prev) =>
+        prev.includes(item.key) ? prev.filter((k) => k !== item.key) : [...prev, item.key]
+      );
+      lastClickedRef.current = { view: 'detail', colIdx: null, idx };
+    } else if (e.shiftKey && lastClickedRef.current.view === 'detail' && lastClickedRef.current.idx !== null) {
+      clearPendingRenameTrigger();
+      // Shift + Click: range select
+      const start = Math.min(lastClickedRef.current.idx, idx);
+      const end = Math.max(lastClickedRef.current.idx, idx);
+      const rangeKeys = displayChildren.slice(start, end + 1).map((it) => it.key);
+      setSelectedItemKeys(rangeKeys);
+    } else if (
+      selectedItemKeys.length === 1
+      && selectedItemKeys[0] === item.key
+      && inlineRenameItemKey !== item.key
+    ) {
+      queueInlineRename(item);
+    } else {
+      clearPendingRenameTrigger();
+      // 普通点击：单选
+      setSelectedItemKeys([item.key]);
+      lastClickedRef.current = { view: 'detail', colIdx: null, idx };
+      recordItemOpened(item);
+    }
+  };
 
   // 切换视图模式时同步 columnPath
   const handleViewModeChange = (mode) => {
@@ -1626,6 +1770,25 @@ export default function ResourceLibrary() {
     return list.find((r) => r.key === selectedItemKey) || null;
   }, [selectedItemKey, list]);
   const toolbarMenuTargetItem = previewItem;
+  const visibleSelectionItems = useMemo(
+    () => (viewMode === 'column' ? columnContextItems : displayChildren),
+    [columnContextItems, displayChildren, viewMode],
+  );
+  const selectedDeleteKeys = useMemo(
+    () => (selectedItemCount > 0
+      ? selectedItemKeys
+      : (toolbarMenuTargetItem ? [toolbarMenuTargetItem.key] : [])),
+    [selectedItemCount, selectedItemKeys, toolbarMenuTargetItem],
+  );
+  const canDeleteSelection = selectedDeleteKeys.length > 0;
+  const resolveDeleteTargetKeys = useCallback((itemKey) => (
+    selectedItemCount > 1 && selectedItemKeys.includes(itemKey) ? selectedItemKeys : [itemKey]
+  ), [selectedItemCount, selectedItemKeys]);
+  const selectAllVisibleItems = useCallback(() => {
+    const nextKeys = visibleSelectionItems.map((item) => item.key);
+    setSelectedItemKeys(nextKeys);
+    setColumnSelectedItem(null);
+  }, [visibleSelectionItems]);
 
   // 选中文件夹的子项数量
   const previewFolderCount = useMemo(() => {
@@ -1712,7 +1875,7 @@ export default function ResourceLibrary() {
     );
   };
 
-  const handleItemMenuAction = (item, key, {
+  const handleItemMenuAction = useCallback((item, key, {
     includeFavorite = false,
     columnPathToOpen = null,
   } = {}) => {
@@ -1741,9 +1904,18 @@ export default function ResourceLibrary() {
       }
     }
     if (key === 'rename') handleRename(item);
-    if (key === 'delete') handleDelete(item.key);
+    if (key === 'delete') handleDelete(resolveDeleteTargetKeys(item.key));
     if (key === 'tags-manage') setTagPickerTarget(item.key);
-  };
+  }, [
+    createFolderAndStartRename,
+    favorites,
+    handleDelete,
+    handleRename,
+    navigateTo,
+    resolveDeleteTargetKeys,
+    saveFavorites,
+    viewMode,
+  ]);
 
   const getItemMoreMenu = (item, {
     includeFavorite = false,
@@ -1751,6 +1923,9 @@ export default function ResourceLibrary() {
     columnPathToOpen = null,
   } = {}) => {
     const isFavorited = item.isFolder && favorites.some((f) => f.key === item.key);
+    const deleteLabel = selectedItemCount > 1 && selectedItemKeys.includes(item.key)
+      ? `删除所选 (${selectedItemCount})`
+      : '删除';
     return {
       items: [
         ...(item.isFolder ? [
@@ -1773,7 +1948,7 @@ export default function ResourceLibrary() {
           { type: 'divider' },
         ] : []),
         { key: 'rename', icon: <EditOutlined />, label: '重命名' },
-        { key: 'delete', icon: <DeleteOutlined />, label: '删除', danger: true },
+        { key: 'delete', icon: <DeleteOutlined />, label: deleteLabel, danger: true },
       ],
       onClick: ({ key, domEvent }) => {
         domEvent?.stopPropagation();
@@ -1828,8 +2003,8 @@ export default function ResourceLibrary() {
       return;
     }
     if (key === 'delete') {
-      if (!toolbarMenuTargetItem) return;
-      handleDelete(toolbarMenuTargetItem.key);
+      if (!canDeleteSelection) return;
+      handleDelete(selectedDeleteKeys);
       return;
     }
     if (key.startsWith('sort-')) {
@@ -1866,7 +2041,7 @@ export default function ResourceLibrary() {
       { key: 'tags-manage', icon: <TagsOutlined />, label: '标签…', disabled: !toolbarMenuTargetItem },
       { type: 'divider' },
       { key: 'rename', icon: <EditOutlined />, label: '重命名', disabled: !toolbarMenuTargetItem },
-      { key: 'delete', icon: <DeleteOutlined />, label: '删除', danger: true, disabled: !toolbarMenuTargetItem },
+      { key: 'delete', icon: <DeleteOutlined />, label: selectedItemCount > 1 ? `删除所选 (${selectedItemCount})` : '删除', danger: true, disabled: !canDeleteSelection },
       { type: 'divider' },
       {
         key: 'sort',
@@ -1978,6 +2153,41 @@ export default function ResourceLibrary() {
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [searchPanelOpen]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (isEditableTarget(e.target)) return;
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'a') {
+        e.preventDefault();
+        selectAllVisibleItems();
+        return;
+      }
+
+      if ((e.key === 'Delete' || e.key === 'Backspace') && canDeleteSelection) {
+        e.preventDefault();
+        handleDelete(selectedDeleteKeys);
+        return;
+      }
+
+      if (e.key === 'Escape' && selectedItemCount > 0) {
+        e.preventDefault();
+        clearCurrentSelection();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [
+    canDeleteSelection,
+    clearCurrentSelection,
+    handleDelete,
+    selectAllVisibleItems,
+    selectedDeleteKeys,
+    selectedItemCount,
+  ]);
 
   useEffect(() => () => {
     clearFolderHoverTipTimer();
@@ -2396,6 +2606,32 @@ export default function ResourceLibrary() {
           </Tooltip>
         </div>
 
+        {selectedItemCount > 0 && (
+          <div className="finder-selection-summary-bar">
+            <span className="finder-selection-summary-label">已选：</span>
+            <span className="finder-selection-summary-text">
+              {selectedItemCount === 1
+                ? `1 个项目`
+                : `${selectedItemCount} 个项目`}
+            </span>
+            <Button
+              size="small"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => handleDelete(selectedItemKeys)}
+            >
+              删除所选
+            </Button>
+            <Button
+              size="small"
+              onClick={clearCurrentSelection}
+            >
+              清除选择
+            </Button>
+            <span className="finder-selection-summary-hint">Cmd/Ctrl + A 全选，Delete 删除</span>
+          </div>
+        )}
+
         {hasActiveSearch && (
           <div className="finder-search-summary-bar">
             <span className="finder-search-summary-label">搜索：</span>
@@ -2452,7 +2688,7 @@ export default function ResourceLibrary() {
                   >
                     {items.length === 0 && colIdx === 0 && hasActiveSearch ? (
                       <div className="finder-column-empty">无匹配资料</div>
-                    ) : items.map((item) => {
+                    ) : items.map((item, itemIdx) => {
                       const isActive = columnPath[colIdx + 1] === item.key || (columnSelectedItem?.key === item.key);
                       const isContextMenuTarget = contextMenuItemKey === item.key;
                       const isInlineRenaming = inlineRenameItemKey === item.key;
@@ -2470,8 +2706,16 @@ export default function ResourceLibrary() {
                         >
                           <div
                             className={`finder-column-item ${isActive ? 'finder-column-item-active' : ''} ${selectedItemKeys.includes(item.key) && !isActive ? 'finder-column-item-selected' : ''} ${isContextMenuTarget ? 'finder-column-item-context-open' : ''} ${item.isFolder && dragOverFolderKey === item.key ? 'finder-column-item-dragover' : ''}`}
+                            data-column-index={colIdx}
+                            data-item-index={itemIdx}
+                            data-item-key={item.key}
                             draggable={!isInlineRenaming}
+                            onMouseDown={(e) => startSwipeSelection(e, itemIdx, { view: 'column', colIdx })}
                             onDragStart={(e) => {
+                              if (swipeSelectionRef.current?.activated) {
+                                e.preventDefault();
+                                return;
+                              }
                               startResourceDrag(e, item);
                             }}
                             onDragEnd={() => {
@@ -2482,7 +2726,7 @@ export default function ResourceLibrary() {
                             onDrop={item.isFolder ? (e) => handleFolderDrop(e, item.key) : undefined}
                             onClick={(e) => {
                               // 如果刚刚完成拖拽，不触发点击
-                              if (isDraggingRef.current) return;
+                              if (isDraggingRef.current || suppressClickSelectionRef.current) return;
                               
                               if (e.metaKey || e.ctrlKey) {
                                 clearPendingRenameTrigger();
@@ -2490,15 +2734,17 @@ export default function ResourceLibrary() {
                                 setSelectedItemKeys((prev) =>
                                   prev.includes(item.key) ? prev.filter((k) => k !== item.key) : [...prev, item.key]
                                 );
+                                lastClickedRef.current = { view: 'column', colIdx, idx: itemIdx };
                               } else if (e.shiftKey) {
                                 clearPendingRenameTrigger();
                                 // Shift+Click: 范围选
                                 const colItems = columnLevels[colIdx] || [];
-                                const curIdx = colItems.findIndex((it) => it.key === item.key);
-                                const lastIdx = colItems.findIndex((it) => selectedItemKeys.includes(it.key));
-                                if (lastIdx >= 0 && curIdx >= 0) {
-                                  const start = Math.min(lastIdx, curIdx);
-                                  const end = Math.max(lastIdx, curIdx);
+                                const anchorIdx = lastClickedRef.current.view === 'column' && lastClickedRef.current.colIdx === colIdx
+                                  ? lastClickedRef.current.idx
+                                  : null;
+                                if (anchorIdx !== null) {
+                                  const start = Math.min(anchorIdx, itemIdx);
+                                  const end = Math.max(anchorIdx, itemIdx);
                                   const rangeKeys = colItems.slice(start, end + 1).map((it) => it.key);
                                   setSelectedItemKeys(rangeKeys);
                                 } else {
@@ -2514,6 +2760,7 @@ export default function ResourceLibrary() {
                                 clearPendingRenameTrigger();
                                 // 普通点击
                                 setSelectedItemKeys([item.key]);
+                                lastClickedRef.current = { view: 'column', colIdx, idx: itemIdx };
                                 if (item.isFolder) {
                                   handleColumnFolderClick(item.key, colIdx);
                                 } else {
@@ -2692,11 +2939,18 @@ export default function ResourceLibrary() {
                   const rowContent = (
                     <div
                       className={`finder-file-row ${isSelected ? 'finder-file-row-selected' : ''} ${isContextMenuTarget ? 'finder-file-row-context-open' : ''} ${item.isFolder && dragOverFolderKey === item.key ? 'finder-file-row-dragover' : ''}`}
+                      data-item-index={idx}
+                      data-item-key={item.key}
                       draggable={!isInlineRenaming}
+                      onMouseDown={(e) => startSwipeSelection(e, idx, { view: 'detail' })}
                       onMouseEnter={item.isFolder && !isInlineRenaming ? (e) => handleFolderHoverEnter(item.key, e) : undefined}
                       onMouseMove={item.isFolder && !isInlineRenaming ? (e) => handleFolderHoverMove(item.key, e) : undefined}
                       onMouseLeave={item.isFolder ? () => hideFolderHoverTip(item.key) : undefined}
                       onDragStart={(e) => {
+                        if (swipeSelectionRef.current?.activated) {
+                          e.preventDefault();
+                          return;
+                        }
                         hideFolderHoverTip(item.key);
                         startResourceDrag(e, item);
                       }}
@@ -2708,7 +2962,7 @@ export default function ResourceLibrary() {
                       onDrop={item.isFolder ? (e) => handleFolderDrop(e, item.key) : undefined}
                       onClick={(e) => {
                         // 如果刚刚完成拖拽，不触发点击
-                        if (isDraggingRef.current) return;
+                        if (isDraggingRef.current || suppressClickSelectionRef.current) return;
                         hideFolderHoverTip(item.key);
                         handleItemClick(item, idx, e);
                       }}
