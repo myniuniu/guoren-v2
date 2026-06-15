@@ -1685,6 +1685,7 @@ export default function ResourceLibrary() {
 
   // 切换视图模式时同步 columnPath
   const handleViewModeChange = (mode) => {
+    if (mode === viewMode) return;
     clearPendingRenameTrigger();
     setViewMode(mode);
     if (mode === 'column') {
@@ -2575,9 +2576,18 @@ export default function ResourceLibrary() {
           </Dropdown>
 
           {/* 视图切换按钮组：仅保留列表和分栏 */}
-          <div className="finder-toolbar-views">
+          <div
+            className="finder-toolbar-views"
+            style={{ '--finder-view-indicator-offset': viewMode === 'column' ? '42px' : '0px' }}
+          >
+            <span className="finder-toolbar-view-indicator" aria-hidden="true" />
             <Tooltip title="列表">
-              <button className={`finder-toolbar-view-btn ${viewMode === 'detail' ? 'finder-toolbar-view-btn-active' : ''}`} onClick={() => handleViewModeChange('detail')}>
+              <button
+                type="button"
+                className={`finder-toolbar-view-btn ${viewMode === 'detail' ? 'finder-toolbar-view-btn-active' : ''}`}
+                onClick={() => handleViewModeChange('detail')}
+                aria-pressed={viewMode === 'detail'}
+              >
                 <span className="finder-toolbar-view-icon finder-toolbar-view-icon-list" aria-hidden="true">
                   <span className="finder-toolbar-view-icon-list-row">
                     <span className="finder-toolbar-view-icon-dot" />
@@ -2595,7 +2605,12 @@ export default function ResourceLibrary() {
               </button>
             </Tooltip>
             <Tooltip title="分栏">
-              <button className={`finder-toolbar-view-btn ${viewMode === 'column' ? 'finder-toolbar-view-btn-active' : ''}`} onClick={() => handleViewModeChange('column')}>
+              <button
+                type="button"
+                className={`finder-toolbar-view-btn ${viewMode === 'column' ? 'finder-toolbar-view-btn-active' : ''}`}
+                onClick={() => handleViewModeChange('column')}
+                aria-pressed={viewMode === 'column'}
+              >
                 <span className="finder-toolbar-view-icon finder-toolbar-view-icon-columns" aria-hidden="true">
                   <span className="finder-toolbar-view-icon-column" />
                   <span className="finder-toolbar-view-icon-column" />
@@ -2721,9 +2736,9 @@ export default function ResourceLibrary() {
 
         {/* ===== 内容区域：文件列表 + 右侧预览面板 ===== */}
         <div className="finder-content-area" ref={contentAreaRef}>
-
-          {/* ==== 分栏视图 ==== */}
-          {viewMode === 'column' ? (
+          <div key={viewMode} className={`finder-content-view finder-content-view-${viewMode}`}>
+            {/* ==== 分栏视图 ==== */}
+            {viewMode === 'column' ? (
               <div className="finder-column-scroll" ref={columnScrollRef} onContextMenu={handleBgContextMenu}>
                 {columnLevels.map((items, colIdx) => {
                   const colWidth = columnWidths[colIdx];
@@ -2923,66 +2938,66 @@ export default function ResourceLibrary() {
                   )}
                 </div>
               </div>
-          ) : (
-            <>
-          {/* ==== 列表/详情视图 ==== */}
-          <div 
-            className="finder-file-list" 
-            onContextMenu={handleBgContextMenu}
-            onDragOver={handleListDragOver}
-            onDrop={handleListDrop}
-            onClick={handleListBlankClick}
-          >
-              {/* 详情模式表头 */}
-              {viewMode === 'detail' && currentChildren.length > 0 && (
-                <Dropdown
-                  menu={colVisibilityMenu}
-                  trigger={['contextMenu']}
-                  overlayClassName={buildMenuOverlayClassName()}
+            ) : (
+              <>
+                {/* ==== 列表/详情视图 ==== */}
+                <div
+                  className="finder-file-list"
+                  onContextMenu={handleBgContextMenu}
+                  onDragOver={handleListDragOver}
+                  onDrop={handleListDrop}
+                  onClick={handleListBlankClick}
                 >
-                  <div className="finder-detail-header">
-                    <span className={`finder-detail-col-name finder-detail-col-sortable ${sortBy === 'name' ? 'finder-detail-col-active' : ''}`} style={nameColResized ? { width: detailColWidths.name, flex: 'none' } : { flex: 1, minWidth: 200 }} onClick={() => handleHeaderSort('name')}>
-                      名称{sortBy === 'name' && <span className="finder-detail-col-arrow">{sortOrder === 'asc' ? '▲' : '▼'}</span>}
-                      <span className="finder-detail-col-resize-handle" onMouseDown={(e) => handleDetailColResizeStart('name', e)} onClick={(e) => e.stopPropagation()} />
-                    </span>
-                    {visibleCols.map((colKey) => {
-                      const def = COL_DEFS.find((c) => c.key === colKey);
-                      if (!def) return null;
-                      return (
-                        <span
-                          key={colKey}
-                          className={`finder-detail-col-${colKey} ${def.sortable ? 'finder-detail-col-sortable' : ''} ${sortBy === colKey ? 'finder-detail-col-active' : ''}`}
-                          style={{ width: detailColWidths[colKey] }}
-                          onClick={() => def.sortable && handleHeaderSort(colKey)}
-                        >
-                          {def.label}{sortBy === colKey && <span className="finder-detail-col-arrow">{sortOrder === 'asc' ? '▲' : '▼'}</span>}
-                          <span className="finder-detail-col-resize-handle" onMouseDown={(e) => handleDetailColResizeStart(colKey, e)} onClick={(e) => e.stopPropagation()} />
+              {/* 详情模式表头 */}
+                  {viewMode === 'detail' && currentChildren.length > 0 && (
+                    <Dropdown
+                      menu={colVisibilityMenu}
+                      trigger={['contextMenu']}
+                      overlayClassName={buildMenuOverlayClassName()}
+                    >
+                      <div className="finder-detail-header">
+                        <span className={`finder-detail-col-name finder-detail-col-sortable ${sortBy === 'name' ? 'finder-detail-col-active' : ''}`} style={nameColResized ? { width: detailColWidths.name, flex: 'none' } : { flex: 1, minWidth: 200 }} onClick={() => handleHeaderSort('name')}>
+                          名称{sortBy === 'name' && <span className="finder-detail-col-arrow">{sortOrder === 'asc' ? '▲' : '▼'}</span>}
+                          <span className="finder-detail-col-resize-handle" onMouseDown={(e) => handleDetailColResizeStart('name', e)} onClick={(e) => e.stopPropagation()} />
                         </span>
-                      );
-                    })}
-                  </div>
-                </Dropdown>
-              )}
-              {/* 内联新建文件夹 */}
-              {newFolderInline && (
-                <div className="finder-file-row finder-file-row-selected">
-                  <span className="finder-file-icon"><FolderFilled style={{ fontSize: 18, color: '#4facfe' }} /></span>
-                  <Input
-                    ref={newFolderInputRef}
-                    className="finder-inline-input"
-                    value={newFolderName}
-                    onChange={(e) => setNewFolderName(e.target.value)}
-                    onPressEnter={confirmNewFolder}
-                    onBlur={confirmNewFolder}
-                    size="small"
-                    style={{ flex: 1 }}
-                  />
-                </div>
-              )}
-              {currentChildren.length === 0 && !newFolderInline ? (
-                <div className="finder-empty"><Empty description={hasActiveSearch ? '无匹配资料' : (isRecentView ? '近一个月暂无最近打开的文件' : '此文件夹为空，右键新建')} image={Empty.PRESENTED_IMAGE_SIMPLE} /></div>
-              ) : (
-                displayChildren.map((item, idx) => {
+                        {visibleCols.map((colKey) => {
+                          const def = COL_DEFS.find((c) => c.key === colKey);
+                          if (!def) return null;
+                          return (
+                            <span
+                              key={colKey}
+                              className={`finder-detail-col-${colKey} ${def.sortable ? 'finder-detail-col-sortable' : ''} ${sortBy === colKey ? 'finder-detail-col-active' : ''}`}
+                              style={{ width: detailColWidths[colKey] }}
+                              onClick={() => def.sortable && handleHeaderSort(colKey)}
+                            >
+                              {def.label}{sortBy === colKey && <span className="finder-detail-col-arrow">{sortOrder === 'asc' ? '▲' : '▼'}</span>}
+                              <span className="finder-detail-col-resize-handle" onMouseDown={(e) => handleDetailColResizeStart(colKey, e)} onClick={(e) => e.stopPropagation()} />
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </Dropdown>
+                  )}
+                  {/* 内联新建文件夹 */}
+                  {newFolderInline && (
+                    <div className="finder-file-row finder-file-row-selected">
+                      <span className="finder-file-icon"><FolderFilled style={{ fontSize: 18, color: '#4facfe' }} /></span>
+                      <Input
+                        ref={newFolderInputRef}
+                        className="finder-inline-input"
+                        value={newFolderName}
+                        onChange={(e) => setNewFolderName(e.target.value)}
+                        onPressEnter={confirmNewFolder}
+                        onBlur={confirmNewFolder}
+                        size="small"
+                        style={{ flex: 1 }}
+                      />
+                    </div>
+                  )}
+                  {currentChildren.length === 0 && !newFolderInline ? (
+                    <div className="finder-empty"><Empty description={hasActiveSearch ? '无匹配资料' : (isRecentView ? '近一个月暂无最近打开的文件' : '此文件夹为空，右键新建')} image={Empty.PRESENTED_IMAGE_SIMPLE} /></div>
+                  ) : (
+                    displayChildren.map((item, idx) => {
                   const isSelected = selectedItemKeys.includes(item.key);
                   const isContextMenuTarget = contextMenuItemKey === item.key;
                   const isInlineRenaming = inlineRenameItemKey === item.key;
@@ -3136,82 +3151,83 @@ export default function ResourceLibrary() {
                       {rowContent}
                     </Dropdown>
                   );
-                })
-              )}
-          </div>
-
-          {folderHoverTip?.visible && (
-            <div
-              className="finder-folder-hover-tip"
-              style={{ left: folderHoverTip.x, top: folderHoverTip.y }}
-            >
-              双击进入文件夹
-            </div>
-          )}
-
-          {/* 预览面板拖拽调整宽度手柄 */}
-          <div className="finder-preview-resize-handle" onMouseDown={handlePreviewResizeStart} />
-
-          {/* 右侧预览面板（常驻 - 文件内容预览） */}
-          <div className="finder-preview-panel" style={{ width: previewWidth }}>
-            {previewItem ? (
-              <div className="finder-preview-content">
-                {/* 内容预览区 */}
-                <div className="finder-preview-body">
-                  {previewItem.isFolder ? (
-                    <div className="finder-preview-folder-grid">
-                      <FolderFilled style={{ fontSize: 80, color: '#4facfe' }} />
-                      <div className="finder-preview-folder-hint">文件夹包含 {previewFolderCount} 个项目</div>
-                      <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        style={{ marginTop: 16 }}
-                        onClick={() => {
-                          setAddDialogParentKey(previewItem.key);
-                          setAddDialogOpen(true);
-                        }}
-                      >
-                        添加资料
-                      </Button>
-                    </div>
-                  ) : previewItem.fileType === 'image' ? (
-                    previewItem.url
-                      ? <img src={previewItem.url} alt={previewItem.name} className="finder-preview-image" />
-                      : <div className="finder-preview-placeholder"><FileImageOutlined style={{ fontSize: 80, color: '#007aff' }} /><div>图片预览</div></div>
-                  ) : previewItem.fileType === 'pdf' ? (
-                    previewItem.url
-                      ? <iframe src={previewItem.url} className="finder-preview-iframe" title="PDF 预览" />
-                      : <div className="finder-preview-placeholder"><FilePdfOutlined style={{ fontSize: 80, color: '#ff3b30' }} /><div>PDF 文档</div></div>
-                  ) : previewItem.fileType === 'video' ? (
-                    previewItem.url
-                      ? <video src={previewItem.url} controls className="finder-preview-video" />
-                      : <div className="finder-preview-placeholder"><PlayCircleOutlined style={{ fontSize: 80, color: '#007aff' }} /><div>视频文件</div></div>
-                  ) : previewItem.fileType === 'audio' ? (
-                    <div className="finder-preview-placeholder">
-                      <SoundOutlined style={{ fontSize: 80, color: '#af52de' }} />
-                      <div>音频文件</div>
-                      {previewItem.url && <audio src={previewItem.url} controls style={{ marginTop: 16, width: '80%' }} />}
-                    </div>
-                  ) : previewItem.fileType === 'pptx' ? (
-                    <div className="finder-preview-placeholder"><FilePptOutlined style={{ fontSize: 80, color: '#ff9500' }} /><div>PPT 演示文稿</div></div>
-                  ) : previewItem.fileType === 'xlsx' ? (
-                    <div className="finder-preview-placeholder"><FileExcelOutlined style={{ fontSize: 80, color: '#34c759' }} /><div>Excel 表格</div></div>
-                  ) : previewItem.fileType === 'docx' ? (
-                    <div className="finder-preview-placeholder"><FileWordOutlined style={{ fontSize: 80, color: '#007aff' }} /><div>Word 文档</div></div>
-                  ) : (
-                    <div className="finder-preview-placeholder"><FileTextOutlined style={{ fontSize: 80, color: '#8e8e93' }} /><div>文件预览</div></div>
+                    })
                   )}
                 </div>
-              </div>
-            ) : (
-              <div className="finder-preview-empty">
-                <FileTextOutlined style={{ fontSize: 48, color: '#d1d1d6' }} />
-                <div>选择一个文件预览</div>
-              </div>
+
+                {folderHoverTip?.visible && (
+                  <div
+                    className="finder-folder-hover-tip"
+                    style={{ left: folderHoverTip.x, top: folderHoverTip.y }}
+                  >
+                    双击进入文件夹
+                  </div>
+                )}
+
+                {/* 预览面板拖拽调整宽度手柄 */}
+                <div className="finder-preview-resize-handle" onMouseDown={handlePreviewResizeStart} />
+
+                {/* 右侧预览面板（常驻 - 文件内容预览） */}
+                <div className="finder-preview-panel" style={{ width: previewWidth }}>
+                  {previewItem ? (
+                    <div className="finder-preview-content">
+                      {/* 内容预览区 */}
+                      <div className="finder-preview-body">
+                        {previewItem.isFolder ? (
+                          <div className="finder-preview-folder-grid">
+                            <FolderFilled style={{ fontSize: 80, color: '#4facfe' }} />
+                            <div className="finder-preview-folder-hint">文件夹包含 {previewFolderCount} 个项目</div>
+                            <Button
+                              type="primary"
+                              icon={<PlusOutlined />}
+                              style={{ marginTop: 16 }}
+                              onClick={() => {
+                                setAddDialogParentKey(previewItem.key);
+                                setAddDialogOpen(true);
+                              }}
+                            >
+                              添加资料
+                            </Button>
+                          </div>
+                        ) : previewItem.fileType === 'image' ? (
+                          previewItem.url
+                            ? <img src={previewItem.url} alt={previewItem.name} className="finder-preview-image" />
+                            : <div className="finder-preview-placeholder"><FileImageOutlined style={{ fontSize: 80, color: '#007aff' }} /><div>图片预览</div></div>
+                        ) : previewItem.fileType === 'pdf' ? (
+                          previewItem.url
+                            ? <iframe src={previewItem.url} className="finder-preview-iframe" title="PDF 预览" />
+                            : <div className="finder-preview-placeholder"><FilePdfOutlined style={{ fontSize: 80, color: '#ff3b30' }} /><div>PDF 文档</div></div>
+                        ) : previewItem.fileType === 'video' ? (
+                          previewItem.url
+                            ? <video src={previewItem.url} controls className="finder-preview-video" />
+                            : <div className="finder-preview-placeholder"><PlayCircleOutlined style={{ fontSize: 80, color: '#007aff' }} /><div>视频文件</div></div>
+                        ) : previewItem.fileType === 'audio' ? (
+                          <div className="finder-preview-placeholder">
+                            <SoundOutlined style={{ fontSize: 80, color: '#af52de' }} />
+                            <div>音频文件</div>
+                            {previewItem.url && <audio src={previewItem.url} controls style={{ marginTop: 16, width: '80%' }} />}
+                          </div>
+                        ) : previewItem.fileType === 'pptx' ? (
+                          <div className="finder-preview-placeholder"><FilePptOutlined style={{ fontSize: 80, color: '#ff9500' }} /><div>PPT 演示文稿</div></div>
+                        ) : previewItem.fileType === 'xlsx' ? (
+                          <div className="finder-preview-placeholder"><FileExcelOutlined style={{ fontSize: 80, color: '#34c759' }} /><div>Excel 表格</div></div>
+                        ) : previewItem.fileType === 'docx' ? (
+                          <div className="finder-preview-placeholder"><FileWordOutlined style={{ fontSize: 80, color: '#007aff' }} /><div>Word 文档</div></div>
+                        ) : (
+                          <div className="finder-preview-placeholder"><FileTextOutlined style={{ fontSize: 80, color: '#8e8e93' }} /><div>文件预览</div></div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="finder-preview-empty">
+                      <FileTextOutlined style={{ fontSize: 48, color: '#d1d1d6' }} />
+                      <div>选择一个文件预览</div>
+                    </div>
+                  )}
+                </div>
+              </>
             )}
           </div>
-          </>
-          )}
         </div>
 
         {/* 底部路径栏 */}
