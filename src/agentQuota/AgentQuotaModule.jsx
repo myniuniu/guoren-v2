@@ -1,13 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Badge,
   Button,
   Card,
+  Checkbox,
+  Drawer,
   Form,
   Input,
   InputNumber,
-  Modal,
   Popconfirm,
   Progress,
   Select,
@@ -22,6 +23,7 @@ import {
 import {
   ApartmentOutlined,
   CopyOutlined,
+  DeleteOutlined,
   EditOutlined,
   PlusOutlined,
   ReloadOutlined,
@@ -69,6 +71,77 @@ const PLAN_STATUS_LABEL_MAP = Object.fromEntries(PLAN_STATUS_OPTIONS.map((item) 
 const PLAN_SCOPE_LABEL_MAP = Object.fromEntries(PLAN_SCOPE_OPTIONS.map((item) => [item.value, item.label]));
 const RESET_CYCLE_LABEL_MAP = Object.fromEntries(RESET_CYCLE_OPTIONS.map((item) => [item.value, item.label]));
 const USER_GROUP_LABEL_MAP = Object.fromEntries(USER_GROUP_OPTIONS.map((item) => [item.value, item.label]));
+const DIMENSION_TAB_ITEMS = [
+  { key: 'skill', label: '技能维度' },
+  { key: 'token', label: 'Token 维度' },
+  { key: 'agent', label: '智能体维度' },
+];
+const DEFAULT_ENABLED_DIMENSIONS = DIMENSION_TAB_ITEMS.map((item) => item.key);
+const DIMENSION_OPTIONS = DIMENSION_TAB_ITEMS.map((item) => ({ label: item.label, value: item.key }));
+const DIMENSION_LABEL_MAP = Object.fromEntries(DIMENSION_TAB_ITEMS.map((item) => [item.key, item.label]));
+const MULTI_DIMENSION_STRATEGY_OPTIONS = [
+  { label: '联合收口', value: 'STRICT' },
+  { label: '综合均衡', value: 'BALANCED' },
+];
+const MULTI_DIMENSION_STRATEGY_GUIDE_ITEMS = [
+  {
+    value: 'STRICT',
+    title: '联合收口',
+    summary: '任一维度先触达阈值，就按最严格口径整体收紧。',
+    detail: '适合风险优先、需要硬约束的场景；即使其他维度仍有余量，也不会继续放量。',
+  },
+  {
+    value: 'BALANCED',
+    title: '综合均衡',
+    summary: '按各维度综合使用率统一判断整体放量节奏。',
+    detail: '适合体验优先、希望平滑控制的场景；单一维度短时偏高，不会立刻触发整体收紧。',
+  },
+];
+const MULTI_DIMENSION_STRATEGY_LABEL_MAP = {
+  SINGLE: '单维度直控',
+  STRICT: '联合收口',
+  BALANCED: '综合均衡',
+};
+const MULTI_DIMENSION_STRATEGY_DESCRIPTION_MAP = {
+  SINGLE: '仅启用单一维度时，直接按该维度进行控制。',
+  STRICT: '多个维度同时生效时，任一维度先接近或达到上限，都会按最严格口径触发整体收口。',
+  BALANCED: '多个维度同时生效时，按综合使用率统一评估整体风险和放量节奏，不因单一维度短时偏高立即收紧。',
+};
+
+const SKILL_CATALOG = [
+  { value: 'knowledge-search', label: '知识检索', color: 'blue' },
+  { value: 'ppt-generate', label: 'PPT 生成', color: 'purple' },
+  { value: 'data-analysis', label: '数据分析', color: 'gold' },
+  { value: 'image-generate', label: '图片生成', color: 'magenta' },
+  { value: 'workflow-run', label: '流程执行', color: 'cyan' },
+  { value: 'agent-publish', label: '智能体发布', color: 'green' },
+];
+
+const SKILL_LABEL_MAP = Object.fromEntries(SKILL_CATALOG.map((item) => [item.value, item.label]));
+const SKILL_META_MAP = new Map(SKILL_CATALOG.map((item) => [item.value, item]));
+
+function createPlanSkillRule(skillKey, limit) {
+  return { skillKey, limit };
+}
+
+function createBindingSkillRule(skillKey, limit, used = 0) {
+  return { skillKey, limit, used };
+}
+
+function normalizeEnabledDimensions(enabledDimensions) {
+  const next = Array.isArray(enabledDimensions) ? enabledDimensions.filter(Boolean) : [];
+  const unique = Array.from(new Set(next));
+  return unique.length ? unique : [...DEFAULT_ENABLED_DIMENSIONS];
+}
+
+function withDimensionConfig(record, enabledDimensions = DEFAULT_ENABLED_DIMENSIONS, dimensionStrategy = 'STRICT') {
+  const nextEnabledDimensions = normalizeEnabledDimensions(enabledDimensions);
+  return {
+    ...record,
+    enabledDimensions: nextEnabledDimensions,
+    dimensionStrategy: nextEnabledDimensions.length > 1 ? dimensionStrategy : 'SINGLE',
+  };
+}
 
 const INITIAL_PLAN_TEMPLATES = [
   {
@@ -78,6 +151,10 @@ const INITIAL_PLAN_TEMPLATES = [
     status: 'ACTIVE',
     resetCycle: 'MONTHLY',
     skillUsageLimit: 300,
+    skillRules: [
+      createPlanSkillRule('knowledge-search', 120),
+      createPlanSkillRule('ppt-generate', 40),
+    ],
     tokenLimit: 180000,
     agentCreateLimit: 2,
     skillGenerateLimit: 3,
@@ -98,6 +175,11 @@ const INITIAL_PLAN_TEMPLATES = [
     status: 'ACTIVE',
     resetCycle: 'MONTHLY',
     skillUsageLimit: 5000,
+    skillRules: [
+      createPlanSkillRule('knowledge-search', 1800),
+      createPlanSkillRule('workflow-run', 1200),
+      createPlanSkillRule('data-analysis', 900),
+    ],
     tokenLimit: 3200000,
     agentCreateLimit: 18,
     skillGenerateLimit: 28,
@@ -118,6 +200,12 @@ const INITIAL_PLAN_TEMPLATES = [
     status: 'ACTIVE',
     resetCycle: 'MONTHLY',
     skillUsageLimit: 22000,
+    skillRules: [
+      createPlanSkillRule('knowledge-search', 6800),
+      createPlanSkillRule('workflow-run', 4200),
+      createPlanSkillRule('data-analysis', 3000),
+      createPlanSkillRule('ppt-generate', 2200),
+    ],
     tokenLimit: 12000000,
     agentCreateLimit: 80,
     skillGenerateLimit: 160,
@@ -138,6 +226,13 @@ const INITIAL_PLAN_TEMPLATES = [
     status: 'DRAFT',
     resetCycle: 'MONTHLY',
     skillUsageLimit: 60000,
+    skillRules: [
+      createPlanSkillRule('knowledge-search', 14000),
+      createPlanSkillRule('workflow-run', 9000),
+      createPlanSkillRule('data-analysis', 7000),
+      createPlanSkillRule('image-generate', 4000),
+      createPlanSkillRule('agent-publish', 2000),
+    ],
     tokenLimit: 32000000,
     agentCreateLimit: 220,
     skillGenerateLimit: 360,
@@ -161,6 +256,12 @@ const INITIAL_CURRENT_TENANT_QUOTA = {
   seatCount: 386,
   planId: 'plan-tenant-standard',
   skillUsageLimit: 22000,
+  skillRules: [
+    createBindingSkillRule('knowledge-search', 6800, 4980),
+    createBindingSkillRule('workflow-run', 4200, 3360),
+    createBindingSkillRule('data-analysis', 3000, 1960),
+    createBindingSkillRule('ppt-generate', 2200, 1420),
+  ],
   tokenLimit: 12000000,
   agentCreateLimit: 80,
   skillGenerateLimit: 160,
@@ -187,6 +288,11 @@ const INITIAL_DEPARTMENT_BINDINGS = [
     seatCount: 38,
     planId: 'plan-department-standard',
     skillUsageLimit: 5200,
+    skillRules: [
+      createBindingSkillRule('knowledge-search', 1700, 1240),
+      createBindingSkillRule('workflow-run', 1200, 980),
+      createBindingSkillRule('data-analysis', 820, 610),
+    ],
     tokenLimit: 3100000,
     agentCreateLimit: 16,
     skillGenerateLimit: 26,
@@ -211,6 +317,12 @@ const INITIAL_DEPARTMENT_BINDINGS = [
     seatCount: 26,
     planId: 'plan-key-department',
     skillUsageLimit: 7600,
+    skillRules: [
+      createBindingSkillRule('knowledge-search', 2200, 1620),
+      createBindingSkillRule('workflow-run', 1600, 1380),
+      createBindingSkillRule('data-analysis', 1200, 860),
+      createBindingSkillRule('image-generate', 620, 540),
+    ],
     tokenLimit: 4200000,
     agentCreateLimit: 24,
     skillGenerateLimit: 46,
@@ -235,6 +347,11 @@ const INITIAL_DEPARTMENT_BINDINGS = [
     seatCount: 29,
     planId: 'plan-department-standard',
     skillUsageLimit: 4600,
+    skillRules: [
+      createBindingSkillRule('knowledge-search', 1500, 920),
+      createBindingSkillRule('workflow-run', 960, 620),
+      createBindingSkillRule('data-analysis', 700, 430),
+    ],
     tokenLimit: 2700000,
     agentCreateLimit: 12,
     skillGenerateLimit: 18,
@@ -259,6 +376,10 @@ const INITIAL_DEPARTMENT_BINDINGS = [
     seatCount: 21,
     planId: 'plan-department-standard',
     skillUsageLimit: 1200,
+    skillRules: [
+      createBindingSkillRule('knowledge-search', 420, 320),
+      createBindingSkillRule('ppt-generate', 180, 156),
+    ],
     tokenLimit: 820000,
     agentCreateLimit: 5,
     skillGenerateLimit: 8,
@@ -286,6 +407,10 @@ const INITIAL_PERSONAL_BINDINGS = [
     roleLabel: '部门管理员',
     planId: 'plan-department-standard',
     skillUsageLimit: 280,
+    skillRules: [
+      createBindingSkillRule('knowledge-search', 110, 92),
+      createBindingSkillRule('workflow-run', 60, 48),
+    ],
     tokenLimit: 180000,
     agentCreateLimit: 3,
     skillGenerateLimit: 4,
@@ -310,6 +435,11 @@ const INITIAL_PERSONAL_BINDINGS = [
     roleLabel: '研发负责人',
     planId: 'plan-tenant-standard',
     skillUsageLimit: 420,
+    skillRules: [
+      createBindingSkillRule('knowledge-search', 120, 96),
+      createBindingSkillRule('data-analysis', 80, 58),
+      createBindingSkillRule('workflow-run', 70, 52),
+    ],
     tokenLimit: 260000,
     agentCreateLimit: 5,
     skillGenerateLimit: 8,
@@ -334,6 +464,10 @@ const INITIAL_PERSONAL_BINDINGS = [
     roleLabel: '一线运营',
     planId: 'plan-personal-base',
     skillUsageLimit: 180,
+    skillRules: [
+      createBindingSkillRule('knowledge-search', 70, 44),
+      createBindingSkillRule('ppt-generate', 24, 20),
+    ],
     tokenLimit: 120000,
     agentCreateLimit: 1,
     skillGenerateLimit: 2,
@@ -358,6 +492,10 @@ const INITIAL_PERSONAL_BINDINGS = [
     roleLabel: '运营专员',
     planId: 'plan-personal-base',
     skillUsageLimit: 150,
+    skillRules: [
+      createBindingSkillRule('knowledge-search', 60, 40),
+      createBindingSkillRule('ppt-generate', 20, 18),
+    ],
     tokenLimit: 96000,
     agentCreateLimit: 1,
     skillGenerateLimit: 2,
@@ -427,6 +565,40 @@ const INITIAL_FREE_POLICIES = [
   },
 ];
 
+function seedPlanTemplates() {
+  return INITIAL_PLAN_TEMPLATES.map((item) => {
+    if (item.id === 'plan-personal-base') {
+      return withDimensionConfig(item, ['skill']);
+    }
+    if (item.id === 'plan-department-standard') {
+      return withDimensionConfig(item, ['skill', 'token'], 'BALANCED');
+    }
+    return withDimensionConfig(item, DEFAULT_ENABLED_DIMENSIONS, 'STRICT');
+  });
+}
+
+function seedCurrentTenantQuota() {
+  return withDimensionConfig(INITIAL_CURRENT_TENANT_QUOTA, DEFAULT_ENABLED_DIMENSIONS, 'STRICT');
+}
+
+function seedDepartmentBindings() {
+  return INITIAL_DEPARTMENT_BINDINGS.map((item) => {
+    if (item.id === 'binding-dept-4') {
+      return withDimensionConfig(item, ['skill']);
+    }
+    return withDimensionConfig(item, ['skill', 'token'], 'BALANCED');
+  });
+}
+
+function seedPersonalBindings() {
+  return INITIAL_PERSONAL_BINDINGS.map((item) => {
+    if (item.planId === 'plan-personal-base') {
+      return withDimensionConfig(item, ['skill']);
+    }
+    return withDimensionConfig(item, ['skill', 'token'], 'BALANCED');
+  });
+}
+
 function formatNumber(value) {
   return Number(value || 0).toLocaleString('zh-CN');
 }
@@ -445,6 +617,145 @@ function formatPercent(value) {
 
 function normalizeNumber(value) {
   return Number(value || 0);
+}
+
+function getEnabledDimensionKeys(enabledDimensions) {
+  return normalizeEnabledDimensions(enabledDimensions);
+}
+
+function getDimensionStrategyLabel(recordOrStrategy, enabledDimensions) {
+  if (typeof recordOrStrategy === 'string') {
+    return MULTI_DIMENSION_STRATEGY_LABEL_MAP[recordOrStrategy] || recordOrStrategy;
+  }
+
+  const activeDimensions = getEnabledDimensionKeys(enabledDimensions || recordOrStrategy?.enabledDimensions);
+  const strategyKey = activeDimensions.length > 1 ? (recordOrStrategy?.dimensionStrategy || 'STRICT') : 'SINGLE';
+  return MULTI_DIMENSION_STRATEGY_LABEL_MAP[strategyKey] || strategyKey;
+}
+
+function getDimensionStrategyDescription(recordOrStrategy, enabledDimensions) {
+  const activeDimensions = getEnabledDimensionKeys(enabledDimensions || recordOrStrategy?.enabledDimensions);
+  const strategyKey = typeof recordOrStrategy === 'string'
+    ? recordOrStrategy
+    : (activeDimensions.length > 1 ? (recordOrStrategy?.dimensionStrategy || 'STRICT') : 'SINGLE');
+  return MULTI_DIMENSION_STRATEGY_DESCRIPTION_MAP[strategyKey] || '';
+}
+
+function renderDimensionStrategySummary(record) {
+  const enabledDimensions = getEnabledDimensionKeys(record.enabledDimensions);
+  return (
+    <div className="aq-free-list">
+      <span>启用维度：{enabledDimensions.map((item) => DIMENSION_LABEL_MAP[item] || item).join(' / ')}</span>
+      <span>整体策略：{getDimensionStrategyLabel(record, enabledDimensions)}</span>
+      <span>{getDimensionStrategyDescription(record, enabledDimensions)}</span>
+    </div>
+  );
+}
+
+function renderMultiDimensionStrategyGuide(selectedStrategy) {
+  return (
+    <div className="aq-strategy-guide">
+      {MULTI_DIMENSION_STRATEGY_GUIDE_ITEMS.map((item) => (
+        <div
+          key={item.value}
+          className={`aq-strategy-guide-item${selectedStrategy === item.value ? ' aq-strategy-guide-item-active' : ''}`}
+        >
+          <div className="aq-strategy-guide-title">{item.title}</div>
+          <div className="aq-strategy-guide-summary">{item.summary}</div>
+          <div className="aq-strategy-guide-detail">{item.detail}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function cloneSkillRules(skillRules = [], includeUsed = false) {
+  return (Array.isArray(skillRules) ? skillRules : []).map((item) => ({
+    skillKey: item?.skillKey,
+    limit: normalizeNumber(item?.limit),
+    ...(includeUsed ? { used: normalizeNumber(item?.used) } : {}),
+  }));
+}
+
+function buildBindingSkillRules(plan) {
+  return cloneSkillRules(plan?.skillRules).map((item) => ({
+    ...item,
+    used: 0,
+  }));
+}
+
+function normalizeSkillRules(skillRules = [], { includeUsed = false } = {}) {
+  return (Array.isArray(skillRules) ? skillRules : [])
+    .filter((item) => item?.skillKey)
+    .map((item) => ({
+      skillKey: item.skillKey,
+      limit: normalizeNumber(item.limit),
+      ...(includeUsed ? { used: normalizeNumber(item.used) } : {}),
+    }));
+}
+
+function validateSkillRules(skillRules, totalLimit, { includeUsed = false } = {}) {
+  const uniqueKeys = new Set();
+
+  for (const item of skillRules) {
+    if (uniqueKeys.has(item.skillKey)) {
+      message.error(`技能「${SKILL_LABEL_MAP[item.skillKey] || item.skillKey}」重复配置，请保留一条规则。`);
+      return false;
+    }
+    uniqueKeys.add(item.skillKey);
+
+    if (item.limit > normalizeNumber(totalLimit)) {
+      message.error(`技能「${SKILL_LABEL_MAP[item.skillKey] || item.skillKey}」的上限不能超过总技能次数上限。`);
+      return false;
+    }
+
+    if (includeUsed && item.used > item.limit) {
+      message.error(`技能「${SKILL_LABEL_MAP[item.skillKey] || item.skillKey}」的已使用次数不能超过该技能上限。`);
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function renderSkillRuleCell(skillRules, { showUsage = false } = {}) {
+  if (!skillRules?.length) {
+    return <span className="aq-muted-text">未配置技能级限制，按总技能次数控制</span>;
+  }
+
+  return (
+    <div className="aq-skill-rule-list">
+      {skillRules.slice(0, 4).map((item) => {
+        const meta = SKILL_META_MAP.get(item.skillKey);
+        const rate = showUsage && item.limit ? Math.min(100, (normalizeNumber(item.used) / item.limit) * 100) : 0;
+
+        return (
+          <div key={item.skillKey} className="aq-skill-rule-item">
+            <div className="aq-skill-rule-head">
+              <Tag color={meta?.color || 'default'}>{meta?.label || item.skillKey}</Tag>
+              <span>{formatNumber(item.limit)} 次</span>
+            </div>
+            {showUsage ? (
+              <div className="aq-skill-rule-progress">
+                <div className="aq-skill-rule-progress-text">
+                  <span>{formatNumber(item.used)} / {formatNumber(item.limit)}</span>
+                  <span>{formatPercent(rate)}</span>
+                </div>
+                <Progress
+                  percent={Math.round(rate)}
+                  showInfo={false}
+                  strokeColor={getUsageColor(rate)}
+                  trailColor="#eef2f7"
+                  size="small"
+                />
+              </div>
+            ) : null}
+          </div>
+        );
+      })}
+      {skillRules.length > 4 ? <span className="aq-muted-text">其余 {skillRules.length - 4} 个技能规则已折叠</span> : null}
+    </div>
+  );
 }
 
 function renderStatusTag(status) {
@@ -466,13 +777,40 @@ function getUsageColor(rate) {
   return '#52c41a';
 }
 
+function getDimensionRates(record) {
+  const enabledDimensions = getEnabledDimensionKeys(record.enabledDimensions);
+  const skillRuleRates = (record.skillRules || []).map((item) => (
+    item.limit ? normalizeNumber(item.used) / item.limit : 0
+  ));
+  const skillRates = [
+    record.skillUsageLimit ? normalizeNumber(record.skillUsageUsed) / record.skillUsageLimit : 0,
+    record.skillGenerateLimit ? normalizeNumber(record.skillGenerated) / record.skillGenerateLimit : 0,
+    ...skillRuleRates,
+  ];
+  const rates = [];
+
+  if (enabledDimensions.includes('skill')) {
+    rates.push(Math.max(...skillRates, 0));
+  }
+  if (enabledDimensions.includes('token')) {
+    rates.push(record.tokenLimit ? normalizeNumber(record.tokenUsed) / record.tokenLimit : 0);
+  }
+  if (enabledDimensions.includes('agent')) {
+    rates.push(record.agentCreateLimit ? normalizeNumber(record.agentCreated) / record.agentCreateLimit : 0);
+  }
+
+  return rates;
+}
+
 function getMaxQuotaRate(record) {
-  return Math.max(
-    record.skillUsageLimit ? record.skillUsageUsed / record.skillUsageLimit : 0,
-    record.tokenLimit ? record.tokenUsed / record.tokenLimit : 0,
-    record.agentCreateLimit ? record.agentCreated / record.agentCreateLimit : 0,
-    record.skillGenerateLimit ? record.skillGenerated / record.skillGenerateLimit : 0,
-  );
+  const dimensionRates = getDimensionRates(record);
+  if (!dimensionRates.length) return 0;
+
+  if ((record.dimensionStrategy || 'STRICT') === 'BALANCED' && dimensionRates.length > 1) {
+    return dimensionRates.reduce((sum, item) => sum + item, 0) / dimensionRates.length;
+  }
+
+  return Math.max(...dimensionRates);
 }
 
 function renderUsageProgress(used, limit, formatter) {
@@ -495,24 +833,174 @@ function renderUsageProgress(used, limit, formatter) {
   );
 }
 
-function renderQuotaCell(record) {
+function renderDimensionCell(sections) {
   return (
-    <div className="aq-free-list">
-      <span>技能使用：{formatNumber(record.skillUsageLimit)} 次</span>
-      <span>Token：{formatCompact(record.tokenLimit)}</span>
-      <span>智能体创建：{formatNumber(record.agentCreateLimit)} 个</span>
-      <span>技能生成：{formatNumber(record.skillGenerateLimit)} 次</span>
+    <div className="aq-dimension-list">
+      {sections.map((section) => (
+        <div key={section.title} className="aq-dimension-card">
+          <div className="aq-dimension-card-title">{section.title}</div>
+          <div className="aq-dimension-card-items">
+            {section.items.map((item) => (
+              <span key={item}>{item}</span>
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
 
+function renderQuotaCell(record) {
+  return renderDimensionCell([
+    {
+      title: '技能维度',
+      items: [
+        `技能使用：${formatNumber(record.skillUsageLimit)} 次`,
+        `技能生成：${formatNumber(record.skillGenerateLimit)} 次`,
+        `技能细分：${record.skillRules?.length ? `${formatNumber(record.skillRules.length)} 个技能` : '未配置'}`,
+      ],
+    },
+    {
+      title: 'Token 维度',
+      items: [
+        `Token 上限：${formatCompact(record.tokenLimit)}`,
+      ],
+    },
+    {
+      title: '智能体维度',
+      items: [
+        `创建上限：${formatNumber(record.agentCreateLimit)} 个`,
+      ],
+    },
+  ]);
+}
+
 function renderFreeQuotaCell(record) {
+  return renderDimensionCell([
+    {
+      title: '技能维度',
+      items: [
+        `免费技能：${formatNumber(record.freeSkillUsagePerUser)} 次 / 人`,
+        `免费生成：${formatNumber(record.freeSkillGeneratePerUser)} 次 / 人`,
+      ],
+    },
+    {
+      title: 'Token 维度',
+      items: [
+        `免费 Token：${formatCompact(record.freeTokenPerUser)} / 人`,
+      ],
+    },
+    {
+      title: '智能体维度',
+      items: [
+        `免费创建：${formatNumber(record.freeAgentCreatePerUser)} 个 / 人`,
+      ],
+    },
+  ]);
+}
+
+function renderSkillPlanCell(record) {
+  return (
+    <div className="aq-free-list">
+      <span>技能使用上限：{formatNumber(record.skillUsageLimit)} 次</span>
+      <span>技能生成上限：{formatNumber(record.skillGenerateLimit)} 次</span>
+      <span>免费技能：{formatNumber(record.freeSkillUsagePerUser)} 次 / 人</span>
+      <span>免费生成：{formatNumber(record.freeSkillGeneratePerUser)} 次 / 人</span>
+    </div>
+  );
+}
+
+function renderTokenPlanCell(record) {
+  return (
+    <div className="aq-free-list">
+      <span>Token 上限：{formatCompact(record.tokenLimit)}</span>
+      <span>免费 Token：{formatCompact(record.freeTokenPerUser)} / 人</span>
+    </div>
+  );
+}
+
+function renderAgentPlanCell(record) {
+  return (
+    <div className="aq-free-list">
+      <span>创建上限：{formatNumber(record.agentCreateLimit)} 个</span>
+      <span>免费创建：{formatNumber(record.freeAgentCreatePerUser)} 个 / 人</span>
+    </div>
+  );
+}
+
+function renderBindingSkillPolicyCell(record) {
   return (
     <div className="aq-free-list">
       <span>免费技能：{formatNumber(record.freeSkillUsagePerUser)} 次 / 人</span>
+      <span>免费生成：{formatNumber(record.freeSkillGeneratePerUser)} 次 / 人</span>
+      <span>{record.allowCustomSkill ? '支持' : '禁用'}自定义技能</span>
+    </div>
+  );
+}
+
+function renderBindingTokenPolicyCell(record) {
+  return (
+    <div className="aq-free-list">
+      <span>Token 上限：{formatCompact(record.tokenLimit)}</span>
       <span>免费 Token：{formatCompact(record.freeTokenPerUser)} / 人</span>
-      <span>免费建智能体：{formatNumber(record.freeAgentCreatePerUser)} 个 / 人</span>
-      <span>免费生成技能：{formatNumber(record.freeSkillGeneratePerUser)} 次 / 人</span>
+    </div>
+  );
+}
+
+function renderBindingAgentPolicyCell(record) {
+  return (
+    <div className="aq-free-list">
+      <span>智能体上限：{formatNumber(record.agentCreateLimit)} 个</span>
+      <span>免费创建：{formatNumber(record.freeAgentCreatePerUser)} 个 / 人</span>
+      <span>{record.allowCustomAgent ? '支持' : '禁用'}自定义智能体</span>
+    </div>
+  );
+}
+
+function renderRiskCell(record) {
+  const rate = Math.min(100, Math.round(getMaxQuotaRate(record) * 100));
+  const status = rate >= 90 ? '超高' : rate >= 75 ? '预警' : '健康';
+
+  return (
+    <div className="aq-progress-cell">
+      <div className="aq-progress-text">
+        <span>{status}</span>
+        <span>{formatPercent(rate)}</span>
+      </div>
+      <Progress
+        percent={rate}
+        showInfo={false}
+        strokeColor={getUsageColor(rate)}
+        trailColor="#eef2f7"
+        size="small"
+      />
+    </div>
+  );
+}
+
+function renderPolicySkillCell(record) {
+  return (
+    <div className="aq-free-list">
+      <span>免费技能：{formatNumber(record.freeSkillUsagePerUser)} 次 / 人</span>
+      <span>免费生成：{formatNumber(record.freeSkillGeneratePerUser)} 次 / 人</span>
+      <span>{record.allowCustomSkill ? '支持' : '不支持'}自定义技能</span>
+    </div>
+  );
+}
+
+function renderPolicyTokenCell(record) {
+  return (
+    <div className="aq-free-list">
+      <span>免费 Token：{formatCompact(record.freeTokenPerUser)} / 人</span>
+    </div>
+  );
+}
+
+function renderPolicyAgentCell(record) {
+  return (
+    <div className="aq-free-list">
+      <span>免费创建：{formatNumber(record.freeAgentCreatePerUser)} 个 / 人</span>
+      <span>{record.allowCustomAgent ? '支持' : '不支持'}自定义智能体</span>
     </div>
   );
 }
@@ -520,7 +1008,10 @@ function renderFreeQuotaCell(record) {
 function buildPlanDefaults(plan) {
   return {
     planId: plan?.id,
+    enabledDimensions: getEnabledDimensionKeys(plan?.enabledDimensions),
+    dimensionStrategy: getEnabledDimensionKeys(plan?.enabledDimensions).length > 1 ? (plan?.dimensionStrategy || 'STRICT') : 'SINGLE',
     skillUsageLimit: plan?.skillUsageLimit || 0,
+    skillRules: buildBindingSkillRules(plan),
     tokenLimit: plan?.tokenLimit || 0,
     agentCreateLimit: plan?.agentCreateLimit || 0,
     skillGenerateLimit: plan?.skillGenerateLimit || 0,
@@ -539,7 +1030,13 @@ function defaultPlanFormValues() {
     scope: 'TENANT_STANDARD',
     status: 'ACTIVE',
     resetCycle: 'MONTHLY',
+    enabledDimensions: [...DEFAULT_ENABLED_DIMENSIONS],
+    dimensionStrategy: 'STRICT',
     skillUsageLimit: 10000,
+    skillRules: [
+      createPlanSkillRule('knowledge-search', 3000),
+      createPlanSkillRule('workflow-run', 1800),
+    ],
     tokenLimit: 6000000,
     agentCreateLimit: 50,
     skillGenerateLimit: 80,
@@ -569,12 +1066,12 @@ function defaultPolicyFormValues() {
   };
 }
 
-export default function AgentQuotaModule({ initialTab = 'plans' }) {
-  const [activeTab, setActiveTab] = useState('plans');
-  const [plans, setPlans] = useState(INITIAL_PLAN_TEMPLATES);
-  const [currentTenantQuota, setCurrentTenantQuota] = useState(INITIAL_CURRENT_TENANT_QUOTA);
-  const [departmentBindings, setDepartmentBindings] = useState(INITIAL_DEPARTMENT_BINDINGS);
-  const [personalBindings, setPersonalBindings] = useState(INITIAL_PERSONAL_BINDINGS);
+export default function AgentQuotaModule() {
+  const [activeTenantQuotaTab, setActiveTenantQuotaTab] = useState('current');
+  const [plans, setPlans] = useState(() => seedPlanTemplates());
+  const [currentTenantQuota, setCurrentTenantQuota] = useState(() => seedCurrentTenantQuota());
+  const [departmentBindings, setDepartmentBindings] = useState(() => seedDepartmentBindings());
+  const [personalBindings, setPersonalBindings] = useState(() => seedPersonalBindings());
   const [freePolicies, setFreePolicies] = useState(INITIAL_FREE_POLICIES);
 
   const [planKeyword, setPlanKeyword] = useState('');
@@ -582,6 +1079,17 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
   const [bindingKeyword, setBindingKeyword] = useState('');
   const [bindingPlanFilter, setBindingPlanFilter] = useState(undefined);
   const [policyKeyword, setPolicyKeyword] = useState('');
+
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [detailModalType, setDetailModalType] = useState('plan');
+  const [detailRecord, setDetailRecord] = useState(null);
+  const [tableScrollY, setTableScrollY] = useState({
+    plans: undefined,
+    current: undefined,
+    department: undefined,
+    personal: undefined,
+    policy: undefined,
+  });
 
   const [planModalOpen, setPlanModalOpen] = useState(false);
   const [planModalMode, setPlanModalMode] = useState('create');
@@ -599,12 +1107,17 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
   const [planForm] = Form.useForm();
   const [bindingForm] = Form.useForm();
   const [policyForm] = Form.useForm();
+  const planTableShellRef = useRef(null);
+  const currentTableShellRef = useRef(null);
+  const departmentTableShellRef = useRef(null);
+  const personalTableShellRef = useRef(null);
+  const policyTableShellRef = useRef(null);
 
   const selectedBindingPlanId = Form.useWatch('planId', bindingForm);
-
-  useEffect(() => {
-    setActiveTab(initialTab || 'plans');
-  }, [initialTab]);
+  const planEnabledDimensions = getEnabledDimensionKeys(Form.useWatch('enabledDimensions', planForm));
+  const bindingEnabledDimensions = getEnabledDimensionKeys(Form.useWatch('enabledDimensions', bindingForm));
+  const planDimensionStrategy = Form.useWatch('dimensionStrategy', planForm);
+  const bindingDimensionStrategy = Form.useWatch('dimensionStrategy', bindingForm);
 
   const planMap = useMemo(() => new Map(plans.map((item) => [item.id, item])), [plans]);
   const selectedBindingPlan = selectedBindingPlanId ? planMap.get(selectedBindingPlanId) : null;
@@ -685,6 +1198,49 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
     });
   }, [freePolicies, policyKeyword]);
 
+  const computeAdaptiveScrollY = useCallback((shell, rowCount) => {
+    if (!shell || typeof window === 'undefined') return undefined;
+    const rect = shell.getBoundingClientRect();
+    const available = Math.floor(window.innerHeight - rect.top - 20);
+    if (available <= 160) return undefined;
+
+    const estimatedTableBodyHeight = rowCount > 0 ? rowCount * 54 + 16 : 140;
+    return Math.min(estimatedTableBodyHeight, available);
+  }, []);
+
+  useLayoutEffect(() => {
+    let frameId = 0;
+
+    function updateScrollY() {
+      setTableScrollY({
+        plans: computeAdaptiveScrollY(planTableShellRef.current, filteredPlans.length),
+        current: computeAdaptiveScrollY(currentTableShellRef.current, 1),
+        department: computeAdaptiveScrollY(departmentTableShellRef.current, filteredDepartmentRows.length),
+        personal: computeAdaptiveScrollY(personalTableShellRef.current, filteredPersonalRows.length),
+        policy: computeAdaptiveScrollY(policyTableShellRef.current, filteredPolicies.length),
+      });
+    }
+
+    function scheduleUpdate() {
+      cancelAnimationFrame(frameId);
+      frameId = window.requestAnimationFrame(updateScrollY);
+    }
+
+    scheduleUpdate();
+    window.addEventListener('resize', scheduleUpdate);
+    return () => {
+      cancelAnimationFrame(frameId);
+      window.removeEventListener('resize', scheduleUpdate);
+    };
+  }, [
+    activeTenantQuotaTab,
+    computeAdaptiveScrollY,
+    filteredDepartmentRows.length,
+    filteredPersonalRows.length,
+    filteredPlans.length,
+    filteredPolicies.length,
+  ]);
+
   const planOptionList = useMemo(() => {
     return plans.map((item) => ({
       value: item.id,
@@ -706,6 +1262,12 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
     setPolicyKeyword('');
   }
 
+  function openDetailModal(type, record) {
+    setDetailModalType(type);
+    setDetailRecord(record);
+    setDetailModalOpen(true);
+  }
+
   function openCreatePlan() {
     setPlanModalMode('create');
     setEditingPlan(null);
@@ -721,7 +1283,10 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
       scope: record.scope,
       status: record.status,
       resetCycle: record.resetCycle,
+      enabledDimensions: getEnabledDimensionKeys(record.enabledDimensions),
+      dimensionStrategy: getEnabledDimensionKeys(record.enabledDimensions).length > 1 ? (record.dimensionStrategy || 'STRICT') : 'SINGLE',
       skillUsageLimit: record.skillUsageLimit,
+      skillRules: cloneSkillRules(record.skillRules),
       tokenLimit: record.tokenLimit,
       agentCreateLimit: record.agentCreateLimit,
       skillGenerateLimit: record.skillGenerateLimit,
@@ -744,7 +1309,10 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
       scope: record.scope,
       status: 'DRAFT',
       resetCycle: record.resetCycle,
+      enabledDimensions: getEnabledDimensionKeys(record.enabledDimensions),
+      dimensionStrategy: getEnabledDimensionKeys(record.enabledDimensions).length > 1 ? (record.dimensionStrategy || 'STRICT') : 'SINGLE',
       skillUsageLimit: record.skillUsageLimit,
+      skillRules: cloneSkillRules(record.skillRules),
       tokenLimit: record.tokenLimit,
       agentCreateLimit: record.agentCreateLimit,
       skillGenerateLimit: record.skillGenerateLimit,
@@ -762,12 +1330,23 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
   async function handlePlanSubmit() {
     try {
       const values = await planForm.validateFields();
+      const enabledDimensions = getEnabledDimensionKeys(values.enabledDimensions);
+      if (!enabledDimensions.length) {
+        message.error('请至少启用一个维度。');
+        return;
+      }
+      const skillRules = normalizeSkillRules(values.skillRules);
+      if (!validateSkillRules(skillRules, values.skillUsageLimit)) return;
+
       const payload = {
         name: values.name,
         scope: values.scope,
         status: values.status,
         resetCycle: values.resetCycle,
+        enabledDimensions,
+        dimensionStrategy: enabledDimensions.length > 1 ? (values.dimensionStrategy || 'STRICT') : 'SINGLE',
         skillUsageLimit: normalizeNumber(values.skillUsageLimit),
+        skillRules,
         tokenLimit: normalizeNumber(values.tokenLimit),
         agentCreateLimit: normalizeNumber(values.agentCreateLimit),
         skillGenerateLimit: normalizeNumber(values.skillGenerateLimit),
@@ -821,6 +1400,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
         owner: undefined,
         seatCount: undefined,
         skillUsageUsed: 0,
+        skillRules: buildBindingSkillRules(defaultPlan),
         tokenUsed: 0,
         agentCreated: 0,
         skillGenerated: 0,
@@ -834,6 +1414,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
         deptName: undefined,
         roleLabel: undefined,
         skillUsageUsed: 0,
+        skillRules: buildBindingSkillRules(defaultPlan),
         tokenUsed: 0,
         agentCreated: 0,
         skillGenerated: 0,
@@ -855,7 +1436,10 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
       deptName: record.deptName,
       roleLabel: record.roleLabel,
       planId: record.planId,
+      enabledDimensions: getEnabledDimensionKeys(record.enabledDimensions),
+      dimensionStrategy: getEnabledDimensionKeys(record.enabledDimensions).length > 1 ? (record.dimensionStrategy || 'STRICT') : 'SINGLE',
       skillUsageLimit: record.skillUsageLimit,
+      skillRules: cloneSkillRules(record.skillRules, true),
       tokenLimit: record.tokenLimit,
       agentCreateLimit: record.agentCreateLimit,
       skillGenerateLimit: record.skillGenerateLimit,
@@ -885,6 +1469,14 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
   async function handleBindingSubmit() {
     try {
       const values = await bindingForm.validateFields();
+      const enabledDimensions = getEnabledDimensionKeys(values.enabledDimensions);
+      if (!enabledDimensions.length) {
+        message.error('请至少启用一个维度。');
+        return;
+      }
+      const skillRules = normalizeSkillRules(values.skillRules, { includeUsed: true });
+      if (!validateSkillRules(skillRules, values.skillUsageLimit, { includeUsed: true })) return;
+
       const payload = {
         scopeType: bindingScope,
         targetName: values.targetName,
@@ -893,7 +1485,10 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
         deptName: values.deptName,
         roleLabel: values.roleLabel,
         planId: values.planId,
+        enabledDimensions,
+        dimensionStrategy: enabledDimensions.length > 1 ? (values.dimensionStrategy || 'STRICT') : 'SINGLE',
         skillUsageLimit: normalizeNumber(values.skillUsageLimit),
+        skillRules,
         tokenLimit: normalizeNumber(values.tokenLimit),
         agentCreateLimit: normalizeNumber(values.agentCreateLimit),
         skillGenerateLimit: normalizeNumber(values.skillGenerateLimit),
@@ -1082,7 +1677,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
       title: '配额方案',
       dataIndex: 'name',
       key: 'name',
-      width: 220,
+      width: 240,
       fixed: 'left',
       render: (_, record) => (
         <div className="aq-identity-cell">
@@ -1097,29 +1692,6 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
       key: 'scope',
       width: 120,
       render: (value) => <Tag color="blue">{PLAN_SCOPE_LABEL_MAP[value] || value}</Tag>,
-    },
-    {
-      title: '额度配置',
-      key: 'quota',
-      width: 220,
-      render: (_, record) => renderQuotaCell(record),
-    },
-    {
-      title: '自定义能力',
-      key: 'custom',
-      width: 180,
-      render: (_, record) => (
-        <div className="aq-tag-stack">
-          {renderSupportTag(record.allowCustomSkill, '支持自定义技能', '禁用自定义技能')}
-          {renderSupportTag(record.allowCustomAgent, '支持自定义智能体', '禁用自定义智能体')}
-        </div>
-      ),
-    },
-    {
-      title: '每用户免费配额',
-      key: 'free-quota',
-      width: 260,
-      render: (_, record) => renderFreeQuotaCell(record),
     },
     {
       title: '重置周期',
@@ -1149,10 +1721,13 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
     {
       title: '操作',
       key: 'action',
-      width: 180,
+      width: 220,
       fixed: 'right',
       render: (_, record) => (
         <Space size={4} wrap>
+          <Button type="link" size="small" onClick={() => openDetailModal('plan', record)}>
+            详情
+          </Button>
           <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openEditPlan(record)}>
             编辑
           </Button>
@@ -1160,19 +1735,13 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
             复制
           </Button>
           {record.status === 'ACTIVE' ? (
-            <Popconfirm
-              title="确认停用该配额方案？"
-              onConfirm={() => handlePlanStatusChange(record, 'DISABLED')}
-            >
+            <Popconfirm title="确认停用该配额方案？" onConfirm={() => handlePlanStatusChange(record, 'DISABLED')}>
               <Button type="link" size="small" danger>
                 停用
               </Button>
             </Popconfirm>
           ) : (
-            <Popconfirm
-              title="确认启用该配额方案？"
-              onConfirm={() => handlePlanStatusChange(record, 'ACTIVE')}
-            >
+            <Popconfirm title="确认启用该配额方案？" onConfirm={() => handlePlanStatusChange(record, 'ACTIVE')}>
               <Button type="link" size="small">
                 启用
               </Button>
@@ -1183,275 +1752,87 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
     },
   ];
 
-  const currentTenantColumns = [
-    {
-      title: '当前租户',
-      dataIndex: 'targetName',
-      key: 'targetName',
-      width: 200,
-      fixed: 'left',
-      render: (_, record) => (
-        <div className="aq-identity-cell">
-          <div className="aq-identity-title">{record.targetName}</div>
-          <div className="aq-identity-desc">负责人：{record.owner} · {formatNumber(record.seatCount)} 人</div>
-        </div>
-      ),
-    },
-    {
-      title: '绑定方案',
-      key: 'plan',
-      width: 160,
-      render: (_, record) => (
-        <div className="aq-tag-stack">
-          <Tag color="blue">{record.planName}</Tag>
-          {renderStatusTag(record.planStatus || 'DRAFT')}
-        </div>
-      ),
-    },
-    {
-      title: '技能使用次数',
-      key: 'skill-usage',
-      width: 220,
-      render: (_, record) => renderUsageProgress(record.skillUsageUsed, record.skillUsageLimit, (value) => `${formatNumber(value)} 次`),
-    },
-    {
-      title: 'Token 使用数量',
-      key: 'token-usage',
-      width: 220,
-      render: (_, record) => renderUsageProgress(record.tokenUsed, record.tokenLimit, (value) => formatCompact(value)),
-    },
-    {
-      title: '智能体创建数量',
-      key: 'agent-created',
-      width: 220,
-      render: (_, record) => renderUsageProgress(record.agentCreated, record.agentCreateLimit, (value) => `${formatNumber(value)} 个`),
-    },
-    {
-      title: '技能生成数量',
-      key: 'skill-generated',
-      width: 220,
-      render: (_, record) => renderUsageProgress(record.skillGenerated, record.skillGenerateLimit, (value) => `${formatNumber(value)} 次`),
-    },
-    {
-      title: '自定义能力',
-      key: 'custom',
-      width: 180,
-      render: (_, record) => (
-        <div className="aq-tag-stack">
-          {renderSupportTag(record.allowCustomSkill, '支持自定义技能', '禁用自定义技能')}
-          {renderSupportTag(record.allowCustomAgent, '支持自定义智能体', '禁用自定义智能体')}
-        </div>
-      ),
-    },
-    {
-      title: '每用户免费配额',
-      key: 'free-quota',
-      width: 260,
-      render: (_, record) => renderFreeQuotaCell(record),
-    },
-    {
-      title: '最近更新',
-      key: 'updated',
-      width: 160,
-      render: (_, record) => (
-        <div className="aq-updated-cell">
-          <span>{record.updatedAt}</span>
-          <span>{record.updatedBy}</span>
-        </div>
-      ),
-    },
-    {
-      title: '操作',
-      key: 'action',
-      width: 100,
-      fixed: 'right',
-      render: (_, record) => (
-        <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openEditBinding(record)}>
-          编辑
-        </Button>
-      ),
-    },
-  ];
+  function buildBindingColumns(scopeType) {
+    const identityColumn = scopeType === 'PERSONAL'
+      ? {
+          title: '个人',
+          dataIndex: 'targetName',
+          key: 'targetName',
+          width: 220,
+          fixed: 'left',
+          render: (_, record) => (
+            <div className="aq-identity-cell">
+              <div className="aq-identity-title">{record.targetName}</div>
+              <div className="aq-identity-desc">{record.deptName} · {record.roleLabel}</div>
+            </div>
+          ),
+        }
+      : {
+          title: scopeType === 'CURRENT' ? '当前租户' : '部门',
+          dataIndex: 'targetName',
+          key: 'targetName',
+          width: 240,
+          fixed: 'left',
+          render: (_, record) => (
+            <div className="aq-identity-cell">
+              <div className="aq-identity-title">{record.targetName}</div>
+              <div className="aq-identity-desc">负责人：{record.owner} · {formatNumber(record.seatCount)} 人</div>
+            </div>
+          ),
+        };
 
-  const departmentColumns = [
-    {
-      title: '部门',
-      dataIndex: 'targetName',
-      key: 'targetName',
-      width: 220,
-      fixed: 'left',
-      render: (_, record) => (
-        <div className="aq-identity-cell">
-          <div className="aq-identity-title">{record.targetName}</div>
-          <div className="aq-identity-desc">负责人：{record.owner} · {formatNumber(record.seatCount)} 人</div>
-        </div>
-      ),
-    },
-    {
-      title: '绑定方案',
-      key: 'plan',
-      width: 160,
-      render: (_, record) => (
-        <div className="aq-tag-stack">
-          <Tag color="blue">{record.planName}</Tag>
-          {renderStatusTag(record.planStatus || 'DRAFT')}
-        </div>
-      ),
-    },
-    {
-      title: '技能使用次数',
-      key: 'skill-usage',
-      width: 220,
-      render: (_, record) => renderUsageProgress(record.skillUsageUsed, record.skillUsageLimit, (value) => `${formatNumber(value)} 次`),
-    },
-    {
-      title: 'Token 使用数量',
-      key: 'token-usage',
-      width: 220,
-      render: (_, record) => renderUsageProgress(record.tokenUsed, record.tokenLimit, (value) => formatCompact(value)),
-    },
-    {
-      title: '智能体创建数量',
-      key: 'agent-created',
-      width: 220,
-      render: (_, record) => renderUsageProgress(record.agentCreated, record.agentCreateLimit, (value) => `${formatNumber(value)} 个`),
-    },
-    {
-      title: '技能生成数量',
-      key: 'skill-generated',
-      width: 220,
-      render: (_, record) => renderUsageProgress(record.skillGenerated, record.skillGenerateLimit, (value) => `${formatNumber(value)} 次`),
-    },
-    {
-      title: '自定义能力',
-      key: 'custom',
-      width: 180,
-      render: (_, record) => (
-        <div className="aq-tag-stack">
-          {renderSupportTag(record.allowCustomSkill, '支持自定义技能', '禁用自定义技能')}
-          {renderSupportTag(record.allowCustomAgent, '支持自定义智能体', '禁用自定义智能体')}
-        </div>
-      ),
-    },
-    {
-      title: '每用户免费配额',
-      key: 'free-quota',
-      width: 260,
-      render: (_, record) => renderFreeQuotaCell(record),
-    },
-    {
-      title: '最近更新',
-      key: 'updated',
-      width: 160,
-      render: (_, record) => (
-        <div className="aq-updated-cell">
-          <span>{record.updatedAt}</span>
-          <span>{record.updatedBy}</span>
-        </div>
-      ),
-    },
-    {
-      title: '操作',
-      key: 'action',
-      width: 100,
-      fixed: 'right',
-      render: (_, record) => (
-        <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openEditBinding(record)}>
-          编辑
-        </Button>
-      ),
-    },
-  ];
+    return [
+      identityColumn,
+      {
+        title: '绑定方案',
+        key: 'plan',
+        width: 160,
+        render: (_, record) => (
+          <div className="aq-tag-stack">
+            <Tag color="blue">{record.planName}</Tag>
+            {renderStatusTag(record.planStatus || 'DRAFT')}
+          </div>
+        ),
+      },
+      {
+        title: '配额风险',
+        key: 'risk',
+        width: 220,
+        render: (_, record) => renderRiskCell(record),
+      },
+      {
+        title: '最近更新',
+        key: 'updated',
+        width: 160,
+        render: (_, record) => (
+          <div className="aq-updated-cell">
+            <span>{record.updatedAt}</span>
+            <span>{record.updatedBy}</span>
+          </div>
+        ),
+      },
+      {
+        title: '操作',
+        key: 'action',
+        width: 150,
+        fixed: 'right',
+        render: (_, record) => (
+          <Space size={4} wrap>
+            <Button type="link" size="small" onClick={() => openDetailModal('binding', record)}>
+              详情
+            </Button>
+            <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openEditBinding(record)}>
+              编辑
+            </Button>
+          </Space>
+        ),
+      },
+    ];
+  }
 
-  const personalColumns = [
-    {
-      title: '个人',
-      dataIndex: 'targetName',
-      key: 'targetName',
-      width: 200,
-      fixed: 'left',
-      render: (_, record) => (
-        <div className="aq-identity-cell">
-          <div className="aq-identity-title">{record.targetName}</div>
-          <div className="aq-identity-desc">{record.deptName} · {record.roleLabel}</div>
-        </div>
-      ),
-    },
-    {
-      title: '绑定方案',
-      key: 'plan',
-      width: 160,
-      render: (_, record) => (
-        <div className="aq-tag-stack">
-          <Tag color="blue">{record.planName}</Tag>
-          {renderStatusTag(record.planStatus || 'DRAFT')}
-        </div>
-      ),
-    },
-    {
-      title: '技能使用次数',
-      key: 'skill-usage',
-      width: 220,
-      render: (_, record) => renderUsageProgress(record.skillUsageUsed, record.skillUsageLimit, (value) => `${formatNumber(value)} 次`),
-    },
-    {
-      title: 'Token 使用数量',
-      key: 'token-usage',
-      width: 220,
-      render: (_, record) => renderUsageProgress(record.tokenUsed, record.tokenLimit, (value) => formatCompact(value)),
-    },
-    {
-      title: '智能体创建数量',
-      key: 'agent-created',
-      width: 220,
-      render: (_, record) => renderUsageProgress(record.agentCreated, record.agentCreateLimit, (value) => `${formatNumber(value)} 个`),
-    },
-    {
-      title: '技能生成数量',
-      key: 'skill-generated',
-      width: 220,
-      render: (_, record) => renderUsageProgress(record.skillGenerated, record.skillGenerateLimit, (value) => `${formatNumber(value)} 次`),
-    },
-    {
-      title: '自定义能力',
-      key: 'custom',
-      width: 180,
-      render: (_, record) => (
-        <div className="aq-tag-stack">
-          {renderSupportTag(record.allowCustomSkill, '支持自定义技能', '禁用自定义技能')}
-          {renderSupportTag(record.allowCustomAgent, '支持自定义智能体', '禁用自定义智能体')}
-        </div>
-      ),
-    },
-    {
-      title: '人均免费配额',
-      key: 'free-quota',
-      width: 260,
-      render: (_, record) => renderFreeQuotaCell(record),
-    },
-    {
-      title: '最近更新',
-      key: 'updated',
-      width: 160,
-      render: (_, record) => (
-        <div className="aq-updated-cell">
-          <span>{record.updatedAt}</span>
-          <span>{record.updatedBy}</span>
-        </div>
-      ),
-    },
-    {
-      title: '操作',
-      key: 'action',
-      width: 100,
-      fixed: 'right',
-      render: (_, record) => (
-        <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openEditBinding(record)}>
-          编辑
-        </Button>
-      ),
-    },
-  ];
+  const currentTenantColumns = buildBindingColumns('CURRENT');
+  const departmentColumns = buildBindingColumns('DEPARTMENT');
+  const personalColumns = buildBindingColumns('PERSONAL');
 
   const policyColumns = [
     {
@@ -1473,48 +1854,6 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
       key: 'userGroup',
       width: 130,
       render: (value) => <Tag color="geekblue">{USER_GROUP_LABEL_MAP[value] || value}</Tag>,
-    },
-    {
-      title: '免费技能使用',
-      dataIndex: 'freeSkillUsagePerUser',
-      key: 'freeSkillUsagePerUser',
-      width: 130,
-      render: (value) => `${formatNumber(value)} 次 / 人`,
-    },
-    {
-      title: '免费 Token',
-      dataIndex: 'freeTokenPerUser',
-      key: 'freeTokenPerUser',
-      width: 130,
-      render: (value) => `${formatCompact(value)} / 人`,
-    },
-    {
-      title: '免费建智能体',
-      dataIndex: 'freeAgentCreatePerUser',
-      key: 'freeAgentCreatePerUser',
-      width: 130,
-      render: (value) => `${formatNumber(value)} 个 / 人`,
-    },
-    {
-      title: '免费生成技能',
-      dataIndex: 'freeSkillGeneratePerUser',
-      key: 'freeSkillGeneratePerUser',
-      width: 130,
-      render: (value) => `${formatNumber(value)} 次 / 人`,
-    },
-    {
-      title: '自定义技能',
-      dataIndex: 'allowCustomSkill',
-      key: 'allowCustomSkill',
-      width: 120,
-      render: (value) => renderSupportTag(value, '支持', '不支持'),
-    },
-    {
-      title: '自定义智能体',
-      dataIndex: 'allowCustomAgent',
-      key: 'allowCustomAgent',
-      width: 130,
-      render: (value) => renderSupportTag(value, '支持', '不支持'),
     },
     {
       title: '重置周期',
@@ -1544,12 +1883,17 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
     {
       title: '操作',
       key: 'action',
-      width: 100,
+      width: 150,
       fixed: 'right',
       render: (_, record) => (
-        <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openEditPolicy(record)}>
-          编辑
-        </Button>
+        <Space size={4} wrap>
+          <Button type="link" size="small" onClick={() => openDetailModal('policy', record)}>
+            详情
+          </Button>
+          <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openEditPolicy(record)}>
+            编辑
+          </Button>
+        </Space>
       ),
     },
   ];
@@ -1590,16 +1934,18 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
             </div>
           </Card>
 
-          <Card className="aq-table-card" bordered={false}>
-            <Table
-              rowKey="id"
-              size="small"
-              columns={planColumns}
-              dataSource={filteredPlans}
-              pagination={false}
-              scroll={{ x: 1460 }}
-            />
-          </Card>
+          <div ref={planTableShellRef} className={tableScrollY.plans ? 'aq-table-shell aq-table-shell-fill' : 'aq-table-shell'}>
+            <Card className="aq-table-card" bordered={false}>
+              <Table
+                rowKey="id"
+                size="small"
+                columns={planColumns}
+                dataSource={filteredPlans}
+                pagination={false}
+                scroll={{ x: 1160, y: tableScrollY.plans }}
+              />
+            </Card>
+          </div>
         </div>
       ),
     },
@@ -1618,11 +1964,13 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
             type="info"
             showIcon
             message={`当前租户：${currentTenantRow.targetName}`}
-            description="当前租户总配额用于控制整体资源池；部门配额用于控制组织采纳和部门消耗；个人配额用于对重点成员做额外收紧或放宽。"
+            description="当前租户总配额用于控制整体资源池；部门配额用于控制组织采纳和部门消耗；个人配额用于对重点成员做额外收紧或放宽；每条配额还可以细化到单个技能次数。"
           />
 
           <Tabs
             className="aq-subtabs"
+            activeKey={activeTenantQuotaTab}
+            onChange={setActiveTenantQuotaTab}
             items={[
               {
                 key: 'current',
@@ -1639,7 +1987,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
                         <div className="aq-tenant-brief">
                           <div className="aq-tenant-brief-title">总配额优先级最高</div>
                           <div className="aq-tenant-brief-desc">
-                            当前租户总配额优先于部门和个人配额，决定技能使用次数、Token、智能体创建、技能生成和人均免费额度的上限。
+                            当前租户总配额优先于部门和个人配额，决定技能使用次数、单技能使用次数、Token、智能体创建、技能生成和人均免费额度的上限。
                           </div>
                         </div>
                         <div className="aq-toolbar-right">
@@ -1650,16 +1998,18 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
                       </div>
                     </Card>
 
-                    <Card className="aq-table-card" bordered={false}>
-                      <Table
-                        rowKey="id"
-                        size="small"
-                        columns={currentTenantColumns}
-                        dataSource={[currentTenantRow]}
-                        pagination={false}
-                        scroll={{ x: 1860 }}
-                      />
-                    </Card>
+                    <div ref={currentTableShellRef} className={tableScrollY.current ? 'aq-table-shell aq-table-shell-fill' : 'aq-table-shell'}>
+                      <Card className="aq-table-card" bordered={false}>
+                        <Table
+                          rowKey="id"
+                          size="small"
+                          columns={currentTenantColumns}
+                          dataSource={[currentTenantRow]}
+                          pagination={false}
+                          scroll={{ x: 1080, y: tableScrollY.current }}
+                        />
+                      </Card>
+                    </div>
                   </div>
                 ),
               },
@@ -1698,16 +2048,18 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
                       </div>
                     </Card>
 
-                    <Card className="aq-table-card" bordered={false}>
-                      <Table
-                        rowKey="id"
-                        size="small"
-                        columns={departmentColumns}
-                        dataSource={filteredDepartmentRows}
-                        pagination={false}
-                        scroll={{ x: 1860 }}
-                      />
-                    </Card>
+                    <div ref={departmentTableShellRef} className={tableScrollY.department ? 'aq-table-shell aq-table-shell-fill' : 'aq-table-shell'}>
+                      <Card className="aq-table-card" bordered={false}>
+                        <Table
+                          rowKey="id"
+                          size="small"
+                          columns={departmentColumns}
+                          dataSource={filteredDepartmentRows}
+                          pagination={false}
+                          scroll={{ x: 1120, y: tableScrollY.department }}
+                        />
+                      </Card>
+                    </div>
                   </div>
                 ),
               },
@@ -1746,16 +2098,18 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
                       </div>
                     </Card>
 
-                    <Card className="aq-table-card" bordered={false}>
-                      <Table
-                        rowKey="id"
-                        size="small"
-                        columns={personalColumns}
-                        dataSource={filteredPersonalRows}
-                        pagination={false}
-                        scroll={{ x: 1840 }}
-                      />
-                    </Card>
+                    <div ref={personalTableShellRef} className={tableScrollY.personal ? 'aq-table-shell aq-table-shell-fill' : 'aq-table-shell'}>
+                      <Card className="aq-table-card" bordered={false}>
+                        <Table
+                          rowKey="id"
+                          size="small"
+                          columns={personalColumns}
+                          dataSource={filteredPersonalRows}
+                          pagination={false}
+                          scroll={{ x: 1080, y: tableScrollY.personal }}
+                        />
+                      </Card>
+                    </div>
                   </div>
                 ),
               },
@@ -1799,20 +2153,24 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
             </div>
           </Card>
 
-          <Card className="aq-table-card" bordered={false}>
-            <Table
-              rowKey="id"
-              size="small"
-              columns={policyColumns}
-              dataSource={filteredPolicies}
-              pagination={false}
-              scroll={{ x: 1540 }}
-            />
-          </Card>
+          <div ref={policyTableShellRef} className={tableScrollY.policy ? 'aq-table-shell aq-table-shell-fill' : 'aq-table-shell'}>
+            <Card className="aq-table-card" bordered={false}>
+              <Table
+                rowKey="id"
+                size="small"
+                columns={policyColumns}
+                dataSource={filteredPolicies}
+                pagination={false}
+                scroll={{ x: 980, y: tableScrollY.policy }}
+              />
+            </Card>
+          </div>
         </div>
       ),
     },
   ];
+  const planSectionContent = tabItems.find((item) => item.key === 'plans')?.children || null;
+  const tenantSectionContent = tabItems.find((item) => item.key === 'tenant')?.children || null;
 
   const isPersonalBinding = bindingScope === 'PERSONAL';
   const isCurrentBinding = bindingScope === 'CURRENT';
@@ -1826,6 +2184,214 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
       ? '新增个人配额'
       : '新增部门配额';
 
+  const detailModalTitle = detailModalType === 'plan'
+    ? '配额方案详情'
+    : detailModalType === 'policy'
+      ? '免费配额策略详情'
+      : '配额详情';
+
+  function renderDetailContent() {
+    if (!detailRecord) return null;
+
+    if (detailModalType === 'plan') {
+      const planDimensionKeys = getEnabledDimensionKeys(detailRecord.enabledDimensions);
+      return (
+        <div className="aq-detail-layout">
+          <div className="aq-detail-grid">
+            <div className="aq-detail-item">
+              <span>方案名称</span>
+              <strong>{detailRecord.name}</strong>
+            </div>
+            <div className="aq-detail-item">
+              <span>适用层级</span>
+              <strong>{PLAN_SCOPE_LABEL_MAP[detailRecord.scope] || detailRecord.scope}</strong>
+            </div>
+            <div className="aq-detail-item">
+              <span>重置周期</span>
+              <strong>{RESET_CYCLE_LABEL_MAP[detailRecord.resetCycle] || detailRecord.resetCycle}</strong>
+            </div>
+            <div className="aq-detail-item">
+              <span>状态</span>
+              <strong>{PLAN_STATUS_LABEL_MAP[detailRecord.status] || detailRecord.status}</strong>
+            </div>
+            <div className="aq-detail-item">
+              <span>启用维度</span>
+              <strong>{planDimensionKeys.map((item) => DIMENSION_LABEL_MAP[item] || item).join(' / ')}</strong>
+            </div>
+            <div className="aq-detail-item">
+              <span>整体策略</span>
+              <strong>{getDimensionStrategyLabel(detailRecord, planDimensionKeys)}</strong>
+            </div>
+          </div>
+          <div className="aq-dimension-panel">{renderDimensionStrategySummary(detailRecord)}</div>
+          <Tabs
+            className="aq-dimension-tabs"
+            defaultActiveKey="skill"
+            items={planDimensionKeys.map((key) => {
+              if (key === 'skill') {
+                return {
+                  key: 'skill',
+                  label: '技能维度',
+                  children: (
+                    <div className="aq-detail-layout">
+                      <div className="aq-dimension-panel">{renderSkillPlanCell(detailRecord)}</div>
+                      <div className="aq-dimension-panel">{renderSkillRuleCell(detailRecord.skillRules)}</div>
+                    </div>
+                  ),
+                };
+              }
+
+              if (key === 'token') {
+                return {
+                  key: 'token',
+                  label: 'Token 维度',
+                  children: <div className="aq-dimension-panel">{renderTokenPlanCell(detailRecord)}</div>,
+                };
+              }
+
+              return {
+                key: 'agent',
+                label: '智能体维度',
+                children: <div className="aq-dimension-panel">{renderAgentPlanCell(detailRecord)}</div>,
+              };
+            })}
+          />
+        </div>
+      );
+    }
+
+    if (detailModalType === 'policy') {
+      return (
+        <div className="aq-detail-layout">
+          <div className="aq-detail-grid">
+            <div className="aq-detail-item">
+              <span>策略名称</span>
+              <strong>{detailRecord.name}</strong>
+            </div>
+            <div className="aq-detail-item">
+              <span>租内身份</span>
+              <strong>{USER_GROUP_LABEL_MAP[detailRecord.userGroup] || detailRecord.userGroup}</strong>
+            </div>
+            <div className="aq-detail-item">
+              <span>重置周期</span>
+              <strong>{RESET_CYCLE_LABEL_MAP[detailRecord.resetCycle] || detailRecord.resetCycle}</strong>
+            </div>
+            <div className="aq-detail-item">
+              <span>默认策略</span>
+              <strong>{detailRecord.isDefault ? '是' : '否'}</strong>
+            </div>
+          </div>
+          <Tabs
+            className="aq-dimension-tabs"
+            defaultActiveKey="skill"
+            items={[
+              {
+                key: 'skill',
+                label: '技能维度',
+                children: <div className="aq-dimension-panel">{renderPolicySkillCell(detailRecord)}</div>,
+              },
+              {
+                key: 'token',
+                label: 'Token 维度',
+                children: <div className="aq-dimension-panel">{renderPolicyTokenCell(detailRecord)}</div>,
+              },
+              {
+                key: 'agent',
+                label: '智能体维度',
+                children: <div className="aq-dimension-panel">{renderPolicyAgentCell(detailRecord)}</div>,
+              },
+            ]}
+          />
+        </div>
+      );
+    }
+
+    const bindingDimensionKeys = getEnabledDimensionKeys(detailRecord.enabledDimensions);
+    return (
+      <div className="aq-detail-layout">
+        <div className="aq-detail-grid">
+          <div className="aq-detail-item">
+            <span>对象</span>
+            <strong>{detailRecord.targetName}</strong>
+          </div>
+          <div className="aq-detail-item">
+            <span>绑定方案</span>
+            <strong>{detailRecord.planName}</strong>
+          </div>
+          <div className="aq-detail-item">
+            <span>最近更新</span>
+            <strong>{detailRecord.updatedAt}</strong>
+          </div>
+          <div className="aq-detail-item">
+            <span>风险状态</span>
+            <strong>{formatPercent(Math.min(100, getMaxQuotaRate(detailRecord) * 100))}</strong>
+          </div>
+          <div className="aq-detail-item">
+            <span>启用维度</span>
+            <strong>{bindingDimensionKeys.map((item) => DIMENSION_LABEL_MAP[item] || item).join(' / ')}</strong>
+          </div>
+          <div className="aq-detail-item">
+            <span>整体策略</span>
+            <strong>{getDimensionStrategyLabel(detailRecord, bindingDimensionKeys)}</strong>
+          </div>
+        </div>
+        <div className="aq-dimension-panel">{renderDimensionStrategySummary(detailRecord)}</div>
+        <Tabs
+          className="aq-dimension-tabs"
+          defaultActiveKey="skill"
+          items={bindingDimensionKeys.map((key) => {
+            if (key === 'skill') {
+              return {
+                key: 'skill',
+                label: '技能维度',
+                children: (
+                  <div className="aq-detail-layout">
+                    <div className="aq-dimension-panel">
+                      {renderUsageProgress(detailRecord.skillUsageUsed, detailRecord.skillUsageLimit, (value) => `${formatNumber(value)} 次`)}
+                    </div>
+                    <div className="aq-dimension-panel">
+                      {renderUsageProgress(detailRecord.skillGenerated, detailRecord.skillGenerateLimit, (value) => `${formatNumber(value)} 次`)}
+                    </div>
+                    <div className="aq-dimension-panel">{renderBindingSkillPolicyCell(detailRecord)}</div>
+                    <div className="aq-dimension-panel">{renderSkillRuleCell(detailRecord.skillRules, { showUsage: true })}</div>
+                  </div>
+                ),
+              };
+            }
+
+            if (key === 'token') {
+              return {
+                key: 'token',
+                label: 'Token 维度',
+                children: (
+                  <div className="aq-detail-layout">
+                    <div className="aq-dimension-panel">
+                      {renderUsageProgress(detailRecord.tokenUsed, detailRecord.tokenLimit, (value) => formatCompact(value))}
+                    </div>
+                    <div className="aq-dimension-panel">{renderBindingTokenPolicyCell(detailRecord)}</div>
+                  </div>
+                ),
+              };
+            }
+
+            return {
+              key: 'agent',
+              label: '智能体维度',
+              children: (
+                <div className="aq-detail-layout">
+                  <div className="aq-dimension-panel">
+                    {renderUsageProgress(detailRecord.agentCreated, detailRecord.agentCreateLimit, (value) => `${formatNumber(value)} 个`)}
+                  </div>
+                  <div className="aq-dimension-panel">{renderBindingAgentPolicyCell(detailRecord)}</div>
+                </div>
+              ),
+            };
+          })}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="agent-quota-module">
       <div className="aq-header">
@@ -1836,7 +2402,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
             <Tag color="gold">Mock 配置</Tag>
           </div>
           <div className="aq-subtitle">
-            面向当前租户管理员，配置租内配额方案、当前租户总配额、部门配额、个人配额，以及自定义技能 / 自定义智能体开关和每用户免费额度。
+            面向当前租户管理员，按技能、Token、智能体等维度配置租内配额方案、当前租户总配额、部门配额和个人配额，并支持单技能次数限制。
           </div>
         </div>
         <Space>
@@ -1868,27 +2434,91 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
           type="info"
           showIcon
           message="配额生效顺序"
-          description="当前租户总配额优先于部门配额，部门配额优先于个人配额；配额方案用于快速带入默认额度，免费配额策略用于控制租内不同身份的人均赠送额度。"
+          description="当前租户总配额优先于部门配额，部门配额优先于个人配额；每层配额支持单维度直控，也支持技能、Token、智能体等多维度联合治理，并可继续细化单技能次数限制。"
         />
 
-        <Tabs
-          activeKey={activeTab}
-          onChange={setActiveTab}
-          className="aq-tabs"
-          items={tabItems}
-        />
+        <div className="aq-page-sections">
+          <section className="aq-page-section">
+            <div className="aq-page-section-head">
+              <div className="aq-page-section-title">配额方案</div>
+              <Badge count={filteredPlans.length} size="small" />
+            </div>
+            {planSectionContent}
+          </section>
+
+          <section className="aq-page-section">
+            <div className="aq-page-section-head">
+              <div className="aq-page-section-title">当前租户配额</div>
+              <Badge count={1 + filteredDepartmentRows.length + filteredPersonalRows.length} size="small" />
+            </div>
+            {tenantSectionContent}
+          </section>
+        </div>
       </div>
 
-      <Modal
+      <Drawer
+        open={detailModalOpen}
+        title={detailModalTitle}
+        onClose={() => setDetailModalOpen(false)}
+        width={920}
+        placement="right"
+        className="aq-side-drawer"
+        destroyOnClose
+        styles={{ header: { padding: '18px 24px' }, body: { padding: '20px 24px 28px' } }}
+      >
+        {renderDetailContent()}
+      </Drawer>
+
+      <Drawer
         open={planModalOpen}
         title={planModalMode === 'edit' ? '编辑配额方案' : planModalMode === 'copy' ? '复制配额方案' : '新建配额方案'}
-        onCancel={() => setPlanModalOpen(false)}
-        onOk={handlePlanSubmit}
+        onClose={() => setPlanModalOpen(false)}
         width={900}
+        placement="right"
+        className="aq-side-drawer"
         destroyOnClose
+        extra={(
+          <Space>
+            <Button onClick={() => setPlanModalOpen(false)}>取消</Button>
+            <Button type="primary" onClick={handlePlanSubmit}>保存</Button>
+          </Space>
+        )}
+        styles={{ header: { padding: '18px 24px' }, body: { padding: '20px 24px 28px' } }}
       >
         <Form form={planForm} layout="vertical">
-          <div className="aq-form-grid aq-form-grid-3">
+          <div className="aq-dimension-governance-card">
+            <div className="aq-section-header">
+              <div className="aq-section-title">维度启用策略</div>
+              <div className="aq-section-desc">支持只启用单一维度，也支持组合多个维度共同生效；当启用多个维度时，需要明确整体治理策略。</div>
+            </div>
+
+            <div className="aq-form-grid aq-form-grid-2">
+              <Form.Item
+                label="启用维度"
+                name="enabledDimensions"
+                rules={[{ required: true, type: 'array', min: 1, message: '请至少启用一个维度' }]}
+              >
+                <Checkbox.Group options={DIMENSION_OPTIONS} />
+              </Form.Item>
+              {planEnabledDimensions.length > 1 ? (
+                <Form.Item
+                  label="多维度整体策略"
+                  name="dimensionStrategy"
+                  rules={[{ required: true, message: '请选择多维度整体策略' }]}
+                  extra={renderMultiDimensionStrategyGuide(planDimensionStrategy)}
+                >
+                  <Select options={MULTI_DIMENSION_STRATEGY_OPTIONS} />
+                </Form.Item>
+              ) : (
+                <div className="aq-dimension-single-hint">
+                  <span className="aq-dimension-single-title">单维度直控</span>
+                  <span>{getDimensionStrategyDescription('SINGLE')}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="aq-form-grid aq-form-grid-4">
             <Form.Item
               label="方案名称"
               name="name"
@@ -1910,63 +2540,175 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
             >
               <Select options={PLAN_STATUS_OPTIONS} />
             </Form.Item>
-          </div>
-
-          <div className="aq-form-grid aq-form-grid-4">
-            <Form.Item label="技能使用次数上限" name="skillUsageLimit" rules={[{ required: true, message: '请输入技能使用次数上限' }]}>
-              <InputNumber min={0} style={{ width: '100%' }} />
-            </Form.Item>
-            <Form.Item label="Token 使用上限" name="tokenLimit" rules={[{ required: true, message: '请输入 Token 使用上限' }]}>
-              <InputNumber min={0} style={{ width: '100%' }} />
-            </Form.Item>
-            <Form.Item label="智能体创建上限" name="agentCreateLimit" rules={[{ required: true, message: '请输入智能体创建上限' }]}>
-              <InputNumber min={0} style={{ width: '100%' }} />
-            </Form.Item>
-            <Form.Item label="技能生成上限" name="skillGenerateLimit" rules={[{ required: true, message: '请输入技能生成上限' }]}>
-              <InputNumber min={0} style={{ width: '100%' }} />
-            </Form.Item>
-          </div>
-
-          <div className="aq-form-grid aq-form-grid-4">
-            <Form.Item label="每用户免费技能次数" name="freeSkillUsagePerUser" rules={[{ required: true, message: '请输入每用户免费技能次数' }]}>
-              <InputNumber min={0} style={{ width: '100%' }} />
-            </Form.Item>
-            <Form.Item label="每用户免费 Token" name="freeTokenPerUser" rules={[{ required: true, message: '请输入每用户免费 Token' }]}>
-              <InputNumber min={0} style={{ width: '100%' }} />
-            </Form.Item>
-            <Form.Item label="每用户免费创建智能体" name="freeAgentCreatePerUser" rules={[{ required: true, message: '请输入每用户免费建智能体数' }]}>
-              <InputNumber min={0} style={{ width: '100%' }} />
-            </Form.Item>
-            <Form.Item label="每用户免费生成技能" name="freeSkillGeneratePerUser" rules={[{ required: true, message: '请输入每用户免费生成技能数' }]}>
-              <InputNumber min={0} style={{ width: '100%' }} />
-            </Form.Item>
-          </div>
-
-          <div className="aq-form-grid aq-form-grid-3">
-            <Form.Item label="是否支持自定义技能" name="allowCustomSkill" valuePropName="checked">
-              <Switch checkedChildren="支持" unCheckedChildren="关闭" />
-            </Form.Item>
-            <Form.Item label="是否支持自定义智能体" name="allowCustomAgent" valuePropName="checked">
-              <Switch checkedChildren="支持" unCheckedChildren="关闭" />
-            </Form.Item>
             <Form.Item label="重置周期" name="resetCycle" rules={[{ required: true, message: '请选择重置周期' }]}>
               <Select options={RESET_CYCLE_OPTIONS} />
             </Form.Item>
           </div>
 
+          <Tabs
+            className="aq-dimension-tabs"
+            defaultActiveKey="skill"
+            items={planEnabledDimensions.map((key) => {
+              if (key === 'skill') {
+                return {
+                  key: 'skill',
+                  label: '技能维度',
+                  children: (
+                    <div className="aq-dimension-panel">
+                      <div className="aq-section-header">
+                        <div className="aq-section-title">技能维度</div>
+                        <div className="aq-section-desc">配置技能使用、技能生成、自定义技能开关，以及单个技能的专项次数限制。</div>
+                      </div>
+
+                      <div className="aq-form-grid aq-form-grid-4">
+                        <Form.Item label="技能使用次数上限" name="skillUsageLimit" rules={[{ required: true, message: '请输入技能使用次数上限' }]}>
+                          <InputNumber min={0} style={{ width: '100%' }} />
+                        </Form.Item>
+                        <Form.Item label="技能生成上限" name="skillGenerateLimit" rules={[{ required: true, message: '请输入技能生成上限' }]}>
+                          <InputNumber min={0} style={{ width: '100%' }} />
+                        </Form.Item>
+                        <Form.Item label="每用户免费技能次数" name="freeSkillUsagePerUser" rules={[{ required: true, message: '请输入每用户免费技能次数' }]}>
+                          <InputNumber min={0} style={{ width: '100%' }} />
+                        </Form.Item>
+                        <Form.Item label="每用户免费生成技能" name="freeSkillGeneratePerUser" rules={[{ required: true, message: '请输入每用户免费生成技能数' }]}>
+                          <InputNumber min={0} style={{ width: '100%' }} />
+                        </Form.Item>
+                      </div>
+
+                      <div className="aq-form-grid aq-form-grid-2">
+                        <Form.Item label="是否支持自定义技能" name="allowCustomSkill" valuePropName="checked">
+                          <Switch checkedChildren="支持" unCheckedChildren="关闭" />
+                        </Form.Item>
+                      </div>
+
+                      <div className="aq-section-header">
+                        <div className="aq-section-title">技能级次数限制</div>
+                        <div className="aq-section-desc">为指定技能设置单独上限。未配置的技能仅受总技能次数上限约束。</div>
+                      </div>
+
+                      <Form.List name="skillRules">
+                        {(fields, { add, remove }) => (
+                          <div className="aq-form-list">
+                            {fields.length ? (
+                              fields.map((field) => (
+                                <div key={field.key} className="aq-skill-form-row aq-skill-form-row-plan">
+                                  <Form.Item
+                                    {...field}
+                                    label="技能"
+                                    name={[field.name, 'skillKey']}
+                                    rules={[{ required: true, message: '请选择技能' }]}
+                                  >
+                                    <Select options={SKILL_CATALOG} placeholder="选择技能" />
+                                  </Form.Item>
+                                  <Form.Item
+                                    {...field}
+                                    label="次数上限"
+                                    name={[field.name, 'limit']}
+                                    rules={[{ required: true, message: '请输入次数上限' }]}
+                                  >
+                                    <InputNumber min={0} style={{ width: '100%' }} />
+                                  </Form.Item>
+                                  <Button
+                                    danger
+                                    type="text"
+                                    icon={<DeleteOutlined />}
+                                    className="aq-skill-form-remove"
+                                    onClick={() => remove(field.name)}
+                                  >
+                                    删除
+                                  </Button>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="aq-empty-skill-rules">未配置技能级规则，将仅按总技能次数控制。</div>
+                            )}
+                            <Button
+                              type="dashed"
+                              icon={<PlusOutlined />}
+                              onClick={() => add({ skillKey: undefined, limit: 0 })}
+                            >
+                              新增技能规则
+                            </Button>
+                          </div>
+                        )}
+                      </Form.List>
+                    </div>
+                  ),
+                };
+              }
+
+              if (key === 'token') {
+                return {
+                  key: 'token',
+                  label: 'Token 维度',
+                  children: (
+                    <div className="aq-dimension-panel">
+                      <div className="aq-section-header">
+                        <div className="aq-section-title">Token 维度</div>
+                        <div className="aq-section-desc">配置总 Token 消耗上限和人均免费 Token 配额。</div>
+                      </div>
+
+                      <div className="aq-form-grid aq-form-grid-2">
+                        <Form.Item label="Token 使用上限" name="tokenLimit" rules={[{ required: true, message: '请输入 Token 使用上限' }]}>
+                          <InputNumber min={0} style={{ width: '100%' }} />
+                        </Form.Item>
+                        <Form.Item label="每用户免费 Token" name="freeTokenPerUser" rules={[{ required: true, message: '请输入每用户免费 Token' }]}>
+                          <InputNumber min={0} style={{ width: '100%' }} />
+                        </Form.Item>
+                      </div>
+                    </div>
+                  ),
+                };
+              }
+
+              return {
+                key: 'agent',
+                label: '智能体维度',
+                children: (
+                  <div className="aq-dimension-panel">
+                    <div className="aq-section-header">
+                      <div className="aq-section-title">智能体维度</div>
+                      <div className="aq-section-desc">配置智能体创建额度和自定义智能体能力。</div>
+                    </div>
+
+                    <div className="aq-form-grid aq-form-grid-3">
+                      <Form.Item label="智能体创建上限" name="agentCreateLimit" rules={[{ required: true, message: '请输入智能体创建上限' }]}>
+                        <InputNumber min={0} style={{ width: '100%' }} />
+                      </Form.Item>
+                      <Form.Item label="每用户免费创建智能体" name="freeAgentCreatePerUser" rules={[{ required: true, message: '请输入每用户免费建智能体数' }]}>
+                        <InputNumber min={0} style={{ width: '100%' }} />
+                      </Form.Item>
+                      <Form.Item label="是否支持自定义智能体" name="allowCustomAgent" valuePropName="checked">
+                        <Switch checkedChildren="支持" unCheckedChildren="关闭" />
+                      </Form.Item>
+                    </div>
+                  </div>
+                ),
+              };
+            })}
+          />
+
           <Form.Item label="方案说明" name="description">
             <TextArea rows={3} placeholder="可填写适用场景、限制说明和运营备注" />
           </Form.Item>
         </Form>
-      </Modal>
+      </Drawer>
 
-      <Modal
+      <Drawer
         open={bindingModalOpen}
         title={bindingModalTitle}
-        onCancel={() => setBindingModalOpen(false)}
-        onOk={handleBindingSubmit}
+        onClose={() => setBindingModalOpen(false)}
         width={980}
+        placement="right"
+        className="aq-side-drawer"
         destroyOnClose
+        extra={(
+          <Space>
+            <Button onClick={() => setBindingModalOpen(false)}>取消</Button>
+            <Button type="primary" onClick={handleBindingSubmit}>保存</Button>
+          </Space>
+        )}
+        styles={{ header: { padding: '18px 24px' }, body: { padding: '20px 24px 28px' } }}
       >
         <Form form={bindingForm} layout="vertical">
           {isPersonalBinding ? (
@@ -2019,73 +2761,222 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
               type="success"
               showIcon
               message={`已选择：${selectedBindingPlan.name}`}
-              description={`方案默认值：技能 ${formatNumber(selectedBindingPlan.skillUsageLimit)} 次，Token ${formatCompact(selectedBindingPlan.tokenLimit)}，智能体 ${formatNumber(selectedBindingPlan.agentCreateLimit)} 个，技能生成 ${formatNumber(selectedBindingPlan.skillGenerateLimit)} 次。`}
+              description={`方案默认值已按技能、Token、智能体三个维度带入；其中技能维度包含 ${formatNumber(selectedBindingPlan.skillRules?.length)} 个技能级限制。`}
             />
           ) : null}
 
-          <div className="aq-form-grid aq-form-grid-4">
-            <Form.Item label="技能使用次数上限" name="skillUsageLimit" rules={[{ required: true, message: '请输入技能使用次数上限' }]}>
-              <InputNumber min={0} style={{ width: '100%' }} />
-            </Form.Item>
-            <Form.Item label="Token 使用上限" name="tokenLimit" rules={[{ required: true, message: '请输入 Token 使用上限' }]}>
-              <InputNumber min={0} style={{ width: '100%' }} />
-            </Form.Item>
-            <Form.Item label="智能体创建上限" name="agentCreateLimit" rules={[{ required: true, message: '请输入智能体创建上限' }]}>
-              <InputNumber min={0} style={{ width: '100%' }} />
-            </Form.Item>
-            <Form.Item label="技能生成上限" name="skillGenerateLimit" rules={[{ required: true, message: '请输入技能生成上限' }]}>
-              <InputNumber min={0} style={{ width: '100%' }} />
-            </Form.Item>
+          <div className="aq-dimension-governance-card">
+            <div className="aq-section-header">
+              <div className="aq-section-title">维度启用策略</div>
+              <div className="aq-section-desc">可按对象实际场景只启用部分维度；若同时启用多个维度，需要定义整体治理方式。</div>
+            </div>
+
+            <div className="aq-form-grid aq-form-grid-2">
+              <Form.Item
+                label="启用维度"
+                name="enabledDimensions"
+                rules={[{ required: true, type: 'array', min: 1, message: '请至少启用一个维度' }]}
+              >
+                <Checkbox.Group options={DIMENSION_OPTIONS} />
+              </Form.Item>
+              {bindingEnabledDimensions.length > 1 ? (
+                <Form.Item
+                  label="多维度整体策略"
+                  name="dimensionStrategy"
+                  rules={[{ required: true, message: '请选择多维度整体策略' }]}
+                  extra={renderMultiDimensionStrategyGuide(bindingDimensionStrategy)}
+                >
+                  <Select options={MULTI_DIMENSION_STRATEGY_OPTIONS} />
+                </Form.Item>
+              ) : (
+                <div className="aq-dimension-single-hint">
+                  <span className="aq-dimension-single-title">单维度直控</span>
+                  <span>{getDimensionStrategyDescription('SINGLE')}</span>
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="aq-form-grid aq-form-grid-4">
-            <Form.Item label="已使用技能次数" name="skillUsageUsed" rules={[{ required: true, message: '请输入已使用技能次数' }]}>
-              <InputNumber min={0} style={{ width: '100%' }} />
-            </Form.Item>
-            <Form.Item label="已使用 Token" name="tokenUsed" rules={[{ required: true, message: '请输入已使用 Token' }]}>
-              <InputNumber min={0} style={{ width: '100%' }} />
-            </Form.Item>
-            <Form.Item label="已创建智能体" name="agentCreated" rules={[{ required: true, message: '请输入已创建智能体数' }]}>
-              <InputNumber min={0} style={{ width: '100%' }} />
-            </Form.Item>
-            <Form.Item label="已生成技能" name="skillGenerated" rules={[{ required: true, message: '请输入已生成技能数' }]}>
-              <InputNumber min={0} style={{ width: '100%' }} />
-            </Form.Item>
-          </div>
+          <Tabs
+            className="aq-dimension-tabs"
+            defaultActiveKey="skill"
+            items={bindingEnabledDimensions.map((key) => {
+              if (key === 'skill') {
+                return {
+                  key: 'skill',
+                  label: '技能维度',
+                  children: (
+                    <div className="aq-dimension-panel">
+                      <div className="aq-section-header">
+                        <div className="aq-section-title">技能维度</div>
+                        <div className="aq-section-desc">统一配置技能使用、技能生成、免费技能额度、自定义技能开关，以及每个技能的专项上限和已用次数。</div>
+                      </div>
 
-          <div className="aq-form-grid aq-form-grid-4">
-            <Form.Item label="每用户免费技能次数" name="freeSkillUsagePerUser" rules={[{ required: true, message: '请输入每用户免费技能次数' }]}>
-              <InputNumber min={0} style={{ width: '100%' }} />
-            </Form.Item>
-            <Form.Item label="每用户免费 Token" name="freeTokenPerUser" rules={[{ required: true, message: '请输入每用户免费 Token' }]}>
-              <InputNumber min={0} style={{ width: '100%' }} />
-            </Form.Item>
-            <Form.Item label="每用户免费创建智能体" name="freeAgentCreatePerUser" rules={[{ required: true, message: '请输入每用户免费建智能体数' }]}>
-              <InputNumber min={0} style={{ width: '100%' }} />
-            </Form.Item>
-            <Form.Item label="每用户免费生成技能" name="freeSkillGeneratePerUser" rules={[{ required: true, message: '请输入每用户免费生成技能数' }]}>
-              <InputNumber min={0} style={{ width: '100%' }} />
-            </Form.Item>
-          </div>
+                      <div className="aq-form-grid aq-form-grid-4">
+                        <Form.Item label="技能使用次数上限" name="skillUsageLimit" rules={[{ required: true, message: '请输入技能使用次数上限' }]}>
+                          <InputNumber min={0} style={{ width: '100%' }} />
+                        </Form.Item>
+                        <Form.Item label="已使用技能次数" name="skillUsageUsed" rules={[{ required: true, message: '请输入已使用技能次数' }]}>
+                          <InputNumber min={0} style={{ width: '100%' }} />
+                        </Form.Item>
+                        <Form.Item label="技能生成上限" name="skillGenerateLimit" rules={[{ required: true, message: '请输入技能生成上限' }]}>
+                          <InputNumber min={0} style={{ width: '100%' }} />
+                        </Form.Item>
+                        <Form.Item label="已生成技能" name="skillGenerated" rules={[{ required: true, message: '请输入已生成技能数' }]}>
+                          <InputNumber min={0} style={{ width: '100%' }} />
+                        </Form.Item>
+                      </div>
 
-          <div className="aq-form-grid aq-form-grid-2">
-            <Form.Item label="是否支持自定义技能" name="allowCustomSkill" valuePropName="checked">
-              <Switch checkedChildren="支持" unCheckedChildren="关闭" />
-            </Form.Item>
-            <Form.Item label="是否支持自定义智能体" name="allowCustomAgent" valuePropName="checked">
-              <Switch checkedChildren="支持" unCheckedChildren="关闭" />
-            </Form.Item>
-          </div>
+                      <div className="aq-form-grid aq-form-grid-3">
+                        <Form.Item label="每用户免费技能次数" name="freeSkillUsagePerUser" rules={[{ required: true, message: '请输入每用户免费技能次数' }]}>
+                          <InputNumber min={0} style={{ width: '100%' }} />
+                        </Form.Item>
+                        <Form.Item label="每用户免费生成技能" name="freeSkillGeneratePerUser" rules={[{ required: true, message: '请输入每用户免费生成技能数' }]}>
+                          <InputNumber min={0} style={{ width: '100%' }} />
+                        </Form.Item>
+                        <Form.Item label="是否支持自定义技能" name="allowCustomSkill" valuePropName="checked">
+                          <Switch checkedChildren="支持" unCheckedChildren="关闭" />
+                        </Form.Item>
+                      </div>
+
+                      <div className="aq-section-header">
+                        <div className="aq-section-title">技能级次数限制</div>
+                        <div className="aq-section-desc">这里可对单个技能单独收紧或放宽，并记录该技能当前已使用次数。</div>
+                      </div>
+
+                      <Form.List name="skillRules">
+                        {(fields, { add, remove }) => (
+                          <div className="aq-form-list">
+                            {fields.length ? (
+                              fields.map((field) => (
+                                <div key={field.key} className="aq-skill-form-row">
+                                  <Form.Item
+                                    {...field}
+                                    label="技能"
+                                    name={[field.name, 'skillKey']}
+                                    rules={[{ required: true, message: '请选择技能' }]}
+                                  >
+                                    <Select options={SKILL_CATALOG} placeholder="选择技能" />
+                                  </Form.Item>
+                                  <Form.Item
+                                    {...field}
+                                    label="次数上限"
+                                    name={[field.name, 'limit']}
+                                    rules={[{ required: true, message: '请输入次数上限' }]}
+                                  >
+                                    <InputNumber min={0} style={{ width: '100%' }} />
+                                  </Form.Item>
+                                  <Form.Item
+                                    {...field}
+                                    label="已使用次数"
+                                    name={[field.name, 'used']}
+                                    rules={[{ required: true, message: '请输入已使用次数' }]}
+                                  >
+                                    <InputNumber min={0} style={{ width: '100%' }} />
+                                  </Form.Item>
+                                  <Button
+                                    danger
+                                    type="text"
+                                    icon={<DeleteOutlined />}
+                                    className="aq-skill-form-remove"
+                                    onClick={() => remove(field.name)}
+                                  >
+                                    删除
+                                  </Button>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="aq-empty-skill-rules">未配置技能级规则，将仅按总技能次数控制。</div>
+                            )}
+                            <Button
+                              type="dashed"
+                              icon={<PlusOutlined />}
+                              onClick={() => add({ skillKey: undefined, limit: 0, used: 0 })}
+                            >
+                              新增技能规则
+                            </Button>
+                          </div>
+                        )}
+                      </Form.List>
+                    </div>
+                  ),
+                };
+              }
+
+              if (key === 'token') {
+                return {
+                  key: 'token',
+                  label: 'Token 维度',
+                  children: (
+                    <div className="aq-dimension-panel">
+                      <div className="aq-section-header">
+                        <div className="aq-section-title">Token 维度</div>
+                        <div className="aq-section-desc">统一配置 Token 上限、当前消耗和人均免费 Token。</div>
+                      </div>
+
+                      <div className="aq-form-grid aq-form-grid-3">
+                        <Form.Item label="Token 使用上限" name="tokenLimit" rules={[{ required: true, message: '请输入 Token 使用上限' }]}>
+                          <InputNumber min={0} style={{ width: '100%' }} />
+                        </Form.Item>
+                        <Form.Item label="已使用 Token" name="tokenUsed" rules={[{ required: true, message: '请输入已使用 Token' }]}>
+                          <InputNumber min={0} style={{ width: '100%' }} />
+                        </Form.Item>
+                        <Form.Item label="每用户免费 Token" name="freeTokenPerUser" rules={[{ required: true, message: '请输入每用户免费 Token' }]}>
+                          <InputNumber min={0} style={{ width: '100%' }} />
+                        </Form.Item>
+                      </div>
+                    </div>
+                  ),
+                };
+              }
+
+              return {
+                key: 'agent',
+                label: '智能体维度',
+                children: (
+                  <div className="aq-dimension-panel">
+                    <div className="aq-section-header">
+                      <div className="aq-section-title">智能体维度</div>
+                      <div className="aq-section-desc">统一配置智能体创建、免费创建和自定义智能体能力。</div>
+                    </div>
+
+                    <div className="aq-form-grid aq-form-grid-4">
+                      <Form.Item label="智能体创建上限" name="agentCreateLimit" rules={[{ required: true, message: '请输入智能体创建上限' }]}>
+                        <InputNumber min={0} style={{ width: '100%' }} />
+                      </Form.Item>
+                      <Form.Item label="已创建智能体" name="agentCreated" rules={[{ required: true, message: '请输入已创建智能体数' }]}>
+                        <InputNumber min={0} style={{ width: '100%' }} />
+                      </Form.Item>
+                      <Form.Item label="每用户免费创建智能体" name="freeAgentCreatePerUser" rules={[{ required: true, message: '请输入每用户免费建智能体数' }]}>
+                        <InputNumber min={0} style={{ width: '100%' }} />
+                      </Form.Item>
+                      <Form.Item label="是否支持自定义智能体" name="allowCustomAgent" valuePropName="checked">
+                        <Switch checkedChildren="支持" unCheckedChildren="关闭" />
+                      </Form.Item>
+                    </div>
+                  </div>
+                ),
+              };
+            })}
+          />
         </Form>
-      </Modal>
+      </Drawer>
 
-      <Modal
+      <Drawer
         open={policyModalOpen}
         title={policyModalMode === 'edit' ? '编辑免费配额策略' : '新建免费配额策略'}
-        onCancel={() => setPolicyModalOpen(false)}
-        onOk={handlePolicySubmit}
+        onClose={() => setPolicyModalOpen(false)}
         width={860}
+        placement="right"
+        className="aq-side-drawer"
         destroyOnClose
+        extra={(
+          <Space>
+            <Button onClick={() => setPolicyModalOpen(false)}>取消</Button>
+            <Button type="primary" onClick={handlePolicySubmit}>保存</Button>
+          </Space>
+        )}
+        styles={{ header: { padding: '18px 24px' }, body: { padding: '20px 24px 28px' } }}
       >
         <Form form={policyForm} layout="vertical">
           <div className="aq-form-grid aq-form-grid-3">
@@ -2131,7 +3022,7 @@ export default function AgentQuotaModule({ initialTab = 'plans' }) {
             <TextArea rows={3} placeholder="填写适用身份、限制条件或发放说明" />
           </Form.Item>
         </Form>
-      </Modal>
+      </Drawer>
     </div>
   );
 }

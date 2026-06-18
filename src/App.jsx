@@ -64,6 +64,7 @@ import AgentQuotaModule from './agentQuota/AgentQuotaModule';
 import ModelStatisticsModule from './modelStatistics/ModelStatisticsModule';
 import SolutionManagementModule from './solution/SolutionManagementModule';
 import SceneTemplateModule from './scene/SceneTemplateModule';
+import CapabilityModelModule from './capabilityModel/CapabilityModelModule';
 import SceneCreateModal from './scene/SceneCreateModal';
 import { getSceneStoreChangeEventName, getSceneTypeLabel, getSceneVisibilityLabel, sceneApi } from './scene/api';
 import './App.css';
@@ -155,6 +156,7 @@ const iconBarItems = [
   { key: 'tag-management', icon: <TagsOutlined />, label: '标签管理' },
   { key: 'app-center', icon: <AppstoreOutlined />, label: '应用中心' },
   { key: 'scene-template', icon: <DesktopOutlined />, label: '场景模板' },
+  { key: 'capability-model', icon: <AppstoreOutlined />, label: '能力模型' },
   { key: 'solution-management', icon: <AppstoreOutlined />, label: '解决方案' },
   { key: 'dms', icon: <FileTextOutlined />, label: '文档管理' },
   { key: 'integration', icon: <PartitionOutlined />, label: '三方对接' }
@@ -412,6 +414,8 @@ function App() {
       setCurrentPage('app-center');
     } else if (key === 'scene-template') {
       setCurrentPage('scene-template');
+    } else if (key === 'capability-model') {
+      setCurrentPage('capability-model');
     } else if (key === 'solution-management') {
       setCurrentPage('solution-management');
     } else if (key === 'dms') {
@@ -442,6 +446,7 @@ function App() {
       currentPage === 'tag-management' ||
       currentPage === 'app-center' ||
       currentPage === 'scene-template' ||
+      currentPage === 'capability-model' ||
       currentPage === 'solution-management' ||
       currentPage === 'dms' ||
       currentPage === 'integration'
@@ -538,6 +543,8 @@ function App() {
         <AppCenterModule />
       ) : currentPage === 'scene-template' ? (
         <SceneTemplateModule />
+      ) : currentPage === 'capability-model' ? (
+        <CapabilityModelModule />
       ) : currentPage === 'solution-management' ? (
         <SolutionManagementModule />
       ) : currentPage === 'dms' ? (
@@ -602,7 +609,7 @@ function App() {
             </Header>
 
             {/* Content */}
-            <Content className="app-content">
+            <Content className={currentPage === 'agent-quota' ? 'app-content app-content-full' : 'app-content'}>
               {sceneDataLoading ? (
                 <div className="scene-empty-state">场景加载中...</div>
               ) : visibleScenes.length === 0 ? (

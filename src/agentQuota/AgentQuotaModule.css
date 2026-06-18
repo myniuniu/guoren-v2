@@ -1,8 +1,11 @@
 .agent-quota-module {
-  min-height: 100vh;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
   background: #f4f7fb;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .aq-header {
@@ -47,6 +50,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-height: 0;
 }
 
 .aq-summary-grid {
@@ -63,19 +67,75 @@
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
 }
 
+.aq-table-shell {
+  min-height: 0;
+}
+
+.aq-table-shell-fill {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
 .aq-alert {
   border-radius: 16px;
+}
+
+.aq-page-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 0;
+}
+
+.aq-page-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+.aq-page-section-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.aq-page-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #172033;
+}
+
+.aq-tabs,
+.aq-subtabs {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .aq-tabs .ant-tabs-nav {
   margin-bottom: 0;
 }
 
+.aq-tabs > .ant-tabs-content-holder,
+.aq-subtabs > .ant-tabs-content-holder,
+.aq-tabs .ant-tabs-content,
+.aq-subtabs .ant-tabs-content,
+.aq-tabs .ant-tabs-tabpane,
+.aq-subtabs .ant-tabs-tabpane {
+  flex: 1;
+  min-height: 0;
+}
+
 .aq-tab-panel {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 16px;
   padding-top: 16px;
+  min-height: 0;
 }
 
 .aq-subtabs .ant-tabs-nav {
@@ -84,9 +144,11 @@
 
 .aq-subtab-panel {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 16px;
   padding-top: 16px;
+  min-height: 0;
 }
 
 .aq-toolbar {
@@ -158,6 +220,35 @@
   line-height: 1.5;
 }
 
+.aq-dimension-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.aq-dimension-card {
+  padding: 10px 12px;
+  border: 1px solid #edf1f7;
+  border-radius: 12px;
+  background: #fafcff;
+}
+
+.aq-dimension-card-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #172033;
+}
+
+.aq-dimension-card-items {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: #455064;
+  line-height: 1.5;
+}
+
 .aq-progress-cell {
   min-width: 180px;
 }
@@ -185,9 +276,94 @@
   color: #98a2b3;
 }
 
+.aq-section-header {
+  margin-bottom: 12px;
+}
+
+.aq-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #172033;
+}
+
+.aq-section-desc {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #7b8598;
+  line-height: 1.5;
+}
+
 .aq-form-grid {
   display: grid;
   gap: 16px;
+}
+
+.aq-dimension-governance-card {
+  padding: 16px;
+  border: 1px solid #e8edf3;
+  border-radius: 16px;
+  background: #fafcff;
+  margin-bottom: 16px;
+}
+
+.aq-dimension-single-hint {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px dashed #d7deea;
+  border-radius: 12px;
+  background: #fff;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.aq-dimension-single-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #172033;
+}
+
+.aq-strategy-guide {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.aq-strategy-guide-item {
+  padding: 12px 14px;
+  border: 1px solid #e8edf3;
+  border-radius: 12px;
+  background: #fafcff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.aq-strategy-guide-item-active {
+  border-color: #91caff;
+  background: #f0f7ff;
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.08);
+}
+
+.aq-strategy-guide-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #172033;
+}
+
+.aq-strategy-guide-summary {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #455064;
+}
+
+.aq-strategy-guide-detail {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #7b8598;
 }
 
 .aq-form-grid-2 {
@@ -207,14 +383,159 @@
   border-radius: 12px;
 }
 
+.aq-dimension-tabs .ant-tabs-nav {
+  margin-bottom: 16px;
+}
+
+.aq-dimension-tabs .ant-tabs-tab {
+  padding-inline: 4px;
+}
+
+.aq-list-dimension-tabs .ant-tabs-nav {
+  margin-bottom: 12px;
+}
+
+.aq-detail-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.aq-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.aq-detail-item {
+  padding: 12px 14px;
+  border: 1px solid #e8edf3;
+  border-radius: 12px;
+  background: #fafcff;
+}
+
+.aq-detail-item span {
+  display: block;
+  font-size: 12px;
+  color: #7b8598;
+}
+
+.aq-detail-item strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 14px;
+  color: #172033;
+}
+
+.aq-dimension-panel {
+  padding: 16px;
+  border: 1px solid #e8edf3;
+  border-radius: 16px;
+  background: #fafcff;
+}
+
+.aq-form-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.aq-skill-form-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) 72px;
+  gap: 12px;
+  align-items: end;
+  padding: 12px;
+  border: 1px solid #e8edf3;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.aq-skill-form-row-plan {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) 72px;
+}
+
+.aq-skill-form-row .ant-form-item {
+  margin-bottom: 0;
+}
+
+.aq-skill-form-remove {
+  align-self: center;
+}
+
+.aq-empty-skill-rules {
+  padding: 14px 16px;
+  border: 1px dashed #d7deea;
+  border-radius: 12px;
+  background: #fafcff;
+  font-size: 12px;
+  color: #7b8598;
+}
+
+.aq-skill-rule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.aq-skill-rule-item {
+  padding: 10px 12px;
+  border: 1px solid #edf1f7;
+  border-radius: 12px;
+  background: #fafcff;
+}
+
+.aq-skill-rule-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: #455064;
+}
+
+.aq-skill-rule-progress {
+  margin-top: 8px;
+}
+
+.aq-skill-rule-progress-text {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: #5f6b7c;
+}
+
 .aq-table-card .ant-table-thead > tr > th {
   background: #f8fafc;
   color: #455064;
   font-weight: 600;
 }
 
+.aq-table-shell-fill .aq-table-card,
+.aq-table-shell-fill .aq-table-card .ant-card-body,
+.aq-table-shell-fill .ant-table-wrapper,
+.aq-table-shell-fill .ant-spin-nested-loading,
+.aq-table-shell-fill .ant-spin-container {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .aq-table-card .ant-table-tbody > tr > td {
   vertical-align: top;
+}
+
+.aq-side-drawer .ant-drawer-header {
+  border-bottom: 1px solid #e8edf3;
+}
+
+.aq-side-drawer .ant-drawer-body {
+  background: #f8fafc;
 }
 
 @media (max-width: 1200px) {
@@ -238,6 +559,19 @@
   .aq-form-grid-2,
   .aq-form-grid-3,
   .aq-form-grid-4 {
+    grid-template-columns: 1fr;
+  }
+
+  .aq-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .aq-strategy-guide {
+    grid-template-columns: 1fr;
+  }
+
+  .aq-skill-form-row,
+  .aq-skill-form-row-plan {
     grid-template-columns: 1fr;
   }
 
