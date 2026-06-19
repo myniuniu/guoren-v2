@@ -476,7 +476,7 @@ function mergeSceneArchivedRecordSnapshot(baseSnapshot, sceneRecords) {
 export default function MyProfileModule() {
   const [loading, setLoading] = useState(true);
   const [snapshot, setSnapshot] = useState(null);
-  const [mappingView, setMappingView] = useState('table');
+  const [mappingView, setMappingView] = useState('matrix');
   const [activeMatrixAnchor, setActiveMatrixAnchor] = useState(undefined);
   const [growthRecordDrawerOpen, setGrowthRecordDrawerOpen] = useState(false);
   const [selectedGrowthRecord, setSelectedGrowthRecord] = useState(null);
@@ -534,7 +534,9 @@ export default function MyProfileModule() {
   }, []);
 
   function resolveMappingRowGrowthRecord(record) {
+    if (!record.evidenceId) return null;
     return resolveGrowthRecordFromSnapshot(snapshot, record.evidenceId, {
+      focusItemId: record.itemId,
       focusDimensionName: record.dimensionName,
       focusItemName: record.itemName,
       focusCoverage: record.coverage,
@@ -550,6 +552,20 @@ export default function MyProfileModule() {
         <div className="profile-archive-item-cell">
           <strong>{record.itemName}</strong>
           <span>{record.dimensionName}</span>
+          {record.levelStatusSummary?.length ? (
+            <div className="profile-archive-level-badges">
+              {record.levelStatusSummary.map((item) => (
+                <Tag key={`${record.key}_${item.levelKey}`} color={item.statusColor}>
+                  {item.levelLabel} · {item.shortLabel}
+                </Tag>
+              ))}
+            </div>
+          ) : null}
+          {record.adviceSummary ? (
+            <span className="profile-archive-item-advice">
+              建议优先关注 {record.levelFocusLabel || '当前等级'}：{record.adviceSummary}
+            </span>
+          ) : null}
         </div>
       ),
     },
@@ -582,6 +598,15 @@ export default function MyProfileModule() {
         const growthRecord = resolveMappingRowGrowthRecord(record);
         const bundleItems = growthRecord?.bundleItems || [];
         const bundleSourceKeys = growthRecord?.bundleSourceKeys || [];
+        if (!record.evidenceId) {
+          return (
+            <div className="profile-archive-item-cell">
+              <strong>暂无直接成长记录</strong>
+              <span>{record.levelFocusLabel || '当前等级'} 待补记录</span>
+              <span className="profile-archive-item-submeta">{record.adviceSummary || '建议优先补充直接支撑该能力项的成长记录。'}</span>
+            </div>
+          );
+        }
         return (
           <div className="profile-archive-item-cell">
             <button
@@ -591,6 +616,7 @@ export default function MyProfileModule() {
                 event.preventDefault();
                 event.stopPropagation();
                 openGrowthRecordDetail(record.evidenceId, snapshot, {
+                  focusItemId: record.itemId,
                   focusDimensionName: record.dimensionName,
                   focusItemName: record.itemName,
                   focusCoverage: record.coverage,
@@ -643,9 +669,12 @@ export default function MyProfileModule() {
   ), [modelDefinition, snapshot]);
 
   function openCellGrowthRecord(item, level, cellRecord) {
+    if (!cellRecord?.evidenceId) return;
     const growthRecord = resolveGrowthRecordFromSnapshot(snapshot, cellRecord?.evidenceId, {
+      focusItemId: item.id,
       focusDimensionName: cellRecord?.dimensionName || '-',
       focusItemName: item.name,
+      focusLevelKey: level.key,
       focusLevelLabel: level.label,
       focusCoverage: cellRecord?.coverage,
     });
@@ -778,6 +807,9 @@ export default function MyProfileModule() {
               <Tag color="blue">当前模型 {snapshot.currentModel.itemCount} 项</Tag>
               <Tag color="green">已形成优势 {snapshot.summary.strongItemCount} 项</Tag>
               <Tag color="warning">待补强 {snapshot.summary.focusItemCount} 项</Tag>
+              <Tag>缺记录等级 {snapshot.summary.missingLevelCount} 个</Tag>
+              <Tag color="warning">低匹配等级 {snapshot.summary.lowMatchLevelCount} 个</Tag>
+              <Tag color="success">高匹配等级 {snapshot.summary.strongLevelCount} 个</Tag>
             </Space>
           </div>
           <Segmented
@@ -854,8 +886,18 @@ export default function MyProfileModule() {
                           {item.cellMappings.map(({ level, descriptor, growthRecord }) => (
                             <td key={`${item.id}_${level.key}`}>
                               <div className="profile-archive-matrix-cell">
-                                <div className="profile-archive-matrix-cell-text">{descriptor.text || '-'}</div>
                                 {growthRecord ? (
+                                  <div className="profile-archive-matrix-status">
+                                    <Tag color={growthRecord.statusColor}>{growthRecord.statusLabel}</Tag>
+                                    <span>
+                                      {growthRecord.hasRecord && typeof growthRecord.coverage === 'number'
+                                        ? `${growthRecord.coverage}% 匹配`
+                                        : '建议补充直接记录'}
+                                    </span>
+                                  </div>
+                                ) : null}
+                                <div className="profile-archive-matrix-cell-text">{descriptor.text || '-'}</div>
+                                {growthRecord?.hasRecord ? (
                                   <button
                                     type="button"
                                     className="profile-archive-matrix-record-card"
@@ -869,8 +911,15 @@ export default function MyProfileModule() {
                                     <span>{growthRecord.evidenceDate} · {growthRecord.evidenceTag}</span>
                                   </button>
                                 ) : (
-                                  <div className="profile-archive-matrix-record-empty">暂无映射记录</div>
+                                  <div className="profile-archive-matrix-record-empty">
+                                    {growthRecord?.statusLabel || '暂无映射记录'}
+                                  </div>
                                 )}
+                                {growthRecord?.growthAdvice?.summary ? (
+                                  <div className="profile-archive-matrix-advice">
+                                    {growthRecord.growthAdvice.summary}
+                                  </div>
+                                ) : null}
                               </div>
                             </td>
                           ))}

@@ -6,7 +6,7 @@ import {
   FolderOpenOutlined,
   ReadOutlined,
 } from '@ant-design/icons';
-import { findRecordAssociationRule } from './resourceRecordAssociations';
+import { findRecordAssociationRule, matchNamePattern } from './resourceRecordAssociations';
 
 export const SOURCE_META = {
   teaching: {
@@ -41,6 +41,14 @@ export const SOURCE_META = {
 
 const SOURCE_KEYS = ['teaching', 'archive', 'study', 'research'];
 const BUNDLE_VISIBLE_LIMIT = 5;
+const LEVEL_RECORD_PATTERNS = [
+  ['strong_match', 'basic_match', 'missing_record', 'missing_record', 'missing_record', 'missing_record'],
+  ['strong_match', 'basic_match', 'low_match', 'missing_record', 'missing_record', 'missing_record'],
+  ['basic_match', 'basic_match', 'low_match', 'missing_record', 'missing_record', 'missing_record'],
+  ['strong_match', 'strong_match', 'basic_match', 'low_match', 'missing_record', 'missing_record'],
+  ['basic_match', 'low_match', 'missing_record', 'missing_record', 'missing_record', 'missing_record'],
+  ['strong_match', 'basic_match', 'basic_match', 'low_match', 'missing_record', 'missing_record'],
+];
 
 const MOCK_SOURCE_RECORDS = {
   teaching: [
@@ -275,6 +283,14 @@ const MOCK_SOURCE_RECORDS = {
   ],
 };
 
+const MOCK_RECORD_CANDIDATES = Object.entries(MOCK_SOURCE_RECORDS).flatMap(([sourceKey, records]) => (
+  records.map((record, recordIndex) => ({
+    ...record,
+    sourceKey,
+    recordIndex,
+  }))
+));
+
 export function getSequenceForRole(role, sequences) {
   return sequences.find((item) => item.id === role?.sequenceId);
 }
@@ -314,6 +330,189 @@ function createRelationBucket() {
   };
 }
 
+function clampScore(score, min, max) {
+  return Math.max(min, Math.min(max, Math.round(score)));
+}
+
+function getLevelRecordScenario(dimensionIndex, itemIndex, levelIndex) {
+  const pattern = LEVEL_RECORD_PATTERNS[(dimensionIndex * 3 + itemIndex) % LEVEL_RECORD_PATTERNS.length];
+  const scenario = pattern[levelIndex] || 'missing_record';
+  return levelIndex === 0 && scenario === 'missing_record' ? 'basic_match' : scenario;
+}
+
+function buildCellCoverage(dimensionIndex, itemIndex, levelIndex, scenario) {
+  const offset = ((dimensionIndex * 5 + itemIndex * 3 + levelIndex * 2) % 7) - 3;
+  if (scenario === 'strong_match') {
+    return clampScore(90 + offset, 86, 96);
+  }
+  if (scenario === 'basic_match') {
+    return clampScore(78 + offset, 72, 84);
+  }
+  if (scenario === 'low_match') {
+    return clampScore(64 + offset, 58, 69);
+  }
+  return null;
+}
+
+function buildLevelMatchStatus(scenario) {
+  switch (scenario) {
+    case 'strong_match':
+      return { key: scenario, label: '高度匹配', shortLabel: '高匹配', color: 'success' };
+    case 'basic_match':
+      return { key: scenario, label: '基本匹配', shortLabel: '基本匹配', color: 'processing' };
+    case 'low_match':
+      return { key: scenario, label: '记录较弱', shortLabel: '低匹配', color: 'warning' };
+    default:
+      return { key: 'missing_record', label: '暂无记录', shortLabel: '暂无记录', color: 'default' };
+  }
+}
+
+function buildCellAssessmentScore(scenario, coverage) {
+  if (scenario === 'missing_record') return 40;
+  return coverage || 0;
+}
+
+function buildSuggestedRecordExamples(item, dimensionName) {
+  if (Array.isArray(item?.evidenceExamples) && item.evidenceExamples.length) {
+    return item.evidenceExamples.slice(0, 2);
+  }
+  if (matchNamePattern(dimensionName, '教学设计') || matchNamePattern(item?.name, '学习活动设计')) {
+    return ['教学设计稿', '任务单或课件'];
+  }
+  if (matchNamePattern(dimensionName, '课堂实施')) {
+    return ['课堂实录', '课堂回看分析'];
+  }
+  if (matchNamePattern(dimensionName, '学习评价')) {
+    return ['作业诊断报表', '评价反馈记录'];
+  }
+  if (matchNamePattern(dimensionName, '专业发展')) {
+    return ['教研纪要', '教学反思记录'];
+  }
+  return ['成长记录', '阶段成果材料'];
+}
+
+function buildLevelGrowthAdvice({ dimensionName, item, level, descriptorText, scenario, nextLevel }) {
+  const targetText = descriptorText || item?.description || item?.name || dimensionName;
+  const suggestedExamples = buildSuggestedRecordExamples(item, dimensionName);
+  const exampleText = suggestedExamples.join('、');
+
+  if (scenario === 'missing_record') {
+    return {
+      title: `${level.label} 仍缺少直接支撑记录`,
+      summary: `当前 ${level.label} 还没有直接对应“${item.name}”的成长记录，建议优先补充能体现“${targetText}”的 ${exampleText}。`,
+      actions: [
+        `优先沉淀 1-2 条可直接支撑 ${level.label} 的过程性记录，如 ${exampleText}。`,
+        '记录中要明确行为表现、结果反馈和改进动作，避免只有成果文件没有过程说明。',
+      ],
+    };
+  }
+
+  if (scenario === 'low_match') {
+    return {
+      title: `${level.label} 已有关联记录，但支撑偏弱`,
+      summary: `当前已有资料与 ${level.label} 建立了关联，但对“${targetText}”的体现还不够完整，建议补强更直接的过程证据和结果反馈。`,
+      actions: [
+        `补充更能体现 ${level.label} 行为表现的 ${exampleText}，减少泛材料占比。`,
+        '在记录中补上关键片段、数据变化或复盘结论，提高匹配度和可信度。',
+      ],
+    };
+  }
+
+  if (scenario === 'basic_match') {
+    return {
+      title: `${level.label} 已形成初步支撑`,
+      summary: `当前资料已能初步支撑 ${level.label}，下一步建议围绕“${targetText}”持续积累连续记录，形成更稳定的表现证据。`,
+      actions: [
+        `继续补充同类 ${exampleText}，至少形成连续两次以上的改进链路。`,
+        '把本次记录中的做法与后续课堂或教研调整结果建立前后对照。',
+      ],
+    };
+  }
+
+  return {
+    title: `${level.label} 已形成较强支撑`,
+    summary: nextLevel?.label
+      ? `当前资料已较好支撑 ${level.label}。下一步可对标 ${nextLevel.label}，继续沉淀更高阶的示范、带动或共创记录。`
+      : `当前资料已较好支撑 ${level.label}，建议继续沉淀可复用案例和阶段成果，稳定优势表现。`,
+    actions: nextLevel?.label
+      ? [
+        `尝试围绕 ${nextLevel.label} 的要求补充更高阶材料，如示范课、带教反馈或共创成果。`,
+        '把当前做法固化成模板或案例，便于在后续教学与教研中复用。',
+      ]
+      : [
+        `把当前与“${targetText}”相关的经验沉淀为案例包或方法清单。`,
+        '继续保持同类型高质量记录，确保优势表现可持续复现。',
+      ],
+  };
+}
+
+function findPreferredSourceKeys(dimensionName, itemName, levelIndex) {
+  const joinedText = `${dimensionName} ${itemName}`;
+  if (matchNamePattern(joinedText, '课堂实施') || matchNamePattern(joinedText, '互动引导') || matchNamePattern(joinedText, '课堂调控')) {
+    return ['teaching', 'study', 'research', 'archive'];
+  }
+  if (matchNamePattern(joinedText, '学习评价') || matchNamePattern(joinedText, '评价数据应用') || matchNamePattern(joinedText, '形成性反馈')) {
+    return ['teaching', 'study', 'research', 'archive'];
+  }
+  if (matchNamePattern(joinedText, '专业发展') || matchNamePattern(joinedText, '教研协同') || matchNamePattern(joinedText, '教学反思')) {
+    return ['research', 'archive', 'study', 'teaching'];
+  }
+  if (levelIndex >= 2) {
+    return ['teaching', 'research', 'study', 'archive'];
+  }
+  return ['teaching', 'study', 'research', 'archive'];
+}
+
+function scoreMockRecordCandidate(record, dimensionName, itemName, preferredSourceKeys) {
+  const associationRule = findRecordAssociationRule(record);
+  let score = 0;
+
+  if (associationRule?.itemNames?.some((name) => matchNamePattern(itemName, name))) {
+    score += 7;
+  }
+  if (associationRule?.dimensionNames?.some((name) => matchNamePattern(dimensionName, name))) {
+    score += 5;
+  }
+  if (matchNamePattern(record.tag, itemName) || matchNamePattern(record.title, itemName)) {
+    score += 4;
+  }
+  if (matchNamePattern(record.tag, dimensionName) || matchNamePattern(record.title, dimensionName)) {
+    score += 3;
+  }
+  const preferredIndex = preferredSourceKeys.indexOf(record.sourceKey);
+  if (preferredIndex >= 0) {
+    score += Math.max(0, 4 - preferredIndex);
+  }
+  return score;
+}
+
+function pickMockRecordForCell({ dimensionName, itemName, dimensionIndex, itemIndex, levelIndex }) {
+  const preferredSourceKeys = findPreferredSourceKeys(dimensionName, itemName, levelIndex);
+  const rankedCandidates = MOCK_RECORD_CANDIDATES
+    .map((record) => ({
+      ...record,
+      matchScore: scoreMockRecordCandidate(record, dimensionName, itemName, preferredSourceKeys),
+    }))
+    .sort((left, right) => {
+      if (right.matchScore !== left.matchScore) {
+        return right.matchScore - left.matchScore;
+      }
+      const leftSourceIndex = preferredSourceKeys.indexOf(left.sourceKey);
+      const rightSourceIndex = preferredSourceKeys.indexOf(right.sourceKey);
+      if (leftSourceIndex !== rightSourceIndex) {
+        return (leftSourceIndex === -1 ? 99 : leftSourceIndex) - (rightSourceIndex === -1 ? 99 : rightSourceIndex);
+      }
+      return left.recordIndex - right.recordIndex;
+    });
+
+  const candidates = rankedCandidates.filter((item) => item.matchScore > 0);
+  if (candidates.length) {
+    return candidates[(dimensionIndex + itemIndex + levelIndex) % Math.min(candidates.length, 2)] || candidates[0];
+  }
+
+  return MOCK_RECORD_CANDIDATES[(dimensionIndex * 5 + itemIndex * 3 + levelIndex) % MOCK_RECORD_CANDIDATES.length];
+}
+
 function enrichEvidenceRecord(record, sourceKey, relationMap = {}) {
   const relation = relationMap[record.id] || createRelationBucket();
   const coverageSource = relation.cellMappings.length ? relation.cellMappings : relation.mappingRows;
@@ -342,14 +541,57 @@ function enrichEvidenceRecord(record, sourceKey, relationMap = {}) {
   };
 }
 
-function buildCellCoverage(dimensionIndex, itemIndex, levelIndex) {
-  return Math.min(96, 62 + dimensionIndex * 6 + itemIndex * 5 + levelIndex * 4);
-}
-
 function buildItemCoverage(cellMappings) {
   return cellMappings.length
-    ? Math.round(cellMappings.reduce((sum, item) => sum + item.coverage, 0) / cellMappings.length)
+    ? Math.round(cellMappings.reduce((sum, item) => sum + (item.assessmentScore || 0), 0) / cellMappings.length)
     : 0;
+}
+
+function buildItemLevelSummaryFromCells(cellMappings = []) {
+  const groups = {
+    strongLevels: [],
+    basicLevels: [],
+    lowLevels: [],
+    missingLevels: [],
+  };
+
+  cellMappings.forEach((cell) => {
+    const entry = {
+      levelKey: cell.levelKey,
+      levelLabel: cell.levelLabel,
+      statusKey: cell.statusKey,
+      statusLabel: cell.statusLabel,
+      shortLabel: cell.shortStatusLabel,
+      statusColor: cell.statusColor,
+    };
+
+    if (cell.statusKey === 'strong_match') groups.strongLevels.push(entry);
+    else if (cell.statusKey === 'basic_match') groups.basicLevels.push(entry);
+    else if (cell.statusKey === 'low_match') groups.lowLevels.push(entry);
+    else groups.missingLevels.push(entry);
+  });
+
+  const focusCell = cellMappings.find((cell) => cell.statusKey === 'missing_record')
+    || cellMappings.find((cell) => cell.statusKey === 'low_match')
+    || cellMappings.find((cell) => cell.statusKey === 'basic_match')
+    || cellMappings[cellMappings.length - 1]
+    || null;
+
+  return {
+    ...groups,
+    levelBadges: cellMappings.map((cell) => ({
+      levelKey: cell.levelKey,
+      levelLabel: cell.levelLabel,
+      statusKey: cell.statusKey,
+      statusLabel: cell.statusLabel,
+      shortLabel: cell.shortStatusLabel,
+      statusColor: cell.statusColor,
+    })),
+    focusLevelKey: focusCell?.levelKey || null,
+    focusLevelLabel: focusCell?.levelLabel || null,
+    summary: focusCell?.growthAdvice?.summary || '当前等级支撑较完整，可继续冲刺更高等级。',
+    actions: focusCell?.growthAdvice?.actions || [],
+  };
 }
 
 export function buildModelGrowthRecordSnapshot(model, industries, roles, sequences) {
@@ -361,6 +603,7 @@ export function buildModelGrowthRecordSnapshot(model, industries, roles, sequenc
   const industry = industries.find((item) => item.id === model.industryId);
   const evidenceRelationMap = {};
   const cellEvidenceMap = {};
+  const cellStatusMap = {};
   const mappingRows = [];
   const sourceStats = Object.fromEntries(
     SOURCE_KEYS.map((key) => [key, {
@@ -376,12 +619,31 @@ export function buildModelGrowthRecordSnapshot(model, industries, roles, sequenc
     const itemRows = (dimension.items || []).map((item, itemIndex) => {
       const sourceCounter = Object.fromEntries(SOURCE_KEYS.map((key) => [key, 0]));
       const cellMappings = (model.levelScheme?.levels || []).map((level, levelIndex) => {
-        const sourceKey = SOURCE_KEYS[(dimensionIndex + itemIndex + levelIndex) % SOURCE_KEYS.length];
-        const sourceMeta = SOURCE_META[sourceKey];
-        const recordPool = MOCK_SOURCE_RECORDS[sourceKey];
-        const record = recordPool[(dimensionIndex * 3 + itemIndex + levelIndex) % recordPool.length];
-        const coverage = buildCellCoverage(dimensionIndex, itemIndex, levelIndex);
-        const status = buildStatusTag(coverage);
+        const descriptor = item.levelDescriptors?.find((entry) => entry.levelKey === level.key);
+        const nextLevel = (model.levelScheme?.levels || [])[levelIndex + 1] || null;
+        const scenario = getLevelRecordScenario(dimensionIndex, itemIndex, levelIndex);
+        const coverage = buildCellCoverage(dimensionIndex, itemIndex, levelIndex, scenario);
+        const assessmentScore = buildCellAssessmentScore(scenario, coverage);
+        const status = buildLevelMatchStatus(scenario);
+        const record = scenario === 'missing_record'
+          ? null
+          : pickMockRecordForCell({
+            dimensionName: dimension.name,
+            itemName: item.name,
+            dimensionIndex,
+            itemIndex,
+            levelIndex,
+          });
+        const sourceKey = record?.sourceKey || null;
+        const sourceMeta = sourceKey ? SOURCE_META[sourceKey] : null;
+        const advice = buildLevelGrowthAdvice({
+          dimensionName: dimension.name,
+          item,
+          level,
+          descriptorText: descriptor?.text,
+          scenario,
+          nextLevel,
+        });
         const cellMapping = {
           key: `${dimension.id}_${item.id}_${level.key}`,
           cellKey: getCellEvidenceKey(item.id, level.key),
@@ -391,67 +653,95 @@ export function buildModelGrowthRecordSnapshot(model, industries, roles, sequenc
           itemName: item.name,
           levelKey: level.key,
           levelLabel: level.label,
+          descriptorText: descriptor?.text || '',
           sourceKey,
-          sourceLabel: sourceMeta.label,
-          evidenceId: record.id,
-          evidenceTitle: record.title,
-          evidenceDate: record.date,
-          evidenceTag: record.tag,
+          sourceLabel: sourceMeta?.label || '',
+          evidenceId: record?.id || null,
+          evidenceTitle: record?.title || '',
+          evidenceDate: record?.date || '',
+          evidenceTag: record?.tag || '',
           coverage,
+          assessmentScore,
+          hasRecord: Boolean(record),
+          statusKey: status.key,
           statusLabel: status.label,
+          shortStatusLabel: status.shortLabel,
           statusColor: status.color,
-          note: record.summary,
+          growthAdvice: advice,
+          note: record?.summary || advice.summary,
         };
 
-        sourceCounter[sourceKey] += 1;
-        cellEvidenceMap[cellMapping.cellKey] = cellMapping;
-        sourceStats[sourceKey].scoreSum += coverage;
-        sourceStats[sourceKey].evidenceCount += 1;
-        sourceStats[sourceKey].itemCount += 1;
-        sourceStats[sourceKey].latestRecord = record;
+        cellStatusMap[cellMapping.cellKey] = cellMapping;
 
-        if (!evidenceRelationMap[record.id]) {
-          evidenceRelationMap[record.id] = createRelationBucket();
+        if (record && sourceKey) {
+          sourceCounter[sourceKey] += 1;
+          cellEvidenceMap[cellMapping.cellKey] = cellMapping;
+          sourceStats[sourceKey].scoreSum += coverage || 0;
+          sourceStats[sourceKey].evidenceCount += 1;
+          sourceStats[sourceKey].itemCount += 1;
+          sourceStats[sourceKey].latestRecord = record;
+
+          if (!evidenceRelationMap[record.id]) {
+            evidenceRelationMap[record.id] = createRelationBucket();
+          }
+          pushUnique(evidenceRelationMap[record.id].dimensions, dimension.name);
+          pushUnique(evidenceRelationMap[record.id].items, item.name);
+          pushUnique(evidenceRelationMap[record.id].levels, level.label);
+          evidenceRelationMap[record.id].cellMappings.push(cellMapping);
         }
-        pushUnique(evidenceRelationMap[record.id].dimensions, dimension.name);
-        pushUnique(evidenceRelationMap[record.id].items, item.name);
-        pushUnique(evidenceRelationMap[record.id].levels, level.label);
-        evidenceRelationMap[record.id].cellMappings.push(cellMapping);
 
         return cellMapping;
       });
 
+      const supportedCells = cellMappings.filter((cell) => cell.hasRecord);
       const primarySourceKey = SOURCE_KEYS.reduce((bestKey, key) => (
         sourceCounter[key] > sourceCounter[bestKey] ? key : bestKey
-      ), SOURCE_KEYS[0]);
-      const latestRecord = MOCK_SOURCE_RECORDS[primarySourceKey][(dimensionIndex * 2 + itemIndex) % MOCK_SOURCE_RECORDS[primarySourceKey].length];
+      ), supportedCells[0]?.sourceKey || SOURCE_KEYS[0]);
+      const latestCell = [...supportedCells].sort((left, right) => (
+        String(right.evidenceDate || '').localeCompare(String(left.evidenceDate || ''))
+          || (right.coverage || 0) - (left.coverage || 0)
+      ))[0] || null;
+      const latestRecord = latestCell
+        ? MOCK_SOURCE_RECORDS[latestCell.sourceKey].find((record) => record.id === latestCell.evidenceId)
+        : null;
       const coverage = buildItemCoverage(cellMappings);
-      const confidence = Math.min(95, coverage + 5);
+      const confidence = supportedCells.length
+        ? Math.min(95, coverage + 6)
+        : Math.min(88, coverage + 12);
       const status = buildStatusTag(coverage);
+      const levelSummary = buildItemLevelSummaryFromCells(cellMappings);
       const row = {
         key: `${dimension.id}_${item.id}`,
+        dimensionId: dimension.id,
+        itemId: item.id,
         dimensionName: dimension.name,
         itemName: item.name,
         sourceKey: primarySourceKey,
         sourceLabel: SOURCE_META[primarySourceKey].label,
-        evidenceId: latestRecord.id,
-        latestEvidenceTitle: latestRecord.title,
-        latestEvidenceDate: latestRecord.date,
-        evidenceTag: latestRecord.tag,
+        evidenceId: latestRecord?.id || null,
+        latestEvidenceTitle: latestRecord?.title || '暂无直接成长记录',
+        latestEvidenceDate: latestRecord?.date || '-',
+        evidenceTag: latestRecord?.tag || '待补充',
         coverage,
         confidence,
-        evidenceCount: cellMappings.length,
+        evidenceCount: supportedCells.length,
+        levelStatusSummary: levelSummary.levelBadges,
+        levelFocusLabel: levelSummary.focusLevelLabel,
+        adviceSummary: levelSummary.summary,
+        adviceActions: levelSummary.actions,
         statusLabel: status.label,
         statusColor: status.color,
-        note: latestRecord.summary,
+        note: latestRecord?.summary || levelSummary.summary,
       };
 
-      if (!evidenceRelationMap[latestRecord.id]) {
-        evidenceRelationMap[latestRecord.id] = createRelationBucket();
+      if (latestRecord) {
+        if (!evidenceRelationMap[latestRecord.id]) {
+          evidenceRelationMap[latestRecord.id] = createRelationBucket();
+        }
+        pushUnique(evidenceRelationMap[latestRecord.id].dimensions, dimension.name);
+        pushUnique(evidenceRelationMap[latestRecord.id].items, item.name);
+        evidenceRelationMap[latestRecord.id].mappingRows.push(row);
       }
-      pushUnique(evidenceRelationMap[latestRecord.id].dimensions, dimension.name);
-      pushUnique(evidenceRelationMap[latestRecord.id].items, item.name);
-      evidenceRelationMap[latestRecord.id].mappingRows.push(row);
       mappingRows.push(row);
 
       return {
@@ -526,6 +816,9 @@ export function buildModelGrowthRecordSnapshot(model, industries, roles, sequenc
       strongItemCount: mappingRows.filter((item) => item.coverage >= 86).length,
       focusItemCount: mappingRows.filter((item) => item.coverage < 72).length,
       totalEvidenceCount: Object.values(cellEvidenceMap).length,
+      missingLevelCount: Object.values(cellStatusMap).filter((item) => item.statusKey === 'missing_record').length,
+      lowMatchLevelCount: Object.values(cellStatusMap).filter((item) => item.statusKey === 'low_match').length,
+      strongLevelCount: Object.values(cellStatusMap).filter((item) => item.statusKey === 'strong_match').length,
     },
     dimensions,
     mappingRows,
@@ -533,6 +826,7 @@ export function buildModelGrowthRecordSnapshot(model, industries, roles, sequenc
     recordsBySource,
     sourceStats: normalizedSourceStats,
     cellEvidenceMap,
+    cellStatusMap,
   };
 }
 
@@ -683,9 +977,17 @@ function buildGrowthRecordBundle(snapshot, growthRecord) {
 export function resolveGrowthRecordFromSnapshot(snapshot, growthRecordId, focus = {}) {
   const growthRecord = snapshot?.evidenceById?.[growthRecordId];
   if (!growthRecord) return null;
+  const focusLevelInsight = focus.focusItemId && focus.focusLevelKey
+    ? resolveCellRecord(snapshot, focus.focusItemId, focus.focusLevelKey)
+    : null;
+  const focusItemLevelSummary = focus.focusItemId
+    ? resolveItemLevelSummary(snapshot, focus.focusItemId)
+    : null;
   const mergedGrowthRecord = {
     ...growthRecord,
     ...focus,
+    focusLevelInsight,
+    focusItemLevelSummary,
   };
   return {
     ...mergedGrowthRecord,
@@ -694,7 +996,17 @@ export function resolveGrowthRecordFromSnapshot(snapshot, growthRecordId, focus 
 }
 
 export function resolveCellRecord(snapshot, itemId, levelKey) {
-  return snapshot?.cellEvidenceMap?.[getCellEvidenceKey(itemId, levelKey)] || null;
+  return snapshot?.cellStatusMap?.[getCellEvidenceKey(itemId, levelKey)]
+    || snapshot?.cellEvidenceMap?.[getCellEvidenceKey(itemId, levelKey)]
+    || null;
+}
+
+export function resolveItemLevelSummary(snapshot, itemId) {
+  if (!snapshot?.modelDefinition?.levelScheme?.levels?.length) return null;
+  const cells = snapshot.modelDefinition.levelScheme.levels
+    .map((level) => resolveCellRecord(snapshot, itemId, level.key))
+    .filter(Boolean);
+  return cells.length ? buildItemLevelSummaryFromCells(cells) : null;
 }
 
 export function GrowthRecordDetailDrawer({ growthRecord, open, onClose }) {
@@ -712,6 +1024,8 @@ export function GrowthRecordDetailDrawer({ growthRecord, open, onClose }) {
 
   const currentLevelLabel = growthRecord.focusLevelLabel || growthRecord.relatedLevelLabels?.[0] || '-';
   const currentCoverage = growthRecord.focusCoverage || growthRecord.coverage;
+  const focusLevelInsight = growthRecord.focusLevelInsight;
+  const focusItemLevelSummary = growthRecord.focusItemLevelSummary;
   const bundleItems = growthRecord.bundleItems || [];
   const bundleSourceKeys = growthRecord.bundleSourceKeys || [];
   const hiddenBundleCount = Math.max(0, bundleItems.length - BUNDLE_VISIBLE_LIMIT);
@@ -762,6 +1076,33 @@ export function GrowthRecordDetailDrawer({ growthRecord, open, onClose }) {
           <Progress percent={currentCoverage} size="small" strokeColor={SOURCE_META[growthRecord.sourceKey].color} />
         </div>
         <p className="shared-record-drawer-note">{growthRecord.matchNote}</p>
+        {focusLevelInsight || focusItemLevelSummary ? (
+          <div className="shared-record-drawer-inline-section">
+            <div className="shared-record-drawer-section-head">
+              <span>等级成长建议</span>
+              {focusLevelInsight ? <Tag color={focusLevelInsight.statusColor}>{focusLevelInsight.levelLabel} · {focusLevelInsight.statusLabel}</Tag> : null}
+            </div>
+            {focusItemLevelSummary?.levelBadges?.length ? (
+              <div className="shared-record-drawer-tags">
+                {focusItemLevelSummary.levelBadges.map((item) => (
+                  <Tag key={item.levelKey} color={item.statusColor}>
+                    {item.levelLabel} · {item.shortLabel}
+                  </Tag>
+                ))}
+              </div>
+            ) : null}
+            <p className="shared-record-drawer-note">
+              {focusLevelInsight?.growthAdvice?.summary || focusItemLevelSummary?.summary || '当前等级支撑较完整，可继续冲刺更高等级。'}
+            </p>
+            {(focusLevelInsight?.growthAdvice?.actions || focusItemLevelSummary?.actions || []).length ? (
+              <ul className="shared-record-drawer-list">
+                {(focusLevelInsight?.growthAdvice?.actions || focusItemLevelSummary?.actions || []).map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        ) : null}
         <div className="shared-record-drawer-inline-section">
           <div className="shared-record-drawer-section-head">
             <span>成长记录包内容</span>
