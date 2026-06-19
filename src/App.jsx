@@ -713,6 +713,8 @@ function App() {
           topicTitle={selectedScene.name}
           onBack={handleBackToHome}
           sceneConfig={selectedScene.templateSnapshot}
+          sceneId={selectedScene.id}
+          sceneType={selectedScene.sceneType}
           storageScopeKey={selectedScene.storageScopeKey}
           sceneDescription={selectedScene.description}
           sceneTypeLabel={getSceneTypeLabel(selectedScene.sceneType)}

@@ -1,6 +1,6 @@
 // 资料库本地存储（独立于 versionStore，避免耦合）
 const STORAGE_KEY = 'guoren_resource_lib';
-const DATA_VERSION = 13;
+const DATA_VERSION = 14;
 
 // macOS 访达风格预设标签（7色 + 自定义）
 const PRESET_TAGS = [
@@ -630,6 +630,46 @@ function buildPersonalTeachingDemo() {
   });
 }
 
+function ensureProfileAssociationDemoEntries(items = []) {
+  const nextItems = [...items];
+  const existingKeys = new Set(nextItems.map((item) => item.key));
+
+  const demoEntries = [
+    createTeachingFile({
+      key: 'p_course_03_class_transcript',
+      name: '第03课 机器学习初体验 课堂实录.mp4',
+      parentKey: 'p_course_03',
+      fileType: 'video',
+      tags: ['tag_p_video', 'tag_p_activity'],
+      daysAgo: 14,
+      hour: 14,
+      minute: 20,
+      contentText: '课堂实录记录了“机器学习初体验”课堂中的学生互动、教师提问和板书推进节奏，可用于课堂回看和教学反思。',
+      lastOpenedAt: createDemoTimestamp(2, 20, 10),
+    }),
+    createTeachingFile({
+      key: 'p_course_03_ai_eval',
+      name: '第03课 机器学习初体验 AI课堂评价报告.pdf',
+      parentKey: 'p_course_03',
+      fileType: 'pdf',
+      tags: ['tag_p_assessment'],
+      daysAgo: 13,
+      hour: 16,
+      minute: 5,
+      contentText: 'AI课堂评价报告汇总了课堂提问分布、学生参与热区、反馈节奏和课堂调控建议，可直接用于教学改进。',
+      lastOpenedAt: createDemoTimestamp(1, 9, 35),
+    }),
+  ];
+
+  demoEntries.forEach((entry) => {
+    if (!existingKeys.has(entry.key)) {
+      nextItems.push(entry);
+    }
+  });
+
+  return nextItems;
+}
+
 const DEMO_CONTENT_TEXT_BY_KEY = {
   o_r1: '员工手册正文包含入职制度、行为规范、内容安全要求和资料协作流程。',
   o_r2: '发布会 PPT 内容包含产品路线、React 门户改版、AI 能力矩阵与商业化计划。',
@@ -670,7 +710,7 @@ function hydrateSearchContent(data) {
 const defaultData = {
   _dataVersion: DATA_VERSION,
   // 个人资料库
-  personal: buildPersonalTeachingDemo(),
+  personal: ensureProfileAssociationDemoEntries(buildPersonalTeachingDemo()),
   // 组织资料库（按 orgId 分组）
   organizations: {
     org_default: [
@@ -776,6 +816,7 @@ function migrate(old) {
   next.tagDefinitions = getScopedTagDefinitionState({ ...next, tagDefinitions: old.tagDefinitions });
   next.personal = stripInheritedTagsFromPersonalDemoFolders(next.personal);
   next.personal = applyPersonalTeachingRootTag(next.personal);
+  next.personal = ensureProfileAssociationDemoEntries(next.personal);
   // 选中文件夹迁移
   if (old.selectedFolderKey) {
     next.selectedFolderKey = { ...next.selectedFolderKey, ...old.selectedFolderKey };

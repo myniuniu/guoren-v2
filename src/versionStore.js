@@ -2,6 +2,7 @@ import { formatVersionName, normalizeVersioningConfig } from './scene/store';
 
 const STORAGE_KEY = 'guoren_version_data';
 const DATA_VERSION = 8; // 增加版本号，当默认数据结构变化时递增，自动重置本地存储
+const STORE_CHANGE_EVENT = 'gr:version-store-change';
 
 function cloneData(data) {
   return JSON.parse(JSON.stringify(data));
@@ -9,6 +10,13 @@ function cloneData(data) {
 
 function resolveStorageKey(scopeKey = 'default') {
   return scopeKey === 'default' ? STORAGE_KEY : `${STORAGE_KEY}:${scopeKey}`;
+}
+
+function emitChange(storageKey) {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent(STORE_CHANGE_EVENT, {
+    detail: { storageKey },
+  }));
 }
 
 function withRuntimeMeta(data, storageKey) {
@@ -154,9 +162,14 @@ export function saveToStorage(data) {
   try {
     const storageKey = data._storageKey || resolveStorageKey();
     localStorage.setItem(storageKey, JSON.stringify(data));
+    emitChange(storageKey);
   } catch (e) {
     console.error('Failed to save version data to localStorage:', e);
   }
+}
+
+export function getVersionStoreChangeEventName() {
+  return STORE_CHANGE_EVENT;
 }
 
 // 获取所有版本
@@ -319,6 +332,36 @@ export function updateResource(data, versionId, resourceKey, updates, versioning
                 ? { ...resource, ...updates, lastEdit: nowText() }
                 : resource
             ),
+          }
+        : v
+    ),
+  };
+  saveToStorage(newData);
+  return newData;
+}
+
+export function updateResourceArchiveProfile(data, versionId, resourceKey, archiveProfile) {
+  const newData = {
+    ...data,
+    versions: data.versions.map((v) =>
+      v.id === versionId
+        ? {
+            ...v,
+            resources: v.resources.map((resource) => (
+              resource.key === resourceKey
+                ? {
+                    ...resource,
+                    meta: {
+                      ...(resource.meta || {}),
+                      archiveProfile: {
+                        ...(resource.meta?.archiveProfile || {}),
+                        ...archiveProfile,
+                      },
+                    },
+                    lastEdit: resource.lastEdit || nowText(),
+                  }
+                : resource
+            )),
           }
         : v
     ),

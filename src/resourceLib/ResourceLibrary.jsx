@@ -25,6 +25,7 @@ import {
   addTagToItem, removeTagFromItem, toggleTagQuickAccess,
   getLibraryList, getLibraryId, getOrganizations, getTagGroups, setCurrentScope, setCurrentOrg, markItemOpened,
 } from './resourceLibStore';
+import { findResourceAssociationRule, inferResourceSourceKey } from '../shared/resourceRecordAssociations';
 import { renderFileIcon } from './resourceIcons.jsx';
 import ResourceLibraryOverlays from './ResourceLibraryOverlays.jsx';
 import useResourceLibraryFileImport from './useResourceLibraryFileImport';
@@ -45,6 +46,12 @@ const RESOURCE_LIB_HELP_TIPS = [
   '悬停行内按钮可快速添加资料或打开更多操作。',
 ];
 const FINDER_LIQUID_MENU_OVERLAY_CLASS = 'finder-liquid-glass-menu';
+const RESOURCE_SOURCE_LABELS = {
+  teaching: '教学数据',
+  study: '培训研修数据',
+  research: '教研数据',
+  archive: '档案数据',
+};
 
 const isEditableTarget = (target) => (
   target instanceof HTMLElement
@@ -1833,6 +1840,10 @@ export default function ResourceLibrary() {
     if (!selectedItemKey) return null;
     return list.find((r) => r.key === selectedItemKey) || null;
   }, [selectedItemKey, list]);
+  const previewItemAssociationRule = useMemo(
+    () => (previewItem && !previewItem.isFolder ? findResourceAssociationRule(previewItem) : null),
+    [previewItem],
+  );
   const toolbarMenuTargetItem = previewItem;
   const visibleSelectionItems = useMemo(
     () => (viewMode === 'column' ? columnContextItems : displayChildren),
@@ -1859,6 +1870,10 @@ export default function ResourceLibrary() {
     if (!previewItem?.isFolder) return 0;
     return list.filter((r) => r.parentKey === previewItem.key).length;
   }, [previewItem, list]);
+  const columnSelectedItemAssociationRule = useMemo(
+    () => (columnSelectedItem && !columnSelectedItem.isFolder ? findResourceAssociationRule(columnSelectedItem) : null),
+    [columnSelectedItem],
+  );
   const [bgMenuPos, setBgMenuPos] = useState(null); // {x, y} 右键菜单位置
   const currentBlankAreaParentKey = viewMode === 'column'
     ? (columnPath[columnPath.length - 1] ?? null)
@@ -1892,6 +1907,43 @@ export default function ResourceLibrary() {
       <span>{label}</span>
     </span>
   );
+
+  const renderResourceAssociationBlock = useCallback((item, associationRule) => {
+    if (!item || item.isFolder || !associationRule) return null;
+    const sourceKey = inferResourceSourceKey(item);
+    return (
+      <div className="finder-preview-association-card">
+        <div className="finder-preview-association-head">
+          <strong>档案关联建议</strong>
+          <span>{RESOURCE_SOURCE_LABELS[sourceKey] || sourceKey}</span>
+        </div>
+        <div className="finder-preview-association-type">
+          该资料将以“{associationRule.recordTag}”纳入我的档案映射。
+        </div>
+        {associationRule.dimensionNames?.length ? (
+          <div className="finder-preview-association-row">
+            <span>能力类</span>
+            <div className="finder-preview-association-tags">
+              {associationRule.dimensionNames.map((name) => (
+                <span key={name} className="finder-preview-association-chip">{name}</span>
+              ))}
+            </div>
+          </div>
+        ) : null}
+        {associationRule.itemNames?.length ? (
+          <div className="finder-preview-association-row">
+            <span>能力项</span>
+            <div className="finder-preview-association-tags">
+              {associationRule.itemNames.map((name) => (
+                <span key={name} className="finder-preview-association-chip is-accent">{name}</span>
+              ))}
+            </div>
+          </div>
+        ) : null}
+        <div className="finder-preview-association-note">{associationRule.matchNote}</div>
+      </div>
+    );
+  }, []);
 
   const toggleItemTagSelection = useCallback((itemKey, tagId, checked) => {
     setData((d) => (
@@ -2928,6 +2980,7 @@ export default function ResourceLibrary() {
                           {columnSelectedItem.size && <span>{(columnSelectedItem.size / 1024).toFixed(1)} KB</span>}
                           {columnSelectedItem.lastEdit && <span>{columnSelectedItem.lastEdit}</span>}
                         </div>
+                        {renderResourceAssociationBlock(columnSelectedItem, columnSelectedItemAssociationRule)}
                       </div>
                     </div>
                   ) : (
@@ -3216,6 +3269,15 @@ export default function ResourceLibrary() {
                         ) : (
                           <div className="finder-preview-placeholder"><FileTextOutlined style={{ fontSize: 80, color: '#8e8e93' }} /><div>文件预览</div></div>
                         )}
+                      </div>
+                      <div className="finder-preview-footer">
+                        <div className="finder-preview-name">{previewItem.name}</div>
+                        <div className="finder-preview-meta-row">
+                          <span>{previewItem.fileType?.toUpperCase() || '文件'}</span>
+                          {previewItem.size && <span>{(previewItem.size / 1024).toFixed(1)} KB</span>}
+                          {previewItem.lastEdit && <span>{previewItem.lastEdit}</span>}
+                        </div>
+                        {renderResourceAssociationBlock(previewItem, previewItemAssociationRule)}
                       </div>
                     </div>
                   ) : (

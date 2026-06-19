@@ -6,6 +6,7 @@ import {
   FolderOpenOutlined,
   ReadOutlined,
 } from '@ant-design/icons';
+import { findRecordAssociationRule } from './resourceRecordAssociations';
 
 export const SOURCE_META = {
   teaching: {
@@ -23,11 +24,11 @@ export const SOURCE_META = {
     description: '个人成长档案、荣誉证书、评价材料与阶段成果。',
   },
   study: {
-    label: '学习数据',
-    sourceType: '学习研修记录',
+    label: '培训研修数据',
+    sourceType: '培训研修记录',
     color: '#0f766e',
     icon: <ReadOutlined />,
-    description: '研修课程、线上学习、微证书和专项训练记录。',
+    description: '培训课程、线上研修、微证书和专项训练记录。',
   },
   research: {
     label: '教研数据',
@@ -320,8 +321,11 @@ function enrichEvidenceRecord(record, sourceKey, relationMap = {}) {
     ? Math.round(coverageSource.reduce((sum, item) => sum + item.coverage, 0) / coverageSource.length)
     : 0;
   const status = buildStatusTag(averageCoverage || 68);
+  const associationRule = findRecordAssociationRule(record);
   return {
     ...record,
+    associationRuleId: associationRule?.id || null,
+    bundleKey: associationRule?.bundleKey || null,
     sourceKey,
     sourceLabel: SOURCE_META[sourceKey].label,
     sourceType: SOURCE_META[sourceKey].sourceType,
@@ -599,12 +603,21 @@ function buildGrowthRecordBundle(snapshot, growthRecord) {
     growthRecord.focusDimensionName,
     ...(growthRecord.relatedDimensionNames || []),
   ].filter(Boolean)));
+  const currentBundleKey = growthRecord.bundleKey || null;
+  const semanticMatchedRecords = currentBundleKey
+    ? bundleCandidates.filter((record) => (
+      record.id === growthRecord.id
+        || record.bundleKey === currentBundleKey
+    ))
+    : [];
   const matchedSourceRecords = bundleCandidates
     .map((record) => ({
       ...record,
       bundleMatchRank: record.id === growthRecord.id
-        ? 5
-        : getBundleMatchRank(
+        ? 6
+        : currentBundleKey && record.bundleKey === currentBundleKey
+          ? 5
+          : getBundleMatchRank(
           record,
           growthRecord.focusItemName,
           contextItemNames,
@@ -613,9 +626,15 @@ function buildGrowthRecordBundle(snapshot, growthRecord) {
         ),
     }))
     .filter((record) => record.bundleMatchRank > 0);
-  const bundledRecords = dedupeById(
-    matchedSourceRecords.length ? matchedSourceRecords : [currentRecord || growthRecord],
-  ).sort((left, right) => {
+  const preferredRecords = semanticMatchedRecords.length > 1
+    ? semanticMatchedRecords.map((record) => ({
+      ...record,
+      bundleMatchRank: record.id === growthRecord.id ? 6 : 5,
+    }))
+    : matchedSourceRecords.length
+      ? matchedSourceRecords
+      : [currentRecord || growthRecord];
+  const bundledRecords = dedupeById(preferredRecords).sort((left, right) => {
     if ((right.bundleMatchRank || 0) !== (left.bundleMatchRank || 0)) {
       return (right.bundleMatchRank || 0) - (left.bundleMatchRank || 0);
     }
@@ -638,9 +657,12 @@ function buildGrowthRecordBundle(snapshot, growthRecord) {
   const bundleSourceKeys = Array.from(new Set(bundleItems.map((item) => item.sourceKey).filter(Boolean)));
   const bundleSourceLabels = bundleSourceKeys.map((sourceKey) => SOURCE_META[sourceKey]?.label || sourceKey);
   const focusItemName = growthRecord.focusItemName || contextItemNames[0];
+  const focusSemanticLabel = growthRecord.tag || growthRecord.activityLabel || null;
   let bundleSummary = `当前成长记录包包含 ${bundleItems.length} 条资料。`;
 
-  if (bundleItems.length > 1 && bundleSourceLabels.length > 1 && focusItemName) {
+  if (bundleItems.length > 1 && semanticMatchedRecords.length > 1 && focusSemanticLabel) {
+    bundleSummary = `由 ${bundleItems.length} 条同类成长记录组成，围绕“${focusSemanticLabel}”形成补充支撑。`;
+  } else if (bundleItems.length > 1 && bundleSourceLabels.length > 1 && focusItemName) {
     bundleSummary = `由 ${bundleItems.length} 条跨来源资料组成，覆盖 ${bundleSourceLabels.join(' / ')}，围绕“${focusItemName}”提供支撑。`;
   } else if (bundleItems.length > 1 && bundleSourceLabels.length > 1) {
     bundleSummary = `由 ${bundleItems.length} 条跨来源资料组成，覆盖 ${bundleSourceLabels.join(' / ')}。`;
@@ -703,6 +725,8 @@ export function GrowthRecordDetailDrawer({ growthRecord, open, onClose }) {
         <div className="shared-record-drawer-kv">
           <div><span>来源类型</span><strong>{growthRecord.sourceType}</strong></div>
           <div><span>数据来源</span><strong>{growthRecord.sourceLabel}</strong></div>
+          {growthRecord.sceneName ? <div><span>来源空间</span><strong>{growthRecord.sceneName}</strong></div> : null}
+          {growthRecord.activityLabel ? <div><span>业务类型</span><strong>{growthRecord.activityLabel}</strong></div> : null}
           <div><span>归属人</span><strong>{growthRecord.ownerName}</strong></div>
           <div><span>记录时间</span><strong>{growthRecord.date}</strong></div>
           <div><span>当前关联能力项</span><strong>{growthRecord.focusItemName || growthRecord.relatedItemNames?.[0] || '-'}</strong></div>

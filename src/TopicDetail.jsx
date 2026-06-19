@@ -56,10 +56,12 @@ import {
   switchVersion,
   updateAssessment,
   updateAssessmentChat,
+  updateResourceArchiveProfile,
   updateResource,
   updateVersionTagLibrary,
 } from './versionStore';
 import { buildSceneInitialVersionData, normalizeVersioningConfig } from './scene/api';
+import { buildSceneResourceArchiveMeta, isSceneResourceArchived } from './shared/sceneGrowthRecords';
 import { getTopicAdminConfig } from './studyClub/adminTopicMapping';
 import './TopicDetail.css';
 
@@ -179,7 +181,16 @@ function loadTopicVersionData(topicConfig, sceneConfig, storageScopeKey) {
   return loadFromStorage();
 }
 
-function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, sceneDescription, sceneTypeLabel }) {
+function TopicDetail({
+  topicTitle,
+  onBack,
+  sceneConfig = null,
+  storageScopeKey,
+  sceneDescription,
+  sceneTypeLabel,
+  sceneId = null,
+  sceneType = null,
+}) {
   const topicAdminConfig = sceneConfig ? null : getTopicAdminConfig(topicTitle);
   const topicStorageScopeKey = storageScopeKey || topicAdminConfig?.storageScopeKey || 'default';
   const [activeTab, setActiveTab] = useState('knowledge');
@@ -328,6 +339,9 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
   const tagPickerItem = tagPickerTarget
     ? resources.find((resource) => resource.key === tagPickerTarget) || null
     : null;
+  const activeSceneType = sceneType || sceneConfig?.sceneType || null;
+  const canArchiveSceneResource = !!sceneConfig && !!activeSceneType;
+  const previewItemArchived = previewItem ? isSceneResourceArchived(previewItem) : false;
 
   const clearTagPickerScrollTimer = () => {
     if (!tagPickerScrollTimerRef.current) return;
@@ -1027,6 +1041,32 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
     message.success('资料添加成功');
   };
 
+  const handleArchiveResourceToProfile = (resource) => {
+    if (!resource || resource.isFolder || !canArchiveSceneResource) return;
+    if (isSceneResourceArchived(resource)) {
+      message.info('该业务活动已归档到我的档案');
+      return;
+    }
+    const archiveProfile = buildSceneResourceArchiveMeta({
+      scene: {
+        id: sceneId,
+        name: topicTitle,
+        sceneType: activeSceneType,
+        storageScopeKey: topicStorageScopeKey,
+      },
+      sceneId,
+      sceneName: topicTitle,
+      sceneType: activeSceneType,
+      sceneTypeLabel,
+      storageScopeKey: topicStorageScopeKey,
+      resource,
+      resources,
+    });
+    const nextData = updateResourceArchiveProfile(versionData, currentVersion.id, resource.key, archiveProfile);
+    setVersionData(nextData);
+    message.success(`已将「${resource.name}」归档到我的档案`);
+  };
+
   const removeResource = (resourceKey) => {
     const newData = deleteResource(versionData, currentVersion.id, resourceKey, versioningConfig);
     setVersionData(newData);
@@ -1450,6 +1490,10 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
       startInlineRename(item, surface);
       return;
     }
+    if (key === 'archiveProfile' && !item.isFolder) {
+      handleArchiveResourceToProfile(item);
+      return;
+    }
     if (key === 'delete') {
       requestDeleteResource(item);
       return;
@@ -1475,6 +1519,17 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
       ...(tagConfig
         ? [
             { key: 'tags-manage', icon: <TagsOutlined />, label: '编辑标签', disabled: !canEditCurrentVersion },
+            { type: 'divider' },
+          ]
+        : []),
+      ...(!item.isFolder && canArchiveSceneResource
+        ? [
+            {
+              key: 'archiveProfile',
+              icon: <CheckCircleOutlined />,
+              label: isSceneResourceArchived(item) ? '已归档到我的档案' : '归档到我的档案',
+              disabled: isSceneResourceArchived(item),
+            },
             { type: 'divider' },
           ]
         : []),
@@ -2202,10 +2257,11 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
                           {previewParentFolder ? previewParentFolder.name : currentVersion?.name || resourcePanelTitle}
                         </div>
                         <div className="topic-preview-main-title">{previewItem.name}</div>
-                        <div className="topic-preview-main-meta">
+                      <div className="topic-preview-main-meta">
                         <span>{getResourceTypeLabel(previewItem, getTopicResourceFileType(previewItem))}</span>
                         <span>{previewItem.owner || '--'}</span>
                         <span>{previewItem.lastEdit || '--'}</span>
+                        {previewItemArchived ? <Tag color="success">已归档到我的档案</Tag> : null}
                       </div>
                       {tagConfig ? (
                         <div className="topic-preview-main-tags">
@@ -2214,11 +2270,24 @@ function TopicDetail({ topicTitle, onBack, sceneConfig = null, storageScopeKey, 
                       ) : null}
                     </div>
                   </div>
-                  {previewParentFolder ? (
-                    <Button size="small" onClick={() => setPreviewItem(null)}>
-                      返回文件夹
-                    </Button>
-                  ) : null}
+                  <div className="topic-preview-main-head-actions">
+                    {canArchiveSceneResource ? (
+                      <Button
+                        size="small"
+                        type={previewItemArchived ? 'default' : 'primary'}
+                        ghost={!previewItemArchived}
+                        disabled={previewItemArchived}
+                        onClick={() => handleArchiveResourceToProfile(previewItem)}
+                      >
+                        {previewItemArchived ? '已归档到我的档案' : '归档到我的档案'}
+                      </Button>
+                    ) : null}
+                    {previewParentFolder ? (
+                      <Button size="small" onClick={() => setPreviewItem(null)}>
+                        返回文件夹
+                      </Button>
+                    ) : null}
+                  </div>
                 </div>
                 <div className="topic-preview-main-content">
                   <div className="topic-preview-body topic-preview-body-main">

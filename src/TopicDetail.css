@@ -1488,6 +1488,15 @@
   font-size: 12px;
 }
 
+.topic-preview-main-head-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .topic-preview-main-tags {
   margin-top: 6px;
 }

@@ -24,7 +24,14 @@ import {
   resolveGrowthRecordFromSnapshot,
   SOURCE_META,
 } from '../shared/profileEvidence';
+import {
+  findResourceAssociationRule,
+  inferResourceSourceKey,
+  matchNamePattern,
+} from '../shared/resourceRecordAssociations';
+import { listArchivedSceneGrowthRecords } from '../shared/sceneGrowthRecords';
 import { getAllItemsAcrossLibraries, loadResourceLib } from '../resourceLib/resourceLibStore';
+import { sceneApi } from '../scene/api';
 import '../system/SystemModule.css';
 import '../shared/profileEvidence.css';
 import './MyProfileModule.css';
@@ -59,11 +66,6 @@ const RESOURCE_PARSE_STATUS_LABELS = {
   pending: '待解析',
   failed: '解析失败',
 };
-
-const TEACHING_TAG_IDS = new Set(['tag_p_courseware', 'tag_p_teaching_plan', 'tag_p_teaching_aid', 'tag_p_activity', 'tag_p_assignment']);
-const STUDY_TAG_IDS = new Set(['tag_p_assessment', 'tag_p_video', 'tag_p_experiment']);
-const RESEARCH_TAG_IDS = new Set(['tag_p_case']);
-const ARCHIVE_LIBRARY_IDS = new Set(['org_default']);
 
 function buildCoverageStatus(score) {
   if (score >= 86) {
@@ -111,17 +113,6 @@ function buildTrendSummary(historyRecords = []) {
   return `近 ${historyRecords.length} 条资料，匹配度从 ${earliestRecord.coverage}% ${direction}到 ${latestRecord.coverage}%。`;
 }
 
-function inferResourceSourceKey(item) {
-  if (item.libraryScope === 'organization') {
-    return ARCHIVE_LIBRARY_IDS.has(item.libraryId) ? 'archive' : 'research';
-  }
-  const tagSet = new Set(item.tags || []);
-  if ([...tagSet].some((tagId) => TEACHING_TAG_IDS.has(tagId))) return 'teaching';
-  if ([...tagSet].some((tagId) => STUDY_TAG_IDS.has(tagId))) return 'study';
-  if ([...tagSet].some((tagId) => RESEARCH_TAG_IDS.has(tagId))) return 'research';
-  return 'teaching';
-}
-
 function buildResourcePath(item, resourceLibData) {
   const libraryItems = item.libraryId === 'personal'
     ? (resourceLibData.personal || [])
@@ -137,6 +128,70 @@ function buildResourcePath(item, resourceLibData) {
 
   pathParts.push(item.name);
   return pathParts.join(' / ');
+}
+
+function resolveResourceCapabilityContext(item, baseSnapshot, fallbackRows) {
+  const associationRule = findResourceAssociationRule(item);
+  if (!associationRule) {
+    const fallbackSourceKey = inferResourceSourceKey(item);
+    const relatedDimensionNames = Array.from(new Set(fallbackRows.map((row) => row.dimensionName)));
+    const relatedItemNames = Array.from(new Set(fallbackRows.map((row) => row.itemName)));
+    const cellMappings = Object.values(baseSnapshot.cellEvidenceMap || {}).filter((mapping) => (
+      relatedItemNames.includes(mapping.itemName)
+    ));
+    const relatedLevelLabels = Array.from(new Set(cellMappings.map((mapping) => mapping.levelLabel)));
+    const coverage = cellMappings.length
+      ? Math.round(cellMappings.reduce((sum, mapping) => sum + mapping.coverage, 0) / cellMappings.length)
+      : fallbackRows.length
+        ? Math.round(fallbackRows.reduce((sum, row) => sum + row.coverage, 0) / fallbackRows.length)
+        : 0;
+
+    return {
+      sourceKey: fallbackSourceKey,
+      relatedRows: fallbackRows,
+      relatedDimensionNames,
+      relatedItemNames,
+      cellMappings,
+      relatedLevelLabels,
+      coverage,
+      associationRule: null,
+    };
+  }
+
+  const mappingRows = (baseSnapshot.mappingRows || []).filter((row) => (
+    (associationRule.dimensionNames || []).some((name) => matchNamePattern(row.dimensionName, name))
+      || (associationRule.itemNames || []).some((name) => matchNamePattern(row.itemName, name))
+  ));
+  const relatedRows = mappingRows.length ? mappingRows : fallbackRows;
+  const relatedDimensionNames = Array.from(new Set([
+    ...relatedRows.map((row) => row.dimensionName),
+    ...(associationRule.dimensionNames || []),
+  ].filter(Boolean)));
+  const relatedItemNames = Array.from(new Set([
+    ...relatedRows.map((row) => row.itemName),
+    ...(associationRule.itemNames || []),
+  ].filter(Boolean)));
+  const cellMappings = Object.values(baseSnapshot.cellEvidenceMap || {}).filter((mapping) => (
+    relatedItemNames.some((name) => matchNamePattern(mapping.itemName, name))
+      || relatedDimensionNames.some((name) => matchNamePattern(mapping.dimensionName, name))
+  ));
+  const relatedLevelLabels = Array.from(new Set(cellMappings.map((mapping) => mapping.levelLabel)));
+  const coverage = cellMappings.length
+    ? Math.round(cellMappings.reduce((sum, mapping) => sum + mapping.coverage, 0) / cellMappings.length)
+    : relatedRows.length
+      ? Math.round(relatedRows.reduce((sum, row) => sum + row.coverage, 0) / relatedRows.length)
+      : 0;
+
+  return {
+    sourceKey: associationRule.sourceKey,
+    relatedRows,
+    relatedDimensionNames,
+    relatedItemNames,
+    cellMappings,
+    relatedLevelLabels,
+    coverage,
+    associationRule,
+  };
 }
 
 function buildResourceLibrarySourceSnapshot(baseSnapshot, resourceLibData) {
@@ -166,38 +221,39 @@ function buildResourceLibrarySourceSnapshot(baseSnapshot, resourceLibData) {
   }
 
   allItems.forEach((item) => {
-    const sourceKey = inferResourceSourceKey(item);
-    const relatedRows = resolveRelatedRows();
-    const relatedDimensionNames = Array.from(new Set(relatedRows.map((row) => row.dimensionName)));
-    const relatedItemNames = Array.from(new Set(relatedRows.map((row) => row.itemName)));
-    const cellMappings = Object.values(baseSnapshot.cellEvidenceMap || {}).filter((mapping) => (
-      relatedItemNames.includes(mapping.itemName)
-    ));
-    const relatedLevelLabels = Array.from(new Set(cellMappings.map((mapping) => mapping.levelLabel)));
-    const coverage = cellMappings.length
-      ? Math.round(cellMappings.reduce((sum, mapping) => sum + mapping.coverage, 0) / cellMappings.length)
-      : relatedRows.length
-        ? Math.round(relatedRows.reduce((sum, row) => sum + row.coverage, 0) / relatedRows.length)
-      : 0;
+    const fallbackRows = resolveRelatedRows();
+    const {
+      sourceKey,
+      relatedRows,
+      relatedDimensionNames,
+      relatedItemNames,
+      cellMappings,
+      relatedLevelLabels,
+      coverage,
+      associationRule,
+    } = resolveResourceCapabilityContext(item, baseSnapshot, fallbackRows);
     const status = buildCoverageStatus(coverage || 68);
     const fileTypeLabel = RESOURCE_FILE_TYPE_LABELS[item.fileType] || '资料文件';
     const parseStatusLabel = RESOURCE_PARSE_STATUS_LABELS[item.parseStatus] || '已入库';
     const title = item.name;
     const resourcePath = buildResourcePath(item, resourceLibData);
     const summary = item.contentText || `${item.libraryName}中的${fileTypeLabel}，当前已纳入${SOURCE_META[sourceKey].label}来源。`;
+    const recordTag = associationRule?.recordTag || fileTypeLabel;
+    const keyFindings = [
+      `资料来源：${item.libraryName}`,
+      `文件类型：${fileTypeLabel}`,
+      `解析状态：${parseStatusLabel}`,
+      ...(associationRule?.recordTag ? [`识别类型：${associationRule.recordTag}`] : []),
+    ];
 
     recordsBySource[sourceKey].push({
       id: `resource_${item.libraryId}_${item.key}`,
       title,
       ownerName: item.owner || '资料库',
       date: item.lastOpenedAt || item.lastEdit || '-',
-      tag: fileTypeLabel,
+      tag: recordTag,
       summary,
-      keyFindings: [
-        `资料来源：${item.libraryName}`,
-        `文件类型：${fileTypeLabel}`,
-        `解析状态：${parseStatusLabel}`,
-      ],
+      keyFindings,
       evidenceExcerpt: item.contentText || `${title} 当前未提取更多正文内容，可前往资料库查看原始资料。`,
       attachments: [
         { name: title, type: fileTypeLabel, size: parseStatusLabel },
@@ -205,8 +261,10 @@ function buildResourceLibrarySourceSnapshot(baseSnapshot, resourceLibData) {
       links: [
         { title: '资料库定位', hint: `${item.libraryName} / ${title}` },
       ],
-      matchNote: `该条目来自资料库模块，当前归入${SOURCE_META[sourceKey].label}，用于展示该来源下的资料沉淀情况。`,
-      nextAction: `可继续在资料库补充同类${fileTypeLabel}，完善${SOURCE_META[sourceKey].label}资料积累。`,
+      matchNote: associationRule?.matchNote || `该条目来自资料库模块，当前归入${SOURCE_META[sourceKey].label}，用于展示该来源下的资料沉淀情况。`,
+      nextAction: associationRule?.nextAction || `可继续在资料库补充同类${fileTypeLabel}，完善${SOURCE_META[sourceKey].label}资料积累。`,
+      associationRuleId: associationRule?.id || null,
+      bundleKey: associationRule?.bundleKey || null,
       sourceKey,
       sourceLabel: SOURCE_META[sourceKey].label,
       sourceType: SOURCE_META[sourceKey].sourceType,
@@ -305,12 +363,113 @@ function buildResourceLibrarySourceSnapshot(baseSnapshot, resourceLibData) {
 
   return {
     ...baseSnapshot,
+    summary: {
+      ...baseSnapshot.summary,
+      totalEvidenceCount: Object.keys({
+        ...enrichedBaseEvidenceById,
+        ...resourceEvidenceById,
+      }).length,
+    },
     sourceStats,
     recordsBySource: normalizedRecordsBySource,
     evidenceById: {
       ...enrichedBaseEvidenceById,
       ...resourceEvidenceById,
     },
+  };
+}
+
+function sortRecordsByDate(records = []) {
+  return [...records].sort((left, right) => String(right.date || '').localeCompare(String(left.date || '')));
+}
+
+function findLatestSceneRecord(sceneRecords, row) {
+  return sortRecordsByDate(sceneRecords).find((record) => (
+    record.relatedItemNames?.includes(row.itemName)
+      || record.relatedDimensionNames?.includes(row.dimensionName)
+  )) || null;
+}
+
+function mergeSceneArchivedRecordSnapshot(baseSnapshot, sceneRecords) {
+  if (!baseSnapshot || !sceneRecords.length) return baseSnapshot;
+
+  const nextRecordsBySource = Object.fromEntries(
+    Object.entries(baseSnapshot.recordsBySource || {}).map(([sourceKey, records]) => [sourceKey, [...records]]),
+  );
+  const nextEvidenceById = { ...(baseSnapshot.evidenceById || {}) };
+  const sceneRecordsBySource = {};
+
+  sceneRecords.forEach((record) => {
+    const sourceMeta = SOURCE_META[record.sourceKey] || SOURCE_META.archive;
+    const normalizedRecord = {
+      ...record,
+      sourceKey: record.sourceKey in SOURCE_META ? record.sourceKey : 'archive',
+      sourceLabel: sourceMeta.label,
+      sourceType: sourceMeta.sourceType,
+      attachments: Array.isArray(record.attachments) ? record.attachments : [],
+      links: Array.isArray(record.links) ? record.links : [],
+      historyRecords: Array.isArray(record.historyRecords) ? record.historyRecords : [],
+      trendSummary: record.trendSummary || '暂无更多历史记录',
+    };
+    const bucketKey = normalizedRecord.sourceKey;
+    if (!nextRecordsBySource[bucketKey]) {
+      nextRecordsBySource[bucketKey] = [];
+    }
+    nextRecordsBySource[bucketKey].push(normalizedRecord);
+    nextEvidenceById[normalizedRecord.id] = normalizedRecord;
+    if (!sceneRecordsBySource[bucketKey]) {
+      sceneRecordsBySource[bucketKey] = [];
+    }
+    sceneRecordsBySource[bucketKey].push(normalizedRecord);
+  });
+
+  const recordsBySource = Object.fromEntries(
+    Object.entries(nextRecordsBySource).map(([sourceKey, records]) => [sourceKey, sortRecordsByDate(records)]),
+  );
+  const normalizedSceneRecords = Object.values(sceneRecordsBySource).flat();
+
+  const mappingRows = (baseSnapshot.mappingRows || []).map((row) => {
+    const latestSceneRecord = findLatestSceneRecord(normalizedSceneRecords, row);
+    if (!latestSceneRecord) return row;
+    return {
+      ...row,
+      sourceKey: latestSceneRecord.sourceKey,
+      sourceLabel: latestSceneRecord.sourceLabel,
+      evidenceId: latestSceneRecord.id,
+      latestEvidenceTitle: latestSceneRecord.title,
+      latestEvidenceDate: latestSceneRecord.date,
+      evidenceTag: latestSceneRecord.tag,
+      note: latestSceneRecord.summary,
+      coverage: Math.max(row.coverage, latestSceneRecord.coverage || 0),
+      confidence: Math.min(97, Math.max(row.confidence || 0, (latestSceneRecord.coverage || 0) + 4)),
+      statusLabel: latestSceneRecord.statusLabel,
+      statusColor: latestSceneRecord.statusColor,
+    };
+  });
+
+  const sourceStats = (baseSnapshot.sourceStats || []).map((item) => {
+    const records = recordsBySource[item.key] || [];
+    return {
+      ...item,
+      averageScore: records.length
+        ? Math.round(records.reduce((sum, record) => sum + (record.coverage || 0), 0) / records.length)
+        : 0,
+      evidenceCount: records.length,
+      recordCount: records.length,
+      latestRecord: records[0] || item.latestRecord,
+    };
+  });
+
+  return {
+    ...baseSnapshot,
+    summary: {
+      ...baseSnapshot.summary,
+      totalEvidenceCount: Object.keys(nextEvidenceById).length,
+    },
+    sourceStats,
+    mappingRows,
+    recordsBySource,
+    evidenceById: nextEvidenceById,
   };
 }
 
@@ -337,7 +496,10 @@ export default function MyProfileModule() {
   async function loadData(withLoading = true) {
     if (withLoading) setLoading(true);
     try {
-      await capabilityModelApi.seed();
+      await Promise.all([
+        capabilityModelApi.seed(),
+        sceneApi.seed(),
+      ]);
       const [industries, sequences, roles, models] = await Promise.all([
         capabilityModelApi.listIndustries(),
         capabilityModelApi.listSequences(),
@@ -348,11 +510,14 @@ export default function MyProfileModule() {
       const baseSnapshot = buildModelGrowthRecordSnapshot(currentModel, industries, roles, sequences);
       const resourceLibData = loadResourceLib();
       const resourceAwareSnapshot = buildResourceLibrarySourceSnapshot(baseSnapshot, resourceLibData);
-      const nextSnapshot = resourceAwareSnapshot ? {
-        ...resourceAwareSnapshot,
+      const scenes = await sceneApi.listScenes();
+      const archivedSceneRecords = listArchivedSceneGrowthRecords(scenes, resourceAwareSnapshot?.modelDefinition);
+      const sceneAwareSnapshot = mergeSceneArchivedRecordSnapshot(resourceAwareSnapshot, archivedSceneRecords);
+      const nextSnapshot = sceneAwareSnapshot ? {
+        ...sceneAwareSnapshot,
         profile: {
           ...PROFILE_BASE,
-          ...resourceAwareSnapshot.context,
+          ...sceneAwareSnapshot.context,
         },
       } : null;
       setSnapshot(nextSnapshot);
@@ -747,7 +912,7 @@ export default function MyProfileModule() {
                   </div>
                   <p>{record.summary}</p>
                   <div className="profile-archive-record-foot">
-                    <span>资料库路径：{record.resourcePath || record.matchNote}</span>
+                    <span>来源路径：{record.resourcePath || record.matchNote}</span>
                     <Button type="link" size="small" onClick={() => openGrowthRecordDetail(record.id)}>查看详情</Button>
                   </div>
                 </div>
@@ -764,7 +929,7 @@ export default function MyProfileModule() {
       <div className="sys-module-header">
         <div>
           <span className="sys-module-header-title">我的档案</span>
-          <span className="sys-module-header-subtitle">查看当前序列模型与教学、档案、学习、教研数据的模拟匹配情况</span>
+          <span className="sys-module-header-subtitle">查看当前序列模型与教学、档案、培训研修、教研数据的成长记录映射情况</span>
         </div>
         <Button icon={<ReloadOutlined />} onClick={() => loadData(false)}>刷新画像</Button>
       </div>
@@ -774,7 +939,7 @@ export default function MyProfileModule() {
           <div className="profile-archive-hero-main">
             <div className="profile-archive-kicker">{snapshot.profile.industryName} · {snapshot.profile.sequenceName}</div>
             <h2>{snapshot.currentModel.name}</h2>
-            <p>{snapshot.currentModel.description || '当前序列模型已与个人四类数据源建立成长记录映射。'}</p>
+            <p>{snapshot.currentModel.description || '当前序列模型已与个人多来源成长记录建立映射。'}</p>
             <div className="profile-archive-hero-tags">
               <Tag color="blue">{snapshot.profile.roleName}</Tag>
               <Tag color="geekblue">{snapshot.profile.roleLevelName}</Tag>
