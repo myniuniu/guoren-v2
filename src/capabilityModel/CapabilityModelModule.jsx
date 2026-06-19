@@ -45,6 +45,10 @@ import {
   createEmptyCapabilityDimension,
   createEmptyCapabilityItem,
 } from './api';
+import {
+  getRoleLevel,
+  getSequenceForRole,
+} from '../shared/profileEvidence';
 import '../system/SystemModule.css';
 import './CapabilityModelModule.css';
 
@@ -150,15 +154,6 @@ function syncDimensionsToLevelScheme(dimensions, nextLevelScheme) {
       })),
     })),
   }));
-}
-
-function getSequenceForRole(role, sequences) {
-  return sequences.find((item) => item.id === role?.sequenceId);
-}
-
-function getRoleLevel(role, roleLevelId, sequences) {
-  const sequence = getSequenceForRole(role, sequences);
-  return sequence?.levels?.find((item) => item.id === roleLevelId) || null;
 }
 
 function escapeMarkdownText(value) {
@@ -619,8 +614,10 @@ function CapabilityModelPreview({ model, industries, roles, sequences }) {
                             </div>
                           ) : null}
                         </td>
-                        {(item.levelDescriptors || []).map((descriptor) => (
-                          <td key={`${item.id}_${descriptor.levelKey}`}>{descriptor.text || '-'}</td>
+                        {(model.levelScheme?.levels || []).map((level) => (
+                          <td key={`${item.id}_${level.key}`}>
+                            {item.levelDescriptors?.find((descriptor) => descriptor.levelKey === level.key)?.text || '-'}
+                          </td>
                         ))}
                       </tr>
                     ))}

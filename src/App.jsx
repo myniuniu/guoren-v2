@@ -59,6 +59,7 @@ import DevDocsPage from './appCenter/DevDocsPage';
 import DevBackendPage from './appCenter/DevBackendPage';
 import DmsModule from './dms/DmsModule';
 import IntegrationModule from './integration/IntegrationModule';
+import MyProfileModule from './myProfile/MyProfileModule';
 import MessagesModule from './messages/MessagesModule';
 import AgentQuotaModule from './agentQuota/AgentQuotaModule';
 import ModelStatisticsModule from './modelStatistics/ModelStatisticsModule';
@@ -156,6 +157,7 @@ const iconBarItems = [
   { key: 'tag-management', icon: <TagsOutlined />, label: '标签管理' },
   { key: 'app-center', icon: <AppstoreOutlined />, label: '应用中心' },
   { key: 'scene-template', icon: <DesktopOutlined />, label: '场景模板' },
+  { key: 'my-profile', icon: <IdcardOutlined />, label: '我的档案' },
   { key: 'capability-model', icon: <AppstoreOutlined />, label: '能力模型' },
   { key: 'solution-management', icon: <AppstoreOutlined />, label: '解决方案' },
   { key: 'dms', icon: <FileTextOutlined />, label: '文档管理' },
@@ -414,6 +416,8 @@ function App() {
       setCurrentPage('app-center');
     } else if (key === 'scene-template') {
       setCurrentPage('scene-template');
+    } else if (key === 'my-profile') {
+      setCurrentPage('my-profile');
     } else if (key === 'capability-model') {
       setCurrentPage('capability-model');
     } else if (key === 'solution-management') {
@@ -446,6 +450,7 @@ function App() {
       currentPage === 'tag-management' ||
       currentPage === 'app-center' ||
       currentPage === 'scene-template' ||
+      currentPage === 'my-profile' ||
       currentPage === 'capability-model' ||
       currentPage === 'solution-management' ||
       currentPage === 'dms' ||
@@ -543,6 +548,8 @@ function App() {
         <AppCenterModule />
       ) : currentPage === 'scene-template' ? (
         <SceneTemplateModule />
+      ) : currentPage === 'my-profile' ? (
+        <MyProfileModule />
       ) : currentPage === 'capability-model' ? (
         <CapabilityModelModule />
       ) : currentPage === 'solution-management' ? (
