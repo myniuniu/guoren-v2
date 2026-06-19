@@ -10,28 +10,28 @@ import {
 export const SOURCE_META = {
   teaching: {
     label: '教学数据',
-    sourceType: '教学过程证据',
+    sourceType: '教学过程记录',
     color: '#1677ff',
     icon: <BookOutlined />,
     description: '课堂设计、课堂回看、作业反馈与学生表现数据。',
   },
   archive: {
     label: '档案数据',
-    sourceType: '成长档案证据',
+    sourceType: '成长档案记录',
     color: '#7c3aed',
     icon: <FolderOpenOutlined />,
     description: '个人成长档案、荣誉证书、评价材料与阶段成果。',
   },
   study: {
     label: '学习数据',
-    sourceType: '学习研修证据',
+    sourceType: '学习研修记录',
     color: '#0f766e',
     icon: <ReadOutlined />,
     description: '研修课程、线上学习、微证书和专项训练记录。',
   },
   research: {
     label: '教研数据',
-    sourceType: '教研协同证据',
+    sourceType: '教研协同记录',
     color: '#ea580c',
     icon: <AuditOutlined />,
     description: '集体备课、主题教研、听评课与课题共创输出。',
@@ -78,7 +78,7 @@ const MOCK_SOURCE_RECORDS = {
       links: [
         { title: '课堂录像片段', hint: '云课堂 / 语文公开课片段 03' },
       ],
-      matchNote: '对应“课堂实施 > 互动引导”“课堂实施 > 课堂调控”，可直接作为课堂行为证据。',
+      matchNote: '对应“课堂实施 > 互动引导”“课堂实施 > 课堂调控”，可直接作为课堂行为记录。',
       nextAction: '下次示范课增加二次追问和学生复述环节，压缩单向讲授时长。',
     },
     {
@@ -109,7 +109,7 @@ const MOCK_SOURCE_RECORDS = {
       tag: '成长档案',
       summary: '沉淀公开课、阶段反思、家校反馈与荣誉材料。',
       keyFindings: ['能够连续记录课堂改进行动。', '家校反馈与公开课材料已形成阶段闭环。'],
-      evidenceExcerpt: '档案中包含 3 次公开课复盘、2 次家校沟通摘要、1 份阶段成长陈述和 4 项荣誉佐证材料。',
+      evidenceExcerpt: '档案中包含 3 次公开课复盘、2 次家校沟通摘要、1 份阶段成长陈述和 4 项荣誉材料。',
       attachments: [
         { name: '2026上半年成长档案.pdf', type: '档案册', size: '1.8 MB' },
         { name: '阶段反思汇总.docx', type: '反思文档', size: '86 KB' },
@@ -136,7 +136,7 @@ const MOCK_SOURCE_RECORDS = {
       links: [
         { title: '区级优质课申报台账', hint: '教务平台 / 赛事申报 / 2026' },
       ],
-      matchNote: '重点映射“教学设计”“课堂实施”，同时能作为成果性佐证进入成长档案。',
+      matchNote: '重点映射“教学设计”“课堂实施”，同时也可作为成果记录纳入成长档案。',
       nextAction: '基于专家意见补充高阶表达任务，并形成修订后的说课版本。',
     },
     {
@@ -145,7 +145,7 @@ const MOCK_SOURCE_RECORDS = {
       ownerName: '林知夏',
       date: '2026-05-19',
       tag: '案例归档',
-      summary: '聚焦学生个别化支持和家校协同过程证据。',
+      summary: '聚焦学生个别化支持和家校协同过程记录。',
       keyFindings: ['对学生个体差异识别较及时。', '家校沟通记录完整，可补充结果追踪数据。'],
       evidenceExcerpt: '案例记录了连续 3 周的支持过程，包括课堂观察、家长沟通纪要和阶段性行为反馈。',
       attachments: [
@@ -154,7 +154,7 @@ const MOCK_SOURCE_RECORDS = {
       links: [
         { title: '家校沟通记录', hint: '班级管理 / 家校互通 / 个案 07' },
       ],
-      matchNote: '与“课堂调控”“形成性反馈”存在辅助映射，也可作为教师综合育人能力佐证。',
+      matchNote: '与“课堂调控”“形成性反馈”存在辅助映射，也可作为教师综合育人能力记录。',
       nextAction: '补录学生阶段表现对比，形成更清晰的支持成效总结。',
     },
   ],
@@ -268,7 +268,7 @@ const MOCK_SOURCE_RECORDS = {
       links: [
         { title: '教研共创过程看板', hint: '教研平台 / 主题共创 / 形成性评价工具包' },
       ],
-      matchNote: '对应“学习评价”相关能力项，也能作为“专业发展 > 教研协同”的协作证据。',
+      matchNote: '对应“学习评价”相关能力项，也能作为“专业发展 > 教研协同”的协作记录。',
       nextAction: '将共创工具包用于年级组试用，并形成一次使用反馈归档。',
     },
   ],
@@ -348,7 +348,7 @@ function buildItemCoverage(cellMappings) {
     : 0;
 }
 
-export function buildModelEvidenceSnapshot(model, industries, roles, sequences) {
+export function buildModelGrowthRecordSnapshot(model, industries, roles, sequences) {
   if (!model) return null;
 
   const role = roles.find((item) => item.id === model.roleId);
@@ -502,9 +502,9 @@ export function buildModelEvidenceSnapshot(model, industries, roles, sequences) 
 
   return {
     context: {
-      industryName: industry?.name || '教育行业',
-      roleName: role?.name || '教师',
-      sequenceName: sequence?.name || '教师发展序列',
+      industryName: industry?.name || '基础教育',
+      roleName: role?.name || '基础教育教师',
+      sequenceName: sequence?.name || '基础教育教师发展序列',
       roleLevelName: roleLevel?.name || '青年教师',
     },
     modelDefinition: model ? JSON.parse(JSON.stringify(model)) : null,
@@ -533,7 +533,10 @@ export function buildModelEvidenceSnapshot(model, industries, roles, sequences) 
 }
 
 export function pickCurrentTeacherModel(models, roles, sequences) {
-  const teacherRole = roles.find((item) => item.name === '教师') || roles[0];
+  const teacherRole = roles.find((item) => item.name === '基础教育教师')
+    || roles.find((item) => item.name?.includes('教师'))
+    || roles.find((item) => item.code === 'BASIC_TEACHER' || item.code === 'TEACHER')
+    || roles[0];
   if (!teacherRole) return null;
   const sequence = getSequenceForRole(teacherRole, sequences);
   const preferredLevel = sequence?.levels?.find((item) => item.name.includes('青年')) || sequence?.levels?.[1] || sequence?.levels?.[0];
@@ -554,7 +557,7 @@ function dedupeById(records = []) {
   });
 }
 
-function getAllEvidenceBundleCandidates(snapshot) {
+function getAllGrowthRecordBundleCandidates(snapshot) {
   const recordBuckets = Object.values(snapshot?.recordsBySource || {});
   return dedupeById(recordBuckets.flat());
 }
@@ -576,42 +579,42 @@ function getBundleMatchRank(record, focusItemName, relatedItemNames, focusDimens
   return 0;
 }
 
-function buildEvidenceBundle(snapshot, evidence) {
-  if (!snapshot || !evidence) {
+function buildGrowthRecordBundle(snapshot, growthRecord) {
+  if (!snapshot || !growthRecord) {
     return {
       bundleItems: [],
-      bundleSummary: '当前证据包包含 0 条资料。',
+      bundleSummary: '当前成长记录包包含 0 条资料。',
       bundleSourceKeys: [],
       bundleSourceLabels: [],
     };
   }
 
-  const bundleCandidates = getAllEvidenceBundleCandidates(snapshot);
-  const currentRecord = bundleCandidates.find((record) => record.id === evidence.id) || null;
+  const bundleCandidates = getAllGrowthRecordBundleCandidates(snapshot);
+  const currentRecord = bundleCandidates.find((record) => record.id === growthRecord.id) || null;
   const contextItemNames = Array.from(new Set([
-    evidence.focusItemName,
-    ...(evidence.relatedItemNames || []),
+    growthRecord.focusItemName,
+    ...(growthRecord.relatedItemNames || []),
   ].filter(Boolean)));
   const contextDimensionNames = Array.from(new Set([
-    evidence.focusDimensionName,
-    ...(evidence.relatedDimensionNames || []),
+    growthRecord.focusDimensionName,
+    ...(growthRecord.relatedDimensionNames || []),
   ].filter(Boolean)));
   const matchedSourceRecords = bundleCandidates
     .map((record) => ({
       ...record,
-      bundleMatchRank: record.id === evidence.id
+      bundleMatchRank: record.id === growthRecord.id
         ? 5
         : getBundleMatchRank(
           record,
-          evidence.focusItemName,
+          growthRecord.focusItemName,
           contextItemNames,
-          evidence.focusDimensionName,
+          growthRecord.focusDimensionName,
           contextDimensionNames,
         ),
     }))
     .filter((record) => record.bundleMatchRank > 0);
   const bundledRecords = dedupeById(
-    matchedSourceRecords.length ? matchedSourceRecords : [currentRecord || evidence],
+    matchedSourceRecords.length ? matchedSourceRecords : [currentRecord || growthRecord],
   ).sort((left, right) => {
     if ((right.bundleMatchRank || 0) !== (left.bundleMatchRank || 0)) {
       return (right.bundleMatchRank || 0) - (left.bundleMatchRank || 0);
@@ -630,21 +633,21 @@ function buildEvidenceBundle(snapshot, evidence) {
     coverage: record.coverage,
     statusLabel: record.statusLabel,
     statusColor: record.statusColor,
-    isCurrent: record.id === evidence.id,
+    isCurrent: record.id === growthRecord.id,
   }));
   const bundleSourceKeys = Array.from(new Set(bundleItems.map((item) => item.sourceKey).filter(Boolean)));
   const bundleSourceLabels = bundleSourceKeys.map((sourceKey) => SOURCE_META[sourceKey]?.label || sourceKey);
-  const focusItemName = evidence.focusItemName || contextItemNames[0];
-  let bundleSummary = `当前证据包包含 ${bundleItems.length} 条资料。`;
+  const focusItemName = growthRecord.focusItemName || contextItemNames[0];
+  let bundleSummary = `当前成长记录包包含 ${bundleItems.length} 条资料。`;
 
   if (bundleItems.length > 1 && bundleSourceLabels.length > 1 && focusItemName) {
-    bundleSummary = `由 ${bundleItems.length} 条跨来源资料组成，覆盖 ${bundleSourceLabels.join(' / ')}，围绕“${focusItemName}”提供佐证。`;
+    bundleSummary = `由 ${bundleItems.length} 条跨来源资料组成，覆盖 ${bundleSourceLabels.join(' / ')}，围绕“${focusItemName}”提供支撑。`;
   } else if (bundleItems.length > 1 && bundleSourceLabels.length > 1) {
     bundleSummary = `由 ${bundleItems.length} 条跨来源资料组成，覆盖 ${bundleSourceLabels.join(' / ')}。`;
   } else if (bundleItems.length > 1 && focusItemName) {
-    bundleSummary = `由 ${bundleItems.length} 条资料组成，围绕“${focusItemName}”提供佐证。`;
+    bundleSummary = `由 ${bundleItems.length} 条资料组成，围绕“${focusItemName}”提供支撑。`;
   } else if (bundleItems.length > 1) {
-    bundleSummary = `由 ${bundleItems.length} 条资料组成，用于补充当前证据判断。`;
+    bundleSummary = `由 ${bundleItems.length} 条资料组成，用于补充当前成长判断。`;
   }
 
   return {
@@ -655,94 +658,94 @@ function buildEvidenceBundle(snapshot, evidence) {
   };
 }
 
-export function resolveEvidenceFromSnapshot(snapshot, evidenceId, focus = {}) {
-  const evidence = snapshot?.evidenceById?.[evidenceId];
-  if (!evidence) return null;
-  const mergedEvidence = {
-    ...evidence,
+export function resolveGrowthRecordFromSnapshot(snapshot, growthRecordId, focus = {}) {
+  const growthRecord = snapshot?.evidenceById?.[growthRecordId];
+  if (!growthRecord) return null;
+  const mergedGrowthRecord = {
+    ...growthRecord,
     ...focus,
   };
   return {
-    ...mergedEvidence,
-    ...buildEvidenceBundle(snapshot, mergedEvidence),
+    ...mergedGrowthRecord,
+    ...buildGrowthRecordBundle(snapshot, mergedGrowthRecord),
   };
 }
 
-export function resolveCellEvidence(snapshot, itemId, levelKey) {
+export function resolveCellRecord(snapshot, itemId, levelKey) {
   return snapshot?.cellEvidenceMap?.[getCellEvidenceKey(itemId, levelKey)] || null;
 }
 
-export function EvidenceDetailDrawer({ evidence, open, onClose }) {
+export function GrowthRecordDetailDrawer({ growthRecord, open, onClose }) {
   const [activeTab, setActiveTab] = useState('detail');
   const [bundleExpanded, setBundleExpanded] = useState(false);
 
   useEffect(() => {
     setActiveTab('detail');
     setBundleExpanded(false);
-  }, [evidence?.id, open]);
+  }, [growthRecord?.id, open]);
 
-  if (!evidence) {
+  if (!growthRecord) {
     return null;
   }
 
-  const currentLevelLabel = evidence.focusLevelLabel || evidence.relatedLevelLabels?.[0] || '-';
-  const currentCoverage = evidence.focusCoverage || evidence.coverage;
-  const bundleItems = evidence.bundleItems || [];
-  const bundleSourceKeys = evidence.bundleSourceKeys || [];
+  const currentLevelLabel = growthRecord.focusLevelLabel || growthRecord.relatedLevelLabels?.[0] || '-';
+  const currentCoverage = growthRecord.focusCoverage || growthRecord.coverage;
+  const bundleItems = growthRecord.bundleItems || [];
+  const bundleSourceKeys = growthRecord.bundleSourceKeys || [];
   const hiddenBundleCount = Math.max(0, bundleItems.length - BUNDLE_VISIBLE_LIMIT);
   const visibleBundleItems = bundleExpanded ? bundleItems : bundleItems.slice(0, BUNDLE_VISIBLE_LIMIT);
   const detailContent = (
     <>
-      <Card bordered={false} className="shared-evidence-drawer-card">
-        <div className="shared-evidence-drawer-section-head">
+      <Card bordered={false} className="shared-record-drawer-card">
+        <div className="shared-record-drawer-section-head">
           <span>基础信息</span>
         </div>
-        <div className="shared-evidence-drawer-kv">
-          <div><span>来源类型</span><strong>{evidence.sourceType}</strong></div>
-          <div><span>数据来源</span><strong>{evidence.sourceLabel}</strong></div>
-          <div><span>归属人</span><strong>{evidence.ownerName}</strong></div>
-          <div><span>记录时间</span><strong>{evidence.date}</strong></div>
-          <div><span>当前关联能力项</span><strong>{evidence.focusItemName || evidence.relatedItemNames?.[0] || '-'}</strong></div>
+        <div className="shared-record-drawer-kv">
+          <div><span>来源类型</span><strong>{growthRecord.sourceType}</strong></div>
+          <div><span>数据来源</span><strong>{growthRecord.sourceLabel}</strong></div>
+          <div><span>归属人</span><strong>{growthRecord.ownerName}</strong></div>
+          <div><span>记录时间</span><strong>{growthRecord.date}</strong></div>
+          <div><span>当前关联能力项</span><strong>{growthRecord.focusItemName || growthRecord.relatedItemNames?.[0] || '-'}</strong></div>
           <div><span>当前关联等级</span><strong>{currentLevelLabel}</strong></div>
         </div>
       </Card>
 
-      <Card bordered={false} className="shared-evidence-drawer-card">
-        <div className="shared-evidence-drawer-section-head">
+      <Card bordered={false} className="shared-record-drawer-card">
+        <div className="shared-record-drawer-section-head">
           <span>能力映射</span>
-          <Tag color="blue">{evidence.linkedItemCount} 个能力项</Tag>
+          <Tag color="blue">{growthRecord.linkedItemCount} 个能力项</Tag>
         </div>
-        <div className="shared-evidence-drawer-tags">
-          {evidence.relatedDimensionNames.map((item) => (
+        <div className="shared-record-drawer-tags">
+          {growthRecord.relatedDimensionNames.map((item) => (
             <Tag key={item} color="geekblue">{item}</Tag>
           ))}
         </div>
-        <div className="shared-evidence-drawer-tags">
-          {evidence.relatedItemNames.map((item) => (
+        <div className="shared-record-drawer-tags">
+          {growthRecord.relatedItemNames.map((item) => (
             <Tag key={item}>{item}</Tag>
           ))}
         </div>
-        <div className="shared-evidence-drawer-tags">
-          {evidence.relatedLevelLabels.map((item) => (
+        <div className="shared-record-drawer-tags">
+          {growthRecord.relatedLevelLabels.map((item) => (
             <Tag key={item} color={item === currentLevelLabel ? 'cyan' : 'default'}>{item}</Tag>
           ))}
         </div>
-        <div className="shared-evidence-drawer-match">
+        <div className="shared-record-drawer-match">
           <div>
             <span>当前匹配度</span>
             <strong>{currentCoverage}%</strong>
           </div>
-          <Progress percent={currentCoverage} size="small" strokeColor={SOURCE_META[evidence.sourceKey].color} />
+          <Progress percent={currentCoverage} size="small" strokeColor={SOURCE_META[growthRecord.sourceKey].color} />
         </div>
-        <p className="shared-evidence-drawer-note">{evidence.matchNote}</p>
-        <div className="shared-evidence-drawer-inline-section">
-          <div className="shared-evidence-drawer-section-head">
-            <span>证据包内容</span>
+        <p className="shared-record-drawer-note">{growthRecord.matchNote}</p>
+        <div className="shared-record-drawer-inline-section">
+          <div className="shared-record-drawer-section-head">
+            <span>成长记录包内容</span>
             <Tag>{bundleItems.length} 条资料</Tag>
           </div>
-          <p className="shared-evidence-drawer-note">{evidence.bundleSummary || '当前证据包包含 0 条资料。'}</p>
+          <p className="shared-record-drawer-note">{growthRecord.bundleSummary || '当前成长记录包包含 0 条资料。'}</p>
           {bundleSourceKeys.length ? (
-            <div className="shared-evidence-drawer-tags shared-evidence-drawer-bundle-sources">
+            <div className="shared-record-drawer-tags shared-record-drawer-bundle-sources">
               {bundleSourceKeys.map((sourceKey) => (
                 <Tag key={sourceKey} color={SOURCE_META[sourceKey]?.color}>
                   {SOURCE_META[sourceKey]?.label || sourceKey}
@@ -751,29 +754,29 @@ export function EvidenceDetailDrawer({ evidence, open, onClose }) {
             </div>
           ) : null}
           {bundleItems.length ? (
-            <div className="shared-evidence-drawer-bundle-list">
+            <div className="shared-record-drawer-bundle-list">
               {visibleBundleItems.map((item) => (
                 <div
                   key={item.id}
-                  className={`shared-evidence-drawer-bundle-item${item.isCurrent ? ' is-current' : ''}`}
+                  className={`shared-record-drawer-bundle-item${item.isCurrent ? ' is-current' : ''}`}
                 >
-                  <div className="shared-evidence-drawer-bundle-top">
+                  <div className="shared-record-drawer-bundle-top">
                     <strong>{item.title}</strong>
                     <span>{item.date}</span>
                   </div>
-                  <div className="shared-evidence-drawer-bundle-meta">
+                  <div className="shared-record-drawer-bundle-meta">
                     <Tag color={SOURCE_META[item.sourceKey]?.color}>{item.sourceLabel}</Tag>
                     <Tag>{item.tag}</Tag>
                     <Tag color={item.statusColor}>{item.coverage}% · {item.statusLabel}</Tag>
                     {item.isCurrent ? <Tag color="blue">当前资料</Tag> : null}
                   </div>
-                  <div className="shared-evidence-drawer-bundle-path">{item.resourcePath || '-'}</div>
+                  <div className="shared-record-drawer-bundle-path">{item.resourcePath || '-'}</div>
                 </div>
               ))}
               {hiddenBundleCount > 0 ? (
                 <button
                   type="button"
-                  className="shared-evidence-drawer-bundle-more"
+                  className="shared-record-drawer-bundle-more"
                   onClick={() => setBundleExpanded((value) => !value)}
                 >
                   {bundleExpanded ? '收起' : `更多（+${hiddenBundleCount}）`}
@@ -781,53 +784,53 @@ export function EvidenceDetailDrawer({ evidence, open, onClose }) {
               ) : null}
             </div>
           ) : (
-            <div className="shared-evidence-drawer-history-empty">暂无证据包资料</div>
+            <div className="shared-record-drawer-history-empty">暂无成长记录包资料</div>
           )}
         </div>
       </Card>
 
-      <Card bordered={false} className="shared-evidence-drawer-card">
-        <div className="shared-evidence-drawer-section-head">
+      <Card bordered={false} className="shared-record-drawer-card">
+        <div className="shared-record-drawer-section-head">
           <span>关键结论</span>
         </div>
-        <ul className="shared-evidence-drawer-list">
-          {evidence.keyFindings.map((item) => (
+        <ul className="shared-record-drawer-list">
+          {growthRecord.keyFindings.map((item) => (
             <li key={item}>{item}</li>
           ))}
         </ul>
       </Card>
 
-      <Card bordered={false} className="shared-evidence-drawer-card">
-        <div className="shared-evidence-drawer-section-head">
-          <span>证据片段</span>
+      <Card bordered={false} className="shared-record-drawer-card">
+        <div className="shared-record-drawer-section-head">
+          <span>记录片段</span>
         </div>
-        <div className="shared-evidence-drawer-excerpt">{evidence.evidenceExcerpt}</div>
-        <div className="shared-evidence-drawer-section-head">
+        <div className="shared-record-drawer-excerpt">{growthRecord.evidenceExcerpt}</div>
+        <div className="shared-record-drawer-section-head">
           <span>后续行动</span>
         </div>
-        <p className="shared-evidence-drawer-note">{evidence.nextAction}</p>
+        <p className="shared-record-drawer-note">{growthRecord.nextAction}</p>
       </Card>
 
-      <Card bordered={false} className="shared-evidence-drawer-card">
-        <div className="shared-evidence-drawer-section-head">
+      <Card bordered={false} className="shared-record-drawer-card">
+        <div className="shared-record-drawer-section-head">
           <span>附件与链接</span>
         </div>
-        <div className="shared-evidence-drawer-asset-block">
-          <span className="shared-evidence-drawer-subtitle">附件</span>
-          <div className="shared-evidence-drawer-asset-list">
-            {evidence.attachments.map((item) => (
-              <div key={item.name} className="shared-evidence-drawer-asset-item">
+        <div className="shared-record-drawer-asset-block">
+          <span className="shared-record-drawer-subtitle">附件</span>
+          <div className="shared-record-drawer-asset-list">
+            {growthRecord.attachments.map((item) => (
+              <div key={item.name} className="shared-record-drawer-asset-item">
                 <strong>{item.name}</strong>
                 <span>{item.type} · {item.size}</span>
               </div>
             ))}
           </div>
         </div>
-        <div className="shared-evidence-drawer-asset-block">
-          <span className="shared-evidence-drawer-subtitle">相关链接</span>
-          <div className="shared-evidence-drawer-asset-list">
-            {evidence.links.map((item) => (
-              <div key={item.title} className="shared-evidence-drawer-asset-item">
+        <div className="shared-record-drawer-asset-block">
+          <span className="shared-record-drawer-subtitle">相关链接</span>
+          <div className="shared-record-drawer-asset-list">
+            {growthRecord.links.map((item) => (
+              <div key={item.title} className="shared-record-drawer-asset-item">
                 <strong>{item.title}</strong>
                 <span>{item.hint}</span>
               </div>
@@ -838,34 +841,34 @@ export function EvidenceDetailDrawer({ evidence, open, onClose }) {
     </>
   );
   const historyContent = (
-    <Card bordered={false} className="shared-evidence-drawer-card">
-      <div className="shared-evidence-drawer-section-head">
-        <span>历史证据与匹配趋势</span>
-        <Tag>{evidence.historyRecords?.length || 0} 条记录</Tag>
+    <Card bordered={false} className="shared-record-drawer-card">
+      <div className="shared-record-drawer-section-head">
+        <span>历史记录与匹配趋势</span>
+        <Tag>{growthRecord.historyRecords?.length || 0} 条记录</Tag>
       </div>
-      <p className="shared-evidence-drawer-note">{evidence.trendSummary || '暂无更多历史记录'}</p>
-      {evidence.historyRecords?.length > 1 ? (
-        <div className="shared-evidence-drawer-history-list">
-          {evidence.historyRecords.map((item) => (
+      <p className="shared-record-drawer-note">{growthRecord.trendSummary || '暂无更多历史记录'}</p>
+      {growthRecord.historyRecords?.length > 1 ? (
+        <div className="shared-record-drawer-history-list">
+          {growthRecord.historyRecords.map((item) => (
             <div
               key={item.id}
-              className={`shared-evidence-drawer-history-item${item.isCurrent ? ' is-current' : ''}`}
+              className={`shared-record-drawer-history-item${item.isCurrent ? ' is-current' : ''}`}
             >
-              <div className="shared-evidence-drawer-history-top">
+              <div className="shared-record-drawer-history-top">
                 <strong>{item.title}</strong>
                 <span>{item.date}</span>
               </div>
-              <div className="shared-evidence-drawer-history-meta">
+              <div className="shared-record-drawer-history-meta">
                 <Tag>{item.tag}</Tag>
                 <Tag color={item.statusColor}>{item.coverage}% · {item.statusLabel}</Tag>
-                {item.isCurrent ? <Tag color="blue">当前证据</Tag> : null}
+                {item.isCurrent ? <Tag color="blue">当前记录</Tag> : null}
               </div>
-              <div className="shared-evidence-drawer-history-path">{item.resourcePath || '-'}</div>
+              <div className="shared-record-drawer-history-path">{item.resourcePath || '-'}</div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="shared-evidence-drawer-history-empty">暂无更多历史记录</div>
+        <div className="shared-record-drawer-history-empty">暂无更多历史记录</div>
       )}
     </Card>
   );
@@ -876,28 +879,28 @@ export function EvidenceDetailDrawer({ evidence, open, onClose }) {
       onClose={onClose}
       width={560}
       placement="right"
-      title="证据详情"
-      className="shared-evidence-drawer"
+      title="摘要"
+      className="shared-record-drawer"
     >
-      <div className="shared-evidence-drawer-body">
-        <div className="shared-evidence-drawer-hero">
-          <div className="shared-evidence-drawer-kicker">{evidence.sourceType}</div>
-          <h3>{evidence.title}</h3>
-          <div className="shared-evidence-drawer-meta">
-            <Tag color={SOURCE_META[evidence.sourceKey].color}>{evidence.sourceLabel}</Tag>
-            <Tag>{evidence.tag}</Tag>
-            <Tag>{evidence.date}</Tag>
-            <Tag color={evidence.statusColor}>{evidence.statusLabel}</Tag>
+      <div className="shared-record-drawer-body">
+        <div className="shared-record-drawer-hero">
+          <div className="shared-record-drawer-kicker">摘要</div>
+          <h3>主成长记录：{growthRecord.title}</h3>
+          <div className="shared-record-drawer-meta">
+            <Tag color={SOURCE_META[growthRecord.sourceKey].color}>{growthRecord.sourceLabel}</Tag>
+            <Tag>{growthRecord.tag}</Tag>
+            <Tag>{growthRecord.date}</Tag>
+            <Tag color={growthRecord.statusColor}>{growthRecord.statusLabel}</Tag>
           </div>
-          <p>{evidence.summary}</p>
+          <p>{growthRecord.summary}</p>
         </div>
         <Tabs
           activeKey={activeTab}
           onChange={setActiveTab}
-          className="shared-evidence-drawer-tabs"
+          className="shared-record-drawer-tabs"
           items={[
-            { key: 'detail', label: '证据详情', children: detailContent },
-            { key: 'history', label: '历史证据', children: historyContent },
+            { key: 'detail', label: '摘要', children: detailContent },
+            { key: 'history', label: '历史记录', children: historyContent },
           ]}
         />
       </div>

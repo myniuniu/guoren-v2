@@ -619,7 +619,7 @@
   color: #7b8598;
 }
 
-.cap-model-matrix-evidence {
+.cap-model-matrix-record {
   margin-top: 6px;
   color: #5f6b7c;
 }
@@ -636,7 +636,7 @@
   line-height: 1.7;
 }
 
-.cap-model-matrix-evidence-card {
+.cap-model-matrix-record-card {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid #d8e4f3;
@@ -651,13 +651,13 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
-.cap-model-matrix-evidence-card:hover {
+.cap-model-matrix-record-card:hover {
   border-color: #1677ff;
   box-shadow: 0 10px 22px rgba(22, 119, 255, 0.12);
   transform: translateY(-1px);
 }
 
-.cap-model-matrix-evidence-head {
+.cap-model-matrix-record-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -666,22 +666,22 @@
   color: #7b8598;
 }
 
-.cap-model-matrix-evidence-head .ant-tag {
+.cap-model-matrix-record-head .ant-tag {
   margin-inline-end: 0;
 }
 
-.cap-model-matrix-evidence-card strong {
+.cap-model-matrix-record-card strong {
   color: #172033;
   font-size: 12px;
   line-height: 1.5;
 }
 
-.cap-model-matrix-evidence-card span:last-child {
+.cap-model-matrix-record-card span:last-child {
   font-size: 11px;
   color: #7b8598;
 }
 
-.cap-model-matrix-evidence-empty {
+.cap-model-matrix-record-empty {
   padding: 10px 12px;
   border: 1px dashed #d8e4f3;
   border-radius: 12px;

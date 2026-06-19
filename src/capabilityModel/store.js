@@ -2,7 +2,8 @@ const INDUSTRY_STORAGE_KEY = 'gr.capability-model.industries.v3';
 const SEQUENCE_STORAGE_KEY = 'gr.capability-model.sequences.v3';
 const ROLE_STORAGE_KEY = 'gr.capability-model.roles.v3';
 const MODEL_STORAGE_KEY = 'gr.capability-model.models.v3';
-const SEED_KEY = 'gr.capability-model.seeded.v3';
+const SEED_KEY = 'gr.capability-model.seeded.v4';
+const LEGACY_SEED_KEY = 'gr.capability-model.seeded.v3';
 const STORE_CHANGE_EVENT = 'gr:capability-model-change';
 
 export const INDUSTRY_STATUS_OPTIONS = [
@@ -315,13 +316,13 @@ function ensureModelValid(model) {
   }
 }
 
-function makeTeacherModel(levelScheme, roleLevelId, name, modelCode, description, tags = []) {
+function makeTeacherModel(levelScheme, roleLevelId, name, modelCode, description, tags = [], overrides = {}) {
   return createCapabilityModelDraft({
-    id: createId('cap_model_teacher'),
+    id: createId(overrides.idPrefix || 'cap_model_teacher'),
     modelCode,
     name,
-    industryId: 'industry_edu',
-    roleId: 'role_teacher',
+    industryId: overrides.industryId || 'industry_edu',
+    roleId: overrides.roleId || 'role_teacher',
     roleLevelId,
     status: 'PUBLISHED',
     tags,
@@ -454,6 +455,156 @@ function makeTeacherModel(levelScheme, roleLevelId, name, modelCode, description
       },
     ],
   });
+}
+
+function createEducationIndustries() {
+  return [
+    normalizeIndustry({
+      id: 'industry_edu',
+      code: 'BASIC_EDU',
+      name: '基础教育',
+      description: '覆盖中小学教师、班主任、教研员等典型岗位。',
+      status: 'ACTIVE',
+      sortNo: 1,
+    }, 0),
+    normalizeIndustry({
+      id: 'industry_vocational_edu',
+      code: 'VOCATIONAL_EDU',
+      name: '职业教育',
+      description: '覆盖职业院校教师、双师型讲师、专业带头人等岗位。',
+      status: 'ACTIVE',
+      sortNo: 2,
+    }, 1),
+    normalizeIndustry({
+      id: 'industry_higher_edu',
+      code: 'HIGHER_EDU',
+      name: '高等教育',
+      description: '覆盖高校教师、课程负责人、学科带头人等岗位。',
+      status: 'ACTIVE',
+      sortNo: 3,
+    }, 2),
+  ];
+}
+
+function createEducationSequences() {
+  return [
+    normalizeSequence({
+      id: 'sequence_teacher_growth',
+      industryId: 'industry_edu',
+      code: 'BASIC_TEACHER_GROWTH',
+      name: '基础教育教师发展序列',
+      description: '覆盖基础教育教师从入职到学科引领阶段的发展等级。',
+      status: 'ACTIVE',
+      sortNo: 1,
+      levels: [
+        { id: 'sequence_teacher_growth_l1', code: 'NEW', name: '新教师', description: '入职 1-3 年，以课堂基本功和教学执行为重点。', sortNo: 1 },
+        { id: 'sequence_teacher_growth_l2', code: 'YOUNG', name: '青年教师', description: '能够独立完成稳定授课，并承担基础教研任务。', sortNo: 2 },
+        { id: 'sequence_teacher_growth_l3', code: 'BACKBONE', name: '骨干教师', description: '在学科教学、教研共创和示范引领上承担核心角色。', sortNo: 3 },
+        { id: 'sequence_teacher_growth_l4', code: 'LEAD', name: '学科带头人', description: '主导学科建设、校本教研和跨团队经验推广。', sortNo: 4 },
+      ],
+    }, 0),
+    normalizeSequence({
+      id: 'sequence_teaching_research',
+      industryId: 'industry_edu',
+      code: 'BASIC_TEACHING_RESEARCH',
+      name: '基础教育教研发展序列',
+      description: '面向基础教育教研统筹、课程研究与教师指导岗位的成长路径。',
+      status: 'ACTIVE',
+      sortNo: 2,
+      levels: [
+        { id: 'sequence_teaching_research_l1', code: 'SPECIALIST', name: '教研专员', description: '承担学科资源整理与基础教研组织工作。', sortNo: 1 },
+        { id: 'sequence_teaching_research_l2', code: 'SENIOR', name: '高级教研员', description: '负责专题研究、教师指导和课程质量改进。', sortNo: 2 },
+      ],
+    }, 1),
+    normalizeSequence({
+      id: 'sequence_vocational_teacher_growth',
+      industryId: 'industry_vocational_edu',
+      code: 'VOCATIONAL_TEACHER_GROWTH',
+      name: '职教教师发展序列',
+      description: '覆盖职业教育教师从课程授课到专业建设引领的发展等级。',
+      status: 'ACTIVE',
+      sortNo: 1,
+      levels: [
+        { id: 'sequence_vocational_teacher_growth_l1', code: 'LECTURER', name: '初任讲师', description: '承担基础课程授课与实训协助，重点提升课堂组织和任务转化能力。', sortNo: 1 },
+        { id: 'sequence_vocational_teacher_growth_l2', code: 'DUAL', name: '双师型骨干讲师', description: '能够完成项目化教学设计，并将企业案例融入教学与评价。', sortNo: 2 },
+        { id: 'sequence_vocational_teacher_growth_l3', code: 'LEAD', name: '专业带头人', description: '主导专业建设、校企协同和双师团队培养。', sortNo: 3 },
+      ],
+    }, 2),
+    normalizeSequence({
+      id: 'sequence_higher_teacher_growth',
+      industryId: 'industry_higher_edu',
+      code: 'HIGHER_TEACHER_GROWTH',
+      name: '高校教师发展序列',
+      description: '覆盖高校教师从课程承担到课程体系与团队引领的发展等级。',
+      status: 'ACTIVE',
+      sortNo: 1,
+      levels: [
+        { id: 'sequence_higher_teacher_growth_l1', code: 'YOUNG', name: '青年教师', description: '承担课程教学与基础班级指导，重点夯实课堂组织和学业反馈能力。', sortNo: 1 },
+        { id: 'sequence_higher_teacher_growth_l2', code: 'BACKBONE', name: '骨干教师', description: '能够持续迭代课程、开展教学研究并支撑学生发展。', sortNo: 2 },
+        { id: 'sequence_higher_teacher_growth_l3', code: 'ACADEMIC', name: '学科负责人', description: '统筹课程体系建设、团队带教与学术育人协同。', sortNo: 3 },
+      ],
+    }, 3),
+  ];
+}
+
+function createEducationRoles() {
+  return [
+    normalizeRole({
+      id: 'role_teacher',
+      industryId: 'industry_edu',
+      sequenceId: 'sequence_teacher_growth',
+      code: 'BASIC_TEACHER',
+      name: '基础教育教师',
+      description: '适用于中小学及基础教育阶段授课岗位。',
+      status: 'ACTIVE',
+      sortNo: 1,
+    }, 0),
+    normalizeRole({
+      id: 'role_teaching_research',
+      industryId: 'industry_edu',
+      sequenceId: 'sequence_teaching_research',
+      code: 'BASIC_TEACHING_RESEARCH',
+      name: '基础教育教研员',
+      description: '适用于基础教育教研统筹与课程研究岗位。',
+      status: 'ACTIVE',
+      sortNo: 2,
+    }, 1),
+    normalizeRole({
+      id: 'role_vocational_teacher',
+      industryId: 'industry_vocational_edu',
+      sequenceId: 'sequence_vocational_teacher_growth',
+      code: 'VOCATIONAL_TEACHER',
+      name: '职教教师',
+      description: '适用于职业院校理论课、实训课及项目化教学岗位。',
+      status: 'ACTIVE',
+      sortNo: 1,
+    }, 2),
+    normalizeRole({
+      id: 'role_higher_teacher',
+      industryId: 'industry_higher_edu',
+      sequenceId: 'sequence_higher_teacher_growth',
+      code: 'HIGHER_TEACHER',
+      name: '高校教师',
+      description: '适用于高校课程教学、课程建设和学生发展支持岗位。',
+      status: 'ACTIVE',
+      sortNo: 1,
+    }, 3),
+  ];
+}
+
+function createEducationModels(levelScheme) {
+  return [
+    normalizeModel(makeTeacherModel(levelScheme, 'sequence_teacher_growth_l1', '基础教育新教师能力模型', 'BASIC_EDU_TEACHER_NEW', '适用于基础教育新教师阶段，强调教学设计基本功、课堂执行和形成性反馈。', ['基础教育', '教师', '新教师'])),
+    normalizeModel(makeTeacherModel(levelScheme, 'sequence_teacher_growth_l2', '基础教育青年教师能力模型', 'BASIC_EDU_TEACHER_YOUNG', '适用于基础教育青年教师阶段，强调课堂优化、学情分析和教研协同。', ['基础教育', '教师', '青年教师'])),
+    normalizeModel(makeTeacherModel(levelScheme, 'sequence_teacher_growth_l3', '基础教育骨干教师能力模型', 'BASIC_EDU_TEACHER_BACKBONE', '适用于基础教育骨干教师阶段，强调示范引领、数据驱动改进和团队共建。', ['基础教育', '教师', '骨干教师'])),
+    normalizeModel(makeTeacherModel(levelScheme, 'sequence_teacher_growth_l4', '基础教育学科带头人能力模型', 'BASIC_EDU_TEACHER_LEAD', '适用于基础教育学科带头人阶段，强调学科建设、跨校教研和体系化引领。', ['基础教育', '教师', '学科带头人'])),
+    normalizeModel(makeTeacherModel(levelScheme, 'sequence_vocational_teacher_growth_l1', '职业教育初任讲师能力模型', 'VOCATIONAL_EDU_TEACHER_LECTURER', '适用于职业教育初任讲师阶段，强调理实一体教学、实训组织和岗位任务转化。', ['职业教育', '职教教师', '初任讲师'], { industryId: 'industry_vocational_edu', roleId: 'role_vocational_teacher', idPrefix: 'cap_model_vocational_teacher' })),
+    normalizeModel(makeTeacherModel(levelScheme, 'sequence_vocational_teacher_growth_l2', '职业教育双师型骨干讲师能力模型', 'VOCATIONAL_EDU_TEACHER_DUAL', '适用于职业教育双师型骨干讲师阶段，强调项目化教学设计、企业案例融入和过程评价。', ['职业教育', '职教教师', '双师型'], { industryId: 'industry_vocational_edu', roleId: 'role_vocational_teacher', idPrefix: 'cap_model_vocational_teacher' })),
+    normalizeModel(makeTeacherModel(levelScheme, 'sequence_vocational_teacher_growth_l3', '职业教育专业带头人能力模型', 'VOCATIONAL_EDU_TEACHER_LEAD', '适用于职业教育专业带头人阶段，强调专业建设、校企协同和双师团队引领。', ['职业教育', '职教教师', '专业带头人'], { industryId: 'industry_vocational_edu', roleId: 'role_vocational_teacher', idPrefix: 'cap_model_vocational_teacher' })),
+    normalizeModel(makeTeacherModel(levelScheme, 'sequence_higher_teacher_growth_l1', '高等教育青年教师能力模型', 'HIGHER_EDU_TEACHER_YOUNG', '适用于高校青年教师阶段，强调课程建设、课堂组织和学业反馈。', ['高等教育', '高校教师', '青年教师'], { industryId: 'industry_higher_edu', roleId: 'role_higher_teacher', idPrefix: 'cap_model_higher_teacher' })),
+    normalizeModel(makeTeacherModel(levelScheme, 'sequence_higher_teacher_growth_l2', '高等教育骨干教师能力模型', 'HIGHER_EDU_TEACHER_BACKBONE', '适用于高校骨干教师阶段，强调教学研究、课程迭代和学生发展支持。', ['高等教育', '高校教师', '骨干教师'], { industryId: 'industry_higher_edu', roleId: 'role_higher_teacher', idPrefix: 'cap_model_higher_teacher' })),
+    normalizeModel(makeTeacherModel(levelScheme, 'sequence_higher_teacher_growth_l3', '高等教育学科负责人能力模型', 'HIGHER_EDU_TEACHER_ACADEMIC', '适用于高校学科负责人阶段，强调课程体系规划、团队带教和学术育人协同。', ['高等教育', '高校教师', '学科负责人'], { industryId: 'industry_higher_edu', roleId: 'role_higher_teacher', idPrefix: 'cap_model_higher_teacher' })),
+  ];
 }
 
 function makeSalesModel(levelScheme, roleLevelId, name, modelCode, description, tags = []) {
@@ -675,40 +826,13 @@ function makeServiceModel(levelScheme, roleLevelId, name, modelCode, description
 function seedPayload() {
   const levelScheme = createDefaultLevelScheme(4);
   const industries = [
-    normalizeIndustry({ id: 'industry_edu', code: 'EDU', name: '教育行业', description: '覆盖教师、教研、培训讲师等典型角色。', status: 'ACTIVE', sortNo: 1 }, 0),
-    normalizeIndustry({ id: 'industry_sales', code: 'SALES', name: '销售行业', description: '面向顾问式销售与客户经营岗位。', status: 'ACTIVE', sortNo: 2 }, 1),
-    normalizeIndustry({ id: 'industry_service', code: 'SERVICE', name: '客户服务行业', description: '聚焦客户服务、热线和服务运营岗位。', status: 'ACTIVE', sortNo: 3 }, 2),
+    ...createEducationIndustries(),
+    normalizeIndustry({ id: 'industry_sales', code: 'SALES', name: '销售行业', description: '面向顾问式销售与客户经营岗位。', status: 'ACTIVE', sortNo: 4 }, 3),
+    normalizeIndustry({ id: 'industry_service', code: 'SERVICE', name: '客户服务行业', description: '聚焦客户服务、热线和服务运营岗位。', status: 'ACTIVE', sortNo: 5 }, 4),
   ];
 
   const sequences = [
-    normalizeSequence({
-      id: 'sequence_teacher_growth',
-      industryId: 'industry_edu',
-      code: 'TEACHER_GROWTH',
-      name: '教师发展序列',
-      description: '覆盖教师从入职到学科引领阶段的发展等级。',
-      status: 'ACTIVE',
-      sortNo: 1,
-      levels: [
-        { id: 'sequence_teacher_growth_l1', code: 'NEW', name: '新教师', description: '入职 1-3 年，以课堂基本功和教学执行为重点。', sortNo: 1 },
-        { id: 'sequence_teacher_growth_l2', code: 'YOUNG', name: '青年教师', description: '能够独立完成稳定授课，并承担基础教研任务。', sortNo: 2 },
-        { id: 'sequence_teacher_growth_l3', code: 'BACKBONE', name: '骨干教师', description: '在学科教学、教研共创和示范引领上承担核心角色。', sortNo: 3 },
-        { id: 'sequence_teacher_growth_l4', code: 'LEAD', name: '学科带头人', description: '主导学科建设、校本教研和跨团队经验推广。', sortNo: 4 },
-      ],
-    }, 0),
-    normalizeSequence({
-      id: 'sequence_teaching_research',
-      industryId: 'industry_edu',
-      code: 'TEACHING_RESEARCH',
-      name: '教研发展序列',
-      description: '面向教研统筹、课程研究与教师指导岗位的成长路径。',
-      status: 'ACTIVE',
-      sortNo: 2,
-      levels: [
-        { id: 'sequence_teaching_research_l1', code: 'SPECIALIST', name: '教研专员', description: '承担学科资源整理与基础教研组织工作。', sortNo: 1 },
-        { id: 'sequence_teaching_research_l2', code: 'SENIOR', name: '高级教研员', description: '负责专题研究、教师指导和课程质量改进。', sortNo: 2 },
-      ],
-    }, 1),
+    ...createEducationSequences(),
     normalizeSequence({
       id: 'sequence_sales_growth',
       industryId: 'industry_sales',
@@ -722,7 +846,7 @@ function seedPayload() {
         { id: 'sequence_sales_growth_l2', code: 'MIDDLE', name: '中级销售顾问', description: '独立负责标准项目推进和基础客户经营。', sortNo: 2 },
         { id: 'sequence_sales_growth_l3', code: 'SENIOR', name: '高级销售顾问', description: '负责复杂项目成交、重大客户经营和团队带教。', sortNo: 3 },
       ],
-    }, 2),
+    }, 4),
     normalizeSequence({
       id: 'sequence_service_growth',
       industryId: 'industry_service',
@@ -736,30 +860,11 @@ function seedPayload() {
         { id: 'sequence_service_growth_l2', code: 'ADVANCED', name: '高级客服', description: '承担复杂问题受理、投诉安抚和跨团队协同。', sortNo: 2 },
         { id: 'sequence_service_growth_l3', code: 'EXPERT', name: '客服专家', description: '负责高风险客诉、服务机制优化和经验沉淀。', sortNo: 3 },
       ],
-    }, 3),
+    }, 5),
   ];
 
   const roles = [
-    normalizeRole({
-      id: 'role_teacher',
-      industryId: 'industry_edu',
-      sequenceId: 'sequence_teacher_growth',
-      code: 'TEACHER',
-      name: '教师',
-      description: '适用于中小学及通用培训授课岗位。',
-      status: 'ACTIVE',
-      sortNo: 1,
-    }, 0),
-    normalizeRole({
-      id: 'role_teaching_research',
-      industryId: 'industry_edu',
-      sequenceId: 'sequence_teaching_research',
-      code: 'TEACHING_RESEARCH',
-      name: '教研员',
-      description: '适用于教研统筹与课程研究岗位。',
-      status: 'ACTIVE',
-      sortNo: 2,
-    }, 1),
+    ...createEducationRoles(),
     normalizeRole({
       id: 'role_sales_advisor',
       industryId: 'industry_sales',
@@ -769,7 +874,7 @@ function seedPayload() {
       description: '适用于商机拓展和顾问式销售岗位。',
       status: 'ACTIVE',
       sortNo: 1,
-    }, 2),
+    }, 4),
     normalizeRole({
       id: 'role_customer_service',
       industryId: 'industry_service',
@@ -779,14 +884,11 @@ function seedPayload() {
       description: '适用于在线客服、热线和服务支持岗位。',
       status: 'ACTIVE',
       sortNo: 1,
-    }, 3),
+    }, 5),
   ];
 
   const models = [
-    normalizeModel(makeTeacherModel(levelScheme, 'sequence_teacher_growth_l1', '新教师能力模型', 'EDU_TEACHER_NEW', '适用于新教师阶段，强调教学设计基本功、课堂执行和形成性反馈。', ['教师', '新教师'])),
-    normalizeModel(makeTeacherModel(levelScheme, 'sequence_teacher_growth_l2', '青年教师能力模型', 'EDU_TEACHER_YOUNG', '适用于青年教师阶段，强调课堂优化、学情分析和教研协同。', ['教师', '青年教师'])),
-    normalizeModel(makeTeacherModel(levelScheme, 'sequence_teacher_growth_l3', '骨干教师能力模型', 'EDU_TEACHER_BACKBONE', '适用于骨干教师阶段，强调示范引领、数据驱动改进和团队共建。', ['教师', '骨干教师'])),
-    normalizeModel(makeTeacherModel(levelScheme, 'sequence_teacher_growth_l4', '学科带头人能力模型', 'EDU_TEACHER_LEAD', '适用于学科带头人阶段，强调学科建设、跨校教研和体系化引领。', ['教师', '学科带头人'])),
+    ...createEducationModels(levelScheme),
     normalizeModel(makeSalesModel(levelScheme, 'sequence_sales_growth_l1', '初级销售顾问能力模型', 'SALES_ADVISOR_JUNIOR', '面向初级销售顾问，强调需求挖掘、基础方案表达和标准商机推进。', ['销售', '初级'])),
     normalizeModel(makeSalesModel(levelScheme, 'sequence_sales_growth_l2', '中级销售顾问能力模型', 'SALES_ADVISOR_MIDDLE', '面向中级销售顾问，强调多角色沟通、异议处理和客户经营。', ['销售', '中级'])),
     normalizeModel(makeSalesModel(levelScheme, 'sequence_sales_growth_l3', '高级销售顾问能力模型', 'SALES_ADVISOR_SENIOR', '面向高级销售顾问，强调复杂项目推进、商务协同和大客户经营。', ['销售', '高级'])),
@@ -798,12 +900,129 @@ function seedPayload() {
   return { industries, sequences, roles, models };
 }
 
+function mergeIndustryTemplate(list, template, index) {
+  const existingIndex = list.findIndex((item) => item.id === template.id);
+  if (existingIndex >= 0) {
+    list[existingIndex] = normalizeIndustry({ ...list[existingIndex], ...template }, index);
+    return;
+  }
+  list.push(normalizeIndustry(template, index));
+}
+
+function mergeSequenceTemplate(list, template, index) {
+  const existingIndex = list.findIndex((item) => item.id === template.id);
+  if (existingIndex >= 0) {
+    list[existingIndex] = normalizeSequence({
+      ...list[existingIndex],
+      ...template,
+      levels: list[existingIndex].levels?.length ? list[existingIndex].levels : template.levels,
+    }, index);
+    return;
+  }
+  list.push(normalizeSequence(template, index));
+}
+
+function mergeRoleTemplate(list, template, index) {
+  const existingIndex = list.findIndex((item) => item.id === template.id);
+  if (existingIndex >= 0) {
+    list[existingIndex] = normalizeRole({ ...list[existingIndex], ...template }, index);
+    return;
+  }
+  list.push(normalizeRole(template, index));
+}
+
+function appendModelIfMissing(list, template) {
+  if (list.some((item) => item.modelCode === template.modelCode)) return;
+  list.push(normalizeModel(template));
+}
+
+function upgradeLegacyEducationModels(list) {
+  const legacyMap = {
+    EDU_TEACHER_NEW: {
+      modelCode: 'BASIC_EDU_TEACHER_NEW',
+      name: '基础教育新教师能力模型',
+      description: '适用于基础教育新教师阶段，强调教学设计基本功、课堂执行和形成性反馈。',
+      tags: ['基础教育', '教师', '新教师'],
+    },
+    EDU_TEACHER_YOUNG: {
+      modelCode: 'BASIC_EDU_TEACHER_YOUNG',
+      name: '基础教育青年教师能力模型',
+      description: '适用于基础教育青年教师阶段，强调课堂优化、学情分析和教研协同。',
+      tags: ['基础教育', '教师', '青年教师'],
+    },
+    EDU_TEACHER_BACKBONE: {
+      modelCode: 'BASIC_EDU_TEACHER_BACKBONE',
+      name: '基础教育骨干教师能力模型',
+      description: '适用于基础教育骨干教师阶段，强调示范引领、数据驱动改进和团队共建。',
+      tags: ['基础教育', '教师', '骨干教师'],
+    },
+    EDU_TEACHER_LEAD: {
+      modelCode: 'BASIC_EDU_TEACHER_LEAD',
+      name: '基础教育学科带头人能力模型',
+      description: '适用于基础教育学科带头人阶段，强调学科建设、跨校教研和体系化引领。',
+      tags: ['基础教育', '教师', '学科带头人'],
+    },
+  };
+
+  return list.map((item) => {
+    const upgrade = legacyMap[item.modelCode];
+    if (!upgrade) return item;
+    return normalizeModel({
+      ...item,
+      ...upgrade,
+      industryId: item.industryId || 'industry_edu',
+      roleId: item.roleId || 'role_teacher',
+    });
+  });
+}
+
+function migrateToEducationSegments(data) {
+  const next = clone(data);
+  const hasLegacyEducation = next.industries.some((item) => item.id === 'industry_edu');
+  const hasSegmentedEducation = next.industries.some((item) => item.id === 'industry_vocational_edu' || item.id === 'industry_higher_edu');
+  const hasLegacyEducationModels = next.models.some((item) => String(item.modelCode || '').startsWith('EDU_TEACHER_'));
+  if (!hasLegacyEducation && !hasSegmentedEducation && !hasLegacyEducationModels) {
+    return null;
+  }
+
+  const educationIndustries = createEducationIndustries();
+  const educationSequences = createEducationSequences();
+  const educationRoles = createEducationRoles();
+  const educationModels = createEducationModels(createDefaultLevelScheme(4));
+
+  educationIndustries.forEach((item, index) => mergeIndustryTemplate(next.industries, item, index));
+  educationSequences.forEach((item, index) => mergeSequenceTemplate(next.sequences, item, index));
+  educationRoles.forEach((item, index) => mergeRoleTemplate(next.roles, item, index));
+
+  next.models = upgradeLegacyEducationModels(next.models).map((item) => {
+    if (item.industryId === 'industry_edu' && item.roleId === 'role_teacher' && item.tags?.includes('教师') && !item.tags.includes('基础教育')) {
+      return normalizeModel({ ...item, tags: ['基础教育', ...item.tags] });
+    }
+    return item;
+  });
+  educationModels.forEach((item) => appendModelIfMissing(next.models, item));
+
+  return next;
+}
+
 export async function seedCapabilityModelData() {
   if (typeof window === 'undefined') return;
   if (window.localStorage.getItem(SEED_KEY)) return;
+  const current = readAll();
+  const hasExistingData = current.industries.length || current.sequences.length || current.roles.length || current.models.length;
+  if (hasExistingData) {
+    const migrated = migrateToEducationSegments(current);
+    if (migrated) {
+      writeAll(migrated);
+    }
+    window.localStorage.setItem(SEED_KEY, '1');
+    window.localStorage.removeItem(LEGACY_SEED_KEY);
+    return;
+  }
   const payload = seedPayload();
   writeAll(payload);
   window.localStorage.setItem(SEED_KEY, '1');
+  window.localStorage.removeItem(LEGACY_SEED_KEY);
 }
 
 export async function listIndustries() {

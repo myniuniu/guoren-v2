@@ -341,12 +341,20 @@ function parseCapabilityModelMarkdown(text, industries, roles, sequences, fileNa
           cursor += 1;
           continue;
         }
-        if (detailLine === '- 证据示例：') {
+        if (detailLine === '- 成长记录示例：' || detailLine === '- 证据示例：') {
           cursor += 1;
           while (cursor < lines.length && lines[cursor].trim().startsWith('- ')) {
             item.evidenceExamples.push(lines[cursor].trim().replace(/^- /, '').trim());
             cursor += 1;
           }
+          continue;
+        }
+        if (detailLine.startsWith('- 成长记录示例：') || detailLine.startsWith('- 证据示例：')) {
+          const inlineExample = detailLine.replace(/^- (成长记录示例|证据示例)：/, '').trim();
+          if (inlineExample && inlineExample !== '-') {
+            item.evidenceExamples.push(inlineExample);
+          }
+          cursor += 1;
           continue;
         }
         if (detailLine.startsWith('| 等级 | 行为描述 |')) {
@@ -501,12 +509,12 @@ function buildCapabilityModelMarkdown(model, industries, roles, sequences) {
       lines.push('');
       lines.push(`- 能力项说明：${item.description || '未填写能力项说明'}`);
       if (item.evidenceExamples?.length) {
-        lines.push('- 证据示例：');
+        lines.push('- 成长记录示例：');
         item.evidenceExamples.forEach((example) => {
           lines.push(`  - ${example}`);
         });
       } else {
-        lines.push('- 证据示例：-');
+        lines.push('- 成长记录示例：-');
       }
       lines.push('');
       lines.push('| 等级 | 行为描述 |');
@@ -609,8 +617,8 @@ function CapabilityModelPreview({ model, industries, roles, sequences }) {
                           <div className="cap-model-matrix-item">{item.name}</div>
                           <div className="cap-model-matrix-desc">{item.description || '未填写能力项说明'}</div>
                           {item.evidenceExamples?.length ? (
-                            <div className="cap-model-matrix-evidence">
-                              证据示例：{item.evidenceExamples.join('、')}
+                            <div className="cap-model-matrix-record">
+                              成长记录示例：{item.evidenceExamples.join('、')}
                             </div>
                           ) : null}
                         </td>
@@ -1787,7 +1795,7 @@ export default function CapabilityModelModule() {
       <div className="sys-module-header">
         <div>
           <span className="sys-module-header-title">能力模型</span>
-          <span className="sys-module-header-subtitle">构建适用于教师等多行业的通用能力模型框架与模板</span>
+          <span className="sys-module-header-subtitle">构建覆盖基础教育、职业教育、高等教育等场景的能力模型框架与模板</span>
         </div>
         <Space>
           <Button icon={<ReloadOutlined />} onClick={() => loadAllData(false)}>刷新数据</Button>
@@ -1842,10 +1850,10 @@ export default function CapabilityModelModule() {
                 </div>
                 <div className="cap-model-form-grid cap-model-form-grid-2">
                   <Form.Item label="模型名称" name="name" rules={[{ required: true, message: '请输入模型名称' }]}>
-                    <Input placeholder="例如：通用教师能力模型" />
+                    <Input placeholder="例如：基础教育青年教师能力模型" />
                   </Form.Item>
                   <Form.Item label="模型编码" name="modelCode" rules={[{ required: true, message: '请输入模型编码' }]}>
-                    <Input placeholder="例如：EDU_TEACHER_CORE" />
+                    <Input placeholder="例如：BASIC_EDU_TEACHER_YOUNG" />
                   </Form.Item>
                   <Form.Item label="所属行业" name="industryId" rules={[{ required: true, message: '请选择所属行业' }]}>
                     <Select options={activeIndustryOptions} placeholder="选择行业" />
@@ -2023,7 +2031,7 @@ export default function CapabilityModelModule() {
                               </div>
 
                               <div>
-                                <div className="cap-model-field-label">证据示例</div>
+                                <div className="cap-model-field-label">成长记录示例</div>
                                 <TextArea
                                   rows={2}
                                   value={(activeItem.evidenceExamples || []).join('\n')}
@@ -2215,10 +2223,10 @@ export default function CapabilityModelModule() {
       >
         <Form form={industryForm} layout="vertical" initialValues={createIndustryDraft()}>
           <Form.Item label="行业名称" name="name" rules={[{ required: true, message: '请输入行业名称' }]}>
-            <Input placeholder="例如：教育行业" />
+            <Input placeholder="例如：基础教育" />
           </Form.Item>
           <Form.Item label="行业编码" name="code" rules={[{ required: true, message: '请输入行业编码' }]}>
-            <Input placeholder="例如：EDU" />
+            <Input placeholder="例如：BASIC_EDU" />
           </Form.Item>
           <Form.Item label="状态" name="status" rules={[{ required: true, message: '请选择状态' }]}>
             <Select options={INDUSTRY_STATUS_OPTIONS} />

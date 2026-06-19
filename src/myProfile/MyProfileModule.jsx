@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Alert,
   Button,
   Card,
   Empty,
@@ -18,11 +17,11 @@ import {
 } from '@ant-design/icons';
 import { capabilityModelApi } from '../capabilityModel/api';
 import {
-  buildModelEvidenceSnapshot,
-  EvidenceDetailDrawer,
+  buildModelGrowthRecordSnapshot,
+  GrowthRecordDetailDrawer,
   pickCurrentTeacherModel,
-  resolveCellEvidence,
-  resolveEvidenceFromSnapshot,
+  resolveCellRecord,
+  resolveGrowthRecordFromSnapshot,
   SOURCE_META,
 } from '../shared/profileEvidence';
 import { getAllItemsAcrossLibraries, loadResourceLib } from '../resourceLib/resourceLibStore';
@@ -275,7 +274,7 @@ function buildResourceLibrarySourceSnapshot(baseSnapshot, resourceLibData) {
         coverage: evidence.coverage,
         statusLabel: evidence.statusLabel,
         statusColor: evidence.statusColor,
-        resourcePath: evidence.resourcePath || '当前映射证据',
+        resourcePath: evidence.resourcePath || '当前映射记录',
         tag: evidence.tag,
         sourceLabel: evidence.sourceLabel,
       }, { isCurrent: true });
@@ -320,19 +319,19 @@ export default function MyProfileModule() {
   const [snapshot, setSnapshot] = useState(null);
   const [mappingView, setMappingView] = useState('table');
   const [activeMatrixAnchor, setActiveMatrixAnchor] = useState(undefined);
-  const [evidenceDrawerOpen, setEvidenceDrawerOpen] = useState(false);
-  const [selectedEvidence, setSelectedEvidence] = useState(null);
+  const [growthRecordDrawerOpen, setGrowthRecordDrawerOpen] = useState(false);
+  const [selectedGrowthRecord, setSelectedGrowthRecord] = useState(null);
   const matrixSectionRefs = useRef({});
 
-  const openEvidenceDetail = useCallback((evidenceId, nextSnapshot = snapshot, focus = {}) => {
+  const openGrowthRecordDetail = useCallback((growthRecordId, nextSnapshot = snapshot, focus = {}) => {
     const resolvedSnapshot = nextSnapshot || snapshot;
-    const evidence = resolveEvidenceFromSnapshot(resolvedSnapshot, evidenceId, focus)
+    const growthRecord = resolveGrowthRecordFromSnapshot(resolvedSnapshot, growthRecordId, focus)
       || Object.values(resolvedSnapshot?.recordsBySource || {})
         .flat()
-        .find((item) => item.id === evidenceId);
-    if (!evidence) return;
-    setSelectedEvidence(evidence);
-    setEvidenceDrawerOpen(true);
+        .find((item) => item.id === growthRecordId);
+    if (!growthRecord) return;
+    setSelectedGrowthRecord(growthRecord);
+    setGrowthRecordDrawerOpen(true);
   }, [snapshot]);
 
   async function loadData(withLoading = true) {
@@ -346,7 +345,7 @@ export default function MyProfileModule() {
         capabilityModelApi.listModels(),
       ]);
       const currentModel = pickCurrentTeacherModel(models, roles, sequences);
-      const baseSnapshot = buildModelEvidenceSnapshot(currentModel, industries, roles, sequences);
+      const baseSnapshot = buildModelGrowthRecordSnapshot(currentModel, industries, roles, sequences);
       const resourceLibData = loadResourceLib();
       const resourceAwareSnapshot = buildResourceLibrarySourceSnapshot(baseSnapshot, resourceLibData);
       const nextSnapshot = resourceAwareSnapshot ? {
@@ -357,8 +356,8 @@ export default function MyProfileModule() {
         },
       } : null;
       setSnapshot(nextSnapshot);
-      if (selectedEvidence?.id && nextSnapshot?.evidenceById?.[selectedEvidence.id]) {
-        setSelectedEvidence(resolveEvidenceFromSnapshot(nextSnapshot, selectedEvidence.id, selectedEvidence));
+      if (selectedGrowthRecord?.id && nextSnapshot?.evidenceById?.[selectedGrowthRecord.id]) {
+        setSelectedGrowthRecord(resolveGrowthRecordFromSnapshot(nextSnapshot, selectedGrowthRecord.id, selectedGrowthRecord));
       }
     } finally {
       if (withLoading) setLoading(false);
@@ -369,8 +368,8 @@ export default function MyProfileModule() {
     loadData();
   }, []);
 
-  function resolveMappingRowEvidence(record) {
-    return resolveEvidenceFromSnapshot(snapshot, record.evidenceId, {
+  function resolveMappingRowGrowthRecord(record) {
+    return resolveGrowthRecordFromSnapshot(snapshot, record.evidenceId, {
       focusDimensionName: record.dimensionName,
       focusItemName: record.itemName,
       focusCoverage: record.coverage,
@@ -395,8 +394,8 @@ export default function MyProfileModule() {
       key: 'sourceLabel',
       width: 220,
       render: (_, record) => {
-        const evidence = resolveMappingRowEvidence(record);
-        const bundleSourceKeys = evidence?.bundleSourceKeys?.length ? evidence.bundleSourceKeys : [record.sourceKey];
+        const growthRecord = resolveMappingRowGrowthRecord(record);
+        const bundleSourceKeys = growthRecord?.bundleSourceKeys?.length ? growthRecord.bundleSourceKeys : [record.sourceKey];
         const visibleSourceKeys = bundleSourceKeys.slice(0, 2);
         const hiddenSourceCount = Math.max(0, bundleSourceKeys.length - visibleSourceKeys.length);
         return (
@@ -412,33 +411,33 @@ export default function MyProfileModule() {
       },
     },
     {
-      title: '最新证据',
+      title: '最新记录',
       key: 'evidence',
       render: (_, record) => {
-        const evidence = resolveMappingRowEvidence(record);
-        const bundleItems = evidence?.bundleItems || [];
-        const bundleSourceKeys = evidence?.bundleSourceKeys || [];
+        const growthRecord = resolveMappingRowGrowthRecord(record);
+        const bundleItems = growthRecord?.bundleItems || [];
+        const bundleSourceKeys = growthRecord?.bundleSourceKeys || [];
         return (
           <div className="profile-archive-item-cell">
             <button
               type="button"
-              className="profile-archive-evidence-link"
+              className="profile-archive-record-link"
               onClick={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
-                openEvidenceDetail(record.evidenceId, snapshot, {
+                openGrowthRecordDetail(record.evidenceId, snapshot, {
                   focusDimensionName: record.dimensionName,
                   focusItemName: record.itemName,
                   focusCoverage: record.coverage,
                 });
               }}
             >
-              {evidence?.title || record.latestEvidenceTitle}
+              {growthRecord?.title || record.latestEvidenceTitle}
             </button>
-            <span>{evidence?.date || record.latestEvidenceDate} · {evidence?.tag || record.evidenceTag}</span>
+            <span>{growthRecord?.date || record.latestEvidenceDate} · {growthRecord?.tag || record.evidenceTag}</span>
             {bundleItems.length > 1 ? (
               <span className="profile-archive-item-submeta">
-                证据包 · {bundleItems.length} 条资料
+                记录包 · {bundleItems.length} 条资料
                 {bundleSourceKeys.length > 1 ? ` · ${bundleSourceKeys.length} 类来源` : ''}
               </span>
             ) : null}
@@ -472,22 +471,22 @@ export default function MyProfileModule() {
         cellMappings: (modelDefinition?.levelScheme?.levels || []).map((level) => ({
           level,
           descriptor: item.levelDescriptors?.find((entry) => entry.levelKey === level.key) || { levelKey: level.key, text: '' },
-          evidence: resolveCellEvidence(snapshot, item.id, level.key),
+          growthRecord: resolveCellRecord(snapshot, item.id, level.key),
         })),
       })),
     }))
   ), [modelDefinition, snapshot]);
 
-  function openCellEvidence(item, level, cellEvidence) {
-    const evidence = resolveEvidenceFromSnapshot(snapshot, cellEvidence?.evidenceId, {
-      focusDimensionName: cellEvidence?.dimensionName || '-',
+  function openCellGrowthRecord(item, level, cellRecord) {
+    const growthRecord = resolveGrowthRecordFromSnapshot(snapshot, cellRecord?.evidenceId, {
+      focusDimensionName: cellRecord?.dimensionName || '-',
       focusItemName: item.name,
       focusLevelLabel: level.label,
-      focusCoverage: cellEvidence?.coverage,
+      focusCoverage: cellRecord?.coverage,
     });
-    if (!evidence) return;
-    setSelectedEvidence(evidence);
-    setEvidenceDrawerOpen(true);
+    if (!growthRecord) return;
+    setSelectedGrowthRecord(growthRecord);
+    setGrowthRecordDrawerOpen(true);
   }
 
   useEffect(() => {
@@ -587,13 +586,13 @@ export default function MyProfileModule() {
             </div>
             <div className="profile-archive-source-stats">
               <div><span>平均匹配度</span><strong>{item.averageScore}%</strong></div>
-              <div><span>证据条数</span><strong>{item.evidenceCount}</strong></div>
+              <div><span>记录条数</span><strong>{item.evidenceCount}</strong></div>
               <div>
-                <span>最近证据</span>
+                <span>最近记录</span>
                 <button
                   type="button"
                   className="profile-archive-inline-link"
-                  onClick={() => openEvidenceDetail(item.latestRecord.id)}
+                  onClick={() => openGrowthRecordDetail(item.latestRecord.id)}
                 >
                   {item.latestRecord.title}
                 </button>
@@ -682,30 +681,30 @@ export default function MyProfileModule() {
                             <div className="profile-archive-matrix-item">{item.name}</div>
                             <div className="profile-archive-matrix-desc">{item.description || '未填写能力项说明'}</div>
                             {item.evidenceExamples?.length ? (
-                              <div className="profile-archive-matrix-evidence">
-                                证据示例：{item.evidenceExamples.join('、')}
+                              <div className="profile-archive-matrix-record">
+                                成长记录示例：{item.evidenceExamples.join('、')}
                               </div>
                             ) : null}
                           </td>
-                          {item.cellMappings.map(({ level, descriptor, evidence }) => (
+                          {item.cellMappings.map(({ level, descriptor, growthRecord }) => (
                             <td key={`${item.id}_${level.key}`}>
                               <div className="profile-archive-matrix-cell">
                                 <div className="profile-archive-matrix-cell-text">{descriptor.text || '-'}</div>
-                                {evidence ? (
+                                {growthRecord ? (
                                   <button
                                     type="button"
-                                    className="profile-archive-matrix-evidence-card"
-                                    onClick={() => openCellEvidence(item, level, evidence)}
+                                    className="profile-archive-matrix-record-card"
+                                    onClick={() => openCellGrowthRecord(item, level, growthRecord)}
                                   >
-                                    <div className="profile-archive-matrix-evidence-head">
-                                      <Tag color={SOURCE_META[evidence.sourceKey].color}>{evidence.sourceLabel}</Tag>
-                                      <span>{evidence.coverage}% 匹配</span>
+                                    <div className="profile-archive-matrix-record-head">
+                                      <Tag color={SOURCE_META[growthRecord.sourceKey].color}>{growthRecord.sourceLabel}</Tag>
+                                      <span>{growthRecord.coverage}% 匹配</span>
                                     </div>
-                                    <strong>{evidence.evidenceTitle}</strong>
-                                    <span>{evidence.evidenceDate} · {evidence.evidenceTag}</span>
+                                    <strong>{growthRecord.evidenceTitle}</strong>
+                                    <span>{growthRecord.evidenceDate} · {growthRecord.evidenceTag}</span>
                                   </button>
                                 ) : (
-                                  <div className="profile-archive-matrix-evidence-empty">暂无映射证据</div>
+                                  <div className="profile-archive-matrix-record-empty">暂无映射记录</div>
                                 )}
                               </div>
                             </td>
@@ -749,7 +748,7 @@ export default function MyProfileModule() {
                   <p>{record.summary}</p>
                   <div className="profile-archive-record-foot">
                     <span>资料库路径：{record.resourcePath || record.matchNote}</span>
-                    <Button type="link" size="small" onClick={() => openEvidenceDetail(record.id)}>查看详情</Button>
+                    <Button type="link" size="small" onClick={() => openGrowthRecordDetail(record.id)}>查看详情</Button>
                   </div>
                 </div>
               ))}
@@ -771,18 +770,11 @@ export default function MyProfileModule() {
       </div>
 
       <div className="sys-module-body profile-archive-body">
-        <Alert
-          type="info"
-          showIcon
-          message="当前页面为模拟档案画像"
-          description="能力模型来自现有能力模型库；模型映射仍为本地模拟关系，数据来源页与来源统计卡片直接读取资料库模块中的资料条目。"
-        />
-
         <div className="profile-archive-hero">
           <div className="profile-archive-hero-main">
             <div className="profile-archive-kicker">{snapshot.profile.industryName} · {snapshot.profile.sequenceName}</div>
             <h2>{snapshot.currentModel.name}</h2>
-            <p>{snapshot.currentModel.description || '当前序列模型已与个人四类数据源建立证据映射。'}</p>
+            <p>{snapshot.currentModel.description || '当前序列模型已与个人四类数据源建立成长记录映射。'}</p>
             <div className="profile-archive-hero-tags">
               <Tag color="blue">{snapshot.profile.roleName}</Tag>
               <Tag color="geekblue">{snapshot.profile.roleLevelName}</Tag>
@@ -804,7 +796,7 @@ export default function MyProfileModule() {
               <strong>{snapshot.summary.focusItemCount}</strong>
             </div>
             <div className="profile-archive-stat-card">
-              <span>累计证据</span>
+              <span>累计记录</span>
               <strong>{snapshot.summary.totalEvidenceCount}</strong>
             </div>
           </div>
@@ -820,10 +812,10 @@ export default function MyProfileModule() {
         />
       </div>
 
-      <EvidenceDetailDrawer
-        evidence={selectedEvidence}
-        open={evidenceDrawerOpen}
-        onClose={() => setEvidenceDrawerOpen(false)}
+      <GrowthRecordDetailDrawer
+        growthRecord={selectedGrowthRecord}
+        open={growthRecordDrawerOpen}
+        onClose={() => setGrowthRecordDrawerOpen(false)}
       />
     </div>
   );

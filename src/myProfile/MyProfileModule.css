@@ -433,7 +433,7 @@
   color: #7b8598;
 }
 
-.profile-archive-matrix-evidence {
+.profile-archive-matrix-record {
   margin-top: 6px;
   color: #5f6b7c;
 }
@@ -450,7 +450,7 @@
   line-height: 1.7;
 }
 
-.profile-archive-matrix-evidence-card {
+.profile-archive-matrix-record-card {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid #d8e4f3;
@@ -465,13 +465,13 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
-.profile-archive-matrix-evidence-card:hover {
+.profile-archive-matrix-record-card:hover {
   border-color: #1677ff;
   box-shadow: 0 10px 22px rgba(22, 119, 255, 0.12);
   transform: translateY(-1px);
 }
 
-.profile-archive-matrix-evidence-head {
+.profile-archive-matrix-record-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -480,22 +480,22 @@
   color: #7b8598;
 }
 
-.profile-archive-matrix-evidence-head .ant-tag {
+.profile-archive-matrix-record-head .ant-tag {
   margin-inline-end: 0;
 }
 
-.profile-archive-matrix-evidence-card strong {
+.profile-archive-matrix-record-card strong {
   color: #172033;
   font-size: 12px;
   line-height: 1.5;
 }
 
-.profile-archive-matrix-evidence-card span:last-child {
+.profile-archive-matrix-record-card span:last-child {
   font-size: 11px;
   color: #7b8598;
 }
 
-.profile-archive-matrix-evidence-empty {
+.profile-archive-matrix-record-empty {
   padding: 10px 12px;
   border: 1px dashed #d8e4f3;
   border-radius: 12px;
@@ -504,7 +504,7 @@
   color: #9aa4b2;
 }
 
-.profile-archive-evidence-link,
+.profile-archive-record-link,
 .profile-archive-inline-link {
   padding: 0;
   border: 0;
@@ -514,7 +514,7 @@
   text-align: left;
 }
 
-.profile-archive-evidence-link {
+.profile-archive-record-link {
   font-size: 14px;
   font-weight: 600;
 }
