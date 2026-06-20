@@ -1868,7 +1868,7 @@ export default function TeacherEvaluationModule() {
   }
 
   if (!activeScheme) {
-    return <Empty description="暂无教师评价方案" />;
+    return <Empty description="暂无教师评价方案，请先到“评价方案”模块创建方案" />;
   }
 
   return (
@@ -1876,7 +1876,7 @@ export default function TeacherEvaluationModule() {
       <div className="sys-module-header">
         <div>
           <span className="sys-module-header-title">教师评价</span>
-          <span className="sys-module-header-subtitle">评价方案、评审流程、AI 建议稿确认和审计台账一体化运行</span>
+          <span className="sys-module-header-subtitle">评审工作台、AI 建议稿确认和审计台账一体化运行</span>
         </div>
         <Space wrap>
           <Segmented
@@ -1884,8 +1884,6 @@ export default function TeacherEvaluationModule() {
             onChange={setActiveRole}
             options={TEACHER_EVALUATION_ROLE_OPTIONS.map((item) => ({ label: item.label, value: item.value }))}
           />
-          <Button icon={<EditOutlined />} onClick={() => openSchemeDrawer('edit')}>编辑方案</Button>
-          <Button icon={<PlusOutlined />} onClick={() => openSchemeDrawer('create')}>新建方案</Button>
           <Button icon={<PlusOutlined />} type="primary" onClick={openCreateRecordDrawer} loading={submitting}>发起评价实例</Button>
         </Space>
       </div>
@@ -1940,94 +1938,6 @@ export default function TeacherEvaluationModule() {
           <Tabs
             className="teacher-evaluation-tabs"
             items={[
-              {
-                key: 'schemes',
-                label: '评价方案',
-                children: (
-                  <div className="teacher-evaluation-section-stack">
-                    <Card bordered={false} className="teacher-evaluation-card">
-                      <div className="teacher-evaluation-card-head">
-                        <span>方案概览</span>
-                        <Space>
-                          <Tag color="blue">{activeScheme.schemeType}</Tag>
-                          <Tag color="purple">{activeScheme.targetLevel}</Tag>
-                          <Tag color="orange">{activeScheme.semester}</Tag>
-                          {activeCapabilityModel ? <Tag color="cyan">{activeCapabilityModel.name}</Tag> : <Tag color="warning">未关联能力模型</Tag>}
-                        </Space>
-                      </div>
-                      <p className="teacher-evaluation-body-copy">{activeScheme.summary}</p>
-                      {activeCapabilityModel ? (
-                        <div className="teacher-evaluation-meta-row">
-                          <Tag>{activeCapabilityModel.modelCode}</Tag>
-                          <Tag>{activeCapabilityModel.dimensions.length} 个维度</Tag>
-                          <Tag>{activeScheme.referencedItemKeys?.length || 0} 个引用能力项</Tag>
-                        </div>
-                      ) : null}
-                    </Card>
-                    <Card bordered={false} className="teacher-evaluation-card">
-                      <div className="teacher-evaluation-card-head">
-                        <span>维度权重</span>
-                        <Tag>{activeScheme.dimensionWeights.length} 个维度</Tag>
-                      </div>
-                      <div className="teacher-evaluation-weight-grid">
-                        {activeScheme.dimensionWeights.map((item) => (
-                          <div key={item.key} className="teacher-evaluation-weight-item">
-                            <strong>{item.name}</strong>
-                            <Tag color={weightColor(item.weight)}>{item.weight}%</Tag>
-                          </div>
-                        ))}
-                      </div>
-                    </Card>
-                    <Card bordered={false} className="teacher-evaluation-card">
-                      <div className="teacher-evaluation-card-head">
-                        <span>量规与证据门槛</span>
-                        <Tag><AuditOutlined /> AI 仅预填建议项</Tag>
-                      </div>
-                      <Table rowKey="key" columns={rubricColumns} dataSource={activeScheme.itemRubrics} pagination={false} scroll={{ x: 880 }} />
-                    </Card>
-                    <Card bordered={false} className="teacher-evaluation-card">
-                      <div className="teacher-evaluation-card-head">
-                        <span>评议流程</span>
-                        <Tag>{activeScheme.reviewFlow.length} 个节点</Tag>
-                      </div>
-                      <div className="teacher-evaluation-flow-list">
-                        {activeScheme.reviewFlow.map((step, index) => (
-                          <div key={step.key} className="teacher-evaluation-flow-card">
-                            <div className="teacher-evaluation-flow-index">{index + 1}</div>
-                            <div className="teacher-evaluation-flow-body">
-                              <strong>{step.name}</strong>
-                              <span>责任角色：{getNodeAllowedRoles(step).map((item) => getTeacherEvaluationRoleLabel(item)).join(' / ')}</span>
-                              <p>{step.output}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </Card>
-                    <Card bordered={false} className="teacher-evaluation-card">
-                      <div className="teacher-evaluation-card-head">
-                        <span>AI 辅助角色</span>
-                        <Tag color="processing">只做建议稿</Tag>
-                      </div>
-                      <div className="teacher-evaluation-ai-grid">
-                        {activeScheme.aiAssistants.map((assistant) => (
-                          <div key={assistant.key} className="teacher-evaluation-ai-draft-card">
-                            <div className="teacher-evaluation-ai-draft-head">
-                              <strong>{assistant.name}</strong>
-                              <Tag color="blue">{assistant.roleScope}</Tag>
-                            </div>
-                            <div className="teacher-evaluation-tag-row">
-                              {assistant.responsibilities.map((item) => <Tag key={item} color="processing">{item}</Tag>)}
-                            </div>
-                            <div className="teacher-evaluation-tag-row">
-                              {assistant.restrictions.map((item) => <Tag key={item} color="red">{item}</Tag>)}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </Card>
-                  </div>
-                ),
-              },
               {
                 key: 'workbench',
                 label: '评审工作台',
@@ -2123,8 +2033,6 @@ export default function TeacherEvaluationModule() {
       </Drawer>
 
       {renderEvidencePackDrawer()}
-
-      {renderSchemeEditorDrawer()}
       {renderCreateRecordDrawer()}
       {renderEvidenceDrawer()}
     </div>

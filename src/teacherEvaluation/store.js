@@ -674,6 +674,36 @@ export async function saveTeacherEvaluationScheme(payload) {
   return clone(scheme);
 }
 
+export async function deleteTeacherEvaluationScheme(schemeId, payload = {}) {
+  const current = readAll();
+  const schemes = current.schemes.map((item) => normalizeScheme(item));
+  const scheme = getSchemeById(schemes, schemeId);
+  if (!scheme) {
+    throw new Error('评价方案不存在');
+  }
+  const relatedRecords = current.records
+    .map((item) => normalizeRecord(item))
+    .filter((item) => item.schemeId === schemeId);
+  if (relatedRecords.length) {
+    throw new Error(`当前方案已关联 ${relatedRecords.length} 个评价实例，不能直接删除。请先处理或迁移相关实例。`);
+  }
+
+  const nextSchemes = schemes.filter((item) => item.id !== schemeId);
+  const nextAuditLogs = [...current.auditLogs];
+  appendAuditLog(nextAuditLogs, {
+    recordId: '',
+    actionType: 'DELETE_SCHEME',
+    operatorId: payload.operatorId || payload.operatorRole || 'SYSTEM',
+    operatorName: payload.operatorName || '系统管理员',
+    operatorRole: payload.operatorRole || 'SYSTEM',
+    targetType: 'TeacherEvaluationScheme',
+    targetId: schemeId,
+    summary: `删除评价方案「${scheme.name}」`,
+  });
+  writeAll({ ...current, schemes: nextSchemes, auditLogs: nextAuditLogs });
+  return clone(scheme);
+}
+
 export async function listTeacherEvaluationRecords() {
   return readList(RECORD_STORAGE_KEY).map((item) => normalizeRecord(item));
 }
