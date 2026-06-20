@@ -13,6 +13,7 @@ import {
   BarChartOutlined,
   CloudOutlined,
   BookOutlined,
+  AuditOutlined,
   FolderOutlined,
   AppstoreOutlined,
   SettingOutlined,
@@ -66,6 +67,7 @@ import ModelStatisticsModule from './modelStatistics/ModelStatisticsModule';
 import SolutionManagementModule from './solution/SolutionManagementModule';
 import SceneTemplateModule from './scene/SceneTemplateModule';
 import CapabilityModelModule from './capabilityModel/CapabilityModelModule';
+import TeacherEvaluationModule from './teacherEvaluation/TeacherEvaluationModule';
 import SceneCreateModal from './scene/SceneCreateModal';
 import { getSceneStoreChangeEventName, getSceneTypeLabel, getSceneVisibilityLabel, sceneApi } from './scene/api';
 import './App.css';
@@ -158,6 +160,7 @@ const iconBarItems = [
   { key: 'app-center', icon: <AppstoreOutlined />, label: '应用中心' },
   { key: 'scene-template', icon: <DesktopOutlined />, label: '场景模板' },
   { key: 'my-profile', icon: <IdcardOutlined />, label: '我的档案' },
+  { key: 'teacher-evaluation', icon: <AuditOutlined />, label: '教师评价' },
   { key: 'capability-model', icon: <AppstoreOutlined />, label: '能力模型' },
   { key: 'solution-management', icon: <AppstoreOutlined />, label: '解决方案' },
   { key: 'dms', icon: <FileTextOutlined />, label: '文档管理' },
@@ -418,6 +421,8 @@ function App() {
       setCurrentPage('scene-template');
     } else if (key === 'my-profile') {
       setCurrentPage('my-profile');
+    } else if (key === 'teacher-evaluation') {
+      setCurrentPage('teacher-evaluation');
     } else if (key === 'capability-model') {
       setCurrentPage('capability-model');
     } else if (key === 'solution-management') {
@@ -451,6 +456,7 @@ function App() {
       currentPage === 'app-center' ||
       currentPage === 'scene-template' ||
       currentPage === 'my-profile' ||
+      currentPage === 'teacher-evaluation' ||
       currentPage === 'capability-model' ||
       currentPage === 'solution-management' ||
       currentPage === 'dms' ||
@@ -550,6 +556,8 @@ function App() {
         <SceneTemplateModule />
       ) : currentPage === 'my-profile' ? (
         <MyProfileModule />
+      ) : currentPage === 'teacher-evaluation' ? (
+        <TeacherEvaluationModule />
       ) : currentPage === 'capability-model' ? (
         <CapabilityModelModule />
       ) : currentPage === 'solution-management' ? (

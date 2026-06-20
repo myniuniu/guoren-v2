@@ -2,7 +2,7 @@ const INDUSTRY_STORAGE_KEY = 'gr.capability-model.industries.v3';
 const SEQUENCE_STORAGE_KEY = 'gr.capability-model.sequences.v3';
 const ROLE_STORAGE_KEY = 'gr.capability-model.roles.v3';
 const MODEL_STORAGE_KEY = 'gr.capability-model.models.v3';
-const SEED_KEY = 'gr.capability-model.seeded.v4';
+const SEED_KEY = 'gr.capability-model.seeded.v5';
 const LEGACY_SEED_KEY = 'gr.capability-model.seeded.v3';
 const STORE_CHANGE_EVENT = 'gr:capability-model-change';
 
@@ -17,6 +17,31 @@ export const CAPABILITY_MODEL_STATUS_OPTIONS = [
   { value: 'DRAFT', label: '草稿' },
   { value: 'PUBLISHED', label: '已发布' },
   { value: 'DISABLED', label: '已停用' },
+];
+
+export const CAPABILITY_ITEM_EVIDENCE_TYPE_OPTIONS = [
+  { value: 'LESSON_PLAN', label: '教案/课件' },
+  { value: 'TASK_SHEET', label: '任务单/实训单' },
+  { value: 'CLASS_VIDEO', label: '课堂录像/回看' },
+  { value: 'ASSESSMENT_DATA', label: '考核数据/成绩分析' },
+  { value: 'OBSERVATION_NOTE', label: '听评课/观察记录' },
+  { value: 'RESEARCH_RECORD', label: '教研纪要/共创成果' },
+  { value: 'ENTERPRISE_PRACTICE', label: '企业实践/企业项目' },
+  { value: 'SAFETY_RECORD', label: '安全规范/实训记录' },
+  { value: 'REVIEW_RESULT', label: '认定结果/评审结论' },
+];
+
+export const CAPABILITY_ITEM_REVIEW_ROLE_OPTIONS = [
+  { value: 'SELF', label: '本人' },
+  { value: 'GROUP_LEADER', label: '教研组长' },
+  { value: 'SUPERVISOR', label: '督导/教学管理者' },
+  { value: 'ENTERPRISE_MENTOR', label: '企业导师' },
+  { value: 'SCHOOL_REVIEW', label: '校级评审组' },
+];
+
+export const CAPABILITY_ITEM_AI_ASSIST_MODE_OPTIONS = [
+  { value: 'DISABLED', label: '不启用 AI' },
+  { value: 'SUGGEST_ONLY', label: '仅建议稿' },
 ];
 
 const LEVEL_LABEL_PRESETS = ['L1 认知', 'L2 应用', 'L3 熟练', 'L4 引领', 'L5 专家', 'L6 战略'];
@@ -44,6 +69,33 @@ function createId(prefix) {
 
 function trimText(value) {
   return typeof value === 'string' ? value.trim() : '';
+}
+
+function normalizeStringArray(value, allowedValues = []) {
+  if (!Array.isArray(value)) return [];
+  const allowed = new Set(allowedValues);
+  const normalized = value
+    .map((item) => trimText(item))
+    .filter(Boolean);
+  return Array.from(new Set(
+    allowed.size ? normalized.filter((item) => allowed.has(item)) : normalized,
+  ));
+}
+
+function buildCapabilityItemDefaults(overrides = {}) {
+  return {
+    evidenceTypes: normalizeStringArray(
+      overrides.evidenceTypes,
+      CAPABILITY_ITEM_EVIDENCE_TYPE_OPTIONS.map((item) => item.value),
+    ),
+    requiredEvidenceCount: Math.max(1, Number(overrides.requiredEvidenceCount || 1)),
+    requiredReviewRoles: normalizeStringArray(
+      overrides.requiredReviewRoles,
+      CAPABILITY_ITEM_REVIEW_ROLE_OPTIONS.map((item) => item.value),
+    ),
+    isGrowthOnly: Boolean(overrides.isGrowthOnly),
+    aiAssistMode: trimText(overrides.aiAssistMode) || 'SUGGEST_ONLY',
+  };
 }
 
 function emitChange() {
@@ -154,6 +206,7 @@ export function createEmptyCapabilityItem(levelScheme, overrides = {}) {
       text: overrides.levelDescriptors?.[index]?.text || '',
     })),
     evidenceExamples: Array.isArray(overrides.evidenceExamples) ? [...overrides.evidenceExamples] : [],
+    ...buildCapabilityItemDefaults(overrides),
   };
 }
 
@@ -213,6 +266,7 @@ function normalizeItem(item, levelScheme, index) {
     sortNo: index + 1,
     levelDescriptors: descriptors,
     evidenceExamples: normalizeEvidenceExamples(item?.evidenceExamples),
+    ...buildCapabilityItemDefaults(item),
   };
 }
 
@@ -314,6 +368,249 @@ function ensureModelValid(model) {
   if (model.dimensions.some((dimension) => !dimension.items?.length)) {
     throw new Error('每个能力类至少保留一个能力项');
   }
+}
+
+function createVocationalCapabilityItem(config) {
+  return {
+    ...config,
+    aiAssistMode: config.aiAssistMode || 'SUGGEST_ONLY',
+    requiredEvidenceCount: config.requiredEvidenceCount || 2,
+    requiredReviewRoles: config.requiredReviewRoles || ['SELF', 'GROUP_LEADER'],
+    evidenceTypes: config.evidenceTypes || ['TASK_SHEET', 'CLASS_VIDEO'],
+    evidenceExamples: config.evidenceExamples || [],
+  };
+}
+
+function makeVocationalTeacherModel(levelScheme, roleLevelId, name, modelCode, description, tags = [], overrides = {}) {
+  const isLecturer = roleLevelId === 'sequence_vocational_teacher_growth_l1';
+  const isDual = roleLevelId === 'sequence_vocational_teacher_growth_l2';
+  const isLead = roleLevelId === 'sequence_vocational_teacher_growth_l3';
+
+  return createCapabilityModelDraft({
+    id: createId(overrides.idPrefix || 'cap_model_vocational_teacher'),
+    modelCode,
+    name,
+    industryId: overrides.industryId || 'industry_vocational_edu',
+    roleId: overrides.roleId || 'role_vocational_teacher',
+    roleLevelId,
+    status: 'PUBLISHED',
+    tags,
+    description,
+    levelScheme,
+    dimensions: [
+      {
+        id: 'dim_vocational_task_transfer',
+        name: '岗位任务转化',
+        description: '围绕岗位工作过程拆解教学目标、任务链与学习情境。',
+        items: [
+          createVocationalCapabilityItem({
+            id: 'item_vocational_task_analysis',
+            name: '岗位任务分析',
+            description: '能将岗位典型工作任务转化为教学任务和学习目标。',
+            levelDescriptors: [
+              { text: '能识别岗位典型任务并整理基础流程。' },
+              { text: '能把岗位任务拆解为教学目标、任务步骤和产出要求。' },
+              { text: '能结合企业标准重构跨任务链的项目化学习方案。' },
+              { text: '能主导专业群岗位任务图谱与课程任务标准建设。' },
+            ],
+            evidenceExamples: ['岗位任务分析表', '课程任务链设计稿'],
+            evidenceTypes: ['TASK_SHEET', 'LESSON_PLAN', 'ENTERPRISE_PRACTICE'],
+            requiredEvidenceCount: isLead ? 3 : 2,
+            requiredReviewRoles: isLead ? ['SELF', 'GROUP_LEADER', 'ENTERPRISE_MENTOR'] : ['SELF', 'GROUP_LEADER'],
+          }),
+          createVocationalCapabilityItem({
+            id: 'item_vocational_context_design',
+            name: '学习情境设计',
+            description: '能把企业情境、工单或项目案例融入课堂任务设计。',
+            levelDescriptors: [
+              { text: '能使用现成案例组织基础教学活动。' },
+              { text: '能根据岗位情境设计任务驱动学习活动。' },
+              { text: '能构建理实一体、项目递进的学习情境。' },
+              { text: '能沉淀校企共享的典型教学情境案例库。' },
+            ],
+            evidenceExamples: ['企业案例改编教案', '项目任务情境包'],
+            evidenceTypes: ['LESSON_PLAN', 'TASK_SHEET', 'ENTERPRISE_PRACTICE'],
+          }),
+        ],
+      },
+      {
+        id: 'dim_vocational_integration',
+        name: '理实一体教学',
+        description: '强调理论讲解、示范操作、任务实操与复盘一体化组织能力。',
+        items: [
+          createVocationalCapabilityItem({
+            id: 'item_vocational_demo_training',
+            name: '示范与实操衔接',
+            description: '能把讲解示范、任务实践和过程指导串成完整教学闭环。',
+            levelDescriptors: [
+              { text: '能完成基础示范和实操组织。' },
+              { text: '能在示范后组织学生完成标准化任务实操。' },
+              { text: '能针对差异化学情调配示范、实操和复盘节奏。' },
+              { text: '能形成可复制的理实一体教学范式并指导团队。' },
+            ],
+            evidenceExamples: ['实训课录像', '过程指导记录'],
+            evidenceTypes: ['CLASS_VIDEO', 'TASK_SHEET', 'OBSERVATION_NOTE'],
+          }),
+          createVocationalCapabilityItem({
+            id: 'item_vocational_process_guidance',
+            name: '过程指导与纠偏',
+            description: '能在学生实操过程中及时发现偏差并进行纠正指导。',
+            levelDescriptors: [
+              { text: '能指出明显操作错误。' },
+              { text: '能围绕关键步骤进行过程指导和即时反馈。' },
+              { text: '能基于过程数据和作品表现实施分层纠偏。' },
+              { text: '能建立团队共用的过程指导清单和观察标准。' },
+            ],
+            evidenceExamples: ['实操观察表', '作品讲评记录'],
+            evidenceTypes: ['CLASS_VIDEO', 'OBSERVATION_NOTE', 'ASSESSMENT_DATA'],
+          }),
+        ],
+      },
+      {
+        id: 'dim_vocational_safety',
+        name: '实训组织与安全规范',
+        description: '关注设备使用、现场组织、安全规范与质量控制。',
+        items: [
+          createVocationalCapabilityItem({
+            id: 'item_vocational_safety_control',
+            name: '安全规范落实',
+            description: '能组织实训现场并落实安全规范、设备检查和风险提示。',
+            levelDescriptors: [
+              { text: '能按要求完成实训前安全提醒。' },
+              { text: '能组织设备检查并规范学生操作流程。' },
+              { text: '能预判风险点并建立完整的安全控制措施。' },
+              { text: '能主导建设专业实训安全规范与巡检机制。' },
+            ],
+            evidenceExamples: ['实训安全检查表', '设备点检记录'],
+            evidenceTypes: ['SAFETY_RECORD', 'TASK_SHEET', 'OBSERVATION_NOTE'],
+            requiredReviewRoles: ['SELF', 'GROUP_LEADER', 'SUPERVISOR'],
+          }),
+          createVocationalCapabilityItem({
+            id: 'item_vocational_quality_control',
+            name: '过程质量控制',
+            description: '能对实训过程和产出质量进行标准化检查与反馈。',
+            levelDescriptors: [
+              { text: '能依据标准完成基础检查。' },
+              { text: '能根据质量标准进行过程抽检和反馈。' },
+              { text: '能构建任务过程与成果质量联动的检查机制。' },
+              { text: '能推动专业层面的质量标准和抽检模板共用。' },
+            ],
+            evidenceExamples: ['质量抽检表', '成果验收记录'],
+            evidenceTypes: ['ASSESSMENT_DATA', 'SAFETY_RECORD', 'REVIEW_RESULT'],
+            requiredEvidenceCount: isLead ? 3 : 2,
+          }),
+        ],
+      },
+      {
+        id: 'dim_vocational_assessment',
+        name: '学习评价与技能考核',
+        description: '强调技能评价、过程记录、结果反馈与证书考核衔接。',
+        items: [
+          createVocationalCapabilityItem({
+            id: 'item_vocational_rubric',
+            name: '技能考核量规设计',
+            description: '能设计与岗位标准一致的技能评价指标和评分规则。',
+            levelDescriptors: [
+              { text: '能按既有模板完成基础评分表。' },
+              { text: '能结合任务要求设计分项评价标准。' },
+              { text: '能把岗位标准、作品质量和过程表现纳入同一量规。' },
+              { text: '能建立专业共用的技能评价模板并推动应用。' },
+            ],
+            evidenceExamples: ['技能考核量规', '评分规则说明'],
+            evidenceTypes: ['ASSESSMENT_DATA', 'TASK_SHEET', 'RESEARCH_RECORD'],
+            requiredReviewRoles: isDual || isLead ? ['SELF', 'GROUP_LEADER', 'ENTERPRISE_MENTOR'] : ['SELF', 'GROUP_LEADER'],
+          }),
+          createVocationalCapabilityItem({
+            id: 'item_vocational_data_feedback',
+            name: '考核数据反馈应用',
+            description: '能利用技能考核数据分析问题并反馈到教学改进。',
+            levelDescriptors: [
+              { text: '能查看基础成绩和通过率。' },
+              { text: '能识别主要薄弱点并提出改进建议。' },
+              { text: '能形成阶段性复盘并调整教学与实训安排。' },
+              { text: '能建立专业层面的考核数据分析模板与改进机制。' },
+            ],
+            evidenceExamples: ['技能考核分析表', '改进复盘纪要'],
+            evidenceTypes: ['ASSESSMENT_DATA', 'RESEARCH_RECORD', 'REVIEW_RESULT'],
+          }),
+        ],
+      },
+      {
+        id: 'dim_vocational_enterprise',
+        name: '校企协同与企业实践',
+        description: '关注企业实践、行业标准引入和校企共建能力。',
+        items: [
+          createVocationalCapabilityItem({
+            id: 'item_vocational_enterprise_project',
+            name: '企业项目融入',
+            description: '能将企业项目、工单或真实案例转化为教学资源。',
+            levelDescriptors: [
+              { text: '能理解企业项目基本流程。' },
+              { text: '能把企业案例嵌入课程任务。' },
+              { text: '能持续引入真实项目并形成课程转化成果。' },
+              { text: '能牵头校企联合开发课程和项目资源。' },
+            ],
+            evidenceExamples: ['企业项目转化方案', '校企共建课程资料'],
+            evidenceTypes: ['ENTERPRISE_PRACTICE', 'LESSON_PLAN', 'RESEARCH_RECORD'],
+            requiredReviewRoles: ['SELF', 'GROUP_LEADER', 'ENTERPRISE_MENTOR'],
+          }),
+          createVocationalCapabilityItem({
+            id: 'item_vocational_industry_update',
+            name: '行业标准更新',
+            description: '能跟进行业技术标准变化并更新课程内容与设备要求。',
+            levelDescriptors: [
+              { text: '能关注行业标准和设备变化。' },
+              { text: '能将标准变化同步到课程和实训要求。' },
+              { text: '能组织团队完成课程与标准的对齐更新。' },
+              { text: '能主导专业建设中的行业标准引入机制。' },
+            ],
+            evidenceExamples: ['企业实践总结', '标准更新对照表'],
+            evidenceTypes: ['ENTERPRISE_PRACTICE', 'RESEARCH_RECORD', 'REVIEW_RESULT'],
+            requiredEvidenceCount: isLead ? 3 : 2,
+          }),
+        ],
+      },
+      {
+        id: 'dim_vocational_leadership',
+        name: '专业建设与团队引领',
+        description: '面向双师团队培养、专业建设和制度化沉淀。',
+        items: [
+          createVocationalCapabilityItem({
+            id: 'item_vocational_team_support',
+            name: '双师团队带教',
+            description: '能在团队中分享经验、带教青年教师并沉淀共同标准。',
+            levelDescriptors: [
+              { text: '能参与组内共备和基础分享。' },
+              { text: '能输出资源并支持同伴改进课堂或实训。' },
+              { text: '能牵头专题教研和双师共创活动。' },
+              { text: '能主导专业团队培养机制和跨校推广。' },
+            ],
+            evidenceExamples: ['带教记录', '专题教研成果'],
+            evidenceTypes: ['RESEARCH_RECORD', 'OBSERVATION_NOTE', 'REVIEW_RESULT'],
+            requiredEvidenceCount: isLecturer ? 1 : 2,
+            requiredReviewRoles: isLead ? ['SELF', 'GROUP_LEADER', 'SCHOOL_REVIEW'] : ['SELF', 'GROUP_LEADER'],
+            isGrowthOnly: isLecturer,
+          }),
+          createVocationalCapabilityItem({
+            id: 'item_vocational_program_building',
+            name: '专业建设推进',
+            description: '能参与或主导课程体系、实训条件和专业标准建设。',
+            levelDescriptors: [
+              { text: '能参与专业建设基础工作。' },
+              { text: '能承担课程或实训条件建设任务。' },
+              { text: '能牵头推进课程体系、标准和资源建设。' },
+              { text: '能主导专业建设方案、校企协同机制和成果推广。' },
+            ],
+            evidenceExamples: ['专业建设方案', '课程标准修订记录'],
+            evidenceTypes: ['RESEARCH_RECORD', 'ENTERPRISE_PRACTICE', 'REVIEW_RESULT'],
+            requiredEvidenceCount: isLead ? 3 : 2,
+            requiredReviewRoles: isLead ? ['SELF', 'GROUP_LEADER', 'SCHOOL_REVIEW'] : ['SELF', 'GROUP_LEADER'],
+            isGrowthOnly: isLecturer,
+          }),
+        ],
+      },
+    ],
+  });
 }
 
 function makeTeacherModel(levelScheme, roleLevelId, name, modelCode, description, tags = [], overrides = {}) {
@@ -598,9 +895,9 @@ function createEducationModels(levelScheme) {
     normalizeModel(makeTeacherModel(levelScheme, 'sequence_teacher_growth_l2', '基础教育青年教师能力模型', 'BASIC_EDU_TEACHER_YOUNG', '适用于基础教育青年教师阶段，强调课堂优化、学情分析和教研协同。', ['基础教育', '教师', '青年教师'])),
     normalizeModel(makeTeacherModel(levelScheme, 'sequence_teacher_growth_l3', '基础教育骨干教师能力模型', 'BASIC_EDU_TEACHER_BACKBONE', '适用于基础教育骨干教师阶段，强调示范引领、数据驱动改进和团队共建。', ['基础教育', '教师', '骨干教师'])),
     normalizeModel(makeTeacherModel(levelScheme, 'sequence_teacher_growth_l4', '基础教育学科带头人能力模型', 'BASIC_EDU_TEACHER_LEAD', '适用于基础教育学科带头人阶段，强调学科建设、跨校教研和体系化引领。', ['基础教育', '教师', '学科带头人'])),
-    normalizeModel(makeTeacherModel(levelScheme, 'sequence_vocational_teacher_growth_l1', '职业教育初任讲师能力模型', 'VOCATIONAL_EDU_TEACHER_LECTURER', '适用于职业教育初任讲师阶段，强调理实一体教学、实训组织和岗位任务转化。', ['职业教育', '职教教师', '初任讲师'], { industryId: 'industry_vocational_edu', roleId: 'role_vocational_teacher', idPrefix: 'cap_model_vocational_teacher' })),
-    normalizeModel(makeTeacherModel(levelScheme, 'sequence_vocational_teacher_growth_l2', '职业教育双师型骨干讲师能力模型', 'VOCATIONAL_EDU_TEACHER_DUAL', '适用于职业教育双师型骨干讲师阶段，强调项目化教学设计、企业案例融入和过程评价。', ['职业教育', '职教教师', '双师型'], { industryId: 'industry_vocational_edu', roleId: 'role_vocational_teacher', idPrefix: 'cap_model_vocational_teacher' })),
-    normalizeModel(makeTeacherModel(levelScheme, 'sequence_vocational_teacher_growth_l3', '职业教育专业带头人能力模型', 'VOCATIONAL_EDU_TEACHER_LEAD', '适用于职业教育专业带头人阶段，强调专业建设、校企协同和双师团队引领。', ['职业教育', '职教教师', '专业带头人'], { industryId: 'industry_vocational_edu', roleId: 'role_vocational_teacher', idPrefix: 'cap_model_vocational_teacher' })),
+    normalizeModel(makeVocationalTeacherModel(levelScheme, 'sequence_vocational_teacher_growth_l1', '职业教育初任讲师能力模型', 'VOCATIONAL_EDU_TEACHER_LECTURER', '适用于职业教育初任讲师阶段，强调岗位任务转化、理实一体教学和基础实训组织。', ['职业教育', '职教教师', '初任讲师'])),
+    normalizeModel(makeVocationalTeacherModel(levelScheme, 'sequence_vocational_teacher_growth_l2', '职业教育双师型骨干讲师能力模型', 'VOCATIONAL_EDU_TEACHER_DUAL', '适用于职业教育双师型骨干讲师阶段，强调企业项目融入、技能评价和校企协同。', ['职业教育', '职教教师', '双师型'])),
+    normalizeModel(makeVocationalTeacherModel(levelScheme, 'sequence_vocational_teacher_growth_l3', '职业教育专业带头人能力模型', 'VOCATIONAL_EDU_TEACHER_LEAD', '适用于职业教育专业带头人阶段，强调专业建设、团队带教和校企共建机制。', ['职业教育', '职教教师', '专业带头人'])),
     normalizeModel(makeTeacherModel(levelScheme, 'sequence_higher_teacher_growth_l1', '高等教育青年教师能力模型', 'HIGHER_EDU_TEACHER_YOUNG', '适用于高校青年教师阶段，强调课程建设、课堂组织和学业反馈。', ['高等教育', '高校教师', '青年教师'], { industryId: 'industry_higher_edu', roleId: 'role_higher_teacher', idPrefix: 'cap_model_higher_teacher' })),
     normalizeModel(makeTeacherModel(levelScheme, 'sequence_higher_teacher_growth_l2', '高等教育骨干教师能力模型', 'HIGHER_EDU_TEACHER_BACKBONE', '适用于高校骨干教师阶段，强调教学研究、课程迭代和学生发展支持。', ['高等教育', '高校教师', '骨干教师'], { industryId: 'industry_higher_edu', roleId: 'role_higher_teacher', idPrefix: 'cap_model_higher_teacher' })),
     normalizeModel(makeTeacherModel(levelScheme, 'sequence_higher_teacher_growth_l3', '高等教育学科负责人能力模型', 'HIGHER_EDU_TEACHER_ACADEMIC', '适用于高校学科负责人阶段，强调课程体系规划、团队带教和学术育人协同。', ['高等教育', '高校教师', '学科负责人'], { industryId: 'industry_higher_edu', roleId: 'role_higher_teacher', idPrefix: 'cap_model_higher_teacher' })),
@@ -936,6 +1233,32 @@ function appendModelIfMissing(list, template) {
   list.push(normalizeModel(template));
 }
 
+function shouldUpgradePublishedTemplate(existing, template) {
+  if (existing?.status !== 'PUBLISHED') return false;
+  if (existing?.roleId !== template?.roleId) return false;
+  const existingDimensionIds = new Set((existing?.dimensions || []).map((item) => item.id || item.name));
+  const templateDimensionIds = new Set((template?.dimensions || []).map((item) => item.id || item.name));
+  const existingLooksGenericTeacher = existingDimensionIds.has('dim_teacher_design') || existingDimensionIds.has('教学设计');
+  const templateLooksVocational = templateDimensionIds.has('dim_vocational_task_transfer') || templateDimensionIds.has('岗位任务转化');
+  return existingLooksGenericTeacher && templateLooksVocational;
+}
+
+function mergeModelTemplate(list, template) {
+  const targetIndex = list.findIndex((item) => item.modelCode === template.modelCode);
+  if (targetIndex === -1) {
+    list.push(normalizeModel(template));
+    return;
+  }
+  const existing = list[targetIndex];
+  if (!shouldUpgradePublishedTemplate(existing, template)) return;
+  list[targetIndex] = normalizeModel({
+    ...template,
+    id: existing.id,
+    createdAt: existing.createdAt,
+    updatedAt: nowText(),
+  });
+}
+
 function upgradeLegacyEducationModels(list) {
   const legacyMap = {
     EDU_TEACHER_NEW: {
@@ -1000,7 +1323,10 @@ function migrateToEducationSegments(data) {
     }
     return item;
   });
-  educationModels.forEach((item) => appendModelIfMissing(next.models, item));
+  educationModels.forEach((item) => {
+    mergeModelTemplate(next.models, item);
+    appendModelIfMissing(next.models, item);
+  });
 
   return next;
 }

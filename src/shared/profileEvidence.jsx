@@ -291,6 +291,23 @@ const MOCK_RECORD_CANDIDATES = Object.entries(MOCK_SOURCE_RECORDS).flatMap(([sou
   }))
 ));
 
+function buildAiSuggestion(record, context = {}) {
+  const relatedItemName = context.focusItemName || record.relatedItemNames?.[0] || record.tag || '当前能力项';
+  return {
+    draftType: 'SUGGEST_ONLY',
+    generatedBy: '评价辅助智能体',
+    confidence: context.confidence || 0.78,
+    reviewStatus: 'PENDING_HUMAN',
+    summary: `已基于当前证据为“${relatedItemName}”生成建议稿，仅供人工确认。`,
+    suggestions: [
+      `建议优先引用“${record.title}”中的关键片段，说明本次证据如何支撑 ${relatedItemName}。`,
+      '如需进入正式评价，请补充评价主体意见和证据时间线，再提交人工复核。',
+    ],
+    references: [record.id],
+    caution: 'AI 仅负责摘要、抽取和建议稿生成，不能直接形成最终评分或认定结论。',
+  };
+}
+
 export function getSequenceForRole(role, sequences) {
   return sequences.find((item) => item.id === role?.sequenceId);
 }
@@ -302,12 +319,12 @@ export function getRoleLevel(role, roleLevelId, sequences) {
 
 function buildStatusTag(score) {
   if (score >= 86) {
-    return { label: '已形成优势', color: 'success' };
+    return { label: '证据充分', color: 'success' };
   }
   if (score >= 72) {
-    return { label: '基本匹配', color: 'processing' };
+    return { label: '证据初步具备', color: 'processing' };
   }
-  return { label: '待补强', color: 'warning' };
+  return { label: '证据待补充', color: 'warning' };
 }
 
 function pushUnique(list, value) {
@@ -357,13 +374,13 @@ function buildCellCoverage(dimensionIndex, itemIndex, levelIndex, scenario) {
 function buildLevelMatchStatus(scenario) {
   switch (scenario) {
     case 'strong_match':
-      return { key: scenario, label: '高度匹配', shortLabel: '高匹配', color: 'success' };
+      return { key: scenario, label: '证据强支撑', shortLabel: '强支撑', color: 'success' };
     case 'basic_match':
-      return { key: scenario, label: '基本匹配', shortLabel: '基本匹配', color: 'processing' };
+      return { key: scenario, label: '证据初步具备', shortLabel: '初步具备', color: 'processing' };
     case 'low_match':
-      return { key: scenario, label: '记录较弱', shortLabel: '低匹配', color: 'warning' };
+      return { key: scenario, label: '证据偏弱', shortLabel: '偏弱', color: 'warning' };
     default:
-      return { key: 'missing_record', label: '暂无记录', shortLabel: '暂无记录', color: 'default' };
+      return { key: 'missing_record', label: '证据缺失', shortLabel: '缺证', color: 'default' };
   }
 }
 
@@ -413,7 +430,7 @@ function buildLevelGrowthAdvice({ dimensionName, item, level, descriptorText, sc
       summary: `当前已有资料与 ${level.label} 建立了关联，但对“${targetText}”的体现还不够完整，建议补强更直接的过程证据和结果反馈。`,
       actions: [
         `补充更能体现 ${level.label} 行为表现的 ${exampleText}，减少泛材料占比。`,
-        '在记录中补上关键片段、数据变化或复盘结论，提高匹配度和可信度。',
+        '在记录中补上关键片段、数据变化或复盘结论，提高证据覆盖度和可信度。',
       ],
     };
   }
@@ -538,6 +555,10 @@ function enrichEvidenceRecord(record, sourceKey, relationMap = {}) {
     coverage: averageCoverage,
     statusLabel: status.label,
     statusColor: status.color,
+    aiSuggestion: record.aiSuggestion || buildAiSuggestion({
+      ...record,
+      relatedItemNames: relation.items,
+    }),
   };
 }
 
@@ -589,7 +610,7 @@ function buildItemLevelSummaryFromCells(cellMappings = []) {
     })),
     focusLevelKey: focusCell?.levelKey || null,
     focusLevelLabel: focusCell?.levelLabel || null,
-    summary: focusCell?.growthAdvice?.summary || '当前等级支撑较完整，可继续冲刺更高等级。',
+    summary: focusCell?.growthAdvice?.summary || '当前等级证据较完整，可继续补充更高阶证据。',
     actions: focusCell?.growthAdvice?.actions || [],
   };
 }
@@ -732,6 +753,11 @@ export function buildModelGrowthRecordSnapshot(model, industries, roles, sequenc
         statusLabel: status.label,
         statusColor: status.color,
         note: latestRecord?.summary || levelSummary.summary,
+        evidenceTypes: item.evidenceTypes || [],
+        requiredEvidenceCount: item.requiredEvidenceCount || 1,
+        requiredReviewRoles: item.requiredReviewRoles || [],
+        isGrowthOnly: Boolean(item.isGrowthOnly),
+        aiAssistMode: item.aiAssistMode || 'SUGGEST_ONLY',
       };
 
       if (latestRecord) {
@@ -830,14 +856,31 @@ export function buildModelGrowthRecordSnapshot(model, industries, roles, sequenc
   };
 }
 
-export function pickCurrentTeacherModel(models, roles, sequences) {
-  const teacherRole = roles.find((item) => item.name === '基础教育教师')
+export function pickCurrentTeacherModel(models, roles, sequences, options = {}) {
+  const teacherRole = (options.preferredRoleCode
+    ? roles.find((item) => item.code === options.preferredRoleCode)
+    : null)
+    || (options.preferredRoleName
+      ? roles.find((item) => item.name === options.preferredRoleName)
+      : null)
+    || roles.find((item) => item.name === '基础教育教师')
     || roles.find((item) => item.name?.includes('教师'))
     || roles.find((item) => item.code === 'BASIC_TEACHER' || item.code === 'TEACHER')
     || roles[0];
   if (!teacherRole) return null;
   const sequence = getSequenceForRole(teacherRole, sequences);
-  const preferredLevel = sequence?.levels?.find((item) => item.name.includes('青年')) || sequence?.levels?.[1] || sequence?.levels?.[0];
+  const preferredLevel = (options.preferredRoleLevelId
+    ? sequence?.levels?.find((item) => item.id === options.preferredRoleLevelId)
+    : null)
+    || (options.preferredLevelCode
+      ? sequence?.levels?.find((item) => item.code === options.preferredLevelCode)
+      : null)
+    || (options.preferredLevelName
+      ? sequence?.levels?.find((item) => item.name.includes(options.preferredLevelName))
+      : null)
+    || sequence?.levels?.find((item) => item.name.includes('青年'))
+    || sequence?.levels?.[1]
+    || sequence?.levels?.[0];
   return models.find((item) => item.status === 'PUBLISHED' && item.roleId === teacherRole.id && item.roleLevelId === preferredLevel?.id)
     || models.find((item) => item.status === 'PUBLISHED' && item.roleId === teacherRole.id)
     || models.find((item) => item.status === 'PUBLISHED')
@@ -963,7 +1006,7 @@ function buildGrowthRecordBundle(snapshot, growthRecord) {
   } else if (bundleItems.length > 1 && focusItemName) {
     bundleSummary = `由 ${bundleItems.length} 条资料组成，围绕“${focusItemName}”提供支撑。`;
   } else if (bundleItems.length > 1) {
-    bundleSummary = `由 ${bundleItems.length} 条资料组成，用于补充当前成长判断。`;
+    bundleSummary = `由 ${bundleItems.length} 条资料组成，用于补充当前成长研判。`;
   }
 
   return {
@@ -988,6 +1031,7 @@ export function resolveGrowthRecordFromSnapshot(snapshot, growthRecordId, focus 
     ...focus,
     focusLevelInsight,
     focusItemLevelSummary,
+    aiSuggestion: growthRecord.aiSuggestion || buildAiSuggestion(growthRecord, focus),
   };
   return {
     ...mergedGrowthRecord,
@@ -1070,7 +1114,7 @@ export function GrowthRecordDetailDrawer({ growthRecord, open, onClose }) {
         </div>
         <div className="shared-record-drawer-match">
           <div>
-            <span>当前匹配度</span>
+            <span>当前证据覆盖度</span>
             <strong>{currentCoverage}%</strong>
           </div>
           <Progress percent={currentCoverage} size="small" strokeColor={SOURCE_META[growthRecord.sourceKey].color} />
@@ -1092,7 +1136,7 @@ export function GrowthRecordDetailDrawer({ growthRecord, open, onClose }) {
               </div>
             ) : null}
             <p className="shared-record-drawer-note">
-              {focusLevelInsight?.growthAdvice?.summary || focusItemLevelSummary?.summary || '当前等级支撑较完整，可继续冲刺更高等级。'}
+              {focusLevelInsight?.growthAdvice?.summary || focusItemLevelSummary?.summary || '当前等级证据较完整，可继续补充更高阶证据。'}
             </p>
             {(focusLevelInsight?.growthAdvice?.actions || focusItemLevelSummary?.actions || []).length ? (
               <ul className="shared-record-drawer-list">
@@ -1156,6 +1200,24 @@ export function GrowthRecordDetailDrawer({ growthRecord, open, onClose }) {
 
       <Card bordered={false} className="shared-record-drawer-card">
         <div className="shared-record-drawer-section-head">
+          <span>AI 建议稿</span>
+          <Tag color="processing">AI生成 · 待人工确认</Tag>
+        </div>
+        <p className="shared-record-drawer-note">{growthRecord.aiSuggestion?.summary || '当前记录暂无 AI 建议稿。'}</p>
+        {growthRecord.aiSuggestion?.suggestions?.length ? (
+          <ul className="shared-record-drawer-list">
+            {growthRecord.aiSuggestion.suggestions.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        ) : null}
+        {growthRecord.aiSuggestion?.caution ? (
+          <p className="shared-record-drawer-note">{growthRecord.aiSuggestion.caution}</p>
+        ) : null}
+      </Card>
+
+      <Card bordered={false} className="shared-record-drawer-card">
+        <div className="shared-record-drawer-section-head">
           <span>关键结论</span>
         </div>
         <ul className="shared-record-drawer-list">
@@ -1208,7 +1270,7 @@ export function GrowthRecordDetailDrawer({ growthRecord, open, onClose }) {
   const historyContent = (
     <Card bordered={false} className="shared-record-drawer-card">
       <div className="shared-record-drawer-section-head">
-        <span>历史记录与匹配趋势</span>
+        <span>历史记录与覆盖趋势</span>
         <Tag>{growthRecord.historyRecords?.length || 0} 条记录</Tag>
       </div>
       <p className="shared-record-drawer-note">{growthRecord.trendSummary || '暂无更多历史记录'}</p>

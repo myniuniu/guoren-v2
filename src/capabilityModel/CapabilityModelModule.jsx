@@ -14,6 +14,7 @@ import {
   Segmented,
   Space,
   Statistic,
+  Switch,
   Table,
   Tabs,
   Tag,
@@ -37,6 +38,9 @@ import {
 } from '@ant-design/icons';
 import {
   CAPABILITY_MODEL_STATUS_OPTIONS,
+  CAPABILITY_ITEM_AI_ASSIST_MODE_OPTIONS,
+  CAPABILITY_ITEM_EVIDENCE_TYPE_OPTIONS,
+  CAPABILITY_ITEM_REVIEW_ROLE_OPTIONS,
   INDUSTRY_STATUS_OPTIONS,
   ROLE_STATUS_OPTIONS,
   capabilityModelApi,
@@ -53,6 +57,9 @@ import '../system/SystemModule.css';
 import './CapabilityModelModule.css';
 
 const { TextArea } = Input;
+const EVIDENCE_TYPE_LABEL_MAP = Object.fromEntries(CAPABILITY_ITEM_EVIDENCE_TYPE_OPTIONS.map((item) => [item.value, item.label]));
+const REVIEW_ROLE_LABEL_MAP = Object.fromEntries(CAPABILITY_ITEM_REVIEW_ROLE_OPTIONS.map((item) => [item.value, item.label]));
+const AI_ASSIST_MODE_LABEL_MAP = Object.fromEntries(CAPABILITY_ITEM_AI_ASSIST_MODE_OPTIONS.map((item) => [item.value, item.label]));
 
 function formatDateTime(value) {
   if (!value) return '-';
@@ -326,6 +333,11 @@ function parseCapabilityModelMarkdown(text, industries, roles, sequences, fileNa
         description: '',
         evidenceExamples: [],
         levelDescriptors: [],
+        evidenceTypes: [],
+        requiredEvidenceCount: 1,
+        requiredReviewRoles: [],
+        isGrowthOnly: false,
+        aiAssistMode: 'SUGGEST_ONLY',
       };
       cursor += 1;
 
@@ -338,6 +350,37 @@ function parseCapabilityModelMarkdown(text, industries, roles, sequences, fileNa
         if (detailLine.startsWith('### ') || detailLine.startsWith('## ')) break;
         if (detailLine.startsWith('- 能力项说明：')) {
           item.description = detailLine.replace('- 能力项说明：', '').trim();
+          cursor += 1;
+          continue;
+        }
+        if (detailLine.startsWith('- 证据类型：')) {
+          const value = detailLine.replace('- 证据类型：', '').trim();
+          item.evidenceTypes = value && value !== '-'
+            ? value.split('、').map((entry) => entry.trim()).filter(Boolean)
+            : [];
+          cursor += 1;
+          continue;
+        }
+        if (detailLine.startsWith('- 最低证据数：')) {
+          item.requiredEvidenceCount = Number(detailLine.replace('- 最低证据数：', '').trim()) || 1;
+          cursor += 1;
+          continue;
+        }
+        if (detailLine.startsWith('- 评价主体：')) {
+          const value = detailLine.replace('- 评价主体：', '').trim();
+          item.requiredReviewRoles = value && value !== '-'
+            ? value.split('、').map((entry) => entry.trim()).filter(Boolean)
+            : [];
+          cursor += 1;
+          continue;
+        }
+        if (detailLine.startsWith('- 成长档案专用：')) {
+          item.isGrowthOnly = detailLine.replace('- 成长档案专用：', '').trim() === '是';
+          cursor += 1;
+          continue;
+        }
+        if (detailLine.startsWith('- AI辅助策略：')) {
+          item.aiAssistMode = detailLine.replace('- AI辅助策略：', '').trim() || 'SUGGEST_ONLY';
           cursor += 1;
           continue;
         }
@@ -415,10 +458,17 @@ function parseCapabilityModelMarkdown(text, industries, roles, sequences, fileNa
       ...dimension,
       items: (dimension.items || []).map((item) => ({
         ...item,
+        evidenceTypes: (item.evidenceTypes || []).map((entry) => (
+          CAPABILITY_ITEM_EVIDENCE_TYPE_OPTIONS.find((option) => option.label === entry)?.value || entry
+        )),
         levelDescriptors: levelScheme.levels.map((level, index) => ({
           levelKey: level.key,
           text: item.levelDescriptors?.[index]?.text || '',
         })),
+        requiredReviewRoles: (item.requiredReviewRoles || []).map((entry) => (
+          CAPABILITY_ITEM_REVIEW_ROLE_OPTIONS.find((option) => option.label === entry)?.value || entry
+        )),
+        aiAssistMode: CAPABILITY_ITEM_AI_ASSIST_MODE_OPTIONS.find((option) => option.label === item.aiAssistMode)?.value || item.aiAssistMode,
       })),
     })),
   });
@@ -429,7 +479,7 @@ function parseCapabilityModelJson(text, industries, roles, sequences, fileName =
   try {
     parsed = JSON.parse(text);
   } catch (error) {
-    throw new Error('JSON 文件解析失败');
+    throw new Error('JSON 文件解析失败', { cause: error });
   }
 
   const payload = parsed?.model || parsed;
@@ -508,6 +558,11 @@ function buildCapabilityModelMarkdown(model, industries, roles, sequences) {
       lines.push(`### ${dimensionIndex + 1}.${itemIndex + 1} ${item.name || '未命名能力项'}`);
       lines.push('');
       lines.push(`- 能力项说明：${item.description || '未填写能力项说明'}`);
+      lines.push(`- 证据类型：${item.evidenceTypes?.length ? item.evidenceTypes.map((entry) => EVIDENCE_TYPE_LABEL_MAP[entry] || entry).join('、') : '-'}`);
+      lines.push(`- 最低证据数：${item.requiredEvidenceCount || 1}`);
+      lines.push(`- 评价主体：${item.requiredReviewRoles?.length ? item.requiredReviewRoles.map((entry) => REVIEW_ROLE_LABEL_MAP[entry] || entry).join('、') : '-'}`);
+      lines.push(`- 成长档案专用：${item.isGrowthOnly ? '是' : '否'}`);
+      lines.push(`- AI辅助策略：${AI_ASSIST_MODE_LABEL_MAP[item.aiAssistMode] || item.aiAssistMode || '-'}`);
       if (item.evidenceExamples?.length) {
         lines.push('- 成长记录示例：');
         item.evidenceExamples.forEach((example) => {
@@ -550,7 +605,7 @@ function CapabilityModelPreview({ model, industries, roles, sequences }) {
     try {
       await navigator.clipboard.writeText(markdownText);
       message.success('Markdown 已复制');
-    } catch (error) {
+    } catch {
       message.error('复制 Markdown 失败');
     }
   }
@@ -616,6 +671,15 @@ function CapabilityModelPreview({ model, industries, roles, sequences }) {
                         <td>
                           <div className="cap-model-matrix-item">{item.name}</div>
                           <div className="cap-model-matrix-desc">{item.description || '未填写能力项说明'}</div>
+                          <div className="cap-model-matrix-desc">
+                            证据类型：{item.evidenceTypes?.length ? item.evidenceTypes.map((entry) => EVIDENCE_TYPE_LABEL_MAP[entry] || entry).join('、') : '未配置'}
+                          </div>
+                          <div className="cap-model-matrix-desc">
+                            最低证据数：{item.requiredEvidenceCount || 1} · 评价主体：{item.requiredReviewRoles?.length ? item.requiredReviewRoles.map((entry) => REVIEW_ROLE_LABEL_MAP[entry] || entry).join('、') : '未配置'}
+                          </div>
+                          <div className="cap-model-matrix-desc">
+                            适用范围：{item.isGrowthOnly ? '仅成长档案' : '可进入正式评价'} · AI：{AI_ASSIST_MODE_LABEL_MAP[item.aiAssistMode] || item.aiAssistMode || '未配置'}
+                          </div>
                           {item.evidenceExamples?.length ? (
                             <div className="cap-model-matrix-record">
                               成长记录示例：{item.evidenceExamples.join('、')}
@@ -1359,6 +1423,17 @@ export default function CapabilityModelModule() {
     });
   }
 
+  function updateItemStringListField(dimensionIndex, itemIndex, field, values) {
+    updateModelDraftState((draft) => {
+      const dimension = draft.dimensions[dimensionIndex];
+      dimension.items[itemIndex] = {
+        ...dimension.items[itemIndex],
+        [field]: Array.isArray(values) ? values : [],
+      };
+      return draft;
+    });
+  }
+
   const modelColumns = [
     {
       title: '模型名称',
@@ -2026,6 +2101,61 @@ export default function CapabilityModelModule() {
                                     value={activeItem.description}
                                     onChange={(event) => updateItemField(activeDimensionIndex, activeItemIndex, 'description', event.target.value)}
                                     placeholder="说明该能力项关注的行为表现"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="cap-model-form-grid cap-model-form-grid-2">
+                                <div>
+                                  <div className="cap-model-field-label">证据类型</div>
+                                  <Select
+                                    mode="multiple"
+                                    value={activeItem.evidenceTypes || []}
+                                    onChange={(values) => updateItemStringListField(activeDimensionIndex, activeItemIndex, 'evidenceTypes', values)}
+                                    options={CAPABILITY_ITEM_EVIDENCE_TYPE_OPTIONS}
+                                    placeholder="选择该能力项允许使用的证据类型"
+                                  />
+                                </div>
+                                <div>
+                                  <div className="cap-model-field-label">评价主体</div>
+                                  <Select
+                                    mode="multiple"
+                                    value={activeItem.requiredReviewRoles || []}
+                                    onChange={(values) => updateItemStringListField(activeDimensionIndex, activeItemIndex, 'requiredReviewRoles', values)}
+                                    options={CAPABILITY_ITEM_REVIEW_ROLE_OPTIONS}
+                                    placeholder="选择该能力项的复核主体"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="cap-model-form-grid cap-model-form-grid-2">
+                                <div>
+                                  <div className="cap-model-field-label">最低证据数</div>
+                                  <InputNumber
+                                    min={1}
+                                    max={10}
+                                    value={activeItem.requiredEvidenceCount || 1}
+                                    onChange={(value) => updateItemField(activeDimensionIndex, activeItemIndex, 'requiredEvidenceCount', value || 1)}
+                                  />
+                                </div>
+                                <div>
+                                  <div className="cap-model-field-label">AI辅助策略</div>
+                                  <Select
+                                    value={activeItem.aiAssistMode || 'SUGGEST_ONLY'}
+                                    onChange={(value) => updateItemField(activeDimensionIndex, activeItemIndex, 'aiAssistMode', value)}
+                                    options={CAPABILITY_ITEM_AI_ASSIST_MODE_OPTIONS}
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="cap-model-form-grid cap-model-form-grid-2">
+                                <div>
+                                  <div className="cap-model-field-label">成长档案专用</div>
+                                  <Switch
+                                    checked={Boolean(activeItem.isGrowthOnly)}
+                                    checkedChildren="是"
+                                    unCheckedChildren="否"
+                                    onChange={(checked) => updateItemField(activeDimensionIndex, activeItemIndex, 'isGrowthOnly', checked)}
                                   />
                                 </div>
                               </div>

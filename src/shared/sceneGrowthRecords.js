@@ -121,12 +121,12 @@ function clampCoverage(score) {
 
 function buildStatusTag(score) {
   if (score >= 86) {
-    return { label: '已形成优势', color: 'success' };
+    return { label: '证据充分', color: 'success' };
   }
   if (score >= 72) {
-    return { label: '基本匹配', color: 'processing' };
+    return { label: '证据初步具备', color: 'processing' };
   }
-  return { label: '待补强', color: 'warning' };
+  return { label: '证据待补充', color: 'warning' };
 }
 
 function normalizeText(value) {

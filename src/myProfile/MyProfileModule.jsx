@@ -16,6 +16,7 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import { capabilityModelApi } from '../capabilityModel/api';
+import { teacherEvaluationApi } from '../teacherEvaluation/api';
 import {
   buildModelGrowthRecordSnapshot,
   GrowthRecordDetailDrawer,
@@ -37,13 +38,13 @@ import '../shared/profileEvidence.css';
 import './MyProfileModule.css';
 
 const PROFILE_BASE = {
-  name: '林知夏',
-  roleTitle: '语文教师',
-  schoolName: '海右实验学校',
-  departmentName: '初中语文教研组',
+  name: '周岚',
+  roleTitle: '智能制造专业教师',
+  schoolName: '海右职业技术学院',
+  departmentName: '智能制造教研组',
   tenureLabel: '入职第 5 年',
-  portraitTag: '青年教师',
-  growthHint: '当前处于“夯实课堂实施 + 强化学习评价”阶段',
+  portraitTag: '双师型骨干教师',
+  growthHint: '当前处于“强化校企协同 + 完善技能考核证据链”阶段',
 };
 
 const RESOURCE_FILE_TYPE_LABELS = {
@@ -67,14 +68,22 @@ const RESOURCE_PARSE_STATUS_LABELS = {
   failed: '解析失败',
 };
 
+const REVIEW_ROLE_LABELS = {
+  SELF: '本人',
+  GROUP_LEADER: '教研组长',
+  SUPERVISOR: '督导/教学管理者',
+  ENTERPRISE_MENTOR: '企业导师',
+  SCHOOL_REVIEW: '校级评审组',
+};
+
 function buildCoverageStatus(score) {
   if (score >= 86) {
-    return { label: '已形成优势', color: 'success' };
+    return { label: '证据充分', color: 'success' };
   }
   if (score >= 72) {
-    return { label: '基本匹配', color: 'processing' };
+    return { label: '证据初步具备', color: 'processing' };
   }
-  return { label: '待补强', color: 'warning' };
+  return { label: '证据待补充', color: 'warning' };
 }
 
 function clampCoverage(score) {
@@ -110,7 +119,11 @@ function buildTrendSummary(historyRecords = []) {
   const earliestRecord = historyRecords[historyRecords.length - 1];
   const delta = latestRecord.coverage - earliestRecord.coverage;
   const direction = delta > 0 ? '提升' : delta < 0 ? '回落' : '持平';
-  return `近 ${historyRecords.length} 条资料，匹配度从 ${earliestRecord.coverage}% ${direction}到 ${latestRecord.coverage}%。`;
+  return `近 ${historyRecords.length} 条资料，证据覆盖度从 ${earliestRecord.coverage}% ${direction}到 ${latestRecord.coverage}%。`;
+}
+
+function formatReviewRoles(reviewRoles = []) {
+  return reviewRoles.map((item) => REVIEW_ROLE_LABELS[item] || item).join('、');
 }
 
 function buildResourcePath(item, resourceLibData) {
@@ -499,25 +512,36 @@ export default function MyProfileModule() {
       await Promise.all([
         capabilityModelApi.seed(),
         sceneApi.seed(),
+        teacherEvaluationApi.seed(),
       ]);
-      const [industries, sequences, roles, models] = await Promise.all([
+      const [industries, sequences, roles, models, evaluationRecords] = await Promise.all([
         capabilityModelApi.listIndustries(),
         capabilityModelApi.listSequences(),
         capabilityModelApi.listRoles(),
         capabilityModelApi.listModels(),
+        teacherEvaluationApi.listRecords(),
       ]);
-      const currentModel = pickCurrentTeacherModel(models, roles, sequences);
+      const currentModel = pickCurrentTeacherModel(models, roles, sequences, {
+        preferredRoleCode: 'VOCATIONAL_TEACHER',
+        preferredLevelCode: 'DUAL',
+      });
       const baseSnapshot = buildModelGrowthRecordSnapshot(currentModel, industries, roles, sequences);
       const resourceLibData = loadResourceLib();
       const resourceAwareSnapshot = buildResourceLibrarySourceSnapshot(baseSnapshot, resourceLibData);
       const scenes = await sceneApi.listScenes();
       const archivedSceneRecords = listArchivedSceneGrowthRecords(scenes, resourceAwareSnapshot?.modelDefinition);
       const sceneAwareSnapshot = mergeSceneArchivedRecordSnapshot(resourceAwareSnapshot, archivedSceneRecords);
+      const currentTeacherEvaluationRecords = evaluationRecords.filter((item) => item.teacherName === PROFILE_BASE.name);
       const nextSnapshot = sceneAwareSnapshot ? {
         ...sceneAwareSnapshot,
         profile: {
           ...PROFILE_BASE,
           ...sceneAwareSnapshot.context,
+        },
+        evaluationSummary: {
+          totalRecords: currentTeacherEvaluationRecords.length,
+          inReviewCount: currentTeacherEvaluationRecords.filter((item) => item.status === 'IN_REVIEW').length,
+          supplementRequiredCount: currentTeacherEvaluationRecords.filter((item) => item.status === 'SUPPLEMENT_REQUIRED').length,
         },
       } : null;
       setSnapshot(nextSnapshot);
@@ -566,6 +590,11 @@ export default function MyProfileModule() {
               建议优先关注 {record.levelFocusLabel || '当前等级'}：{record.adviceSummary}
             </span>
           ) : null}
+          <span className="profile-archive-item-submeta">
+            证据要求：至少 {record.requiredEvidenceCount || 1} 条
+            {record.requiredReviewRoles?.length ? ` · 评价主体 ${formatReviewRoles(record.requiredReviewRoles)}` : ''}
+            {record.isGrowthOnly ? ' · 仅成长档案' : ' · 可进入正式评价'}
+          </span>
         </div>
       ),
     },
@@ -637,7 +666,7 @@ export default function MyProfileModule() {
       },
     },
     {
-      title: '匹配度',
+      title: '证据覆盖度',
       dataIndex: 'coverage',
       key: 'coverage',
       width: 150,
@@ -742,12 +771,14 @@ export default function MyProfileModule() {
             <div><span>当前模型</span><strong>{snapshot.currentModel.name}</strong></div>
             <div><span>模型编码</span><strong>{snapshot.currentModel.code}</strong></div>
             <div><span>成长判断</span><strong>{snapshot.profile.growthHint}</strong></div>
+            <div><span>正式评价实例</span><strong>{snapshot.evaluationSummary?.totalRecords || 0} 条</strong></div>
+            <div><span>评审中实例</span><strong>{snapshot.evaluationSummary?.inReviewCount || 0} 条</strong></div>
           </div>
         </Card>
 
         <Card bordered={false} className="profile-archive-panel">
           <div className="profile-archive-panel-head">
-            <span>维度匹配概览</span>
+            <span>维度证据概览</span>
             <Tag color="green">{snapshot.currentModel.dimensionCount} 个能力类</Tag>
           </div>
           <div className="profile-archive-dimension-list">
@@ -779,7 +810,7 @@ export default function MyProfileModule() {
               </div>
             </div>
             <div className="profile-archive-source-stats">
-              <div><span>平均匹配度</span><strong>{item.averageScore}%</strong></div>
+              <div><span>平均覆盖度</span><strong>{item.averageScore}%</strong></div>
               <div><span>记录条数</span><strong>{item.evidenceCount}</strong></div>
               <div>
                 <span>最近记录</span>
@@ -805,11 +836,11 @@ export default function MyProfileModule() {
           <div className="profile-archive-panel-head-main">
             <Space wrap>
               <Tag color="blue">当前模型 {snapshot.currentModel.itemCount} 项</Tag>
-              <Tag color="green">已形成优势 {snapshot.summary.strongItemCount} 项</Tag>
-              <Tag color="warning">待补强 {snapshot.summary.focusItemCount} 项</Tag>
-              <Tag>缺记录等级 {snapshot.summary.missingLevelCount} 个</Tag>
-              <Tag color="warning">低匹配等级 {snapshot.summary.lowMatchLevelCount} 个</Tag>
-              <Tag color="success">高匹配等级 {snapshot.summary.strongLevelCount} 个</Tag>
+              <Tag color="green">证据充分 {snapshot.summary.strongItemCount} 项</Tag>
+              <Tag color="warning">待补证 {snapshot.summary.focusItemCount} 项</Tag>
+              <Tag>缺证等级 {snapshot.summary.missingLevelCount} 个</Tag>
+              <Tag color="warning">证据偏弱等级 {snapshot.summary.lowMatchLevelCount} 个</Tag>
+              <Tag color="success">证据强支撑等级 {snapshot.summary.strongLevelCount} 个</Tag>
             </Space>
           </div>
           <Segmented
@@ -863,11 +894,25 @@ export default function MyProfileModule() {
                 </div>
                 <div className="profile-archive-matrix">
                   <table>
+                    <colgroup>
+                      <col className="profile-archive-matrix-col-item" />
+                      {(modelDefinition?.levelScheme?.levels || []).map((level) => (
+                        <col key={level.key} className="profile-archive-matrix-col-level" />
+                      ))}
+                    </colgroup>
                     <thead>
                       <tr>
-                        <th>能力项</th>
+                        <th>
+                          <div className="profile-archive-matrix-head-main">能力项</div>
+                          <div className="profile-archive-matrix-head-sub">要求与成长记录</div>
+                        </th>
                         {(modelDefinition?.levelScheme?.levels || []).map((level) => (
-                          <th key={level.key}>{level.label}</th>
+                          <th key={level.key}>
+                            <div className="profile-archive-matrix-level-head">
+                              <strong>{level.label}</strong>
+                              <span>等级描述与证据</span>
+                            </div>
+                          </th>
                         ))}
                       </tr>
                     </thead>
@@ -877,6 +922,16 @@ export default function MyProfileModule() {
                           <td>
                             <div className="profile-archive-matrix-item">{item.name}</div>
                             <div className="profile-archive-matrix-desc">{item.description || '未填写能力项说明'}</div>
+                            <div className="profile-archive-matrix-item-meta">
+                              <span>至少 {item.requiredEvidenceCount || 1} 条证据</span>
+                              {item.requiredReviewRoles?.length ? (
+                                <span>{formatReviewRoles(item.requiredReviewRoles)}</span>
+                              ) : null}
+                              <span>{item.isGrowthOnly ? '仅成长档案' : '可进入正式评价'}</span>
+                            </div>
+                            <div className="profile-archive-matrix-desc">
+                              证据要求：围绕真实教学任务、可复核过程记录与结果材料组织证据。
+                            </div>
                             {item.evidenceExamples?.length ? (
                               <div className="profile-archive-matrix-record">
                                 成长记录示例：{item.evidenceExamples.join('、')}
@@ -891,12 +946,16 @@ export default function MyProfileModule() {
                                     <Tag color={growthRecord.statusColor}>{growthRecord.statusLabel}</Tag>
                                     <span>
                                       {growthRecord.hasRecord && typeof growthRecord.coverage === 'number'
-                                        ? `${growthRecord.coverage}% 匹配`
+                                        ? `${growthRecord.coverage}% 覆盖`
                                         : '建议补充直接记录'}
                                     </span>
                                   </div>
                                 ) : null}
-                                <div className="profile-archive-matrix-cell-text">{descriptor.text || '-'}</div>
+                                <div className="profile-archive-matrix-cell-block">
+                                  <div className="profile-archive-matrix-cell-label">等级描述</div>
+                                  <div className="profile-archive-matrix-cell-text">{descriptor.text || '-'}</div>
+                                </div>
+                                <div className="profile-archive-matrix-cell-label">当前记录</div>
                                 {growthRecord?.hasRecord ? (
                                   <button
                                     type="button"
@@ -905,7 +964,7 @@ export default function MyProfileModule() {
                                   >
                                     <div className="profile-archive-matrix-record-head">
                                       <Tag color={SOURCE_META[growthRecord.sourceKey].color}>{growthRecord.sourceLabel}</Tag>
-                                      <span>{growthRecord.coverage}% 匹配</span>
+                                      <span>{growthRecord.coverage}% 覆盖</span>
                                     </div>
                                     <strong>{growthRecord.evidenceTitle}</strong>
                                     <span>{growthRecord.evidenceDate} · {growthRecord.evidenceTag}</span>
@@ -917,7 +976,8 @@ export default function MyProfileModule() {
                                 )}
                                 {growthRecord?.growthAdvice?.summary ? (
                                   <div className="profile-archive-matrix-advice">
-                                    {growthRecord.growthAdvice.summary}
+                                    <div className="profile-archive-matrix-cell-label">改进建议</div>
+                                    <div>{growthRecord.growthAdvice.summary}</div>
                                   </div>
                                 ) : null}
                               </div>
@@ -946,7 +1006,7 @@ export default function MyProfileModule() {
                 <span>{SOURCE_META[key].label}</span>
                 <Tag color={SOURCE_META[key].color}>{records.length} 条记录</Tag>
               </Space>
-              <Tag>{snapshot.sourceStats.find((item) => item.key === key)?.averageScore || 0}% 匹配</Tag>
+              <Tag>{snapshot.sourceStats.find((item) => item.key === key)?.averageScore || 0}% 覆盖</Tag>
             </div>
             <div className="profile-archive-record-list">
               {records.map((record) => (
@@ -978,7 +1038,7 @@ export default function MyProfileModule() {
       <div className="sys-module-header">
         <div>
           <span className="sys-module-header-title">我的档案</span>
-          <span className="sys-module-header-subtitle">查看当前序列模型与教学、档案、培训研修、教研数据的成长记录映射情况</span>
+          <span className="sys-module-header-subtitle">查看当前序列模型与教学、档案、培训研修、教研数据的证据覆盖和成长记录沉淀情况</span>
         </div>
         <Button icon={<ReloadOutlined />} onClick={() => loadData(false)}>刷新画像</Button>
       </div>
@@ -988,7 +1048,7 @@ export default function MyProfileModule() {
           <div className="profile-archive-hero-main">
             <div className="profile-archive-kicker">{snapshot.profile.industryName} · {snapshot.profile.sequenceName}</div>
             <h2>{snapshot.currentModel.name}</h2>
-            <p>{snapshot.currentModel.description || '当前序列模型已与个人多来源成长记录建立映射。'}</p>
+            <p>{snapshot.currentModel.description || '当前序列模型已与个人多来源证据建立关联。'}</p>
             <div className="profile-archive-hero-tags">
               <Tag color="blue">{snapshot.profile.roleName}</Tag>
               <Tag color="geekblue">{snapshot.profile.roleLevelName}</Tag>
@@ -998,20 +1058,28 @@ export default function MyProfileModule() {
           </div>
           <div className="profile-archive-hero-stats">
             <div className="profile-archive-stat-card">
-              <span>总体匹配度</span>
+              <span>总体证据覆盖度</span>
               <strong>{snapshot.summary.overallCoverage}%</strong>
             </div>
             <div className="profile-archive-stat-card">
-              <span>优势能力项</span>
+              <span>证据充分项</span>
               <strong>{snapshot.summary.strongItemCount}</strong>
             </div>
             <div className="profile-archive-stat-card">
-              <span>待补强能力项</span>
+              <span>待补证能力项</span>
               <strong>{snapshot.summary.focusItemCount}</strong>
             </div>
             <div className="profile-archive-stat-card">
               <span>累计记录</span>
               <strong>{snapshot.summary.totalEvidenceCount}</strong>
+            </div>
+            <div className="profile-archive-stat-card">
+              <span>正式评价实例</span>
+              <strong>{snapshot.evaluationSummary?.totalRecords || 0}</strong>
+            </div>
+            <div className="profile-archive-stat-card">
+              <span>待补证实例</span>
+              <strong>{snapshot.evaluationSummary?.supplementRequiredCount || 0}</strong>
             </div>
           </div>
         </div>
@@ -1020,7 +1088,7 @@ export default function MyProfileModule() {
           defaultActiveKey="overview"
           items={[
             { key: 'overview', label: '总览', children: overviewTab },
-            { key: 'mapping', label: '模型映射', children: mappingTab },
+            { key: 'mapping', label: '证据映射', children: mappingTab },
             { key: 'sources', label: '数据来源', children: sourcesTab },
           ]}
         />

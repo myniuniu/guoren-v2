@@ -1,0 +1,374 @@
+.teacher-evaluation-module {
+  background: #f6f8fc;
+}
+
+.teacher-evaluation-module > .sys-module-body > .ant-tabs,
+.teacher-evaluation-module > .sys-module-body > .ant-tabs > .ant-tabs-content-holder,
+.teacher-evaluation-module > .sys-module-body > .ant-tabs > .ant-tabs-content-holder > .ant-tabs-content,
+.teacher-evaluation-module > .sys-module-body > .ant-tabs > .ant-tabs-content-holder > .ant-tabs-content > .ant-tabs-tabpane {
+  height: 100%;
+}
+
+.teacher-evaluation-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-height: 0;
+}
+
+.teacher-evaluation-loading {
+  width: 100%;
+  padding: 48px 0;
+}
+
+.teacher-evaluation-alert {
+  border-radius: 16px;
+}
+
+.teacher-evaluation-tabs,
+.teacher-evaluation-tabs > .ant-tabs-content-holder,
+.teacher-evaluation-tabs > .ant-tabs-content-holder > .ant-tabs-content,
+.teacher-evaluation-tabs > .ant-tabs-content-holder > .ant-tabs-content > .ant-tabs-tabpane {
+  min-height: 0;
+}
+
+.teacher-evaluation-scheme-tabs {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.teacher-evaluation-scheme-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 220px;
+  padding: 14px 16px;
+  border: 1px solid #d9e1ec;
+  border-radius: 16px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.teacher-evaluation-scheme-chip.is-active {
+  border-color: #1677ff;
+  box-shadow: 0 12px 30px rgba(22, 119, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+.teacher-evaluation-scheme-chip strong {
+  font-size: 15px;
+}
+
+.teacher-evaluation-scheme-chip span {
+  color: #667085;
+  font-size: 13px;
+}
+
+.teacher-evaluation-hero-grid,
+.teacher-evaluation-ai-grid,
+.teacher-evaluation-weight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.teacher-evaluation-hero-card,
+.teacher-evaluation-card {
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.teacher-evaluation-hero-kicker {
+  color: #667085;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.teacher-evaluation-meta-row,
+.teacher-evaluation-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.teacher-evaluation-section-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.teacher-evaluation-workbench {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(360px, 0.95fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.teacher-evaluation-workbench-detail,
+.teacher-evaluation-records-card,
+.teacher-evaluation-detail-card {
+  min-width: 0;
+}
+
+.teacher-evaluation-records-card .ant-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.teacher-evaluation-workbench-detail {
+  position: sticky;
+  top: 0;
+}
+
+.teacher-evaluation-detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.teacher-evaluation-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.teacher-evaluation-weight-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #f8fbff 0%, #eef5ff 100%);
+}
+
+.teacher-evaluation-flow-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.teacher-evaluation-flow-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.teacher-evaluation-flow-index {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #1677ff;
+  color: #fff;
+  font-weight: 700;
+}
+
+.teacher-evaluation-flow-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.teacher-evaluation-flow-body span,
+.teacher-evaluation-flow-body p,
+.teacher-evaluation-ai-block strong {
+  color: #475467;
+}
+
+.teacher-evaluation-ai-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.teacher-evaluation-ai-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.teacher-evaluation-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.teacher-evaluation-body-copy {
+  margin: 0;
+  color: #5d6778;
+  line-height: 1.7;
+}
+
+.teacher-evaluation-record-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.teacher-evaluation-record-cell span {
+  color: #667085;
+  font-size: 12px;
+}
+
+.teacher-evaluation-record-row-active > td {
+  background: #f5f9ff !important;
+}
+
+.teacher-evaluation-drawer .ant-drawer-body {
+  background: #f6f9fd;
+}
+
+.teacher-evaluation-drawer-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.teacher-evaluation-drawer-hero {
+  padding: 20px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #174b84 0%, #1677ff 100%);
+  color: #fff;
+}
+
+.teacher-evaluation-drawer-kicker {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.teacher-evaluation-drawer-hero h3 {
+  margin: 10px 0 8px;
+  color: #fff;
+  font-size: 24px;
+}
+
+.teacher-evaluation-drawer-hero p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.88);
+  line-height: 1.7;
+}
+
+.teacher-evaluation-action-row {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.teacher-evaluation-evidence-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.teacher-evaluation-evidence-item,
+.teacher-evaluation-ai-draft-card {
+  padding: 14px;
+  border: 1px solid #e6ebf2;
+  border-radius: 16px;
+  background: #fbfcfe;
+}
+
+.teacher-evaluation-evidence-head,
+.teacher-evaluation-ai-draft-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.teacher-evaluation-evidence-meta,
+.teacher-evaluation-ai-review-note {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #667085;
+  font-size: 12px;
+}
+
+.teacher-evaluation-evidence-item p,
+.teacher-evaluation-ai-draft-card p {
+  margin: 10px 0 0;
+  color: #475467;
+  line-height: 1.7;
+}
+
+.teacher-evaluation-evidence-path {
+  margin-top: 10px;
+  color: #98a2b3;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.teacher-evaluation-list {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  color: #475467;
+}
+
+.teacher-evaluation-list li + li {
+  margin-top: 6px;
+}
+
+@media (max-width: 1280px) {
+  .teacher-evaluation-workbench {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .teacher-evaluation-workbench-detail {
+    position: static;
+  }
+}
+
+.teacher-evaluation-evidence-path {
+  margin-top: 10px;
+  color: #667085;
+  font-size: 12px;
+}
+
+.teacher-evaluation-list {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  color: #475467;
+}
+
+.teacher-evaluation-list li + li {
+  margin-top: 6px;
+}
+
+.teacher-evaluation-timeline-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.teacher-evaluation-timeline-item span,
+.teacher-evaluation-timeline-item p {
+  color: #667085;
+}
+
+@media (max-width: 960px) {
+  .teacher-evaluation-scheme-chip {
+    min-width: 100%;
+  }
+
+  .teacher-evaluation-card-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
