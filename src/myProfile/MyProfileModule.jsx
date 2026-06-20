@@ -16,7 +16,10 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import { capabilityModelApi } from '../capabilityModel/api';
-import { teacherEvaluationApi } from '../teacherEvaluation/api';
+import {
+  getTeacherEvaluationStatusLabel,
+  teacherEvaluationApi,
+} from '../teacherEvaluation/api';
 import {
   buildModelGrowthRecordSnapshot,
   GrowthRecordDetailDrawer,
@@ -396,6 +399,60 @@ function sortRecordsByDate(records = []) {
   return [...records].sort((left, right) => String(right.date || '').localeCompare(String(left.date || '')));
 }
 
+function sortEvaluationRecords(records = []) {
+  return [...records].sort((left, right) => {
+    const leftPeriod = String(left.periodSortKey || '');
+    const rightPeriod = String(right.periodSortKey || '');
+    if (leftPeriod !== rightPeriod) return rightPeriod.localeCompare(leftPeriod);
+    return String(right.updatedAt || right.createdAt || '').localeCompare(String(left.updatedAt || left.createdAt || ''));
+  });
+}
+
+function getEvaluationStatusColor(status) {
+  if (status === 'APPROVED') return 'success';
+  if (status === 'REJECTED') return 'error';
+  if (status === 'SUPPLEMENT_REQUIRED') return 'warning';
+  if (status === 'IN_REVIEW' || status === 'APPEAL_PENDING') return 'processing';
+  return 'default';
+}
+
+function buildTeacherEvaluationPeriodGroups(records = [], schemes = []) {
+  const schemeMap = new Map(schemes.map((item) => [item.id, item]));
+  const grouped = new Map();
+
+  sortEvaluationRecords(records).forEach((record) => {
+    const scheme = schemeMap.get(record.schemeId);
+    const periodLabel = record.periodLabel || scheme?.semester || '未标记周期';
+    const currentNodeName = scheme?.reviewFlow?.find((item) => item.key === record.currentNode)?.name || record.currentNode || '-';
+    const normalizedRecord = {
+      ...record,
+      periodLabel,
+      schemeNameSnapshot: record.schemeNameSnapshot || scheme?.name || '-',
+      currentNodeName,
+    };
+    if (!grouped.has(periodLabel)) {
+      grouped.set(periodLabel, {
+        key: periodLabel,
+        periodLabel,
+        periodSortKey: record.periodSortKey || '',
+        records: [],
+      });
+    }
+    grouped.get(periodLabel).records.push(normalizedRecord);
+  });
+
+  return Array.from(grouped.values())
+    .sort((left, right) => String(right.periodSortKey || '').localeCompare(String(left.periodSortKey || '')))
+    .map((group) => ({
+      ...group,
+      recordCount: group.records.length,
+      inReviewCount: group.records.filter((item) => item.status === 'IN_REVIEW').length,
+      supplementRequiredCount: group.records.filter((item) => item.status === 'SUPPLEMENT_REQUIRED').length,
+      approvedCount: group.records.filter((item) => item.status === 'APPROVED').length,
+      pendingCount: group.records.filter((item) => !['APPROVED', 'REJECTED', 'APPEAL_RESOLVED'].includes(item.status)).length,
+    }));
+}
+
 function findLatestSceneRecord(sceneRecords, row) {
   return sortRecordsByDate(sceneRecords).find((record) => (
     record.relatedItemNames?.includes(row.itemName)
@@ -514,11 +571,12 @@ export default function MyProfileModule() {
         sceneApi.seed(),
         teacherEvaluationApi.seed(),
       ]);
-      const [industries, sequences, roles, models, evaluationRecords] = await Promise.all([
+      const [industries, sequences, roles, models, evaluationSchemes, evaluationRecords] = await Promise.all([
         capabilityModelApi.listIndustries(),
         capabilityModelApi.listSequences(),
         capabilityModelApi.listRoles(),
         capabilityModelApi.listModels(),
+        teacherEvaluationApi.listSchemes(),
         teacherEvaluationApi.listRecords(),
       ]);
       const currentModel = pickCurrentTeacherModel(models, roles, sequences, {
@@ -532,6 +590,7 @@ export default function MyProfileModule() {
       const archivedSceneRecords = listArchivedSceneGrowthRecords(scenes, resourceAwareSnapshot?.modelDefinition);
       const sceneAwareSnapshot = mergeSceneArchivedRecordSnapshot(resourceAwareSnapshot, archivedSceneRecords);
       const currentTeacherEvaluationRecords = evaluationRecords.filter((item) => item.teacherName === PROFILE_BASE.name);
+      const evaluationPeriodGroups = buildTeacherEvaluationPeriodGroups(currentTeacherEvaluationRecords, evaluationSchemes);
       const nextSnapshot = sceneAwareSnapshot ? {
         ...sceneAwareSnapshot,
         profile: {
@@ -542,6 +601,11 @@ export default function MyProfileModule() {
           totalRecords: currentTeacherEvaluationRecords.length,
           inReviewCount: currentTeacherEvaluationRecords.filter((item) => item.status === 'IN_REVIEW').length,
           supplementRequiredCount: currentTeacherEvaluationRecords.filter((item) => item.status === 'SUPPLEMENT_REQUIRED').length,
+          approvedCount: currentTeacherEvaluationRecords.filter((item) => item.status === 'APPROVED').length,
+          periodCount: evaluationPeriodGroups.length,
+          currentPeriodLabel: evaluationPeriodGroups[0]?.periodLabel || '-',
+          currentPeriodPendingCount: evaluationPeriodGroups[0]?.pendingCount || 0,
+          periodGroups: evaluationPeriodGroups,
         },
       } : null;
       setSnapshot(nextSnapshot);
@@ -1033,6 +1097,86 @@ export default function MyProfileModule() {
     </div>
   );
 
+  const evaluationTab = (
+    <div className="profile-archive-tab">
+      <div className="profile-archive-grid profile-archive-grid-evaluation">
+        <Card bordered={false} className="profile-archive-panel">
+          <div className="profile-archive-panel-head">
+            <span>当前周期待办</span>
+            <Tag color="blue">{snapshot.evaluationSummary?.currentPeriodLabel || '-'}</Tag>
+          </div>
+          <div className="profile-archive-kv-list">
+            <div><span>当前周期</span><strong>{snapshot.evaluationSummary?.currentPeriodLabel || '-'}</strong></div>
+            <div><span>待处理实例</span><strong>{snapshot.evaluationSummary?.currentPeriodPendingCount || 0} 条</strong></div>
+            <div><span>评审中</span><strong>{snapshot.evaluationSummary?.inReviewCount || 0} 条</strong></div>
+            <div><span>待补证</span><strong>{snapshot.evaluationSummary?.supplementRequiredCount || 0} 条</strong></div>
+          </div>
+        </Card>
+        <Card bordered={false} className="profile-archive-panel">
+          <div className="profile-archive-panel-head">
+            <span>历次评价概览</span>
+            <Tag color="green">{snapshot.evaluationSummary?.periodCount || 0} 个周期</Tag>
+          </div>
+          <div className="profile-archive-kv-list">
+            <div><span>累计实例</span><strong>{snapshot.evaluationSummary?.totalRecords || 0} 条</strong></div>
+            <div><span>已通过</span><strong>{snapshot.evaluationSummary?.approvedCount || 0} 条</strong></div>
+            <div><span>待补证</span><strong>{snapshot.evaluationSummary?.supplementRequiredCount || 0} 条</strong></div>
+            <div><span>跨周期积累</span><strong>{snapshot.evaluationSummary?.periodCount || 0} 轮</strong></div>
+          </div>
+        </Card>
+      </div>
+
+      <div className="profile-archive-evaluation-periods">
+        {(snapshot.evaluationSummary?.periodGroups || []).length ? (
+          snapshot.evaluationSummary.periodGroups.map((group) => (
+            <Card key={group.key} bordered={false} className="profile-archive-panel">
+              <div className="profile-archive-panel-head">
+                <div className="profile-archive-evaluation-period-head">
+                  <strong>{group.periodLabel}</strong>
+                  <span>{group.recordCount} 条实例 · 评审中 {group.inReviewCount} 条 · 待补证 {group.supplementRequiredCount} 条</span>
+                </div>
+                <Space wrap>
+                  <Tag color="processing">待处理 {group.pendingCount}</Tag>
+                  <Tag color="success">已通过 {group.approvedCount}</Tag>
+                </Space>
+              </div>
+              <div className="profile-archive-evaluation-record-list">
+                {group.records.map((record) => (
+                  <div key={record.id} className="profile-archive-evaluation-record-item">
+                    <div className="profile-archive-evaluation-record-top">
+                      <div>
+                        <strong>{record.schemeNameSnapshot}</strong>
+                        <span>{record.currentNodeName} · {String(record.updatedAt || record.createdAt || '-').slice(0, 16)}</span>
+                      </div>
+                      <Tag color={getEvaluationStatusColor(record.status)}>{getTeacherEvaluationStatusLabel(record.status)}</Tag>
+                    </div>
+                    <div className="profile-archive-record-tags">
+                      <Tag>{record.targetLevel}</Tag>
+                      <Tag>{record.evidenceItems?.length || 0} 条证据</Tag>
+                      <Tag>{record.aiDrafts?.length || 0} 份 AI 建议稿</Tag>
+                    </div>
+                    <p>{record.applicationNote || record.scenarioLabel || '该实例暂无额外发起说明。'}</p>
+                    <div className="profile-archive-record-foot">
+                      <span>
+                        发起于 {String(record.createdAt || '-').slice(0, 16)}
+                        {record.submittedAt ? ` · 提交于 ${String(record.submittedAt).slice(0, 16)}` : ''}
+                      </span>
+                      <span>{record.finalDecision?.summary || (record.appeal ? `申诉状态：${record.appeal.status}` : '可在教师评价模块继续查看详情')}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          ))
+        ) : (
+          <Card bordered={false} className="profile-archive-panel">
+            <Empty description="当前暂无正式评价记录" />
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="sys-module my-profile-module">
       <div className="sys-module-header">
@@ -1088,6 +1232,7 @@ export default function MyProfileModule() {
           defaultActiveKey="overview"
           items={[
             { key: 'overview', label: '总览', children: overviewTab },
+            { key: 'evaluations', label: '历次评价', children: evaluationTab },
             { key: 'mapping', label: '证据映射', children: mappingTab },
             { key: 'sources', label: '数据来源', children: sourcesTab },
           ]}

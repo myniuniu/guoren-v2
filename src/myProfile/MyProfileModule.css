@@ -110,6 +110,10 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.profile-archive-grid-evaluation {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .profile-archive-panel,
 .profile-archive-source-card {
   border-radius: 18px;
@@ -711,6 +715,59 @@
   color: #7b8598;
 }
 
+.profile-archive-evaluation-periods {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.profile-archive-evaluation-period-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.profile-archive-evaluation-period-head strong,
+.profile-archive-evaluation-record-top strong {
+  color: #172033;
+}
+
+.profile-archive-evaluation-period-head strong {
+  font-size: 16px;
+}
+
+.profile-archive-evaluation-period-head span,
+.profile-archive-evaluation-record-top span {
+  font-size: 12px;
+  color: #7b8598;
+}
+
+.profile-archive-evaluation-record-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profile-archive-evaluation-record-item {
+  padding: 14px;
+  border: 1px solid #e6ebf2;
+  border-radius: 14px;
+  background: #fbfcfe;
+}
+
+.profile-archive-evaluation-record-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.profile-archive-evaluation-record-top > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .profile-archive-drawer .ant-drawer-body {
   background: #f6f9fd;
 }
@@ -876,6 +933,7 @@
   .profile-archive-grid-overview,
   .profile-archive-grid-sources,
   .profile-archive-grid-sources-detail,
+  .profile-archive-grid-evaluation,
   .profile-archive-hero-stats,
   .profile-archive-dimension-row {
     grid-template-columns: 1fr;
@@ -886,6 +944,7 @@
   .profile-archive-kv-list > div,
   .profile-archive-record-top,
   .profile-archive-record-foot,
+  .profile-archive-evaluation-record-top,
   .profile-archive-drawer-section-head,
   .profile-archive-matrix-section-head,
   .profile-archive-matrix-anchor-bar {

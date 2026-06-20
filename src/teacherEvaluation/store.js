@@ -59,6 +59,28 @@ function trimText(value) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+function buildPeriodSortKey(label, fallbackDate = '') {
+  const normalized = trimText(label);
+  const yearMatch = normalized.match(/(20\d{2})/);
+  const year = yearMatch ? Number(yearMatch[1]) : 0;
+
+  let phaseCode = '9';
+  if (/春/.test(normalized)) phaseCode = '1';
+  else if (/夏/.test(normalized)) phaseCode = '2';
+  else if (/秋/.test(normalized)) phaseCode = '3';
+  else if (/冬/.test(normalized)) phaseCode = '4';
+  else if (/学年/.test(normalized)) phaseCode = '5';
+  else if (/上学期|上半年/.test(normalized)) phaseCode = '1';
+  else if (/下学期|下半年/.test(normalized)) phaseCode = '3';
+
+  if (year) {
+    return `${year}_${phaseCode}_${normalized}`;
+  }
+
+  const normalizedDate = String(fallbackDate || '').slice(0, 10).replace(/-/g, '');
+  return normalizedDate ? `0000_${normalizedDate}_${normalized}` : normalized || '9999';
+}
+
 function emitChange() {
   if (typeof window === 'undefined') return;
   window.dispatchEvent(new CustomEvent(STORE_CHANGE_EVENT));
@@ -87,6 +109,10 @@ function writeAll({ schemes, records, auditLogs }) {
   writeList(RECORD_STORAGE_KEY, records);
   writeList(AUDIT_STORAGE_KEY, auditLogs);
   emitChange();
+}
+
+function createSchemeMap(schemes = []) {
+  return new Map(schemes.map((item) => [item.id, item]));
 }
 
 function readAll() {
@@ -319,12 +345,15 @@ function createRecordFromScheme(scheme, teacher, overrides = {}) {
   return {
     id: overrides.id || createId('eval_record'),
     schemeId: scheme.id,
+    schemeNameSnapshot: trimText(overrides.schemeNameSnapshot) || scheme.name,
     teacherId: teacher.teacherId,
     teacherName: teacher.name,
     schoolName: teacher.schoolName,
     departmentName: teacher.departmentName,
     roleName: teacher.roleName,
     targetLevel: teacher.targetLevel || scheme.targetLevel,
+    periodLabel: trimText(overrides.periodLabel) || trimText(scheme.semester),
+    periodSortKey: overrides.periodSortKey || buildPeriodSortKey(trimText(overrides.periodLabel) || trimText(scheme.semester), createdAt),
     applicationNote: trimText(overrides.applicationNote),
     scenarioLabel: trimText(overrides.scenarioLabel) || scheme.schemeType,
     requestedBy: trimText(overrides.requestedBy) || teacher.name,
@@ -465,16 +494,21 @@ function normalizeAiDraft(draft) {
 }
 
 function normalizeRecord(record) {
+  const scheme = arguments.length > 1 ? arguments[1] : null;
+  const periodLabel = trimText(record.periodLabel) || trimText(scheme?.semester);
   return {
     ...record,
     id: record.id || createId('eval_record'),
     status: record.status || 'DRAFT',
     currentNode: record.currentNode || 'submit',
+    schemeNameSnapshot: trimText(record.schemeNameSnapshot) || trimText(scheme?.name),
     teacherName: trimText(record.teacherName),
     schoolName: trimText(record.schoolName),
     departmentName: trimText(record.departmentName),
     roleName: trimText(record.roleName),
     targetLevel: trimText(record.targetLevel),
+    periodLabel,
+    periodSortKey: record.periodSortKey || buildPeriodSortKey(periodLabel, record.createdAt || scheme?.createdAt),
     applicationNote: trimText(record.applicationNote),
     scenarioLabel: trimText(record.scenarioLabel),
     requestedBy: trimText(record.requestedBy),
@@ -487,6 +521,11 @@ function normalizeRecord(record) {
     createdAt: record.createdAt || nowText(),
     updatedAt: record.updatedAt || nowText(),
   };
+}
+
+function normalizeRecordsWithSchemes(records = [], schemes = []) {
+  const schemeMap = createSchemeMap(schemes);
+  return records.map((item) => normalizeRecord(item, schemeMap.get(item.schemeId) || null));
 }
 
 function normalizeAuditLog(log) {
@@ -705,12 +744,15 @@ export async function deleteTeacherEvaluationScheme(schemeId, payload = {}) {
 }
 
 export async function listTeacherEvaluationRecords() {
-  return readList(RECORD_STORAGE_KEY).map((item) => normalizeRecord(item));
+  const schemes = readList(SCHEME_STORAGE_KEY).map((item) => normalizeScheme(item));
+  return normalizeRecordsWithSchemes(readList(RECORD_STORAGE_KEY), schemes);
 }
 
 export async function getTeacherEvaluationRecord(id) {
+  const schemes = readList(SCHEME_STORAGE_KEY).map((item) => normalizeScheme(item));
+  const schemeMap = createSchemeMap(schemes);
   const target = readList(RECORD_STORAGE_KEY).find((item) => item.id === id);
-  return target ? normalizeRecord(target) : null;
+  return target ? normalizeRecord(target, schemeMap.get(target.schemeId) || null) : null;
 }
 
 export async function createTeacherEvaluationRecord(schemeId, options = null) {
@@ -725,9 +767,9 @@ export async function createTeacherEvaluationRecord(schemeId, options = null) {
     : options && typeof options === 'object' && options.teacherId
       ? createDefaultTeacherProfiles().find((item) => item.teacherId === options.teacherId)
       : null;
-  const teacher = chooseTeacherForScheme(scheme, current.records.map((item) => normalizeRecord(item)), optionTeacher);
-  const existingOpenRecord = current.records
-    .map((item) => normalizeRecord(item))
+  const normalizedCurrentRecords = normalizeRecordsWithSchemes(current.records, schemes);
+  const teacher = chooseTeacherForScheme(scheme, normalizedCurrentRecords, optionTeacher);
+  const existingOpenRecord = normalizedCurrentRecords
     .find((item) => item.schemeId === scheme.id && item.teacherId === teacher.teacherId && !isClosedStatus(item.status));
   if (existingOpenRecord) {
     throw new Error(`该教师在当前方案下已有进行中的评价实例，请继续处理「${existingOpenRecord.id}」或先完成当前实例。`);
@@ -756,7 +798,7 @@ export async function createTeacherEvaluationRecord(schemeId, options = null) {
 export async function submitTeacherEvaluationRecord(recordId, actor = {}) {
   const current = readAll();
   const schemes = current.schemes.map((item) => normalizeScheme(item));
-  const nextRecords = current.records.map((item) => normalizeRecord(item));
+  const nextRecords = normalizeRecordsWithSchemes(current.records, schemes);
   const record = nextRecords.find((item) => item.id === recordId);
   if (!record) throw new Error('评价实例不存在');
   const scheme = getSchemeById(schemes, record.schemeId);
@@ -784,7 +826,7 @@ export async function submitTeacherEvaluationRecord(recordId, actor = {}) {
 export async function reviewTeacherEvaluationRecord(recordId, payload) {
   const current = readAll();
   const schemes = current.schemes.map((item) => normalizeScheme(item));
-  const nextRecords = current.records.map((item) => normalizeRecord(item));
+  const nextRecords = normalizeRecordsWithSchemes(current.records, schemes);
   const record = nextRecords.find((item) => item.id === recordId);
   if (!record) throw new Error('评价实例不存在');
   const scheme = getSchemeById(schemes, record.schemeId);
@@ -860,7 +902,8 @@ export async function reviewTeacherEvaluationRecord(recordId, payload) {
 
 export async function updateTeacherEvaluationAiDraft(recordId, draftId, payload) {
   const current = readAll();
-  const nextRecords = current.records.map((item) => normalizeRecord(item));
+  const schemes = current.schemes.map((item) => normalizeScheme(item));
+  const nextRecords = normalizeRecordsWithSchemes(current.records, schemes);
   const record = nextRecords.find((item) => item.id === recordId);
   if (!record) throw new Error('评价实例不存在');
   const draft = record.aiDrafts.find((item) => item.id === draftId);
@@ -903,7 +946,7 @@ export async function updateTeacherEvaluationAiDraft(recordId, draftId, payload)
 export async function submitTeacherEvaluationAppeal(recordId, payload) {
   const current = readAll();
   const schemes = current.schemes.map((item) => normalizeScheme(item));
-  const nextRecords = current.records.map((item) => normalizeRecord(item));
+  const nextRecords = normalizeRecordsWithSchemes(current.records, schemes);
   const record = nextRecords.find((item) => item.id === recordId);
   if (!record) throw new Error('评价实例不存在');
   const scheme = getSchemeById(schemes, record.schemeId);
@@ -934,7 +977,8 @@ export async function submitTeacherEvaluationAppeal(recordId, payload) {
 
 export async function appendTeacherEvaluationEvidence(recordId, payload) {
   const current = readAll();
-  const nextRecords = current.records.map((item) => normalizeRecord(item));
+  const schemes = current.schemes.map((item) => normalizeScheme(item));
+  const nextRecords = normalizeRecordsWithSchemes(current.records, schemes);
   const record = nextRecords.find((item) => item.id === recordId);
   if (!record) throw new Error('评价实例不存在');
 

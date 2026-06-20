@@ -539,6 +539,68 @@ function isClosedStatus(status) {
   return ['APPROVED', 'REJECTED', 'APPEAL_RESOLVED'].includes(status);
 }
 
+function sortTeacherEvaluationRecords(records = []) {
+  return [...records].sort((left, right) => {
+    const leftPeriod = String(left.periodSortKey || '');
+    const rightPeriod = String(right.periodSortKey || '');
+    if (leftPeriod !== rightPeriod) return rightPeriod.localeCompare(leftPeriod);
+    return String(right.updatedAt || right.createdAt || '').localeCompare(String(left.updatedAt || left.createdAt || ''));
+  });
+}
+
+function groupRecordsByTeacher(records = []) {
+  const grouped = new Map();
+  sortTeacherEvaluationRecords(records).forEach((record) => {
+    const key = record.teacherId || record.teacherName;
+    if (!grouped.has(key)) {
+      grouped.set(key, {
+        key,
+        teacherId: record.teacherId,
+        teacherName: record.teacherName,
+        departmentName: record.departmentName,
+        roleName: record.roleName,
+        records: [],
+      });
+    }
+    grouped.get(key).records.push(record);
+  });
+  return Array.from(grouped.values()).map((group) => ({
+    ...group,
+    latestPeriodLabel: group.records[0]?.periodLabel || '-',
+    recordCount: group.records.length,
+    inReviewCount: group.records.filter((item) => item.status === 'IN_REVIEW').length,
+    supplementRequiredCount: group.records.filter((item) => item.status === 'SUPPLEMENT_REQUIRED').length,
+    approvedCount: group.records.filter((item) => item.status === 'APPROVED').length,
+    periodCount: new Set(group.records.map((item) => item.periodLabel || '-')).size,
+  }));
+}
+
+function groupRecordsByPeriod(records = []) {
+  const grouped = new Map();
+  sortTeacherEvaluationRecords(records).forEach((record) => {
+    const key = record.periodLabel || '未标记周期';
+    if (!grouped.has(key)) {
+      grouped.set(key, {
+        key,
+        periodLabel: key,
+        periodSortKey: record.periodSortKey || '',
+        records: [],
+      });
+    }
+    grouped.get(key).records.push(record);
+  });
+  return Array.from(grouped.values())
+    .sort((left, right) => String(right.periodSortKey || '').localeCompare(String(left.periodSortKey || '')))
+    .map((group) => ({
+      ...group,
+      recordCount: group.records.length,
+      teacherCount: new Set(group.records.map((item) => item.teacherId || item.teacherName)).size,
+      inReviewCount: group.records.filter((item) => item.status === 'IN_REVIEW').length,
+      supplementRequiredCount: group.records.filter((item) => item.status === 'SUPPLEMENT_REQUIRED').length,
+      approvedCount: group.records.filter((item) => item.status === 'APPROVED').length,
+    }));
+}
+
 export default function TeacherEvaluationModule() {
   const [loading, setLoading] = useState(true);
   const [schemes, setSchemes] = useState([]);
@@ -557,6 +619,9 @@ export default function TeacherEvaluationModule() {
   const [activeRole, setActiveRole] = useState('GROUP_LEADER');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [recordScope, setRecordScope] = useState('ALL');
+  const [workbenchView, setWorkbenchView] = useState('TEACHER');
+  const [workbenchSchemeScope, setWorkbenchSchemeScope] = useState('ALL');
+  const [periodFilter, setPeriodFilter] = useState('ALL');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [activeEvidencePackKey, setActiveEvidencePackKey] = useState(undefined);
   const [expandedEvidencePackageKeys, setExpandedEvidencePackageKeys] = useState([]);
@@ -652,17 +717,37 @@ export default function TeacherEvaluationModule() {
     [selectedSchemeFormModel],
   );
 
+  const periodOptions = useMemo(() => {
+    const periodMap = new Map();
+    records.forEach((record) => {
+      const key = record.periodLabel || '未标记周期';
+      if (!periodMap.has(key)) {
+        periodMap.set(key, record.periodSortKey || '');
+      }
+    });
+    return [
+      { label: '全部周期', value: 'ALL' },
+      ...Array.from(periodMap.entries())
+        .sort((left, right) => String(right[1] || '').localeCompare(String(left[1] || '')))
+        .map(([label]) => ({
+          label,
+          value: label,
+        })),
+    ];
+  }, [records]);
+
   const filteredRecords = useMemo(() => (
     records.filter((record) => {
       const scheme = schemes.find((item) => item.id === record.schemeId);
       return (
-        (!activeSchemeId || record.schemeId === activeSchemeId)
+        (workbenchSchemeScope === 'ALL' || !activeSchemeId || record.schemeId === activeSchemeId)
+        && (periodFilter === 'ALL' || (record.periodLabel || '未标记周期') === periodFilter)
         && (statusFilter === 'ALL' || record.status === statusFilter)
         && matchesKeyword(record, scheme, searchKeyword.trim())
         && matchesScope(record, scheme, activeRole, recordScope)
       );
     })
-  ), [activeRole, activeSchemeId, recordScope, records, schemes, searchKeyword, statusFilter]);
+  ), [activeRole, activeSchemeId, periodFilter, recordScope, records, schemes, searchKeyword, statusFilter, workbenchSchemeScope]);
 
   const selectedRecord = useMemo(
     () => records.find((item) => item.id === selectedRecordId) || filteredRecords[0] || null,
@@ -696,6 +781,16 @@ export default function TeacherEvaluationModule() {
   const availableActions = useMemo(
     () => resolveAvailableActions(selectedRecord, selectedScheme, activeRole),
     [activeRole, selectedRecord, selectedScheme],
+  );
+
+  const teacherWorkbenchGroups = useMemo(
+    () => groupRecordsByTeacher(filteredRecords),
+    [filteredRecords],
+  );
+
+  const periodWorkbenchGroups = useMemo(
+    () => groupRecordsByPeriod(filteredRecords),
+    [filteredRecords],
   );
 
   const summaryStats = useMemo(() => ({
@@ -764,6 +859,17 @@ export default function TeacherEvaluationModule() {
           <strong>{record.teacherName}</strong>
           <span>{record.departmentName}</span>
           {record.applicationNote ? <span className="teacher-evaluation-muted">{record.applicationNote}</span> : null}
+        </div>
+      ),
+    },
+    {
+      title: '周期 / 方案',
+      key: 'period',
+      width: 220,
+      render: (_, record) => (
+        <div className="teacher-evaluation-record-cell">
+          <strong>{record.periodLabel || '-'}</strong>
+          <span>{record.schemeNameSnapshot || '-'}</span>
         </div>
       ),
     },
@@ -864,6 +970,61 @@ export default function TeacherEvaluationModule() {
       applicationNote: '',
     });
     setRecordCreateDrawerOpen(true);
+  }
+
+  function openRecordDetail(recordId) {
+    setSelectedRecordId(recordId);
+    setRecordDrawerOpen(true);
+  }
+
+  function renderWorkbenchGroups() {
+    const groups = workbenchView === 'TEACHER' ? teacherWorkbenchGroups : periodWorkbenchGroups;
+    if (!groups.length) {
+      return <Empty description="当前筛选条件下暂无评价实例" />;
+    }
+
+    return (
+      <Collapse
+        ghost
+        className="teacher-evaluation-workbench-groups"
+        defaultActiveKey={groups.slice(0, 2).map((item) => item.key)}
+        items={groups.map((group) => ({
+          key: group.key,
+          label: (
+            <div className="teacher-evaluation-workbench-group-head">
+              <div className="teacher-evaluation-workbench-group-main">
+                <strong>{workbenchView === 'TEACHER' ? group.teacherName : group.periodLabel}</strong>
+                <span>
+                  {workbenchView === 'TEACHER'
+                    ? `${group.departmentName} · ${group.roleName}`
+                    : `${group.teacherCount} 位教师 · ${group.recordCount} 条实例`}
+                </span>
+              </div>
+              <div className="teacher-evaluation-workbench-group-metrics">
+                {workbenchView === 'TEACHER' ? <Tag>{group.periodCount} 个周期</Tag> : null}
+                {workbenchView === 'TEACHER' ? <Tag color="blue">{group.latestPeriodLabel}</Tag> : null}
+                <Tag color="processing">评审中 {group.inReviewCount}</Tag>
+                <Tag color="warning">待补证 {group.supplementRequiredCount}</Tag>
+                <Tag color="success">已通过 {group.approvedCount}</Tag>
+              </div>
+            </div>
+          ),
+          children: (
+            <Table
+              rowKey="id"
+              columns={recordColumns}
+              dataSource={group.records}
+              pagination={false}
+              scroll={{ x: 1260 }}
+              rowClassName={(record) => (record.id === selectedRecord?.id ? 'teacher-evaluation-record-row-active' : '')}
+              onRow={(record) => ({
+                onClick: () => openRecordDetail(record.id),
+              })}
+            />
+          ),
+        }))}
+      />
+    );
   }
 
   function openSchemeDrawer(mode) {
@@ -1357,6 +1518,9 @@ export default function TeacherEvaluationModule() {
           <Form.Item label="评价方案">
             <Input value={activeScheme?.name} disabled />
           </Form.Item>
+          <Form.Item label="继承周期">
+            <Input value={activeScheme?.semester || '-'} disabled />
+          </Form.Item>
           <Form.Item label="教师" name="teacherId" rules={[{ required: true, message: '请选择教师' }]}>
             <Select
               options={teachers.map((item) => ({
@@ -1654,36 +1818,11 @@ export default function TeacherEvaluationModule() {
     );
   }
 
-  function renderRecordDetail(mode = 'panel') {
-    if (!selectedRecord || !selectedScheme) {
-      return (
-        <Card bordered={false} className="teacher-evaluation-card teacher-evaluation-detail-card">
-          <Empty description="请选择评价实例" />
-        </Card>
-      );
-    }
-
-    const bodyClassName = mode === 'drawer'
-      ? 'teacher-evaluation-drawer-body'
-      : 'teacher-evaluation-detail-body';
+  function renderWorkflowSection(mode = 'panel') {
+    if (!selectedRecord || !selectedScheme) return null;
 
     return (
-      <div className={bodyClassName}>
-        <div className="teacher-evaluation-drawer-hero">
-          <div className="teacher-evaluation-drawer-kicker">{selectedRecord.schoolName} · {selectedRecord.departmentName}</div>
-          <h3>{selectedRecord.teacherName} / {selectedRecord.roleName}</h3>
-          <p>{selectedScheme.summary}</p>
-          <div className="teacher-evaluation-meta-row">
-            <Tag color={statusColor(selectedRecord.status)}>{getTeacherEvaluationStatusLabel(selectedRecord.status)}</Tag>
-            <Tag>{selectedRecord.targetLevel}</Tag>
-            <Tag>{selectedRecord.evidenceItems.length} 条证据</Tag>
-            <Tag>{selectedRecord.aiDrafts.length} 份 AI 建议稿</Tag>
-            {selectedRecord.applicationNote ? <Tag color="cyan">{selectedRecord.applicationNote}</Tag> : null}
-          </div>
-        </div>
-
-        {renderReviewPackSummary(mode)}
-
+      <div className="teacher-evaluation-section-stack">
         <Card bordered={false} className="teacher-evaluation-card teacher-evaluation-detail-card">
           <div className="teacher-evaluation-card-head">
             <span>当前动作</span>
@@ -1738,7 +1877,34 @@ export default function TeacherEvaluationModule() {
           )}
         </Card>
 
-        {renderIntegratedEvidencePackages()}
+        <Card bordered={false} className="teacher-evaluation-card teacher-evaluation-detail-card">
+          <div className="teacher-evaluation-card-head">
+            <span>流程信息</span>
+            <Tag>{selectedScheme.reviewFlow.length} 个节点</Tag>
+          </div>
+          <div className="teacher-evaluation-flow-list">
+            {selectedScheme.reviewFlow.map((step, index) => {
+              const opinions = (selectedRecord.reviewOpinions || []).filter((item) => item.nodeKey === step.key);
+              const isCurrent = selectedRecord.currentNode === step.key && ['IN_REVIEW', 'APPEAL_PENDING'].includes(selectedRecord.status);
+              const isCompleted = opinions.length > 0 || (!isCurrent && index < selectedScheme.reviewFlow.findIndex((item) => item.key === selectedRecord.currentNode));
+              return (
+                <div key={step.key} className="teacher-evaluation-flow-card">
+                  <div className="teacher-evaluation-flow-index">{index + 1}</div>
+                  <div className="teacher-evaluation-flow-body">
+                    <div className="teacher-evaluation-card-head">
+                      <strong>{step.name}</strong>
+                      <Tag color={isCurrent ? 'processing' : isCompleted ? 'success' : 'default'}>
+                        {isCurrent ? '当前节点' : isCompleted ? '已流转' : '待处理'}
+                      </Tag>
+                    </div>
+                    <span>责任角色：{getNodeAllowedRoles(step).map((item) => getTeacherEvaluationRoleLabel(item)).join(' / ')}</span>
+                    <p>{step.output}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
 
         <Card bordered={false} className="teacher-evaluation-card teacher-evaluation-detail-card">
           <div className="teacher-evaluation-card-head">
@@ -1747,6 +1913,61 @@ export default function TeacherEvaluationModule() {
           </div>
           <Timeline items={buildRecordTimeline(selectedRecord, selectedScheme)} />
         </Card>
+      </div>
+    );
+  }
+
+  function renderRecordDetail(mode = 'panel') {
+    if (!selectedRecord || !selectedScheme) {
+      return (
+        <Card bordered={false} className="teacher-evaluation-card teacher-evaluation-detail-card">
+          <Empty description="请选择评价实例" />
+        </Card>
+      );
+    }
+
+    const bodyClassName = mode === 'drawer'
+      ? 'teacher-evaluation-drawer-body'
+      : 'teacher-evaluation-detail-body';
+
+    return (
+      <div className={bodyClassName}>
+        <div className="teacher-evaluation-drawer-hero">
+          <div className="teacher-evaluation-drawer-kicker">{selectedRecord.schoolName} · {selectedRecord.departmentName}</div>
+          <h3>{selectedRecord.teacherName} / {selectedRecord.roleName}</h3>
+          <p>{selectedScheme.summary}</p>
+          <div className="teacher-evaluation-meta-row">
+            <Tag color={statusColor(selectedRecord.status)}>{getTeacherEvaluationStatusLabel(selectedRecord.status)}</Tag>
+            <Tag color="blue">{selectedRecord.periodLabel || selectedScheme.semester}</Tag>
+            <Tag>{selectedRecord.targetLevel}</Tag>
+            <Tag>{selectedRecord.schemeNameSnapshot || selectedScheme.name}</Tag>
+            <Tag>{selectedRecord.evidenceItems.length} 条证据</Tag>
+            <Tag>{selectedRecord.aiDrafts.length} 份 AI 建议稿</Tag>
+            {selectedRecord.applicationNote ? <Tag color="cyan">{selectedRecord.applicationNote}</Tag> : null}
+          </div>
+        </div>
+
+        <Tabs
+          className="teacher-evaluation-detail-tabs"
+          defaultActiveKey="review"
+          items={[
+            {
+              key: 'review',
+              label: '评审内容',
+              children: (
+                <div className="teacher-evaluation-section-stack">
+                  {renderReviewPackSummary(mode)}
+                  {renderIntegratedEvidencePackages()}
+                </div>
+              ),
+            },
+            {
+              key: 'workflow',
+              label: '流程处理',
+              children: renderWorkflowSection(mode),
+            },
+          ]}
+        />
       </div>
     );
   }
@@ -1969,32 +2190,44 @@ export default function TeacherEvaluationModule() {
                       </Space>
                     </div>
                     <div className="teacher-evaluation-toolbar">
+                      <Space wrap>
+                        <Segmented
+                          value={workbenchView}
+                          onChange={setWorkbenchView}
+                          options={[
+                            { label: '按教师', value: 'TEACHER' },
+                            { label: '按周期', value: 'PERIOD' },
+                          ]}
+                        />
+                        <Segmented
+                          value={workbenchSchemeScope}
+                          onChange={setWorkbenchSchemeScope}
+                          options={[
+                            { label: '全部周期', value: 'ALL' },
+                            { label: '当前方案', value: 'ACTIVE' },
+                          ]}
+                        />
+                        <Select
+                          value={periodFilter}
+                          onChange={setPeriodFilter}
+                          options={periodOptions}
+                          className="teacher-evaluation-period-select"
+                        />
+                      </Space>
                       <Input
                         allowClear
                         value={searchKeyword}
                         onChange={(event) => setSearchKeyword(event.target.value)}
                         prefix={<SearchOutlined />}
-                        placeholder="搜索教师、部门、用途标签或评价状态"
+                        placeholder="搜索教师、部门、方案或评价状态"
                       />
                       <Space wrap>
                         <Tag color="blue">共 {filteredRecords.length} 条实例</Tag>
+                        <Tag>{workbenchView === 'TEACHER' ? `${teacherWorkbenchGroups.length} 位教师` : `${periodWorkbenchGroups.length} 个周期`}</Tag>
                         <Tag>点击行查看评审详情</Tag>
                       </Space>
                     </div>
-                    <Table
-                      rowKey="id"
-                      columns={recordColumns}
-                      dataSource={filteredRecords}
-                      pagination={{ pageSize: 6, showSizeChanger: false }}
-                      scroll={{ x: 1080 }}
-                      rowClassName={(record) => (record.id === selectedRecord?.id ? 'teacher-evaluation-record-row-active' : '')}
-                      onRow={(record) => ({
-                        onClick: () => {
-                          setSelectedRecordId(record.id);
-                          setRecordDrawerOpen(true);
-                        },
-                      })}
-                    />
+                    {renderWorkbenchGroups()}
                   </Card>
                 ),
               },
