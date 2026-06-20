@@ -2,6 +2,7 @@ const SCHEME_STORAGE_KEY = 'gr.teacher-evaluation.schemes.v1';
 const RECORD_STORAGE_KEY = 'gr.teacher-evaluation.records.v1';
 const AUDIT_STORAGE_KEY = 'gr.teacher-evaluation.audit.v1';
 const SEED_KEY = 'gr.teacher-evaluation.seeded.v1';
+const REBALANCE_KEY = 'gr.teacher-evaluation.rebalanced.v2';
 const STORE_CHANGE_EVENT = 'gr:teacher-evaluation-change';
 
 export const TEACHER_EVALUATION_STATUS_OPTIONS = [
@@ -113,6 +114,22 @@ function createDefaultTeacherProfiles() {
       departmentName: '机电工程教研组',
       roleName: '机电一体化专业教师',
       targetLevel: '专业带头人',
+    },
+    {
+      teacherId: 'teacher_chen_xi',
+      name: '陈曦',
+      schoolName: '海右职业技术学院',
+      departmentName: '数字媒体教研组',
+      roleName: '数字媒体技术专业教师',
+      targetLevel: '初任讲师',
+    },
+    {
+      teacherId: 'teacher_liu_qin',
+      name: '刘琴',
+      schoolName: '海右职业技术学院',
+      departmentName: '现代服务教研组',
+      roleName: '酒店管理专业教师',
+      targetLevel: '双师型骨干讲师',
     },
   ];
 }
@@ -308,6 +325,9 @@ function createRecordFromScheme(scheme, teacher, overrides = {}) {
     departmentName: teacher.departmentName,
     roleName: teacher.roleName,
     targetLevel: teacher.targetLevel || scheme.targetLevel,
+    applicationNote: trimText(overrides.applicationNote),
+    scenarioLabel: trimText(overrides.scenarioLabel) || scheme.schemeType,
+    requestedBy: trimText(overrides.requestedBy) || teacher.name,
     status: overrides.status || 'DRAFT',
     currentNode: overrides.currentNode || scheme.reviewFlow?.[0]?.key || 'submit',
     submittedAt: overrides.submittedAt || '',
@@ -455,6 +475,9 @@ function normalizeRecord(record) {
     departmentName: trimText(record.departmentName),
     roleName: trimText(record.roleName),
     targetLevel: trimText(record.targetLevel),
+    applicationNote: trimText(record.applicationNote),
+    scenarioLabel: trimText(record.scenarioLabel),
+    requestedBy: trimText(record.requestedBy),
     evidenceItems: Array.isArray(record.evidenceItems) ? clone(record.evidenceItems) : [],
     aiDrafts: Array.isArray(record.aiDrafts) ? record.aiDrafts.map((item) => normalizeAiDraft(item)) : [],
     reviewOpinions: Array.isArray(record.reviewOpinions) ? clone(record.reviewOpinions) : [],
@@ -477,6 +500,112 @@ function normalizeAuditLog(log) {
 
 function getSchemeById(schemes, schemeId) {
   return schemes.find((item) => item.id === schemeId) || null;
+}
+
+function isClosedStatus(status) {
+  return ['APPROVED', 'REJECTED', 'APPEAL_RESOLVED'].includes(status);
+}
+
+function getTeacherPoolForScheme(scheme) {
+  const teachers = createDefaultTeacherProfiles();
+  const matched = teachers.filter((item) => item.targetLevel === scheme.targetLevel);
+  const fallback = teachers.filter((item) => item.targetLevel !== scheme.targetLevel);
+  return [...matched, ...fallback];
+}
+
+function getTeacherRecordStats(records, schemeId, teacherId) {
+  const targetRecords = records.filter((item) => item.schemeId === schemeId && item.teacherId === teacherId);
+  return {
+    total: targetRecords.length,
+    open: targetRecords.filter((item) => !isClosedStatus(item.status)).length,
+  };
+}
+
+function chooseTeacherForScheme(scheme, records, explicitTeacher = null) {
+  if (explicitTeacher) {
+    return explicitTeacher;
+  }
+  const pool = getTeacherPoolForScheme(scheme);
+  return [...pool].sort((left, right) => {
+    const leftStats = getTeacherRecordStats(records, scheme.id, left.teacherId);
+    const rightStats = getTeacherRecordStats(records, scheme.id, right.teacherId);
+    if (leftStats.open !== rightStats.open) return leftStats.open - rightStats.open;
+    if (leftStats.total !== rightStats.total) return leftStats.total - rightStats.total;
+    return left.name.localeCompare(right.name, 'zh-CN');
+  })[0];
+}
+
+function replaceTeacherName(value, fromName, toName) {
+  if (typeof value !== 'string' || !fromName || fromName === toName) return value;
+  return value.split(fromName).join(toName);
+}
+
+function isPristineDraftRecord(record) {
+  return record.status === 'DRAFT'
+    && !record.submittedAt
+    && !(record.reviewOpinions || []).length
+    && !record.finalDecision
+    && !record.appeal
+    && !trimText(record.applicationNote)
+    && !trimText(record.requestedBy);
+}
+
+function applyTeacherProfile(record, teacher) {
+  const previousName = record.teacherName;
+  record.teacherId = teacher.teacherId;
+  record.teacherName = teacher.name;
+  record.schoolName = teacher.schoolName;
+  record.departmentName = teacher.departmentName;
+  record.roleName = teacher.roleName;
+  record.targetLevel = teacher.targetLevel;
+  record.evidenceItems = (record.evidenceItems || []).map((item) => ({
+    ...item,
+    title: replaceTeacherName(item.title, previousName, teacher.name),
+    summary: replaceTeacherName(item.summary, previousName, teacher.name),
+    resourcePath: replaceTeacherName(item.resourcePath, previousName, teacher.name),
+  }));
+  record.aiDrafts = (record.aiDrafts || []).map((item) => ({
+    ...item,
+    summary: replaceTeacherName(item.summary, previousName, teacher.name),
+    suggestions: (item.suggestions || []).map((suggestion) => replaceTeacherName(suggestion, previousName, teacher.name)),
+  }));
+}
+
+function rebalanceDemoDraftRecords() {
+  if (typeof window === 'undefined') return;
+  if (window.localStorage.getItem(REBALANCE_KEY)) return;
+  const current = readAll();
+  if (!current.records.length) {
+    window.localStorage.setItem(REBALANCE_KEY, '1');
+    return;
+  }
+  const schemes = current.schemes.map((item) => normalizeScheme(item));
+  const nextRecords = current.records.map((item) => normalizeRecord(item));
+  let changed = false;
+
+  schemes.forEach((scheme) => {
+    const pool = getTeacherPoolForScheme(scheme);
+    const draftCandidates = nextRecords.filter((item) => item.schemeId === scheme.id && isPristineDraftRecord(item));
+    draftCandidates
+      .sort((left, right) => String(left.createdAt).localeCompare(String(right.createdAt)))
+      .forEach((record) => {
+        const replacement = [...pool].sort((left, right) => {
+          const leftStats = getTeacherRecordStats(nextRecords, scheme.id, left.teacherId);
+          const rightStats = getTeacherRecordStats(nextRecords, scheme.id, right.teacherId);
+          if (leftStats.open !== rightStats.open) return leftStats.open - rightStats.open;
+          if (leftStats.total !== rightStats.total) return leftStats.total - rightStats.total;
+          return left.name.localeCompare(right.name, 'zh-CN');
+        })[0];
+        if (!replacement || replacement.teacherId === record.teacherId) return;
+        applyTeacherProfile(record, replacement);
+        changed = true;
+      });
+  });
+
+  if (changed) {
+    writeAll({ ...current, records: nextRecords });
+  }
+  window.localStorage.setItem(REBALANCE_KEY, '1');
 }
 
 function getCurrentFlowIndex(record, scheme) {
@@ -511,18 +640,27 @@ export function getTeacherEvaluationStoreEventName() {
 
 export async function seedTeacherEvaluationData() {
   if (typeof window === 'undefined') return;
-  if (window.localStorage.getItem(SEED_KEY)) return;
+  if (window.localStorage.getItem(SEED_KEY)) {
+    rebalanceDemoDraftRecords();
+    return;
+  }
   const current = readAll();
   if (current.schemes.length || current.records.length || current.auditLogs.length) {
     window.localStorage.setItem(SEED_KEY, '1');
+    rebalanceDemoDraftRecords();
     return;
   }
   writeAll(createSeedData());
   window.localStorage.setItem(SEED_KEY, '1');
+  rebalanceDemoDraftRecords();
 }
 
 export async function listTeacherEvaluationSchemes() {
   return readList(SCHEME_STORAGE_KEY).map((item) => normalizeScheme(item));
+}
+
+export async function listTeacherEvaluationTeacherProfiles() {
+  return clone(createDefaultTeacherProfiles());
 }
 
 export async function saveTeacherEvaluationScheme(payload) {
@@ -545,15 +683,30 @@ export async function getTeacherEvaluationRecord(id) {
   return target ? normalizeRecord(target) : null;
 }
 
-export async function createTeacherEvaluationRecord(schemeId, teacherProfile = null) {
+export async function createTeacherEvaluationRecord(schemeId, options = null) {
   const current = readAll();
   const schemes = current.schemes.map((item) => normalizeScheme(item));
   const scheme = getSchemeById(schemes, schemeId);
   if (!scheme) {
     throw new Error('评价方案不存在');
   }
-  const teacher = teacherProfile || createDefaultTeacherProfiles().find((item) => item.targetLevel === scheme.targetLevel) || createDefaultTeacherProfiles()[0];
-  const record = normalizeRecord(createRecordFromScheme(scheme, teacher));
+  const optionTeacher = options?.teacherProfile && typeof options.teacherProfile === 'object'
+    ? options.teacherProfile
+    : options && typeof options === 'object' && options.teacherId
+      ? createDefaultTeacherProfiles().find((item) => item.teacherId === options.teacherId)
+      : null;
+  const teacher = chooseTeacherForScheme(scheme, current.records.map((item) => normalizeRecord(item)), optionTeacher);
+  const existingOpenRecord = current.records
+    .map((item) => normalizeRecord(item))
+    .find((item) => item.schemeId === scheme.id && item.teacherId === teacher.teacherId && !isClosedStatus(item.status));
+  if (existingOpenRecord) {
+    throw new Error(`该教师在当前方案下已有进行中的评价实例，请继续处理「${existingOpenRecord.id}」或先完成当前实例。`);
+  }
+  const record = normalizeRecord(createRecordFromScheme(scheme, teacher, {
+    applicationNote: options?.applicationNote,
+    scenarioLabel: options?.scenarioLabel,
+    requestedBy: options?.requestedBy,
+  }));
   const nextRecords = [record, ...current.records];
   const nextAuditLogs = [...current.auditLogs];
   appendAuditLog(nextAuditLogs, {
@@ -564,7 +717,7 @@ export async function createTeacherEvaluationRecord(schemeId, teacherProfile = n
     operatorRole: 'TEACHER',
     targetType: 'TeacherEvaluationRecord',
     targetId: record.id,
-    summary: `新建评价实例「${record.id}」`,
+    summary: `新建评价实例「${record.id}」${record.applicationNote ? `：${record.applicationNote}` : ''}`,
   });
   writeAll({ ...current, records: nextRecords, auditLogs: nextAuditLogs });
   return clone(record);
@@ -747,6 +900,48 @@ export async function submitTeacherEvaluationAppeal(recordId, payload) {
   });
   writeAll({ ...current, records: nextRecords, auditLogs: nextAuditLogs });
   return clone(record);
+}
+
+export async function appendTeacherEvaluationEvidence(recordId, payload) {
+  const current = readAll();
+  const nextRecords = current.records.map((item) => normalizeRecord(item));
+  const record = nextRecords.find((item) => item.id === recordId);
+  if (!record) throw new Error('评价实例不存在');
+
+  const evidence = {
+    id: createId('evidence'),
+    title: trimText(payload.title) || '补充证据',
+    sourceType: trimText(payload.sourceType) || '人工补充',
+    sourceLabel: trimText(payload.sourceLabel) || '人工补证',
+    relatedItemName: trimText(payload.relatedItemName) || '待归类评价项',
+    date: trimText(payload.date) || nowText().slice(0, 10),
+    summary: trimText(payload.summary) || '补充上传了新的评价证据。',
+    evidenceThreshold: trimText(payload.evidenceThreshold),
+    resourcePath: trimText(payload.resourcePath) || '教师评价 / 人工补证',
+    coverage: typeof payload.coverage === 'number' ? payload.coverage : 76,
+    statusLabel: trimText(payload.statusLabel) || '证据初步具备',
+  };
+
+  record.evidenceItems.unshift(evidence);
+  record.updatedAt = nowText();
+  if (record.status === 'SUPPLEMENT_REQUIRED') {
+    record.status = 'DRAFT';
+    record.currentNode = 'submit';
+  }
+
+  const nextAuditLogs = [...current.auditLogs];
+  appendAuditLog(nextAuditLogs, {
+    recordId,
+    actionType: 'APPEND_EVIDENCE',
+    operatorId: payload.actorId || payload.actorRole || 'TEACHER',
+    operatorName: trimText(payload.actorName) || record.teacherName,
+    operatorRole: payload.actorRole || 'TEACHER',
+    targetType: 'TeacherEvaluationEvidence',
+    targetId: evidence.id,
+    summary: `补充证据「${evidence.title}」并写入评价实例`,
+  });
+  writeAll({ ...current, records: nextRecords, auditLogs: nextAuditLogs });
+  return clone(evidence);
 }
 
 export async function listTeacherEvaluationAuditLogs(recordId = '') {
