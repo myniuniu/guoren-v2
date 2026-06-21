@@ -19,6 +19,7 @@ import {
   seedTeacherEvaluationData,
   submitTeacherEvaluationAppeal,
   submitTeacherEvaluationRecord,
+  updateTeacherEvaluationRecordDraft,
   updateTeacherEvaluationAiDraft,
 } from './store';
 
@@ -40,6 +41,7 @@ export const teacherEvaluationApi = {
   listRecords: async () => listTeacherEvaluationRecords(),
   detailRecord: async (id) => getTeacherEvaluationRecord(id),
   createRecord: async (schemeId, options) => createTeacherEvaluationRecord(schemeId, options),
+  updateRecordDraft: async (recordId, payload) => updateTeacherEvaluationRecordDraft(recordId, payload),
   submitRecord: async (recordId, actor) => submitTeacherEvaluationRecord(recordId, actor),
   reviewRecord: async (recordId, payload) => reviewTeacherEvaluationRecord(recordId, payload),
   updateAiDraft: async (recordId, draftId, payload) => updateTeacherEvaluationAiDraft(recordId, draftId, payload),

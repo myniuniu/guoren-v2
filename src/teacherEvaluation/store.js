@@ -320,8 +320,33 @@ function createEvidenceItemsForRubric(rubric, teacherName) {
   ];
 }
 
+function normalizeTeacherEvaluationEvidenceItem(item, fallback = {}) {
+  return {
+    ...item,
+    id: item?.id || createId('evidence'),
+    title: trimText(item?.title) || fallback.title || '评价材料',
+    sourceType: trimText(item?.sourceType) || fallback.sourceType || '成长档案记录',
+    sourceLabel: trimText(item?.sourceLabel) || fallback.sourceLabel || '我的档案',
+    relatedItemName: trimText(item?.relatedItemName) || fallback.relatedItemName || '待归类评价项',
+    date: trimText(item?.date) || fallback.date || nowText().slice(0, 10),
+    summary: trimText(item?.summary) || fallback.summary || '补充上传了新的评价材料。',
+    evidenceThreshold: trimText(item?.evidenceThreshold) || trimText(fallback.evidenceThreshold),
+    resourcePath: trimText(item?.resourcePath) || fallback.resourcePath || '教师评价 / 档案直提',
+    coverage: typeof item?.coverage === 'number'
+      ? item.coverage
+      : typeof fallback.coverage === 'number'
+        ? fallback.coverage
+        : 76,
+    statusLabel: trimText(item?.statusLabel) || fallback.statusLabel || '证据初步具备',
+    submissionSource: trimText(item?.submissionSource) || fallback.submissionSource || '',
+  };
+}
+
 function createRecordFromScheme(scheme, teacher, overrides = {}) {
-  const evidenceItems = (scheme.itemRubrics || []).flatMap((rubric) => createEvidenceItemsForRubric(rubric, teacher.name));
+  const defaultEvidenceItems = (scheme.itemRubrics || []).flatMap((rubric) => createEvidenceItemsForRubric(rubric, teacher.name));
+  const evidenceItems = Array.isArray(overrides.evidenceItems) && overrides.evidenceItems.length
+    ? overrides.evidenceItems.map((item) => normalizeTeacherEvaluationEvidenceItem(item))
+    : defaultEvidenceItems.map((item) => normalizeTeacherEvaluationEvidenceItem(item));
   const aiDrafts = (scheme.itemRubrics || []).map((rubric, index) => ({
     id: createId(`ai_draft_${index + 1}`),
     rubricKey: rubric.key,
@@ -344,6 +369,7 @@ function createRecordFromScheme(scheme, teacher, overrides = {}) {
   const createdAt = overrides.createdAt || nowText();
   return {
     id: overrides.id || createId('eval_record'),
+    archiveVersionId: trimText(overrides.archiveVersionId),
     schemeId: scheme.id,
     schemeNameSnapshot: trimText(overrides.schemeNameSnapshot) || scheme.name,
     teacherId: teacher.teacherId,
@@ -499,6 +525,7 @@ function normalizeRecord(record) {
   return {
     ...record,
     id: record.id || createId('eval_record'),
+    archiveVersionId: trimText(record.archiveVersionId),
     status: record.status || 'DRAFT',
     currentNode: record.currentNode || 'submit',
     schemeNameSnapshot: trimText(record.schemeNameSnapshot) || trimText(scheme?.name),
@@ -769,15 +796,24 @@ export async function createTeacherEvaluationRecord(schemeId, options = null) {
       : null;
   const normalizedCurrentRecords = normalizeRecordsWithSchemes(current.records, schemes);
   const teacher = chooseTeacherForScheme(scheme, normalizedCurrentRecords, optionTeacher);
+  const targetPeriodLabel = trimText(options?.periodLabel) || trimText(scheme.semester);
   const existingOpenRecord = normalizedCurrentRecords
-    .find((item) => item.schemeId === scheme.id && item.teacherId === teacher.teacherId && !isClosedStatus(item.status));
+    .find((item) => (
+      item.schemeId === scheme.id
+      && item.teacherId === teacher.teacherId
+      && !isClosedStatus(item.status)
+      && (trimText(item.periodLabel) || trimText(scheme.semester)) === targetPeriodLabel
+    ));
   if (existingOpenRecord) {
-    throw new Error(`该教师在当前方案下已有进行中的评价实例，请继续处理「${existingOpenRecord.id}」或先完成当前实例。`);
+    throw new Error(`该教师在「${targetPeriodLabel}」下已有进行中的评价实例，请继续处理「${existingOpenRecord.id}」或先完成当前实例。`);
   }
   const record = normalizeRecord(createRecordFromScheme(scheme, teacher, {
+    archiveVersionId: options?.archiveVersionId,
+    periodLabel: options?.periodLabel,
     applicationNote: options?.applicationNote,
     scenarioLabel: options?.scenarioLabel,
     requestedBy: options?.requestedBy,
+    evidenceItems: options?.evidenceItems,
   }));
   const nextRecords = [record, ...current.records];
   const nextAuditLogs = [...current.auditLogs];
@@ -970,6 +1006,70 @@ export async function submitTeacherEvaluationAppeal(recordId, payload) {
     targetType: 'TeacherEvaluationRecord',
     targetId: recordId,
     summary: `提交申诉：${trimText(payload.reason)}`,
+  });
+  writeAll({ ...current, records: nextRecords, auditLogs: nextAuditLogs });
+  return clone(record);
+}
+
+export async function updateTeacherEvaluationRecordDraft(recordId, payload = {}) {
+  const current = readAll();
+  const schemes = current.schemes.map((item) => normalizeScheme(item));
+  const nextRecords = normalizeRecordsWithSchemes(current.records, schemes);
+  const record = nextRecords.find((item) => item.id === recordId);
+  if (!record) throw new Error('评价实例不存在');
+  if (!['DRAFT', 'SUPPLEMENT_REQUIRED'].includes(record.status)) {
+    throw new Error('当前实例不处于可编辑草稿态');
+  }
+  const scheme = getSchemeById(schemes, record.schemeId);
+  if (!scheme) throw new Error('评价方案不存在');
+
+  const normalizedEvidenceItems = Array.isArray(payload.evidenceItems)
+    ? payload.evidenceItems.map((item) => normalizeTeacherEvaluationEvidenceItem(item))
+    : record.evidenceItems;
+  const regeneratedDrafts = (scheme.itemRubrics || []).map((rubric, index) => ({
+    id: createId(`ai_draft_${index + 1}`),
+    rubricKey: rubric.key,
+    itemName: rubric.itemName,
+    draftType: 'SUGGEST_ONLY',
+    generatedBy: '评价辅助智能体',
+    generatedAt: nowText(),
+    summary: `已根据“${rubric.itemName}”的现有证据生成量规建议稿，供 ${rubric.evaluatorRoles.join(' / ')} 确认。`,
+    suggestions: [
+      `建议优先说明 ${record.teacherName} 在“${rubric.itemName}”上的直接行为证据与结果证据。`,
+      rubric.aiAssistAllowed ? '请人工确认量规建议项后再用于正式评议。' : '该项仅允许 AI 整理证据摘要，不允许 AI 预填判断。',
+    ],
+    references: normalizedEvidenceItems.filter((item) => item.relatedItemName === rubric.itemName).map((item) => item.id),
+    confidence: Number((0.76 + index * 0.04).toFixed(2)),
+    reviewStatus: 'PENDING_HUMAN',
+    reviewNote: '',
+    reviewedBy: '',
+    reviewedAt: '',
+  }));
+
+  record.archiveVersionId = trimText(payload.archiveVersionId) || record.archiveVersionId || '';
+  record.periodLabel = trimText(payload.periodLabel) || record.periodLabel;
+  record.periodSortKey = buildPeriodSortKey(record.periodLabel, record.createdAt);
+  record.applicationNote = trimText(payload.applicationNote) || record.applicationNote;
+  record.scenarioLabel = trimText(payload.scenarioLabel) || record.scenarioLabel;
+  record.requestedBy = trimText(payload.requestedBy) || record.requestedBy;
+  record.evidenceItems = clone(normalizedEvidenceItems);
+  record.aiDrafts = regeneratedDrafts;
+  if (record.status === 'SUPPLEMENT_REQUIRED') {
+    record.status = 'DRAFT';
+    record.currentNode = scheme.reviewFlow?.[0]?.key || 'submit';
+  }
+  record.updatedAt = nowText();
+
+  const nextAuditLogs = [...current.auditLogs];
+  appendAuditLog(nextAuditLogs, {
+    recordId,
+    actionType: 'UPDATE_RECORD_DRAFT',
+    operatorId: payload.actorId || payload.actorRole || record.teacherId,
+    operatorName: trimText(payload.actorName) || record.teacherName,
+    operatorRole: payload.actorRole || 'TEACHER',
+    targetType: 'TeacherEvaluationRecord',
+    targetId: recordId,
+    summary: `更新草稿实例材料，共 ${record.evidenceItems.length} 条证据`,
   });
   writeAll({ ...current, records: nextRecords, auditLogs: nextAuditLogs });
   return clone(record);

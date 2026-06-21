@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Button,
@@ -601,7 +601,7 @@ function groupRecordsByPeriod(records = []) {
     }));
 }
 
-export default function TeacherEvaluationModule() {
+export default function TeacherEvaluationModule({ initialContext = null }) {
   const [loading, setLoading] = useState(true);
   const [schemes, setSchemes] = useState([]);
   const [capabilityModels, setCapabilityModels] = useState([]);
@@ -631,6 +631,7 @@ export default function TeacherEvaluationModule() {
   const [schemeForm] = Form.useForm();
   const [recordForm] = Form.useForm();
   const [evidenceForm] = Form.useForm();
+  const handledContextRequestRef = useRef(null);
   const watchedSchemeTargetRole = Form.useWatch('targetRole', schemeForm);
   const watchedCapabilityModelId = Form.useWatch('capabilityModelId', schemeForm);
 
@@ -677,6 +678,43 @@ export default function TeacherEvaluationModule() {
       setSelectedRecordId(records[0].id);
     }
   }, [records, selectedRecordId]);
+
+  useEffect(() => {
+    if (!initialContext?.requestId || loading) return;
+    if (handledContextRequestRef.current === initialContext.requestId) return;
+
+    const matchedRecord = initialContext.recordId
+      ? records.find((item) => item.id === initialContext.recordId)
+      : records.find((item) => (
+        (!initialContext.schemeId || item.schemeId === initialContext.schemeId)
+        && (!initialContext.teacherName || item.teacherName === initialContext.teacherName)
+        && (!initialContext.periodLabel || item.periodLabel === initialContext.periodLabel)
+      ));
+
+    if (initialContext.activeRole) {
+      setActiveRole(initialContext.activeRole);
+    }
+    if (initialContext.schemeId) {
+      setActiveSchemeId(initialContext.schemeId);
+      setWorkbenchSchemeScope('ACTIVE');
+    } else {
+      setWorkbenchSchemeScope('ALL');
+    }
+    setRecordScope('ALL');
+    setStatusFilter('ALL');
+    setWorkbenchView('TEACHER');
+    setPeriodFilter(initialContext.periodLabel || 'ALL');
+    setSearchKeyword(initialContext.teacherName || '');
+
+    if (matchedRecord?.id) {
+      setSelectedRecordId(matchedRecord.id);
+      if (initialContext.openRecordDrawer) {
+        setRecordDrawerOpen(true);
+      }
+    }
+
+    handledContextRequestRef.current = initialContext.requestId;
+  }, [initialContext, loading, records]);
 
   const activeScheme = useMemo(
     () => schemes.find((item) => item.id === activeSchemeId) || schemes[0] || null,

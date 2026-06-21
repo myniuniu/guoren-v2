@@ -69,6 +69,8 @@ import SceneTemplateModule from './scene/SceneTemplateModule';
 import CapabilityModelModule from './capabilityModel/CapabilityModelModule';
 import TeacherEvaluationModule from './teacherEvaluation/TeacherEvaluationModule';
 import TeacherEvaluationSchemeModule from './teacherEvaluation/TeacherEvaluationSchemeModule';
+import TeacherDevelopmentModule from './teacherDevelopment/TeacherDevelopmentModule';
+import TeacherPortraitModule from './teacherPortrait/TeacherPortraitModule';
 import SceneCreateModal from './scene/SceneCreateModal';
 import { getSceneStoreChangeEventName, getSceneTypeLabel, getSceneVisibilityLabel, sceneApi } from './scene/api';
 import './App.css';
@@ -161,6 +163,8 @@ const iconBarItems = [
   { key: 'app-center', icon: <AppstoreOutlined />, label: '应用中心' },
   { key: 'scene-template', icon: <DesktopOutlined />, label: '场景模板' },
   { key: 'my-profile', icon: <IdcardOutlined />, label: '我的档案' },
+  { key: 'teacher-portrait', icon: <SolutionOutlined />, label: '教师画像' },
+  { key: 'teacher-development', icon: <BarChartOutlined />, label: '教师发展' },
   { key: 'teacher-evaluation-schemes', icon: <FileTextOutlined />, label: '评价方案' },
   { key: 'teacher-evaluation', icon: <AuditOutlined />, label: '教师评价' },
   { key: 'capability-model', icon: <AppstoreOutlined />, label: '能力模型' },
@@ -174,6 +178,7 @@ function App() {
   const [activeIconKey, setActiveIconKey] = useState(() => getInitialHashPage() || 'my-space');
   const [currentPage, setCurrentPage] = useState(() => getInitialHashPage() || 'home'); // 'home', 'detail', or 'workflow'
   const [agentQuotaEntryTab, setAgentQuotaEntryTab] = useState('plans');
+  const [teacherEvaluationEntryContext, setTeacherEvaluationEntryContext] = useState(null);
   const [selectedScene, setSelectedScene] = useState(null);
   const [sceneTemplates, setSceneTemplates] = useState([]);
   const [scenes, setScenes] = useState([]);
@@ -329,6 +334,15 @@ function App() {
     setCurrentPage('agent-quota');
   };
 
+  const openTeacherEvaluationPage = useCallback((context = null) => {
+    setActiveIconKey('teacher-evaluation');
+    setTeacherEvaluationEntryContext(context ? {
+      ...context,
+      requestId: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    } : null);
+    setCurrentPage('teacher-evaluation');
+  }, []);
+
   const openCreateSceneModal = () => {
     setSceneEditing(null);
     setSceneModalOpen(true);
@@ -423,9 +437,14 @@ function App() {
       setCurrentPage('scene-template');
     } else if (key === 'my-profile') {
       setCurrentPage('my-profile');
+    } else if (key === 'teacher-portrait') {
+      setCurrentPage('teacher-portrait');
+    } else if (key === 'teacher-development') {
+      setCurrentPage('teacher-development');
     } else if (key === 'teacher-evaluation-schemes') {
       setCurrentPage('teacher-evaluation-schemes');
     } else if (key === 'teacher-evaluation') {
+      setTeacherEvaluationEntryContext(null);
       setCurrentPage('teacher-evaluation');
     } else if (key === 'capability-model') {
       setCurrentPage('capability-model');
@@ -460,6 +479,8 @@ function App() {
       currentPage === 'app-center' ||
       currentPage === 'scene-template' ||
       currentPage === 'my-profile' ||
+      currentPage === 'teacher-portrait' ||
+      currentPage === 'teacher-development' ||
       currentPage === 'teacher-evaluation-schemes' ||
       currentPage === 'teacher-evaluation' ||
       currentPage === 'capability-model' ||
@@ -560,11 +581,15 @@ function App() {
       ) : currentPage === 'scene-template' ? (
         <SceneTemplateModule />
       ) : currentPage === 'my-profile' ? (
-        <MyProfileModule />
+        <MyProfileModule onNavigateToTeacherEvaluation={openTeacherEvaluationPage} />
+      ) : currentPage === 'teacher-portrait' ? (
+        <TeacherPortraitModule onNavigateToTeacherEvaluation={openTeacherEvaluationPage} />
+      ) : currentPage === 'teacher-development' ? (
+        <TeacherDevelopmentModule />
       ) : currentPage === 'teacher-evaluation-schemes' ? (
         <TeacherEvaluationSchemeModule />
       ) : currentPage === 'teacher-evaluation' ? (
-        <TeacherEvaluationModule />
+        <TeacherEvaluationModule initialContext={teacherEvaluationEntryContext} />
       ) : currentPage === 'capability-model' ? (
         <CapabilityModelModule />
       ) : currentPage === 'solution-management' ? (

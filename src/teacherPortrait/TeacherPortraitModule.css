@@ -1,0 +1,184 @@
+.teacher-portrait-module {
+  background: #f6f8fc;
+}
+
+.teacher-portrait-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+}
+
+.teacher-portrait-alert,
+.teacher-portrait-hero-card,
+.teacher-portrait-stat-card,
+.teacher-portrait-card {
+  border-radius: 20px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+}
+
+.teacher-portrait-loading {
+  min-height: 360px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.teacher-portrait-teacher-select {
+  min-width: 240px;
+}
+
+.teacher-portrait-hero-head,
+.teacher-portrait-card-head,
+.teacher-portrait-timeline-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.teacher-portrait-hero-head h2 {
+  margin: 8px 0 10px;
+}
+
+.teacher-portrait-hero-head p {
+  margin: 0;
+  color: #475467;
+  line-height: 1.8;
+  max-width: 860px;
+}
+
+.teacher-portrait-kicker {
+  color: #667085;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.teacher-portrait-tag-row,
+.teacher-portrait-list,
+.teacher-portrait-model-cell,
+.teacher-portrait-evidence-cell,
+.teacher-portrait-hero-status,
+.teacher-portrait-timeline-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.teacher-portrait-tag-row {
+  margin-top: 14px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.teacher-portrait-hero-actions {
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+}
+
+.teacher-portrait-hero-status {
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #f3f8ff 0%, #ffffff 100%);
+  border: 1px solid #dbe7ff;
+}
+
+.teacher-portrait-hero-status span,
+.teacher-portrait-card-head span,
+.teacher-portrait-model-cell span,
+.teacher-portrait-evidence-cell span,
+.teacher-portrait-timeline-item span,
+.teacher-portrait-timeline-item p,
+.teacher-portrait-list-item span {
+  color: #667085;
+}
+
+.teacher-portrait-summary-grid,
+.teacher-portrait-main-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.teacher-portrait-summary-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.teacher-portrait-main-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.teacher-portrait-card-head {
+  margin-bottom: 16px;
+}
+
+.teacher-portrait-card-head > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.teacher-portrait-list {
+  gap: 12px;
+}
+
+.teacher-portrait-list-item {
+  padding: 16px 18px;
+  border-radius: 16px;
+  border: 1px solid #e4ebf5;
+  background: #fff;
+  gap: 6px;
+}
+
+.teacher-portrait-list-item.is-success {
+  background: linear-gradient(180deg, #f6ffed 0%, #ffffff 100%);
+}
+
+.teacher-portrait-list-item.is-warning {
+  background: linear-gradient(180deg, #fffaf0 0%, #ffffff 100%);
+}
+
+.teacher-portrait-list-item.is-processing {
+  background: linear-gradient(180deg, #f3f8ff 0%, #ffffff 100%);
+}
+
+.teacher-portrait-progress-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.teacher-portrait-progress-cell .ant-progress {
+  margin-bottom: 0;
+}
+
+.teacher-portrait-model-cell,
+.teacher-portrait-evidence-cell,
+.teacher-portrait-timeline-item {
+  gap: 4px;
+}
+
+.teacher-portrait-timeline-item p {
+  margin: 0;
+}
+
+@media (max-width: 1080px) {
+  .teacher-portrait-main-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .teacher-portrait-hero-head,
+  .teacher-portrait-card-head {
+    flex-direction: column;
+  }
+
+  .teacher-portrait-teacher-select {
+    min-width: 180px;
+  }
+}
