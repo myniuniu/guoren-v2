@@ -343,6 +343,11 @@ function App() {
     setCurrentPage('teacher-evaluation');
   }, []);
 
+  const openMyProfilePage = useCallback(() => {
+    setActiveIconKey('my-profile');
+    setCurrentPage('my-profile');
+  }, []);
+
   const openCreateSceneModal = () => {
     setSceneEditing(null);
     setSceneModalOpen(true);
@@ -589,7 +594,7 @@ function App() {
       ) : currentPage === 'teacher-evaluation-schemes' ? (
         <TeacherEvaluationSchemeModule />
       ) : currentPage === 'teacher-evaluation' ? (
-        <TeacherEvaluationModule initialContext={teacherEvaluationEntryContext} />
+        <TeacherEvaluationModule initialContext={teacherEvaluationEntryContext} onNavigateToMyProfile={openMyProfilePage} />
       ) : currentPage === 'capability-model' ? (
         <CapabilityModelModule />
       ) : currentPage === 'solution-management' ? (

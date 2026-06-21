@@ -31,8 +31,6 @@ import {
   RobotOutlined,
   SafetyCertificateOutlined,
   SearchOutlined,
-  SendOutlined,
-  UploadOutlined,
 } from '@ant-design/icons';
 import {
   getAiDraftStatusLabel,
@@ -401,12 +399,6 @@ function resolveAvailableActions(record, scheme, role) {
   const currentNode = (scheme.reviewFlow || []).find((item) => item.key === record.currentNode) || null;
   const canHandleNode = getNodeAllowedRoles(currentNode).includes(role);
 
-  if (role === 'TEACHER' && ['DRAFT', 'SUPPLEMENT_REQUIRED'].includes(record.status)) {
-    return [{ key: 'SUBMIT', label: '提交评审', tone: 'primary' }];
-  }
-  if (role === 'TEACHER' && record.status === 'REJECTED') {
-    return [{ key: 'APPEAL', label: '提交申诉', tone: 'default' }];
-  }
   if (role === 'SCHOOL_REVIEW' && record.status === 'APPEAL_PENDING') {
     return [{ key: 'RESOLVE_APPEAL', label: '处理申诉', tone: 'primary' }];
   }
@@ -601,11 +593,10 @@ function groupRecordsByPeriod(records = []) {
     }));
 }
 
-export default function TeacherEvaluationModule({ initialContext = null }) {
+export default function TeacherEvaluationModule({ initialContext = null, onNavigateToMyProfile = null }) {
   const [loading, setLoading] = useState(true);
   const [schemes, setSchemes] = useState([]);
   const [capabilityModels, setCapabilityModels] = useState([]);
-  const [teachers, setTeachers] = useState([]);
   const [records, setRecords] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
   const [activeSchemeId, setActiveSchemeId] = useState(undefined);
@@ -613,8 +604,6 @@ export default function TeacherEvaluationModule({ initialContext = null }) {
   const [recordDrawerOpen, setRecordDrawerOpen] = useState(false);
   const [evidencePackDrawerOpen, setEvidencePackDrawerOpen] = useState(false);
   const [schemeDrawerOpen, setSchemeDrawerOpen] = useState(false);
-  const [recordCreateDrawerOpen, setRecordCreateDrawerOpen] = useState(false);
-  const [evidenceDrawerOpen, setEvidenceDrawerOpen] = useState(false);
   const [editingSchemeId, setEditingSchemeId] = useState(undefined);
   const [activeRole, setActiveRole] = useState('GROUP_LEADER');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -626,30 +615,26 @@ export default function TeacherEvaluationModule({ initialContext = null }) {
   const [activeEvidencePackKey, setActiveEvidencePackKey] = useState(undefined);
   const [expandedEvidencePackageKeys, setExpandedEvidencePackageKeys] = useState([]);
   const [opinionText, setOpinionText] = useState('');
-  const [appealText, setAppealText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [schemeForm] = Form.useForm();
-  const [recordForm] = Form.useForm();
-  const [evidenceForm] = Form.useForm();
   const handledContextRequestRef = useRef(null);
   const watchedSchemeTargetRole = Form.useWatch('targetRole', schemeForm);
   const watchedCapabilityModelId = Form.useWatch('capabilityModelId', schemeForm);
+  const canNavigateToMyProfile = typeof onNavigateToMyProfile === 'function';
 
   const refreshData = useCallback(async () => {
     setLoading(true);
     try {
       await teacherEvaluationApi.seed();
       await capabilityModelApi.seed();
-      const [nextSchemes, nextCapabilityModels, nextTeachers, nextRecords, nextAuditLogs] = await Promise.all([
+      const [nextSchemes, nextCapabilityModels, nextRecords, nextAuditLogs] = await Promise.all([
         teacherEvaluationApi.listSchemes(),
         capabilityModelApi.listModels(),
-        teacherEvaluationApi.listTeachers(),
         teacherEvaluationApi.listRecords(),
         teacherEvaluationApi.listAuditLogs(),
       ]);
       setSchemes(nextSchemes);
       setCapabilityModels(nextCapabilityModels);
-      setTeachers(nextTeachers);
       setRecords(nextRecords);
       setAuditLogs(nextAuditLogs);
       setActiveSchemeId((current) => current || nextSchemes[0]?.id);
@@ -692,7 +677,7 @@ export default function TeacherEvaluationModule({ initialContext = null }) {
       ));
 
     if (initialContext.activeRole) {
-      setActiveRole(initialContext.activeRole);
+      setActiveRole(initialContext.activeRole === 'TEACHER' ? 'GROUP_LEADER' : initialContext.activeRole);
     }
     if (initialContext.schemeId) {
       setActiveSchemeId(initialContext.schemeId);
@@ -843,22 +828,6 @@ export default function TeacherEvaluationModule({ initialContext = null }) {
     }).length,
   }), [activeRole, records, schemes]);
 
-  const recommendedTeacherId = useMemo(() => {
-    if (!activeScheme || !teachers.length) return undefined;
-    const matchedTeachers = teachers.filter((item) => item.targetLevel === activeScheme.targetLevel);
-    const teacherPool = matchedTeachers.length ? matchedTeachers : teachers;
-    const scoredPool = [...teacherPool].sort((left, right) => {
-      const leftOpen = records.filter((item) => item.schemeId === activeScheme.id && item.teacherId === left.teacherId && !isClosedStatus(item.status)).length;
-      const rightOpen = records.filter((item) => item.schemeId === activeScheme.id && item.teacherId === right.teacherId && !isClosedStatus(item.status)).length;
-      if (leftOpen !== rightOpen) return leftOpen - rightOpen;
-      const leftTotal = records.filter((item) => item.schemeId === activeScheme.id && item.teacherId === left.teacherId).length;
-      const rightTotal = records.filter((item) => item.schemeId === activeScheme.id && item.teacherId === right.teacherId).length;
-      if (leftTotal !== rightTotal) return leftTotal - rightTotal;
-      return left.name.localeCompare(right.name, 'zh-CN');
-    });
-    return scoredPool[0]?.teacherId;
-  }, [activeScheme, records, teachers]);
-
   const rubricColumns = [
     {
       title: '评价项',
@@ -1001,15 +970,6 @@ export default function TeacherEvaluationModule({ initialContext = null }) {
     },
   ];
 
-  function openCreateRecordDrawer() {
-    recordForm.setFieldsValue({
-      teacherId: recommendedTeacherId,
-      scenarioLabel: activeScheme?.schemeType || '正式评价',
-      applicationNote: '',
-    });
-    setRecordCreateDrawerOpen(true);
-  }
-
   function openRecordDetail(recordId) {
     setSelectedRecordId(recordId);
     setRecordDrawerOpen(true);
@@ -1080,45 +1040,9 @@ export default function TeacherEvaluationModule({ initialContext = null }) {
     setSchemeDrawerOpen(true);
   }
 
-  function openEvidenceDrawer() {
-    if (!selectedRecord || !selectedScheme) return;
-    evidenceForm.setFieldsValue({
-      title: '',
-      relatedItemName: selectedScheme.itemRubrics?.[0]?.itemName,
-      sourceLabel: '人工补证',
-      summary: '',
-      resourcePath: `教师评价 / ${selectedRecord.teacherName} / 补充材料`,
-      coverage: 80,
-    });
-    setEvidenceDrawerOpen(true);
-  }
-
   function openEvidencePackDrawer(packageKey = '') {
     setActiveEvidencePackKey(packageKey || selectedEvidencePackages[0]?.key);
     setEvidencePackDrawerOpen(true);
-  }
-
-  async function handleCreateRecord(values) {
-    if (!activeScheme) return;
-    setSubmitting(true);
-    try {
-      const teacherProfile = teachers.find((item) => item.teacherId === values.teacherId);
-      const created = await teacherEvaluationApi.createRecord(activeScheme.id, {
-        teacherProfile,
-        scenarioLabel: values.scenarioLabel,
-        applicationNote: values.applicationNote,
-        requestedBy: getTeacherEvaluationRoleLabel(activeRole),
-      });
-      message.success('已新建评价实例');
-      setSelectedRecordId(created.id);
-      setRecordCreateDrawerOpen(false);
-      recordForm.resetFields();
-      await refreshData();
-    } catch (error) {
-      message.error(error?.message || '创建评价实例失败');
-    } finally {
-      setSubmitting(false);
-    }
   }
 
   async function handleSaveScheme(values) {
@@ -1197,21 +1121,7 @@ export default function TeacherEvaluationModule({ initialContext = null }) {
     if (!selectedRecord || !selectedScheme) return;
     setSubmitting(true);
     try {
-      if (actionKey === 'SUBMIT') {
-        await teacherEvaluationApi.submitRecord(selectedRecord.id, {
-          operatorName: selectedRecord.teacherName,
-          operatorRole: activeRole,
-        });
-        message.success('已提交评审');
-      } else if (actionKey === 'APPEAL') {
-        await teacherEvaluationApi.submitAppeal(selectedRecord.id, {
-          actorName: selectedRecord.teacherName,
-          actorRole: activeRole,
-          reason: appealText || '对当前评审结论提出申诉，请求补充复核。',
-        });
-        setAppealText('');
-        message.success('已提交申诉');
-      } else {
+      if (actionKey === 'RESOLVE_APPEAL' || actionKey === 'REQUEST_SUPPLEMENT' || actionKey === 'APPROVE' || actionKey === 'REJECT' || actionKey === 'ADVANCE') {
         await teacherEvaluationApi.reviewRecord(selectedRecord.id, {
           actorRole: activeRole,
           actorName: getTeacherEvaluationRoleLabel(activeRole),
@@ -1241,24 +1151,6 @@ export default function TeacherEvaluationModule({ initialContext = null }) {
         setOpinionText('');
       }
       message.success(action === 'REGENERATE' ? '已重新生成建议稿' : 'AI 建议稿已更新');
-      await refreshData();
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  async function handleAppendEvidence(values) {
-    if (!selectedRecord) return;
-    setSubmitting(true);
-    try {
-      await teacherEvaluationApi.appendEvidence(selectedRecord.id, {
-        ...values,
-        actorRole: activeRole,
-        actorName: getTeacherEvaluationRoleLabel(activeRole),
-      });
-      message.success('已补充证据');
-      setEvidenceDrawerOpen(false);
-      evidenceForm.resetFields();
       await refreshData();
     } finally {
       setSubmitting(false);
@@ -1543,97 +1435,6 @@ export default function TeacherEvaluationModule({ initialContext = null }) {
     );
   }
 
-  function renderCreateRecordDrawer() {
-    return (
-      <Drawer
-        title="发起评价实例"
-        width={520}
-        open={recordCreateDrawerOpen}
-        onClose={() => setRecordCreateDrawerOpen(false)}
-        destroyOnClose
-      >
-        <Form layout="vertical" form={recordForm} onFinish={handleCreateRecord}>
-          <Form.Item label="评价方案">
-            <Input value={activeScheme?.name} disabled />
-          </Form.Item>
-          <Form.Item label="继承周期">
-            <Input value={activeScheme?.semester || '-'} disabled />
-          </Form.Item>
-          <Form.Item label="教师" name="teacherId" rules={[{ required: true, message: '请选择教师' }]}>
-            <Select
-              options={teachers.map((item) => ({
-                label: `${item.name} · ${item.departmentName}`,
-                value: item.teacherId,
-              }))}
-              placeholder="选择教师"
-            />
-          </Form.Item>
-          <Form.Item label="用途标签" name="scenarioLabel">
-            <Input placeholder="例如：双师型认定 / 年度考核 / 骨干遴选" />
-          </Form.Item>
-          <Form.Item label="发起说明" name="applicationNote">
-            <TextArea rows={4} placeholder="说明本次评价的发起背景、需要重点关注的证据项或补证要求。" />
-          </Form.Item>
-          <div className="teacher-evaluation-form-footer">
-            <Button onClick={() => setRecordCreateDrawerOpen(false)}>取消</Button>
-            <Button type="primary" htmlType="submit" loading={submitting}>创建实例</Button>
-          </div>
-        </Form>
-      </Drawer>
-    );
-  }
-
-  function renderEvidenceDrawer() {
-    return (
-      <Drawer
-        title="补充证据"
-        width={520}
-        open={evidenceDrawerOpen}
-        onClose={() => setEvidenceDrawerOpen(false)}
-        destroyOnClose
-      >
-        <Form layout="vertical" form={evidenceForm} onFinish={handleAppendEvidence}>
-          <Form.Item label="证据标题" name="title" rules={[{ required: true, message: '请输入证据标题' }]}>
-            <Input placeholder="例如：企业项目融入补充材料" />
-          </Form.Item>
-          <Form.Item label="关联评价项" name="relatedItemName" rules={[{ required: true, message: '请选择关联评价项' }]}>
-            <Select
-              options={(selectedScheme?.itemRubrics || []).map((item) => ({
-                label: item.itemName,
-                value: item.itemName,
-              }))}
-            />
-          </Form.Item>
-          <Form.Item label="来源标签" name="sourceLabel">
-            <Select
-              options={[
-                { label: '人工补证', value: '人工补证' },
-                { label: '企业实践记录', value: '企业实践记录' },
-                { label: '教研协同记录', value: '教研协同记录' },
-                { label: '课堂观察记录', value: '课堂观察记录' },
-              ]}
-            />
-          </Form.Item>
-          <Form.Item label="证据摘要" name="summary">
-            <TextArea rows={3} placeholder="简要说明补充证据包含的行为事实、结果或改进行动。" />
-          </Form.Item>
-          <div className="teacher-evaluation-form-grid">
-            <Form.Item label="资源路径" name="resourcePath">
-              <Input placeholder="教师评价 / 教师姓名 / 补充材料" />
-            </Form.Item>
-            <Form.Item label="覆盖度" name="coverage">
-              <InputNumber min={0} max={100} precision={0} className="teacher-evaluation-full-width" />
-            </Form.Item>
-          </div>
-          <div className="teacher-evaluation-form-footer">
-            <Button onClick={() => setEvidenceDrawerOpen(false)}>取消</Button>
-            <Button type="primary" htmlType="submit" icon={<UploadOutlined />} loading={submitting}>写入补证</Button>
-          </div>
-        </Form>
-      </Drawer>
-    );
-  }
-
   function renderReviewPackSummary(mode = 'panel') {
     if (!selectedRecord || !selectedScheme) return null;
     return (
@@ -1643,7 +1444,6 @@ export default function TeacherEvaluationModule({ initialContext = null }) {
           <Space>
             <Tag color="blue">{selectedRecord.scenarioLabel || selectedScheme.schemeType}</Tag>
             <Button size="small" onClick={() => openEvidencePackDrawer()}>查看证据包</Button>
-            {mode !== 'drawer' ? <Button size="small" icon={<UploadOutlined />} onClick={openEvidenceDrawer}>补充证据</Button> : null}
           </Space>
         </div>
         <div className="teacher-evaluation-pack-grid">
@@ -1873,20 +1673,12 @@ export default function TeacherEvaluationModule({ initialContext = null }) {
           </div>
           {availableActions.length ? (
             <>
-              {availableActions.some((item) => item.key !== 'SUBMIT' && item.key !== 'APPEAL') ? (
+              {availableActions.length ? (
                 <TextArea
                   rows={3}
                   value={opinionText}
                   onChange={(event) => setOpinionText(event.target.value)}
-                  placeholder="填写本次节点意见，系统将连同 AI 草稿确认记录一起留痕。"
-                />
-              ) : null}
-              {availableActions.some((item) => item.key === 'APPEAL') ? (
-                <TextArea
-                  rows={3}
-                  value={appealText}
-                  onChange={(event) => setAppealText(event.target.value)}
-                  placeholder="填写申诉理由，例如：补充新的企业实践证据或说明评审争议点。"
+                  placeholder="填写本次节点意见，系统将连同 AI 草稿确认记录一起留痕。教师补证和教师提交已迁移到“我的档案”。"
                 />
               ) : null}
               <div className="teacher-evaluation-action-row">
@@ -1895,14 +1687,13 @@ export default function TeacherEvaluationModule({ initialContext = null }) {
                     key={action.key}
                     type={toneToType(action.tone)}
                     danger={action.tone === 'danger'}
-                    icon={action.key === 'SUBMIT' ? <SendOutlined /> : action.key === 'APPROVE' ? <CheckCircleOutlined /> : undefined}
+                    icon={action.key === 'APPROVE' ? <CheckCircleOutlined /> : undefined}
                     loading={submitting}
                     onClick={() => handleWorkflowAction(action.key)}
                   >
                     {action.label}
                   </Button>
                 ))}
-                <Button icon={<UploadOutlined />} onClick={openEvidenceDrawer}>补充证据</Button>
               </div>
             </>
           ) : (
@@ -1910,7 +1701,7 @@ export default function TeacherEvaluationModule({ initialContext = null }) {
               type="info"
               showIcon
               message="当前角色没有可执行动作"
-              description="可以切换角色模拟不同视角，或先确认 AI 建议稿、补充意见后再进入对应节点。"
+              description="教师提交、教师补证、教师申诉都在“我的档案”中完成；这里仅保留评审侧查看、流转和留痕。"
             />
           )}
         </Card>
@@ -2135,15 +1926,19 @@ export default function TeacherEvaluationModule({ initialContext = null }) {
       <div className="sys-module-header">
         <div>
           <span className="sys-module-header-title">教师评价</span>
-          <span className="sys-module-header-subtitle">评审工作台、AI 建议稿确认和审计台账一体化运行</span>
+          <span className="sys-module-header-subtitle">评审工作台、AI 建议稿确认和审计台账一体化运行，教师动作统一回到我的档案</span>
         </div>
         <Space wrap>
           <Segmented
             value={activeRole}
             onChange={setActiveRole}
-            options={TEACHER_EVALUATION_ROLE_OPTIONS.map((item) => ({ label: item.label, value: item.value }))}
+            options={TEACHER_EVALUATION_ROLE_OPTIONS
+              .filter((item) => item.value !== 'TEACHER')
+              .map((item) => ({ label: item.label, value: item.value }))}
           />
-          <Button icon={<PlusOutlined />} type="primary" onClick={openCreateRecordDrawer} loading={submitting}>发起评价实例</Button>
+          {canNavigateToMyProfile ? (
+            <Button onClick={onNavigateToMyProfile}>去我的档案</Button>
+          ) : null}
         </Space>
       </div>
 
@@ -2153,15 +1948,15 @@ export default function TeacherEvaluationModule({ initialContext = null }) {
             showIcon
             type="warning"
             className="teacher-evaluation-alert"
-            message="AI 输出只作为建议稿"
-            description="AI 可以归档、抽取、摘要、预填量规和草拟意见，但最终评分、认定、申诉处理和负向结论必须由人工确认。当前工作台支持完整留痕。"
+            message="AI 输出只作为建议稿，教师动作已迁移到我的档案"
+            description="教师评价模块只保留评审工作台能力。AI 可以归档、抽取、摘要、预填量规和草拟意见，但最终评分、认定和负向结论必须由人工确认；教师发起实例、教师补证、教师提交和教师申诉统一在“我的档案”中完成。"
           />
 
           <div className="teacher-evaluation-hero-grid">
             <Card bordered={false} className="teacher-evaluation-hero-card">
               <div className="teacher-evaluation-hero-kicker">当前角色</div>
               <h3>{getTeacherEvaluationRoleLabel(activeRole)}</h3>
-              <p>你当前看到的是该角色下的操作视角与节点动作。AI 草稿确认、退回补证和流转动作都会记入审计日志。</p>
+              <p>你当前看到的是评审侧角色下的操作视角与节点动作。AI 草稿确认、退回补证和流转动作都会记入审计日志；教师侧动作不再从此模块发起。</p>
               <div className="teacher-evaluation-meta-row">
                 <Tag color="processing"><RobotOutlined /> AI 输出需人工确认</Tag>
                 <Tag color="warning"><SafetyCertificateOutlined /> 最终结论不得由 AI 写入</Tag>
@@ -2302,10 +2097,7 @@ export default function TeacherEvaluationModule({ initialContext = null }) {
       >
         {renderRecordDetail('drawer')}
       </Drawer>
-
       {renderEvidencePackDrawer()}
-      {renderCreateRecordDrawer()}
-      {renderEvidenceDrawer()}
     </div>
   );
 }

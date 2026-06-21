@@ -1490,7 +1490,6 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
       schemeId: record.schemeId,
       teacherName: record.teacherName || snapshot?.profile?.name || PROFILE_BASE.name,
       periodLabel: record.periodLabel || '',
-      activeRole: 'TEACHER',
       openRecordDrawer: true,
       source: 'my-profile',
     });
