@@ -1,3 +1,5 @@
+import { trackEvent } from '../shared/analytics';
+
 const TEMPLATE_STORAGE_KEY = 'gr.scene.templates.v1';
 const SCENE_STORAGE_KEY = 'gr.scenes.v1';
 const SEED_KEY = 'gr.scene.seeded.v1';
@@ -1155,6 +1157,18 @@ export function saveSceneTemplate(template) {
     ? list.map((item) => (item.id === normalized.id ? normalized : item))
     : [normalized, ...list];
   writeList(TEMPLATE_STORAGE_KEY, nextList);
+  trackEvent(existing ? 'space_template_update_success' : 'space_template_create_success', {
+    module: 'space',
+    objectType: 'scene_template',
+    objectId: normalized.id,
+    properties: {
+      templateName: normalized.name,
+      templateCode: normalized.templateCode,
+      sceneType: normalized.sceneType,
+      builtIn: normalized.builtIn,
+      recommendationEnabled: normalized.recommendation?.enabled !== false,
+    },
+  });
   emitChange();
   return normalized;
 }
@@ -1179,10 +1193,23 @@ export function removeSceneTemplate(id) {
     throw new Error('该模板已被场景使用，请先删除或迁移关联场景');
   }
   const list = readTemplates();
+  const target = list.find((item) => item.id === id);
   writeList(
     TEMPLATE_STORAGE_KEY,
     list.filter((item) => item.id !== id),
   );
+  if (target) {
+    trackEvent('space_template_delete_success', {
+      module: 'space',
+      objectType: 'scene_template',
+      objectId: target.id,
+      properties: {
+        templateName: target.name,
+        templateCode: target.templateCode,
+        sceneType: target.sceneType,
+      },
+    });
+  }
   emitChange();
 }
 
@@ -1214,6 +1241,19 @@ export function saveScene(scene) {
     ? list.map((item) => (item.id === normalized.id ? normalized : item))
     : [normalized, ...list];
   writeList(SCENE_STORAGE_KEY, nextList);
+  trackEvent(existing ? 'space_scene_update_success' : 'space_scene_create_success', {
+    module: 'space',
+    objectType: 'scene',
+    objectId: normalized.id,
+    properties: {
+      sceneName: normalized.name,
+      sceneCode: normalized.sceneCode,
+      sceneType: normalized.sceneType,
+      templateName: normalized.templateName,
+      visibility: normalized.visibility,
+      menuKey: normalized.menuKey,
+    },
+  });
   emitChange();
   return normalized;
 }
@@ -1227,6 +1267,18 @@ export function removeScene(id) {
     list.filter((item) => item.id !== id),
   );
   localStorage.removeItem(`${VERSION_STORAGE_KEY}:${target.storageScopeKey}`);
+  trackEvent('space_scene_delete_success', {
+    module: 'space',
+    objectType: 'scene',
+    objectId: target.id,
+    properties: {
+      sceneName: target.name,
+      sceneCode: target.sceneCode,
+      sceneType: target.sceneType,
+      templateName: target.templateName,
+      menuKey: target.menuKey,
+    },
+  });
   emitChange();
 }
 

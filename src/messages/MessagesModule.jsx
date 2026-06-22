@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Avatar, Badge, Button, Dropdown, Empty, Input, Popover, Tooltip } from 'antd';
+import { Avatar, Badge, Button, Dropdown, Empty, Input, Popover, Tag, Tooltip } from 'antd';
 import {
   CloseOutlined,
   DownOutlined,
@@ -21,6 +21,14 @@ import {
   StarFilled,
   StarOutlined,
 } from '@ant-design/icons';
+import {
+  getLuckyConversationId,
+  getLuckyPushStoreEventName,
+  markLuckyConversationRead,
+  readLuckyConversation,
+  syncLuckyConversation,
+} from './luckyPushStore';
+import { trackEvent, trackRecommendationEvent } from '../shared/analytics';
 import './MessagesModule.css';
 
 const TYPE_META = {
@@ -58,6 +66,7 @@ const MAX_SIDEBAR_WIDTH = 520;
 const MIN_THREAD_WIDTH = 420;
 const SIDEBAR_KEYBOARD_STEP = 16;
 const EMPTY_CONVERSATION_INDICATOR = { x: 0, y: 0, width: 0, height: 0, opacity: 0 };
+const LUCKY_CONVERSATION_ID = getLuckyConversationId();
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
@@ -75,6 +84,11 @@ function getMaxSidebarWidth(containerWidth) {
 
 function clampSidebarWidth(nextWidth, containerWidth) {
   return clamp(nextWidth, MIN_SIDEBAR_WIDTH, getMaxSidebarWidth(containerWidth));
+}
+
+function mergeLuckyConversation(list, luckyConversation) {
+  const otherConversations = list.filter((item) => item.id !== luckyConversation.id);
+  return [luckyConversation, ...otherConversations];
 }
 
 const INITIAL_CONVERSATIONS = [
@@ -348,9 +362,32 @@ function getAvatarStyle(background) {
   };
 }
 
-function MessagesModule() {
-  const [conversations, setConversations] = useState(INITIAL_CONVERSATIONS);
-  const [selectedId, setSelectedId] = useState('topic-genai');
+function LuckyRecommendationCard({ recommendation, onAction }) {
+  return (
+    <div className="messages-lucky-rec-card">
+      <div className="messages-lucky-rec-main">
+        <div className="messages-lucky-rec-title">{recommendation.title}</div>
+        {recommendation.subtitle ? (
+          <div className="messages-lucky-rec-subtitle">{recommendation.subtitle}</div>
+        ) : null}
+        <div className="messages-lucky-rec-desc">{recommendation.reasonSummary || recommendation.description}</div>
+        <div className="messages-lucky-rec-tags">
+          <Tag color="blue">{recommendation.score} 分</Tag>
+          {(recommendation.reasonLabels || []).slice(0, 2).map((item) => (
+            <Tag key={`${recommendation.id}_${item}`}>{item}</Tag>
+          ))}
+        </div>
+      </div>
+      <Button className="messages-lucky-rec-btn" type="primary" onClick={() => onAction?.(recommendation)}>
+        {recommendation.actionLabel || '查看'}
+      </Button>
+    </div>
+  );
+}
+
+function MessagesModule({ initialConversationId = null, onNavigateToTeacherEvaluation, onNavigateToScene }) {
+  const [conversations, setConversations] = useState(() => mergeLuckyConversation(INITIAL_CONVERSATIONS, readLuckyConversation()));
+  const [selectedId, setSelectedId] = useState(initialConversationId || 'topic-genai');
   const [drafts, setDrafts] = useState({});
   const [expandedTopicPosts, setExpandedTopicPosts] = useState({});
   const [activeTopicThread, setActiveTopicThread] = useState(null);
@@ -364,6 +401,7 @@ function MessagesModule() {
   const conversationListRef = useRef(null);
   const conversationItemRefs = useRef(new Map());
   const composerInputRef = useRef(null);
+  const luckyExposeRegistryRef = useRef(new Set());
   const resizeStateRef = useRef({
     startX: 0,
     startWidth: DEFAULT_SIDEBAR_WIDTH,
@@ -377,6 +415,76 @@ function MessagesModule() {
     ? (selectedConversation.posts || []).find((post) => post.id === activeTopicThread) || null
     : null;
   const currentDraft = drafts[activeConversationId] || '';
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadLuckyConversation = async () => {
+      const luckyConversation = await syncLuckyConversation();
+      if (cancelled) return;
+      setConversations((prev) => mergeLuckyConversation(prev, luckyConversation));
+    };
+
+    loadLuckyConversation();
+
+    const eventName = getLuckyPushStoreEventName();
+    const handleLuckyChange = () => {
+      const luckyConversation = readLuckyConversation();
+      setConversations((prev) => mergeLuckyConversation(prev, luckyConversation));
+    };
+
+    window.addEventListener(eventName, handleLuckyChange);
+    const intervalId = window.setInterval(() => {
+      syncLuckyConversation();
+    }, 1000 * 60);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener(eventName, handleLuckyChange);
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (selectedId !== LUCKY_CONVERSATION_ID) return;
+    markLuckyConversationRead();
+    trackEvent('message_lucky_open', {
+      module: 'messages',
+      pageId: 'messages',
+      pageName: '消息',
+      objectType: 'conversation',
+      objectId: LUCKY_CONVERSATION_ID,
+      properties: {
+        source: initialConversationId === LUCKY_CONVERSATION_ID ? 'lucky_icon' : 'messages_list',
+      },
+    });
+  }, [initialConversationId, selectedId]);
+
+  useEffect(() => {
+    if (selectedConversation?.id !== LUCKY_CONVERSATION_ID) {
+      return;
+    }
+
+    (selectedConversation.messages || []).forEach((message) => {
+      (message.recommendations || []).forEach((recommendation) => {
+        const exposeKey = `${message.id}_${recommendation.id}`;
+        if (luckyExposeRegistryRef.current.has(exposeKey)) {
+          return;
+        }
+        luckyExposeRegistryRef.current.add(exposeKey);
+        trackRecommendationEvent('expose', recommendation, {
+          module: 'messages',
+          pageId: 'messages',
+          pageName: '消息',
+          recommendPosition: 'lucky_push',
+          properties: {
+            sourceConversationId: LUCKY_CONVERSATION_ID,
+            luckyMessageId: message.id,
+          },
+        });
+      });
+    });
+  }, [selectedConversation]);
 
   const getClampedSidebarWidth = (nextWidth) => {
     return clampSidebarWidth(nextWidth, moduleRef.current?.clientWidth || 0);
@@ -711,6 +819,41 @@ function MessagesModule() {
   const handleConversationSelect = (conversationId) => {
     setSelectedId(conversationId);
     setActiveTopicThread(null);
+    if (conversationId === LUCKY_CONVERSATION_ID) {
+      const nextLuckyConversation = markLuckyConversationRead();
+      setConversations((prev) => mergeLuckyConversation(prev, nextLuckyConversation));
+    }
+  };
+
+  const handleLuckyRecommendationAction = (recommendation) => {
+    trackRecommendationEvent('click', recommendation, {
+      module: 'messages',
+      pageId: 'messages',
+      pageName: '消息',
+      recommendPosition: 'lucky_push',
+      properties: {
+        sourceConversationId: LUCKY_CONVERSATION_ID,
+      },
+    });
+
+    if (recommendation.target?.type === 'scene') {
+      onNavigateToScene?.({
+        sceneId: recommendation.target.sceneId,
+        menuKey: recommendation.target.menuKey,
+      });
+      return;
+    }
+
+    if (recommendation.target?.type === 'space_catalog') {
+      onNavigateToScene?.({
+        menuKey: recommendation.target.menuKey,
+      });
+      return;
+    }
+
+    onNavigateToTeacherEvaluation?.({
+      teacherId: recommendation.target?.teacherId,
+    });
   };
 
   const handleSidebarResizeStart = (event) => {
@@ -1139,7 +1282,23 @@ function MessagesModule() {
               <span>{message.sender}</span>
               <span>{message.time}</span>
             </div>
-            <div className="messages-chat-bubble">{message.content}</div>
+            <div className={`messages-chat-bubble ${conversation.id === LUCKY_CONVERSATION_ID && !message.self ? 'is-lucky' : ''}`}>
+              {message.summary ? (
+                <div className="messages-lucky-summary">{message.summary}</div>
+              ) : null}
+              <div>{message.content}</div>
+              {(message.recommendations || []).length ? (
+                <div className="messages-lucky-rec-list">
+                  {message.recommendations.map((recommendation) => (
+                    <LuckyRecommendationCard
+                      key={recommendation.id}
+                      recommendation={recommendation}
+                      onAction={handleLuckyRecommendationAction}
+                    />
+                  ))}
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
       ))}

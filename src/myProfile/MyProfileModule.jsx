@@ -21,7 +21,6 @@ import {
 } from 'antd';
 import {
   BellOutlined,
-  ReloadOutlined,
   SendOutlined,
   UserOutlined,
 } from '@ant-design/icons';
@@ -2649,6 +2648,14 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
           <Button type="primary" onClick={() => setVersionDrawerOpen(true)}>
             周期切换
           </Button>
+          <Segmented
+            value={workspaceView}
+            onChange={setWorkspaceView}
+            options={[
+              { label: '当前周期', value: 'CURRENT' },
+              { label: '周期分析', value: 'ANALYSIS' },
+            ]}
+          />
           <Popover
             trigger="click"
             placement="bottomRight"
@@ -2661,15 +2668,6 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
               <Button icon={<BellOutlined />} aria-label="查看我的待办任务" />
             </Badge>
           </Popover>
-          <Segmented
-            value={workspaceView}
-            onChange={setWorkspaceView}
-            options={[
-              { label: '当前周期', value: 'CURRENT' },
-              { label: '周期分析', value: 'ANALYSIS' },
-            ]}
-          />
-          <Button icon={<ReloadOutlined />} onClick={() => loadData(false)}>刷新画像</Button>
         </Space>
       </div>
 

@@ -73,6 +73,8 @@ import TeacherDevelopmentModule from './teacherDevelopment/TeacherDevelopmentMod
 import TeacherPortraitModule from './teacherPortrait/TeacherPortraitModule';
 import SceneCreateModal from './scene/SceneCreateModal';
 import { getSceneStoreChangeEventName, getSceneTypeLabel, getSceneVisibilityLabel, sceneApi } from './scene/api';
+import { getLuckyConversationId } from './messages/luckyPushStore';
+import { setAnalyticsContext, trackEvent, trackPageView } from './shared/analytics';
 import './App.css';
 
 const { Sider, Header, Content } = Layout;
@@ -179,6 +181,7 @@ function App() {
   const [currentPage, setCurrentPage] = useState(() => getInitialHashPage() || 'home'); // 'home', 'detail', or 'workflow'
   const [agentQuotaEntryTab, setAgentQuotaEntryTab] = useState('plans');
   const [teacherEvaluationEntryContext, setTeacherEvaluationEntryContext] = useState(null);
+  const [messageEntryConversationId, setMessageEntryConversationId] = useState(null);
   const [selectedScene, setSelectedScene] = useState(null);
   const [sceneTemplates, setSceneTemplates] = useState([]);
   const [scenes, setScenes] = useState([]);
@@ -304,6 +307,13 @@ function App() {
   }, [updateIconBarIndicator, updateSiderMenuIndicator]);
 
   useEffect(() => {
+    setAnalyticsContext({
+      product: 'guoren-v2',
+      platform: 'web',
+    });
+  }, []);
+
+  useEffect(() => {
     const timer = window.setTimeout(() => {
       loadSceneHomeData();
     }, 0);
@@ -318,10 +328,55 @@ function App() {
     };
   }, [loadSceneHomeData]);
 
-  const handleCardClick = (scene) => {
+  useEffect(() => {
+    const pageId = currentPage === 'detail' && selectedScene ? 'space_detail' : currentPage;
+    const pageName = currentPage === 'detail' && selectedScene ? selectedScene.name : currentPage;
+    const module = currentPage === 'home' || currentPage === 'detail'
+      ? 'space'
+      : currentPage.startsWith('teacher')
+        ? 'teacher'
+        : currentPage;
+
+    setAnalyticsContext({
+      pageId,
+      pageName,
+      module,
+    });
+
+    trackPageView(pageId, {
+      module,
+      pageName,
+      objectType: currentPage === 'detail' && selectedScene ? 'scene' : 'page',
+      objectId: currentPage === 'detail' && selectedScene ? selectedScene.id : pageId,
+      properties: currentPage === 'detail' && selectedScene
+        ? {
+            sceneId: selectedScene.id,
+            sceneName: selectedScene.name,
+            sceneType: selectedScene.sceneType,
+          }
+        : {
+            currentPage,
+          },
+    });
+  }, [currentPage, selectedScene]);
+
+  const handleCardClick = useCallback((scene, source = 'catalog') => {
+    trackEvent('space_scene_open', {
+      module: 'space',
+      pageId: 'space_home',
+      pageName: '空间首页',
+      objectType: 'scene',
+      objectId: scene.id,
+      properties: {
+        sceneName: scene.name,
+        sceneType: scene.sceneType,
+        templateName: scene.templateName,
+        source,
+      },
+    });
     setSelectedScene(scene);
     setCurrentPage('detail');
-  };
+  }, []);
 
   const handleBackToHome = () => {
     setCurrentPage('home');
@@ -347,6 +402,31 @@ function App() {
     setActiveIconKey('my-profile');
     setCurrentPage('my-profile');
   }, []);
+
+  const openMessagesPage = useCallback((conversationId = null) => {
+    setActiveIconKey(conversationId === getLuckyConversationId() ? 'lucky' : 'messages');
+    setMessageEntryConversationId(conversationId);
+    setCurrentPage('messages');
+  }, []);
+
+  const openSceneRecommendation = useCallback((payload = {}) => {
+    setActiveIconKey('my-space');
+    if (payload.menuKey) {
+      setSelectedKeys([payload.menuKey]);
+    }
+
+    const matchedScene = payload.sceneId
+      ? scenes.find((item) => item.id === payload.sceneId) || null
+      : null;
+
+    if (matchedScene) {
+      handleCardClick(matchedScene, 'recommendation');
+      return;
+    }
+
+    setSelectedScene(null);
+    setCurrentPage('home');
+  }, [handleCardClick, scenes]);
 
   const openCreateSceneModal = () => {
     setSceneEditing(null);
@@ -399,7 +479,9 @@ function App() {
     if (key === 'workflow') {
       setCurrentPage('workflow');
     } else if (key === 'messages') {
-      setCurrentPage('messages');
+      openMessagesPage();
+    } else if (key === 'lucky') {
+      openMessagesPage(getLuckyConversationId());
     } else if (key === 'process-management') {
       setCurrentPage('process-management');
     } else if (key === 'leave') {
@@ -542,7 +624,12 @@ function App() {
 
       {/* Page Content */}
       {currentPage === 'messages' ? (
-        <MessagesModule />
+        <MessagesModule
+          key={messageEntryConversationId || 'messages-default'}
+          initialConversationId={messageEntryConversationId}
+          onNavigateToTeacherEvaluation={openTeacherEvaluationPage}
+          onNavigateToScene={openSceneRecommendation}
+        />
       ) : currentPage === 'workflow' ? (
         <LeaveWorkflow onBack={handleBackToHome} />
       ) : currentPage === 'process-management' ? (
@@ -588,7 +675,10 @@ function App() {
       ) : currentPage === 'my-profile' ? (
         <MyProfileModule onNavigateToTeacherEvaluation={openTeacherEvaluationPage} />
       ) : currentPage === 'teacher-portrait' ? (
-        <TeacherPortraitModule onNavigateToTeacherEvaluation={openTeacherEvaluationPage} />
+        <TeacherPortraitModule
+          onNavigateToTeacherEvaluation={openTeacherEvaluationPage}
+          onNavigateToScene={openSceneRecommendation}
+        />
       ) : currentPage === 'teacher-development' ? (
         <TeacherDevelopmentModule />
       ) : currentPage === 'teacher-evaluation-schemes' ? (

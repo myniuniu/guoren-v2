@@ -842,6 +842,107 @@
   color: #fff;
 }
 
+.messages-chat-bubble.is-lucky {
+  min-width: min(620px, calc(100vw - 180px));
+  background:
+    radial-gradient(circle at top right, rgba(255, 214, 102, 0.16) 0%, rgba(255, 214, 102, 0) 30%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(246, 248, 253, 0.9) 100%);
+  border-color: rgba(240, 186, 65, 0.24);
+  box-shadow:
+    0 18px 32px rgba(154, 100, 31, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.88);
+}
+
+.messages-lucky-summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 10px;
+  margin-bottom: 10px;
+  border-radius: 999px;
+  background: rgba(250, 237, 201, 0.9);
+  color: #8a5a11;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.messages-lucky-rec-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.messages-lucky-rec-card {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(223, 229, 239, 0.9);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 253, 0.92) 100%);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
+}
+
+.messages-lucky-rec-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.messages-lucky-rec-title {
+  color: #172335;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.messages-lucky-rec-subtitle {
+  margin-top: 4px;
+  color: #536273;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.messages-lucky-rec-desc {
+  margin-top: 8px;
+  color: #364659;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.messages-lucky-rec-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.messages-lucky-rec-tags .ant-tag {
+  margin: 0;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.messages-lucky-rec-btn.ant-btn {
+  align-self: center;
+  min-width: 104px;
+  height: 40px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1f7aff 0%, #0f5fe6 100%) !important;
+  box-shadow: 0 12px 24px rgba(16, 96, 230, 0.24);
+  color: #fff !important;
+  font-weight: 700;
+}
+
+.messages-lucky-rec-btn.ant-btn:hover,
+.messages-lucky-rec-btn.ant-btn:focus {
+  background: linear-gradient(135deg, #0f69ee 0%, #0c56cf 100%) !important;
+  color: #fff !important;
+}
+
 .messages-composer {
   padding: 12px 16px 16px;
   border-top: 1px solid rgba(229, 235, 243, 0.9);
@@ -1472,6 +1573,10 @@
   color: #27364a;
 }
 
+.messages-chat-bubble.is-lucky {
+  color: #233246;
+}
+
 .messages-chat-row.is-self .messages-chat-bubble {
   background: linear-gradient(135deg, rgba(98, 143, 255, 0.96) 0%, rgba(85, 122, 255, 0.88) 100%);
   border-color: rgba(255, 255, 255, 0.22);
@@ -1621,5 +1726,17 @@
 
   .messages-chat-row {
     max-width: 92%;
+  }
+
+  .messages-chat-bubble.is-lucky {
+    min-width: 0;
+  }
+
+  .messages-lucky-rec-card {
+    flex-direction: column;
+  }
+
+  .messages-lucky-rec-btn.ant-btn {
+    align-self: stretch;
   }
 }

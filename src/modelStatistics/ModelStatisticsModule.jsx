@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Alert, Avatar, Button, Card, Progress, Segmented, Space, Table, Tabs, Tag, message } from 'antd';
+import { useEffect, useMemo, useState } from 'react';
+import { Alert, Avatar, Button, Card, Empty, Progress, Segmented, Space, Table, Tabs, Tag, message } from 'antd';
 import {
   ArrowRightOutlined,
   ApartmentOutlined,
@@ -8,6 +8,7 @@ import {
   ControlOutlined,
   DatabaseOutlined,
   DollarCircleOutlined,
+  EyeOutlined,
   FireOutlined,
   LineChartOutlined,
   ReloadOutlined,
@@ -17,6 +18,7 @@ import {
   UserOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
+import { clearAnalyticsEvents, getAnalyticsStoreEventName, listAnalyticsEvents } from '../shared/analytics';
 import './ModelStatisticsModule.css';
 
 const PERIOD_OPTIONS = [
@@ -63,6 +65,7 @@ const MANAGEMENT_VIEW_ITEMS = [
   { key: 'usage', label: '使用与活跃看板' },
   { key: 'billing', label: '账单与成本看板' },
   { key: 'governance', label: '治理与配额看板' },
+  { key: 'analytics', label: '埋点与推荐效果' },
 ];
 
 const DIMENSION_GOALS = {
@@ -1310,6 +1313,107 @@ function buildGovernanceData(dimensionData) {
   };
 }
 
+function getPeriodDays(period) {
+  if (period === '7d') return 7;
+  if (period === '90d') return 90;
+  return 30;
+}
+
+function filterEventsByPeriod(events, period) {
+  const days = getPeriodDays(period);
+  const threshold = Date.now() - (days * 24 * 60 * 60 * 1000);
+  return events.filter((item) => {
+    const time = new Date(item.event_time || item.eventTime || 0).getTime();
+    return Number.isFinite(time) && time >= threshold;
+  });
+}
+
+function buildAnalyticsDashboardData(events, period) {
+  const filteredEvents = filterEventsByPeriod(events, period);
+  const totalEvents = filteredEvents.length;
+  const eventCountMap = new Map();
+  const moduleCountMap = new Map();
+  const recommendationMap = new Map();
+
+  filteredEvents.forEach((event) => {
+    eventCountMap.set(event.event_name, (eventCountMap.get(event.event_name) || 0) + 1);
+    moduleCountMap.set(event.module || 'unknown', (moduleCountMap.get(event.module || 'unknown') || 0) + 1);
+
+    if (event.recommend_id) {
+      const current = recommendationMap.get(event.recommend_id) || {
+        key: event.recommend_id,
+        title: event.properties?.title || event.recommend_target_id || event.recommend_id,
+        strategy: event.recommend_strategy || '-',
+        position: event.recommend_position || '-',
+        targetType: event.recommend_target_type || '-',
+        exposeCount: 0,
+        clickCount: 0,
+      };
+      if (event.event_name === 'recommend_expose') current.exposeCount += 1;
+      if (event.event_name === 'recommend_click') current.clickCount += 1;
+      recommendationMap.set(event.recommend_id, current);
+    }
+  });
+
+  const pageViews = eventCountMap.get('page_view') || 0;
+  const sceneOpens = eventCountMap.get('space_scene_open') || 0;
+  const portraitViews = eventCountMap.get('teacher_portrait_view') || 0;
+  const recommendationExpose = eventCountMap.get('recommend_expose') || 0;
+  const recommendationClick = eventCountMap.get('recommend_click') || 0;
+  const recommendationCtr = recommendationExpose ? (recommendationClick / recommendationExpose) * 100 : 0;
+
+  const topEvents = Array.from(eventCountMap.entries())
+    .map(([eventName, count]) => ({ key: eventName, eventName, count }))
+    .sort((left, right) => right.count - left.count)
+    .slice(0, 8);
+
+  const moduleRows = Array.from(moduleCountMap.entries())
+    .map(([module, count]) => ({
+      key: module,
+      module,
+      count,
+      share: totalEvents ? (count / totalEvents) * 100 : 0,
+    }))
+    .sort((left, right) => right.count - left.count);
+
+  const recommendationRows = Array.from(recommendationMap.values())
+    .map((item) => ({
+      ...item,
+      ctr: item.exposeCount ? (item.clickCount / item.exposeCount) * 100 : 0,
+    }))
+    .sort((left, right) => right.clickCount - left.clickCount || right.exposeCount - left.exposeCount)
+    .slice(0, 10);
+
+  const recentEvents = [...filteredEvents]
+    .sort((left, right) => String(right.event_time || '').localeCompare(String(left.event_time || '')))
+    .slice(0, 12)
+    .map((event, index) => ({
+      key: event.event_id || `${event.event_name}_${index}`,
+      eventName: event.event_name,
+      module: event.module || '-',
+      pageName: event.page_name || '-',
+      objectType: event.object_type || '-',
+      objectId: event.object_id || '-',
+      actor: event.actor_name || event.actor_id || '-',
+      time: event.event_time || '-',
+      result: event.result || '-',
+    }));
+
+  return {
+    totalEvents,
+    pageViews,
+    sceneOpens,
+    portraitViews,
+    recommendationExpose,
+    recommendationClick,
+    recommendationCtr,
+    topEvents,
+    moduleRows,
+    recommendationRows,
+    recentEvents,
+  };
+}
+
 function renderLeaderboardCard(title, items, extra) {
   return (
     <Card className="ms-panel-card" title={title} extra={extra}>
@@ -2040,9 +2144,144 @@ function renderGovernanceDashboard(dimensionData, onNavigateToQuota) {
   );
 }
 
+function renderAnalyticsDashboard(analyticsData, onClearEvents) {
+  const eventColumns = [
+    { title: '事件名', dataIndex: 'eventName', key: 'eventName', width: 240, render: (value) => <Tag color="blue">{value}</Tag> },
+    { title: '次数', dataIndex: 'count', key: 'count', width: 120, render: (value) => formatNumber(value) },
+  ];
+
+  const moduleColumns = [
+    { title: '模块', dataIndex: 'module', key: 'module', width: 180, render: (value) => <Tag>{value}</Tag> },
+    { title: '事件数', dataIndex: 'count', key: 'count', width: 120, render: (value) => formatNumber(value) },
+    { title: '占比', dataIndex: 'share', key: 'share', width: 120, render: (value) => formatPercent(value) },
+  ];
+
+  const recommendationColumns = [
+    {
+      title: '推荐对象',
+      dataIndex: 'title',
+      key: 'title',
+      width: 280,
+      render: (_, record) => (
+        <div className="ms-entity-cell">
+          <Avatar className="ms-entity-avatar" style={{ background: '#1677ff' }}>
+            {getAvatarText(record.title)}
+          </Avatar>
+          <div>
+            <div className="ms-entity-name">{record.title}</div>
+            <div className="ms-entity-subtitle">{record.targetType} · {record.position}</div>
+          </div>
+        </div>
+      ),
+    },
+    { title: '策略', dataIndex: 'strategy', key: 'strategy', width: 220 },
+    { title: '曝光', dataIndex: 'exposeCount', key: 'exposeCount', width: 100, render: (value) => formatNumber(value) },
+    { title: '点击', dataIndex: 'clickCount', key: 'clickCount', width: 100, render: (value) => formatNumber(value) },
+    { title: 'CTR', dataIndex: 'ctr', key: 'ctr', width: 100, render: (value) => <Tag color={value >= 30 ? 'success' : value >= 10 ? 'processing' : 'default'}>{formatPercent(value)}</Tag> },
+  ];
+
+  const recentColumns = [
+    { title: '时间', dataIndex: 'time', key: 'time', width: 180, render: (value) => String(value).replace('T', ' ').slice(0, 19) },
+    { title: '事件', dataIndex: 'eventName', key: 'eventName', width: 220, render: (value) => <Tag color="blue">{value}</Tag> },
+    { title: '模块', dataIndex: 'module', key: 'module', width: 120 },
+    { title: '页面', dataIndex: 'pageName', key: 'pageName', width: 160 },
+    { title: '对象', key: 'object', width: 200, render: (_, record) => `${record.objectType} / ${record.objectId}` },
+    { title: '触发人', dataIndex: 'actor', key: 'actor', width: 140 },
+    { title: '结果', dataIndex: 'result', key: 'result', width: 100, render: (value) => <Tag color={value === 'success' ? 'success' : value === 'fail' ? 'error' : 'default'}>{value}</Tag> },
+  ];
+
+  return (
+    <div className="ms-dashboard-pane">
+      <Alert
+        className="ms-dashboard-alert"
+        type="success"
+        showIcon
+        message="当前页展示真实前端埋点与推荐效果事件"
+        description="用于验证最近接入的空间、教师画像与推荐埋点是否生效。当前实现基于浏览器本地事件存储，适合联调、演示和口径校验。"
+      />
+
+      {renderSummaryGrid([
+        { key: 'a-1', label: '事件总数', value: formatCompact(analyticsData.totalEvents), icon: <BarChartOutlined />, hint: '当前时间范围内已记录的埋点事件' },
+        { key: 'a-2', label: '页面浏览', value: formatCompact(analyticsData.pageViews), icon: <EyeOutlined />, hint: '包含首页、画像页、空间详情等 page_view' },
+        { key: 'a-3', label: '空间打开', value: formatCompact(analyticsData.sceneOpens), icon: <ApartmentOutlined />, hint: '来自空间目录或推荐跳转' },
+        { key: 'a-4', label: '画像查看', value: formatCompact(analyticsData.portraitViews), icon: <UserOutlined />, hint: '教师画像页真实查看次数' },
+        { key: 'a-5', label: '推荐曝光', value: formatCompact(analyticsData.recommendationExpose), icon: <RobotOutlined />, hint: '推荐卡片在画像页曝光次数' },
+        { key: 'a-6', label: '推荐点击率', value: formatPercent(analyticsData.recommendationCtr), icon: <LineChartOutlined />, hint: `${formatCompact(analyticsData.recommendationClick)} 次点击` },
+      ])}
+
+      <div className="ms-panel-grid">
+        <Card className="ms-panel-card" title="高频事件 Top 8" extra={<Tag color="blue">真实事件</Tag>}>
+          {analyticsData.topEvents.length ? (
+            <Table rowKey="key" size="small" pagination={false} columns={eventColumns} dataSource={analyticsData.topEvents} className="ms-table" />
+          ) : (
+            <Empty description="当前没有埋点事件" />
+          )}
+        </Card>
+
+        <Card
+          className="ms-panel-card"
+          title="模块分布"
+          extra={<Button danger type="link" onClick={onClearEvents}>清空本地事件</Button>}
+        >
+          {analyticsData.moduleRows.length ? (
+            <Table rowKey="key" size="small" pagination={false} columns={moduleColumns} dataSource={analyticsData.moduleRows} className="ms-table" />
+          ) : (
+            <Empty description="当前没有可统计的模块事件" />
+          )}
+        </Card>
+      </div>
+
+      <Card className="ms-panel-card" title="推荐效果明细" extra={<Tag color="purple">teacher_capability_rule_v1</Tag>}>
+        {analyticsData.recommendationRows.length ? (
+          <Table
+            rowKey="key"
+            size="small"
+            pagination={false}
+            columns={recommendationColumns}
+            dataSource={analyticsData.recommendationRows}
+            scroll={{ x: 920 }}
+            className="ms-table"
+          />
+        ) : (
+          <Empty description="当前还没有推荐曝光事件，请先进入教师画像页进行操作。" />
+        )}
+      </Card>
+
+      <Card className="ms-panel-card" title="最近事件流" extra={<Tag color="green">最近 12 条</Tag>}>
+        {analyticsData.recentEvents.length ? (
+          <Table
+            rowKey="key"
+            size="small"
+            pagination={false}
+            columns={recentColumns}
+            dataSource={analyticsData.recentEvents}
+            scroll={{ x: 1180 }}
+            className="ms-table"
+          />
+        ) : (
+          <Empty description="当前时间范围内没有事件流数据" />
+        )}
+      </Card>
+    </div>
+  );
+}
+
 export default function ModelStatisticsModule({ onNavigateToQuota = () => {} }) {
   const [period, setPeriod] = useState('30d');
   const [activeView, setActiveView] = useState('usage');
+  const [, setAnalyticsVersion] = useState(0);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const eventName = getAnalyticsStoreEventName();
+    const handleChange = () => {
+      setAnalyticsVersion((value) => value + 1);
+    };
+    window.addEventListener(eventName, handleChange);
+    return () => {
+      window.removeEventListener(eventName, handleChange);
+    };
+  }, []);
 
   const dimensionData = useMemo(() => {
     const factor = PERIOD_FACTORS[period] || 1;
@@ -2070,6 +2309,11 @@ export default function ModelStatisticsModule({ onNavigateToQuota = () => {} }) 
 
     return scaledDimensions;
   }, [period]);
+
+  const analyticsData = useMemo(
+    () => buildAnalyticsDashboardData(listAnalyticsEvents(), period),
+    [period],
+  );
 
   const periodLabel = PERIOD_OPTIONS.find((item) => item.value === period)?.label || period;
 
@@ -2129,6 +2373,14 @@ export default function ModelStatisticsModule({ onNavigateToQuota = () => {} }) 
               key: 'governance',
               label: MANAGEMENT_VIEW_ITEMS[2].label,
               children: renderGovernanceDashboard(dimensionData, onNavigateToQuota),
+            },
+            {
+              key: 'analytics',
+              label: MANAGEMENT_VIEW_ITEMS[3].label,
+              children: renderAnalyticsDashboard(analyticsData, () => {
+                clearAnalyticsEvents();
+                message.success('本地埋点事件已清空');
+              }),
             },
           ]}
         />

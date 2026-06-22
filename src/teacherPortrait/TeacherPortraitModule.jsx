@@ -16,13 +16,19 @@ import {
 } from 'antd';
 import {
   AuditOutlined,
+  AppstoreOutlined,
+  BookOutlined,
   CheckCircleOutlined,
+  CompassOutlined,
   ClockCircleOutlined,
   IdcardOutlined,
   ReloadOutlined,
   RiseOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
+import { sceneApi } from '../scene/api';
+import { trackEvent, trackRecommendationEvent } from '../shared/analytics';
+import { buildTeacherCapabilityRecommendations } from '../shared/recommendationEngine';
 import { capabilityModelApi, getCapabilityModelStoreEventName } from '../capabilityModel/api';
 import { getTeacherEvaluationStatusLabel, teacherEvaluationApi } from '../teacherEvaluation/api';
 import '../system/SystemModule.css';
@@ -298,12 +304,40 @@ function buildTeacherSummary(teacher, records, schemes, modelMetas) {
   };
 }
 
-function TeacherPortraitModule({ onNavigateToTeacherEvaluation }) {
+function RecommendationCard({ recommendation, icon, tone = 'processing', onAction }) {
+  return (
+    <div className={`teacher-portrait-recommend-card is-${tone}`}>
+      <div className="teacher-portrait-recommend-main">
+        <div className="teacher-portrait-recommend-icon">{icon}</div>
+        <div className="teacher-portrait-recommend-copy">
+          <strong>{recommendation.title}</strong>
+          <span className="teacher-portrait-recommend-subtitle">{recommendation.subtitle}</span>
+          <p className="teacher-portrait-recommend-description">{recommendation.description}</p>
+          <div className="teacher-portrait-tag-row teacher-portrait-tag-row-compact">
+            <Tag color="blue">{recommendation.score} 分</Tag>
+            {recommendation.reasonLabels?.slice(0, 3).map((item) => (
+              <Tag key={`${recommendation.id}_${item}`}>{item}</Tag>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="teacher-portrait-recommend-actions">
+        <span className="teacher-portrait-recommend-summary">{recommendation.reasonSummary}</span>
+        <Button className="teacher-portrait-recommend-btn" type="primary" onClick={() => onAction?.(recommendation)}>
+          {recommendation.actionLabel || '查看'}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function TeacherPortraitModule({ onNavigateToTeacherEvaluation, onNavigateToScene }) {
   const [loading, setLoading] = useState(true);
   const [teachers, setTeachers] = useState([]);
   const [records, setRecords] = useState([]);
   const [schemes, setSchemes] = useState([]);
   const [modelMetas, setModelMetas] = useState([]);
+  const [scenes, setScenes] = useState([]);
   const [selectedTeacherId, setSelectedTeacherId] = useState('');
 
   const loadData = useCallback(async (withLoading = true) => {
@@ -314,6 +348,7 @@ function TeacherPortraitModule({ onNavigateToTeacherEvaluation }) {
       await Promise.all([
         teacherEvaluationApi.seed(),
         capabilityModelApi.seed(),
+        sceneApi.seed(),
       ]);
 
       const [
@@ -323,6 +358,7 @@ function TeacherPortraitModule({ onNavigateToTeacherEvaluation }) {
         nextModels,
         nextRoles,
         nextSequences,
+        nextScenes,
       ] = await Promise.all([
         teacherEvaluationApi.listTeachers(),
         teacherEvaluationApi.listRecords(),
@@ -330,12 +366,14 @@ function TeacherPortraitModule({ onNavigateToTeacherEvaluation }) {
         capabilityModelApi.listModels(),
         capabilityModelApi.listRoles(),
         capabilityModelApi.listSequences(),
+        sceneApi.listScenes(),
       ]);
 
       setTeachers(nextTeachers);
       setRecords(nextRecords);
       setSchemes(nextSchemes);
       setModelMetas(buildModelMetas(nextModels, nextRoles, nextSequences));
+      setScenes(nextScenes);
       setSelectedTeacherId((prev) => {
         if (prev && nextTeachers.some((item) => item.teacherId === prev)) {
           return prev;
@@ -352,7 +390,12 @@ function TeacherPortraitModule({ onNavigateToTeacherEvaluation }) {
   }, []);
 
   useEffect(() => {
-    loadData();
+    const timer = window.setTimeout(() => {
+      loadData();
+    }, 0);
+    return () => {
+      window.clearTimeout(timer);
+    };
   }, [loadData]);
 
   useEffect(() => {
@@ -400,6 +443,15 @@ function TeacherPortraitModule({ onNavigateToTeacherEvaluation }) {
   const portraitSummary = useMemo(
     () => (selectedTeacher ? buildTeacherSummary(selectedTeacher, selectedTeacherRecords, schemes, modelMetas) : null),
     [modelMetas, schemes, selectedTeacher, selectedTeacherRecords],
+  );
+
+  const recommendationBundle = useMemo(
+    () => buildTeacherCapabilityRecommendations({
+      teacher: selectedTeacher,
+      portraitSummary,
+      scenes,
+    }),
+    [portraitSummary, scenes, selectedTeacher],
   );
 
   const evidenceColumns = useMemo(() => [
@@ -478,6 +530,138 @@ function TeacherPortraitModule({ onNavigateToTeacherEvaluation }) {
 
   const riskMeta = portraitSummary ? getRiskMeta(portraitSummary.riskLevel) : getRiskMeta('LOW');
 
+  useEffect(() => {
+    if (!selectedTeacher || !portraitSummary) return;
+    trackEvent('teacher_portrait_view', {
+      module: 'teacher',
+      pageId: 'teacher_portrait',
+      pageName: '教师画像',
+      objectType: 'teacher',
+      objectId: selectedTeacher.teacherId,
+      actorId: selectedTeacher.teacherId,
+      actorName: selectedTeacher.name,
+      actorRole: selectedTeacher.roleName,
+      dept: selectedTeacher.departmentName,
+      properties: {
+        portraitTag: portraitSummary.portraitTag,
+        riskLevel: portraitSummary.riskLevel,
+        targetLevel: selectedTeacher.targetLevel,
+        averageCoverage: portraitSummary.averageCoverage,
+        gapCount: portraitSummary.gapCount,
+      },
+    });
+  }, [portraitSummary, selectedTeacher]);
+
+  useEffect(() => {
+    const recommendations = [
+      ...(recommendationBundle.actionRecommendations || []),
+      ...(recommendationBundle.sceneRecommendations || []),
+      ...(recommendationBundle.resourceRecommendations || []),
+    ];
+    if (!selectedTeacher || recommendations.length === 0) return;
+    recommendations.forEach((recommendation) => {
+      trackRecommendationEvent('expose', recommendation, {
+        module: 'teacher',
+        pageId: 'teacher_portrait',
+        pageName: '教师画像',
+        actorId: selectedTeacher.teacherId,
+        actorName: selectedTeacher.name,
+        actorRole: selectedTeacher.roleName,
+        dept: selectedTeacher.departmentName,
+        recommendPosition: recommendation.position || 'teacher_portrait',
+        properties: {
+          targetLevel: selectedTeacher.targetLevel,
+          recommendationType: recommendation.type,
+        },
+      });
+    });
+  }, [recommendationBundle, selectedTeacher]);
+
+  const handleRefresh = useCallback(async () => {
+    if (selectedTeacher) {
+      trackEvent('teacher_portrait_refresh', {
+        module: 'teacher',
+        pageId: 'teacher_portrait',
+        pageName: '教师画像',
+        objectType: 'teacher',
+        objectId: selectedTeacher.teacherId,
+        actorId: selectedTeacher.teacherId,
+        actorName: selectedTeacher.name,
+        actorRole: selectedTeacher.roleName,
+        dept: selectedTeacher.departmentName,
+        properties: {
+          targetLevel: selectedTeacher.targetLevel,
+        },
+      });
+    }
+    await loadData();
+  }, [loadData, selectedTeacher]);
+
+  const handleTeacherChange = useCallback((teacherId) => {
+    setSelectedTeacherId(teacherId);
+  }, []);
+
+  const handleRecommendationAction = useCallback((recommendation) => {
+    if (!selectedTeacher) return;
+    trackRecommendationEvent('click', recommendation, {
+      module: 'teacher',
+      pageId: 'teacher_portrait',
+      pageName: '教师画像',
+      actorId: selectedTeacher.teacherId,
+      actorName: selectedTeacher.name,
+      actorRole: selectedTeacher.roleName,
+      dept: selectedTeacher.departmentName,
+      recommendPosition: recommendation.position || 'teacher_portrait',
+      properties: {
+        targetLevel: selectedTeacher.targetLevel,
+        recommendationType: recommendation.type,
+      },
+    });
+
+    if (recommendation.target?.type === 'scene') {
+      onNavigateToScene?.({
+        sceneId: recommendation.target.sceneId,
+        menuKey: recommendation.target.menuKey,
+      });
+      return;
+    }
+
+    if (recommendation.target?.type === 'space_catalog') {
+      onNavigateToScene?.({
+        menuKey: recommendation.target.menuKey,
+      });
+      return;
+    }
+
+    trackEvent('teacher_growth_action_recommend', {
+      module: 'teacher',
+      pageId: 'teacher_portrait',
+      pageName: '教师画像',
+      objectType: recommendation.target?.type || recommendation.type,
+      objectId: recommendation.target?.recordId || recommendation.target?.teacherId || recommendation.id,
+      actorId: selectedTeacher.teacherId,
+      actorName: selectedTeacher.name,
+      actorRole: selectedTeacher.roleName,
+      dept: selectedTeacher.departmentName,
+      recommendScene: true,
+      recommendId: recommendation.id,
+      recommendStrategy: recommendation.strategy,
+      recommendReasonCodes: recommendation.reasonCodes,
+      recommendScore: recommendation.score,
+      recommendTargetType: recommendation.target?.type || recommendation.type,
+      recommendTargetId: recommendation.target?.teacherId || recommendation.target?.recordId || '',
+      properties: {
+        title: recommendation.title,
+        targetLevel: selectedTeacher.targetLevel,
+      },
+    });
+
+    onNavigateToTeacherEvaluation?.({
+      teacherId: selectedTeacher.teacherId,
+      teacherName: selectedTeacher.name,
+    });
+  }, [onNavigateToScene, onNavigateToTeacherEvaluation, selectedTeacher]);
+
   return (
     <div className="sys-module teacher-portrait-module">
       <div className="sys-module-header">
@@ -490,10 +674,10 @@ function TeacherPortraitModule({ onNavigateToTeacherEvaluation }) {
             className="teacher-portrait-teacher-select"
             options={teacherOptions}
             value={selectedTeacher?.teacherId}
-            onChange={setSelectedTeacherId}
+            onChange={handleTeacherChange}
             placeholder="选择教师"
           />
-          <Button icon={<ReloadOutlined />} onClick={() => loadData()}>
+          <Button icon={<ReloadOutlined />} onClick={handleRefresh}>
             刷新画像
           </Button>
         </Space>
@@ -678,6 +862,71 @@ function TeacherPortraitModule({ onNavigateToTeacherEvaluation }) {
                 </div>
               </Card>
             </div>
+
+            <div className="teacher-portrait-main-grid">
+              <Card className="teacher-portrait-card">
+                <div className="teacher-portrait-card-head">
+                  <div>
+                    <strong>能力画像推荐动作</strong>
+                    <span>根据当前短板、评审状态和成长阶段，优先推荐可直接带来改进的动作。</span>
+                  </div>
+                  <Tag color="magenta">{recommendationBundle.actionRecommendations.length} 条</Tag>
+                </div>
+                <div className="teacher-portrait-recommend-list">
+                  {recommendationBundle.actionRecommendations.length ? recommendationBundle.actionRecommendations.map((item) => (
+                    <RecommendationCard
+                      key={item.id}
+                      recommendation={item}
+                      icon={<CompassOutlined />}
+                      tone="action"
+                      onAction={handleRecommendationAction}
+                    />
+                  )) : <Empty description="当前没有额外动作推荐" />}
+                </div>
+              </Card>
+
+              <Card className="teacher-portrait-card">
+                <div className="teacher-portrait-card-head">
+                  <div>
+                    <strong>推荐业务空间</strong>
+                    <span>面向教师成长场景，优先推荐适合当前能力画像的教学、培训或教研空间。</span>
+                  </div>
+                  <Tag color="cyan">{recommendationBundle.sceneRecommendations.length} 个空间</Tag>
+                </div>
+                <div className="teacher-portrait-recommend-list">
+                  {recommendationBundle.sceneRecommendations.length ? recommendationBundle.sceneRecommendations.map((item) => (
+                    <RecommendationCard
+                      key={item.id}
+                      recommendation={item}
+                      icon={<AppstoreOutlined />}
+                      tone="scene"
+                      onAction={handleRecommendationAction}
+                    />
+                  )) : <Empty description="当前没有可推荐的空间" />}
+                </div>
+              </Card>
+            </div>
+
+            <Card className="teacher-portrait-card">
+              <div className="teacher-portrait-card-head">
+                <div>
+                  <strong>推荐资料方向</strong>
+                  <span>围绕当前能力项和评审推进状态，建议优先进入相关空间查看的资料方向。</span>
+                </div>
+                <Tag color="geekblue">{recommendationBundle.resourceRecommendations.length} 条</Tag>
+              </div>
+              <div className="teacher-portrait-recommend-list">
+                {recommendationBundle.resourceRecommendations.length ? recommendationBundle.resourceRecommendations.map((item) => (
+                  <RecommendationCard
+                    key={item.id}
+                    recommendation={item}
+                    icon={<BookOutlined />}
+                    tone="resource"
+                    onAction={handleRecommendationAction}
+                  />
+                )) : <Empty description="当前没有额外资料推荐" />}
+              </div>
+            </Card>
           </>
         )}
       </div>
