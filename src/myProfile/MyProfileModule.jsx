@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Badge,
   Button,
   Card,
   Drawer,
@@ -8,6 +9,7 @@ import {
   Input,
   message,
   Modal,
+  Popover,
   Progress,
   Segmented,
   Select,
@@ -18,6 +20,7 @@ import {
   Tag,
 } from 'antd';
 import {
+  BellOutlined,
   ReloadOutlined,
   SendOutlined,
   UserOutlined,
@@ -669,6 +672,51 @@ function getArchiveVersionActionMeta(record) {
   };
 }
 
+function getArchiveVersionTodoMeta(record) {
+  const status = record?.versionStatus || record?.status;
+  if (!record) return null;
+  if (status === 'DRAFT') {
+    return {
+      key: `todo_${record.id}`,
+      versionId: record.id,
+      periodLabel: record.periodLabel || '-',
+      schemeName: record.schemeName || '未绑定评价方案',
+      status,
+      title: '待提交审批',
+      description: '当前周期还是草稿，确认材料和映射后可提交审批。',
+      actionLabel: '去审批信息',
+      priority: 2,
+    };
+  }
+  if (status === 'SUPPLEMENT_REQUIRED') {
+    return {
+      key: `todo_${record.id}`,
+      versionId: record.id,
+      periodLabel: record.periodLabel || '-',
+      schemeName: record.schemeName || '未绑定评价方案',
+      status,
+      title: '待补证',
+      description: record?.reviewOpinions?.[0]?.comment || '当前周期已被退回补证，请根据审批意见继续补齐材料。',
+      actionLabel: '去审批信息',
+      priority: 1,
+    };
+  }
+  if (['REJECTED', 'APPROVED', 'APPEAL_PENDING', 'APPEAL_RESOLVED'].includes(status)) {
+    return {
+      key: `todo_${record.id}`,
+      versionId: record.id,
+      periodLabel: record.periodLabel || '-',
+      schemeName: record.schemeName || '未绑定评价方案',
+      status,
+      title: '待查看结论',
+      description: record?.finalDecision?.summary || record?.appeal?.summary || '当前周期已有结论或复核状态，建议及时查看。',
+      actionLabel: '去审批信息',
+      priority: 3,
+    };
+  }
+  return null;
+}
+
 function formatDateTimeText(value) {
   return value ? String(value).slice(0, 16) : '-';
 }
@@ -844,9 +892,11 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
   const [snapshot, setSnapshot] = useState(null);
   const [archiveVersions, setArchiveVersions] = useState([]);
   const [workspaceView, setWorkspaceView] = useState('CURRENT');
+  const [activeArchiveTab, setActiveArchiveTab] = useState('overview');
   const [selectedArchiveVersionId, setSelectedArchiveVersionId] = useState('');
   const [archiveVersionFilter, setArchiveVersionFilter] = useState('ALL');
   const [versionDrawerOpen, setVersionDrawerOpen] = useState(false);
+  const [todoPopoverOpen, setTodoPopoverOpen] = useState(false);
   const [evaluationSchemes, setEvaluationSchemes] = useState([]);
   const [evaluationTeachers, setEvaluationTeachers] = useState([]);
   const [evaluationRecordList, setEvaluationRecordList] = useState([]);
@@ -1240,6 +1290,29 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
       hint: selectedArchiveVersion?.schemeName || '未绑定评价方案',
     },
   ];
+  const todoItems = useMemo(
+    () => sortEvaluationRecords(archiveVersions)
+      .map((record) => {
+        const meta = getArchiveVersionTodoMeta(record);
+        if (!meta) return null;
+        return {
+          ...meta,
+          updatedAt: record.updatedAt || record.createdAt || '',
+          currentNodeName: record.currentNodeName || '尚未进入审批',
+        };
+      })
+      .filter(Boolean)
+      .sort((left, right) => {
+        if (left.priority !== right.priority) return left.priority - right.priority;
+        return String(right.updatedAt || '').localeCompare(String(left.updatedAt || ''));
+      }),
+    [archiveVersions],
+  );
+  const todoCount = todoItems.length;
+  const selectedVersionTodoMeta = useMemo(
+    () => todoItems.find((item) => item.versionId === selectedArchiveVersion?.id) || null,
+    [selectedArchiveVersion?.id, todoItems],
+  );
   const compareVersions = useMemo(
     () => evaluationSummaryRecords.slice(0, Math.max(2, Math.min(analysisCompareCount, 4))),
     [analysisCompareCount, evaluationSummaryRecords],
@@ -1648,11 +1721,37 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
       handleSubmitArchiveVersion(record);
       return;
     }
+    setWorkspaceView('CURRENT');
     setSelectedArchiveVersionId(record.id);
-    if (record.evaluationRecordId) {
-      openTeacherEvaluationRecord(record);
+    setActiveArchiveTab('approval');
+  }, [handleSubmitArchiveVersion]);
+
+  const openArchiveVersionTask = useCallback((versionId, targetTab = 'approval') => {
+    if (!versionId) return;
+    setTodoPopoverOpen(false);
+    setWorkspaceView('CURRENT');
+    setSelectedArchiveVersionId(versionId);
+    setActiveArchiveTab(targetTab);
+  }, []);
+
+  const handleApprovalTaskAction = useCallback((record, actionKey) => {
+    if (!record) return;
+    if (actionKey === 'SUBMIT') {
+      handleSubmitArchiveVersion(record);
+      return;
     }
-  }, [handleSubmitArchiveVersion, openTeacherEvaluationRecord]);
+    if (actionKey === 'OPEN_TEACHER_EVALUATION') {
+      openTeacherEvaluationRecord(record);
+      return;
+    }
+    if (actionKey === 'GO_SOURCES') {
+      openArchiveVersionTask(record.id, 'sources');
+      return;
+    }
+    if (actionKey === 'GO_APPROVAL') {
+      openArchiveVersionTask(record.id, 'approval');
+    }
+  }, [handleSubmitArchiveVersion, openArchiveVersionTask, openTeacherEvaluationRecord]);
 
   function renderArchiveVersionActions(record) {
     const actionMeta = getArchiveVersionActionMeta(record);
@@ -1680,6 +1779,49 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
             </Button>
           ) : null}
         </Space>
+      </div>
+    );
+  }
+
+  function renderTodoPopoverContent() {
+    if (!todoItems.length) {
+      return (
+        <div className="profile-archive-todo-popover">
+          <div className="profile-archive-todo-popover-head">
+            <strong>我的待办</strong>
+            <span>当前没有需要在档案里处理的任务</span>
+          </div>
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无待办" />
+        </div>
+      );
+    }
+
+    return (
+      <div className="profile-archive-todo-popover">
+        <div className="profile-archive-todo-popover-head">
+          <strong>我的待办</strong>
+          <span>点击任务后会切到对应周期的审批信息</span>
+        </div>
+        <div className="profile-archive-todo-list">
+          {todoItems.map((item) => (
+            <div key={item.key} className={`profile-archive-todo-item is-${item.status.toLowerCase()}`}>
+              <div className="profile-archive-todo-item-head">
+                <div>
+                  <strong>{item.title}</strong>
+                  <span>{item.periodLabel} · {item.schemeName}</span>
+                </div>
+                <Tag color={getEvaluationStatusColor(item.status)}>{getTeacherEvaluationStatusLabel(item.status)}</Tag>
+              </div>
+              <p>{item.description}</p>
+              <div className="profile-archive-todo-item-foot">
+                <span>{item.currentNodeName} · 最近更新 {formatDateTimeText(item.updatedAt)}</span>
+                <Button size="small" type="primary" onClick={() => openArchiveVersionTask(item.versionId)}>
+                  {item.actionLabel}
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -2104,6 +2246,74 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
 
   const approvalTab = (
     <div className="profile-archive-tab">
+      <Card variant="borderless" className={`profile-archive-panel profile-archive-task-panel${selectedVersionTodoMeta ? ` is-${selectedVersionTodoMeta.status.toLowerCase()}` : ''}`}>
+        <div className="profile-archive-panel-head">
+          <span>当前任务</span>
+          {selectedVersionTodoMeta ? (
+            <Tag color={getEvaluationStatusColor(selectedVersionTodoMeta.status)}>{selectedVersionTodoMeta.title}</Tag>
+          ) : (
+            <Tag>当前无待办</Tag>
+          )}
+        </div>
+        {selectedArchiveVersion ? (
+          <div className="profile-archive-task-card">
+            <div className="profile-archive-task-card-copy">
+              <strong>{selectedVersionTodoMeta?.title || '当前周期暂无待办任务'}</strong>
+              <p>{selectedVersionTodoMeta?.description || '当前周期没有教师侧待办任务，可在下方查看审批留痕与结论。'}</p>
+            </div>
+            <div className="profile-archive-task-meta-grid">
+              <div className="profile-archive-task-meta-item">
+                <span>当前周期</span>
+                <strong>{selectedArchiveVersion.periodLabel || '-'}</strong>
+                <em>{selectedArchiveVersion.schemeName || '未绑定评价方案'}</em>
+              </div>
+              <div className="profile-archive-task-meta-item">
+                <span>当前节点</span>
+                <strong>{selectedArchiveVersion.currentNodeName || '尚未进入审批'}</strong>
+                <em>{selectedVersionStatusLabel}</em>
+              </div>
+              <div className="profile-archive-task-meta-item">
+                <span>最近更新时间</span>
+                <strong>{formatDateTimeText(selectedArchiveVersion.updatedAt || selectedArchiveVersion.createdAt)}</strong>
+                <em>{selectedVersionReviewOpinions[0]?.stageName || '当前暂无审批意见'}</em>
+              </div>
+              <div className="profile-archive-task-meta-item">
+                <span>最近意见</span>
+                <strong>{selectedVersionReviewOpinions[0]?.resultLabel || selectedArchiveVersion.finalDecision?.decisionLabel || '待处理'}</strong>
+                <em>{selectedVersionReviewOpinions[0]?.comment || selectedArchiveVersion.finalDecision?.summary || selectedArchiveVersion.appeal?.summary || '当前暂无新增意见'}</em>
+              </div>
+            </div>
+            <Space wrap>
+              {selectedVersionStatus === 'DRAFT' ? (
+                <>
+                  <Button
+                    type="primary"
+                    loading={archiveActionLoadingId === selectedArchiveVersion.id}
+                    onClick={() => handleApprovalTaskAction(selectedArchiveVersion, 'SUBMIT')}
+                  >
+                    提交审批
+                  </Button>
+                  <Button onClick={() => handleApprovalTaskAction(selectedArchiveVersion, 'GO_SOURCES')}>
+                    去数据来源整理材料
+                  </Button>
+                </>
+              ) : null}
+              {selectedVersionStatus === 'SUPPLEMENT_REQUIRED' ? (
+                <Button type="primary" onClick={() => handleApprovalTaskAction(selectedArchiveVersion, 'GO_SOURCES')}>
+                  去数据来源继续补证
+                </Button>
+              ) : null}
+              {canNavigateToTeacherEvaluation && selectedArchiveVersion.evaluationRecordId ? (
+                <Button onClick={() => handleApprovalTaskAction(selectedArchiveVersion, 'OPEN_TEACHER_EVALUATION')}>
+                  打开教师评价实例
+                </Button>
+              ) : null}
+            </Space>
+          </div>
+        ) : (
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="当前未选择周期" />
+        )}
+      </Card>
       <div className="profile-archive-grid profile-archive-grid-evaluation-summary">
         <Card variant="borderless" className="profile-archive-panel">
           <div className="profile-archive-panel-head">
@@ -2439,6 +2649,18 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
           <Button type="primary" onClick={() => setVersionDrawerOpen(true)}>
             周期切换
           </Button>
+          <Popover
+            trigger="click"
+            placement="bottomRight"
+            open={todoPopoverOpen}
+            onOpenChange={setTodoPopoverOpen}
+            content={renderTodoPopoverContent()}
+            overlayClassName="profile-archive-todo-popover-overlay"
+          >
+            <Badge count={todoCount} size="small">
+              <Button icon={<BellOutlined />} aria-label="查看我的待办任务" />
+            </Badge>
+          </Popover>
           <Segmented
             value={workspaceView}
             onChange={setWorkspaceView}
@@ -2483,7 +2705,8 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
               </Card>
 
               <Tabs
-                defaultActiveKey="overview"
+                activeKey={activeArchiveTab}
+                onChange={setActiveArchiveTab}
                 items={[
                   { key: 'overview', label: '周期总览', children: overviewTab },
                   { key: 'mapping', label: '证据映射', children: mappingTab },
