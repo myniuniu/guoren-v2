@@ -26,6 +26,7 @@ import {
   RiseOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
+import { getAllItemsAcrossLibraries, loadResourceLib } from '../resourceLib/resourceLibStore';
 import { sceneApi } from '../scene/api';
 import { trackEvent, trackRecommendationEvent } from '../shared/analytics';
 import { buildTeacherCapabilityRecommendations } from '../shared/recommendationEngine';
@@ -331,13 +332,14 @@ function RecommendationCard({ recommendation, icon, tone = 'processing', onActio
   );
 }
 
-function TeacherPortraitModule({ onNavigateToTeacherEvaluation, onNavigateToScene }) {
+function TeacherPortraitModule({ onNavigateToTeacherEvaluation, onNavigateToScene, onNavigateToResource }) {
   const [loading, setLoading] = useState(true);
   const [teachers, setTeachers] = useState([]);
   const [records, setRecords] = useState([]);
   const [schemes, setSchemes] = useState([]);
   const [modelMetas, setModelMetas] = useState([]);
   const [scenes, setScenes] = useState([]);
+  const [resourceItems, setResourceItems] = useState([]);
   const [selectedTeacherId, setSelectedTeacherId] = useState('');
 
   const loadData = useCallback(async (withLoading = true) => {
@@ -369,11 +371,13 @@ function TeacherPortraitModule({ onNavigateToTeacherEvaluation, onNavigateToScen
         sceneApi.listScenes(),
       ]);
 
+      const resourceData = loadResourceLib();
       setTeachers(nextTeachers);
       setRecords(nextRecords);
       setSchemes(nextSchemes);
       setModelMetas(buildModelMetas(nextModels, nextRoles, nextSequences));
       setScenes(nextScenes);
+      setResourceItems(getAllItemsAcrossLibraries(resourceData));
       setSelectedTeacherId((prev) => {
         if (prev && nextTeachers.some((item) => item.teacherId === prev)) {
           return prev;
@@ -450,8 +454,9 @@ function TeacherPortraitModule({ onNavigateToTeacherEvaluation, onNavigateToScen
       teacher: selectedTeacher,
       portraitSummary,
       scenes,
+      resources: resourceItems,
     }),
-    [portraitSummary, scenes, selectedTeacher],
+    [portraitSummary, resourceItems, scenes, selectedTeacher],
   );
 
   const evidenceColumns = useMemo(() => [
@@ -633,6 +638,16 @@ function TeacherPortraitModule({ onNavigateToTeacherEvaluation, onNavigateToScen
       return;
     }
 
+    if (recommendation.target?.type === 'resource') {
+      onNavigateToResource?.({
+        scope: recommendation.target.libraryScope,
+        libraryId: recommendation.target.libraryId,
+        resourceKey: recommendation.target.resourceKey,
+        keyword: recommendation.target.keyword,
+      });
+      return;
+    }
+
     trackEvent('teacher_growth_action_recommend', {
       module: 'teacher',
       pageId: 'teacher_portrait',
@@ -649,7 +664,7 @@ function TeacherPortraitModule({ onNavigateToTeacherEvaluation, onNavigateToScen
       recommendReasonCodes: recommendation.reasonCodes,
       recommendScore: recommendation.score,
       recommendTargetType: recommendation.target?.type || recommendation.type,
-      recommendTargetId: recommendation.target?.teacherId || recommendation.target?.recordId || '',
+      recommendTargetId: recommendation.target?.teacherId || recommendation.target?.recordId || recommendation.target?.resourceKey || '',
       properties: {
         title: recommendation.title,
         targetLevel: selectedTeacher.targetLevel,
@@ -660,7 +675,7 @@ function TeacherPortraitModule({ onNavigateToTeacherEvaluation, onNavigateToScen
       teacherId: selectedTeacher.teacherId,
       teacherName: selectedTeacher.name,
     });
-  }, [onNavigateToScene, onNavigateToTeacherEvaluation, selectedTeacher]);
+  }, [onNavigateToResource, onNavigateToScene, onNavigateToTeacherEvaluation, selectedTeacher]);
 
   return (
     <div className="sys-module teacher-portrait-module">
@@ -910,8 +925,8 @@ function TeacherPortraitModule({ onNavigateToTeacherEvaluation, onNavigateToScen
             <Card className="teacher-portrait-card">
               <div className="teacher-portrait-card-head">
                 <div>
-                  <strong>推荐资料方向</strong>
-                  <span>围绕当前能力项和评审推进状态，建议优先进入相关空间查看的资料方向。</span>
+                  <strong>推荐资料库课程资源</strong>
+                  <span>围绕当前能力项和评审推进状态，优先推荐资料库中可直接复用的课程资源。</span>
                 </div>
                 <Tag color="geekblue">{recommendationBundle.resourceRecommendations.length} 条</Tag>
               </div>

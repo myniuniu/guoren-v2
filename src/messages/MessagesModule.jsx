@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Avatar, Badge, Button, Dropdown, Empty, Input, Popover, Tag, Tooltip } from 'antd';
+import { Avatar, Badge, Button, Dropdown, Empty, Input, Popover, Tag, Tooltip, message } from 'antd';
 import {
   CloseOutlined,
   DownOutlined,
@@ -363,6 +363,12 @@ function getAvatarStyle(background) {
 }
 
 function LuckyRecommendationCard({ recommendation, onAction }) {
+  const resolvedActionLabel = recommendation.target?.type === 'scene' || recommendation.target?.type === 'space_catalog'
+    ? '申请加入空间'
+    : recommendation.target?.type === 'resource'
+      ? '去资料库'
+      : recommendation.actionLabel || '查看';
+
   return (
     <div className="messages-lucky-rec-card">
       <div className="messages-lucky-rec-main">
@@ -379,13 +385,17 @@ function LuckyRecommendationCard({ recommendation, onAction }) {
         </div>
       </div>
       <Button className="messages-lucky-rec-btn" type="primary" onClick={() => onAction?.(recommendation)}>
-        {recommendation.actionLabel || '查看'}
+        {resolvedActionLabel}
       </Button>
     </div>
   );
 }
 
-function MessagesModule({ initialConversationId = null, onNavigateToTeacherEvaluation, onNavigateToScene }) {
+function MessagesModule({
+  initialConversationId = null,
+  onNavigateToTeacherEvaluation,
+  onNavigateToResource,
+}) {
   const [conversations, setConversations] = useState(() => mergeLuckyConversation(INITIAL_CONVERSATIONS, readLuckyConversation()));
   const [selectedId, setSelectedId] = useState(initialConversationId || 'topic-genai');
   const [drafts, setDrafts] = useState({});
@@ -837,16 +847,57 @@ function MessagesModule({ initialConversationId = null, onNavigateToTeacherEvalu
     });
 
     if (recommendation.target?.type === 'scene') {
-      onNavigateToScene?.({
-        sceneId: recommendation.target.sceneId,
-        menuKey: recommendation.target.menuKey,
+      trackEvent('space_join_apply', {
+        module: 'messages',
+        pageId: 'messages',
+        pageName: '消息',
+        objectType: 'scene',
+        objectId: recommendation.target.sceneId || '',
+        recommendScene: true,
+        recommendId: recommendation.id,
+        recommendStrategy: recommendation.strategy,
+        recommendReasonCodes: recommendation.reasonCodes,
+        recommendScore: recommendation.score,
+        recommendTargetType: recommendation.target?.type || recommendation.type,
+        recommendTargetId: recommendation.target.sceneId || '',
+        properties: {
+          sourceConversationId: LUCKY_CONVERSATION_ID,
+          sceneTitle: recommendation.title,
+        },
       });
+      message.success(`已提交加入“${recommendation.title}”的申请，等待空间管理员处理`);
       return;
     }
 
     if (recommendation.target?.type === 'space_catalog') {
-      onNavigateToScene?.({
-        menuKey: recommendation.target.menuKey,
+      trackEvent('space_join_apply', {
+        module: 'messages',
+        pageId: 'messages',
+        pageName: '消息',
+        objectType: 'space_catalog',
+        objectId: recommendation.target.menuKey || recommendation.id,
+        recommendScene: true,
+        recommendId: recommendation.id,
+        recommendStrategy: recommendation.strategy,
+        recommendReasonCodes: recommendation.reasonCodes,
+        recommendScore: recommendation.score,
+        recommendTargetType: recommendation.target?.type || recommendation.type,
+        recommendTargetId: recommendation.target.menuKey || '',
+        properties: {
+          sourceConversationId: LUCKY_CONVERSATION_ID,
+          sceneTitle: recommendation.title,
+        },
+      });
+      message.success(`已提交加入“${recommendation.title}”的申请，等待空间管理员处理`);
+      return;
+    }
+
+    if (recommendation.target?.type === 'resource') {
+      onNavigateToResource?.({
+        scope: recommendation.target.libraryScope,
+        libraryId: recommendation.target.libraryId,
+        resourceKey: recommendation.target.resourceKey,
+        keyword: recommendation.target.keyword,
       });
       return;
     }

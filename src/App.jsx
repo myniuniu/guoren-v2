@@ -409,6 +409,11 @@ function App() {
     setCurrentPage('messages');
   }, []);
 
+  const openResourceLibraryPage = useCallback(() => {
+    setActiveIconKey('resource-lib');
+    setCurrentPage('resource-lib');
+  }, []);
+
   const openSceneRecommendation = useCallback((payload = {}) => {
     setActiveIconKey('my-space');
     if (payload.menuKey) {
@@ -499,7 +504,7 @@ function App() {
     } else if (key === 'certificate-issue') {
       setCurrentPage('certificate-issue');
     } else if (key === 'resource-lib') {
-      setCurrentPage('resource-lib');
+      openResourceLibraryPage();
     } else if (key === 'resource-parse') {
       setCurrentPage('resource-parse');
     } else if (key === 'archive') {
@@ -628,7 +633,7 @@ function App() {
           key={messageEntryConversationId || 'messages-default'}
           initialConversationId={messageEntryConversationId}
           onNavigateToTeacherEvaluation={openTeacherEvaluationPage}
-          onNavigateToScene={openSceneRecommendation}
+          onNavigateToResource={openResourceLibraryPage}
         />
       ) : currentPage === 'workflow' ? (
         <LeaveWorkflow onBack={handleBackToHome} />
@@ -678,6 +683,7 @@ function App() {
         <TeacherPortraitModule
           onNavigateToTeacherEvaluation={openTeacherEvaluationPage}
           onNavigateToScene={openSceneRecommendation}
+          onNavigateToResource={openResourceLibraryPage}
         />
       ) : currentPage === 'teacher-development' ? (
         <TeacherDevelopmentModule />

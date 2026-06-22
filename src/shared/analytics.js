@@ -20,6 +20,7 @@ export const IMPLEMENTED_ANALYTICS_EVENTS = [
   'recommend_click',
   'recommend_push_delivered',
   'message_lucky_open',
+  'space_join_apply',
 ];
 
 function isBrowser() {

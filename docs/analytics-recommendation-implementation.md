@@ -12,7 +12,7 @@ This repo now includes a first implementation slice for the analytics and teache
   - Generates:
     - action recommendations
     - scene recommendations
-    - resource-direction recommendations
+    - concrete resource-library course recommendations
 - `src/scene/store.js`
   - Emits analytics when scene/template records are created, updated, or deleted
 - `src/App.jsx`
@@ -27,8 +27,11 @@ This repo now includes a first implementation slice for the analytics and teache
   - Tracks Lucky conversation opens and recommendation exposure/click behavior
 - `src/teacherPortrait/TeacherPortraitModule.jsx`
   - Loads scenes together with portrait data
+  - Loads resource-library course materials together with portrait data
   - Builds teacher-capability recommendations
   - Tracks portrait views, refreshes, recommendation exposures, and recommendation clicks
+- `src/resourceLib/resourceLibStore.js`
+  - Provides seeded AI general-course resources used by the recommendation engine
 
 ## Event names in this slice
 
@@ -47,6 +50,7 @@ This repo now includes a first implementation slice for the analytics and teache
 - `recommend_click`
 - `recommend_push_delivered`
 - `message_lucky_open`
+- `space_join_apply`
 
 ## Recommendation strategy
 
@@ -60,6 +64,7 @@ The engine uses:
 - evidence gap count
 - review progression state
 - scene type and template recommendation metadata
+- resource-library courseware, teaching plans, teaching aids, rubric files, videos, and other course assets
 
 Reason codes currently emitted:
 
@@ -81,5 +86,7 @@ Analytics events are stored locally in browser storage for this prototype:
 - `gr.analytics.session.v1`
 - `gr.analytics.context.v1`
 - `gr.messages.lucky.v1`
+
+The Lucky message store now includes a schema refresh path so older cached pushes are upgraded automatically when recommendation content changes, including new resource-library recommendations.
 
 This is intentionally lightweight and should be replaced or mirrored by a backend/event pipeline in a production rollout.

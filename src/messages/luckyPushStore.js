@@ -1,3 +1,4 @@
+import { getAllItemsAcrossLibraries, loadResourceLib } from '../resourceLib/resourceLibStore';
 import { sceneApi } from '../scene/api';
 import { teacherEvaluationApi } from '../teacherEvaluation/api';
 import { trackEvent } from '../shared/analytics';
@@ -7,6 +8,7 @@ const LUCKY_STORAGE_KEY = 'gr.messages.lucky.v1';
 const LUCKY_CHANGE_EVENT = 'gr:messages-lucky-change';
 const LUCKY_CONVERSATION_ID = 'direct-lucky';
 const LUCKY_PUSH_INTERVAL_MS = 1000 * 60 * 8;
+const LUCKY_SCHEMA_VERSION = 2;
 
 function nowIso() {
   return new Date().toISOString();
@@ -24,12 +26,42 @@ function createId(prefix) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function normalizeLuckyRecommendation(recommendation) {
+  if (!recommendation || typeof recommendation !== 'object') {
+    return recommendation;
+  }
+
+  const targetType = recommendation.target?.type;
+  const actionLabel = targetType === 'scene' || targetType === 'space_catalog'
+    ? '申请加入空间'
+    : targetType === 'resource'
+      ? '去资料库'
+      : recommendation.actionLabel || '查看建议';
+
+  return {
+    ...recommendation,
+    actionLabel,
+  };
+}
+
+function normalizeLuckyConversation(conversation) {
+  if (!conversation) return null;
+  return {
+    ...conversation,
+    schemaVersion: Math.max(conversation.schemaVersion || 0, LUCKY_SCHEMA_VERSION),
+    messages: (conversation.messages || []).map((message) => ({
+      ...message,
+      recommendations: (message.recommendations || []).map(normalizeLuckyRecommendation),
+    })),
+  };
+}
+
 function readStoredConversation() {
   if (typeof window === 'undefined') return null;
   try {
     const raw = window.localStorage.getItem(LUCKY_STORAGE_KEY);
     if (!raw) return null;
-    return JSON.parse(raw);
+    return normalizeLuckyConversation(JSON.parse(raw));
   } catch (error) {
     console.warn('[lucky-push] failed to read conversation', error);
     return null;
@@ -38,7 +70,7 @@ function readStoredConversation() {
 
 function writeStoredConversation(conversation) {
   if (typeof window === 'undefined') return;
-  window.localStorage.setItem(LUCKY_STORAGE_KEY, JSON.stringify(conversation));
+  window.localStorage.setItem(LUCKY_STORAGE_KEY, JSON.stringify(normalizeLuckyConversation(conversation)));
 }
 
 function emitLuckyChange() {
@@ -153,6 +185,7 @@ function buildTeacherPortraitSummary(teacher, records, schemes) {
 function getBaseLuckyConversation() {
   return {
     id: LUCKY_CONVERSATION_ID,
+    schemaVersion: LUCKY_SCHEMA_VERSION,
     type: 'direct',
     title: 'Lucky',
     subtitle: '智能体推送',
@@ -169,10 +202,23 @@ function getBaseLuckyConversation() {
   };
 }
 
+function needsLuckyConversationRefresh(conversation) {
+  if (!conversation) return true;
+  if ((conversation.schemaVersion || 0) < LUCKY_SCHEMA_VERSION) return true;
+  const messages = conversation.messages || [];
+  if (!messages.length) return true;
+  return !messages.some((item) => (
+    item.sender === 'Lucky'
+    && Array.isArray(item.recommendations)
+    && item.recommendations.some((recommendation) => recommendation.target?.type === 'resource')
+  ));
+}
+
 function buildLuckyPushMessage(teacher, portraitSummary, recommendationBundle) {
   const recommendations = [
-    ...(recommendationBundle.actionRecommendations || []),
-    ...(recommendationBundle.sceneRecommendations || []).slice(0, 2),
+    ...(recommendationBundle.actionRecommendations || []).slice(0, 1),
+    ...(recommendationBundle.sceneRecommendations || []).slice(0, 1),
+    ...(recommendationBundle.resourceRecommendations || []).slice(0, 1),
   ].slice(0, 3);
 
   const focusLabel = portraitSummary.focusNames?.slice(0, 2).join('、') || '关键能力项';
@@ -188,10 +234,7 @@ function buildLuckyPushMessage(teacher, portraitSummary, recommendationBundle) {
     time: '刚刚',
     content: `我根据 ${teacher.name} 当前的能力画像整理了新的成长建议。当前阶段为“${portraitSummary.portraitTag}”，重点关注 ${focusLabel}。`,
     summary: `${teacher.departmentName} · ${teacher.targetLevel} · ${riskLabel}`,
-    recommendations: recommendations.map((item) => ({
-      ...item,
-      actionLabel: item.actionLabel || (item.target?.type === 'scene' ? '进入空间' : '查看建议'),
-    })),
+    recommendations: recommendations.map(normalizeLuckyRecommendation),
     createdAt: nowIso(),
   };
 }
@@ -225,15 +268,18 @@ async function buildNextLuckyConversation(existingConversation, forcePush = fals
   const teacher = teachers[teacherIndex];
   const teacherRecords = records.filter((item) => item.teacherId === teacher.teacherId);
   const portraitSummary = buildTeacherPortraitSummary(teacher, teacherRecords, schemes);
+  const resourceItems = getAllItemsAcrossLibraries(loadResourceLib());
   const recommendationBundle = buildTeacherCapabilityRecommendations({
     teacher,
     portraitSummary,
     scenes,
+    resources: resourceItems,
   });
 
   const nextMessage = buildLuckyPushMessage(teacher, portraitSummary, recommendationBundle);
   const nextConversation = {
     ...conversation,
+    schemaVersion: LUCKY_SCHEMA_VERSION,
     preview: nextMessage.content,
     time: nowTimeText(),
     unread: (conversation.unread || 0) + 1,
@@ -272,14 +318,22 @@ export function getLuckyConversationId() {
 
 export async function syncLuckyConversation(options = {}) {
   const existingConversation = readStoredConversation() || getBaseLuckyConversation();
-  const nextConversation = await buildNextLuckyConversation(existingConversation, options.forcePush);
+  const nextConversation = await buildNextLuckyConversation(
+    existingConversation,
+    options.forcePush || needsLuckyConversationRefresh(existingConversation),
+  );
   writeStoredConversation(nextConversation);
   emitLuckyChange();
   return nextConversation;
 }
 
 export function readLuckyConversation() {
-  return readStoredConversation() || getBaseLuckyConversation();
+  const stored = readStoredConversation();
+  if (!stored) return getBaseLuckyConversation();
+  return normalizeLuckyConversation({
+    ...getBaseLuckyConversation(),
+    ...stored,
+  });
 }
 
 export function markLuckyConversationRead() {
