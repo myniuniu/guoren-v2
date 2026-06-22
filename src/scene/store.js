@@ -1,4 +1,6 @@
 import { trackEvent } from '../shared/analytics';
+import { createFieldSchema } from '../processV2/form/fieldDefs';
+import { getDefaultSceneThemeCoverPresetId, getSceneThemeCoverPreset } from './themeCovers';
 
 const TEMPLATE_STORAGE_KEY = 'gr.scene.templates.v1';
 const SCENE_STORAGE_KEY = 'gr.scenes.v1';
@@ -211,6 +213,28 @@ export const VERSION_CREATE_MODE_OPTIONS = [
   { value: 'COPY_ACTIVE', label: '继承当前版本内容' },
   { value: 'EMPTY', label: '创建空白版本' },
 ];
+
+const DESIGNER_FIELD_TYPES = new Set([
+  'input',
+  'textarea',
+  'alert',
+  'inputNumber',
+  'radio',
+  'checkbox',
+  'datePicker',
+  'dateRange',
+  'tableForm',
+  'upload',
+]);
+
+const LEGACY_METADATA_FIELD_TYPE_MAP = Object.freeze({
+  TEXT: 'input',
+  TEXTAREA: 'textarea',
+  DATE: 'datePicker',
+  DATETIME: 'datePicker',
+  NUMBER: 'inputNumber',
+  SELECT: 'radio',
+});
 
 const MODE_TAB_LABEL_MAP = Object.fromEntries(
   MODE_TAB_PRESET_OPTIONS.map((item) => [item.value, item.label]),
@@ -606,13 +630,27 @@ export function createRoleDraft(seed = 1) {
 }
 
 function normalizeMetadataField(field, index) {
+  const rawType = trimToNull(field?.type) || 'TEXT';
+  const designerType = DESIGNER_FIELD_TYPES.has(rawType)
+    ? rawType
+    : (LEGACY_METADATA_FIELD_TYPE_MAP[rawType] || 'input');
+  const defaultField = createFieldSchema(designerType);
   return {
-    id: field?.id || createId(`field_${index}`),
+    ...defaultField,
+    ...field,
+    id: field?.id || defaultField.id || createId(`field_${index}`),
+    type: designerType,
+    label: trimToNull(field?.label) || defaultField.label || `字段${index + 1}`,
     key: trimToNull(field?.key) || `field_${index + 1}`,
-    label: trimToNull(field?.label) || `字段${index + 1}`,
-    type: trimToNull(field?.type) || 'TEXT',
-    required: Boolean(field?.required),
     description: trimToNull(field?.description) || '',
+    sceneMetadataType: trimToNull(field?.sceneMetadataType) || (!DESIGNER_FIELD_TYPES.has(rawType) ? rawType : null),
+    props: {
+      ...(defaultField.props || {}),
+      ...(field?.props || {}),
+      required: typeof field?.required === 'boolean'
+        ? field.required
+        : Boolean(field?.props?.required ?? defaultField.props?.required),
+    },
   };
 }
 
@@ -709,6 +747,14 @@ function normalizeAgent(agent, index) {
 function normalizeTemplate(input = {}) {
   const sceneType = trimToNull(input.sceneType) || 'CUSTOM';
   const builtIn = Boolean(input.builtIn);
+  const defaultCoverPresetId = getDefaultSceneThemeCoverPresetId(sceneType);
+  const coverSource = trimToNull(input.theme?.coverSource) === 'UPLOAD'
+    ? 'UPLOAD'
+    : ((trimToNull(input.theme?.coverSource) === 'PRESET' || !trimToNull(input.theme?.coverImage))
+      ? 'PRESET'
+      : 'UPLOAD');
+  const coverPresetId = trimToNull(input.theme?.coverPresetId) || defaultCoverPresetId;
+  const coverPreset = getSceneThemeCoverPreset(coverPresetId) || getSceneThemeCoverPreset(defaultCoverPresetId);
   const roles = (Array.isArray(input.roles) ? input.roles : []).map((role, index) => (
     normalizeRole(role, index, sceneType, builtIn)
   ));
@@ -734,9 +780,12 @@ function normalizeTemplate(input = {}) {
     theme: {
       badgeText: trimToNull(input.theme?.badgeText) || getSceneTypeLabel(sceneType),
       emoji: trimToNull(input.theme?.emoji) || '🧩',
+      coverSource,
+      coverPresetId,
+      coverImage: coverSource === 'UPLOAD' ? (trimToNull(input.theme?.coverImage) || '') : '',
       topicThemeMode: trimToNull(input.theme?.topicThemeMode) || 'DEFAULT',
-      coverStart: trimToNull(input.theme?.coverStart) || '#4f8cff',
-      coverEnd: trimToNull(input.theme?.coverEnd) || '#7ee4ff',
+      coverStart: trimToNull(input.theme?.coverStart) || coverPreset?.coverStart || '#4f8cff',
+      coverEnd: trimToNull(input.theme?.coverEnd) || coverPreset?.coverEnd || '#7ee4ff',
       accentColor: trimToNull(input.theme?.accentColor) || '#3b82f6',
       heroTitle: trimToNull(input.theme?.heroTitle) || '可配置场景模板',
       heroSubtitle: trimToNull(input.theme?.heroSubtitle) || '通过角色、资料结构、工具与主题页面配置快速生成空间场景。',
@@ -850,6 +899,8 @@ function buildPresetTemplates() {
       theme: {
         badgeText: '课堂教学',
         emoji: '📘',
+        coverSource: 'PRESET',
+        coverPresetId: 'abstract_blue_wave',
         coverStart: '#3568ff',
         coverEnd: '#6fd6ff',
         accentColor: '#2f64f2',
@@ -946,6 +997,8 @@ function buildPresetTemplates() {
       theme: {
         badgeText: '教研共创',
         emoji: '🧠',
+        coverSource: 'PRESET',
+        coverPresetId: 'abstract_portal',
         coverStart: '#0f766e',
         coverEnd: '#72f0cf',
         accentColor: '#14867a',
@@ -1053,6 +1106,8 @@ function buildPresetTemplates() {
       theme: {
         badgeText: '组织培训',
         emoji: '🎓',
+        coverSource: 'PRESET',
+        coverPresetId: 'abstract_gold',
         coverStart: '#f97316',
         coverEnd: '#facc15',
         accentColor: '#ea580c',
@@ -1162,6 +1217,8 @@ function buildPresetTemplates() {
       theme: {
         badgeText: '社区频道',
         emoji: '🌱',
+        coverSource: 'PRESET',
+        coverPresetId: 'abstract_mint',
         coverStart: '#6b7cff',
         coverEnd: '#c7e4ff',
         accentColor: '#6673f4',

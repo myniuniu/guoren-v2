@@ -41,6 +41,7 @@ import AssessmentConfig from './AssessmentConfig';
 import ResourceLibraryTagPicker from './resourceLib/ResourceLibraryTagPicker.jsx';
 import { inferFileType } from './resourceLib/resourceLibStore';
 import { renderFileIcon } from './resourceLib/resourceIcons.jsx';
+import { getSceneThemeCoverPalette } from './scene/themeCovers';
 import {
   addResource,
   createNewVersion,
@@ -283,6 +284,10 @@ function TopicDetail({
   const appLabel = currentModeConfig?.appLabel || sceneConfig?.topicPage?.appLabel || '应用';
   const emptyStateText = currentModeConfig?.emptyStateText || sceneConfig?.topicPage?.emptyStateText || '暂无资料，右键新建文件夹或添加资料';
   const useSceneTopicTheme = (sceneTheme?.topicThemeMode || 'DEFAULT') === 'SCENE';
+  const sceneThemePalette = useMemo(
+    () => getSceneThemeCoverPalette(sceneTheme || {}),
+    [sceneTheme],
+  );
   const detailThemeStyle = sceneTheme
     && useSceneTopicTheme
     ? {
@@ -290,7 +295,7 @@ function TopicDetail({
         '--td-accent-soft': hexToRgba(sceneTheme.accentColor || '#56a8f5', 0.14),
         '--td-accent-strong': hexToRgba(sceneTheme.accentColor || '#56a8f5', 0.24),
         '--td-accent-glow': hexToRgba(sceneTheme.accentColor || '#56a8f5', 0.36),
-        '--td-panel-bg': `linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.92) 58%, rgba(250, 251, 252, 0.9) 100%), linear-gradient(135deg, ${hexToRgba(sceneTheme.coverStart, 0.18)} 0%, ${hexToRgba(sceneTheme.coverEnd, 0.14)} 100%)`,
+        '--td-panel-bg': `linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.92) 58%, rgba(250, 251, 252, 0.9) 100%), linear-gradient(135deg, ${hexToRgba(sceneThemePalette.coverStart, 0.18)} 0%, ${hexToRgba(sceneThemePalette.coverEnd, 0.14)} 100%)`,
       }
     : undefined;
   const tagDefs = currentVersion?.tagDefinitions?.length

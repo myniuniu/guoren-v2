@@ -429,6 +429,145 @@
   color: #64748b;
 }
 
+.scene-template-cover-picker {
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #ffffff;
+  padding: 12px 14px 4px;
+}
+
+.scene-template-cover-trigger {
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #ffffff;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.scene-template-cover-trigger-preview {
+  width: 180px;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  flex-shrink: 0;
+}
+
+.scene-template-cover-trigger-copy {
+  display: grid;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.scene-template-cover-trigger-copy strong {
+  font-size: 14px;
+  color: #111827;
+}
+
+.scene-template-cover-trigger-copy span {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #64748b;
+}
+
+.scene-template-cover-panel {
+  display: grid;
+  gap: 18px;
+  max-height: 520px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.scene-template-cover-group {
+  display: grid;
+  gap: 10px;
+}
+
+.scene-template-cover-group-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.scene-template-cover-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.scene-template-cover-tile {
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 8px;
+  display: grid;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  text-align: left;
+}
+
+.scene-template-cover-tile:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 10px 24px rgba(59, 130, 246, 0.08);
+}
+
+.scene-template-cover-tile.is-active {
+  border-color: #4096ff;
+  box-shadow: 0 0 0 2px rgba(64, 150, 255, 0.14);
+}
+
+.scene-template-cover-tile span {
+  font-size: 12px;
+  color: #374151;
+}
+
+.scene-template-cover-thumb {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.scene-template-cover-upload-panel {
+  display: grid;
+  gap: 12px;
+  padding-bottom: 8px;
+}
+
+.scene-template-cover-upload-preview {
+  min-height: 220px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-size: 13px;
+  text-align: center;
+  padding: 16px;
+}
+
+.scene-template-cover-upload-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.scene-template-cover-modal .ant-modal-body {
+  padding-top: 8px;
+}
+
 .scene-template-role-summary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -513,32 +652,17 @@
 }
 
 .scene-template-role-editor-block {
-  border: 1px solid #e5e7eb;
   border-radius: 14px;
-  padding: 14px 14px 8px;
+  padding: 0 0 8px;
   display: grid;
   gap: 10px;
-}
-
-.scene-template-role-editor-block-basic {
-  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
-  border-color: #e2e8f0;
-}
-
-.scene-template-role-editor-block-function {
-  background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
-  border-color: #bfdbfe;
-}
-
-.scene-template-role-editor-block-data {
-  background: linear-gradient(180deg, #ecfeff 0%, #ffffff 100%);
-  border-color: #a5f3fc;
 }
 
 .scene-template-role-editor-title {
   font-size: 13px;
   font-weight: 700;
   color: #0f172a;
+  margin-bottom: 2px;
 }
 
 .scene-template-role-editor-grid {
@@ -574,8 +698,17 @@
   background: transparent;
 }
 
+.scene-template-metadata-form-designer {
+  height: 640px;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
 @media (max-width: 1280px) {
   .scene-template-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .scene-template-cover-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -588,6 +721,19 @@
   .scene-template-role-editor-sections,
   .scene-template-role-editor-grid {
     grid-template-columns: 1fr;
+  }
+
+  .scene-template-cover-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .scene-template-cover-trigger {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .scene-template-cover-trigger-preview {
+    width: 100%;
   }
 
   .scene-template-role-empty-panel {

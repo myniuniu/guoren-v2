@@ -73,6 +73,7 @@ import TeacherDevelopmentModule from './teacherDevelopment/TeacherDevelopmentMod
 import TeacherPortraitModule from './teacherPortrait/TeacherPortraitModule';
 import SceneCreateModal from './scene/SceneCreateModal';
 import { getSceneStoreChangeEventName, getSceneTypeLabel, getSceneVisibilityLabel, sceneApi } from './scene/api';
+import { getSceneThemeCoverStyle } from './scene/themeCovers';
 import { getLuckyConversationId } from './messages/luckyPushStore';
 import { setAnalyticsContext, trackEvent, trackPageView } from './shared/analytics';
 import './App.css';
@@ -783,16 +784,16 @@ function App() {
                         <div className="card-cover">
                           <div
                             className="wave-bg"
-                            style={{
-                              background: `linear-gradient(135deg, ${theme.coverStart || '#667eea'} 0%, ${theme.coverEnd || '#00f2fe'} 100%)`,
-                            }}
+                            style={getSceneThemeCoverStyle(theme, {
+                              overlayStart: 'rgba(15, 23, 42, 0.18)',
+                              overlayEnd: 'rgba(15, 23, 42, 0.04)',
+                            })}
                           >
                             <div className="card-cover-copy">
                               <span className="card-cover-badge">{theme.badgeText || getSceneTypeLabel(scene.sceneType)}</span>
                               <div className="card-cover-title">{theme.heroTitle || scene.templateName}</div>
                               <div className="card-cover-hint">{theme.surfaceHint || scene.templateName}</div>
                             </div>
-                            <div className="card-cover-emoji">{theme.emoji || '🧩'}</div>
                             <svg className="wave-svg" viewBox="0 0 400 120" preserveAspectRatio="none">
                               <path d="M0,60 C100,20 150,100 250,50 C300,30 350,80 400,40 L400,120 L0,120 Z" fill="rgba(255,255,255,0.18)" />
                               <path d="M0,80 C80,50 160,100 240,70 C320,40 360,90 400,60 L400,120 L0,120 Z" fill="rgba(255,255,255,0.12)" />

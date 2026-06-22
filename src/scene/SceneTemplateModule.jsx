@@ -15,6 +15,7 @@ import {
   Tabs,
   Tag,
   TreeSelect,
+  Upload,
   message,
 } from 'antd';
 import {
@@ -26,11 +27,11 @@ import {
   ReloadOutlined,
   SaveOutlined,
   SearchOutlined,
+  UploadOutlined,
 } from '@ant-design/icons';
 import {
   ASSIGNED_ACCESS_RULE_OPTIONS,
   ENTRY_METHOD_OPTIONS,
-  METADATA_FIELD_TYPE_OPTIONS,
   MODE_TAB_PRESET_OPTIONS,
   ROLE_DATA_ACCESS_AREA_OPTIONS,
   ROLE_FUNCTION_PERMISSION_MODE_OPTIONS,
@@ -52,6 +53,12 @@ import {
   getStatusRuleStageLabel,
   sceneApi,
 } from './api';
+import FormDesignerV2 from '../processV2/form/FormDesignerV2';
+import {
+  SCENE_THEME_COVER_PRESETS,
+  getSceneThemeCoverPreset,
+  getSceneThemeCoverStyle,
+} from './themeCovers';
 import '../system/SystemModule.css';
 import './SceneTemplateModule.css';
 
@@ -69,6 +76,15 @@ const TOPIC_THEME_MODE_OPTIONS = [
 
 function getErrorMessage(error, fallback = '操作失败') {
   return error?.message || fallback;
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(new Error('文件读取失败'));
+    reader.readAsDataURL(file);
+  });
 }
 
 function formatDateTime(value) {
@@ -177,9 +193,7 @@ function SceneTemplatePreview({ template, sceneCount }) {
     <div className="scene-template-preview-card">
       <div
         className="scene-template-preview-hero"
-        style={{
-          background: `linear-gradient(135deg, ${template.theme.coverStart} 0%, ${template.theme.coverEnd} 100%)`,
-        }}
+        style={getSceneThemeCoverStyle(template.theme)}
       >
         <div className="scene-template-preview-copy">
           <div className="scene-template-preview-kicker">{template.theme.badgeText}</div>
@@ -190,7 +204,6 @@ function SceneTemplatePreview({ template, sceneCount }) {
             <span>{countEnabledTools(template)} 个工具能力</span>
           </div>
         </div>
-        <div className="scene-template-preview-emoji">{template.theme.emoji}</div>
       </div>
 
       <div className="scene-template-preview-section">
@@ -373,6 +386,7 @@ export default function SceneTemplateModule() {
   const [editingTemplate, setEditingTemplate] = useState(null);
   const [saving, setSaving] = useState(false);
   const [activeRoleTabKey, setActiveRoleTabKey] = useState(null);
+  const [themeCoverModalOpen, setThemeCoverModalOpen] = useState(false);
 
   const [templateForm] = Form.useForm();
   const watchedRolesValue = Form.useWatch('roles', { form: templateForm, preserve: true });
@@ -380,13 +394,16 @@ export default function SceneTemplateModule() {
   const watchedToolConfigsValue = Form.useWatch('toolConfigs', { form: templateForm, preserve: true });
   const watchedFolderTypesValue = Form.useWatch('folderTypes', { form: templateForm, preserve: true });
   const watchedStatusRulesValue = Form.useWatch('statusRules', { form: templateForm, preserve: true });
+  const watchedThemeValue = Form.useWatch('theme', { form: templateForm, preserve: true });
   const watchedVersioningValue = Form.useWatch('versioning', { form: templateForm, preserve: true });
   const watchedRoles = useMemo(() => watchedRolesValue || [], [watchedRolesValue]);
   const watchedMetadataFields = useMemo(() => watchedMetadataFieldsValue || [], [watchedMetadataFieldsValue]);
   const watchedToolConfigs = useMemo(() => watchedToolConfigsValue || [], [watchedToolConfigsValue]);
   const watchedFolderTypes = useMemo(() => watchedFolderTypesValue || [], [watchedFolderTypesValue]);
   const watchedStatusRules = useMemo(() => watchedStatusRulesValue || [], [watchedStatusRulesValue]);
+  const watchedTheme = useMemo(() => watchedThemeValue || {}, [watchedThemeValue]);
   const watchedVersioning = useMemo(() => watchedVersioningValue || {}, [watchedVersioningValue]);
+  const uploadedThemeCoverImage = watchedTheme.coverSource === 'UPLOAD' ? watchedTheme.coverImage : '';
   const roleOptions = useMemo(
     () => watchedRoles
       .filter((role) => role?.id && role?.name)
@@ -404,6 +421,19 @@ export default function SceneTemplateModule() {
         [...ROLE_DATA_ACCESS_AREA_OPTIONS],
       ),
     [watchedFolderTypes],
+  );
+  const themeCoverPresetGroups = useMemo(() => {
+    const grouped = new Map();
+    SCENE_THEME_COVER_PRESETS.forEach((preset) => {
+      const nextGroup = grouped.get(preset.category) || [];
+      nextGroup.push(preset);
+      grouped.set(preset.category, nextGroup);
+    });
+    return Array.from(grouped.entries()).map(([category, presets]) => ({ category, presets }));
+  }, []);
+  const currentThemeCoverPreset = useMemo(
+    () => getSceneThemeCoverPreset(watchedTheme.coverPresetId),
+    [watchedTheme.coverPresetId],
   );
   const sceneCountMap = useMemo(() => {
     return scenes.reduce((map, item) => {
@@ -510,6 +540,43 @@ export default function SceneTemplateModule() {
       const nextActiveRole = currentRoles[index] || currentRoles[index - 1] || null;
       setActiveRoleTabKey(nextActiveRole ? String(nextActiveRole.id) : null);
     }
+  }
+
+  function updateThemeConfig(patch) {
+    const currentTheme = templateForm.getFieldValue('theme') || {};
+    templateForm.setFieldValue('theme', {
+      ...currentTheme,
+      ...patch,
+    });
+  }
+
+  function handleSelectThemeCoverPreset(presetId) {
+    const preset = getSceneThemeCoverPreset(presetId);
+    if (!preset) return;
+    updateThemeConfig({
+      coverSource: 'PRESET',
+      coverPresetId: preset.id,
+      coverStart: preset.coverStart,
+      coverEnd: preset.coverEnd,
+    });
+  }
+
+  async function handleThemeCoverUpload(file) {
+    if (!file.type?.startsWith('image/')) {
+      message.error('请上传图片格式的主题封面');
+      return Upload.LIST_IGNORE;
+    }
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      updateThemeConfig({
+        coverSource: 'UPLOAD',
+        coverImage: dataUrl,
+      });
+      message.success('默认主题封面已更新');
+    } catch (error) {
+      message.error(getErrorMessage(error, '主题封面上传失败'));
+    }
+    return Upload.LIST_IGNORE;
   }
 
   function openCreateDrawer() {
@@ -848,66 +915,12 @@ export default function SceneTemplateModule() {
                 label: '主题元数据',
                 children: (
                   <div className="scene-template-drawer-section">
-                    <div className="scene-template-subsection-title with-action">
-                      <span>主题元数据</span>
-                      <Button
-                        size="small"
-                        icon={<PlusOutlined />}
-                        onClick={() => {
-                          const nextFields = [...watchedMetadataFields, {
-                            id: `field_${Date.now()}`,
-                            key: '',
-                            label: '',
-                            type: 'TEXT',
-                            required: false,
-                            description: '',
-                          }];
-                          templateForm.setFieldsValue({ metadataFields: nextFields });
-                        }}
-                      >
-                        添加字段
-                      </Button>
+                    <div className="scene-template-metadata-form-designer">
+                      <FormDesignerV2
+                        value={watchedMetadataFields}
+                        onChange={(nextFields) => templateForm.setFieldValue('metadataFields', nextFields)}
+                      />
                     </div>
-
-                    {watchedMetadataFields.map((field, index) => (
-                      <div key={field?.id || index} className="scene-template-list-card">
-                        <div className="scene-template-list-card-head">
-                          <strong>字段 {index + 1}</strong>
-                          <Button
-                            type="link"
-                            danger
-                            icon={<DeleteOutlined />}
-                            onClick={() => {
-                              const nextFields = [...watchedMetadataFields];
-                              nextFields.splice(index, 1);
-                              templateForm.setFieldsValue({ metadataFields: nextFields });
-                            }}
-                          >
-                            删除
-                          </Button>
-                        </div>
-                        <div className="scene-template-form-grid">
-                          <Form.Item label="字段标识" name={['metadataFields', index, 'key']}>
-                            <Input placeholder="例如：start_time" />
-                          </Form.Item>
-                          <Form.Item label="字段名称" name={['metadataFields', index, 'label']}>
-                            <Input placeholder="例如：开始时间" />
-                          </Form.Item>
-                          <Form.Item label="字段类型" name={['metadataFields', index, 'type']}>
-                            <Select options={METADATA_FIELD_TYPE_OPTIONS} />
-                          </Form.Item>
-                          <Form.Item label="必填" name={['metadataFields', index, 'required']} valuePropName="checked">
-                            <Switch />
-                          </Form.Item>
-                          <Form.Item className="scene-template-form-span-2" label="字段说明" name={['metadataFields', index, 'description']}>
-                            <TextArea rows={2} placeholder="说明该字段在场景中的业务含义" />
-                          </Form.Item>
-                          <Form.Item name={['metadataFields', index, 'id']} hidden>
-                            <Input />
-                          </Form.Item>
-                        </div>
-                      </div>
-                    ))}
                   </div>
                 ),
               },
@@ -920,20 +933,35 @@ export default function SceneTemplateModule() {
                       <Form.Item label="模板角标" name={['theme', 'badgeText']}>
                         <Input placeholder="例如：课堂教学" />
                       </Form.Item>
-                      <Form.Item label="表情符号" name={['theme', 'emoji']}>
-                        <Input placeholder="例如：📘" />
-                      </Form.Item>
                       <Form.Item label="详情页主题" name={['theme', 'topicThemeMode']}>
                         <Select options={TOPIC_THEME_MODE_OPTIONS} />
                       </Form.Item>
-                      <Form.Item label="封面起始色" name={['theme', 'coverStart']}>
-                        <Input placeholder="#3568ff" />
-                      </Form.Item>
-                      <Form.Item label="封面结束色" name={['theme', 'coverEnd']}>
-                        <Input placeholder="#6fd6ff" />
-                      </Form.Item>
                       <Form.Item label="强调色" name={['theme', 'accentColor']}>
                         <Input placeholder="#2f64f2" />
+                      </Form.Item>
+                      <Form.Item className="scene-template-form-span-2" label="默认主题封面">
+                        <div className="scene-template-cover-trigger">
+                          <div
+                            className="scene-template-cover-trigger-preview"
+                            style={getSceneThemeCoverStyle(watchedTheme, {
+                              overlayStart: 'rgba(15, 23, 42, 0.14)',
+                              overlayEnd: 'rgba(15, 23, 42, 0.03)',
+                            })}
+                          />
+                          <div className="scene-template-cover-trigger-copy">
+                            <strong>
+                              {watchedTheme.coverSource === 'UPLOAD'
+                                ? '本地上传封面'
+                                : (currentThemeCoverPreset?.name || '默认图库封面')}
+                            </strong>
+                            <span>
+                              {watchedTheme.coverSource === 'UPLOAD'
+                                ? '当前使用上传图片作为主题封面'
+                                : `当前来自 ${currentThemeCoverPreset?.category || '图库'}，点击可重新选择`}
+                            </span>
+                          </div>
+                          <Button onClick={() => setThemeCoverModalOpen(true)}>选择封面</Button>
+                        </div>
                       </Form.Item>
                       <Form.Item label="首页短提示" name={['theme', 'surfaceHint']}>
                         <Input placeholder="例如：课件、作业、互动" />
@@ -1486,6 +1514,88 @@ export default function SceneTemplateModule() {
             ]}
           />
         </Form>
+        <Modal
+          title="选择默认主题封面"
+          open={themeCoverModalOpen}
+          onCancel={() => setThemeCoverModalOpen(false)}
+          footer={[
+            <Button key="close" type="primary" onClick={() => setThemeCoverModalOpen(false)}>
+              完成
+            </Button>,
+          ]}
+          width={1120}
+          className="scene-template-cover-modal"
+        >
+          <Tabs
+            activeKey={watchedTheme.coverSource === 'UPLOAD' ? 'upload' : 'gallery'}
+            onChange={(key) => {
+              if (key === 'gallery') {
+                updateThemeConfig({ coverSource: 'PRESET' });
+              } else {
+                updateThemeConfig({ coverSource: 'UPLOAD' });
+              }
+            }}
+            items={[
+              {
+                key: 'gallery',
+                label: '图库',
+                children: (
+                  <div className="scene-template-cover-panel">
+                    {themeCoverPresetGroups.map((group) => (
+                      <div key={group.category} className="scene-template-cover-group">
+                        <div className="scene-template-cover-group-title">{group.category}</div>
+                        <div className="scene-template-cover-grid">
+                          {group.presets.map((preset) => (
+                            <button
+                              key={preset.id}
+                              type="button"
+                              className={`scene-template-cover-tile ${watchedTheme.coverSource !== 'UPLOAD' && watchedTheme.coverPresetId === preset.id ? 'is-active' : ''}`}
+                              onClick={() => handleSelectThemeCoverPreset(preset.id)}
+                            >
+                              <div
+                                className="scene-template-cover-thumb"
+                                style={{ backgroundImage: `url("${preset.image}")` }}
+                              />
+                              <span>{preset.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ),
+              },
+              {
+                key: 'upload',
+                label: '本地上传',
+                children: (
+                  <div className="scene-template-cover-upload-panel">
+                    <div
+                      className="scene-template-cover-upload-preview"
+                      style={uploadedThemeCoverImage
+                        ? { backgroundImage: `url("${uploadedThemeCoverImage}")` }
+                        : undefined}
+                    >
+                      {!uploadedThemeCoverImage ? '上传后在这里预览主题封面' : null}
+                    </div>
+                    <div className="scene-template-cover-upload-actions">
+                      <Upload
+                        accept="image/*"
+                        showUploadList={false}
+                        beforeUpload={handleThemeCoverUpload}
+                      >
+                        <Button icon={<UploadOutlined />}>本地上传</Button>
+                      </Upload>
+                      <Button onClick={() => updateThemeConfig({ coverSource: 'PRESET' })}>
+                        恢复图库封面
+                      </Button>
+                    </div>
+                  </div>
+                ),
+              },
+            ]}
+          />
+        </Modal>
       </Drawer>
     </div>
   );

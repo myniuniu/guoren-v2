@@ -5,6 +5,7 @@ import {
   TOOL_OPTIONS,
   getSceneTypeLabel,
 } from './api';
+import { getSceneThemeCoverStyle } from './themeCovers';
 import './SceneCreateModal.css';
 
 const { TextArea } = Input;
@@ -146,11 +147,11 @@ export default function SceneCreateModal({
                   >
                     <div
                       className="scene-create-template-card-cover"
-                      style={{
-                        background: `linear-gradient(135deg, ${template.theme.coverStart} 0%, ${template.theme.coverEnd} 100%)`,
-                      }}
+                      style={getSceneThemeCoverStyle(template.theme, {
+                        overlayStart: 'rgba(15, 23, 42, 0.16)',
+                        overlayEnd: 'rgba(15, 23, 42, 0.02)',
+                      })}
                     >
-                      <span className="scene-create-template-card-emoji">{template.theme.emoji}</span>
                       <span className="scene-create-template-card-badge">{template.theme.badgeText}</span>
                     </div>
                     <div className="scene-create-template-card-body">
@@ -203,16 +204,13 @@ export default function SceneCreateModal({
               <div className="scene-create-preview">
                 <div
                   className="scene-create-preview-hero"
-                  style={{
-                    background: `linear-gradient(135deg, ${selectedTemplate.theme.coverStart} 0%, ${selectedTemplate.theme.coverEnd} 100%)`,
-                  }}
+                  style={getSceneThemeCoverStyle(selectedTemplate.theme)}
                 >
                   <div className="scene-create-preview-hero-copy">
                     <div className="scene-create-preview-kicker">{selectedTemplate.theme.badgeText}</div>
                     <div className="scene-create-preview-title">{selectedTemplate.theme.heroTitle}</div>
                     <div className="scene-create-preview-desc">{selectedTemplate.theme.heroSubtitle}</div>
                   </div>
-                  <div className="scene-create-preview-emoji">{selectedTemplate.theme.emoji}</div>
                 </div>
 
                 <div className="scene-create-preview-sections">
