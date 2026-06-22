@@ -6,6 +6,7 @@ import {
   Form,
   Input,
   InputNumber,
+  Modal,
   Popconfirm,
   Select,
   Space,
@@ -13,6 +14,7 @@ import {
   Table,
   Tabs,
   Tag,
+  TreeSelect,
   message,
 } from 'antd';
 import {
@@ -26,23 +28,28 @@ import {
   SearchOutlined,
 } from '@ant-design/icons';
 import {
+  ASSIGNED_ACCESS_RULE_OPTIONS,
   ENTRY_METHOD_OPTIONS,
-  HOME_INTRO_MODE_OPTIONS,
   METADATA_FIELD_TYPE_OPTIONS,
   MODE_TAB_PRESET_OPTIONS,
   ROLE_DATA_ACCESS_AREA_OPTIONS,
+  ROLE_FUNCTION_PERMISSION_MODE_OPTIONS,
   ROLE_DATA_SCOPE_OPTIONS,
   ROLE_FUNCTION_PERMISSION_OPTIONS,
-  SCENE_MENU_OPTIONS,
-  SCENE_TYPE_OPTIONS,
+  ROLE_FUNCTION_PERMISSION_TREE,
+  STATUS_RULE_CONTROL_OPTIONS,
+  STATUS_RULE_STAGE_OPTIONS,
   TEMPLATE_STATUS_OPTIONS,
   TOOL_OPTIONS,
   TOOL_PLACEMENT_OPTIONS,
   VERSION_CREATE_MODE_OPTIONS,
   createRoleDraft,
   createTemplateDraft,
+  getAssignedAccessRuleLabel,
+  getRoleFunctionPermissionModeLabel,
   getSceneStoreChangeEventName,
-  getSceneTypeLabel,
+  getStatusRuleControlLabel,
+  getStatusRuleStageLabel,
   sceneApi,
 } from './api';
 import '../system/SystemModule.css';
@@ -102,6 +109,42 @@ function getRoleDataScopeLabel(value) {
   return ROLE_DATA_SCOPE_OPTIONS.find((item) => item.value === value)?.label || value || '-';
 }
 
+function getAssignedResourceTargetLabels(values, folderNameMap) {
+  const typeLabelMap = new Map(ROLE_DATA_ACCESS_AREA_OPTIONS.map((item) => [item.value, item.label]));
+  return (Array.isArray(values) ? values : [])
+    .map((value) => {
+      if (typeof value === 'string' && value.startsWith('FOLDER::')) {
+        const folderKey = value.slice('FOLDER::'.length);
+        return `目录类型 / ${folderNameMap.get(folderKey) || folderKey}`;
+      }
+      return typeLabelMap.get(value) || value;
+    })
+    .filter(Boolean);
+}
+
+function getAssignedAccessSummary(role, folderNameMap) {
+  if (role?.dataAccessScope !== 'ASSIGNED') return [];
+  switch (role?.assignedAccessRuleType) {
+    case 'RESOURCE_TYPE':
+      return getAssignedResourceTargetLabels(role?.dataAccessAreas, folderNameMap);
+    case 'RESOURCE_ATTR':
+      return role?.assignedAttributeRules || [];
+    case 'RESOURCE_ITEM':
+      return role?.authorizedResourceRefs || [];
+    case 'ALL':
+    default:
+      return ['全部授权对象'];
+  }
+}
+
+function getFunctionalPermissionSummary(role) {
+  const labels = getOptionLabels(ROLE_FUNCTION_PERMISSION_OPTIONS, role?.functionalPermissions);
+  if (role?.functionalPermissionMode === 'EXCLUDE' && labels.length === 0) {
+    return ['未排除功能'];
+  }
+  return labels;
+}
+
 function getVersionCreateModeLabel(value) {
   return VERSION_CREATE_MODE_OPTIONS.find((item) => item.value === value)?.label || value || '-';
 }
@@ -127,6 +170,8 @@ function SceneTemplatePreview({ template, sceneCount }) {
   }
 
   const enabledModes = (template.topicPage?.modeTabs || []).filter((item) => item.enabled !== false);
+  const roleNameMap = new Map((template.roles || []).map((role) => [role.id, role.name]));
+  const folderNameMap = new Map((template.folderTypes || []).map((folder) => [folder.key, folder.name]));
 
   return (
     <div className="scene-template-preview-card">
@@ -141,7 +186,6 @@ function SceneTemplatePreview({ template, sceneCount }) {
           <div className="scene-template-preview-title">{template.name}</div>
           <div className="scene-template-preview-desc">{template.theme.heroSubtitle}</div>
           <div className="scene-template-preview-meta">
-            <span>{getSceneTypeLabel(template.sceneType)}</span>
             <span>{sceneCount} 个场景在用</span>
             <span>{countEnabledTools(template)} 个工具能力</span>
           </div>
@@ -156,36 +200,47 @@ function SceneTemplatePreview({ template, sceneCount }) {
             <div key={role.id} className="scene-template-role-card">
               <div className="scene-template-role-head">
                 <strong>{role.name}</strong>
-                {role.agentName ? <Tag color="cyan">{role.agentName}</Tag> : null}
               </div>
               <div className="scene-template-role-desc">{role.description || '未填写角色说明'}</div>
-              <div className="scene-template-role-meta">
-                <span>功能授权</span>
-                <div className="scene-template-tag-wrap">
-                  {getOptionLabels(ROLE_FUNCTION_PERMISSION_OPTIONS, role.functionalPermissions).length > 0
-                    ? getOptionLabels(ROLE_FUNCTION_PERMISSION_OPTIONS, role.functionalPermissions).map((label) => (
-                        <Tag key={`${role.id}_${label}`} color="blue">{label}</Tag>
-                      ))
-                    : <span className="scene-template-role-empty">未配置</span>}
+              <div className="scene-template-role-block scene-template-role-block-function">
+                <div className="scene-template-role-block-title">功能授权</div>
+                <div className="scene-template-role-meta">
+                  <div className="scene-template-tag-wrap">
+                    <Tag color={role.functionalPermissionMode === 'EXCLUDE' ? 'volcano' : 'blue'}>
+                      {getRoleFunctionPermissionModeLabel(role.functionalPermissionMode)}
+                    </Tag>
+                    {getFunctionalPermissionSummary(role).length > 0
+                      ? getFunctionalPermissionSummary(role).map((label) => (
+                          <Tag key={`${role.id}_${label}`} color="blue">{label}</Tag>
+                        ))
+                      : <span className="scene-template-role-empty">未配置</span>}
+                  </div>
                 </div>
+                {role.permissionSummary ? (
+                  <div className="scene-template-role-note">功能说明：{role.permissionSummary}</div>
+                ) : null}
               </div>
-              <div className="scene-template-role-meta">
-                <span>数据访问</span>
-                <div className="scene-template-tag-wrap">
-                  <Tag color="geekblue">{getRoleDataScopeLabel(role.dataAccessScope)}</Tag>
-                  {getOptionLabels(ROLE_DATA_ACCESS_AREA_OPTIONS, role.dataAccessAreas).length > 0
-                    ? getOptionLabels(ROLE_DATA_ACCESS_AREA_OPTIONS, role.dataAccessAreas).map((label) => (
-                        <Tag key={`${role.id}_data_${label}`}>{label}</Tag>
-                      ))
-                    : <span className="scene-template-role-empty">未配置数据域</span>}
+              <div className="scene-template-role-block scene-template-role-block-data">
+                <div className="scene-template-role-block-title">资料授权</div>
+                <div className="scene-template-role-meta">
+                  <div className="scene-template-tag-wrap">
+                    <Tag color="geekblue">{getRoleDataScopeLabel(role.dataAccessScope)}</Tag>
+                    {role.dataAccessScope === 'ASSIGNED'
+                      ? (
+                          <>
+                            <Tag color="purple">{getAssignedAccessRuleLabel(role.assignedAccessRuleType)}</Tag>
+                            {getAssignedAccessSummary(role, folderNameMap).map((label) => (
+                              <Tag key={`${role.id}_data_${label}`}>{label}</Tag>
+                            ))}
+                          </>
+                        )
+                      : null}
+                  </div>
                 </div>
+                {role.scopeSummary ? (
+                  <div className="scene-template-role-note">资料权限说明：{role.scopeSummary}</div>
+                ) : null}
               </div>
-              {role.permissionSummary ? (
-                <div className="scene-template-role-note">功能说明：{role.permissionSummary}</div>
-              ) : null}
-              {role.scopeSummary ? (
-                <div className="scene-template-role-note">访问说明：{role.scopeSummary}</div>
-              ) : null}
             </div>
           ))}
         </div>
@@ -197,7 +252,6 @@ function SceneTemplatePreview({ template, sceneCount }) {
           <span>详情页主题：{getTopicThemeModeLabel(template.theme?.topicThemeMode || 'DEFAULT')}</span>
           <span>资料区：{template.topicPage.resourcePanelTitle}</span>
           <span>新增按钮：{template.topicPage.addResourceLabel}</span>
-          <span>主页模板：{template.homepage.templateName}</span>
         </div>
         <div className="scene-template-tag-wrap">
           {enabledModes.map((item) => (
@@ -280,24 +334,25 @@ function SceneTemplatePreview({ template, sceneCount }) {
       </div>
 
       <div className="scene-template-preview-section">
-        <div className="scene-template-preview-section-title">状态规则与智能体</div>
+        <div className="scene-template-preview-section-title">状态规则</div>
         <div className="scene-template-preview-list">
           {(template.statusRules || []).map((rule) => (
             <div key={rule.id} className="scene-template-preview-list-row">
               <strong>{rule.name}</strong>
-              <span>{rule.description || '未填写规则说明'}</span>
-            </div>
-          ))}
-        </div>
-        <div className="scene-template-agent-grid">
-          {(template.agents || []).map((agent) => (
-            <div key={agent.id} className="scene-template-agent-card">
-              <div className="scene-template-agent-head">
-                <span>{agent.avatar || '🤖'}</span>
-                <strong>{agent.name}</strong>
+              <div className="scene-template-tag-wrap">
+                <Tag>{rule.key || '未设编码'}</Tag>
+                <Tag color="blue">{getStatusRuleStageLabel(rule.stage)}</Tag>
+                <Tag color="geekblue">{getStatusRuleControlLabel(rule.controlMode)}</Tag>
+                <Tag color={rule.entryEnabled ? 'green' : 'default'}>
+                  {rule.entryEnabled ? '开放进入' : '关闭进入'}
+                </Tag>
+                {(rule.roleIds || []).length > 0
+                  ? rule.roleIds.map((roleId) => (
+                      <Tag key={`${rule.id}_${roleId}`}>{roleNameMap.get(roleId) || roleId}</Tag>
+                    ))
+                  : <Tag>未限定角色</Tag>}
               </div>
-              <div className="scene-template-agent-meta">{agent.knowledgeSource || '未设置知识来源'}</div>
-              <div className="scene-template-agent-desc">{agent.prompt || '未设置提示词说明'}</div>
+              <span>{rule.description || '未填写规则说明'}</span>
             </div>
           ))}
         </div>
@@ -311,13 +366,13 @@ export default function SceneTemplateModule() {
   const [templates, setTemplates] = useState([]);
   const [scenes, setScenes] = useState([]);
   const [keyword, setKeyword] = useState('');
-  const [sceneTypeFilter, setSceneTypeFilter] = useState(undefined);
   const [statusFilter, setStatusFilter] = useState(undefined);
   const [selectedTemplateId, setSelectedTemplateId] = useState(null);
   const [previewDrawerOpen, setPreviewDrawerOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [activeRoleTabKey, setActiveRoleTabKey] = useState(null);
 
   const [templateForm] = Form.useForm();
   const watchedRolesValue = Form.useWatch('roles', { form: templateForm, preserve: true });
@@ -325,14 +380,12 @@ export default function SceneTemplateModule() {
   const watchedToolConfigsValue = Form.useWatch('toolConfigs', { form: templateForm, preserve: true });
   const watchedFolderTypesValue = Form.useWatch('folderTypes', { form: templateForm, preserve: true });
   const watchedStatusRulesValue = Form.useWatch('statusRules', { form: templateForm, preserve: true });
-  const watchedAgentsValue = Form.useWatch('agents', { form: templateForm, preserve: true });
   const watchedVersioningValue = Form.useWatch('versioning', { form: templateForm, preserve: true });
   const watchedRoles = useMemo(() => watchedRolesValue || [], [watchedRolesValue]);
   const watchedMetadataFields = useMemo(() => watchedMetadataFieldsValue || [], [watchedMetadataFieldsValue]);
   const watchedToolConfigs = useMemo(() => watchedToolConfigsValue || [], [watchedToolConfigsValue]);
   const watchedFolderTypes = useMemo(() => watchedFolderTypesValue || [], [watchedFolderTypesValue]);
   const watchedStatusRules = useMemo(() => watchedStatusRulesValue || [], [watchedStatusRulesValue]);
-  const watchedAgents = useMemo(() => watchedAgentsValue || [], [watchedAgentsValue]);
   const watchedVersioning = useMemo(() => watchedVersioningValue || {}, [watchedVersioningValue]);
   const roleOptions = useMemo(
     () => watchedRoles
@@ -340,12 +393,18 @@ export default function SceneTemplateModule() {
       .map((role) => ({ value: role.id, label: role.name })),
     [watchedRoles],
   );
-  const roleSummary = useMemo(() => ({
-    total: watchedRoles.length,
-    withFunctionalPermissions: watchedRoles.filter((role) => (role?.functionalPermissions || []).length > 0).length,
-    withDataAccess: watchedRoles.filter((role) => (role?.dataAccessAreas || []).length > 0).length,
-  }), [watchedRoles]);
-
+  const assignedResourceTypeOptions = useMemo(
+    () => watchedFolderTypes
+      .filter((folder) => folder?.key && folder?.name)
+      .reduce(
+        (options, folder) => [
+          ...options,
+          { value: `FOLDER::${folder.key}`, label: `目录类型 / ${folder.name}` },
+        ],
+        [...ROLE_DATA_ACCESS_AREA_OPTIONS],
+      ),
+    [watchedFolderTypes],
+  );
   const sceneCountMap = useMemo(() => {
     return scenes.reduce((map, item) => {
       map[item.templateId] = (map[item.templateId] || 0) + 1;
@@ -367,11 +426,10 @@ export default function SceneTemplateModule() {
         const haystack = `${item.name} ${item.templateCode} ${item.description}`.toLowerCase();
         if (!haystack.includes(normalizedKeyword)) return false;
       }
-      if (sceneTypeFilter && item.sceneType !== sceneTypeFilter) return false;
       if (statusFilter && item.status !== statusFilter) return false;
       return true;
     });
-  }, [keyword, sceneTypeFilter, statusFilter, templates]);
+  }, [keyword, statusFilter, templates]);
 
   const selectedTemplate = useMemo(
     () => templates.find((item) => item.id === selectedTemplateId) || null,
@@ -425,19 +483,37 @@ export default function SceneTemplateModule() {
     }
   }, [drawerOpen, editingTemplate, isExistingEditing, templateForm]);
 
+  useEffect(() => {
+    if (watchedRoles.length === 0) {
+      setActiveRoleTabKey(null);
+      return;
+    }
+    const hasActive = watchedRoles.some((role, index) => String(role?.id || index) === activeRoleTabKey);
+    if (!hasActive) {
+      setActiveRoleTabKey(String(watchedRoles[0]?.id || 0));
+    }
+  }, [activeRoleTabKey, watchedRoles]);
+
   function appendRole() {
     const currentRoles = templateForm.getFieldValue('roles') || [];
-    templateForm.setFieldValue('roles', [...currentRoles, createRoleDraft(currentRoles.length + 1)]);
+    const nextRole = createRoleDraft(currentRoles.length + 1);
+    templateForm.setFieldValue('roles', [...currentRoles, nextRole]);
+    setActiveRoleTabKey(String(nextRole.id));
   }
 
   function removeRole(index) {
     const currentRoles = [...(templateForm.getFieldValue('roles') || [])];
+    const removedRole = currentRoles[index];
     currentRoles.splice(index, 1);
     templateForm.setFieldValue('roles', currentRoles);
+    if (String(removedRole?.id || index) === activeRoleTabKey) {
+      const nextActiveRole = currentRoles[index] || currentRoles[index - 1] || null;
+      setActiveRoleTabKey(nextActiveRole ? String(nextActiveRole.id) : null);
+    }
   }
 
   function openCreateDrawer() {
-    const draft = createTemplateDraft('CUSTOM');
+    const draft = createTemplateDraft();
     setPreviewDrawerOpen(false);
     setEditingTemplate(draft);
     setDrawerOpen(true);
@@ -459,8 +535,35 @@ export default function SceneTemplateModule() {
     try {
       const values = await templateForm.validateFields();
       const modeTabs = Array.isArray(values.topicPage?.modeTabs) ? values.topicPage.modeTabs : [];
+      const statusRules = Array.isArray(values.statusRules) ? values.statusRules : [];
       if (modeTabs.filter((item) => item?.enabled !== false).length === 0) {
         message.error('至少启用一个主题模式');
+        return;
+      }
+      const normalizedStatusKeys = statusRules
+        .map((rule) => String(rule?.key || '').trim())
+        .filter(Boolean);
+      if (new Set(normalizedStatusKeys).size !== normalizedStatusKeys.length) {
+        message.error('状态编码不能重复');
+        return;
+      }
+      const roleRules = Array.isArray(values.roles) ? values.roles : [];
+      const invalidAssignedRole = roleRules.find((role) => {
+        if (role?.dataAccessScope !== 'ASSIGNED') return false;
+        switch (role?.assignedAccessRuleType) {
+          case 'RESOURCE_TYPE':
+            return !Array.isArray(role?.dataAccessAreas) || role.dataAccessAreas.length === 0;
+          case 'RESOURCE_ATTR':
+            return !Array.isArray(role?.assignedAttributeRules) || role.assignedAttributeRules.length === 0;
+          case 'RESOURCE_ITEM':
+            return !Array.isArray(role?.authorizedResourceRefs) || role.authorizedResourceRefs.length === 0;
+          case 'ALL':
+          default:
+            return false;
+        }
+      });
+      if (invalidAssignedRole) {
+        message.error(`角色“${invalidAssignedRole.name || invalidAssignedRole.key || '未命名角色'}”需完善授权配置`);
         return;
       }
       const saved = await sceneApi.saveTemplate({
@@ -521,20 +624,6 @@ export default function SceneTemplateModule() {
           <div className="scene-template-subline">{record.description || '未填写描述'}</div>
         </div>
       ),
-    },
-    {
-      title: '类型',
-      dataIndex: 'sceneType',
-      key: 'sceneType',
-      width: 120,
-      render: (value) => getSceneTypeLabel(value),
-    },
-    {
-      title: '默认归类',
-      dataIndex: 'defaultMenuKey',
-      key: 'defaultMenuKey',
-      width: 120,
-      render: (value) => SCENE_MENU_OPTIONS.find((item) => item.value === value)?.label || value,
     },
     {
       title: '配置摘要',
@@ -651,14 +740,6 @@ export default function SceneTemplateModule() {
             allowClear
           />
           <Select
-            placeholder="场景类型"
-            options={SCENE_TYPE_OPTIONS}
-            value={sceneTypeFilter}
-            onChange={setSceneTypeFilter}
-            allowClear
-            style={{ width: 150 }}
-          />
-          <Select
             placeholder="模板状态"
             options={TEMPLATE_STATUS_OPTIONS}
             value={statusFilter}
@@ -752,31 +833,11 @@ export default function SceneTemplateModule() {
                       <Form.Item label="模板编码" name="templateCode">
                         <Input placeholder="留空则自动生成" />
                       </Form.Item>
-                      <Form.Item
-                        label="场景类型"
-                        name="sceneType"
-                        rules={[{ required: true, message: '请选择场景类型' }]}
-                      >
-                        <Select options={SCENE_TYPE_OPTIONS} />
-                      </Form.Item>
                       <Form.Item label="模板状态" name="status">
                         <Select options={TEMPLATE_STATUS_OPTIONS} />
                       </Form.Item>
-                      <Form.Item label="默认归类栏目" name="defaultMenuKey">
-                        <Select options={SCENE_MENU_OPTIONS} />
-                      </Form.Item>
-                      <Form.Item label="主页模板" name={['homepage', 'templateName']}>
-                        <Input placeholder="例如：培训营主页模板" />
-                      </Form.Item>
-                      <Form.Item label="主题介绍生成方式" name={['homepage', 'introMode']}>
-                        <Select options={HOME_INTRO_MODE_OPTIONS} />
-                      </Form.Item>
-                      <div />
                       <Form.Item className="scene-template-form-span-2" label="模板描述" name="description">
                         <TextArea rows={3} placeholder="描述这个模板适用的场景和目标对象" />
-                      </Form.Item>
-                      <Form.Item className="scene-template-form-span-2" label="主页说明文案" name={['homepage', 'introText']}>
-                        <TextArea rows={3} placeholder="说明主页上需要呈现的引导文案和使用说明" />
                       </Form.Item>
                     </div>
                   </div>
@@ -971,26 +1032,11 @@ export default function SceneTemplateModule() {
                       ) : null}
                     </div>
 
-                    <div className="scene-template-role-summary">
-                      <div className="scene-template-role-summary-item">
-                        <span>角色数</span>
-                        <strong>{roleSummary.total}</strong>
-                      </div>
-                      <div className="scene-template-role-summary-item">
-                        <span>已配功能授权</span>
-                        <strong>{roleSummary.withFunctionalPermissions}</strong>
-                      </div>
-                      <div className="scene-template-role-summary-item">
-                        <span>已配数据访问</span>
-                        <strong>{roleSummary.withDataAccess}</strong>
-                      </div>
-                    </div>
-
                     {watchedRoles.length === 0 ? (
                       <div className="scene-template-role-empty-panel">
                         <div className="scene-template-role-empty-copy">
-                          <strong>先创建角色，再配置权限和数据访问范围</strong>
-                          <span>每个角色都可以绑定智能体，单独设置功能授权和数据访问授权。</span>
+                          <strong>先创建角色，再配置功能权限和资料权限</strong>
+                          <span>每个角色都可以单独设置功能授权，以及资料归属范围和授权对象。</span>
                         </div>
                         <Button
                           type="primary"
@@ -1002,121 +1048,147 @@ export default function SceneTemplateModule() {
                       </div>
                     ) : null}
 
-                    {watchedRoles.map((role, index) => (
-                      <div key={role?.id || index} className="scene-template-list-card">
-                        <div className="scene-template-list-card-head">
-                          <strong>角色 {index + 1}</strong>
-                          <Button
-                            type="link"
-                            danger
-                            icon={<DeleteOutlined />}
-                            onClick={() => removeRole(index)}
-                          >
-                            删除
-                          </Button>
-                        </div>
-                        <div className="scene-template-form-grid">
-                          <Form.Item label="角色标识" name={['roles', index, 'key']}>
-                            <Input placeholder="例如：teacher" />
-                          </Form.Item>
-                          <Form.Item label="角色名称" name={['roles', index, 'name']}>
-                            <Input placeholder="例如：教师" />
-                          </Form.Item>
-                          <Form.Item label="绑定智能体" name={['roles', index, 'agentName']}>
-                            <Input placeholder="例如：AI助教" />
-                          </Form.Item>
-                          <Form.Item className="scene-template-form-span-2" label="功能授权" name={['roles', index, 'functionalPermissions']}>
-                            <Select mode="multiple" options={ROLE_FUNCTION_PERMISSION_OPTIONS} placeholder="选择该角色可使用的功能能力" />
-                          </Form.Item>
-                          <Form.Item label="数据访问范围" name={['roles', index, 'dataAccessScope']}>
-                            <Select options={ROLE_DATA_SCOPE_OPTIONS} />
-                          </Form.Item>
-                          <Form.Item label="可访问数据" name={['roles', index, 'dataAccessAreas']}>
-                            <Select mode="multiple" options={ROLE_DATA_ACCESS_AREA_OPTIONS} placeholder="选择该角色可查看的数据域" />
-                          </Form.Item>
-                          <Form.Item label="功能补充说明" name={['roles', index, 'permissionSummary']}>
-                            <Input placeholder="例如：可管理主题、资料和作业" />
-                          </Form.Item>
-                          <Form.Item label="数据访问说明" name={['roles', index, 'scopeSummary']}>
-                            <Input placeholder="例如：仅访问学员开放内容" />
-                          </Form.Item>
-                          <Form.Item className="scene-template-form-span-2" label="角色说明" name={['roles', index, 'description']}>
-                            <TextArea rows={2} placeholder="说明该角色在场景中的职责" />
-                          </Form.Item>
-                          <Form.Item name={['roles', index, 'id']} hidden>
-                            <Input />
-                          </Form.Item>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ),
-              },
-              {
-                key: 'agents',
-                label: '智能体配置',
-                children: (
-                  <div className="scene-template-drawer-section">
-                    <div className="scene-template-subsection-title with-action">
-                      <span>智能体配置</span>
-                      <Button
-                        size="small"
-                        icon={<PlusOutlined />}
-                        onClick={() => {
-                          const nextAgents = [...watchedAgents, {
-                            id: `agent_${Date.now()}`,
-                            name: '',
-                            roleIds: [],
-                            knowledgeSource: '',
-                            prompt: '',
-                            avatar: '',
-                          }];
-                          templateForm.setFieldsValue({ agents: nextAgents });
+                    {watchedRoles.length > 0 ? (
+                      <Tabs
+                        type="editable-card"
+                        hideAdd
+                        activeKey={activeRoleTabKey || String(watchedRoles[0]?.id || 0)}
+                        onChange={setActiveRoleTabKey}
+                        onEdit={(targetKey, action) => {
+                          if (action === 'remove') {
+                            const removeIndex = watchedRoles.findIndex((role, index) => String(role?.id || index) === String(targetKey));
+                            if (removeIndex >= 0) {
+                              const targetRole = watchedRoles[removeIndex];
+                              Modal.confirm({
+                                title: '删除角色',
+                                content: `确认删除角色“${targetRole?.name || `角色${removeIndex + 1}`}”吗？`,
+                                okText: '删除',
+                                okButtonProps: { danger: true },
+                                cancelText: '取消',
+                                onOk: () => removeRole(removeIndex),
+                              });
+                            }
+                          }
                         }}
-                      >
-                        添加智能体
-                      </Button>
-                    </div>
-
-                    {watchedAgents.map((agent, index) => (
-                      <div key={agent?.id || index} className="scene-template-list-card">
-                        <div className="scene-template-list-card-head">
-                          <strong>智能体 {index + 1}</strong>
-                          <Button
-                            type="link"
-                            danger
-                            icon={<DeleteOutlined />}
-                            onClick={() => {
-                              const nextAgents = [...watchedAgents];
-                              nextAgents.splice(index, 1);
-                              templateForm.setFieldsValue({ agents: nextAgents });
-                            }}
-                          >
-                            删除
-                          </Button>
-                        </div>
-                        <div className="scene-template-form-grid">
-                          <Form.Item label="名称" name={['agents', index, 'name']}>
-                            <Input placeholder="例如：AI助教" />
-                          </Form.Item>
-                          <Form.Item label="头像 / emoji" name={['agents', index, 'avatar']}>
-                            <Input placeholder="例如：🤖" />
-                          </Form.Item>
-                          <Form.Item label="限定角色" name={['agents', index, 'roleIds']}>
-                            <Select mode="multiple" options={roleOptions} placeholder="可使用该智能体的角色" />
-                          </Form.Item>
-                          <Form.Item label="知识来源" name={['agents', index, 'knowledgeSource']}>
-                            <Input placeholder="例如：课程资料 / 议题池" />
-                          </Form.Item>
-                          <Form.Item className="scene-template-form-span-2" label="系统提示词 / 能力说明" name={['agents', index, 'prompt']}>
-                            <TextArea rows={3} placeholder="描述这个智能体的能力、提示词方向和边界" />
-                          </Form.Item>
-                          <Form.Item name={['agents', index, 'id']} hidden>
-                            <Input />
-                          </Form.Item>
-                        </div>
-                      </div>
-                    ))}
+                        className="scene-template-role-tabs"
+                        items={watchedRoles.map((role, index) => ({
+                          key: String(role?.id || index),
+                          label: role?.name || `角色${index + 1}`,
+                          closable: watchedRoles.length > 1,
+                          children: (
+                            <div className="scene-template-role-tab-panel">
+                              <div className="scene-template-role-stack">
+                                <div className="scene-template-role-editor-block scene-template-role-editor-block-basic">
+                                  <div className="scene-template-role-editor-title">基本信息</div>
+                                  <div className="scene-template-form-grid">
+                                    <Form.Item label="角色标识" name={['roles', index, 'key']}>
+                                      <Input placeholder="例如：teacher" />
+                                    </Form.Item>
+                                    <Form.Item label="角色名称" name={['roles', index, 'name']}>
+                                      <Input placeholder="例如：教师" />
+                                    </Form.Item>
+                                    <Form.Item className="scene-template-form-span-2" label="角色说明" name={['roles', index, 'description']}>
+                                      <TextArea rows={2} placeholder="说明该角色在场景中的职责" />
+                                    </Form.Item>
+                                  </div>
+                                </div>
+                                <div className="scene-template-role-editor-sections">
+                                  <div className="scene-template-role-editor-block scene-template-role-editor-block-function">
+                                    <div className="scene-template-role-editor-title">功能授权</div>
+                                    <div className="scene-template-role-editor-stack-grid">
+                                      <Form.Item label="授权方式" name={['roles', index, 'functionalPermissionMode']}>
+                                        <Select options={ROLE_FUNCTION_PERMISSION_MODE_OPTIONS} />
+                                      </Form.Item>
+                                      <div className="scene-template-mode-hint">
+                                        支持正选和反选。选择“不包括以下功能”时，树中勾选的是排除项。
+                                      </div>
+                                      <Form.Item label="功能树授权" name={['roles', index, 'functionalPermissions']}>
+                                        <TreeSelect
+                                          treeData={ROLE_FUNCTION_PERMISSION_TREE}
+                                          treeCheckable
+                                          showCheckedStrategy={TreeSelect.SHOW_CHILD}
+                                          placeholder="从功能树中选择授权项"
+                                          allowClear
+                                        />
+                                      </Form.Item>
+                                      <Form.Item label="功能说明" name={['roles', index, 'permissionSummary']}>
+                                        <Input placeholder="例如：可管理主题、资料和作业" />
+                                      </Form.Item>
+                                    </div>
+                                  </div>
+                                  <div className="scene-template-role-editor-block scene-template-role-editor-block-data">
+                                    <div className="scene-template-role-editor-title">资料授权</div>
+                                    <div className="scene-template-role-editor-stack-grid">
+                                      <Form.Item label="资料归属范围" name={['roles', index, 'dataAccessScope']}>
+                                        <Select options={ROLE_DATA_SCOPE_OPTIONS} />
+                                      </Form.Item>
+                                      {role?.dataAccessScope === 'ASSIGNED' ? (
+                                        <>
+                                          <Form.Item label="授权方式" name={['roles', index, 'assignedAccessRuleType']}>
+                                            <Select options={ASSIGNED_ACCESS_RULE_OPTIONS} />
+                                          </Form.Item>
+                                          <div className="scene-template-mode-hint">
+                                            仅在“指定授权资料”下配置授权方式。默认“全部授权对象”，也可以按资料类型、目录类型、资料属性或具体资料逐项授权；目录类型已并入授权对象列表。
+                                          </div>
+                                          {role?.assignedAccessRuleType === 'RESOURCE_TYPE' ? (
+                                            <Form.Item
+                                              label="授权对象"
+                                              name={['roles', index, 'dataAccessAreas']}
+                                              rules={[{ required: true, message: '请选择授权对象' }]}
+                                            >
+                                              <Select
+                                                mode="multiple"
+                                                options={assignedResourceTypeOptions}
+                                                placeholder="选择资料类型或目录类型"
+                                                notFoundContent="请先在下方资料目录类型中配置目录"
+                                              />
+                                            </Form.Item>
+                                          ) : null}
+                                          {role?.assignedAccessRuleType === 'RESOURCE_ATTR' ? (
+                                            <Form.Item
+                                              label="授权对象"
+                                              name={['roles', index, 'assignedAttributeRules']}
+                                              rules={[{ required: true, message: '请输入资料属性条件' }]}
+                                            >
+                                              <Select
+                                                mode="tags"
+                                                placeholder="输入资料属性条件后回车，例如：学科=数学、阶段=结营、标签=重点"
+                                              />
+                                            </Form.Item>
+                                          ) : null}
+                                          {role?.assignedAccessRuleType === 'RESOURCE_ITEM' ? (
+                                            <Form.Item
+                                              label="授权对象"
+                                              name={['roles', index, 'authorizedResourceRefs']}
+                                              rules={[{ required: true, message: '请输入具体资料标识' }]}
+                                            >
+                                              <Select
+                                                mode="tags"
+                                                placeholder="输入具体资料名称、编码或唯一标识后回车"
+                                              />
+                                            </Form.Item>
+                                          ) : null}
+                                        </>
+                                      ) : (
+                                        <div className="scene-template-mode-hint">
+                                          当前范围下无需逐项配置授权对象，系统会按“资料归属范围”自动生效。
+                                        </div>
+                                      )}
+                                      <Form.Item label="资料权限说明" name={['roles', index, 'scopeSummary']}>
+                                        <Input placeholder="例如：仅可查看公开的调查与投票数据" />
+                                      </Form.Item>
+                                    </div>
+                                  </div>
+                                </div>
+                                <Form.Item name={['roles', index, 'id']} hidden>
+                                  <Input />
+                                </Form.Item>
+                              </div>
+                            </div>
+                          ),
+                        }))}
+                      />
+                    ) : null}
                   </div>
                 ),
               },
@@ -1323,15 +1395,6 @@ export default function SceneTemplateModule() {
                       <Form.Item className="scene-template-form-span-2" label="进入主题的方式" name="entryMethods">
                         <Select mode="multiple" options={ENTRY_METHOD_OPTIONS} placeholder="选择该场景支持的进入方式" />
                       </Form.Item>
-                      <Form.Item label="推荐模式开启" name={['recommendation', 'enabled']} valuePropName="checked">
-                        <Switch />
-                      </Form.Item>
-                      <Form.Item label="推荐资源范围" name={['recommendation', 'resourceScope']}>
-                        <Input placeholder="例如：当前场景全部资料" />
-                      </Form.Item>
-                      <Form.Item className="scene-template-form-span-2" label="推荐说明" name={['recommendation', 'description']}>
-                        <TextArea rows={2} placeholder="说明推荐模式如何工作" />
-                      </Form.Item>
                     </div>
 
                     <div className="scene-template-subsection-title with-action">
@@ -1342,7 +1405,12 @@ export default function SceneTemplateModule() {
                         onClick={() => {
                           const nextRules = [...watchedStatusRules, {
                             id: `rule_${Date.now()}`,
+                            key: '',
                             name: '',
+                            stage: 'RUNNING',
+                            controlMode: 'COLLABORATIVE',
+                            entryEnabled: true,
+                            roleIds: [],
                             description: '',
                           }];
                           templateForm.setFieldsValue({ statusRules: nextRules });
@@ -1355,7 +1423,7 @@ export default function SceneTemplateModule() {
                     {watchedStatusRules.map((rule, index) => (
                       <div key={rule?.id || index} className="scene-template-list-card">
                         <div className="scene-template-list-card-head">
-                          <strong>规则 {index + 1}</strong>
+                          <strong>状态规则 {index + 1}</strong>
                           <Button
                             type="link"
                             danger
@@ -1370,12 +1438,41 @@ export default function SceneTemplateModule() {
                           </Button>
                         </div>
                         <div className="scene-template-form-grid">
-                          <Form.Item label="规则名称" name={['statusRules', index, 'name']}>
+                          <Form.Item
+                            label="状态编码"
+                            name={['statusRules', index, 'key']}
+                            rules={[
+                              { required: true, message: '请输入状态编码' },
+                              { pattern: /^[a-z][a-z0-9_]*$/, message: '状态编码需使用英文小写字母、数字或下划线，且以字母开头' },
+                            ]}
+                          >
+                            <Input placeholder="例如：running / reviewing" />
+                          </Form.Item>
+                          <Form.Item
+                            label="状态名称"
+                            name={['statusRules', index, 'name']}
+                            rules={[{ required: true, message: '请输入状态名称' }]}
+                          >
                             <Input placeholder="例如：培训中 / 已结课" />
                           </Form.Item>
-                          <div />
+                          <Form.Item label="状态阶段" name={['statusRules', index, 'stage']}>
+                            <Select options={STATUS_RULE_STAGE_OPTIONS} />
+                          </Form.Item>
+                          <Form.Item label="控制策略" name={['statusRules', index, 'controlMode']}>
+                            <Select options={STATUS_RULE_CONTROL_OPTIONS} />
+                          </Form.Item>
+                          <Form.Item label="开放进入" name={['statusRules', index, 'entryEnabled']} valuePropName="checked">
+                            <Switch />
+                          </Form.Item>
+                          <Form.Item label="适用角色" name={['statusRules', index, 'roleIds']}>
+                            <Select
+                              mode="multiple"
+                              options={roleOptions}
+                              placeholder="选择该状态下允许操作的角色"
+                            />
+                          </Form.Item>
                           <Form.Item className="scene-template-form-span-2" label="规则说明" name={['statusRules', index, 'description']}>
-                            <TextArea rows={2} placeholder="说明该状态下允许的操作和限制" />
+                            <TextArea rows={2} placeholder="补充说明该状态下的业务限制、动作边界或自动化条件" />
                           </Form.Item>
                           <Form.Item name={['statusRules', index, 'id']} hidden>
                             <Input />

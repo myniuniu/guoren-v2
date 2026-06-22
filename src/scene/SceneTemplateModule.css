@@ -163,6 +163,31 @@
   color: #64748b;
 }
 
+.scene-template-role-block {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.scene-template-role-block-function {
+  background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
+  border-color: #bfdbfe;
+}
+
+.scene-template-role-block-data {
+  background: linear-gradient(180deg, #ecfeff 0%, #ffffff 100%);
+  border-color: #a5f3fc;
+}
+
+.scene-template-role-block-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #0f172a;
+}
+
 .scene-template-role-note {
   font-size: 12px;
   line-height: 1.6;
@@ -476,6 +501,79 @@
   color: #111827;
 }
 
+.scene-template-role-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.scene-template-role-editor-sections {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.scene-template-role-editor-block {
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 14px 14px 8px;
+  display: grid;
+  gap: 10px;
+}
+
+.scene-template-role-editor-block-basic {
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+  border-color: #e2e8f0;
+}
+
+.scene-template-role-editor-block-function {
+  background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
+  border-color: #bfdbfe;
+}
+
+.scene-template-role-editor-block-data {
+  background: linear-gradient(180deg, #ecfeff 0%, #ffffff 100%);
+  border-color: #a5f3fc;
+}
+
+.scene-template-role-editor-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.scene-template-role-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 12px;
+}
+
+.scene-template-role-editor-stack-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+.scene-template-role-editor-span-2 {
+  grid-column: span 2;
+}
+
+.scene-template-role-tabs .ant-tabs-nav {
+  margin-bottom: 12px;
+}
+
+.scene-template-role-tabs .ant-tabs-tab {
+  border-radius: 12px 12px 0 0;
+}
+
+.scene-template-role-tabs .ant-tabs-tab-btn {
+  max-width: 180px;
+}
+
+.scene-template-role-tab-panel {
+  padding: 0;
+  background: transparent;
+}
+
 @media (max-width: 1280px) {
   .scene-template-summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -486,7 +584,9 @@
   .scene-template-summary-grid,
   .scene-template-role-summary,
   .scene-template-mode-grid,
-  .scene-template-form-grid {
+  .scene-template-form-grid,
+  .scene-template-role-editor-sections,
+  .scene-template-role-editor-grid {
     grid-template-columns: 1fr;
   }
 
@@ -496,6 +596,10 @@
   }
 
   .scene-template-form-span-2 {
+    grid-column: span 1;
+  }
+
+  .scene-template-role-editor-span-2 {
     grid-column: span 1;
   }
 }

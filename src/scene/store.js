@@ -77,6 +77,23 @@ export const ENTRY_METHOD_OPTIONS = [
   { value: 'LEARNING_SQUARE', label: '学习广场' },
 ];
 
+export const STATUS_RULE_STAGE_OPTIONS = [
+  { value: 'PREPARING', label: '准备阶段' },
+  { value: 'OPEN', label: '开放阶段' },
+  { value: 'RUNNING', label: '运行阶段' },
+  { value: 'REVIEWING', label: '评阅阶段' },
+  { value: 'CLOSED', label: '结束阶段' },
+  { value: 'ARCHIVED', label: '归档阶段' },
+];
+
+export const STATUS_RULE_CONTROL_OPTIONS = [
+  { value: 'ADMIN_ONLY', label: '仅管理端可编辑' },
+  { value: 'COLLABORATIVE', label: '协同开放' },
+  { value: 'SUBMISSION_ONLY', label: '仅开放报名/提交' },
+  { value: 'REVIEW_ONLY', label: '仅开放评阅' },
+  { value: 'READ_ONLY', label: '只读' },
+];
+
 export const METADATA_FIELD_TYPE_OPTIONS = [
   { value: 'TEXT', label: '文本' },
   { value: 'TEXTAREA', label: '多行文本' },
@@ -107,21 +124,80 @@ export const ROLE_FUNCTION_PERMISSION_OPTIONS = [
   { value: 'DATA_EXPORT', label: '数据导出' },
 ];
 
+export const ROLE_FUNCTION_PERMISSION_TREE = [
+  {
+    value: 'CONTENT_GROUP',
+    label: '内容与主题',
+    title: '内容与主题',
+    selectable: false,
+    children: [
+      { value: 'TOPIC_EDIT', label: '主题配置管理', title: '主题配置管理' },
+      { value: 'RESOURCE_CREATE', label: '新增资料', title: '新增资料' },
+      { value: 'RESOURCE_EDIT', label: '资料编辑', title: '资料编辑' },
+      { value: 'RESOURCE_DELETE', label: '资料删除', title: '资料删除' },
+    ],
+  },
+  {
+    value: 'COLLAB_GROUP',
+    label: '协作与互动',
+    title: '协作与互动',
+    selectable: false,
+    children: [
+      { value: 'TOOL_USE', label: '工具使用', title: '工具使用' },
+      { value: 'LIVE_ACTIVITY_MANAGE', label: '直播/活动管理', title: '直播/活动管理' },
+      { value: 'COMMENT_INTERACT', label: '互动评论', title: '互动评论' },
+    ],
+  },
+  {
+    value: 'ASSESS_GROUP',
+    label: '考核与成果',
+    title: '考核与成果',
+    selectable: false,
+    children: [
+      { value: 'ASSESSMENT_CONFIG', label: '考核配置', title: '考核配置' },
+      { value: 'RESULT_SUBMIT', label: '成果提交', title: '成果提交' },
+      { value: 'RESULT_REVIEW', label: '评阅反馈', title: '评阅反馈' },
+    ],
+  },
+  {
+    value: 'ORG_GROUP',
+    label: '组织与运营',
+    title: '组织与运营',
+    selectable: false,
+    children: [
+      { value: 'MEMBER_MANAGE', label: '成员管理', title: '成员管理' },
+      { value: 'DATA_EXPORT', label: '数据导出', title: '数据导出' },
+    ],
+  },
+];
+
+export const ROLE_FUNCTION_PERMISSION_MODE_OPTIONS = [
+  { value: 'INCLUDE', label: '包括以下功能' },
+  { value: 'EXCLUDE', label: '不包括以下功能' },
+];
+
 export const ROLE_DATA_SCOPE_OPTIONS = [
-  { value: 'ALL', label: '全部数据' },
-  { value: 'ASSIGNED', label: '授权范围' },
-  { value: 'OWN', label: '本人负责 / 创建' },
-  { value: 'PARTICIPATED', label: '参与内容' },
-  { value: 'PUBLIC', label: '公开内容' },
+  { value: 'ALL', label: '全部符合类型的资料' },
+  { value: 'ASSIGNED', label: '指定授权资料' },
+  { value: 'OWN', label: '本人创建资料' },
+  { value: 'PARTICIPATED', label: '我参与的资料' },
+  { value: 'PUBLIC', label: '公开资料' },
+];
+
+export const ASSIGNED_ACCESS_RULE_OPTIONS = [
+  { value: 'ALL', label: '全部授权对象' },
+  { value: 'RESOURCE_TYPE', label: '按资料类型' },
+  { value: 'RESOURCE_ATTR', label: '按资料属性' },
+  { value: 'RESOURCE_ITEM', label: '指定具体资料' },
 ];
 
 export const ROLE_DATA_ACCESS_AREA_OPTIONS = [
-  { value: 'TOPIC_METADATA', label: '主题元数据' },
-  { value: 'RESOURCE_AREA', label: '资料区' },
-  { value: 'RESULT_AREA', label: '创作结果区' },
-  { value: 'ASSESSMENT_DATA', label: '考核与评阅数据' },
-  { value: 'MEMBER_DATA', label: '成员信息' },
-  { value: 'OPERATION_DATA', label: '运营报表' },
+  { value: 'SEMINAR', label: '研讨会' },
+  { value: 'NOTE', label: '笔记' },
+  { value: 'SURVEY', label: '调查' },
+  { value: 'VOTE', label: '投票' },
+  { value: 'EXAM', label: '考试' },
+  { value: 'REGISTER', label: '报名' },
 ];
 
 export const MODE_TAB_PRESET_OPTIONS = [
@@ -150,61 +226,85 @@ const DEFAULT_VERSIONING_CONFIG = Object.freeze({
   description: '',
 });
 
+const RESOURCE_ACCESS_TYPE_VALUES = ROLE_DATA_ACCESS_AREA_OPTIONS.map((item) => item.value);
+const LEGACY_ROLE_DATA_ACCESS_MAP = Object.freeze({
+  TOPIC_METADATA: ['NOTE'],
+  RESOURCE_AREA: ['NOTE'],
+  RESULT_AREA: ['SEMINAR', 'SURVEY', 'VOTE', 'EXAM', 'REGISTER'],
+  ASSESSMENT_DATA: ['SURVEY', 'EXAM'],
+  MEMBER_DATA: [],
+  OPERATION_DATA: [],
+});
+
+const BUILT_IN_RESOURCE_ACCESS = Object.freeze({
+  ALL: RESOURCE_ACCESS_TYPE_VALUES,
+  TEACHING_LEARNER: ['NOTE', 'SURVEY', 'EXAM'],
+  RESEARCH_CORE: ['SEMINAR', 'NOTE'],
+  RESEARCH_EXPERT: ['SEMINAR', 'NOTE', 'SURVEY'],
+  TRAINING_LEARNER: ['NOTE', 'SURVEY', 'EXAM', 'REGISTER'],
+  TRAINING_REVIEWER: ['NOTE', 'EXAM'],
+  COMMUNITY_OPERATOR: ['SEMINAR', 'NOTE', 'SURVEY', 'VOTE', 'REGISTER'],
+  COMMUNITY_MEMBER: ['NOTE', 'VOTE', 'REGISTER'],
+  COMMUNITY_PUBLIC: ['SURVEY', 'VOTE', 'REGISTER'],
+});
+
 const BUILT_IN_ROLE_AUTHORIZATION = {
   'TEACHING:teacher': {
     functionalPermissions: ['TOPIC_EDIT', 'RESOURCE_CREATE', 'RESOURCE_EDIT', 'TOOL_USE', 'LIVE_ACTIVITY_MANAGE', 'ASSESSMENT_CONFIG', 'RESULT_REVIEW'],
     dataAccessScope: 'ALL',
-    dataAccessAreas: ['TOPIC_METADATA', 'RESOURCE_AREA', 'RESULT_AREA', 'ASSESSMENT_DATA'],
+    dataAccessAreas: BUILT_IN_RESOURCE_ACCESS.ALL,
   },
   'TEACHING:student': {
     functionalPermissions: ['TOOL_USE', 'RESULT_SUBMIT', 'COMMENT_INTERACT'],
     dataAccessScope: 'PARTICIPATED',
-    dataAccessAreas: ['RESOURCE_AREA', 'RESULT_AREA', 'ASSESSMENT_DATA'],
+    dataAccessAreas: BUILT_IN_RESOURCE_ACCESS.TEACHING_LEARNER,
   },
   'RESEARCH:leader': {
     functionalPermissions: ['TOPIC_EDIT', 'RESOURCE_CREATE', 'RESOURCE_EDIT', 'TOOL_USE', 'LIVE_ACTIVITY_MANAGE', 'ASSESSMENT_CONFIG', 'MEMBER_MANAGE', 'DATA_EXPORT'],
     dataAccessScope: 'ALL',
-    dataAccessAreas: ['TOPIC_METADATA', 'RESOURCE_AREA', 'RESULT_AREA', 'ASSESSMENT_DATA', 'MEMBER_DATA'],
+    dataAccessAreas: BUILT_IN_RESOURCE_ACCESS.ALL,
   },
   'RESEARCH:teacher': {
     functionalPermissions: ['RESOURCE_CREATE', 'RESOURCE_EDIT', 'TOOL_USE', 'RESULT_SUBMIT', 'COMMENT_INTERACT'],
     dataAccessScope: 'PARTICIPATED',
-    dataAccessAreas: ['RESOURCE_AREA', 'RESULT_AREA', 'TOPIC_METADATA'],
+    dataAccessAreas: BUILT_IN_RESOURCE_ACCESS.RESEARCH_CORE,
   },
   'RESEARCH:expert': {
     functionalPermissions: ['TOOL_USE', 'RESULT_REVIEW', 'COMMENT_INTERACT'],
     dataAccessScope: 'ASSIGNED',
-    dataAccessAreas: ['RESOURCE_AREA', 'RESULT_AREA', 'ASSESSMENT_DATA'],
+    assignedAccessRuleType: 'RESOURCE_TYPE',
+    dataAccessAreas: ['FOLDER::lesson_review'],
   },
   'TRAINING:admin': {
     functionalPermissions: ['TOPIC_EDIT', 'RESOURCE_CREATE', 'RESOURCE_EDIT', 'LIVE_ACTIVITY_MANAGE', 'ASSESSMENT_CONFIG', 'MEMBER_MANAGE', 'DATA_EXPORT'],
     dataAccessScope: 'ALL',
-    dataAccessAreas: ['TOPIC_METADATA', 'RESOURCE_AREA', 'RESULT_AREA', 'ASSESSMENT_DATA', 'MEMBER_DATA', 'OPERATION_DATA'],
+    dataAccessAreas: BUILT_IN_RESOURCE_ACCESS.ALL,
   },
   'TRAINING:reviewer': {
     functionalPermissions: ['TOOL_USE', 'RESULT_REVIEW', 'COMMENT_INTERACT'],
     dataAccessScope: 'ASSIGNED',
-    dataAccessAreas: ['RESOURCE_AREA', 'RESULT_AREA', 'ASSESSMENT_DATA'],
+    assignedAccessRuleType: 'RESOURCE_TYPE',
+    dataAccessAreas: ['FOLDER::exam_repo', 'FOLDER::outcome'],
   },
   'TRAINING:student': {
     functionalPermissions: ['TOOL_USE', 'RESULT_SUBMIT', 'COMMENT_INTERACT'],
     dataAccessScope: 'PARTICIPATED',
-    dataAccessAreas: ['RESOURCE_AREA', 'RESULT_AREA', 'ASSESSMENT_DATA'],
+    dataAccessAreas: BUILT_IN_RESOURCE_ACCESS.TRAINING_LEARNER,
   },
   'COMMUNITY:operator': {
     functionalPermissions: ['TOPIC_EDIT', 'RESOURCE_CREATE', 'RESOURCE_EDIT', 'LIVE_ACTIVITY_MANAGE', 'MEMBER_MANAGE', 'COMMENT_INTERACT', 'DATA_EXPORT'],
     dataAccessScope: 'ALL',
-    dataAccessAreas: ['TOPIC_METADATA', 'RESOURCE_AREA', 'RESULT_AREA', 'MEMBER_DATA', 'OPERATION_DATA'],
+    dataAccessAreas: BUILT_IN_RESOURCE_ACCESS.COMMUNITY_OPERATOR,
   },
   'COMMUNITY:member': {
     functionalPermissions: ['RESOURCE_CREATE', 'RESOURCE_EDIT', 'TOOL_USE', 'RESULT_SUBMIT', 'COMMENT_INTERACT'],
     dataAccessScope: 'OWN',
-    dataAccessAreas: ['RESOURCE_AREA', 'RESULT_AREA'],
+    dataAccessAreas: BUILT_IN_RESOURCE_ACCESS.COMMUNITY_MEMBER,
   },
   'COMMUNITY:observer': {
     functionalPermissions: ['TOOL_USE', 'COMMENT_INTERACT'],
     dataAccessScope: 'PUBLIC',
-    dataAccessAreas: ['RESOURCE_AREA', 'RESULT_AREA'],
+    dataAccessAreas: BUILT_IN_RESOURCE_ACCESS.COMMUNITY_PUBLIC,
   },
 };
 
@@ -282,6 +382,22 @@ export function getSceneVisibilityLabel(value) {
 
 export function getTemplateStatusLabel(value) {
   return optionLabel(TEMPLATE_STATUS_OPTIONS, value, value || '-');
+}
+
+export function getRoleFunctionPermissionModeLabel(value) {
+  return optionLabel(ROLE_FUNCTION_PERMISSION_MODE_OPTIONS, value, value || '-');
+}
+
+export function getAssignedAccessRuleLabel(value) {
+  return optionLabel(ASSIGNED_ACCESS_RULE_OPTIONS, value, value || '-');
+}
+
+export function getStatusRuleStageLabel(value) {
+  return optionLabel(STATUS_RULE_STAGE_OPTIONS, value, value || '-');
+}
+
+export function getStatusRuleControlLabel(value) {
+  return optionLabel(STATUS_RULE_CONTROL_OPTIONS, value, value || '-');
 }
 
 function defaultMenuKeyByType(sceneType) {
@@ -369,25 +485,102 @@ export function formatVersionName(namePattern, index) {
   return `${pattern} ${versionIndex}`;
 }
 
+function normalizeRoleDataAccessAreas(values) {
+  const normalized = new Set();
+  (Array.isArray(values) ? values : []).forEach((value) => {
+    if (LEGACY_ROLE_DATA_ACCESS_MAP[value]) {
+      LEGACY_ROLE_DATA_ACCESS_MAP[value].forEach((mappedValue) => normalized.add(mappedValue));
+      return;
+    }
+    if (typeof value === 'string' && value.startsWith('FOLDER::')) {
+      const folderKey = value.slice('FOLDER::'.length).trim();
+      if (folderKey) normalized.add(`FOLDER::${folderKey}`);
+      return;
+    }
+    if (ROLE_DATA_ACCESS_AREA_OPTIONS.some((item) => item.value === value)) {
+      normalized.add(value);
+    }
+  });
+  return Array.from(normalized);
+}
+
+function normalizeRoleFunctionalPermissions(values) {
+  const allowedValues = new Set(ROLE_FUNCTION_PERMISSION_OPTIONS.map((item) => item.value));
+  return (Array.isArray(values) ? values : []).filter((value) => allowedValues.has(value));
+}
+
+function normalizeRoleFolderKeys(values) {
+  return (Array.isArray(values) ? values : [])
+    .map((value) => trimToNull(value))
+    .filter(Boolean);
+}
+
+function normalizeRoleTagValues(values) {
+  return (Array.isArray(values) ? values : [])
+    .map((value) => trimToNull(value))
+    .filter(Boolean);
+}
+
+function inferAssignedAccessRuleType(role = {}) {
+  if (role?.assignedAccessRuleType === 'FOLDER_TYPE') {
+    return 'RESOURCE_TYPE';
+  }
+  if (ASSIGNED_ACCESS_RULE_OPTIONS.some((item) => item.value === role?.assignedAccessRuleType)) {
+    return role.assignedAccessRuleType;
+  }
+  if ((role?.authorizedFolderKeys || []).length > 0) return 'RESOURCE_TYPE';
+  if ((role?.authorizedResourceRefs || []).length > 0) return 'RESOURCE_ITEM';
+  if ((role?.assignedAttributeRules || []).length > 0) return 'RESOURCE_ATTR';
+  if ((role?.dataAccessAreas || []).length > 0) return 'RESOURCE_TYPE';
+  return 'ALL';
+}
+
 function normalizeRole(role, index, sceneType, builtIn) {
   const roleKey = trimToNull(role?.key) || `role_${index + 1}`;
   const defaultAuthorization = builtIn ? getDefaultRoleAuthorization(sceneType, roleKey) : null;
+  const dataAccessScope = Object.prototype.hasOwnProperty.call(role || {}, 'dataAccessScope')
+    ? (trimToNull(role?.dataAccessScope) || 'ASSIGNED')
+    : (defaultAuthorization?.dataAccessScope || 'ASSIGNED');
+  const assignedAccessRuleType = inferAssignedAccessRuleType({
+    ...defaultAuthorization,
+    ...role,
+  });
+  const functionalPermissionMode = ROLE_FUNCTION_PERMISSION_MODE_OPTIONS.some((item) => item.value === role?.functionalPermissionMode)
+    ? role.functionalPermissionMode
+    : (defaultAuthorization?.functionalPermissionMode || 'INCLUDE');
+  const mergedAssignedTypeTargets = normalizeRoleDataAccessAreas([
+    ...(Array.isArray(defaultAuthorization?.dataAccessAreas) ? defaultAuthorization.dataAccessAreas : []),
+    ...(Array.isArray(defaultAuthorization?.authorizedFolderKeys)
+      ? defaultAuthorization.authorizedFolderKeys.map((folderKey) => `FOLDER::${folderKey}`)
+      : []),
+    ...(Array.isArray(role?.dataAccessAreas) ? role.dataAccessAreas : []),
+    ...(Array.isArray(role?.authorizedFolderKeys)
+      ? role.authorizedFolderKeys.map((folderKey) => `FOLDER::${folderKey}`)
+      : []),
+  ]);
   return {
     id: role?.id || roleKey,
     key: roleKey,
     name: trimToNull(role?.name) || `角色${index + 1}`,
     description: trimToNull(role?.description) || '',
     agentName: trimToNull(role?.agentName) || '',
+    functionalPermissionMode,
     functionalPermissions: Array.isArray(role?.functionalPermissions)
-      ? role.functionalPermissions.filter(Boolean)
-      : (defaultAuthorization?.functionalPermissions || []),
+      ? normalizeRoleFunctionalPermissions(role.functionalPermissions)
+      : normalizeRoleFunctionalPermissions(defaultAuthorization?.functionalPermissions || []),
     permissionSummary: trimToNull(role?.permissionSummary) || '',
-    dataAccessScope: Object.prototype.hasOwnProperty.call(role || {}, 'dataAccessScope')
-      ? (trimToNull(role?.dataAccessScope) || 'ASSIGNED')
-      : (defaultAuthorization?.dataAccessScope || 'ASSIGNED'),
-    dataAccessAreas: Array.isArray(role?.dataAccessAreas)
-      ? role.dataAccessAreas.filter(Boolean)
-      : (defaultAuthorization?.dataAccessAreas || []),
+    dataAccessScope,
+    assignedAccessRuleType: dataAccessScope === 'ASSIGNED' ? assignedAccessRuleType : 'ALL',
+    dataAccessAreas: mergedAssignedTypeTargets,
+    authorizedFolderKeys: Array.isArray(role?.authorizedFolderKeys)
+      ? normalizeRoleFolderKeys(role.authorizedFolderKeys)
+      : normalizeRoleFolderKeys(defaultAuthorization?.authorizedFolderKeys || []),
+    assignedAttributeRules: Array.isArray(role?.assignedAttributeRules)
+      ? normalizeRoleTagValues(role.assignedAttributeRules)
+      : normalizeRoleTagValues(defaultAuthorization?.assignedAttributeRules || []),
+    authorizedResourceRefs: Array.isArray(role?.authorizedResourceRefs)
+      ? normalizeRoleTagValues(role.authorizedResourceRefs)
+      : normalizeRoleTagValues(defaultAuthorization?.authorizedResourceRefs || []),
     scopeSummary: trimToNull(role?.scopeSummary) || '',
   };
 }
@@ -399,10 +592,15 @@ export function createRoleDraft(seed = 1) {
     name: `角色${seed}`,
     description: '',
     agentName: '',
+    functionalPermissionMode: 'INCLUDE',
     functionalPermissions: ['TOOL_USE'],
     permissionSummary: '',
     dataAccessScope: 'ASSIGNED',
-    dataAccessAreas: ['RESOURCE_AREA'],
+    assignedAccessRuleType: 'ALL',
+    dataAccessAreas: [],
+    authorizedFolderKeys: [],
+    assignedAttributeRules: [],
+    authorizedResourceRefs: [],
     scopeSummary: '',
   };
 }
@@ -418,10 +616,58 @@ function normalizeMetadataField(field, index) {
   };
 }
 
-function normalizeStatusRule(rule, index) {
+function inferStatusRuleStage(rule = {}) {
+  const text = `${rule?.key || ''} ${rule?.name || ''} ${rule?.description || ''}`;
+  if (/备课|筹备|准备|预热/.test(text)) return 'PREPARING';
+  if (/报名|招募|开放|邀请/.test(text)) return 'OPEN';
+  if (/评阅|评审|审核/.test(text)) return 'REVIEWING';
+  if (/归档/.test(text)) return 'ARCHIVED';
+  if (/结课|结营|结束|关闭|沉淀|复盘/.test(text)) return 'CLOSED';
+  return 'RUNNING';
+}
+
+function inferStatusRuleControl(stage) {
+  switch (stage) {
+    case 'PREPARING':
+      return 'ADMIN_ONLY';
+    case 'OPEN':
+      return 'SUBMISSION_ONLY';
+    case 'REVIEWING':
+      return 'REVIEW_ONLY';
+    case 'CLOSED':
+    case 'ARCHIVED':
+      return 'READ_ONLY';
+    case 'RUNNING':
+    default:
+      return 'COLLABORATIVE';
+  }
+}
+
+function inferStatusRuleEntryEnabled(rule = {}, stage) {
+  const text = `${rule?.key || ''} ${rule?.name || ''} ${rule?.description || ''}`;
+  if (/停止|关闭|归档|结课|结营/.test(text)) return false;
+  return stage === 'OPEN' || /报名|邀请|开放/.test(text);
+}
+
+function normalizeStatusRule(rule, index, normalizeRoleIds = (roleIds) => (
+  Array.isArray(roleIds) ? roleIds.filter(Boolean) : []
+)) {
+  const stage = STATUS_RULE_STAGE_OPTIONS.some((item) => item.value === rule?.stage)
+    ? rule.stage
+    : inferStatusRuleStage(rule);
+  const controlMode = STATUS_RULE_CONTROL_OPTIONS.some((item) => item.value === rule?.controlMode)
+    ? rule.controlMode
+    : inferStatusRuleControl(stage);
   return {
     id: rule?.id || createId(`rule_${index}`),
+    key: trimToNull(rule?.key) || `status_${index + 1}`,
     name: trimToNull(rule?.name) || `规则${index + 1}`,
+    stage,
+    controlMode,
+    entryEnabled: typeof rule?.entryEnabled === 'boolean'
+      ? rule.entryEnabled
+      : inferStatusRuleEntryEnabled(rule, stage),
+    roleIds: normalizeRoleIds(rule?.roleIds),
     description: trimToNull(rule?.description) || '',
   };
 }
@@ -510,7 +756,9 @@ function normalizeTemplate(input = {}) {
     },
     roles,
     metadataFields: (Array.isArray(input.metadataFields) ? input.metadataFields : []).map(normalizeMetadataField),
-    statusRules: (Array.isArray(input.statusRules) ? input.statusRules : []).map(normalizeStatusRule),
+    statusRules: (Array.isArray(input.statusRules) ? input.statusRules : []).map((rule, index) => (
+      normalizeStatusRule(rule, index, normalizeRoleIds)
+    )),
     toolAreas: {
       resourceAreaTools: Array.isArray(input.toolAreas?.resourceAreaTools)
         ? input.toolAreas.resourceAreaTools.filter(Boolean)
@@ -657,9 +905,9 @@ function buildPresetTemplates() {
         { key: 'course_target', label: '课程目标', type: 'TEXTAREA', required: false },
       ],
       statusRules: [
-        { name: '备课中', description: '仅教师可编辑资料与课堂工具。' },
-        { name: '上课中', description: '开放课堂互动、练习和问答。' },
-        { name: '已结课', description: '保留回看与作业复盘，停止编辑。' },
+        { key: 'preparing', name: '备课中', stage: 'PREPARING', controlMode: 'ADMIN_ONLY', entryEnabled: false, roleIds: ['teacher'], description: '仅教师可编辑资料、配置课堂工具和作业。' },
+        { key: 'running', name: '上课中', stage: 'RUNNING', controlMode: 'COLLABORATIVE', entryEnabled: true, roleIds: ['teacher', 'student'], description: '开放课堂互动、练习、问答与作业提交。' },
+        { key: 'closed', name: '已结课', stage: 'CLOSED', controlMode: 'READ_ONLY', entryEnabled: false, roleIds: ['teacher', 'student'], description: '保留回看与作业复盘，停止新增和编辑。' },
       ],
       toolAreas: {
         resourceAreaTools: ['ONLINE_DOC', 'RESOURCE_LIBRARY', 'OFFICE_UPLOAD', 'LIVE'],
@@ -764,9 +1012,9 @@ function buildPresetTemplates() {
         { key: 'semester', label: '学期', type: 'SELECT', required: false, description: '如：2026春季学期' },
       ],
       statusRules: [
-        { name: '筹备中', description: '聚焦议题征集与资料预热。' },
-        { name: '研讨中', description: '开放论坛、白板和共创文档协同。' },
-        { name: '已归档', description: '固化成果，保留浏览与复盘入口。' },
+        { key: 'planning', name: '筹备中', stage: 'PREPARING', controlMode: 'ADMIN_ONLY', entryEnabled: false, roleIds: ['leader', 'teacher'], description: '聚焦议题征集、资料预热和议程准备。' },
+        { key: 'running', name: '研讨中', stage: 'RUNNING', controlMode: 'COLLABORATIVE', entryEnabled: true, roleIds: ['leader', 'teacher', 'expert'], description: '开放论坛、白板和共创文档协同。' },
+        { key: 'archived', name: '已归档', stage: 'ARCHIVED', controlMode: 'READ_ONLY', entryEnabled: false, roleIds: ['leader', 'teacher', 'expert'], description: '固化成果，保留浏览与复盘入口。' },
       ],
       toolAreas: {
         resourceAreaTools: ['ONLINE_DOC', 'RESOURCE_LIBRARY', 'WHITEBOARD'],
@@ -871,10 +1119,10 @@ function buildPresetTemplates() {
         { key: 'target_group', label: '培训对象', type: 'TEXT', required: false },
       ],
       statusRules: [
-        { name: '报名中', description: '开放报名、邀请和批量导入。' },
-        { name: '培训中', description: '开放课程学习、直播和任务提交。' },
-        { name: '评阅中', description: '对考试和成果进入评阅环节。' },
-        { name: '已结营', description: '仅保留复盘、证书与成果回看。' },
+        { key: 'enrolling', name: '报名中', stage: 'OPEN', controlMode: 'SUBMISSION_ONLY', entryEnabled: true, roleIds: ['admin', 'student'], description: '开放报名、邀请、批量导入与入营确认。' },
+        { key: 'running', name: '培训中', stage: 'RUNNING', controlMode: 'COLLABORATIVE', entryEnabled: false, roleIds: ['admin', 'student'], description: '开放课程学习、直播参与和任务提交。' },
+        { key: 'reviewing', name: '评阅中', stage: 'REVIEWING', controlMode: 'REVIEW_ONLY', entryEnabled: false, roleIds: ['admin', 'reviewer'], description: '对考试和成果进入评阅反馈环节。' },
+        { key: 'closed', name: '已结营', stage: 'CLOSED', controlMode: 'READ_ONLY', entryEnabled: false, roleIds: ['admin', 'reviewer', 'student'], description: '仅保留复盘、证书与成果回看。' },
       ],
       toolAreas: {
         resourceAreaTools: ['RESOURCE_LIBRARY', 'ONLINE_DOC', 'LIVE', 'ONLINE_VIDEO'],
@@ -979,9 +1227,9 @@ function buildPresetTemplates() {
         { key: 'start_time', label: '启动时间', type: 'DATE', required: false },
       ],
       statusRules: [
-        { name: '运营中', description: '开放内容共创、报名和活动讨论。' },
-        { name: '专题活动中', description: '突出展示活动报名和精选内容。' },
-        { name: '沉淀中', description: '聚焦精选内容和经验复盘。' },
+        { key: 'operating', name: '运营中', stage: 'RUNNING', controlMode: 'COLLABORATIVE', entryEnabled: true, roleIds: ['operator', 'member', 'observer'], description: '开放内容共创、报名和活动讨论。' },
+        { key: 'campaign', name: '专题活动中', stage: 'OPEN', controlMode: 'SUBMISSION_ONLY', entryEnabled: true, roleIds: ['operator', 'member'], description: '突出展示活动报名、互动参与和精选内容。' },
+        { key: 'retrospective', name: '沉淀中', stage: 'CLOSED', controlMode: 'READ_ONLY', entryEnabled: false, roleIds: ['operator', 'member', 'observer'], description: '聚焦精选内容沉淀、经验复盘与对外展示。' },
       ],
       toolAreas: {
         resourceAreaTools: ['ONLINE_DOC', 'RESOURCE_LIBRARY', 'URL'],

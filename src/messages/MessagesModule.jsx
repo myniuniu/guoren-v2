@@ -23,10 +23,8 @@ import {
 } from '@ant-design/icons';
 import {
   getLuckyConversationId,
-  getLuckyPushStoreEventName,
   markLuckyConversationRead,
   readLuckyConversation,
-  syncLuckyConversation,
 } from './luckyPushStore';
 import { trackEvent, trackRecommendationEvent } from '../shared/analytics';
 import './MessagesModule.css';
@@ -425,35 +423,6 @@ function MessagesModule({
     ? (selectedConversation.posts || []).find((post) => post.id === activeTopicThread) || null
     : null;
   const currentDraft = drafts[activeConversationId] || '';
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadLuckyConversation = async () => {
-      const luckyConversation = await syncLuckyConversation();
-      if (cancelled) return;
-      setConversations((prev) => mergeLuckyConversation(prev, luckyConversation));
-    };
-
-    loadLuckyConversation();
-
-    const eventName = getLuckyPushStoreEventName();
-    const handleLuckyChange = () => {
-      const luckyConversation = readLuckyConversation();
-      setConversations((prev) => mergeLuckyConversation(prev, luckyConversation));
-    };
-
-    window.addEventListener(eventName, handleLuckyChange);
-    const intervalId = window.setInterval(() => {
-      syncLuckyConversation();
-    }, 1000 * 60);
-
-    return () => {
-      cancelled = true;
-      window.removeEventListener(eventName, handleLuckyChange);
-      window.clearInterval(intervalId);
-    };
-  }, []);
 
   useEffect(() => {
     if (selectedId !== LUCKY_CONVERSATION_ID) return;
