@@ -176,6 +176,41 @@ function countEnabledTools(template) {
   ]).size;
 }
 
+const METADATA_FIELD_TYPE_LABEL_MAP = {
+  input: '单行文本',
+  textarea: '多行文本',
+  alert: '说明',
+  inputNumber: '数字',
+  radio: '单选',
+  checkbox: '多选',
+  datePicker: '日期',
+  dateRange: '日期区间',
+  tableForm: '明细/表格',
+  upload: '图片/视频',
+};
+
+function getMetadataFieldTypeLabel(field) {
+  return METADATA_FIELD_TYPE_LABEL_MAP[field?.type] || field?.type || '-';
+}
+
+function SceneTemplateStaticField({
+  label,
+  value,
+  children,
+  span = 1,
+  empty = '-',
+}) {
+  const hasValue = value !== undefined && value !== null && value !== '';
+  return (
+    <div className={`scene-template-static-field${span === 2 ? ' scene-template-form-span-2' : ''}`}>
+      <div className="scene-template-static-field-label">{label}</div>
+      <div className="scene-template-static-field-value">
+        {children || (hasValue ? value : <span className="scene-template-static-field-empty">{empty}</span>)}
+      </div>
+    </div>
+  );
+}
+
 function SceneTemplatePreview({ template, sceneCount }) {
   if (!template) {
     return (
@@ -185,191 +220,340 @@ function SceneTemplatePreview({ template, sceneCount }) {
     );
   }
 
-  const enabledModes = (template.topicPage?.modeTabs || []).filter((item) => item.enabled !== false);
   const roleNameMap = new Map((template.roles || []).map((role) => [role.id, role.name]));
   const folderNameMap = new Map((template.folderTypes || []).map((folder) => [folder.key, folder.name]));
+  const currentThemeCoverPreset = getSceneThemeCoverPreset(template.theme?.coverPresetId);
 
   return (
     <div className="scene-template-preview-card">
-      <div
-        className="scene-template-preview-hero"
-        style={getSceneThemeCoverStyle(template.theme)}
-      >
-        <div className="scene-template-preview-copy">
-          <div className="scene-template-preview-kicker">{template.theme.badgeText}</div>
-          <div className="scene-template-preview-title">{template.name}</div>
-          <div className="scene-template-preview-desc">{template.theme.heroSubtitle}</div>
-          <div className="scene-template-preview-meta">
-            <span>{sceneCount} 个场景在用</span>
-            <span>{countEnabledTools(template)} 个工具能力</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="scene-template-preview-section">
-        <div className="scene-template-preview-section-title">角色限定</div>
-        <div className="scene-template-role-grid">
-          {template.roles.map((role) => (
-            <div key={role.id} className="scene-template-role-card">
-              <div className="scene-template-role-head">
-                <strong>{role.name}</strong>
+      <Tabs
+        key={template.id}
+        items={[
+          {
+            key: 'basic',
+            label: '基础信息',
+            children: (
+              <div className="scene-template-drawer-section">
+                <div className="scene-template-form-grid">
+                  <SceneTemplateStaticField label="模板名称" value={template.name} />
+                  <SceneTemplateStaticField label="模板编码" value={template.templateCode} />
+                  <SceneTemplateStaticField label="模板状态">
+                    {renderStatusTag(template.status)}
+                  </SceneTemplateStaticField>
+                  <SceneTemplateStaticField label="在用场景数" value={`${sceneCount} 个`} />
+                  <SceneTemplateStaticField label="工具能力数" value={`${countEnabledTools(template)} 个`} />
+                  <SceneTemplateStaticField span={2} label="模板描述" value={template.description} />
+                </div>
               </div>
-              <div className="scene-template-role-desc">{role.description || '未填写角色说明'}</div>
-              <div className="scene-template-role-block scene-template-role-block-function">
-                <div className="scene-template-role-block-title">功能授权</div>
-                <div className="scene-template-role-meta">
-                  <div className="scene-template-tag-wrap">
-                    <Tag color={role.functionalPermissionMode === 'EXCLUDE' ? 'volcano' : 'blue'}>
-                      {getRoleFunctionPermissionModeLabel(role.functionalPermissionMode)}
-                    </Tag>
-                    {getFunctionalPermissionSummary(role).length > 0
-                      ? getFunctionalPermissionSummary(role).map((label) => (
-                          <Tag key={`${role.id}_${label}`} color="blue">{label}</Tag>
-                        ))
-                      : <span className="scene-template-role-empty">未配置</span>}
+            ),
+          },
+          {
+            key: 'metadata',
+            label: '主题元数据',
+            children: (
+              <div className="scene-template-drawer-section">
+                {template.metadataFields?.length ? template.metadataFields.map((field, index) => (
+                  <div key={field.id || field.key || index} className="scene-template-list-card">
+                    <div className="scene-template-list-card-head">
+                      <strong>{field.label || `字段 ${index + 1}`}</strong>
+                    </div>
+                    <div className="scene-template-form-grid">
+                      <SceneTemplateStaticField label="字段标识" value={field.key || field.id} />
+                      <SceneTemplateStaticField label="字段类型" value={getMetadataFieldTypeLabel(field)} />
+                      <SceneTemplateStaticField label="是否必填" value={field.props?.required ? '是' : '否'} />
+                      <SceneTemplateStaticField label="占位提示" value={field.props?.placeholder} />
+                      <SceneTemplateStaticField span={2} label="字段说明" value={field.description || field.props?.content} />
+                    </div>
+                  </div>
+                )) : <Empty description="未配置主题元数据字段" />}
+              </div>
+            ),
+          },
+          {
+            key: 'theme',
+            label: '主题样式',
+            children: (
+              <div className="scene-template-drawer-section">
+                <div className="scene-template-static-field">
+                  <div className="scene-template-static-field-label">默认主题封面</div>
+                  <div className="scene-template-static-field-value">
+                    <div className="scene-template-cover-trigger scene-template-cover-trigger-readonly">
+                      <div
+                        className="scene-template-cover-trigger-preview"
+                        style={getSceneThemeCoverStyle(template.theme, {
+                          overlayStart: 'rgba(15, 23, 42, 0.14)',
+                          overlayEnd: 'rgba(15, 23, 42, 0.03)',
+                        })}
+                      />
+                      <div className="scene-template-cover-trigger-copy">
+                        <strong>
+                          {template.theme?.coverSource === 'UPLOAD'
+                            ? '本地上传封面'
+                            : (currentThemeCoverPreset?.name || '默认图库封面')}
+                        </strong>
+                        <span>
+                          {template.theme?.coverSource === 'UPLOAD'
+                            ? '当前使用上传图片作为主题封面'
+                            : `当前来自 ${currentThemeCoverPreset?.category || '图库'}`}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                {role.permissionSummary ? (
-                  <div className="scene-template-role-note">功能说明：{role.permissionSummary}</div>
-                ) : null}
               </div>
-              <div className="scene-template-role-block scene-template-role-block-data">
-                <div className="scene-template-role-block-title">资料授权</div>
-                <div className="scene-template-role-meta">
-                  <div className="scene-template-tag-wrap">
-                    <Tag color="geekblue">{getRoleDataScopeLabel(role.dataAccessScope)}</Tag>
-                    {role.dataAccessScope === 'ASSIGNED'
-                      ? (
-                          <>
-                            <Tag color="purple">{getAssignedAccessRuleLabel(role.assignedAccessRuleType)}</Tag>
-                            {getAssignedAccessSummary(role, folderNameMap).map((label) => (
-                              <Tag key={`${role.id}_data_${label}`}>{label}</Tag>
-                            ))}
-                          </>
-                        )
-                      : null}
+            ),
+          },
+          {
+            key: 'modeTabs',
+            label: '主题模式',
+            children: (
+              <div className="scene-template-mode-page">
+                <div className="scene-template-mode-grid">
+                  {(template.topicPage?.modeTabs || []).map((mode) => (
+                    <div key={mode.id || mode.key} className="scene-template-mode-card">
+                      <div className="scene-template-list-card-head">
+                        <strong>{mode.label || mode.key}</strong>
+                        <Tag color={mode.enabled !== false ? 'blue' : 'default'}>
+                          {mode.enabled !== false ? '已启用' : '未启用'}
+                        </Tag>
+                      </div>
+                      <div className="scene-template-form-grid">
+                        <SceneTemplateStaticField label="模式标识" value={mode.key} />
+                        <SceneTemplateStaticField label="页签名称" value={mode.label} />
+                        <SceneTemplateStaticField label="资料区标题" value={mode.resourcePanelTitle || template.topicPage?.resourcePanelTitle} />
+                        <SceneTemplateStaticField label="新增资料按钮" value={mode.addResourceLabel || template.topicPage?.addResourceLabel} />
+                        <SceneTemplateStaticField label="应用区按钮" value={mode.appLabel || template.topicPage?.appLabel} />
+                        <SceneTemplateStaticField label="空状态文案" value={mode.emptyStateText || template.topicPage?.emptyStateText} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ),
+          },
+          {
+            key: 'roles',
+            label: '角色限定',
+            children: (
+              <div className="scene-template-drawer-section">
+                {template.roles?.length ? (
+                  <Tabs
+                    key={`${template.id}_roles`}
+                    defaultActiveKey={String(template.roles[0]?.id || 0)}
+                    items={template.roles.map((role, index) => ({
+                      key: String(role?.id || index),
+                      label: role?.name || `角色${index + 1}`,
+                      children: (
+                        <div className="scene-template-role-tab-panel">
+                          <div className="scene-template-role-stack">
+                            <div className="scene-template-role-editor-block scene-template-role-editor-block-basic">
+                              <div className="scene-template-role-editor-title">基本信息</div>
+                              <div className="scene-template-form-grid">
+                                <SceneTemplateStaticField label="角色标识" value={role.key} />
+                                <SceneTemplateStaticField label="角色名称" value={role.name} />
+                                <SceneTemplateStaticField span={2} label="角色说明" value={role.description} />
+                              </div>
+                            </div>
+                            <div className="scene-template-role-editor-sections">
+                              <div className="scene-template-role-editor-block scene-template-role-editor-block-function">
+                                <div className="scene-template-role-editor-title">功能授权</div>
+                                <div className="scene-template-role-editor-stack-grid">
+                                  <SceneTemplateStaticField label="授权方式" value={getRoleFunctionPermissionModeLabel(role.functionalPermissionMode)} />
+                                  <SceneTemplateStaticField label="功能树授权">
+                                    <div className="scene-template-tag-wrap">
+                                      {getFunctionalPermissionSummary(role).length > 0
+                                        ? getFunctionalPermissionSummary(role).map((label) => (
+                                            <Tag key={`${role.id}_${label}`} color="blue">{label}</Tag>
+                                          ))
+                                        : <span className="scene-template-static-field-empty">未配置</span>}
+                                    </div>
+                                  </SceneTemplateStaticField>
+                                  <SceneTemplateStaticField label="功能说明" value={role.permissionSummary} />
+                                </div>
+                              </div>
+                              <div className="scene-template-role-editor-block scene-template-role-editor-block-data">
+                                <div className="scene-template-role-editor-title">资料授权</div>
+                                <div className="scene-template-role-editor-stack-grid">
+                                  <SceneTemplateStaticField label="资料归属范围" value={getRoleDataScopeLabel(role.dataAccessScope)} />
+                                  {role.dataAccessScope === 'ASSIGNED' ? (
+                                    <>
+                                      <SceneTemplateStaticField label="授权方式" value={getAssignedAccessRuleLabel(role.assignedAccessRuleType)} />
+                                      <SceneTemplateStaticField label="授权对象">
+                                        <div className="scene-template-tag-wrap">
+                                          {getAssignedAccessSummary(role, folderNameMap).length > 0
+                                            ? getAssignedAccessSummary(role, folderNameMap).map((label) => (
+                                                <Tag key={`${role.id}_data_${label}`}>{label}</Tag>
+                                              ))
+                                            : <span className="scene-template-static-field-empty">未配置</span>}
+                                        </div>
+                                      </SceneTemplateStaticField>
+                                    </>
+                                  ) : (
+                                    <SceneTemplateStaticField label="授权对象" value="当前范围下自动生效，无需单独指定" />
+                                  )}
+                                  <SceneTemplateStaticField label="资料权限说明" value={role.scopeSummary} />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ),
+                    }))}
+                    className="scene-template-role-tabs"
+                  />
+                ) : <Empty description="未配置角色" />}
+              </div>
+            ),
+          },
+          {
+            key: 'tools',
+            label: '工具与资料',
+            children: (
+              <div className="scene-template-drawer-section">
+                <div className="scene-template-form-grid">
+                  <SceneTemplateStaticField label="资料区工具">
+                    <div className="scene-template-tag-wrap">
+                      {template.toolAreas?.resourceAreaTools?.length
+                        ? template.toolAreas.resourceAreaTools.map((toolKey) => (
+                            <Tag key={toolKey}>{getToolLabel(toolKey)}</Tag>
+                          ))
+                        : <span className="scene-template-static-field-empty">未配置</span>}
+                    </div>
+                  </SceneTemplateStaticField>
+                  <SceneTemplateStaticField label="创作结果区工具">
+                    <div className="scene-template-tag-wrap">
+                      {template.toolAreas?.resultAreaTools?.length
+                        ? template.toolAreas.resultAreaTools.map((toolKey) => (
+                            <Tag key={toolKey}>{getToolLabel(toolKey)}</Tag>
+                          ))
+                        : <span className="scene-template-static-field-empty">未配置</span>}
+                    </div>
+                  </SceneTemplateStaticField>
+                </div>
+
+                <div className="scene-template-subsection-title">
+                  <span>工具配置项</span>
+                </div>
+                {template.toolConfigs?.length ? template.toolConfigs.map((tool, index) => (
+                  <div key={tool?.id || index} className="scene-template-list-card">
+                    <div className="scene-template-list-card-head">
+                      <strong>工具配置 {index + 1}</strong>
+                    </div>
+                    <div className="scene-template-form-grid">
+                      <SceneTemplateStaticField label="工具标识" value={tool.key} />
+                      <SceneTemplateStaticField label="工具名称" value={tool.name} />
+                      <SceneTemplateStaticField label="出现位置" value={TOOL_PLACEMENT_OPTIONS.find((item) => item.value === tool.placement)?.label || tool.placement} />
+                      <SceneTemplateStaticField label="启用" value={tool.enabled !== false ? '是' : '否'} />
+                      <SceneTemplateStaticField span={2} label="配置说明" value={tool.description} />
+                    </div>
+                  </div>
+                )) : <Empty description="未配置工具项" />}
+
+                <div className="scene-template-subsection-title">
+                  <span>资料目录类型</span>
+                </div>
+                {template.folderTypes?.length ? template.folderTypes.map((folder, index) => (
+                  <div key={folder?.id || index} className="scene-template-list-card">
+                    <div className="scene-template-list-card-head">
+                      <strong>目录类型 {index + 1}</strong>
+                    </div>
+                    <div className="scene-template-form-grid">
+                      <SceneTemplateStaticField label="目录标识" value={folder.key} />
+                      <SceneTemplateStaticField label="目录名称" value={folder.name} />
+                      <SceneTemplateStaticField label="角色限制">
+                        <div className="scene-template-tag-wrap">
+                          {folder.roleIds?.length
+                            ? folder.roleIds.map((roleId) => (
+                                <Tag key={`${folder.id}_${roleId}`}>{roleNameMap.get(roleId) || roleId}</Tag>
+                              ))
+                            : <span className="scene-template-static-field-empty">未限制</span>}
+                        </div>
+                      </SceneTemplateStaticField>
+                      <SceneTemplateStaticField label="允许工具">
+                        <div className="scene-template-tag-wrap">
+                          {folder.allowedTools?.length
+                            ? folder.allowedTools.map((toolKey) => (
+                                <Tag key={`${folder.id}_${toolKey}`}>{getToolLabel(toolKey)}</Tag>
+                              ))
+                            : <span className="scene-template-static-field-empty">未配置</span>}
+                        </div>
+                      </SceneTemplateStaticField>
+                      <SceneTemplateStaticField label="必选目录" value={folder.required ? '是' : '否'} />
+                      <SceneTemplateStaticField span={2} label="目录说明" value={folder.description} />
+                    </div>
+                  </div>
+                )) : <Empty description="未配置资料目录类型" />}
+              </div>
+            ),
+          },
+          {
+            key: 'versioning',
+            label: '版本管理',
+            children: (
+              <div className="scene-template-drawer-section">
+                <div className="scene-template-list-card">
+                  <div className="scene-template-form-grid">
+                    <SceneTemplateStaticField label="启用版本管理" value={template.versioning?.enabled !== false ? '是' : '否'} />
+                    <SceneTemplateStaticField label="最多版本数" value={template.versioning?.enabled !== false ? String(template.versioning?.maxVersions || 5) : '-'} />
+                    <SceneTemplateStaticField label="新建版本规则" value={template.versioning?.enabled !== false ? getVersionCreateModeLabel(template.versioning?.createMode) : '-'} />
+                    <SceneTemplateStaticField label="版本名称规则" value={template.versioning?.enabled !== false ? (template.versioning?.namePattern || '版本 {index}') : '-'} />
+                    <SceneTemplateStaticField label="允许回退历史版本" value={template.versioning?.enabled !== false ? (template.versioning?.allowRollback ? '是' : '否') : '-'} />
+                    <SceneTemplateStaticField label="允许删除已失效版本" value={template.versioning?.enabled !== false ? (template.versioning?.allowDeletePublished ? '是' : '否') : '-'} />
+                    <SceneTemplateStaticField span={2} label="版本规则说明" value={template.versioning?.description} />
                   </div>
                 </div>
-                {role.scopeSummary ? (
-                  <div className="scene-template-role-note">资料权限说明：{role.scopeSummary}</div>
-                ) : null}
               </div>
-            </div>
-          ))}
-        </div>
-      </div>
+            ),
+          },
+          {
+            key: 'rules',
+            label: '规则与进入',
+            children: (
+              <div className="scene-template-drawer-section">
+                <div className="scene-template-form-grid">
+                  <SceneTemplateStaticField span={2} label="进入主题的方式">
+                    <div className="scene-template-tag-wrap">
+                      {template.entryMethods?.length
+                        ? template.entryMethods.map((method) => (
+                            <Tag key={method}>{getEntryMethodLabel(method)}</Tag>
+                          ))
+                        : <span className="scene-template-static-field-empty">未配置</span>}
+                    </div>
+                  </SceneTemplateStaticField>
+                </div>
 
-      <div className="scene-template-preview-section">
-        <div className="scene-template-preview-section-title">主题模式与文案</div>
-        <div className="scene-template-inline-meta">
-          <span>详情页主题：{getTopicThemeModeLabel(template.theme?.topicThemeMode || 'DEFAULT')}</span>
-          <span>资料区：{template.topicPage.resourcePanelTitle}</span>
-          <span>新增按钮：{template.topicPage.addResourceLabel}</span>
-        </div>
-        <div className="scene-template-tag-wrap">
-          {enabledModes.map((item) => (
-            <Tag key={item.key} color="blue">{item.label}</Tag>
-          ))}
-        </div>
-      </div>
-
-      <div className="scene-template-preview-section">
-        <div className="scene-template-preview-section-title">资料结构</div>
-        <div className="scene-template-folder-list">
-          {template.folderTypes.map((folder) => (
-            <div key={folder.id} className="scene-template-folder-card">
-              <div className="scene-template-folder-head">
-                <span>{folder.name}</span>
-                {folder.required ? <Tag color="orange">必选</Tag> : null}
+                <div className="scene-template-subsection-title">
+                  <span>状态控制规则</span>
+                </div>
+                {template.statusRules?.length ? template.statusRules.map((rule, index) => (
+                  <div key={rule?.id || index} className="scene-template-list-card">
+                    <div className="scene-template-list-card-head">
+                      <strong>状态规则 {index + 1}</strong>
+                    </div>
+                    <div className="scene-template-form-grid">
+                      <SceneTemplateStaticField label="状态编码" value={rule.key} />
+                      <SceneTemplateStaticField label="状态名称" value={rule.name} />
+                      <SceneTemplateStaticField label="状态阶段" value={getStatusRuleStageLabel(rule.stage)} />
+                      <SceneTemplateStaticField label="控制策略" value={getStatusRuleControlLabel(rule.controlMode)} />
+                      <SceneTemplateStaticField label="开放进入" value={rule.entryEnabled ? '是' : '否'} />
+                      <SceneTemplateStaticField label="适用角色">
+                        <div className="scene-template-tag-wrap">
+                          {rule.roleIds?.length
+                            ? rule.roleIds.map((roleId) => (
+                                <Tag key={`${rule.id}_${roleId}`}>{roleNameMap.get(roleId) || roleId}</Tag>
+                              ))
+                            : <span className="scene-template-static-field-empty">未限定角色</span>}
+                        </div>
+                      </SceneTemplateStaticField>
+                      <SceneTemplateStaticField span={2} label="规则说明" value={rule.description} />
+                    </div>
+                  </div>
+                )) : <Empty description="未配置状态控制规则" />}
               </div>
-              <div className="scene-template-folder-desc">{folder.description || '未填写说明'}</div>
-              <div className="scene-template-folder-tools">
-                {(folder.allowedTools || []).map((toolKey) => (
-                  <span key={toolKey}>{getToolLabel(toolKey)}</span>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="scene-template-preview-section">
-        <div className="scene-template-preview-section-title">工具与进入方式</div>
-        <div className="scene-template-inline-columns">
-          <div>
-            <div className="scene-template-subtitle">资料区工具</div>
-            <div className="scene-template-tag-wrap">
-              {(template.toolAreas.resourceAreaTools || []).map((toolKey) => (
-                <Tag key={toolKey}>{getToolLabel(toolKey)}</Tag>
-              ))}
-            </div>
-          </div>
-          <div>
-            <div className="scene-template-subtitle">创作结果区工具</div>
-            <div className="scene-template-tag-wrap">
-              {(template.toolAreas.resultAreaTools || []).map((toolKey) => (
-                <Tag key={toolKey}>{getToolLabel(toolKey)}</Tag>
-              ))}
-            </div>
-          </div>
-          <div>
-            <div className="scene-template-subtitle">进入方式</div>
-            <div className="scene-template-tag-wrap">
-              {(template.entryMethods || []).map((method) => (
-                <Tag key={method}>{getEntryMethodLabel(method)}</Tag>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="scene-template-preview-section">
-        <div className="scene-template-preview-section-title">版本管理</div>
-        <div className="scene-template-inline-meta">
-          <span>{template.versioning?.enabled !== false ? '启用版本管理' : '不启用版本管理'}</span>
-          {template.versioning?.enabled !== false ? (
-            <>
-              <span>最多 {template.versioning?.maxVersions || 5} 个版本</span>
-              <span>{getVersionCreateModeLabel(template.versioning?.createMode)}</span>
-            </>
-          ) : null}
-        </div>
-        {template.versioning?.enabled !== false ? (
-          <div className="scene-template-tag-wrap">
-            {template.versioning?.allowRollback ? <Tag color="blue">允许回退</Tag> : <Tag>不允许回退</Tag>}
-            {template.versioning?.allowDeletePublished ? <Tag color="blue">允许删除历史版本</Tag> : <Tag>历史版本不可删</Tag>}
-            <Tag>{template.versioning?.namePattern || '版本 {index}'}</Tag>
-          </div>
-        ) : null}
-        {template.versioning?.description ? (
-          <div className="scene-template-role-note">规则说明：{template.versioning.description}</div>
-        ) : null}
-      </div>
-
-      <div className="scene-template-preview-section">
-        <div className="scene-template-preview-section-title">状态规则</div>
-        <div className="scene-template-preview-list">
-          {(template.statusRules || []).map((rule) => (
-            <div key={rule.id} className="scene-template-preview-list-row">
-              <strong>{rule.name}</strong>
-              <div className="scene-template-tag-wrap">
-                <Tag>{rule.key || '未设编码'}</Tag>
-                <Tag color="blue">{getStatusRuleStageLabel(rule.stage)}</Tag>
-                <Tag color="geekblue">{getStatusRuleControlLabel(rule.controlMode)}</Tag>
-                <Tag color={rule.entryEnabled ? 'green' : 'default'}>
-                  {rule.entryEnabled ? '开放进入' : '关闭进入'}
-                </Tag>
-                {(rule.roleIds || []).length > 0
-                  ? rule.roleIds.map((roleId) => (
-                      <Tag key={`${rule.id}_${roleId}`}>{roleNameMap.get(roleId) || roleId}</Tag>
-                    ))
-                  : <Tag>未限定角色</Tag>}
-              </div>
-              <span>{rule.description || '未填写规则说明'}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+            ),
+          },
+        ]}
+      />
     </div>
   );
 }
@@ -836,7 +1020,7 @@ export default function SceneTemplateModule() {
       <Drawer
         title="查看场景模板"
         open={previewDrawerOpen}
-        width={760}
+        width={1040}
         onClose={() => setPreviewDrawerOpen(false)}
         extra={selectedTemplate ? (
           <Space>
@@ -929,62 +1113,30 @@ export default function SceneTemplateModule() {
                 label: '主题样式',
                 children: (
                   <div className="scene-template-drawer-section">
-                    <div className="scene-template-form-grid">
-                      <Form.Item label="模板角标" name={['theme', 'badgeText']}>
-                        <Input placeholder="例如：课堂教学" />
-                      </Form.Item>
-                      <Form.Item label="详情页主题" name={['theme', 'topicThemeMode']}>
-                        <Select options={TOPIC_THEME_MODE_OPTIONS} />
-                      </Form.Item>
-                      <Form.Item label="强调色" name={['theme', 'accentColor']}>
-                        <Input placeholder="#2f64f2" />
-                      </Form.Item>
-                      <Form.Item className="scene-template-form-span-2" label="默认主题封面">
-                        <div className="scene-template-cover-trigger">
-                          <div
-                            className="scene-template-cover-trigger-preview"
-                            style={getSceneThemeCoverStyle(watchedTheme, {
-                              overlayStart: 'rgba(15, 23, 42, 0.14)',
-                              overlayEnd: 'rgba(15, 23, 42, 0.03)',
-                            })}
-                          />
-                          <div className="scene-template-cover-trigger-copy">
-                            <strong>
-                              {watchedTheme.coverSource === 'UPLOAD'
-                                ? '本地上传封面'
-                                : (currentThemeCoverPreset?.name || '默认图库封面')}
-                            </strong>
-                            <span>
-                              {watchedTheme.coverSource === 'UPLOAD'
-                                ? '当前使用上传图片作为主题封面'
-                                : `当前来自 ${currentThemeCoverPreset?.category || '图库'}，点击可重新选择`}
-                            </span>
-                          </div>
-                          <Button onClick={() => setThemeCoverModalOpen(true)}>选择封面</Button>
+                    <Form.Item label="默认主题封面">
+                      <div className="scene-template-cover-trigger">
+                        <div
+                          className="scene-template-cover-trigger-preview"
+                          style={getSceneThemeCoverStyle(watchedTheme, {
+                            overlayStart: 'rgba(15, 23, 42, 0.14)',
+                            overlayEnd: 'rgba(15, 23, 42, 0.03)',
+                          })}
+                        />
+                        <div className="scene-template-cover-trigger-copy">
+                          <strong>
+                            {watchedTheme.coverSource === 'UPLOAD'
+                              ? '本地上传封面'
+                              : (currentThemeCoverPreset?.name || '默认图库封面')}
+                          </strong>
+                          <span>
+                            {watchedTheme.coverSource === 'UPLOAD'
+                              ? '当前使用上传图片作为主题封面'
+                              : `当前来自 ${currentThemeCoverPreset?.category || '图库'}，点击可重新选择`}
+                          </span>
                         </div>
-                      </Form.Item>
-                      <Form.Item label="首页短提示" name={['theme', 'surfaceHint']}>
-                        <Input placeholder="例如：课件、作业、互动" />
-                      </Form.Item>
-                      <Form.Item className="scene-template-form-span-2" label="主页主标题" name={['theme', 'heroTitle']}>
-                        <Input placeholder="例如：以课程、作业和课堂互动为核心的教学空间" />
-                      </Form.Item>
-                      <Form.Item className="scene-template-form-span-2" label="主页副标题" name={['theme', 'heroSubtitle']}>
-                        <TextArea rows={3} placeholder="说明该场景的主题风格、定位和能力范围" />
-                      </Form.Item>
-                      <Form.Item label="左侧资料区标题" name={['topicPage', 'resourcePanelTitle']}>
-                        <Input placeholder="例如：课程资料" />
-                      </Form.Item>
-                      <Form.Item label="新增资料按钮文案" name={['topicPage', 'addResourceLabel']}>
-                        <Input placeholder="例如：添加课件" />
-                      </Form.Item>
-                      <Form.Item label="应用区按钮文案" name={['topicPage', 'appLabel']}>
-                        <Input placeholder="例如：教学工具" />
-                      </Form.Item>
-                      <Form.Item label="空状态文案" name={['topicPage', 'emptyStateText']}>
-                        <Input placeholder="例如：暂无课件，可先创建课程目录" />
-                      </Form.Item>
-                    </div>
+                        <Button onClick={() => setThemeCoverModalOpen(true)}>选择封面</Button>
+                      </div>
+                    </Form.Item>
                   </div>
                 ),
               },

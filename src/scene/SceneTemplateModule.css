@@ -47,16 +47,13 @@
 
 .scene-template-preview-card {
   min-width: 0;
-  min-height: 0;
-  border: 1px solid #e5e7eb;
-  border-radius: 18px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  overflow: auto;
+  min-height: 100%;
+  background: transparent;
 }
 
 .scene-template-preview-drawer .ant-drawer-body {
-  padding: 0;
-  background: #f8fafc;
+  padding: 24px;
+  background: #fff;
 }
 
 .scene-template-preview-drawer .scene-template-preview-card {
@@ -64,6 +61,44 @@
   border-radius: 0;
   min-height: 100%;
   background: transparent;
+}
+
+.scene-template-static-field {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.scene-template-static-field-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.88);
+}
+
+.scene-template-static-field-value {
+  min-height: 40px;
+  padding: 8px 11px;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  line-height: 1.6;
+  color: rgba(0, 0, 0, 0.88);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.scene-template-static-field-value .scene-template-tag-wrap {
+  width: 100%;
+}
+
+.scene-template-static-field-empty {
+  color: #8c8c8c;
+}
+
+.scene-template-cover-trigger-readonly {
+  width: 100%;
 }
 
 .scene-template-preview-hero {
