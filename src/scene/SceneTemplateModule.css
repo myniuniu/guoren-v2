@@ -425,6 +425,42 @@
   gap: 12px;
 }
 
+.scene-template-guidance-panel {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  display: grid;
+  gap: 6px;
+}
+
+.scene-template-guidance-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.scene-template-guidance-text {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #475569;
+}
+
+.scene-template-warning-list {
+  display: grid;
+  gap: 8px;
+}
+
+.scene-template-warning-item {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #9a3412;
+}
+
 .scene-template-mode-page {
   padding: 0;
   border: none;

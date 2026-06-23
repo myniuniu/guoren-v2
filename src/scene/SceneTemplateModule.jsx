@@ -44,12 +44,17 @@ import {
   TOOL_OPTIONS,
   TOOL_PLACEMENT_OPTIONS,
   VERSION_CREATE_MODE_OPTIONS,
+  buildSceneTypeStatusRules,
   createRoleDraft,
   createTemplateDraft,
   getAssignedAccessRuleLabel,
   getRoleFunctionPermissionModeLabel,
   getSceneStoreChangeEventName,
+  getSceneTypeLabel,
+  getSceneTypeStatusGuidance,
+  getSceneTypeStatusPreset,
   getStatusRuleControlLabel,
+  getStatusRuleStageDescription,
   getStatusRuleStageLabel,
   sceneApi,
 } from './api';
@@ -223,6 +228,9 @@ function SceneTemplatePreview({ template, sceneCount }) {
   const roleNameMap = new Map((template.roles || []).map((role) => [role.id, role.name]));
   const folderNameMap = new Map((template.folderTypes || []).map((folder) => [folder.key, folder.name]));
   const currentThemeCoverPreset = getSceneThemeCoverPreset(template.theme?.coverPresetId);
+  const statusPresetSceneType = template.statusPresetSceneType || template.sceneType || 'CUSTOM';
+  const statusPreset = getSceneTypeStatusPreset(statusPresetSceneType);
+  const statusGuidance = getSceneTypeStatusGuidance(statusPresetSceneType, template.statusRules);
 
   return (
     <div className="scene-template-preview-card">
@@ -525,6 +533,19 @@ function SceneTemplatePreview({ template, sceneCount }) {
                 <div className="scene-template-subsection-title">
                   <span>状态控制规则</span>
                 </div>
+                <div className="scene-template-guidance-panel">
+                  <div className="scene-template-guidance-title">当前空间主题阶段模型</div>
+                  <div className="scene-template-guidance-text">
+                    {`当前模板按 ${getSceneTypeLabel(statusPresetSceneType)} 的默认阶段模型解释这些规则。${statusPreset.description}`}
+                  </div>
+                </div>
+                {statusGuidance.length > 0 ? (
+                  <div className="scene-template-warning-list">
+                    {statusGuidance.map((item) => (
+                      <div key={item} className="scene-template-warning-item">{item}</div>
+                    ))}
+                  </div>
+                ) : null}
                 {template.statusRules?.length ? template.statusRules.map((rule, index) => (
                   <div key={rule?.id || index} className="scene-template-list-card">
                     <div className="scene-template-list-card-head">
@@ -545,6 +566,7 @@ function SceneTemplatePreview({ template, sceneCount }) {
                             : <span className="scene-template-static-field-empty">未限定角色</span>}
                         </div>
                       </SceneTemplateStaticField>
+                      <SceneTemplateStaticField span={2} label="阶段语义" value={getStatusRuleStageDescription(rule.stage)} />
                       <SceneTemplateStaticField span={2} label="规则说明" value={rule.description} />
                     </div>
                   </div>
@@ -578,6 +600,7 @@ export default function SceneTemplateModule() {
   const watchedToolConfigsValue = Form.useWatch('toolConfigs', { form: templateForm, preserve: true });
   const watchedFolderTypesValue = Form.useWatch('folderTypes', { form: templateForm, preserve: true });
   const watchedStatusRulesValue = Form.useWatch('statusRules', { form: templateForm, preserve: true });
+  const watchedStatusPresetSceneTypeValue = Form.useWatch('statusPresetSceneType', { form: templateForm, preserve: true });
   const watchedThemeValue = Form.useWatch('theme', { form: templateForm, preserve: true });
   const watchedVersioningValue = Form.useWatch('versioning', { form: templateForm, preserve: true });
   const watchedRoles = useMemo(() => watchedRolesValue || [], [watchedRolesValue]);
@@ -585,6 +608,10 @@ export default function SceneTemplateModule() {
   const watchedToolConfigs = useMemo(() => watchedToolConfigsValue || [], [watchedToolConfigsValue]);
   const watchedFolderTypes = useMemo(() => watchedFolderTypesValue || [], [watchedFolderTypesValue]);
   const watchedStatusRules = useMemo(() => watchedStatusRulesValue || [], [watchedStatusRulesValue]);
+  const watchedStatusPresetSceneType = useMemo(
+    () => watchedStatusPresetSceneTypeValue || editingTemplate?.statusPresetSceneType || editingTemplate?.sceneType || 'CUSTOM',
+    [editingTemplate, watchedStatusPresetSceneTypeValue],
+  );
   const watchedTheme = useMemo(() => watchedThemeValue || {}, [watchedThemeValue]);
   const watchedVersioning = useMemo(() => watchedVersioningValue || {}, [watchedVersioningValue]);
   const uploadedThemeCoverImage = watchedTheme.coverSource === 'UPLOAD' ? watchedTheme.coverImage : '';
@@ -618,6 +645,14 @@ export default function SceneTemplateModule() {
   const currentThemeCoverPreset = useMemo(
     () => getSceneThemeCoverPreset(watchedTheme.coverPresetId),
     [watchedTheme.coverPresetId],
+  );
+  const currentStatusPreset = useMemo(
+    () => getSceneTypeStatusPreset(watchedStatusPresetSceneType),
+    [watchedStatusPresetSceneType],
+  );
+  const statusRuleGuidance = useMemo(
+    () => getSceneTypeStatusGuidance(watchedStatusPresetSceneType, watchedStatusRules),
+    [watchedStatusPresetSceneType, watchedStatusRules],
   );
   const sceneCountMap = useMemo(() => {
     return scenes.reduce((map, item) => {
@@ -763,6 +798,14 @@ export default function SceneTemplateModule() {
     return Upload.LIST_IGNORE;
   }
 
+  function handleRestoreStatusRules() {
+    templateForm.setFieldValue(
+      'statusRules',
+      buildSceneTypeStatusRules(watchedStatusPresetSceneType, watchedRoles),
+    );
+    message.success(`已恢复为${getSceneTypeLabel(watchedStatusPresetSceneType)}默认阶段规则`);
+  }
+
   function openCreateDrawer() {
     const draft = createTemplateDraft();
     setPreviewDrawerOpen(false);
@@ -797,6 +840,13 @@ export default function SceneTemplateModule() {
       if (new Set(normalizedStatusKeys).size !== normalizedStatusKeys.length) {
         message.error('状态编码不能重复');
         return;
+      }
+      const statusGuidanceMessages = getSceneTypeStatusGuidance(
+        values.statusPresetSceneType || editingTemplate?.statusPresetSceneType || editingTemplate?.sceneType || 'CUSTOM',
+        statusRules,
+      );
+      if (statusGuidanceMessages.length > 0) {
+        message.warning(statusGuidanceMessages[0]);
       }
       const roleRules = Array.isArray(values.roles) ? values.roles : [];
       const invalidAssignedRole = roleRules.find((role) => {
@@ -1571,6 +1621,9 @@ export default function SceneTemplateModule() {
                 label: '规则与进入',
                 children: (
                   <div className="scene-template-drawer-section">
+                    <Form.Item name="statusPresetSceneType" hidden>
+                      <Input />
+                    </Form.Item>
                     <div className="scene-template-form-grid">
                       <Form.Item className="scene-template-form-span-2" label="进入主题的方式" name="entryMethods">
                         <Select mode="multiple" options={ENTRY_METHOD_OPTIONS} placeholder="选择该场景支持的进入方式" />
@@ -1579,26 +1632,55 @@ export default function SceneTemplateModule() {
 
                     <div className="scene-template-subsection-title with-action">
                       <span>状态控制规则</span>
-                      <Button
-                        size="small"
-                        icon={<PlusOutlined />}
-                        onClick={() => {
-                          const nextRules = [...watchedStatusRules, {
-                            id: `rule_${Date.now()}`,
-                            key: '',
-                            name: '',
-                            stage: 'RUNNING',
-                            controlMode: 'COLLABORATIVE',
-                            entryEnabled: true,
-                            roleIds: [],
-                            description: '',
-                          }];
-                          templateForm.setFieldsValue({ statusRules: nextRules });
-                        }}
-                      >
-                        添加规则
-                      </Button>
+                      <Space size="small">
+                        <Popconfirm
+                          title="恢复默认阶段"
+                          description={`确认按${getSceneTypeLabel(watchedStatusPresetSceneType)}默认阶段模型重置当前状态规则吗？`}
+                          okText="恢复默认"
+                          cancelText="取消"
+                          onConfirm={handleRestoreStatusRules}
+                        >
+                          <Button size="small" icon={<ReloadOutlined />}>
+                            恢复默认阶段
+                          </Button>
+                        </Popconfirm>
+                        <Button
+                          size="small"
+                          icon={<PlusOutlined />}
+                          onClick={() => {
+                            const nextRules = [...watchedStatusRules, {
+                              id: `rule_${Date.now()}`,
+                              key: '',
+                              name: '',
+                              stage: 'RUNNING',
+                              controlMode: 'COLLABORATIVE',
+                              entryEnabled: true,
+                              roleIds: [],
+                              description: '',
+                            }];
+                            templateForm.setFieldsValue({ statusRules: nextRules });
+                          }}
+                        >
+                          添加规则
+                        </Button>
+                      </Space>
                     </div>
+                    <div className="scene-template-guidance-panel">
+                      <div className="scene-template-guidance-title">当前空间主题阶段模型</div>
+                      <div className="scene-template-guidance-text">
+                        {`当前模板按 ${getSceneTypeLabel(watchedStatusPresetSceneType)} 的默认阶段模型解释这些规则。${currentStatusPreset.description}`}
+                      </div>
+                    </div>
+                    <div className="scene-template-mode-hint">
+                      阶段是平台级生命周期分类；具体名称和规则由空间主题预置。你可以调整状态名称、控制策略、开放进入和适用角色，但阶段类型仍限定为平台统一的 6 个阶段。
+                    </div>
+                    {statusRuleGuidance.length > 0 ? (
+                      <div className="scene-template-warning-list">
+                        {statusRuleGuidance.map((item) => (
+                          <div key={item} className="scene-template-warning-item">{item}</div>
+                        ))}
+                      </div>
+                    ) : null}
 
                     {watchedStatusRules.map((rule, index) => (
                       <div key={rule?.id || index} className="scene-template-list-card">
@@ -1638,6 +1720,9 @@ export default function SceneTemplateModule() {
                           <Form.Item label="状态阶段" name={['statusRules', index, 'stage']}>
                             <Select options={STATUS_RULE_STAGE_OPTIONS} />
                           </Form.Item>
+                          <div className="scene-template-mode-hint scene-template-form-span-2">
+                            {getStatusRuleStageDescription(rule?.stage)}
+                          </div>
                           <Form.Item label="控制策略" name={['statusRules', index, 'controlMode']}>
                             <Select options={STATUS_RULE_CONTROL_OPTIONS} />
                           </Form.Item>

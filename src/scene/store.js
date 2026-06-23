@@ -88,6 +88,15 @@ export const STATUS_RULE_STAGE_OPTIONS = [
   { value: 'ARCHIVED', label: '归档阶段' },
 ];
 
+const STATUS_RULE_STAGE_DESCRIPTION_MAP = Object.freeze({
+  PREPARING: '用于资料、成员、工具和任务准备，通常仅组织者或管理员可编辑。',
+  OPEN: '用于报名、招募、邀请或征集，强调允许新增成员进入主题。',
+  RUNNING: '用于主题正式运行中的学习、协作、互动和提交。',
+  REVIEWING: '用于评阅、审核、评分和反馈，通常由评审角色主导。',
+  CLOSED: '用于业务结束后的回看、复盘和结果查看，通常停止新增与编辑。',
+  ARCHIVED: '用于历史沉淀和留档，通常仅保留浏览与检索能力。',
+});
+
 export const STATUS_RULE_CONTROL_OPTIONS = [
   { value: 'ADMIN_ONLY', label: '仅管理端可编辑' },
   { value: 'COLLABORATIVE', label: '协同开放' },
@@ -248,6 +257,178 @@ const DEFAULT_VERSIONING_CONFIG = Object.freeze({
   allowRollback: true,
   allowDeletePublished: true,
   description: '',
+});
+
+const SCENE_TYPE_STATUS_PRESETS = Object.freeze({
+  TEACHING: {
+    description: '教学场景通常采用“准备 -> 运行 -> 结束”三段式，聚焦备课、授课和结课复盘。',
+    rules: [
+      {
+        key: 'preparing',
+        name: '备课中',
+        stage: 'PREPARING',
+        controlMode: 'ADMIN_ONLY',
+        entryEnabled: false,
+        roleKeys: ['teacher'],
+        description: '仅教师可编辑资料、配置课堂工具和作业。',
+      },
+      {
+        key: 'running',
+        name: '上课中',
+        stage: 'RUNNING',
+        controlMode: 'COLLABORATIVE',
+        entryEnabled: true,
+        roleKeys: ['teacher', 'student'],
+        description: '开放课堂互动、练习、问答与作业提交。',
+      },
+      {
+        key: 'closed',
+        name: '已结课',
+        stage: 'CLOSED',
+        controlMode: 'READ_ONLY',
+        entryEnabled: false,
+        roleKeys: ['teacher', 'student'],
+        description: '保留回看与作业复盘，停止新增和编辑。',
+      },
+    ],
+  },
+  RESEARCH: {
+    description: '教研场景通常采用“准备 -> 运行 -> 归档”，聚焦议题筹备、研讨共创和成果归档。',
+    rules: [
+      {
+        key: 'planning',
+        name: '筹备中',
+        stage: 'PREPARING',
+        controlMode: 'ADMIN_ONLY',
+        entryEnabled: false,
+        roleKeys: ['leader', 'teacher'],
+        description: '聚焦议题征集、资料预热和议程准备。',
+      },
+      {
+        key: 'running',
+        name: '研讨中',
+        stage: 'RUNNING',
+        controlMode: 'COLLABORATIVE',
+        entryEnabled: true,
+        roleKeys: ['leader', 'teacher', 'expert'],
+        description: '开放论坛、白板和共创文档协同。',
+      },
+      {
+        key: 'archived',
+        name: '已归档',
+        stage: 'ARCHIVED',
+        controlMode: 'READ_ONLY',
+        entryEnabled: false,
+        roleKeys: ['leader', 'teacher', 'expert'],
+        description: '固化成果，保留浏览与复盘入口。',
+      },
+    ],
+  },
+  TRAINING: {
+    description: '培训场景通常采用“开放 -> 运行 -> 评阅 -> 结束”，覆盖报名入营、学习过程和结营评定。',
+    rules: [
+      {
+        key: 'enrolling',
+        name: '报名中',
+        stage: 'OPEN',
+        controlMode: 'SUBMISSION_ONLY',
+        entryEnabled: true,
+        roleKeys: ['admin', 'student'],
+        description: '开放报名、邀请、批量导入与入营确认。',
+      },
+      {
+        key: 'running',
+        name: '培训中',
+        stage: 'RUNNING',
+        controlMode: 'COLLABORATIVE',
+        entryEnabled: false,
+        roleKeys: ['admin', 'student'],
+        description: '开放课程学习、直播参与和任务提交。',
+      },
+      {
+        key: 'reviewing',
+        name: '评阅中',
+        stage: 'REVIEWING',
+        controlMode: 'REVIEW_ONLY',
+        entryEnabled: false,
+        roleKeys: ['admin', 'reviewer'],
+        description: '对考试和成果进入评阅反馈环节。',
+      },
+      {
+        key: 'closed',
+        name: '已结营',
+        stage: 'CLOSED',
+        controlMode: 'READ_ONLY',
+        entryEnabled: false,
+        roleKeys: ['admin', 'reviewer', 'student'],
+        description: '仅保留复盘、证书与成果回看。',
+      },
+    ],
+  },
+  COMMUNITY: {
+    description: '社区共创以持续运营为常态，可叠加活动开放期与沉淀回看期。',
+    rules: [
+      {
+        key: 'operating',
+        name: '运营中',
+        stage: 'RUNNING',
+        controlMode: 'COLLABORATIVE',
+        entryEnabled: true,
+        roleKeys: ['operator', 'member', 'observer'],
+        description: '开放内容共创、报名和活动讨论。',
+      },
+      {
+        key: 'campaign',
+        name: '专题活动中',
+        stage: 'OPEN',
+        controlMode: 'SUBMISSION_ONLY',
+        entryEnabled: true,
+        roleKeys: ['operator', 'member'],
+        description: '突出展示活动报名、互动参与和精选内容。',
+      },
+      {
+        key: 'retrospective',
+        name: '沉淀中',
+        stage: 'CLOSED',
+        controlMode: 'READ_ONLY',
+        entryEnabled: false,
+        roleKeys: ['operator', 'member', 'observer'],
+        description: '聚焦精选内容沉淀、经验复盘与对外展示。',
+      },
+    ],
+  },
+  CUSTOM: {
+    description: '自定义场景默认提供“准备 -> 运行 -> 结束”的通用三段式，可按模板继续调整。',
+    rules: [
+      {
+        key: 'preparing',
+        name: '准备中',
+        stage: 'PREPARING',
+        controlMode: 'ADMIN_ONLY',
+        entryEnabled: false,
+        roleKeys: [],
+        description: '用于准备资料、成员、目录和工具配置。',
+      },
+      {
+        key: 'running',
+        name: '运行中',
+        stage: 'RUNNING',
+        controlMode: 'COLLABORATIVE',
+        entryEnabled: true,
+        roleKeys: [],
+        description: '用于主题正式运行中的协作、学习与提交。',
+      },
+      {
+        key: 'closed',
+        name: '已结束',
+        stage: 'CLOSED',
+        controlMode: 'READ_ONLY',
+        entryEnabled: false,
+        roleKeys: [],
+        description: '用于业务结束后的回看、复盘和结果浏览。',
+      },
+    ],
+  },
 });
 
 const RESOURCE_ACCESS_TYPE_VALUES = ROLE_DATA_ACCESS_AREA_OPTIONS.map((item) => item.value);
@@ -420,8 +601,27 @@ export function getStatusRuleStageLabel(value) {
   return optionLabel(STATUS_RULE_STAGE_OPTIONS, value, value || '-');
 }
 
+export function getStatusRuleStageDescription(value) {
+  return STATUS_RULE_STAGE_DESCRIPTION_MAP[value] || '用于定义主题在该阶段下的默认业务边界和可执行动作。';
+}
+
 export function getStatusRuleControlLabel(value) {
   return optionLabel(STATUS_RULE_CONTROL_OPTIONS, value, value || '-');
+}
+
+function normalizeStatusPresetSceneType(sceneType) {
+  return Object.prototype.hasOwnProperty.call(SCENE_TYPE_STATUS_PRESETS, sceneType)
+    ? sceneType
+    : 'CUSTOM';
+}
+
+export function getSceneTypeStatusPreset(sceneType = 'CUSTOM') {
+  const normalizedType = normalizeStatusPresetSceneType(sceneType);
+  return {
+    sceneType: normalizedType,
+    label: getSceneTypeLabel(normalizedType),
+    ...(SCENE_TYPE_STATUS_PRESETS[normalizedType] || SCENE_TYPE_STATUS_PRESETS.CUSTOM),
+  };
 }
 
 function defaultMenuKeyByType(sceneType) {
@@ -710,6 +910,66 @@ function normalizeStatusRule(rule, index, normalizeRoleIds = (roleIds) => (
   };
 }
 
+export function buildSceneTypeStatusRules(sceneType = 'CUSTOM', roles = []) {
+  const preset = getSceneTypeStatusPreset(sceneType);
+  const shouldFallbackToRoleKey = !(Array.isArray(roles) && roles.some((role) => role?.id));
+  const roleRefMap = new Map(
+    (Array.isArray(roles) ? roles : [])
+      .filter((role) => role?.key || role?.id)
+      .map((role) => [role.key, role.id || role.key]),
+  );
+  return preset.rules.map((rule, index) => normalizeStatusRule({
+    ...rule,
+    roleIds: Array.isArray(rule.roleKeys) && rule.roleKeys.length > 0
+      ? rule.roleKeys
+        .map((roleKey) => roleRefMap.get(roleKey) || (shouldFallbackToRoleKey ? roleKey : null))
+        .filter(Boolean)
+      : [],
+  }, index, (roleIds) => (Array.isArray(roleIds) ? roleIds.filter(Boolean) : [])));
+}
+
+export function getSceneTypeStatusGuidance(sceneType = 'CUSTOM', statusRules = []) {
+  const rules = Array.isArray(statusRules) ? statusRules : [];
+  const normalizedType = normalizeStatusPresetSceneType(sceneType);
+  const stageCountMap = rules.reduce((map, rule) => {
+    const stage = trimToNull(rule?.stage);
+    if (!stage) return map;
+    map.set(stage, (map.get(stage) || 0) + 1);
+    return map;
+  }, new Map());
+  const messages = [];
+
+  if (normalizedType === 'TRAINING') {
+    if (!stageCountMap.has('OPEN')) {
+      messages.push('培训场景通常应包含“开放阶段”，用于报名、邀请或导入成员。');
+    }
+    if (!stageCountMap.has('REVIEWING')) {
+      messages.push('培训场景通常应包含“评阅阶段”，用于考试、作业和成果评定。');
+    }
+  }
+
+  if (normalizedType === 'TEACHING' && stageCountMap.has('ARCHIVED')) {
+    messages.push('教学场景一般不单独配置“归档阶段”，通常使用“结束阶段”完成结课与复盘。');
+  }
+
+  rules.forEach((rule) => {
+    if (rule?.stage === 'OPEN' && rule?.entryEnabled === false) {
+      messages.push(`规则“${rule?.name || rule?.key || '未命名规则'}”属于开放阶段，通常应允许进入。`);
+    }
+    if (rule?.stage === 'REVIEWING' && rule?.controlMode !== 'REVIEW_ONLY') {
+      messages.push(`规则“${rule?.name || rule?.key || '未命名规则'}”属于评阅阶段，通常建议使用“仅开放评阅”。`);
+    }
+  });
+
+  Array.from(stageCountMap.entries())
+    .filter(([, count]) => count > 1)
+    .forEach(([stage, count]) => {
+      messages.push(`${getStatusRuleStageLabel(stage)}已配置 ${count} 条规则，保存后会并行生效，请确认不是重复配置。`);
+    });
+
+  return Array.from(new Set(messages));
+}
+
 function normalizeToolConfig(tool, index) {
   return {
     id: tool?.id || createId(`tool_${index}`),
@@ -746,6 +1006,7 @@ function normalizeAgent(agent, index) {
 
 function normalizeTemplate(input = {}) {
   const sceneType = trimToNull(input.sceneType) || 'CUSTOM';
+  const statusPresetSceneType = normalizeStatusPresetSceneType(trimToNull(input.statusPresetSceneType) || sceneType);
   const builtIn = Boolean(input.builtIn);
   const defaultCoverPresetId = getDefaultSceneThemeCoverPresetId(sceneType);
   const coverSource = trimToNull(input.theme?.coverSource) === 'UPLOAD'
@@ -773,6 +1034,7 @@ function normalizeTemplate(input = {}) {
     templateCode: trimToNull(input.templateCode) || `TPL-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
     name: trimToNull(input.name) || '未命名场景模板',
     sceneType,
+    statusPresetSceneType,
     defaultMenuKey: trimToNull(input.defaultMenuKey) || defaultMenuKeyByType(sceneType),
     description: trimToNull(input.description) || '',
     status: trimToNull(input.status) || 'ACTIVE',
@@ -955,11 +1217,7 @@ function buildPresetTemplates() {
         { key: 'end_time', label: '结束时间', type: 'DATETIME', required: true },
         { key: 'course_target', label: '课程目标', type: 'TEXTAREA', required: false },
       ],
-      statusRules: [
-        { key: 'preparing', name: '备课中', stage: 'PREPARING', controlMode: 'ADMIN_ONLY', entryEnabled: false, roleIds: ['teacher'], description: '仅教师可编辑资料、配置课堂工具和作业。' },
-        { key: 'running', name: '上课中', stage: 'RUNNING', controlMode: 'COLLABORATIVE', entryEnabled: true, roleIds: ['teacher', 'student'], description: '开放课堂互动、练习、问答与作业提交。' },
-        { key: 'closed', name: '已结课', stage: 'CLOSED', controlMode: 'READ_ONLY', entryEnabled: false, roleIds: ['teacher', 'student'], description: '保留回看与作业复盘，停止新增和编辑。' },
-      ],
+      statusRules: buildSceneTypeStatusRules('TEACHING'),
       toolAreas: {
         resourceAreaTools: ['ONLINE_DOC', 'RESOURCE_LIBRARY', 'OFFICE_UPLOAD', 'LIVE'],
         resultAreaTools: ['WHITEBOARD', 'FORUM', 'EXAM'],
@@ -1064,11 +1322,7 @@ function buildPresetTemplates() {
         { key: 'meeting_time', label: '研讨时间', type: 'DATETIME', required: false },
         { key: 'semester', label: '学期', type: 'SELECT', required: false, description: '如：2026春季学期' },
       ],
-      statusRules: [
-        { key: 'planning', name: '筹备中', stage: 'PREPARING', controlMode: 'ADMIN_ONLY', entryEnabled: false, roleIds: ['leader', 'teacher'], description: '聚焦议题征集、资料预热和议程准备。' },
-        { key: 'running', name: '研讨中', stage: 'RUNNING', controlMode: 'COLLABORATIVE', entryEnabled: true, roleIds: ['leader', 'teacher', 'expert'], description: '开放论坛、白板和共创文档协同。' },
-        { key: 'archived', name: '已归档', stage: 'ARCHIVED', controlMode: 'READ_ONLY', entryEnabled: false, roleIds: ['leader', 'teacher', 'expert'], description: '固化成果，保留浏览与复盘入口。' },
-      ],
+      statusRules: buildSceneTypeStatusRules('RESEARCH'),
       toolAreas: {
         resourceAreaTools: ['ONLINE_DOC', 'RESOURCE_LIBRARY', 'WHITEBOARD'],
         resultAreaTools: ['FORUM', 'LIVE', 'ONLINE_DOC'],
@@ -1173,12 +1427,7 @@ function buildPresetTemplates() {
         { key: 'end_date', label: '结束时间', type: 'DATETIME', required: true },
         { key: 'target_group', label: '培训对象', type: 'TEXT', required: false },
       ],
-      statusRules: [
-        { key: 'enrolling', name: '报名中', stage: 'OPEN', controlMode: 'SUBMISSION_ONLY', entryEnabled: true, roleIds: ['admin', 'student'], description: '开放报名、邀请、批量导入与入营确认。' },
-        { key: 'running', name: '培训中', stage: 'RUNNING', controlMode: 'COLLABORATIVE', entryEnabled: false, roleIds: ['admin', 'student'], description: '开放课程学习、直播参与和任务提交。' },
-        { key: 'reviewing', name: '评阅中', stage: 'REVIEWING', controlMode: 'REVIEW_ONLY', entryEnabled: false, roleIds: ['admin', 'reviewer'], description: '对考试和成果进入评阅反馈环节。' },
-        { key: 'closed', name: '已结营', stage: 'CLOSED', controlMode: 'READ_ONLY', entryEnabled: false, roleIds: ['admin', 'reviewer', 'student'], description: '仅保留复盘、证书与成果回看。' },
-      ],
+      statusRules: buildSceneTypeStatusRules('TRAINING'),
       toolAreas: {
         resourceAreaTools: ['RESOURCE_LIBRARY', 'ONLINE_DOC', 'LIVE', 'ONLINE_VIDEO'],
         resultAreaTools: ['EXAM', 'SURVEY', 'REGISTER', 'FORUM'],
@@ -1283,11 +1532,7 @@ function buildPresetTemplates() {
         { key: 'operation_cycle', label: '运营周期', type: 'TEXT', required: false },
         { key: 'start_time', label: '启动时间', type: 'DATE', required: false },
       ],
-      statusRules: [
-        { key: 'operating', name: '运营中', stage: 'RUNNING', controlMode: 'COLLABORATIVE', entryEnabled: true, roleIds: ['operator', 'member', 'observer'], description: '开放内容共创、报名和活动讨论。' },
-        { key: 'campaign', name: '专题活动中', stage: 'OPEN', controlMode: 'SUBMISSION_ONLY', entryEnabled: true, roleIds: ['operator', 'member'], description: '突出展示活动报名、互动参与和精选内容。' },
-        { key: 'retrospective', name: '沉淀中', stage: 'CLOSED', controlMode: 'READ_ONLY', entryEnabled: false, roleIds: ['operator', 'member', 'observer'], description: '聚焦精选内容沉淀、经验复盘与对外展示。' },
-      ],
+      statusRules: buildSceneTypeStatusRules('COMMUNITY'),
       toolAreas: {
         resourceAreaTools: ['ONLINE_DOC', 'RESOURCE_LIBRARY', 'URL'],
         resultAreaTools: ['FORUM', 'REGISTER', 'VOTE', 'SURVEY'],
@@ -1435,10 +1680,13 @@ export function getSceneTemplate(id) {
 }
 
 export function createTemplateDraft(sceneType = 'CUSTOM') {
+  const roles = [createRoleDraft(1)];
   return normalizeTemplate({
     sceneType,
     status: 'ACTIVE',
-    roles: [createRoleDraft(1)],
+    statusPresetSceneType: sceneType,
+    roles,
+    statusRules: buildSceneTypeStatusRules(sceneType, roles),
     topicPage: {
       modeTabs: createModeTabs(),
     },

@@ -36,6 +36,7 @@ import {
   TagsOutlined,
   ScanOutlined,
   FileTextOutlined,
+  NodeIndexOutlined,
 } from '@ant-design/icons';
 import TopicDetail from './TopicDetail';
 import LeaveWorkflow from './workflow/LeaveWorkflow';
@@ -60,6 +61,7 @@ import DevDocsPage from './appCenter/DevDocsPage';
 import DevBackendPage from './appCenter/DevBackendPage';
 import DmsModule from './dms/DmsModule';
 import IntegrationModule from './integration/IntegrationModule';
+import KnowledgeGraphModule from './knowledgeGraph/KnowledgeGraphModule';
 import MyProfileModule from './myProfile/MyProfileModule';
 import MessagesModule from './messages/MessagesModule';
 import AgentQuotaModule from './agentQuota/AgentQuotaModule';
@@ -140,6 +142,7 @@ const iconBarItems = [
   { key: 'resource-lib', icon: <BookOutlined />, label: '资料库' },
   { key: 'resource-parse', icon: <ScanOutlined />, label: '资料解析' },
   { key: 'knowledge-space', icon: <BulbOutlined />, label: '知识空间' },
+  { key: 'knowledge-graph', icon: <NodeIndexOutlined />, label: '知识图谱' },
   { key: 'messages', icon: <MessageOutlined />, label: '消息' },
   { key: 'org-management', icon: <TeamOutlined />, label: '组织管理' },
   { key: 'workflow', icon: <ApartmentOutlined />, label: '工作流' },
@@ -508,6 +511,8 @@ function App() {
       openResourceLibraryPage();
     } else if (key === 'resource-parse') {
       setCurrentPage('resource-parse');
+    } else if (key === 'knowledge-graph') {
+      setCurrentPage('knowledge-graph');
     } else if (key === 'archive') {
       setCurrentPage('archive');
     } else if (key === 'study-club') {
@@ -561,6 +566,7 @@ function App() {
       currentPage === 'certificate-issue' ||
       currentPage === 'resource-lib' ||
       currentPage === 'resource-parse' ||
+      currentPage === 'knowledge-graph' ||
       currentPage === 'archive' ||
       currentPage === 'study-club' ||
       currentPage === 'learning-analytics' ||
@@ -658,6 +664,8 @@ function App() {
         <ResourceLibrary />
       ) : currentPage === 'resource-parse' ? (
         <ResourceParseStatus />
+      ) : currentPage === 'knowledge-graph' ? (
+        <KnowledgeGraphModule />
       ) : currentPage === 'archive' ? (
         <ArchiveModule />
       ) : currentPage === 'study-club' ? (
