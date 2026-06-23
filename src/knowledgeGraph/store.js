@@ -18,6 +18,7 @@ export const RELATION_TYPE_OPTIONS = [
 ];
 
 const RELATION_LABEL_MAP = Object.fromEntries(RELATION_TYPE_OPTIONS.map((item) => [item.value, item.label]));
+const EDGE_LINE_STYLE_OPTIONS = ['solid', 'dashed', 'dotted'];
 
 function createId(prefix) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -48,6 +49,46 @@ function trimText(value) {
 function sanitizeTags(value) {
   const source = Array.isArray(value) ? value : String(value || '').split(',');
   return Array.from(new Set(source.map((item) => trimText(item)).filter(Boolean)));
+}
+
+function sanitizeEdgeLineStyle(value, fallback = 'solid') {
+  return EDGE_LINE_STYLE_OPTIONS.includes(value) ? value : fallback;
+}
+
+function sanitizeEdgeStrokeColor(value, fallback) {
+  const color = trimText(value);
+  return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(color) ? color : fallback;
+}
+
+function sanitizeEdgeStrokeWidth(value, fallback = 2) {
+  const next = Number(value);
+  if (!Number.isFinite(next)) return fallback;
+  return Math.max(1, Math.min(8, next));
+}
+
+function sanitizeEdgeAnimated(value, fallback = false) {
+  if (typeof value === 'boolean') return value;
+  return fallback;
+}
+
+function normalizeRelationAppearance(relation = {}) {
+  const relationType = relation.relationType || 'RELATED';
+  const fallbackAnimated = relationType === 'PRECEDES';
+  return {
+    strokeColor: sanitizeEdgeStrokeColor(relation.strokeColor, '#a78bfa'),
+    strokeWidth: sanitizeEdgeStrokeWidth(relation.strokeWidth, 1.8),
+    lineStyle: sanitizeEdgeLineStyle(relation.lineStyle, 'solid'),
+    animated: sanitizeEdgeAnimated(relation.animated, fallbackAnimated),
+  };
+}
+
+function normalizeStageEdgeAppearance(edge = {}) {
+  return {
+    strokeColor: sanitizeEdgeStrokeColor(edge.strokeColor, '#60a5fa'),
+    strokeWidth: sanitizeEdgeStrokeWidth(edge.strokeWidth, 2),
+    lineStyle: sanitizeEdgeLineStyle(edge.lineStyle, 'solid'),
+    animated: sanitizeEdgeAnimated(edge.animated, false),
+  };
 }
 
 function buildSection(id, title, color, description, sortNo) {
@@ -264,6 +305,7 @@ function normalizeStructuredView(layout, pointsForGraph = []) {
         source: edge.source,
         target: edge.target,
         label: trimText(edge.label),
+        ...normalizeStageEdgeAppearance(edge),
         createdAt: edge.createdAt || nowText(),
         updatedAt: edge.updatedAt || edge.createdAt || nowText(),
       }))
@@ -611,6 +653,7 @@ function normalizeState(state) {
       relationType: relation.relationType || 'RELATED',
       label: trimText(relation.label) || RELATION_LABEL_MAP[relation.relationType] || '关联',
       weight: Math.max(1, Number(relation.weight || 1)),
+      ...normalizeRelationAppearance(relation),
       createdAt: relation.createdAt || nowText(),
       updatedAt: relation.updatedAt || relation.createdAt || nowText(),
     }));
@@ -765,6 +808,10 @@ function createPointRecord(graphId, payload = {}) {
 function createRelationRecord(graphId, payload = {}) {
   const createdAt = nowText();
   const relationType = payload.relationType || 'RELATED';
+  const appearance = normalizeRelationAppearance({
+    ...payload,
+    relationType,
+  });
   return {
     id: createId('kg_relation'),
     graphId,
@@ -773,6 +820,7 @@ function createRelationRecord(graphId, payload = {}) {
     relationType,
     label: trimText(payload.label) || RELATION_LABEL_MAP[relationType] || '关联',
     weight: Math.max(1, Number(payload.weight || 1)),
+    ...appearance,
     createdAt,
     updatedAt: createdAt,
   };
@@ -780,11 +828,13 @@ function createRelationRecord(graphId, payload = {}) {
 
 function createStageEdgeRecord(payload = {}) {
   const createdAt = nowText();
+  const appearance = normalizeStageEdgeAppearance(payload);
   return {
     id: createId('kg_stage_edge'),
     source: payload.source,
     target: payload.target,
     label: trimText(payload.label),
+    ...appearance,
     createdAt,
     updatedAt: createdAt,
   };
@@ -1172,6 +1222,18 @@ export function updateRelation(graphId, relationId, patch = {}) {
     if (typeof patch.relationType !== 'undefined') relation.relationType = patch.relationType || relation.relationType;
     if (typeof patch.label !== 'undefined') relation.label = trimText(patch.label) || RELATION_LABEL_MAP[relation.relationType] || relation.label;
     if (typeof patch.weight !== 'undefined') relation.weight = Math.max(1, Number(patch.weight || relation.weight));
+    if (typeof patch.strokeColor !== 'undefined') {
+      relation.strokeColor = sanitizeEdgeStrokeColor(patch.strokeColor, relation.strokeColor || '#a78bfa');
+    }
+    if (typeof patch.strokeWidth !== 'undefined') {
+      relation.strokeWidth = sanitizeEdgeStrokeWidth(patch.strokeWidth, relation.strokeWidth || 1.8);
+    }
+    if (typeof patch.lineStyle !== 'undefined') {
+      relation.lineStyle = sanitizeEdgeLineStyle(patch.lineStyle, relation.lineStyle || 'solid');
+    }
+    if (typeof patch.animated !== 'undefined') {
+      relation.animated = sanitizeEdgeAnimated(patch.animated, relation.animated ?? relation.relationType === 'PRECEDES');
+    }
     relation.updatedAt = nowText();
   });
 }
@@ -1369,6 +1431,18 @@ export function updateStructuredStageEdge(graphId, edgeId, patch = {}) {
     const edge = (layout.structuredView.stageEdges || []).find((item) => item.id === edgeId);
     if (!edge) return;
     if (typeof patch.label !== 'undefined') edge.label = trimText(patch.label);
+    if (typeof patch.strokeColor !== 'undefined') {
+      edge.strokeColor = sanitizeEdgeStrokeColor(patch.strokeColor, edge.strokeColor || '#60a5fa');
+    }
+    if (typeof patch.strokeWidth !== 'undefined') {
+      edge.strokeWidth = sanitizeEdgeStrokeWidth(patch.strokeWidth, edge.strokeWidth || 2);
+    }
+    if (typeof patch.lineStyle !== 'undefined') {
+      edge.lineStyle = sanitizeEdgeLineStyle(patch.lineStyle, edge.lineStyle || 'solid');
+    }
+    if (typeof patch.animated !== 'undefined') {
+      edge.animated = sanitizeEdgeAnimated(patch.animated, edge.animated ?? false);
+    }
     edge.updatedAt = nowText();
   });
 }

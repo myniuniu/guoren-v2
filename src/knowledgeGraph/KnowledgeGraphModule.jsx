@@ -13,6 +13,7 @@ import {
   Segmented,
   Select,
   Space,
+  Switch,
   Table,
   Tag,
   Tooltip,
@@ -27,14 +28,10 @@ import {
   FileAddOutlined,
   FolderAddOutlined,
   NodeIndexOutlined,
-  PlusOutlined,
   RobotOutlined,
   SettingOutlined,
   ShareAltOutlined,
-  TableOutlined,
 } from '@ant-design/icons';
-import ReactFlow, { Background, Controls, MiniMap } from 'reactflow';
-import 'reactflow/dist/style.css';
 import { getAllItemsAcrossLibraries, loadResourceLib } from '../resourceLib/resourceLibStore';
 import {
   acceptGraphDraft,
@@ -67,7 +64,6 @@ import {
   removeStructuredStageEdge,
   updateCollection,
   updateGraph,
-  updateGraphNodePosition,
   updatePoint,
   updateRelation,
   updateStructuredStage,
@@ -80,6 +76,11 @@ import StructuredKnowledgeGraphView from './StructuredKnowledgeGraphView';
 import './KnowledgeGraphModule.css';
 const RELATION_TYPE_LABEL_MAP = Object.fromEntries(RELATION_TYPE_OPTIONS.map((item) => [item.value, item.label]));
 const POINT_TYPE_LABEL_MAP = Object.fromEntries(KNOWLEDGE_POINT_TYPE_OPTIONS.map((item) => [item.value, item.label]));
+const EDGE_LINE_STYLE_OPTIONS = [
+  { label: '实线', value: 'solid' },
+  { label: '虚线', value: 'dashed' },
+  { label: '点线', value: 'dotted' },
+];
 
 function formatDateTime(value) {
   if (!value) return '-';
@@ -530,7 +531,7 @@ function KnowledgeGraphModule() {
   });
   const [selection, setSelection] = useState(() => defaultSelection(selectedGraphId));
   const [inspectorOpen, setInspectorOpen] = useState(false);
-  const [viewMode, setViewMode] = useState('graph');
+  const [viewMode, setViewMode] = useState('curriculum');
   const [collectionModalState, setCollectionModalState] = useState({ open: false, mode: 'create', record: null });
   const [graphModalState, setGraphModalState] = useState({ open: false, mode: 'create', record: null });
   const [pointModalState, setPointModalState] = useState({ open: false });
@@ -601,12 +602,6 @@ function KnowledgeGraphModule() {
   const structuredStageEdges = structuredView.stageEdges || [];
 
   useEffect(() => {
-    if (currentGraph?.viewModeDefault) {
-      setViewMode(currentGraph.viewModeDefault);
-    }
-  }, [currentGraph?.id, currentGraph?.viewModeDefault]);
-
-  useEffect(() => {
     if (!selectedGraphId) {
       setSelection(null);
       return;
@@ -641,10 +636,14 @@ function KnowledgeGraphModule() {
       setInspectorOpen(false);
       return;
     }
+    if (viewMode === 'graph') {
+      setInspectorOpen(false);
+      return;
+    }
     if (selection && selection.type !== 'graph') {
       setInspectorOpen(true);
     }
-  }, [pageMode, selectedGraphId, selection]);
+  }, [pageMode, selectedGraphId, selection, viewMode]);
 
   const selectedPoint = useMemo(
     () => (selection?.type === 'point' ? currentPoints.find((point) => point.id === selection.id) || null : null),
@@ -668,7 +667,6 @@ function KnowledgeGraphModule() {
       graphEditorForm.setFieldsValue({
         name: currentGraph.name,
         description: currentGraph.description,
-        viewModeDefault: currentGraph.viewModeDefault,
       });
     }
   }, [currentGraph, graphEditorForm, selection]);
@@ -702,6 +700,10 @@ function KnowledgeGraphModule() {
         label: selectedRelation.label,
         relationType: selectedRelation.relationType,
         weight: selectedRelation.weight,
+        strokeColor: selectedRelation.strokeColor || '#a78bfa',
+        strokeWidth: Number(selectedRelation.strokeWidth || 1.8),
+        lineStyle: selectedRelation.lineStyle || 'solid',
+        animated: Boolean(selectedRelation.animated),
       });
     }
   }, [relationEditorForm, selectedRelation, selection]);
@@ -710,6 +712,10 @@ function KnowledgeGraphModule() {
     if (selection?.type === 'stage-edge' && selectedStageEdge) {
       stageEdgeEditorForm.setFieldsValue({
         label: selectedStageEdge.label,
+        strokeColor: selectedStageEdge.strokeColor || '#60a5fa',
+        strokeWidth: Number(selectedStageEdge.strokeWidth || 2),
+        lineStyle: selectedStageEdge.lineStyle || 'solid',
+        animated: Boolean(selectedStageEdge.animated),
       });
     }
   }, [selectedStageEdge, selection, stageEdgeEditorForm]);
@@ -722,52 +728,6 @@ function KnowledgeGraphModule() {
     () => Object.fromEntries(currentPoints.map((point) => [point.id, point])),
     [currentPoints],
   );
-
-  const graphNodes = useMemo(() => currentPoints.map((point, index) => ({
-    id: point.id,
-    position: currentLayout.graphView.positions?.[point.id] || { x: 80 + (index % 3) * 260, y: 80 + Math.floor(index / 3) * 160 },
-    data: {
-      label: (
-        <div className="kg-flow-node">
-          <div className="kg-flow-node-head">
-            <span className="kg-flow-node-title">{point.title}</span>
-            <span className="kg-flow-node-type">{POINT_TYPE_LABEL_MAP[point.type] || point.type}</span>
-          </div>
-          <div className="kg-flow-node-summary">{point.summary || '未填写知识点摘要'}</div>
-          <div className="kg-flow-node-footer">
-            <span>{point.tags?.length || 0} 个标签</span>
-            <span>{point.resourceBindings?.length || 0} 条资料</span>
-          </div>
-        </div>
-      ),
-    },
-    selected: selection?.type === 'point' && selection.id === point.id,
-    style: {
-      borderRadius: 18,
-      border: selection?.type === 'point' && selection.id === point.id ? '2px solid #0f172a' : '1px solid rgba(15, 23, 42, 0.12)',
-      background: point.meta?.color || '#4667d6',
-      color: '#fff',
-      width: 220,
-      padding: 16,
-      boxShadow: '0 18px 40px rgba(15, 23, 42, 0.18)',
-    },
-  })), [currentLayout.graphView.positions, currentPoints, selection]);
-
-  const graphEdges = useMemo(() => currentRelations.map((relation) => ({
-    id: relation.id,
-    source: relation.sourceId,
-    target: relation.targetId,
-    label: relation.label,
-    type: 'smoothstep',
-    animated: relation.relationType === 'PRECEDES',
-    markerEnd: { type: 'arrowclosed', color: '#667085' },
-    labelStyle: { fill: '#475467', fontSize: 12, fontWeight: 600 },
-    style: {
-      stroke: selection?.type === 'relation' && selection.id === relation.id ? '#0f172a' : '#64748b',
-      strokeWidth: selection?.type === 'relation' && selection.id === relation.id ? 2.4 : 1.6,
-    },
-    selected: selection?.type === 'relation' && selection.id === relation.id,
-  })), [currentRelations, selection]);
 
   const pointsByStage = useMemo(() => {
     const grouped = {};
@@ -806,9 +766,10 @@ function KnowledgeGraphModule() {
     });
   };
 
-  const openGraphEditor = useCallback((graphId, collectionId = null) => {
+  const openGraphWorkspace = useCallback((graphId, collectionId = null, mode = 'curriculum') => {
     if (collectionId) setSelectedCollectionId(collectionId);
     setSelectedGraphId(graphId);
+    setViewMode(mode);
     setSelection(defaultSelection(graphId));
     setInspectorOpen(false);
     setPageMode('editor');
@@ -878,6 +839,7 @@ function KnowledgeGraphModule() {
         const nextGraph = nextState.graphs.find((graph) => !previousIds.has(graph.id));
         setSelectedCollectionId(values.collectionId);
         setSelectedGraphId(nextGraph?.id || null);
+        setViewMode('curriculum');
         setSelection(defaultSelection(nextGraph?.id || null));
         if (nextGraph?.id) setPageMode('editor');
         refreshAndMessage('图谱已创建');
@@ -937,7 +899,6 @@ function KnowledgeGraphModule() {
     try {
       const values = await graphEditorForm.validateFields();
       updateGraph(currentGraph.id, values);
-      setViewMode(values.viewModeDefault);
       refreshAndMessage('图谱信息已保存');
     } catch {
       // validation handled by antd
@@ -1047,16 +1008,6 @@ function KnowledgeGraphModule() {
     setDraftPreviewOpen(true);
   }, [currentPoints.length]);
 
-  const handleConnect = ({ source, target }) => {
-    if (!selectedGraphId || !source || !target || source === target) return;
-    createRelation(selectedGraphId, {
-      sourceId: source,
-      targetId: target,
-      relationType: 'RELATED',
-    });
-    refreshAndMessage('关系已创建');
-  };
-
   const handleCreateStructuredStageEdge = (payload) => {
     if (!selectedGraphId) return;
     createStructuredStageEdge(selectedGraphId, payload);
@@ -1141,14 +1092,6 @@ function KnowledgeGraphModule() {
             </Form.Item>
             <Form.Item label="图谱描述" name="description">
               <Input.TextArea rows={4} />
-            </Form.Item>
-            <Form.Item label="默认视图" name="viewModeDefault">
-              <Select
-                options={[
-                  { label: 'Neo4j 视图', value: 'graph' },
-                  { label: '结构化视图', value: 'curriculum' },
-                ]}
-              />
             </Form.Item>
             <Button type="primary" block onClick={handleSaveGraphEditor}>保存图谱属性</Button>
           </Form>
@@ -1401,6 +1344,18 @@ function KnowledgeGraphModule() {
             <Form.Item label="连线标签" name="label">
               <Input placeholder="例如：下一阶段、依次推进、学习路径" />
             </Form.Item>
+            <Form.Item label="连线颜色" name="strokeColor">
+              <input type="color" className="kg-color-input" />
+            </Form.Item>
+            <Form.Item label="连线粗细" name="strokeWidth">
+              <InputNumber min={1} max={8} step={0.2} style={{ width: '100%' }} />
+            </Form.Item>
+            <Form.Item label="线型" name="lineStyle">
+              <Select options={EDGE_LINE_STYLE_OPTIONS} />
+            </Form.Item>
+            <Form.Item label="动态效果" name="animated" valuePropName="checked">
+              <Switch checkedChildren="开启" unCheckedChildren="关闭" />
+            </Form.Item>
             <Space className="kg-inspector-actions">
               <Button type="primary" onClick={handleSaveStageEdgeEditor}>保存连线</Button>
               <Popconfirm
@@ -1430,7 +1385,7 @@ function KnowledgeGraphModule() {
                       {structuredStages.find((stage) => stage.id === selectedStageEdge.target)?.name || '未知阶段'}
                     </div>
                     <div className="kg-fill-list-meta">
-                      {selectedStageEdge.label || '未填写标签'} · 最近更新 {formatDateTime(selectedStageEdge.updatedAt)}
+                      {selectedStageEdge.label || '未填写标签'} · {selectedStageEdge.lineStyle || 'solid'} · {selectedStageEdge.strokeWidth || 2}px · 最近更新 {formatDateTime(selectedStageEdge.updatedAt)}
                     </div>
                   </div>
                 </div>
@@ -1478,6 +1433,18 @@ function KnowledgeGraphModule() {
             <Form.Item label="关系强度" name="weight">
               <InputNumber min={1} max={10} style={{ width: '100%' }} />
             </Form.Item>
+            <Form.Item label="连线颜色" name="strokeColor">
+              <input type="color" className="kg-color-input" />
+            </Form.Item>
+            <Form.Item label="连线粗细" name="strokeWidth">
+              <InputNumber min={1} max={8} step={0.2} style={{ width: '100%' }} />
+            </Form.Item>
+            <Form.Item label="线型" name="lineStyle">
+              <Select options={EDGE_LINE_STYLE_OPTIONS} />
+            </Form.Item>
+            <Form.Item label="动态效果" name="animated" valuePropName="checked">
+              <Switch checkedChildren="开启" unCheckedChildren="关闭" />
+            </Form.Item>
             <Space className="kg-inspector-actions">
               <Button type="primary" onClick={handleSaveRelationEditor}>保存关系</Button>
               <Popconfirm
@@ -1516,12 +1483,12 @@ function KnowledgeGraphModule() {
               <div className="kg-fill-panel-title">最近变更关系</div>
               <div className="kg-fill-list">
                 {recentRelations.map((relation) => (
-                  <div key={relation.id} className="kg-fill-list-item">
-                    <div className="kg-fill-list-copy">
-                      <div className="kg-fill-list-name">{pointMap[relation.sourceId]?.title || '未知'} → {pointMap[relation.targetId]?.title || '未知'}</div>
-                      <div className="kg-fill-list-meta">{relation.label} · {formatDateTime(relation.updatedAt)}</div>
+                    <div key={relation.id} className="kg-fill-list-item">
+                      <div className="kg-fill-list-copy">
+                        <div className="kg-fill-list-name">{pointMap[relation.sourceId]?.title || '未知'} → {pointMap[relation.targetId]?.title || '未知'}</div>
+                      <div className="kg-fill-list-meta">{relation.label} · {relation.lineStyle || 'solid'} · {relation.strokeWidth || 1.8}px · {formatDateTime(relation.updatedAt)}</div>
+                      </div>
                     </div>
-                  </div>
                 ))}
               </div>
             </div>
@@ -1604,12 +1571,12 @@ function KnowledgeGraphModule() {
                   </div>
                   <div className="kg-graph-grid">
                     {collectionGraphs.length ? collectionGraphs.map((graph) => (
-                      <div
+                          <div
                         key={graph.id}
                         className={`kg-graph-item kg-graph-item-grid ${graph.id === selectedGraphId ? 'is-selected' : ''}`}
                         onClick={(event) => {
                           event.stopPropagation();
-                          openGraphEditor(graph.id, collection.id);
+                          openGraphWorkspace(graph.id, collection.id, 'curriculum');
                         }}
                       >
                         <div className="kg-graph-item-main">
@@ -1623,6 +1590,16 @@ function KnowledgeGraphModule() {
                           </div>
                         </div>
                         <Space size={4}>
+                          <Tooltip title="预览视图">
+                            <Button
+                              type="text"
+                              icon={<NodeIndexOutlined />}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                openGraphWorkspace(graph.id, collection.id, 'graph');
+                              }}
+                            />
+                          </Tooltip>
                           <Tooltip title="复制图谱">
                             <Button
                               type="text"
@@ -1712,23 +1689,18 @@ function KnowledgeGraphModule() {
                     />
                     <div className="kg-toolbar-title">{currentGraph.name}</div>
                   </div>
-                  <div className="kg-toolbar-subtitle">{currentGraph.description || '维护知识点、关系和资料绑定，并支持 AI 草稿生成。'}</div>
+                  <div className="kg-toolbar-subtitle">
+                    {currentGraph.description || (viewMode === 'graph'
+                      ? '面向学员的知识图谱预览，可浏览知识点关系与学习路径。'
+                      : '维护知识点、关系和资料绑定，并支持 AI 草稿生成。')}
+                  </div>
                 </div>
                 <Space wrap>
-                  <Segmented
-                    value={viewMode}
-                    onChange={(value) => {
-                      setViewMode(value);
-                      updateGraph(currentGraph.id, { viewModeDefault: value });
-                      setSnapshot(loadKnowledgeGraphStore());
-                    }}
-                    options={[
-                      { label: 'Neo4j 视图', value: 'graph', icon: <NodeIndexOutlined /> },
-                      { label: '结构化视图', value: 'curriculum', icon: <TableOutlined /> },
-                    ]}
-                  />
-                  {viewMode === 'graph' ? (
+                  {viewMode === 'curriculum' ? (
                     <>
+                      <Button icon={<ApartmentOutlined />} onClick={() => openSectionModal('create')}>
+                        新增阶段
+                      </Button>
                       <Button icon={<SettingOutlined />} onClick={() => {
                         setSelection(defaultSelection(currentGraph.id));
                         setInspectorOpen(true);
@@ -1736,16 +1708,15 @@ function KnowledgeGraphModule() {
                       >
                         图谱属性
                       </Button>
-                      <Button icon={<PlusOutlined />} onClick={openPointModal}>新建知识点</Button>
+                      <Button type="primary" icon={<RobotOutlined />} onClick={() => setAiModalOpen(true)}>
+                        AI 生成图谱
+                      </Button>
                     </>
                   ) : null}
-                  <Button type="primary" icon={<RobotOutlined />} onClick={() => setAiModalOpen(true)}>
-                    AI 生成图谱
-                  </Button>
                 </Space>
               </div>
 
-              {currentDraft ? (
+              {viewMode === 'curriculum' && currentDraft ? (
                 <Alert
                   type="warning"
                   showIcon
@@ -1759,45 +1730,17 @@ function KnowledgeGraphModule() {
               <div className="kg-content kg-content-full">
                 <section className="kg-canvas-shell">
                   {viewMode === 'graph' ? (
-                    <div className="kg-graph-canvas">
-                      {currentPoints.length === 0 ? (
-                        <div className="kg-empty-shell">
-                          <Empty description="当前图谱还没有知识点" image={Empty.PRESENTED_IMAGE_SIMPLE}>
-                            <Space>
-                              <Button type="primary" icon={<PlusOutlined />} onClick={openPointModal}>新建知识点</Button>
-                              <Button icon={<RobotOutlined />} onClick={() => setAiModalOpen(true)}>AI 生成草稿</Button>
-                            </Space>
-                          </Empty>
-                        </div>
-                      ) : (
-                        <ReactFlow
-                          nodes={graphNodes}
-                          edges={graphEdges}
-                          fitView
-                          nodesDraggable
-                          nodesConnectable
-                          onNodeClick={(_, node) => {
-                            setSelection({ type: 'point', id: node.id });
-                            setInspectorOpen(true);
-                          }}
-                          onEdgeClick={(_, edge) => {
-                            setSelection({ type: 'relation', id: edge.id });
-                            setInspectorOpen(true);
-                          }}
-                          onPaneClick={() => {
-                            setSelection(defaultSelection(selectedGraphId));
-                            setInspectorOpen(false);
-                          }}
-                          onConnect={handleConnect}
-                          onNodeDragStop={(_, node) => updateGraphNodePosition(selectedGraphId, node.id, node.position)}
-                          proOptions={{ hideAttribution: true }}
-                        >
-                          <Background color="#d0d5dd" gap={20} />
-                          <Controls />
-                          <MiniMap pannable zoomable />
-                        </ReactFlow>
-                      )}
-                    </div>
+                    <StructuredKnowledgeGraphView
+                      graphId={selectedGraphId}
+                      points={currentPoints}
+                      relations={currentRelations}
+                      structuredView={structuredView}
+                      pointTypeLabelMap={POINT_TYPE_LABEL_MAP}
+                      relationTypeLabelMap={RELATION_TYPE_LABEL_MAP}
+                      selection={null}
+                      onSelectionChange={() => {}}
+                      readOnly
+                    />
                   ) : (
                     <StructuredKnowledgeGraphView
                       graphId={selectedGraphId}
@@ -1812,7 +1755,6 @@ function KnowledgeGraphModule() {
                         setInspectorOpen(nextSelection?.type && nextSelection.type !== 'graph');
                       }}
                       onCreateStage={() => openSectionModal('create')}
-                      onCreatePoint={openPointModal}
                       onDeleteStage={(stageId) => {
                         removeStructuredStage(selectedGraphId, stageId);
                         setInspectorOpen(false);

@@ -1,12 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Empty, Input, Segmented, Tag, Tooltip, message } from 'antd';
+import { Button, Empty, Input, Modal, Segmented, Tag, Tooltip, message } from 'antd';
 import {
-  ApartmentOutlined,
   DownOutlined,
   DeleteOutlined,
+  FileExcelOutlined,
+  FileImageOutlined,
+  FilePdfOutlined,
+  FilePptOutlined,
+  FileTextOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  PlusOutlined,
+  PlayCircleOutlined,
+  SoundOutlined,
   UpOutlined,
 } from '@ant-design/icons';
 import ReactFlow, {
@@ -133,6 +138,7 @@ function isSameNodeData(left, right, type) {
       && left.label === right.label
       && left.description === right.description
       && left.color === right.color
+      && left.readOnly === right.readOnly
       && left.pointCount === right.pointCount
       && left.bindingCount === right.bindingCount
       && left.height === right.height
@@ -148,6 +154,7 @@ function isSameNodeData(left, right, type) {
       && left.summary === right.summary
       && left.color === right.color
       && left.typeLabel === right.typeLabel
+      && left.readOnly === right.readOnly
       && left.tagCount === right.tagCount
       && left.bindingCount === right.bindingCount
       && left.canMoveUp === right.canMoveUp
@@ -199,8 +206,59 @@ function reconcileFlowEdges(previousEdges = [], nextEdges = []) {
   });
 }
 
+function renderBindingPreviewContent(binding) {
+  if (!binding) return null;
+  const fileType = binding.fileType || 'other';
+  const previewUrl = binding.snapshotUrl || '';
+
+  if (fileType === 'image') {
+    return previewUrl
+      ? <img src={previewUrl} alt={binding.resourceName} className="kg-binding-preview-image" />
+      : <div className="kg-binding-preview-placeholder"><FileImageOutlined style={{ fontSize: 72 }} /><div>图片资料暂无预览</div></div>;
+  }
+
+  if (fileType === 'pdf') {
+    return previewUrl
+      ? <iframe src={previewUrl} title="PDF 预览" className="kg-binding-preview-iframe" />
+      : <div className="kg-binding-preview-placeholder"><FilePdfOutlined style={{ fontSize: 72 }} /><div>PDF 资料暂无预览</div></div>;
+  }
+
+  if (fileType === 'video') {
+    return previewUrl
+      ? <video src={previewUrl} controls className="kg-binding-preview-video" />
+      : <div className="kg-binding-preview-placeholder"><PlayCircleOutlined style={{ fontSize: 72 }} /><div>视频资料暂无预览</div></div>;
+  }
+
+  if (fileType === 'audio') {
+    return (
+      <div className="kg-binding-preview-placeholder">
+        <SoundOutlined style={{ fontSize: 72 }} />
+        <div>{binding.resourceName}</div>
+        {previewUrl ? <audio src={previewUrl} controls className="kg-binding-preview-audio" /> : <div>音频资料暂无预览</div>}
+      </div>
+    );
+  }
+
+  if (fileType === 'pptx') {
+    return <div className="kg-binding-preview-placeholder"><FilePptOutlined style={{ fontSize: 72 }} /><div>{binding.resourceName}</div><div>演示文稿预览</div></div>;
+  }
+
+  if (fileType === 'xlsx') {
+    return <div className="kg-binding-preview-placeholder"><FileExcelOutlined style={{ fontSize: 72 }} /><div>{binding.resourceName}</div><div>表格资料预览</div></div>;
+  }
+
+  return <div className="kg-binding-preview-placeholder"><FileTextOutlined style={{ fontSize: 72 }} /><div>{binding.resourceName}</div><div>文档资料预览</div></div>;
+}
+
+function getEdgeDashArray(lineStyle) {
+  if (lineStyle === 'dashed') return '8 6';
+  if (lineStyle === 'dotted') return '2 6';
+  return undefined;
+}
+
 function StageNode({ data, selected }) {
   const stop = (event) => event.stopPropagation();
+  const handleClassName = `kg-structured-handle${data.readOnly ? ' is-hidden' : ''}`;
   return (
     <div
       className={`kg-structured-stage ${selected ? 'is-selected' : ''}`}
@@ -209,7 +267,7 @@ function StageNode({ data, selected }) {
         height: data.height,
       }}
     >
-      <Handle type="target" position={Position.Left} className="kg-structured-handle" />
+      <Handle type="target" position={Position.Left} className={handleClassName} />
       <div className="kg-structured-stage-head">
         <div className="kg-structured-stage-copy">
           <span className="kg-structured-stage-pill" />
@@ -218,26 +276,20 @@ function StageNode({ data, selected }) {
             <div className="kg-structured-stage-description">{data.description || '用于承载一组知识点与阶段路径。'}</div>
           </div>
         </div>
-        <div className="kg-structured-stage-actions nodrag nopan" onMouseDown={stop} onClick={stop}>
-          <Tooltip title="新增知识点">
-            <Button
-              size="small"
-              type="text"
-              icon={<PlusOutlined />}
-              onClick={() => data.onCreatePoint?.(data.stageId)}
-            />
-          </Tooltip>
-          <Tooltip title="删除阶段">
-            <Button
-              size="small"
-              type="text"
-              danger
-              icon={<DeleteOutlined />}
-              disabled={data.disableDelete}
-              onClick={() => data.onDeleteStage?.(data.stageId)}
-            />
-          </Tooltip>
-        </div>
+        {data.readOnly ? null : (
+          <div className="kg-structured-stage-actions nodrag nopan" onMouseDown={stop} onClick={stop}>
+            <Tooltip title="删除阶段">
+              <Button
+                size="small"
+                type="text"
+                danger
+                icon={<DeleteOutlined />}
+                disabled={data.disableDelete}
+                onClick={() => data.onDeleteStage?.(data.stageId)}
+              />
+            </Tooltip>
+          </div>
+        )}
       </div>
       <div className="kg-structured-stage-meta">
         <span>{data.pointCount} 个知识点</span>
@@ -246,11 +298,11 @@ function StageNode({ data, selected }) {
       <div className="kg-structured-stage-body">
         {data.pointCount ? null : (
           <div className="kg-structured-stage-empty">
-            可在这里拖入知识点，或从右上角新增知识点。
+            {data.readOnly ? '当前阶段还没有知识点。' : '可在这里拖入已有知识点进行编排。'}
           </div>
         )}
       </div>
-      <Handle type="source" position={Position.Right} className="kg-structured-handle" />
+      <Handle type="source" position={Position.Right} className={handleClassName} />
     </div>
   );
 }
@@ -275,44 +327,45 @@ function PointNode({ data, selected }) {
     <div
       className={`kg-structured-point ${selected ? 'is-selected' : ''}`}
       style={{ '--kg-point-accent': data.color || '#4667d6' }}
-      onDragOver={(event) => event.preventDefault()}
-      onDrop={handleDrop}
+      onDragOver={data.readOnly ? undefined : (event) => event.preventDefault()}
+      onDrop={data.readOnly ? undefined : handleDrop}
     >
-      <Handle type="target" position={Position.Left} className="kg-structured-point-handle" />
       <div className="kg-structured-point-head">
         <div className="kg-structured-point-title-wrap">
           <div className="kg-structured-point-title">{data.label}</div>
           <Tag color="blue">{data.typeLabel}</Tag>
         </div>
-        <div className="kg-structured-point-actions nodrag nopan" onMouseDown={stop} onClick={stop}>
-          <Tooltip title="上移">
-            <Button
-              size="small"
-              type="text"
-              icon={<UpOutlined />}
-              disabled={!data.canMoveUp}
-              onClick={() => data.onMoveUp?.(data.pointId)}
-            />
-          </Tooltip>
-          <Tooltip title="下移">
-            <Button
-              size="small"
-              type="text"
-              icon={<DownOutlined />}
-              disabled={!data.canMoveDown}
-              onClick={() => data.onMoveDown?.(data.pointId)}
-            />
-          </Tooltip>
-          <Tooltip title="删除知识点">
-            <Button
-              size="small"
-              type="text"
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() => data.onDeletePoint?.(data.pointId)}
-            />
-          </Tooltip>
-        </div>
+        {data.readOnly ? null : (
+          <div className="kg-structured-point-actions nodrag nopan" onMouseDown={stop} onClick={stop}>
+            <Tooltip title="上移">
+              <Button
+                size="small"
+                type="text"
+                icon={<UpOutlined />}
+                disabled={!data.canMoveUp}
+                onClick={() => data.onMoveUp?.(data.pointId)}
+              />
+            </Tooltip>
+            <Tooltip title="下移">
+              <Button
+                size="small"
+                type="text"
+                icon={<DownOutlined />}
+                disabled={!data.canMoveDown}
+                onClick={() => data.onMoveDown?.(data.pointId)}
+              />
+            </Tooltip>
+            <Tooltip title="删除知识点">
+              <Button
+                size="small"
+                type="text"
+                danger
+                icon={<DeleteOutlined />}
+                onClick={() => data.onDeletePoint?.(data.pointId)}
+              />
+            </Tooltip>
+          </div>
+        )}
       </div>
       <div className="kg-structured-point-summary">{data.summary || '未填写知识点摘要。'}</div>
       <div className="kg-structured-point-footer">
@@ -321,14 +374,26 @@ function PointNode({ data, selected }) {
       </div>
       <div className="kg-structured-point-binding">
         {data.bindingCount ? (
-          (data.bindingNames || []).slice(0, 2).map((name) => (
-            <span key={name} className="kg-structured-point-binding-item">{name}</span>
+          (data.bindings || []).map((binding) => (
+            <button
+              key={binding.bindingId}
+              type="button"
+              className={`kg-structured-point-binding-item ${data.readOnly ? 'is-previewable' : ''}`}
+              onClick={(event) => {
+                if (!data.onPreviewBinding) return;
+                event.stopPropagation();
+                data.onPreviewBinding(binding);
+              }}
+            >
+              {binding.resourceName}
+            </button>
           ))
         ) : (
-          <span className="kg-structured-point-binding-empty">拖入资料到该知识点进行绑定</span>
+          <span className="kg-structured-point-binding-empty">
+            {data.readOnly ? '当前知识点未绑定学习资料' : '拖入资料到该知识点进行绑定'}
+          </span>
         )}
       </div>
-      <Handle type="source" position={Position.Right} className="kg-structured-point-handle" />
     </div>
   );
 }
@@ -348,7 +413,6 @@ function StructuredKnowledgeGraphView({
   selection,
   onSelectionChange,
   onCreateStage,
-  onCreatePoint,
   onDeleteStage,
   onDeletePoint,
   onUpdateStagePosition,
@@ -356,16 +420,18 @@ function StructuredKnowledgeGraphView({
   onCreateStageEdge,
   onCreatePointRelation,
   onBindResourcesToPoint,
+  readOnly = false,
 }) {
   const [resourceData, setResourceData] = useState(() => loadResourceLib());
   const [resourceScope, setResourceScope] = useState('all');
   const [resourceKeyword, setResourceKeyword] = useState('');
-  const [resourcePanelOpen, setResourcePanelOpen] = useState(true);
+  const [resourcePanelOpen, setResourcePanelOpen] = useState(false);
   const [rfInstance, setRfInstance] = useState(null);
   const [dragPreview, setDragPreview] = useState(null);
   const [stageDragPreview, setStageDragPreview] = useState(null);
   const [renderNodes, setRenderNodes] = useState([]);
   const [renderEdges, setRenderEdges] = useState([]);
+  const [previewBinding, setPreviewBinding] = useState(null);
   const dragFrameRef = useRef(0);
   const dragNodeRef = useRef(null);
 
@@ -580,8 +646,8 @@ function StructuredKnowledgeGraphView({
           height: metric.height,
           width: metric.width,
           disableDelete: stages.length <= 1,
+          readOnly,
           onDeleteStage,
-          onCreatePoint,
         },
         selected: selection?.type === 'stage' && selection.id === stage.id,
         style: {
@@ -619,9 +685,9 @@ function StructuredKnowledgeGraphView({
               x: stagePosition.x + relativePosition.x,
               y: stagePosition.y + relativePosition.y,
             },
-        draggable: true,
-        selectable: true,
-        connectable: true,
+        draggable: !readOnly,
+        selectable: !readOnly,
+        connectable: false,
         data: {
           pointId: point.id,
           label: point.title,
@@ -630,13 +696,16 @@ function StructuredKnowledgeGraphView({
           typeLabel: pointTypeLabelMap[point.type] || point.type,
           tagCount: point.tags?.length || 0,
           bindingCount: point.resourceBindings?.length || 0,
+          bindings: point.resourceBindings || [],
           bindingNames: (point.resourceBindings || []).map((binding) => binding.resourceName),
+          readOnly,
           canMoveUp: stageIndex > 0,
           canMoveDown: stageIndex > -1 && stageIndex < stageEntries.length - 1,
           onMoveUp: () => handleMovePointByStep(point.id, 'up'),
           onMoveDown: () => handleMovePointByStep(point.id, 'down'),
           onDeletePoint,
           onResourceDrop: onBindResourcesToPoint,
+          onPreviewBinding: setPreviewBinding,
         },
         selected: selection?.type === 'point' && selection.id === point.id,
         style: {
@@ -651,10 +720,10 @@ function StructuredKnowledgeGraphView({
     return [...stageNodes, ...pointNodes];
   }, [
     onBindResourcesToPoint,
-    onCreatePoint,
     onDeletePoint,
     onDeleteStage,
     onMovePoint,
+    readOnly,
     dragPreview,
     effectivePointPlacements,
     pointPlacements,
@@ -674,34 +743,19 @@ function StructuredKnowledgeGraphView({
       target: edge.target,
       label: edge.label || '阶段衔接',
       type: 'smoothstep',
-      markerEnd: { type: MarkerType.ArrowClosed, color: '#2b64d8' },
-      labelStyle: { fill: '#2b64d8', fontSize: 12, fontWeight: 600 },
+      markerEnd: { type: MarkerType.ArrowClosed, color: edge.strokeColor || '#60a5fa' },
+      labelStyle: { fill: edge.strokeColor || '#60a5fa', fontSize: 12, fontWeight: 600 },
       style: {
-        stroke: selection?.type === 'stage-edge' && selection.id === edge.id ? '#1d4ed8' : '#60a5fa',
-        strokeWidth: selection?.type === 'stage-edge' && selection.id === edge.id ? 2.8 : 2,
+        stroke: edge.strokeColor || '#60a5fa',
+        strokeWidth: (edge.strokeWidth || 2) + (selection?.type === 'stage-edge' && selection.id === edge.id ? 0.8 : 0),
+        strokeDasharray: getEdgeDashArray(edge.lineStyle),
       },
       data: { edgeType: 'stage-edge' },
-      animated: false,
+      animated: Boolean(edge.animated),
     }));
 
-    const relationEdges = relations.map((relation) => ({
-      id: relation.id,
-      source: relation.sourceId,
-      target: relation.targetId,
-      label: relation.label || relationTypeLabelMap[relation.relationType] || relation.relationType,
-      type: 'smoothstep',
-      markerEnd: { type: MarkerType.ArrowClosed, color: '#7c3aed' },
-      labelStyle: { fill: '#6d28d9', fontSize: 12, fontWeight: 600 },
-      style: {
-        stroke: selection?.type === 'relation' && selection.id === relation.id ? '#5b21b6' : '#a78bfa',
-        strokeWidth: selection?.type === 'relation' && selection.id === relation.id ? 2.6 : 1.8,
-      },
-      data: { edgeType: 'relation' },
-      animated: relation.relationType === 'PRECEDES',
-    }));
-
-    return [...stageFlowEdges, ...relationEdges];
-  }, [relationTypeLabelMap, relations, selection, stageEdges]);
+    return stageFlowEdges;
+  }, [selection, stageEdges]);
 
   useEffect(() => {
     setRenderNodes((current) => reconcileFlowNodes(current, nodes));
@@ -720,23 +774,17 @@ function StructuredKnowledgeGraphView({
   };
 
   const handleConnect = ({ source, target }) => {
+    if (readOnly) return;
     if (!source || !target || source === target) return;
     if (stageIdSet.has(source) && stageIdSet.has(target)) {
       onCreateStageEdge?.({ source, target });
       return;
     }
-    if (pointIdSet.has(source) && pointIdSet.has(target)) {
-      onCreatePointRelation?.({
-        sourceId: source,
-        targetId: target,
-        relationType: 'RELATED',
-      });
-      return;
-    }
-    message.warning('结构化视图中只允许阶段与阶段、知识点与知识点分别连线。');
+    message.warning('结构化视图中只允许阶段与阶段之间连线。');
   };
 
   const handleNodeDragStart = (_, node) => {
+    if (readOnly) return;
     if (stageIdSet.has(node.id)) {
       setStageDragPreview({
         stageId: node.id,
@@ -756,6 +804,7 @@ function StructuredKnowledgeGraphView({
   };
 
   const handleNodeDrag = (_, node) => {
+    if (readOnly) return;
     if (stageIdSet.has(node.id)) {
       setStageDragPreview({
         stageId: node.id,
@@ -769,6 +818,7 @@ function StructuredKnowledgeGraphView({
   };
 
   const handleNodeDragStop = (_, node) => {
+    if (readOnly) return;
     if (stageIdSet.has(node.id)) {
       setStageDragPreview(null);
       onUpdateStagePosition?.(node.id, node.position);
@@ -788,22 +838,9 @@ function StructuredKnowledgeGraphView({
 
   return (
     <div className="kg-structured-shell">
-      <div className="kg-structured-toolbar">
-        <div className="kg-structured-toolbar-copy">
-          <div className="kg-structured-toolbar-title">结构化画布</div>
-          <div className="kg-structured-toolbar-subtitle">阶段对应分区，知识点对应活动，可直接拖拽编排与连线。</div>
-        </div>
-        <div className="kg-structured-toolbar-actions">
-          <Button icon={<ApartmentOutlined />} onClick={() => onCreateStage?.()}>新增阶段</Button>
-          <Button icon={<PlusOutlined />} onClick={() => onCreatePoint?.(selection?.type === 'stage' ? selection.id : null)}>
-            新增知识点
-          </Button>
-        </div>
-      </div>
-
       <div className="kg-structured-main">
         <div className="kg-structured-canvas kg-structured-canvas-overlay">
-          {resourcePanelOpen ? (
+          {!readOnly && resourcePanelOpen ? (
             <aside className="kg-resource-drawer kg-resource-drawer-floating is-open">
               <div className="kg-resource-drawer-head">
                 <div>
@@ -855,52 +892,57 @@ function StructuredKnowledgeGraphView({
                 )}
               </div>
             </aside>
-          ) : (
+          ) : !readOnly ? (
             <Button
               className="kg-resource-drawer-toggle"
               icon={<MenuUnfoldOutlined />}
               onClick={() => setResourcePanelOpen(true)}
             />
-          )}
+          ) : null}
 
           {!stages.length ? (
             <div className="kg-empty-shell">
-              <Empty description="当前图谱还没有阶段" image={Empty.PRESENTED_IMAGE_SIMPLE}>
-                <Button type="primary" icon={<ApartmentOutlined />} onClick={() => onCreateStage?.()}>
-                  新增阶段
-                </Button>
-              </Empty>
+              {readOnly ? (
+                <Empty description="当前预览图谱还没有阶段内容" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              ) : (
+                <Empty description="当前图谱还没有阶段" image={Empty.PRESENTED_IMAGE_SIMPLE}>
+                  <Button type="primary" icon={<ApartmentOutlined />} onClick={() => onCreateStage?.()}>
+                    新增阶段
+                  </Button>
+                </Empty>
+              )}
             </div>
           ) : (
             <ReactFlow
               nodes={renderNodes}
               edges={renderEdges}
               fitView
-              nodesDraggable
-              nodesConnectable
+              nodesDraggable={!readOnly}
+              nodesConnectable={!readOnly}
+              elementsSelectable={!readOnly}
               nodeDragThreshold={1}
               connectionDragThreshold={6}
               onlyRenderVisibleElements
               elevateNodesOnSelect={false}
               onNodesChange={handleNodesChange}
               onEdgesChange={handleEdgesChange}
-              onNodeClick={(_, node) => {
+              onNodeClick={readOnly ? undefined : (_, node) => {
                 onSelectionChange?.({
                   type: stageIdSet.has(node.id) ? 'stage' : 'point',
                   id: node.id,
                 });
               }}
-              onEdgeClick={(_, edge) => {
+              onEdgeClick={readOnly ? undefined : (_, edge) => {
                 onSelectionChange?.({
                   type: edge.data?.edgeType === 'stage-edge' ? 'stage-edge' : 'relation',
                   id: edge.id,
                 });
               }}
-              onPaneClick={() => onSelectionChange?.({ type: 'graph', id: graphId })}
-              onConnect={handleConnect}
-              onNodeDragStart={handleNodeDragStart}
-              onNodeDrag={handleNodeDrag}
-              onNodeDragStop={handleNodeDragStop}
+              onPaneClick={readOnly ? undefined : () => onSelectionChange?.({ type: 'graph', id: graphId })}
+              onConnect={readOnly ? undefined : handleConnect}
+              onNodeDragStart={readOnly ? undefined : handleNodeDragStart}
+              onNodeDrag={readOnly ? undefined : handleNodeDrag}
+              onNodeDragStop={readOnly ? undefined : handleNodeDragStop}
               nodeTypes={nodeTypes}
               onInit={setRfInstance}
               proOptions={{ hideAttribution: true }}
@@ -912,6 +954,29 @@ function StructuredKnowledgeGraphView({
           )}
         </div>
       </div>
+
+      <Modal
+        title={previewBinding?.resourceName || '资料预览'}
+        open={!!previewBinding}
+        onCancel={() => setPreviewBinding(null)}
+        footer={null}
+        width={920}
+        destroyOnClose
+        className="kg-binding-preview-modal"
+      >
+        {previewBinding ? (
+          <div className="kg-binding-preview-shell">
+            <div className="kg-binding-preview-meta">
+              <span>{previewBinding.libraryName || '未知资料库'}</span>
+              <span>{previewBinding.fileType || 'other'}</span>
+              <span>{previewBinding.snapshotPath || '-'}</span>
+            </div>
+            <div className="kg-binding-preview-body">
+              {renderBindingPreviewContent(previewBinding)}
+            </div>
+          </div>
+        ) : null}
+      </Modal>
     </div>
   );
 }
