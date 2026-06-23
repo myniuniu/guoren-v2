@@ -61,7 +61,12 @@ function buildStructuredStage(id, name, color, description, sortNo) {
     color,
     description,
     sortNo,
+    layoutColumns: 1,
   };
+}
+
+function sanitizeStageLayoutColumns(value) {
+  return Math.max(1, Math.min(3, Number(value || 1) || 1));
 }
 
 function createDefaultSections() {
@@ -87,6 +92,12 @@ function getStructuredStagePosition(index) {
   return {
     x: index * 360,
     y: 0,
+  };
+}
+
+function getStructuredStageSize() {
+  return {
+    width: 332,
   };
 }
 
@@ -134,9 +145,11 @@ function buildStructuredViewFromLegacy(layout, pointsForGraph = []) {
   const pointPlacements = {};
   const pointPositions = {};
   const stagePositions = {};
+  const stageSizes = {};
 
   stages.forEach((stage, index) => {
     stagePositions[stage.id] = getStructuredStagePosition(index);
+    stageSizes[stage.id] = getStructuredStageSize();
   });
 
   pointsForGraph.forEach((point, index) => {
@@ -167,6 +180,7 @@ function buildStructuredViewFromLegacy(layout, pointsForGraph = []) {
     pointPlacements,
     pointPositions,
     stagePositions,
+    stageSizes,
     stageEdges: [],
   };
 }
@@ -181,13 +195,16 @@ function normalizeStructuredView(layout, pointsForGraph = []) {
     : createDefaultStructuredStages();
 
   stages = stages
-    .map((stage, index) => buildStructuredStage(
-      stage.id || createId('kg_stage'),
-      trimText(stage.name) || trimText(stage.title) || `阶段 ${index + 1}`,
-      stage.color || '#4667d6',
-      trimText(stage.description),
-      Number(stage.sortNo || index + 1),
-    ))
+    .map((stage, index) => ({
+      ...buildStructuredStage(
+        stage.id || createId('kg_stage'),
+        trimText(stage.name) || trimText(stage.title) || `阶段 ${index + 1}`,
+        stage.color || '#4667d6',
+        trimText(stage.description),
+        Number(stage.sortNo || index + 1),
+      ),
+      layoutColumns: sanitizeStageLayoutColumns(stage.layoutColumns),
+    }))
     .sort((left, right) => (left.sortNo || 0) - (right.sortNo || 0))
     .map((stage, index) => ({
       ...stage,
@@ -199,6 +216,7 @@ function normalizeStructuredView(layout, pointsForGraph = []) {
   const pointPlacements = {};
   const pointPositions = { ...(source.pointPositions || {}) };
   const stagePositions = { ...(source.stagePositions || {}) };
+  const stageSizes = { ...(source.stageSizes || {}) };
   const sourcePlacements = source.pointPlacements || {};
 
   pointsForGraph.forEach((point, index) => {
@@ -220,6 +238,9 @@ function normalizeStructuredView(layout, pointsForGraph = []) {
   stages.forEach((stage, stageIndex) => {
     if (!stagePositions[stage.id]) {
       stagePositions[stage.id] = getStructuredStagePosition(stageIndex);
+    }
+    if (!stageSizes[stage.id]) {
+      stageSizes[stage.id] = getStructuredStageSize();
     }
     const stagePoints = Object.values(pointPlacements)
       .filter((placement) => placement.stageId === stage.id)
@@ -253,6 +274,7 @@ function normalizeStructuredView(layout, pointsForGraph = []) {
     pointPlacements,
     pointPositions,
     stagePositions,
+    stageSizes,
     stageEdges,
   };
 }
@@ -459,6 +481,12 @@ function buildStarterState() {
       [sectionPracticeId]: getStructuredStagePosition(2),
       [sectionSafetyId]: getStructuredStagePosition(3),
     },
+    stageSizes: {
+      [sectionOverviewId]: getStructuredStageSize(),
+      [sectionCoreId]: getStructuredStageSize(),
+      [sectionPracticeId]: getStructuredStageSize(),
+      [sectionSafetyId]: getStructuredStageSize(),
+    },
     pointPositions: {
       [pointOverviewId]: getStructuredPointPosition(1),
       [pointVisionId]: getStructuredPointPosition(1),
@@ -608,6 +636,7 @@ function normalizeState(state) {
               pointPlacements: {},
               pointPositions: {},
               stagePositions: {},
+              stageSizes: {},
               stageEdges: [],
             },
             curriculumView: { sections: createDefaultSections(), cards: {} },
@@ -685,6 +714,7 @@ function ensureGraphLayout(state, graphId) {
         pointPlacements: {},
         pointPositions: {},
         stagePositions: {},
+        stageSizes: {},
         stageEdges: [],
       },
       curriculumView: {
@@ -810,8 +840,10 @@ function buildDraftLayout(nodes) {
   const positions = {};
   const pointPositions = {};
   const stagePositions = {};
+  const stageSizes = {};
   sections.forEach((section, index) => {
     stagePositions[section.id] = getStructuredStagePosition(index);
+    stageSizes[section.id] = getStructuredStageSize();
   });
   nodes.forEach((node, index) => {
     let sectionId = sections[1].id;
@@ -836,6 +868,7 @@ function buildDraftLayout(nodes) {
     pointPlacements: cards,
     pointPositions,
     stagePositions,
+    stageSizes,
     stageEdges: [],
   };
   return {
@@ -891,6 +924,7 @@ export function getGraphLayout(state, graphId) {
     pointPlacements: {},
     pointPositions: {},
     stagePositions: {},
+    stageSizes: {},
     stageEdges: [],
   };
   return {
@@ -1019,6 +1053,7 @@ export function duplicateGraph(graphId) {
         pointPlacements: clonedPointPlacements,
         pointPositions: clonedPointPositions,
         stagePositions: clone(sourceLayout.structuredView?.stagePositions || {}),
+        stageSizes: clone(sourceLayout.structuredView?.stageSizes || {}),
         stageEdges: clone(sourceLayout.structuredView?.stageEdges || []),
       },
       curriculumView: buildLegacyCurriculumViewFromStructured({
@@ -1185,13 +1220,16 @@ export function updateGraphNodePosition(graphId, pointId, position) {
 export function createStructuredStage(graphId, payload = {}) {
   return commit((state) => {
     const layout = ensureGraphLayout(state, graphId);
-    layout.structuredView.stages.push(buildStructuredStage(
+    layout.structuredView.stages.push({
+      ...buildStructuredStage(
       createId('kg_stage'),
       trimText(payload.name || payload.title) || `阶段 ${layout.structuredView.stages.length + 1}`,
       payload.color || '#4667d6',
       trimText(payload.description),
       layout.structuredView.stages.length + 1,
-    ));
+      ),
+      layoutColumns: sanitizeStageLayoutColumns(payload.layoutColumns),
+    });
   });
 }
 
@@ -1205,6 +1243,9 @@ export function updateStructuredStage(graphId, stageId, patch = {}) {
     }
     if (typeof patch.description !== 'undefined') stage.description = trimText(patch.description);
     if (typeof patch.color !== 'undefined') stage.color = patch.color || stage.color;
+    if (typeof patch.layoutColumns !== 'undefined') {
+      stage.layoutColumns = sanitizeStageLayoutColumns(patch.layoutColumns);
+    }
   });
 }
 
@@ -1214,6 +1255,15 @@ export function updateStructuredStagePosition(graphId, stageId, position) {
     layout.structuredView.stagePositions[stageId] = {
       x: Number(position?.x || 0),
       y: Number(position?.y || 0),
+    };
+  });
+}
+
+export function updateStructuredStageSize(graphId, stageId, size = {}) {
+  return commit((state) => {
+    const layout = ensureGraphLayout(state, graphId);
+    layout.structuredView.stageSizes[stageId] = {
+      width: Math.max(332, Number(size.width || getStructuredStageSize().width)),
     };
   });
 }
@@ -1230,6 +1280,7 @@ export function removeStructuredStage(graphId, stageId) {
       }
     });
     delete layout.structuredView.stagePositions[stageId];
+    delete layout.structuredView.stageSizes[stageId];
     layout.structuredView.stageEdges = (layout.structuredView.stageEdges || []).filter((edge) => edge.source !== stageId && edge.target !== stageId);
     layout.structuredView.stages.forEach((stage) => {
       const stagePoints = Object.values(layout.structuredView.pointPlacements)
@@ -1523,6 +1574,9 @@ export function acceptGraphDraft(graphId, draftId, options = {}) {
       });
       Object.entries(draftLayout.structuredView.stagePositions || {}).forEach(([stageId, position]) => {
         layout.structuredView.stagePositions[stageId] = clone(position);
+      });
+      Object.entries(draftLayout.structuredView.stageSizes || {}).forEach(([stageId, size]) => {
+        layout.structuredView.stageSizes[stageId] = clone(size);
       });
       const existingStageEdgeIds = new Set((layout.structuredView.stageEdges || []).map((edge) => edge.id));
       draftLayout.structuredView.stageEdges.forEach((edge) => {

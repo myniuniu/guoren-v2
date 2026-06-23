@@ -13,7 +13,6 @@ import {
   Segmented,
   Select,
   Space,
-  Statistic,
   Table,
   Tag,
   Tooltip,
@@ -692,6 +691,7 @@ function KnowledgeGraphModule() {
         name: selectedStage.name,
         description: selectedStage.description,
         color: selectedStage.color || '#4667d6',
+        layoutColumns: Number(selectedStage.layoutColumns || 1),
       });
     }
   }, [selectedStage, selection, stageEditorForm]);
@@ -722,12 +722,6 @@ function KnowledgeGraphModule() {
     () => Object.fromEntries(currentPoints.map((point) => [point.id, point])),
     [currentPoints],
   );
-
-  const graphStats = useMemo(() => ({
-    pointCount: currentPoints.length,
-    relationCount: currentRelations.length,
-    bindingCount: currentPoints.reduce((sum, point) => sum + (point.resourceBindings?.length || 0), 0),
-  }), [currentPoints, currentRelations]);
 
   const graphNodes = useMemo(() => currentPoints.map((point, index) => ({
     id: point.id,
@@ -1209,6 +1203,15 @@ function KnowledgeGraphModule() {
             </Form.Item>
             <Form.Item label="阶段描述" name="description">
               <Input.TextArea rows={4} />
+            </Form.Item>
+            <Form.Item label="列数布局" name="layoutColumns">
+              <Select
+                options={[
+                  { label: '1 列', value: 1 },
+                  { label: '2 列', value: 2 },
+                  { label: '3 列', value: 3 },
+                ]}
+              />
             </Form.Item>
             <Form.Item label="阶段颜色" name="color">
               <input type="color" className="kg-color-input" />
@@ -1700,10 +1703,15 @@ function KnowledgeGraphModule() {
             <>
               <div className="kg-toolbar">
                 <div className="kg-toolbar-copy">
-                  <div className="kg-toolbar-breadcrumb">
-                    <Button type="text" icon={<ArrowLeftOutlined />} onClick={returnToListPage}>返回列表</Button>
+                  <div className="kg-toolbar-title-row">
+                    <Button
+                      type="text"
+                      icon={<ArrowLeftOutlined />}
+                      className="kg-toolbar-back"
+                      onClick={returnToListPage}
+                    />
+                    <div className="kg-toolbar-title">{currentGraph.name}</div>
                   </div>
-                  <div className="kg-toolbar-title">{currentGraph.name}</div>
                   <div className="kg-toolbar-subtitle">{currentGraph.description || '维护知识点、关系和资料绑定，并支持 AI 草稿生成。'}</div>
                 </div>
                 <Space wrap>
@@ -1719,16 +1727,17 @@ function KnowledgeGraphModule() {
                       { label: '结构化视图', value: 'curriculum', icon: <TableOutlined /> },
                     ]}
                   />
-                  <Button icon={<SettingOutlined />} onClick={() => {
-                    setSelection(defaultSelection(currentGraph.id));
-                    setInspectorOpen(true);
-                  }}
-                  >
-                    图谱属性
-                  </Button>
-                  <Button icon={<PlusOutlined />} onClick={openPointModal}>新建知识点</Button>
-                  {viewMode === 'curriculum' ? (
-                    <Button icon={<ApartmentOutlined />} onClick={() => openSectionModal('create')}>新增阶段</Button>
+                  {viewMode === 'graph' ? (
+                    <>
+                      <Button icon={<SettingOutlined />} onClick={() => {
+                        setSelection(defaultSelection(currentGraph.id));
+                        setInspectorOpen(true);
+                      }}
+                      >
+                        图谱属性
+                      </Button>
+                      <Button icon={<PlusOutlined />} onClick={openPointModal}>新建知识点</Button>
+                    </>
                   ) : null}
                   <Button type="primary" icon={<RobotOutlined />} onClick={() => setAiModalOpen(true)}>
                     AI 生成图谱
@@ -1746,12 +1755,6 @@ function KnowledgeGraphModule() {
                   action={<Button size="small" onClick={() => openDraftPreview(currentDraft)}>查看草稿</Button>}
                 />
               ) : null}
-
-              <div className="kg-stats-row">
-                <Card size="small"><Statistic title="知识点" value={graphStats.pointCount} /></Card>
-                <Card size="small"><Statistic title="关系" value={graphStats.relationCount} /></Card>
-                <Card size="small"><Statistic title="资料绑定" value={graphStats.bindingCount} /></Card>
-              </div>
 
               <div className="kg-content kg-content-full">
                 <section className="kg-canvas-shell">

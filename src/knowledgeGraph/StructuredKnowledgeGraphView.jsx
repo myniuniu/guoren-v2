@@ -1,13 +1,17 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Empty, Input, Segmented, Tag, Tooltip, message } from 'antd';
 import {
   ApartmentOutlined,
-  BookOutlined,
+  DownOutlined,
   DeleteOutlined,
-  FolderOpenOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
   PlusOutlined,
+  UpOutlined,
 } from '@ant-design/icons';
 import ReactFlow, {
+  applyEdgeChanges,
+  applyNodeChanges,
   Background,
   Controls,
   Handle,
@@ -23,8 +27,8 @@ const STAGE_MIN_HEIGHT = 288;
 const STAGE_HEADER_HEIGHT = 78;
 const STAGE_PADDING_X = 18;
 const STAGE_PADDING_BOTTOM = 18;
-const POINT_WIDTH = STAGE_WIDTH - STAGE_PADDING_X * 2;
-const POINT_HEIGHT = 128;
+const POINT_MIN_WIDTH = 280;
+const POINT_HEIGHT = 196;
 const POINT_GAP = 16;
 const RESOURCE_DRAG_TYPE = 'application/x-kg-resource';
 
@@ -32,12 +36,167 @@ function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
-function buildStageHeight(pointCount, maxPointY = 0) {
+function buildStageHeight(pointCount) {
   return Math.max(
     STAGE_MIN_HEIGHT,
     STAGE_HEADER_HEIGHT + STAGE_PADDING_BOTTOM + Math.max(1, pointCount) * (POINT_HEIGHT + POINT_GAP),
-    maxPointY + POINT_HEIGHT + STAGE_PADDING_BOTTOM,
   );
+}
+
+function getStageGridMetrics(layoutColumns = 1, pointCount = 0) {
+  const columns = clamp(Number(layoutColumns || 1) || 1, 1, 3);
+  const width = Math.max(
+    STAGE_WIDTH,
+    STAGE_PADDING_X * 2 + columns * POINT_MIN_WIDTH + Math.max(0, columns - 1) * POINT_GAP,
+  );
+  const innerWidth = Math.max(POINT_MIN_WIDTH, width - STAGE_PADDING_X * 2);
+  const cardWidth = (innerWidth - (columns - 1) * POINT_GAP) / columns;
+  const rows = Math.max(1, Math.ceil(Math.max(1, pointCount) / columns));
+  const height = Math.max(
+    STAGE_MIN_HEIGHT,
+    STAGE_HEADER_HEIGHT + STAGE_PADDING_BOTTOM + rows * POINT_HEIGHT + Math.max(0, rows - 1) * POINT_GAP,
+  );
+  return {
+    width,
+    innerWidth,
+    columns,
+    rows,
+    cardWidth,
+    height,
+  };
+}
+
+function buildPreviewPlacements(pointPlacements, preview) {
+  if (!preview?.pointId || !preview?.stageId) return pointPlacements;
+  const currentPlacement = pointPlacements[preview.pointId];
+  if (!currentPlacement) return pointPlacements;
+
+  const nextPlacements = { ...pointPlacements };
+  const sourceStageId = currentPlacement.stageId;
+  const targetStageId = preview.stageId;
+  const targetEntries = Object.values(pointPlacements)
+    .filter((placement) => placement.stageId === targetStageId && placement.pointId !== preview.pointId)
+    .sort((left, right) => (left.order || 0) - (right.order || 0));
+  const targetIndex = Math.max(0, Math.min(Number(preview.targetIndex ?? targetEntries.length), targetEntries.length));
+
+  targetEntries.splice(targetIndex, 0, {
+    ...currentPlacement,
+    stageId: targetStageId,
+  });
+
+  targetEntries.forEach((placement, index) => {
+    nextPlacements[placement.pointId] = {
+      ...placement,
+      stageId: targetStageId,
+      order: index + 1,
+    };
+  });
+
+  if (sourceStageId !== targetStageId) {
+    const sourceEntries = Object.values(pointPlacements)
+      .filter((placement) => placement.stageId === sourceStageId && placement.pointId !== preview.pointId)
+      .sort((left, right) => (left.order || 0) - (right.order || 0));
+
+    sourceEntries.forEach((placement, index) => {
+      nextPlacements[placement.pointId] = {
+        ...placement,
+        stageId: sourceStageId,
+        order: index + 1,
+      };
+    });
+  }
+
+  return nextPlacements;
+}
+
+function isSamePosition(left, right) {
+  return Number(left?.x || 0) === Number(right?.x || 0) && Number(left?.y || 0) === Number(right?.y || 0);
+}
+
+function isSameStyle(left, right) {
+  return JSON.stringify(left || {}) === JSON.stringify(right || {});
+}
+
+function isSameArray(left = [], right = []) {
+  if (left.length !== right.length) return false;
+  for (let index = 0; index < left.length; index += 1) {
+    if (left[index] !== right[index]) return false;
+  }
+  return true;
+}
+
+function isSameNodeData(left, right, type) {
+  if (!left || !right) return left === right;
+  if (type === 'kgStage') {
+    return (
+      left.stageId === right.stageId
+      && left.label === right.label
+      && left.description === right.description
+      && left.color === right.color
+      && left.pointCount === right.pointCount
+      && left.bindingCount === right.bindingCount
+      && left.height === right.height
+      && left.width === right.width
+      && left.disableDelete === right.disableDelete
+    );
+  }
+
+  if (type === 'kgPoint') {
+    return (
+      left.pointId === right.pointId
+      && left.label === right.label
+      && left.summary === right.summary
+      && left.color === right.color
+      && left.typeLabel === right.typeLabel
+      && left.tagCount === right.tagCount
+      && left.bindingCount === right.bindingCount
+      && left.canMoveUp === right.canMoveUp
+      && left.canMoveDown === right.canMoveDown
+      && isSameArray(left.bindingNames || [], right.bindingNames || [])
+    );
+  }
+
+  return false;
+}
+
+function reconcileFlowNodes(previousNodes = [], nextNodes = []) {
+  const previousMap = new Map(previousNodes.map((node) => [node.id, node]));
+  return nextNodes.map((node) => {
+    const previous = previousMap.get(node.id);
+    if (!previous) return node;
+    const isEquivalent = (
+      previous.id === node.id
+      && previous.type === node.type
+      && previous.selected === node.selected
+      && previous.draggable === node.draggable
+      && previous.selectable === node.selectable
+      && previous.connectable === node.connectable
+      && isSamePosition(previous.position, node.position)
+      && isSameStyle(previous.style, node.style)
+      && isSameNodeData(previous.data, node.data, node.type)
+    );
+    return isEquivalent ? previous : node;
+  });
+}
+
+function reconcileFlowEdges(previousEdges = [], nextEdges = []) {
+  const previousMap = new Map(previousEdges.map((edge) => [edge.id, edge]));
+  return nextEdges.map((edge) => {
+    const previous = previousMap.get(edge.id);
+    if (!previous) return edge;
+    const isEquivalent = (
+      previous.id === edge.id
+      && previous.source === edge.source
+      && previous.target === edge.target
+      && previous.label === edge.label
+      && previous.type === edge.type
+      && previous.animated === edge.animated
+      && JSON.stringify(previous.style || {}) === JSON.stringify(edge.style || {})
+      && JSON.stringify(previous.markerEnd || {}) === JSON.stringify(edge.markerEnd || {})
+      && JSON.stringify(previous.labelStyle || {}) === JSON.stringify(edge.labelStyle || {})
+    );
+    return isEquivalent ? previous : edge;
+  });
 }
 
 function StageNode({ data, selected }) {
@@ -126,6 +285,24 @@ function PointNode({ data, selected }) {
           <Tag color="blue">{data.typeLabel}</Tag>
         </div>
         <div className="kg-structured-point-actions nodrag nopan" onMouseDown={stop} onClick={stop}>
+          <Tooltip title="上移">
+            <Button
+              size="small"
+              type="text"
+              icon={<UpOutlined />}
+              disabled={!data.canMoveUp}
+              onClick={() => data.onMoveUp?.(data.pointId)}
+            />
+          </Tooltip>
+          <Tooltip title="下移">
+            <Button
+              size="small"
+              type="text"
+              icon={<DownOutlined />}
+              disabled={!data.canMoveDown}
+              onClick={() => data.onMoveDown?.(data.pointId)}
+            />
+          </Tooltip>
           <Tooltip title="删除知识点">
             <Button
               size="small"
@@ -185,6 +362,12 @@ function StructuredKnowledgeGraphView({
   const [resourceKeyword, setResourceKeyword] = useState('');
   const [resourcePanelOpen, setResourcePanelOpen] = useState(true);
   const [rfInstance, setRfInstance] = useState(null);
+  const [dragPreview, setDragPreview] = useState(null);
+  const [stageDragPreview, setStageDragPreview] = useState(null);
+  const [renderNodes, setRenderNodes] = useState([]);
+  const [renderEdges, setRenderEdges] = useState([]);
+  const dragFrameRef = useRef(0);
+  const dragNodeRef = useRef(null);
 
   useEffect(() => {
     setResourceData(loadResourceLib());
@@ -198,6 +381,12 @@ function StructuredKnowledgeGraphView({
     return () => window.clearTimeout(timer);
   }, [graphId, rfInstance]);
 
+  useEffect(() => () => {
+    if (dragFrameRef.current) {
+      window.cancelAnimationFrame(dragFrameRef.current);
+    }
+  }, []);
+
   const pointMap = useMemo(
     () => Object.fromEntries(points.map((point) => [point.id, point])),
     [points],
@@ -209,8 +398,18 @@ function StructuredKnowledgeGraphView({
   );
 
   const pointPlacements = structuredView?.pointPlacements || {};
-  const pointPositions = structuredView?.pointPositions || {};
+  const effectivePointPlacements = useMemo(
+    () => buildPreviewPlacements(pointPlacements, dragPreview),
+    [dragPreview, pointPlacements],
+  );
   const stagePositions = structuredView?.stagePositions || {};
+  const effectiveStagePositions = useMemo(() => {
+    if (!stageDragPreview?.stageId) return stagePositions;
+    return {
+      ...stagePositions,
+      [stageDragPreview.stageId]: stageDragPreview.position,
+    };
+  }, [stageDragPreview, stagePositions]);
   const stageEdges = structuredView?.stageEdges || [];
 
   const stagePointEntries = useMemo(() => {
@@ -219,7 +418,7 @@ function StructuredKnowledgeGraphView({
       grouped[stage.id] = [];
     });
     points.forEach((point) => {
-      const placement = pointPlacements[point.id];
+      const placement = effectivePointPlacements[point.id];
       if (!placement?.stageId) return;
       if (!grouped[placement.stageId]) grouped[placement.stageId] = [];
       grouped[placement.stageId].push({
@@ -231,27 +430,124 @@ function StructuredKnowledgeGraphView({
       grouped[stageId].sort((left, right) => (left.placement.order || 0) - (right.placement.order || 0));
     });
     return grouped;
-  }, [pointPlacements, points, stages]);
+  }, [effectivePointPlacements, points, stages]);
 
   const stageMetrics = useMemo(
     () => Object.fromEntries(stages.map((stage) => {
       const entries = stagePointEntries[stage.id] || [];
       const bindingCount = entries.reduce((sum, entry) => sum + (entry.point.resourceBindings?.length || 0), 0);
-      const maxPointY = entries.reduce((maxY, entry) => {
-        const position = pointPositions[entry.point.id];
-        return Math.max(maxY, Number(position?.y || 0));
-      }, STAGE_HEADER_HEIGHT);
+      const grid = getStageGridMetrics(stage.layoutColumns, entries.length);
       return [stage.id, {
         pointCount: entries.length,
         bindingCount,
-        height: buildStageHeight(entries.length, maxPointY),
+        width: grid.width,
+        columns: grid.columns,
+        cardWidth: grid.cardWidth,
+        height: grid.height,
       }];
     })),
-    [pointPositions, stagePointEntries, stages],
+    [stagePointEntries, stages],
   );
 
   const stageIdSet = useMemo(() => new Set(stages.map((stage) => stage.id)), [stages]);
   const pointIdSet = useMemo(() => new Set(points.map((point) => point.id)), [points]);
+
+  const handleMovePointByStep = (pointId, direction) => {
+    const placement = pointPlacements[pointId];
+    if (!placement?.stageId) return;
+    const stageEntries = stagePointEntries[placement.stageId] || [];
+    const currentIndex = stageEntries.findIndex((entry) => entry.point.id === pointId);
+    if (currentIndex === -1) return;
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= stageEntries.length) return;
+    onMovePoint?.(pointId, placement.stageId, targetIndex);
+  };
+
+  const resolvePointDropPreview = (node) => {
+    if (!node || !pointIdSet.has(node.id)) return null;
+    const point = pointMap[node.id];
+    const currentPlacement = pointPlacements[node.id];
+    if (!point || !currentPlacement) return null;
+
+    const currentStageMetric = stageMetrics[currentPlacement.stageId]
+      || getStageGridMetrics(
+        stages.find((stage) => stage.id === currentPlacement.stageId)?.layoutColumns,
+        (stagePointEntries[currentPlacement.stageId] || []).length,
+      );
+    const draggedWidth = Number(node.width || currentStageMetric.cardWidth);
+    const centerX = node.position.x + draggedWidth / 2;
+    const centerY = node.position.y + POINT_HEIGHT / 2;
+    const targetStage = stages.find((stage) => {
+      const stagePosition = effectiveStagePositions[stage.id] || { x: 0, y: 0 };
+      const fallbackMetric = getStageGridMetrics(stage.layoutColumns, (stagePointEntries[stage.id] || []).length);
+      const stageWidth = stageMetrics[stage.id]?.width || fallbackMetric.width;
+      const stageHeight = stageMetrics[stage.id]?.height || fallbackMetric.height;
+      return (
+        centerX >= stagePosition.x
+        && centerX <= stagePosition.x + stageWidth
+        && centerY >= stagePosition.y
+        && centerY <= stagePosition.y + stageHeight
+      );
+    }) || stages.find((stage) => stage.id === currentPlacement.stageId);
+
+    if (!targetStage) return null;
+
+    const stagePosition = effectiveStagePositions[targetStage.id] || { x: 0, y: 0 };
+    const stageMetric = stageMetrics[targetStage.id]
+      || getStageGridMetrics(targetStage.layoutColumns, (stagePointEntries[targetStage.id] || []).length);
+    const relativeX = clamp(
+      node.position.x - stagePosition.x,
+      STAGE_PADDING_X,
+      Math.max(STAGE_PADDING_X, stageMetric.width - stageMetric.cardWidth - STAGE_PADDING_X),
+    );
+    const relativeY = clamp(
+      node.position.y - stagePosition.y,
+      STAGE_HEADER_HEIGHT,
+      Math.max(STAGE_HEADER_HEIGHT, stageMetric.height - POINT_HEIGHT - STAGE_PADDING_BOTTOM),
+    );
+
+    const siblings = (stagePointEntries[targetStage.id] || [])
+      .filter((entry) => entry.point.id !== point.id)
+      .sort((left, right) => (left.placement.order || 0) - (right.placement.order || 0));
+
+    const targetColumn = clamp(
+      Math.floor((relativeX - STAGE_PADDING_X) / (stageMetric.cardWidth + POINT_GAP)),
+      0,
+      Math.max(0, stageMetric.columns - 1),
+    );
+    const targetRow = Math.max(0, Math.floor((relativeY - STAGE_HEADER_HEIGHT) / (POINT_HEIGHT + POINT_GAP)));
+    const candidateIndex = targetRow * stageMetric.columns + targetColumn;
+    const targetIndex = Math.max(0, Math.min(candidateIndex, siblings.length));
+
+    return {
+      pointId: node.id,
+      stageId: targetStage.id,
+      targetIndex,
+      position: node.position,
+      width: draggedWidth,
+    };
+  };
+
+  const schedulePointDragPreview = (node) => {
+    dragNodeRef.current = node;
+    if (dragFrameRef.current) return;
+    dragFrameRef.current = window.requestAnimationFrame(() => {
+      dragFrameRef.current = 0;
+      const nextPreview = resolvePointDropPreview(dragNodeRef.current);
+      setDragPreview((prev) => {
+        if (
+          prev?.pointId === nextPreview?.pointId
+          && prev?.stageId === nextPreview?.stageId
+          && prev?.targetIndex === nextPreview?.targetIndex
+          && prev?.position?.x === nextPreview?.position?.x
+          && prev?.position?.y === nextPreview?.position?.y
+        ) {
+          return prev;
+        }
+        return nextPreview;
+      });
+    });
+  };
 
   const resourceItems = useMemo(() => {
     const keyword = String(resourceKeyword || '').trim().toLowerCase();
@@ -265,8 +561,8 @@ function StructuredKnowledgeGraphView({
 
   const nodes = useMemo(() => {
     const stageNodes = stages.map((stage, index) => {
-      const position = stagePositions[stage.id] || { x: index * 380, y: 0 };
-      const metric = stageMetrics[stage.id] || { pointCount: 0, bindingCount: 0, height: buildStageHeight(0) };
+      const position = effectiveStagePositions[stage.id] || { x: index * 380, y: 0 };
+      const metric = stageMetrics[stage.id] || { pointCount: 0, bindingCount: 0, width: STAGE_WIDTH, height: buildStageHeight(0) };
       return {
         id: stage.id,
         type: 'kgStage',
@@ -282,16 +578,18 @@ function StructuredKnowledgeGraphView({
           pointCount: metric.pointCount,
           bindingCount: metric.bindingCount,
           height: metric.height,
+          width: metric.width,
           disableDelete: stages.length <= 1,
           onDeleteStage,
           onCreatePoint,
         },
         selected: selection?.type === 'stage' && selection.id === stage.id,
         style: {
-          width: STAGE_WIDTH,
+          width: metric.width,
           height: metric.height,
           border: 'none',
           background: 'transparent',
+          zIndex: 1,
         },
       };
     });
@@ -299,22 +597,28 @@ function StructuredKnowledgeGraphView({
     const pointNodes = points.map((point) => {
       const placement = pointPlacements[point.id];
       if (!placement?.stageId) return null;
-      const stagePosition = stagePositions[placement.stageId] || { x: 0, y: 0 };
-      const rawRelativePosition = pointPositions[point.id] || {
-        x: STAGE_PADDING_X,
-        y: STAGE_HEADER_HEIGHT + (Math.max(0, (placement.order || 1) - 1) * (POINT_HEIGHT + POINT_GAP)),
-      };
+      const previewPlacement = effectivePointPlacements[point.id] || placement;
+      const stageEntries = stagePointEntries[previewPlacement.stageId] || [];
+      const stageIndex = stageEntries.findIndex((entry) => entry.point.id === point.id);
+      const isDraggingPoint = dragPreview?.pointId === point.id;
+      const stagePosition = effectiveStagePositions[previewPlacement.stageId] || { x: 0, y: 0 };
+      const stageMetric = stageMetrics[previewPlacement.stageId]
+        || getStageGridMetrics(stages.find((stage) => stage.id === previewPlacement.stageId)?.layoutColumns, stageEntries.length);
+      const columnIndex = Math.max(0, stageIndex) % stageMetric.columns;
+      const rowIndex = Math.floor(Math.max(0, stageIndex) / stageMetric.columns);
       const relativePosition = {
-        x: clamp(Number(rawRelativePosition.x || STAGE_PADDING_X), STAGE_PADDING_X, STAGE_WIDTH - POINT_WIDTH - STAGE_PADDING_X),
-        y: Math.max(STAGE_HEADER_HEIGHT, Number(rawRelativePosition.y || STAGE_HEADER_HEIGHT)),
+        x: STAGE_PADDING_X + columnIndex * (stageMetric.cardWidth + POINT_GAP),
+        y: STAGE_HEADER_HEIGHT + rowIndex * (POINT_HEIGHT + POINT_GAP),
       };
       return {
         id: point.id,
         type: 'kgPoint',
-        position: {
-          x: stagePosition.x + relativePosition.x,
-          y: stagePosition.y + relativePosition.y,
-        },
+        position: isDraggingPoint
+          ? dragPreview.position
+          : {
+              x: stagePosition.x + relativePosition.x,
+              y: stagePosition.y + relativePosition.y,
+            },
         draggable: true,
         selectable: true,
         connectable: true,
@@ -327,14 +631,19 @@ function StructuredKnowledgeGraphView({
           tagCount: point.tags?.length || 0,
           bindingCount: point.resourceBindings?.length || 0,
           bindingNames: (point.resourceBindings || []).map((binding) => binding.resourceName),
+          canMoveUp: stageIndex > 0,
+          canMoveDown: stageIndex > -1 && stageIndex < stageEntries.length - 1,
+          onMoveUp: () => handleMovePointByStep(point.id, 'up'),
+          onMoveDown: () => handleMovePointByStep(point.id, 'down'),
           onDeletePoint,
           onResourceDrop: onBindResourcesToPoint,
         },
         selected: selection?.type === 'point' && selection.id === point.id,
         style: {
-          width: POINT_WIDTH,
+          width: stageMetric.cardWidth,
           border: 'none',
           background: 'transparent',
+          zIndex: 5,
         },
       };
     }).filter(Boolean);
@@ -345,13 +654,16 @@ function StructuredKnowledgeGraphView({
     onCreatePoint,
     onDeletePoint,
     onDeleteStage,
+    onMovePoint,
+    dragPreview,
+    effectivePointPlacements,
     pointPlacements,
-    pointPositions,
     pointTypeLabelMap,
     points,
     selection,
     stageMetrics,
-    stagePositions,
+    stagePointEntries,
+    effectiveStagePositions,
     stages,
   ]);
 
@@ -391,6 +703,22 @@ function StructuredKnowledgeGraphView({
     return [...stageFlowEdges, ...relationEdges];
   }, [relationTypeLabelMap, relations, selection, stageEdges]);
 
+  useEffect(() => {
+    setRenderNodes((current) => reconcileFlowNodes(current, nodes));
+  }, [nodes]);
+
+  useEffect(() => {
+    setRenderEdges((current) => reconcileFlowEdges(current, edges));
+  }, [edges]);
+
+  const handleNodesChange = (changes) => {
+    setRenderNodes((current) => applyNodeChanges(changes, current));
+  };
+
+  const handleEdgesChange = (changes) => {
+    setRenderEdges((current) => applyEdgeChanges(changes, current));
+  };
+
   const handleConnect = ({ source, target }) => {
     if (!source || !target || source === target) return;
     if (stageIdSet.has(source) && stageIdSet.has(target)) {
@@ -408,61 +736,54 @@ function StructuredKnowledgeGraphView({
     message.warning('结构化视图中只允许阶段与阶段、知识点与知识点分别连线。');
   };
 
+  const handleNodeDragStart = (_, node) => {
+    if (stageIdSet.has(node.id)) {
+      setStageDragPreview({
+        stageId: node.id,
+        position: node.position,
+      });
+      return;
+    }
+    if (pointIdSet.has(node.id)) {
+      setDragPreview({
+        pointId: node.id,
+        stageId: pointPlacements[node.id]?.stageId,
+        targetIndex: Math.max(0, Number(pointPlacements[node.id]?.order || 1) - 1),
+        position: node.position,
+        width: Number(node.width || 0),
+      });
+    }
+  };
+
+  const handleNodeDrag = (_, node) => {
+    if (stageIdSet.has(node.id)) {
+      setStageDragPreview({
+        stageId: node.id,
+        position: node.position,
+      });
+      return;
+    }
+    if (pointIdSet.has(node.id)) {
+      schedulePointDragPreview(node);
+    }
+  };
+
   const handleNodeDragStop = (_, node) => {
     if (stageIdSet.has(node.id)) {
+      setStageDragPreview(null);
       onUpdateStagePosition?.(node.id, node.position);
       return;
     }
     if (!pointIdSet.has(node.id)) return;
-    const point = pointMap[node.id];
-    const currentPlacement = pointPlacements[node.id];
-    if (!point || !currentPlacement) return;
-
-    const centerX = node.position.x + POINT_WIDTH / 2;
-    const centerY = node.position.y + POINT_HEIGHT / 2;
-    const targetStage = stages.find((stage) => {
-      const stagePosition = stagePositions[stage.id] || { x: 0, y: 0 };
-      const stageHeight = stageMetrics[stage.id]?.height || buildStageHeight(0);
-      return (
-        centerX >= stagePosition.x
-        && centerX <= stagePosition.x + STAGE_WIDTH
-        && centerY >= stagePosition.y
-        && centerY <= stagePosition.y + stageHeight
-      );
-    }) || stages.find((stage) => stage.id === currentPlacement.stageId);
-
-    if (!targetStage) return;
-
-    const stagePosition = stagePositions[targetStage.id] || { x: 0, y: 0 };
-    const stageHeight = stageMetrics[targetStage.id]?.height || buildStageHeight(0);
-    const nextRelativePosition = {
-      x: clamp(node.position.x - stagePosition.x, STAGE_PADDING_X, STAGE_WIDTH - POINT_WIDTH - STAGE_PADDING_X),
-      y: clamp(
-        node.position.y - stagePosition.y,
-        STAGE_HEADER_HEIGHT,
-        Math.max(STAGE_HEADER_HEIGHT, stageHeight - POINT_HEIGHT - STAGE_PADDING_BOTTOM),
-      ),
-    };
-
-    const siblings = (stagePointEntries[targetStage.id] || [])
-      .filter((entry) => entry.point.id !== point.id)
-      .sort((left, right) => {
-        const leftPos = pointPositions[left.point.id] || { y: left.placement.order * (POINT_HEIGHT + POINT_GAP) };
-        const rightPos = pointPositions[right.point.id] || { y: right.placement.order * (POINT_HEIGHT + POINT_GAP) };
-        return leftPos.y - rightPos.y;
-      });
-
-    const targetIndex = siblings.findIndex((entry) => {
-      const position = pointPositions[entry.point.id] || { y: STAGE_HEADER_HEIGHT };
-      return nextRelativePosition.y < position.y + POINT_HEIGHT / 2;
-    });
-
-    onMovePoint?.(
-      node.id,
-      targetStage.id,
-      targetIndex === -1 ? siblings.length : targetIndex,
-      nextRelativePosition,
-    );
+    const nextPreview = resolvePointDropPreview(node) || dragPreview;
+    if (dragFrameRef.current) {
+      window.cancelAnimationFrame(dragFrameRef.current);
+      dragFrameRef.current = 0;
+    }
+    dragNodeRef.current = null;
+    setDragPreview(null);
+    if (!nextPreview?.stageId) return;
+    onMovePoint?.(node.id, nextPreview.stageId, nextPreview.targetIndex);
   };
 
   return (
@@ -477,70 +798,70 @@ function StructuredKnowledgeGraphView({
           <Button icon={<PlusOutlined />} onClick={() => onCreatePoint?.(selection?.type === 'stage' ? selection.id : null)}>
             新增知识点
           </Button>
-          <Button
-            icon={<BookOutlined />}
-            type={resourcePanelOpen ? 'primary' : 'default'}
-            onClick={() => setResourcePanelOpen((prev) => !prev)}
-          >
-            {resourcePanelOpen ? '隐藏资料来源' : '显示资料来源'}
-          </Button>
         </div>
       </div>
 
       <div className="kg-structured-main">
         <div className="kg-structured-canvas kg-structured-canvas-overlay">
-          <aside className={`kg-resource-drawer kg-resource-drawer-floating ${resourcePanelOpen ? 'is-open' : 'is-collapsed'}`}>
-            <div className="kg-resource-drawer-head">
-              <div>
-                <div className="kg-resource-drawer-title">{resourcePanelOpen ? '资料来源' : '资料'}</div>
-                {resourcePanelOpen ? (
+          {resourcePanelOpen ? (
+            <aside className="kg-resource-drawer kg-resource-drawer-floating is-open">
+              <div className="kg-resource-drawer-head">
+                <div>
+                  <div className="kg-resource-drawer-title">资料来源</div>
                   <div className="kg-resource-drawer-subtitle">可拖到知识点节点上直接绑定。</div>
-                ) : null}
-              </div>
-              <FolderOpenOutlined className="kg-resource-drawer-icon" />
-            </div>
-            {resourcePanelOpen ? (
-              <>
-                <Segmented
-                  block
-                  size="small"
-                  value={resourceScope}
-                  onChange={setResourceScope}
-                  options={[
-                    { label: '全部', value: 'all' },
-                    { label: '个人库', value: 'personal' },
-                    { label: '组织库', value: 'organization' },
-                  ]}
-                />
-                <Input.Search
-                  allowClear
-                  placeholder="搜索资料"
-                  value={resourceKeyword}
-                  onChange={(event) => setResourceKeyword(event.target.value)}
-                />
-                <div className="kg-resource-drawer-list">
-                  {resourceItems.length ? resourceItems.map((item) => (
-                    <div
-                      key={item.key}
-                      className="kg-resource-drawer-item"
-                      draggable
-                      onDragStart={(event) => {
-                        event.dataTransfer.setData(RESOURCE_DRAG_TYPE, JSON.stringify(item));
-                        event.dataTransfer.effectAllowed = 'copy';
-                      }}
-                    >
-                      <div className="kg-resource-drawer-item-name">{item.name}</div>
-                      <div className="kg-resource-drawer-item-meta">{item.libraryName} · {item.fileType}</div>
-                    </div>
-                  )) : (
-                    <div className="kg-resource-drawer-empty">当前筛选条件下没有可用资料。</div>
-                  )}
                 </div>
-              </>
-            ) : (
-              <div className="kg-resource-drawer-collapsed-tip">已收起</div>
-            )}
-          </aside>
+                <div className="kg-resource-drawer-head-actions">
+                  <Button
+                    size="small"
+                    type="text"
+                    icon={<MenuFoldOutlined />}
+                    onClick={() => setResourcePanelOpen(false)}
+                  />
+                </div>
+              </div>
+              <Segmented
+                block
+                size="small"
+                value={resourceScope}
+                onChange={setResourceScope}
+                options={[
+                  { label: '全部', value: 'all' },
+                  { label: '个人库', value: 'personal' },
+                  { label: '组织库', value: 'organization' },
+                ]}
+              />
+              <Input.Search
+                allowClear
+                placeholder="搜索资料"
+                value={resourceKeyword}
+                onChange={(event) => setResourceKeyword(event.target.value)}
+              />
+              <div className="kg-resource-drawer-list">
+                {resourceItems.length ? resourceItems.map((item) => (
+                  <div
+                    key={item.key}
+                    className="kg-resource-drawer-item"
+                    draggable
+                    onDragStart={(event) => {
+                      event.dataTransfer.setData(RESOURCE_DRAG_TYPE, JSON.stringify(item));
+                      event.dataTransfer.effectAllowed = 'copy';
+                    }}
+                  >
+                    <div className="kg-resource-drawer-item-name">{item.name}</div>
+                    <div className="kg-resource-drawer-item-meta">{item.libraryName} · {item.fileType}</div>
+                  </div>
+                )) : (
+                  <div className="kg-resource-drawer-empty">当前筛选条件下没有可用资料。</div>
+                )}
+              </div>
+            </aside>
+          ) : (
+            <Button
+              className="kg-resource-drawer-toggle"
+              icon={<MenuUnfoldOutlined />}
+              onClick={() => setResourcePanelOpen(true)}
+            />
+          )}
 
           {!stages.length ? (
             <div className="kg-empty-shell">
@@ -552,11 +873,17 @@ function StructuredKnowledgeGraphView({
             </div>
           ) : (
             <ReactFlow
-              nodes={nodes}
-              edges={edges}
+              nodes={renderNodes}
+              edges={renderEdges}
               fitView
               nodesDraggable
               nodesConnectable
+              nodeDragThreshold={1}
+              connectionDragThreshold={6}
+              onlyRenderVisibleElements
+              elevateNodesOnSelect={false}
+              onNodesChange={handleNodesChange}
+              onEdgesChange={handleEdgesChange}
               onNodeClick={(_, node) => {
                 onSelectionChange?.({
                   type: stageIdSet.has(node.id) ? 'stage' : 'point',
@@ -571,6 +898,8 @@ function StructuredKnowledgeGraphView({
               }}
               onPaneClick={() => onSelectionChange?.({ type: 'graph', id: graphId })}
               onConnect={handleConnect}
+              onNodeDragStart={handleNodeDragStart}
+              onNodeDrag={handleNodeDrag}
               onNodeDragStop={handleNodeDragStop}
               nodeTypes={nodeTypes}
               onInit={setRfInstance}
