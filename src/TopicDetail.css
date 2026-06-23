@@ -686,6 +686,10 @@
   box-shadow: 0 12px 24px rgba(148, 163, 184, 0.1);
 }
 
+.topic-knowledge-panel-summary-head {
+  position: relative;
+}
+
 .topic-knowledge-overview-btn,
 .topic-knowledge-stage-main,
 .topic-knowledge-stage-toggle,
@@ -699,6 +703,8 @@
 }
 
 .topic-knowledge-overview-btn {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: flex-start;
   gap: 12px;

@@ -2517,14 +2517,6 @@ function TopicDetail({
                 </div>
               </div>
             </div>
-            <div className="topic-preview-main-head-actions">
-              <Button size="small" onClick={handleSelectKnowledgeGraphOverview}>
-                返回知识图谱
-              </Button>
-              <Button size="small" type="primary" onClick={handleOpenKnowledgeGraphEditor}>
-                进入知识图谱编辑
-              </Button>
-            </div>
           </div>
           <div className="topic-preview-main-content">
             <div className="topic-preview-body topic-preview-body-main">
@@ -2554,6 +2546,14 @@ function TopicDetail({
                 </div>
               </div>
               <div className="finder-kg-preview-head-actions">
+                <Button icon={<DatabaseOutlined />} onClick={handleOpenKnowledgeGraphPicker} disabled={!canEditCurrentVersion}>
+                  {knowledgeGraphRef ? '更换图谱' : '绑定图谱'}
+                </Button>
+                {canEditCurrentVersion ? (
+                  <Button danger onClick={handleUnbindKnowledgeGraph}>
+                    解除关联
+                  </Button>
+                ) : null}
                 <Button icon={<FullscreenOutlined />} onClick={() => openKnowledgeGraphInNewTab(previewData.graph, 'curriculum')}>
                   全屏
                 </Button>
@@ -2581,6 +2581,14 @@ function TopicDetail({
               </div>
             </div>
             <div className="finder-kg-preview-head-actions">
+              <Button icon={<DatabaseOutlined />} onClick={handleOpenKnowledgeGraphPicker} disabled={!canEditCurrentVersion}>
+                {knowledgeGraphRef ? '更换图谱' : '绑定图谱'}
+              </Button>
+              {canEditCurrentVersion ? (
+                <Button danger onClick={handleUnbindKnowledgeGraph}>
+                  解除关联
+                </Button>
+              ) : null}
               <Button type="primary" icon={<EditOutlined />} onClick={() => setKnowledgeGraphPreviewMode('edit')}>
                 编辑
               </Button>
@@ -2687,34 +2695,23 @@ function TopicDetail({
     return (
       <div className="topic-knowledge-panel">
         <div className="topic-knowledge-panel-summary">
-          <button
-            type="button"
-            className={`topic-knowledge-overview-btn ${knowledgeGraphSelection?.type === 'graph' ? 'is-active' : ''}`}
-            onClick={handleSelectKnowledgeGraphOverview}
-          >
-            <span className="topic-knowledge-overview-icon"><NodeIndexOutlined /></span>
-            <span className="topic-knowledge-overview-copy">
-              <strong>{knowledgeGraphGraph.name}</strong>
-              <span>{knowledgeGraphGraph.description || '点击查看图谱概览与阶段分布。'}</span>
-            </span>
-          </button>
+          <div className="topic-knowledge-panel-summary-head">
+            <button
+              type="button"
+              className={`topic-knowledge-overview-btn ${knowledgeGraphSelection?.type === 'graph' ? 'is-active' : ''}`}
+              onClick={handleSelectKnowledgeGraphOverview}
+            >
+              <span className="topic-knowledge-overview-icon"><NodeIndexOutlined /></span>
+              <span className="topic-knowledge-overview-copy">
+                <strong>{knowledgeGraphGraph.name}</strong>
+                <span>{knowledgeGraphGraph.description || '点击查看图谱概览与阶段分布。'}</span>
+              </span>
+            </button>
+          </div>
           <div className="topic-knowledge-panel-stats">
             <span>{knowledgeGraphStages.length} 阶段</span>
             <span>{knowledgeGraphPoints.length} 知识点</span>
             <span>{knowledgeGraphBindingCount} 资料</span>
-          </div>
-          <div className="topic-knowledge-panel-actions">
-            <Button size="small" icon={<DatabaseOutlined />} onClick={handleOpenKnowledgeGraphPicker} disabled={!canEditCurrentVersion}>
-              {knowledgeGraphRef ? '更换图谱' : '绑定图谱'}
-            </Button>
-            <Button size="small" type="primary" onClick={handleOpenKnowledgeGraphEditor}>
-              编辑
-            </Button>
-            {canEditCurrentVersion ? (
-              <Button size="small" danger onClick={handleUnbindKnowledgeGraph}>
-                解除关联
-              </Button>
-            ) : null}
           </div>
         </div>
 
