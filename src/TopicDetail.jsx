@@ -20,6 +20,7 @@ import {
   EditOutlined,
   EyeOutlined,
   FileAddOutlined,
+  FullscreenOutlined,
   AppstoreOutlined,
   FolderFilled,
   FolderAddOutlined,
@@ -73,13 +74,23 @@ import {
   getGraphLayout,
   getPointsByGraph,
   getRelationsByGraph,
+  KNOWLEDGE_POINT_TYPE_OPTIONS,
+  RELATION_TYPE_OPTIONS,
   getKnowledgeGraphStoreEventName,
   loadKnowledgeGraphStore,
 } from './knowledgeGraph/store';
+import KnowledgeGraphModule from './knowledgeGraph/KnowledgeGraphModule';
+import StructuredKnowledgeGraphView from './knowledgeGraph/StructuredKnowledgeGraphView';
 import './TopicDetail.css';
 
 const EMPTY_TAB_INDICATOR = { x: 0, y: 0, width: 0, height: 0, opacity: 0 };
 const TOPIC_DROPDOWN_OVERLAY_CLASS = 'finder-liquid-glass-menu';
+const KNOWLEDGE_GRAPH_POINT_TYPE_LABEL_MAP = Object.fromEntries(
+  KNOWLEDGE_POINT_TYPE_OPTIONS.map((item) => [item.value, item.label]),
+);
+const KNOWLEDGE_GRAPH_RELATION_TYPE_LABEL_MAP = Object.fromEntries(
+  RELATION_TYPE_OPTIONS.map((item) => [item.value, item.label]),
+);
 
 function getResourceIcon(type) {
   switch (type) {
@@ -356,6 +367,7 @@ function TopicDetail({
   const [knowledgeGraphSelection, setKnowledgeGraphSelection] = useState({ type: 'graph', id: null });
   const [knowledgeGraphExpandedStageIds, setKnowledgeGraphExpandedStageIds] = useState(new Set());
   const [selectedKnowledgeGraphBindingId, setSelectedKnowledgeGraphBindingId] = useState(null);
+  const [knowledgeGraphPreviewMode, setKnowledgeGraphPreviewMode] = useState('preview');
   const [tabIndicatorStyle, setTabIndicatorStyle] = useState(EMPTY_TAB_INDICATOR);
   const detailBodyRef = useRef(null);
   const detailTabsRef = useRef(null);
@@ -814,6 +826,10 @@ function TopicDetail({
       setSelectedKnowledgeGraphBindingId(bindings[0].bindingId);
     }
   }, [selectedKnowledgeGraphBindingId, selectedKnowledgeGraphPoint]);
+
+  useEffect(() => {
+    setKnowledgeGraphPreviewMode('preview');
+  }, [knowledgeGraphGraph?.id]);
 
   const getResourceTagIds = (resource) => {
     if (!resource || !tagConfig) return [];
@@ -1314,6 +1330,19 @@ function TopicDetail({
       mode: 'curriculum',
     });
   };
+
+  const openKnowledgeGraphInNewTab = useCallback((graph, mode = 'graph') => {
+    if (!graph?.id || typeof window === 'undefined') return;
+    const params = new URLSearchParams({
+      graphId: graph.id,
+      mode,
+    });
+    if (graph.collectionId) {
+      params.set('collectionId', graph.collectionId);
+    }
+    const targetUrl = `${window.location.pathname}${window.location.search}#knowledge-graph?${params.toString()}`;
+    window.open(targetUrl, '_blank', 'noopener,noreferrer');
+  }, []);
 
   const handleSelectKnowledgeGraphOverview = () => {
     if (!knowledgeGraphGraph?.id) return;
@@ -2502,6 +2531,75 @@ function TopicDetail({
               {renderPreviewContent(previewItem)}
             </div>
           </div>
+        </div>
+      );
+    }
+
+    if (knowledgeGraphSelection?.type === 'graph') {
+      const previewData = {
+        graph: knowledgeGraphGraph,
+        points: knowledgeGraphPoints,
+        relations: knowledgeGraphRelations,
+        structuredView: knowledgeGraphStructuredView,
+      };
+
+      if (knowledgeGraphPreviewMode === 'edit') {
+        return (
+          <div className="finder-kg-preview-embed finder-kg-preview-embed-edit">
+            <div className="finder-kg-preview-head">
+              <div className="finder-kg-preview-head-copy">
+                <div className="finder-kg-preview-head-title">{previewData.graph.name}</div>
+                <div className="finder-kg-preview-head-meta">
+                  {previewData.graph.description || '知识图谱结构化编辑'}
+                </div>
+              </div>
+              <div className="finder-kg-preview-head-actions">
+                <Button icon={<FullscreenOutlined />} onClick={() => openKnowledgeGraphInNewTab(previewData.graph, 'curriculum')}>
+                  全屏
+                </Button>
+              </div>
+            </div>
+            <KnowledgeGraphModule
+              embedded
+              entryGraphId={previewData.graph.id}
+              entryCollectionId={previewData.graph.collectionId}
+              entryMode="curriculum"
+              entryRequestId={`topic-${currentVersion?.id || 'default'}-${previewData.graph.id}-edit`}
+              onExitEmbedded={() => setKnowledgeGraphPreviewMode('preview')}
+            />
+          </div>
+        );
+      }
+
+      return (
+        <div className="finder-kg-preview-embed topic-kg-preview-embed">
+          <div className="finder-kg-preview-head">
+            <div className="finder-kg-preview-head-copy">
+              <div className="finder-kg-preview-head-title">{previewData.graph.name}</div>
+              <div className="finder-kg-preview-head-meta">
+                {previewData.graph.description || '知识图谱结构化预览'}
+              </div>
+            </div>
+            <div className="finder-kg-preview-head-actions">
+              <Button type="primary" icon={<EditOutlined />} onClick={() => setKnowledgeGraphPreviewMode('edit')}>
+                编辑
+              </Button>
+              <Button icon={<FullscreenOutlined />} onClick={() => openKnowledgeGraphInNewTab(previewData.graph, 'graph')}>
+                全屏
+              </Button>
+            </div>
+          </div>
+          <StructuredKnowledgeGraphView
+            graphId={previewData.graph.id}
+            points={previewData.points}
+            relations={previewData.relations}
+            structuredView={previewData.structuredView}
+            pointTypeLabelMap={KNOWLEDGE_GRAPH_POINT_TYPE_LABEL_MAP}
+            relationTypeLabelMap={KNOWLEDGE_GRAPH_RELATION_TYPE_LABEL_MAP}
+            selection={null}
+            onSelectionChange={() => {}}
+            readOnly
+          />
         </div>
       );
     }
