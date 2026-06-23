@@ -9,6 +9,7 @@ import {
   UserOutlined,
   RightOutlined,
   ToolOutlined,
+  NodeIndexOutlined,
 } from '@ant-design/icons';
 import './AddResourceModal.css';
 
@@ -29,6 +30,12 @@ const resourceCategories = [
   {
     title: '工具',
     items: [],
+  },
+  {
+    title: '知识体系',
+    items: [
+      { key: 'knowledge-graph', icon: <NodeIndexOutlined />, label: '知识图谱', type: 'knowledgeGraph' },
+    ],
   },
 ];
 

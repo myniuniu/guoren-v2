@@ -361,6 +361,7 @@ function TopicDetail({
   const [knowledgeGraphStoreSnapshot, setKnowledgeGraphStoreSnapshot] = useState(() => loadKnowledgeGraphStore());
   const [resourceLibraryData, setResourceLibraryData] = useState(() => loadResourceLib());
   const [knowledgeGraphPickerOpen, setKnowledgeGraphPickerOpen] = useState(false);
+  const [knowledgeGraphPickerMode, setKnowledgeGraphPickerMode] = useState('bind');
   const [knowledgeGraphPickerScope, setKnowledgeGraphPickerScope] = useState('all');
   const [knowledgeGraphPickerKeyword, setKnowledgeGraphPickerKeyword] = useState('');
   const [selectedKnowledgeGraphResourceKey, setSelectedKnowledgeGraphResourceKey] = useState(null);
@@ -725,6 +726,11 @@ function TopicDetail({
       setResourcePanelView('resources');
     }
   }, [activeTab, resourcePanelView]);
+
+  useEffect(() => {
+    if (knowledgeGraphRef || resourcePanelView !== 'knowledgeGraph') return;
+    setResourcePanelView('resources');
+  }, [knowledgeGraphRef, resourcePanelView]);
 
   useEffect(() => {
     if (tagPickerGroupFilter !== 'all' && !tagGroups.some((group) => group.id === tagPickerGroupFilter)) {
@@ -1267,6 +1273,7 @@ function TopicDetail({
       message.warning(versioningEnabled ? '当前版本已发布，请新建版本后再绑定知识图谱' : '当前内容不可编辑');
       return;
     }
+    setKnowledgeGraphPickerMode('bind');
     setResourceLibraryData(loadResourceLib());
     setKnowledgeGraphPickerScope('all');
     setKnowledgeGraphPickerKeyword('');
@@ -1295,7 +1302,11 @@ function TopicDetail({
     setVersionData(nextData);
     setKnowledgeGraphPickerOpen(false);
     setResourcePanelView('knowledgeGraph');
-    message.success(`已绑定知识图谱「${selectedItem.name}」`);
+    message.success(
+      knowledgeGraphPickerMode === 'add'
+        ? `已导入知识图谱「${selectedItem.name}」`
+        : `已绑定知识图谱「${selectedItem.name}」`,
+    );
   };
 
   const handleUnbindKnowledgeGraph = () => {
@@ -1473,6 +1484,23 @@ function TopicDetail({
   };
 
   const handleAddResource = (resource) => {
+    if (resource?.type === 'knowledgeGraph') {
+      if (!canEditCurrentVersion) {
+        message.warning(versioningEnabled ? '当前版本已发布，请新建版本后再导入知识图谱' : '当前内容不可编辑');
+        return;
+      }
+      setKnowledgeGraphPickerMode('add');
+      setResourceLibraryData(loadResourceLib());
+      setKnowledgeGraphPickerScope('all');
+      setKnowledgeGraphPickerKeyword('');
+      setSelectedKnowledgeGraphResourceKey(
+        knowledgeGraphRef?.libraryId && knowledgeGraphRef?.resourceKey
+          ? `${knowledgeGraphRef.libraryId}:${knowledgeGraphRef.resourceKey}`
+          : null,
+      );
+      setKnowledgeGraphPickerOpen(true);
+      return;
+    }
     if (!canEditDisplayedResources) {
       message.warning(versioningEnabled ? '当前版本已发布，请新建版本后再添加资料' : '当前内容不可编辑');
       return;
@@ -2041,6 +2069,17 @@ function TopicDetail({
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [bgMenuPos]);
+
+  const resourcePanelViewOptions = useMemo(() => (
+    knowledgeGraphRef
+      ? [
+          { label: '资料', value: 'resources' },
+          { label: '知识图谱', value: 'knowledgeGraph' },
+        ]
+      : [
+          { label: '资料', value: 'resources' },
+        ]
+  ), [knowledgeGraphRef]);
 
   const bgContextMenu = {
     items: [
@@ -2987,16 +3026,15 @@ function TopicDetail({
           <div className="detail-left-panel" style={{ width: leftPanelWidth, minWidth: leftPanelWidth }}>
             <div className="panel-header">
               <span className="panel-title">{resourcePanelView === 'knowledgeGraph' ? '知识图谱' : resourcePanelTitle}</span>
-              <Segmented
-                size="small"
-                value={resourcePanelView}
-                onChange={handleSwitchResourcePanelView}
-                options={[
-                  { label: '资料', value: 'resources' },
-                  { label: '知识图谱', value: 'knowledgeGraph' },
-                ]}
-                className="topic-panel-view-switcher"
-              />
+              {resourcePanelViewOptions.length > 1 ? (
+                <Segmented
+                  size="small"
+                  value={resourcePanelView}
+                  onChange={handleSwitchResourcePanelView}
+                  options={resourcePanelViewOptions}
+                  className="topic-panel-view-switcher"
+                />
+              ) : null}
             </div>
 
             {resourcePanelView === 'resources' ? (
@@ -3210,11 +3248,11 @@ function TopicDetail({
       )}
 
       <Modal
-        title="从资料库绑定知识图谱"
+        title={knowledgeGraphPickerMode === 'add' ? '从资料库导入知识图谱' : '从资料库绑定知识图谱'}
         open={knowledgeGraphPickerOpen}
         onCancel={() => setKnowledgeGraphPickerOpen(false)}
         onOk={handleConfirmKnowledgeGraphBinding}
-        okText="绑定图谱"
+        okText={knowledgeGraphPickerMode === 'add' ? '导入图谱' : '绑定图谱'}
         cancelText="取消"
         okButtonProps={{ disabled: !selectedKnowledgeGraphResourceKey }}
         width={720}
