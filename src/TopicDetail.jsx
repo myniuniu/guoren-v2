@@ -2606,6 +2606,7 @@ function TopicDetail({
             relationTypeLabelMap={KNOWLEDGE_GRAPH_RELATION_TYPE_LABEL_MAP}
             selection={null}
             onSelectionChange={() => {}}
+            onPreviewBinding={handleSelectKnowledgeGraphPreviewBinding}
             readOnly
           />
         </div>

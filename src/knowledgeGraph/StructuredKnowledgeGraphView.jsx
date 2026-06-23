@@ -277,7 +277,21 @@ const STAGE_HANDLE_CONFIGS = [
 ];
 
 function StageNode({ data, selected }) {
-  const stop = (event) => event.stopPropagation();
+  const stop = (event) => {
+    event.stopPropagation();
+    if (typeof event.preventDefault === 'function') {
+      event.preventDefault();
+    }
+    if (event.nativeEvent?.stopImmediatePropagation) {
+      event.nativeEvent.stopImmediatePropagation();
+    }
+  };
+  const stopBubbleOnly = (event) => {
+    event.stopPropagation();
+    if (event.nativeEvent?.stopImmediatePropagation) {
+      event.nativeEvent.stopImmediatePropagation();
+    }
+  };
   const handleClassName = `kg-structured-handle${data.readOnly ? ' is-hidden' : ''}`;
   return (
     <div
@@ -352,7 +366,21 @@ function StageNode({ data, selected }) {
 }
 
 function PointNode({ data, selected }) {
-  const stop = (event) => event.stopPropagation();
+  const stop = (event) => {
+    event.stopPropagation();
+    if (typeof event.preventDefault === 'function') {
+      event.preventDefault();
+    }
+    if (event.nativeEvent?.stopImmediatePropagation) {
+      event.nativeEvent.stopImmediatePropagation();
+    }
+  };
+  const stopBubbleOnly = (event) => {
+    event.stopPropagation();
+    if (event.nativeEvent?.stopImmediatePropagation) {
+      event.nativeEvent.stopImmediatePropagation();
+    }
+  };
 
   const handleDrop = (event) => {
     event.preventDefault();
@@ -416,16 +444,31 @@ function PointNode({ data, selected }) {
         <span>{data.tagCount} 个标签</span>
         <span>{data.bindingCount} 条资料</span>
       </div>
-      <div className="kg-structured-point-binding">
+      <div
+        className="kg-structured-point-binding nodrag nopan nowheel"
+        onPointerDown={stopBubbleOnly}
+        onPointerUp={stopBubbleOnly}
+        onMouseDown={stopBubbleOnly}
+        onTouchStart={stopBubbleOnly}
+        onClick={stopBubbleOnly}
+      >
         {data.bindingCount ? (
           (data.bindings || []).map((binding) => (
             <button
               key={binding.bindingId}
               type="button"
-              className={`kg-structured-point-binding-item ${data.readOnly ? 'is-previewable' : ''}`}
+              className={`kg-structured-point-binding-item ${data.readOnly ? 'is-previewable' : ''} nodrag nopan nowheel`}
+              onPointerDown={stopBubbleOnly}
+              onPointerUp={stopBubbleOnly}
+              onMouseDown={stopBubbleOnly}
+              onTouchStart={stopBubbleOnly}
+              onClickCapture={stopBubbleOnly}
               onClick={(event) => {
                 if (!data.onPreviewBinding) return;
                 event.stopPropagation();
+                if (event.nativeEvent?.stopImmediatePropagation) {
+                  event.nativeEvent.stopImmediatePropagation();
+                }
                 data.onPreviewBinding(binding);
               }}
             >
