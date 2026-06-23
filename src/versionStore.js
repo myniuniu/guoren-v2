@@ -121,10 +121,42 @@ const defaultData = {
         ],
       },
       assessmentChat: [],
+      knowledgeGraphRef: null,
     },
   ],
   currentVersionId: 'v1',
 };
+
+function normalizeKnowledgeGraphRef(ref) {
+  if (!ref || typeof ref !== 'object') return null;
+  if (!ref.knowledgeGraphId && !ref.resourceKey) return null;
+  return {
+    resourceKey: ref.resourceKey || '',
+    knowledgeGraphId: ref.knowledgeGraphId || '',
+    libraryId: ref.libraryId || '',
+    name: ref.name || '',
+  };
+}
+
+function normalizeVersionRecord(version = {}) {
+  return {
+    ...version,
+    resources: Array.isArray(version.resources) ? version.resources : [],
+    assessment: version.assessment || buildEmptyAssessment(),
+    assessmentChat: Array.isArray(version.assessmentChat) ? version.assessmentChat : [],
+    tagDefinitions: Array.isArray(version.tagDefinitions) ? version.tagDefinitions : [],
+    tagGroups: Array.isArray(version.tagGroups) ? version.tagGroups : [],
+    knowledgeGraphRef: normalizeKnowledgeGraphRef(version.knowledgeGraphRef),
+  };
+}
+
+function normalizeVersionStoreData(data = {}) {
+  return {
+    ...data,
+    versions: Array.isArray(data.versions) ? data.versions.map(normalizeVersionRecord) : [],
+    currentVersionId: data.currentVersionId || data.versions?.[0]?.id || 'v1',
+  };
+}
 
 // 从 localStorage 加载数据
 export function loadFromStorage(options = {}) {
@@ -145,14 +177,14 @@ export function loadFromStorage(options = {}) {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed._dataVersion === DATA_VERSION) {
-        return withRuntimeMeta(parsed, storageKey);
+        return withRuntimeMeta(normalizeVersionStoreData(parsed), storageKey);
       }
     }
   } catch (e) {
     console.error('Failed to load version data from localStorage:', e);
   }
 
-  const seeded = withRuntimeMeta(initialData, storageKey);
+  const seeded = withRuntimeMeta(normalizeVersionStoreData(initialData), storageKey);
   saveToStorage(seeded);
   return seeded;
 }
@@ -258,6 +290,9 @@ export function createNewVersion(data, versioningConfig) {
     tagGroups: shouldCopyActive && activeVersion?.tagGroups ? cloneData(activeVersion.tagGroups) : [],
     assessment: inheritedAssessment,
     assessmentChat: shouldCopyActive && activeVersion?.assessmentChat ? cloneData(activeVersion.assessmentChat) : [],
+    knowledgeGraphRef: shouldCopyActive && activeVersion?.knowledgeGraphRef
+      ? cloneData(activeVersion.knowledgeGraphRef)
+      : null,
   };
 
   const newData = {
@@ -577,6 +612,23 @@ export function updateVersionTagLibrary(data, versionId, patch, versioningConfig
     versions: data.versions.map((v) =>
       v.id === versionId ? { ...v, ...patch } : v
     ),
+  };
+  saveToStorage(newData);
+  return newData;
+}
+
+export function updateVersionKnowledgeGraphRef(data, versionId, knowledgeGraphRef, versioningConfig) {
+  const version = data.versions.find((v) => v.id === versionId);
+  if (!isVersionEditable(version, versioningConfig)) return data;
+
+  const normalizedRef = normalizeKnowledgeGraphRef(knowledgeGraphRef);
+  const newData = {
+    ...data,
+    versions: data.versions.map((v) => (
+      v.id === versionId
+        ? { ...v, knowledgeGraphRef: normalizedRef }
+        : v
+    )),
   };
   saveToStorage(newData);
   return newData;

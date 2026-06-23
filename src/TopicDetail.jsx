@@ -6,6 +6,7 @@ import {
   Empty,
   Input,
   Modal,
+  Segmented,
   Tag,
   message,
 } from 'antd';
@@ -35,11 +36,13 @@ import {
   SwapOutlined,
   TagsOutlined,
   UserOutlined,
+  NodeIndexOutlined,
+  DatabaseOutlined,
 } from '@ant-design/icons';
 import AddResourceModal from './AddResourceModal';
 import AssessmentConfig from './AssessmentConfig';
 import ResourceLibraryTagPicker from './resourceLib/ResourceLibraryTagPicker.jsx';
-import { inferFileType } from './resourceLib/resourceLibStore';
+import { getAllItemsAcrossLibraries, inferFileType, loadResourceLib } from './resourceLib/resourceLibStore';
 import { renderFileIcon } from './resourceLib/resourceIcons.jsx';
 import { getSceneThemeCoverPalette } from './scene/themeCovers';
 import {
@@ -57,6 +60,7 @@ import {
   switchVersion,
   updateAssessment,
   updateAssessmentChat,
+  updateVersionKnowledgeGraphRef,
   updateResourceArchiveProfile,
   updateResource,
   updateVersionTagLibrary,
@@ -64,6 +68,14 @@ import {
 import { buildSceneInitialVersionData, normalizeVersioningConfig } from './scene/api';
 import { buildSceneResourceArchiveMeta, isSceneResourceArchived } from './shared/sceneGrowthRecords';
 import { getTopicAdminConfig } from './studyClub/adminTopicMapping';
+import {
+  getGraphById,
+  getGraphLayout,
+  getPointsByGraph,
+  getRelationsByGraph,
+  getKnowledgeGraphStoreEventName,
+  loadKnowledgeGraphStore,
+} from './knowledgeGraph/store';
 import './TopicDetail.css';
 
 const EMPTY_TAB_INDICATOR = { x: 0, y: 0, width: 0, height: 0, opacity: 0 };
@@ -87,6 +99,7 @@ function getResourceIcon(type) {
 
 function getTopicResourceFileType(resource) {
   if (!resource || resource.isFolder) return 'folder';
+  if (resource.fileType && resource.fileType !== 'other') return resource.fileType;
   if (resource.type === 'video') return 'video';
   if (/\.html?$/i.test(resource.name || '')) return 'note';
   const inferred = inferFileType(resource.name || '');
@@ -107,6 +120,7 @@ function getTopicResourceFileType(resource) {
 function getResourceTypeLabel(resource, fileType) {
   if (!resource) return '文件';
   if (resource.isFolder) return '文件夹';
+  if (resource.fileType === 'knowledgeGraph' || fileType === 'knowledgeGraph') return '知识图谱';
   switch (resource.type) {
     case 'video':
       return '视频课件';
@@ -166,6 +180,117 @@ function getDefaultLeftPanelWidth() {
   return 360;
 }
 
+function getTopicPanelViewStorageKey(scopeKey = 'default') {
+  return `gr:topic-panel-view:${scopeKey}`;
+}
+
+function loadTopicPanelView(scopeKey = 'default') {
+  if (typeof window === 'undefined') return 'resources';
+  try {
+    return window.localStorage.getItem(getTopicPanelViewStorageKey(scopeKey)) === 'knowledgeGraph'
+      ? 'knowledgeGraph'
+      : 'resources';
+  } catch {
+    return 'resources';
+  }
+}
+
+function persistTopicPanelView(scopeKey = 'default', view = 'resources') {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(
+      getTopicPanelViewStorageKey(scopeKey),
+      view === 'knowledgeGraph' ? 'knowledgeGraph' : 'resources',
+    );
+  } catch {
+    // ignore persistence failure
+  }
+}
+
+function buildTopicBindingPreviewResource(binding, liveResource, pointTitle, stageName) {
+  const resourceName = liveResource?.name || binding?.resourceName || '未命名资料';
+  return {
+    key: liveResource?.key || binding?.resourceKey || binding?.bindingId || resourceName,
+    name: resourceName,
+    isFolder: false,
+    type: liveResource?.type || (binding?.fileType === 'video' ? 'video' : 'file'),
+    fileType: liveResource?.fileType || binding?.fileType || inferFileType(resourceName),
+    url: liveResource?.url || liveResource?.dataUrl || binding?.snapshotUrl || '',
+    owner: liveResource?.owner || binding?.libraryName || '--',
+    lastEdit: liveResource?.lastEdit || binding?.createdAt || '--',
+    meta: {
+      ...(liveResource?.meta || {}),
+      summary: liveResource?.meta?.summary || `该资料绑定于知识点「${pointTitle}」。`,
+      paragraphs: Array.isArray(liveResource?.meta?.paragraphs) && liveResource.meta.paragraphs.length
+        ? liveResource.meta.paragraphs
+        : [
+            `资料来源于知识图谱中的知识点「${pointTitle}」，所属阶段「${stageName}」。`,
+            binding?.libraryName ? `当前资料库：${binding.libraryName}。` : '该资料来自外部资料库绑定快照。',
+            binding?.snapshotPath ? `资料路径：${binding.snapshotPath}` : '可在资料库中维护该资料内容。',
+          ],
+    },
+  };
+}
+
+function buildKnowledgeGraphMirrorResources(stages, stagePointEntries, resourceLibraryItemMap) {
+  const nextResources = [];
+  stages.forEach((stage) => {
+    const stageKey = `kg_stage_${stage.id}`;
+    nextResources.push({
+      key: stageKey,
+      name: stage.name,
+      isFolder: true,
+      parentKey: null,
+      owner: '知识图谱',
+      lastEdit: '--',
+      meta: {
+        summary: stage.description || '知识图谱阶段目录',
+      },
+      __kgMirror: true,
+      __kgEntityType: 'stage',
+      __kgStageId: stage.id,
+    });
+
+    const entries = stagePointEntries[stage.id] || [];
+    entries.forEach(({ point }) => {
+      const pointKey = `kg_point_${point.id}`;
+      nextResources.push({
+        key: pointKey,
+        name: point.title,
+        isFolder: true,
+        parentKey: stageKey,
+        owner: '知识图谱',
+        lastEdit: point.updatedAt || '--',
+        meta: {
+          summary: point.summary || '知识点绑定资料目录',
+        },
+        __kgMirror: true,
+        __kgEntityType: 'point',
+        __kgStageId: stage.id,
+        __kgPointId: point.id,
+      });
+
+      (point.resourceBindings || []).forEach((binding) => {
+        const liveResource = resourceLibraryItemMap.get(`${binding.libraryId}:${binding.resourceKey}`) || null;
+        const previewResource = buildTopicBindingPreviewResource(binding, liveResource, point.title, stage.name);
+        nextResources.push({
+          ...previewResource,
+          key: `kg_binding_${binding.bindingId}`,
+          parentKey: pointKey,
+          owner: liveResource?.owner || binding.libraryName || '--',
+          lastEdit: liveResource?.lastEdit || binding.createdAt || '--',
+          __kgMirror: true,
+          __kgEntityType: 'binding',
+          __kgStageId: stage.id,
+          __kgPointId: point.id,
+          __kgBindingId: binding.bindingId,
+        });
+      });
+    });
+  });
+  return nextResources;
+}
+
 function loadTopicVersionData(topicConfig, sceneConfig, storageScopeKey) {
   if (sceneConfig) {
     return loadFromStorage({
@@ -185,6 +310,7 @@ function loadTopicVersionData(topicConfig, sceneConfig, storageScopeKey) {
 function TopicDetail({
   topicTitle,
   onBack,
+  onOpenKnowledgeGraph = null,
   sceneConfig = null,
   storageScopeKey,
   sceneDescription,
@@ -199,6 +325,7 @@ function TopicDetail({
   const [previewItem, setPreviewItem] = useState(null);
   const [versionData, setVersionData] = useState(() => loadTopicVersionData(topicAdminConfig, sceneConfig, topicStorageScopeKey));
   const [leftPanelWidth, setLeftPanelWidth] = useState(() => getDefaultLeftPanelWidth());
+  const [resourcePanelView, setResourcePanelView] = useState(() => loadTopicPanelView(topicStorageScopeKey));
   const [expandedFolders, setExpandedFolders] = useState(new Set());
   const [selectedFolderKey, setSelectedFolderKey] = useState(null);
   const [selectedItemKey, setSelectedItemKey] = useState(null);
@@ -220,6 +347,15 @@ function TopicDetail({
   const [addTagOpen, setAddTagOpen] = useState(false);
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#1677ff');
+  const [knowledgeGraphStoreSnapshot, setKnowledgeGraphStoreSnapshot] = useState(() => loadKnowledgeGraphStore());
+  const [resourceLibraryData, setResourceLibraryData] = useState(() => loadResourceLib());
+  const [knowledgeGraphPickerOpen, setKnowledgeGraphPickerOpen] = useState(false);
+  const [knowledgeGraphPickerScope, setKnowledgeGraphPickerScope] = useState('all');
+  const [knowledgeGraphPickerKeyword, setKnowledgeGraphPickerKeyword] = useState('');
+  const [selectedKnowledgeGraphResourceKey, setSelectedKnowledgeGraphResourceKey] = useState(null);
+  const [knowledgeGraphSelection, setKnowledgeGraphSelection] = useState({ type: 'graph', id: null });
+  const [knowledgeGraphExpandedStageIds, setKnowledgeGraphExpandedStageIds] = useState(new Set());
+  const [selectedKnowledgeGraphBindingId, setSelectedKnowledgeGraphBindingId] = useState(null);
   const [tabIndicatorStyle, setTabIndicatorStyle] = useState(EMPTY_TAB_INDICATOR);
   const detailBodyRef = useRef(null);
   const detailTabsRef = useRef(null);
@@ -270,7 +406,7 @@ function TopicDetail({
   );
   const versioningEnabled = versioningConfig.enabled !== false;
   const canEditCurrentVersion = isVersionEditable(currentVersion, versioningConfig);
-  const resources = currentVersion?.resources || [];
+  const sourceResources = currentVersion?.resources || [];
   const tagConfig = topicAdminConfig?.tagConfig || null;
   const sceneTheme = sceneConfig?.theme || null;
   const currentModeConfig = useMemo(() => {
@@ -330,6 +466,84 @@ function TopicDetail({
     return map;
   }, [tagDefMap, tagGroups]);
 
+  const activeSceneType = sceneType || sceneConfig?.sceneType || null;
+  const canArchiveSceneResource = !!sceneConfig && !!activeSceneType;
+  const previewItemArchived = previewItem ? isSceneResourceArchived(previewItem) : false;
+  const knowledgeGraphRef = currentVersion?.knowledgeGraphRef || null;
+  const knowledgeGraphGraph = useMemo(
+    () => (knowledgeGraphRef?.knowledgeGraphId ? getGraphById(knowledgeGraphStoreSnapshot, knowledgeGraphRef.knowledgeGraphId) : null),
+    [knowledgeGraphRef?.knowledgeGraphId, knowledgeGraphStoreSnapshot],
+  );
+  const knowledgeGraphLayout = useMemo(
+    () => (knowledgeGraphGraph ? getGraphLayout(knowledgeGraphStoreSnapshot, knowledgeGraphGraph.id) : {}),
+    [knowledgeGraphGraph, knowledgeGraphStoreSnapshot],
+  );
+  const knowledgeGraphPoints = useMemo(
+    () => (knowledgeGraphGraph ? getPointsByGraph(knowledgeGraphStoreSnapshot, knowledgeGraphGraph.id) : []),
+    [knowledgeGraphGraph, knowledgeGraphStoreSnapshot],
+  );
+  const knowledgeGraphRelations = useMemo(
+    () => (knowledgeGraphGraph ? getRelationsByGraph(knowledgeGraphStoreSnapshot, knowledgeGraphGraph.id) : []),
+    [knowledgeGraphGraph, knowledgeGraphStoreSnapshot],
+  );
+  const knowledgeGraphStructuredView = knowledgeGraphLayout?.structuredView || {};
+  const knowledgeGraphStages = useMemo(
+    () => [...(knowledgeGraphStructuredView.stages || [])].sort((left, right) => (left.sortNo || 0) - (right.sortNo || 0)),
+    [knowledgeGraphStructuredView.stages],
+  );
+  const knowledgeGraphPointPlacements = knowledgeGraphStructuredView.pointPlacements || {};
+  const knowledgeGraphStagePointEntries = useMemo(() => {
+    const grouped = {};
+    knowledgeGraphStages.forEach((stage) => {
+      grouped[stage.id] = [];
+    });
+    knowledgeGraphPoints.forEach((point) => {
+      const placement = knowledgeGraphPointPlacements[point.id];
+      if (!placement?.stageId) return;
+      if (!grouped[placement.stageId]) grouped[placement.stageId] = [];
+      grouped[placement.stageId].push({ point, placement });
+    });
+    Object.keys(grouped).forEach((stageId) => {
+      grouped[stageId].sort((left, right) => (left.placement.order || 0) - (right.placement.order || 0));
+    });
+    return grouped;
+  }, [knowledgeGraphPointPlacements, knowledgeGraphPoints, knowledgeGraphStages]);
+  const knowledgeGraphPointMap = useMemo(
+    () => new Map(knowledgeGraphPoints.map((point) => [point.id, point])),
+    [knowledgeGraphPoints],
+  );
+  const knowledgeGraphStageMap = useMemo(
+    () => new Map(knowledgeGraphStages.map((stage) => [stage.id, stage])),
+    [knowledgeGraphStages],
+  );
+  const allLibraryItems = useMemo(
+    () => getAllItemsAcrossLibraries(resourceLibraryData),
+    [resourceLibraryData],
+  );
+  const resourceLibraryItemMap = useMemo(
+    () => new Map(allLibraryItems.map((item) => [`${item.libraryId}:${item.key}`, item])),
+    [allLibraryItems],
+  );
+  const knowledgeGraphBindingCount = useMemo(
+    () => knowledgeGraphPoints.reduce((sum, point) => sum + (point.resourceBindings?.length || 0), 0),
+    [knowledgeGraphPoints],
+  );
+  const knowledgeGraphPickerItems = useMemo(() => {
+    const keyword = knowledgeGraphPickerKeyword.trim().toLowerCase();
+    return allLibraryItems.filter((item) => {
+      if (item.fileType !== 'knowledgeGraph' || !item.knowledgeGraphId) return false;
+      if (knowledgeGraphPickerScope !== 'all' && item.libraryScope !== knowledgeGraphPickerScope) return false;
+      if (!keyword) return true;
+      const haystack = `${item.name} ${item.libraryName} ${item.knowledgeGraphId}`.toLowerCase();
+      return haystack.includes(keyword);
+    });
+  }, [allLibraryItems, knowledgeGraphPickerKeyword, knowledgeGraphPickerScope]);
+  const knowledgeGraphMirrorResources = useMemo(
+    () => buildKnowledgeGraphMirrorResources(knowledgeGraphStages, knowledgeGraphStagePointEntries, resourceLibraryItemMap),
+    [knowledgeGraphStagePointEntries, knowledgeGraphStages, resourceLibraryItemMap],
+  );
+  const resources = knowledgeGraphGraph ? knowledgeGraphMirrorResources : sourceResources;
+  const canEditDisplayedResources = canEditCurrentVersion && !knowledgeGraphGraph;
   const rootItems = resources.filter((r) => r.parentKey === null);
   const getChildren = (folderKey) => resources.filter((r) => r.parentKey === folderKey);
   const selectedFolder = selectedFolderKey ? resources.find((r) => r.key === selectedFolderKey && r.isFolder) : null;
@@ -344,9 +558,6 @@ function TopicDetail({
   const tagPickerItem = tagPickerTarget
     ? resources.find((resource) => resource.key === tagPickerTarget) || null
     : null;
-  const activeSceneType = sceneType || sceneConfig?.sceneType || null;
-  const canArchiveSceneResource = !!sceneConfig && !!activeSceneType;
-  const previewItemArchived = previewItem ? isSceneResourceArchived(previewItem) : false;
 
   const clearTagPickerScrollTimer = () => {
     if (!tagPickerScrollTimerRef.current) return;
@@ -468,6 +679,19 @@ function TopicDetail({
   }, []);
 
   useEffect(() => {
+    persistTopicPanelView(topicStorageScopeKey, resourcePanelView);
+  }, [resourcePanelView, topicStorageScopeKey]);
+
+  useEffect(() => {
+    const handleKnowledgeGraphStoreChange = () => {
+      setKnowledgeGraphStoreSnapshot(loadKnowledgeGraphStore());
+    };
+    const eventName = getKnowledgeGraphStoreEventName();
+    window.addEventListener(eventName, handleKnowledgeGraphStoreChange);
+    return () => window.removeEventListener(eventName, handleKnowledgeGraphStoreChange);
+  }, []);
+
+  useEffect(() => {
     const handleResize = () => {
       const containerWidth = detailBodyRef.current?.getBoundingClientRect().width || window.innerWidth;
       const minLeftWidth = 280;
@@ -478,6 +702,17 @@ function TopicDetail({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    if (!knowledgeGraphPickerOpen && resourcePanelView !== 'knowledgeGraph') return;
+    setResourceLibraryData(loadResourceLib());
+  }, [knowledgeGraphPickerOpen, resourcePanelView]);
+
+  useEffect(() => {
+    if (activeTab === 'assessment' && resourcePanelView !== 'resources') {
+      setResourcePanelView('resources');
+    }
+  }, [activeTab, resourcePanelView]);
 
   useEffect(() => {
     if (tagPickerGroupFilter !== 'all' && !tagGroups.some((group) => group.id === tagPickerGroupFilter)) {
@@ -533,6 +768,52 @@ function TopicDetail({
     selectedFolderKey,
     selectedItemKey,
   ]);
+
+  useEffect(() => {
+    const stageIds = knowledgeGraphStages.map((stage) => stage.id);
+    const stageIdSet = new Set(stageIds);
+    const pointIdSet = new Set(knowledgeGraphPoints.map((point) => point.id));
+    if (!knowledgeGraphGraph) {
+      setKnowledgeGraphExpandedStageIds(new Set());
+      setKnowledgeGraphSelection({ type: 'graph', id: null });
+      setSelectedKnowledgeGraphBindingId(null);
+      return;
+    }
+    setKnowledgeGraphExpandedStageIds((prev) => {
+      const next = new Set([...prev].filter((stageId) => stageIdSet.has(stageId)));
+      if (!next.size) {
+        stageIds.forEach((stageId) => next.add(stageId));
+      }
+      return next;
+    });
+    setKnowledgeGraphSelection((prev) => {
+      if (prev?.type === 'stage' && stageIdSet.has(prev.id)) return prev;
+      if (prev?.type === 'point' && pointIdSet.has(prev.id)) return prev;
+      return { type: 'graph', id: knowledgeGraphGraph.id };
+    });
+  }, [knowledgeGraphGraph, knowledgeGraphPoints, knowledgeGraphStages]);
+
+  const selectedKnowledgeGraphPoint = knowledgeGraphSelection?.type === 'point'
+    ? knowledgeGraphPointMap.get(knowledgeGraphSelection.id) || null
+    : null;
+  const selectedKnowledgeGraphStage = knowledgeGraphSelection?.type === 'stage'
+    ? knowledgeGraphStageMap.get(knowledgeGraphSelection.id) || null
+    : null;
+
+  useEffect(() => {
+    if (!selectedKnowledgeGraphPoint) {
+      setSelectedKnowledgeGraphBindingId(null);
+      return;
+    }
+    const bindings = selectedKnowledgeGraphPoint.resourceBindings || [];
+    if (!bindings.length) {
+      setSelectedKnowledgeGraphBindingId(null);
+      return;
+    }
+    if (!bindings.some((binding) => binding.bindingId === selectedKnowledgeGraphBindingId)) {
+      setSelectedKnowledgeGraphBindingId(bindings[0].bindingId);
+    }
+  }, [selectedKnowledgeGraphBindingId, selectedKnowledgeGraphPoint]);
 
   const getResourceTagIds = (resource) => {
     if (!resource || !tagConfig) return [];
@@ -759,7 +1040,7 @@ function TopicDetail({
   };
 
   const toggleItemTagSelection = (itemKey, tagId, checked) => {
-    if (!canEditCurrentVersion) {
+    if (!canEditDisplayedResources) {
       message.warning('当前版本不可编辑');
       return;
     }
@@ -773,7 +1054,7 @@ function TopicDetail({
   };
 
   const handleApplyQuickCombo = (itemKey, combo) => {
-    if (!canEditCurrentVersion) {
+    if (!canEditDisplayedResources) {
       message.warning('当前版本不可编辑');
       return;
     }
@@ -795,7 +1076,7 @@ function TopicDetail({
   };
 
   const handleQuickTagToggle = (tagId, quick) => {
-    if (!canEditCurrentVersion) {
+    if (!canEditDisplayedResources) {
       message.warning('当前版本不可编辑');
       return;
     }
@@ -811,7 +1092,7 @@ function TopicDetail({
 
   const handleOpenTagPicker = (resourceKey) => {
     if (!tagConfig) return;
-    if (!canEditCurrentVersion) {
+    if (!canEditDisplayedResources) {
       message.warning('当前版本不可编辑');
       return;
     }
@@ -826,7 +1107,7 @@ function TopicDetail({
       message.warning('标签名称不能为空');
       return;
     }
-    if (!canEditCurrentVersion) {
+    if (!canEditDisplayedResources) {
       message.warning('当前版本不可编辑');
       return;
     }
@@ -955,6 +1236,139 @@ function TopicDetail({
     setVersionData(newData);
   };
 
+  const handleSwitchResourcePanelView = (nextView) => {
+    setResourcePanelView(nextView);
+    if (nextView === 'knowledgeGraph') {
+      setResourceLibraryData(loadResourceLib());
+      if (previewItem && !previewItem.__kgMirror) {
+        setPreviewItem(null);
+      }
+    }
+  };
+
+  const handleOpenKnowledgeGraphPicker = () => {
+    if (!canEditCurrentVersion) {
+      message.warning(versioningEnabled ? '当前版本已发布，请新建版本后再绑定知识图谱' : '当前内容不可编辑');
+      return;
+    }
+    setResourceLibraryData(loadResourceLib());
+    setKnowledgeGraphPickerScope('all');
+    setKnowledgeGraphPickerKeyword('');
+    setSelectedKnowledgeGraphResourceKey(
+      knowledgeGraphRef?.libraryId && knowledgeGraphRef?.resourceKey
+        ? `${knowledgeGraphRef.libraryId}:${knowledgeGraphRef.resourceKey}`
+        : null,
+    );
+    setKnowledgeGraphPickerOpen(true);
+  };
+
+  const handleConfirmKnowledgeGraphBinding = () => {
+    const selectedItem = knowledgeGraphPickerItems.find(
+      (item) => `${item.libraryId}:${item.key}` === selectedKnowledgeGraphResourceKey,
+    );
+    if (!selectedItem?.knowledgeGraphId) {
+      message.warning('请选择一张知识图谱');
+      return;
+    }
+    const nextData = updateVersionKnowledgeGraphRef(versionData, currentVersion.id, {
+      resourceKey: selectedItem.key,
+      knowledgeGraphId: selectedItem.knowledgeGraphId,
+      libraryId: selectedItem.libraryId,
+      name: selectedItem.name,
+    }, versioningConfig);
+    setVersionData(nextData);
+    setKnowledgeGraphPickerOpen(false);
+    setResourcePanelView('knowledgeGraph');
+    message.success(`已绑定知识图谱「${selectedItem.name}」`);
+  };
+
+  const handleUnbindKnowledgeGraph = () => {
+    if (!canEditCurrentVersion) {
+      message.warning(versioningEnabled ? '当前版本已发布，请新建版本后再解绑知识图谱' : '当前内容不可编辑');
+      return;
+    }
+    Modal.confirm({
+      title: '解除知识图谱关联',
+      icon: null,
+      content: '解除后仅取消当前主题版本与知识图谱的关联，不会删除资料库中的图谱资产。',
+      okText: '解除关联',
+      cancelText: '取消',
+      onOk: () => {
+        const nextData = updateVersionKnowledgeGraphRef(versionData, currentVersion.id, null, versioningConfig);
+        setVersionData(nextData);
+        setKnowledgeGraphSelection({ type: 'graph', id: null });
+        setSelectedKnowledgeGraphBindingId(null);
+        message.success('已解除知识图谱关联');
+      },
+    });
+  };
+
+  const handleOpenKnowledgeGraphEditor = () => {
+    if (!knowledgeGraphGraph?.id) {
+      message.warning('当前主题还没有可编辑的知识图谱');
+      return;
+    }
+    onOpenKnowledgeGraph?.({
+      graphId: knowledgeGraphGraph.id,
+      collectionId: knowledgeGraphGraph.collectionId || null,
+      mode: 'curriculum',
+    });
+  };
+
+  const handleSelectKnowledgeGraphOverview = () => {
+    if (!knowledgeGraphGraph?.id) return;
+    setKnowledgeGraphSelection({ type: 'graph', id: knowledgeGraphGraph.id });
+    setSelectedKnowledgeGraphBindingId(null);
+    setPreviewItem(null);
+  };
+
+  const handleToggleKnowledgeGraphStage = (stageId) => {
+    setKnowledgeGraphExpandedStageIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(stageId)) next.delete(stageId);
+      else next.add(stageId);
+      return next;
+    });
+  };
+
+  const handleSelectKnowledgeGraphStage = (stageId) => {
+    setKnowledgeGraphExpandedStageIds((prev) => {
+      const next = new Set(prev);
+      next.add(stageId);
+      return next;
+    });
+    setKnowledgeGraphSelection({ type: 'stage', id: stageId });
+    setSelectedKnowledgeGraphBindingId(null);
+    setPreviewItem(null);
+  };
+
+  const handleSelectKnowledgeGraphPoint = (stageId, pointId) => {
+    setKnowledgeGraphExpandedStageIds((prev) => {
+      const next = new Set(prev);
+      next.add(stageId);
+      return next;
+    });
+    setKnowledgeGraphSelection({ type: 'point', id: pointId });
+    const point = knowledgeGraphPointMap.get(pointId) || null;
+    const firstBinding = point?.resourceBindings?.[0] || null;
+    if (firstBinding) {
+      handleSelectKnowledgeGraphPreviewBinding(firstBinding);
+      return;
+    }
+    setSelectedKnowledgeGraphBindingId(null);
+    setPreviewItem(null);
+  };
+
+  const handleSelectKnowledgeGraphPreviewBinding = (binding) => {
+    if (!binding?.bindingId) return;
+    const matchedResource = resources.find((item) => item.__kgBindingId === binding.bindingId) || null;
+    if (!matchedResource) return;
+    setSelectedKnowledgeGraphBindingId(binding.bindingId);
+    setSelectedItemKey(matchedResource.key);
+    setSelectedFolderKey(matchedResource.parentKey || null);
+    setPreviewItem(matchedResource);
+  };
+
   useEffect(() => {
     if (!inlineRenameItemKey) return undefined;
     const timer = window.setTimeout(() => {
@@ -1020,7 +1434,7 @@ function TopicDetail({
   };
 
   const openAddResourceModal = (parentKey = currentListParentKey) => {
-    if (!canEditCurrentVersion) {
+    if (!canEditDisplayedResources) {
       message.warning(versioningEnabled ? '当前版本已发布，请新建版本后再添加资料' : '当前内容不可编辑');
       return;
     }
@@ -1030,7 +1444,7 @@ function TopicDetail({
   };
 
   const handleAddResource = (resource) => {
-    if (!canEditCurrentVersion) {
+    if (!canEditDisplayedResources) {
       message.warning(versioningEnabled ? '当前版本已发布，请新建版本后再添加资料' : '当前内容不可编辑');
       return;
     }
@@ -1047,7 +1461,7 @@ function TopicDetail({
   };
 
   const handleArchiveResourceToProfile = (resource) => {
-    if (!resource || resource.isFolder || !canArchiveSceneResource) return;
+    if (!resource || resource.isFolder || resource.__kgMirror || !canArchiveSceneResource) return;
     if (isSceneResourceArchived(resource)) {
       message.info('该业务活动已归档到我的档案');
       return;
@@ -1088,8 +1502,8 @@ function TopicDetail({
   };
 
   const requestDeleteResource = (resource) => {
-    if (!resource || !canEditCurrentVersion) {
-      if (!canEditCurrentVersion) message.warning('当前版本不可编辑');
+    if (!resource || !canEditDisplayedResources) {
+      if (!canEditDisplayedResources) message.warning('当前版本不可编辑');
       return;
     }
     clearPendingRenameTrigger();
@@ -1126,7 +1540,7 @@ function TopicDetail({
 
   const startInlineRename = (item, surface = 'list') => {
     if (!item?.key) return;
-    if (!canEditCurrentVersion) {
+    if (!canEditDisplayedResources) {
       message.warning('当前版本不可编辑');
       return;
     }
@@ -1140,7 +1554,7 @@ function TopicDetail({
   };
 
   const queueInlineRename = (item, surface = 'list', delay = 220) => {
-    if (!item?.key || !canEditCurrentVersion) return;
+    if (!item?.key || !canEditDisplayedResources) return;
     clearPendingRenameTrigger();
     pendingRenameTimerRef.current = window.setTimeout(() => {
       pendingRenameTimerRef.current = null;
@@ -1211,7 +1625,7 @@ function TopicDetail({
   };
 
   const moveDraggedResource = (draggedItem, targetParentKey, targetIndex = null) => {
-    if (!canEditCurrentVersion) {
+    if (!canEditDisplayedResources) {
       message.warning('当前版本不可编辑');
       return false;
     }
@@ -1436,7 +1850,7 @@ function TopicDetail({
   };
 
   const createFolderAndStartRename = (parentKey = currentListParentKey, surface = 'list') => {
-    if (!canEditCurrentVersion) {
+    if (!canEditDisplayedResources) {
       message.warning('当前版本不可编辑');
       return;
     }
@@ -1516,18 +1930,18 @@ function TopicDetail({
       { type: 'divider' },
       ...(item.isFolder
         ? [
-            { key: 'addResource', icon: <FileAddOutlined />, label: addResourceLabel, disabled: !canEditCurrentVersion },
-            { key: 'newFolder', icon: <FolderAddOutlined />, label: '新建文件夹', disabled: !canEditCurrentVersion },
+            { key: 'addResource', icon: <FileAddOutlined />, label: addResourceLabel, disabled: !canEditDisplayedResources },
+            { key: 'newFolder', icon: <FolderAddOutlined />, label: '新建文件夹', disabled: !canEditDisplayedResources },
             { type: 'divider' },
           ]
         : []),
       ...(tagConfig
         ? [
-            { key: 'tags-manage', icon: <TagsOutlined />, label: '编辑标签', disabled: !canEditCurrentVersion },
+            { key: 'tags-manage', icon: <TagsOutlined />, label: '编辑标签', disabled: !canEditDisplayedResources },
             { type: 'divider' },
           ]
         : []),
-      ...(!item.isFolder && canArchiveSceneResource
+      ...(!item.isFolder && canArchiveSceneResource && !item.__kgMirror
         ? [
             {
               key: 'archiveProfile',
@@ -1538,8 +1952,8 @@ function TopicDetail({
             { type: 'divider' },
           ]
         : []),
-      { key: 'rename', icon: <EditOutlined />, label: '重命名', disabled: !canEditCurrentVersion },
-      { key: 'delete', icon: <DeleteOutlined />, label: '删除', danger: true, disabled: !canEditCurrentVersion },
+      { key: 'rename', icon: <EditOutlined />, label: '重命名', disabled: !canEditDisplayedResources },
+      { key: 'delete', icon: <DeleteOutlined />, label: '删除', danger: true, disabled: !canEditDisplayedResources },
     ];
 
     return {
@@ -1601,8 +2015,8 @@ function TopicDetail({
 
   const bgContextMenu = {
     items: [
-      { key: 'newFolder', icon: <FolderAddOutlined />, label: '新建文件夹', disabled: !canEditCurrentVersion },
-      { key: 'addResource', icon: <FileAddOutlined />, label: addResourceLabel, disabled: !canEditCurrentVersion },
+      { key: 'newFolder', icon: <FolderAddOutlined />, label: '新建文件夹', disabled: !canEditDisplayedResources },
+      { key: 'addResource', icon: <FileAddOutlined />, label: addResourceLabel, disabled: !canEditDisplayedResources },
     ],
     onClick: ({ key }) => {
       if (key === 'newFolder') handleCreateFolderAtCurrentLocation(bgMenuSurface);
@@ -1635,7 +2049,7 @@ function TopicDetail({
           >
             <div
               className={`project-item project-item-folder ${isSelected ? 'project-item-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''} ${isDragOverFolder ? 'project-item-dragover' : ''} ${isDragging ? 'project-item-dragging' : ''} ${treeDropPosition === 'before' ? 'project-item-drop-before' : ''} ${treeDropPosition === 'after' ? 'project-item-drop-after' : ''}`}
-              draggable={!isInlineRenaming}
+              draggable={!isInlineRenaming && canEditDisplayedResources}
               onDragStart={(event) => startResourceDrag(event, item)}
               onDragEnd={finishResourceDrag}
               onDragOver={(event) => handleTreeFolderDragOver(event, item)}
@@ -1681,7 +2095,7 @@ function TopicDetail({
               {!isInlineRenaming ? renderResourceTagDots(item) : null}
               {!isInlineRenaming ? (
                 <span className="topic-tree-item-actions" onClick={(event) => event.stopPropagation()}>
-                  {canEditCurrentVersion ? (
+                  {canEditDisplayedResources ? (
                     <button
                       type="button"
                       className="topic-action-btn"
@@ -1730,7 +2144,7 @@ function TopicDetail({
       >
         <div
           className={`project-item project-item-child ${isSelected ? 'project-item-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''} ${isDragging ? 'project-item-dragging' : ''} ${treeDropPosition === 'before' ? 'project-item-drop-before' : ''} ${treeDropPosition === 'after' ? 'project-item-drop-after' : ''}`}
-          draggable={!isInlineRenaming}
+          draggable={!isInlineRenaming && canEditDisplayedResources}
           onDragStart={(event) => startResourceDrag(event, item)}
           onDragEnd={finishResourceDrag}
           onDragOver={(event) => handleTreeFolderDragOver(event, item)}
@@ -1806,7 +2220,7 @@ function TopicDetail({
       >
         <div
           className={`topic-file-row ${isSelected ? 'topic-file-row-selected' : ''} ${isContextOpen ? 'topic-file-row-context-open' : ''} ${isDragOverFolder ? 'topic-file-row-dragover' : ''} ${isDragging ? 'topic-file-row-dragging' : ''} ${dropPosition === 'before' ? 'topic-file-row-drop-before' : ''} ${dropPosition === 'after' ? 'topic-file-row-drop-after' : ''}`}
-          draggable={!isInlineRenaming}
+          draggable={!isInlineRenaming && canEditDisplayedResources}
           onDragStart={(event) => startResourceDrag(event, item)}
           onDragEnd={finishResourceDrag}
           onDragOver={(event) => handleListRowDragOver(event, item)}
@@ -1847,7 +2261,7 @@ function TopicDetail({
             )}
             {!isInlineRenaming ? (
               <span className="topic-file-row-actions" onClick={(event) => event.stopPropagation()}>
-                {item.isFolder && canEditCurrentVersion ? (
+                {item.isFolder && canEditDisplayedResources ? (
                   <button
                     type="button"
                     className="topic-action-btn"
@@ -1991,6 +2405,303 @@ function TopicDetail({
     }
 
     return renderDocumentPreview(item, fileType);
+  };
+
+  const renderKnowledgeGraphPreviewPane = () => {
+    if (!knowledgeGraphRef) {
+      return (
+        <div className="topic-preview-main topic-knowledge-preview-main">
+          <div className="topic-preview-main-head">
+            <div className="topic-preview-main-head-left">
+              <span className="topic-preview-main-icon">
+                <NodeIndexOutlined />
+              </span>
+              <div className="topic-preview-main-copy">
+                <div className="topic-preview-main-breadcrumb">知识图谱</div>
+                <div className="topic-preview-main-title">当前主题尚未绑定知识图谱</div>
+                <div className="topic-preview-main-meta">
+                  <span>从资料库中选择 1 张主知识图谱后即可在空间内浏览。</span>
+                </div>
+              </div>
+            </div>
+            {canEditCurrentVersion ? (
+              <div className="topic-preview-main-head-actions">
+                <Button type="primary" onClick={handleOpenKnowledgeGraphPicker}>
+                  从资料库绑定
+                </Button>
+              </div>
+            ) : null}
+          </div>
+          <div className="topic-preview-main-content topic-knowledge-preview-empty-shell">
+            <Empty description="当前主题版本还没有绑定知识图谱" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          </div>
+        </div>
+      );
+    }
+
+    if (!knowledgeGraphGraph) {
+      return (
+        <div className="topic-preview-main topic-knowledge-preview-main">
+          <div className="topic-preview-main-head">
+            <div className="topic-preview-main-head-left">
+              <span className="topic-preview-main-icon">
+                <NodeIndexOutlined />
+              </span>
+              <div className="topic-preview-main-copy">
+                <div className="topic-preview-main-breadcrumb">知识图谱</div>
+                <div className="topic-preview-main-title">{knowledgeGraphRef.name || '关联图谱不可用'}</div>
+                <div className="topic-preview-main-meta">
+                  <span>原图谱已删除或当前不可访问，可重新从资料库绑定。</span>
+                </div>
+              </div>
+            </div>
+            {canEditCurrentVersion ? (
+              <div className="topic-preview-main-head-actions">
+                <Button onClick={handleOpenKnowledgeGraphPicker}>重新绑定</Button>
+              </div>
+            ) : null}
+          </div>
+          <div className="topic-preview-main-content topic-knowledge-preview-empty-shell">
+            <Empty description="当前主题绑定的知识图谱不可用" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          </div>
+        </div>
+      );
+    }
+
+    if (previewItem && !previewItem.isFolder) {
+      return (
+        <div className="topic-preview-main">
+          <div className="topic-preview-main-head">
+            <div className="topic-preview-main-head-left">
+              <span className="topic-preview-main-icon">
+                {renderFileIcon(getTopicResourceFileType(previewItem), { fontSize: 18 })}
+              </span>
+              <div className="topic-preview-main-copy">
+                <div className="topic-preview-main-breadcrumb">
+                  {previewParentFolder ? previewParentFolder.name : knowledgeGraphGraph.name}
+                </div>
+                <div className="topic-preview-main-title">{previewItem.name}</div>
+                <div className="topic-preview-main-meta">
+                  <span>{getResourceTypeLabel(previewItem, getTopicResourceFileType(previewItem))}</span>
+                  <span>{previewItem.owner || '--'}</span>
+                  <span>{previewItem.lastEdit || '--'}</span>
+                </div>
+              </div>
+            </div>
+            <div className="topic-preview-main-head-actions">
+              <Button size="small" onClick={handleSelectKnowledgeGraphOverview}>
+                返回知识图谱
+              </Button>
+              <Button size="small" type="primary" onClick={handleOpenKnowledgeGraphEditor}>
+                进入知识图谱编辑
+              </Button>
+            </div>
+          </div>
+          <div className="topic-preview-main-content">
+            <div className="topic-preview-body topic-preview-body-main">
+              {renderPreviewContent(previewItem)}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const selectedPointBindings = selectedKnowledgeGraphPoint?.resourceBindings || [];
+    const placeholderTitle = selectedKnowledgeGraphPoint?.title
+      || selectedKnowledgeGraphStage?.name
+      || knowledgeGraphGraph.name;
+    const placeholderText = selectedKnowledgeGraphPoint
+      ? (selectedPointBindings.length
+        ? '请在左侧点击该知识点下的绑定资料，在右侧查看具体内容。'
+        : '当前知识点还没有绑定资料，请在左侧切换其他知识点。')
+      : selectedKnowledgeGraphStage
+        ? '请在左侧点击该阶段下某个知识点绑定的资料，在右侧查看预览。'
+        : '请在左侧知识图谱中点击绑定资料，在右侧查看具体预览。';
+
+    return (
+      <div className="topic-preview-main topic-knowledge-preview-main">
+        <div className="topic-preview-main-head">
+          <div className="topic-preview-main-head-left">
+            <span className="topic-preview-main-icon">
+              <NodeIndexOutlined />
+            </span>
+            <div className="topic-preview-main-copy">
+              <div className="topic-preview-main-breadcrumb">
+                {selectedKnowledgeGraphPoint ? '知识点资料预览' : selectedKnowledgeGraphStage ? '阶段资料预览' : '知识图谱资料预览'}
+              </div>
+              <div className="topic-preview-main-title">{placeholderTitle}</div>
+              <div className="topic-preview-main-meta">
+                <span>{placeholderText}</span>
+              </div>
+            </div>
+          </div>
+          <div className="topic-preview-main-head-actions">
+            <Button type="primary" onClick={handleOpenKnowledgeGraphEditor}>
+              编辑
+            </Button>
+          </div>
+        </div>
+        <div className="topic-preview-main-content topic-knowledge-preview-empty-shell">
+          <Empty
+            description="左侧知识图谱用于导航，点击绑定资料后会在这里显示资源预览。"
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+          />
+        </div>
+      </div>
+    );
+  };
+
+  const renderKnowledgeGraphSidebar = () => {
+    if (!knowledgeGraphRef) {
+      return (
+        <div className="topic-knowledge-panel-empty">
+          <NodeIndexOutlined className="topic-knowledge-panel-empty-icon" />
+          <div className="topic-knowledge-panel-empty-title">当前主题尚未绑定知识图谱</div>
+          <div className="topic-knowledge-panel-empty-text">
+            从资料库中选择一张知识图谱，作为本主题的主学习路径视图。
+          </div>
+          {canEditCurrentVersion ? (
+            <Button type="primary" onClick={handleOpenKnowledgeGraphPicker}>
+              从资料库绑定
+            </Button>
+          ) : null}
+        </div>
+      );
+    }
+
+    if (!knowledgeGraphGraph) {
+      return (
+        <div className="topic-knowledge-panel-empty">
+          <NodeIndexOutlined className="topic-knowledge-panel-empty-icon" />
+          <div className="topic-knowledge-panel-empty-title">{knowledgeGraphRef.name || '知识图谱不可用'}</div>
+          <div className="topic-knowledge-panel-empty-text">
+            当前绑定的图谱已失效，可重新从资料库绑定新的知识图谱。
+          </div>
+          {canEditCurrentVersion ? (
+            <Button type="primary" onClick={handleOpenKnowledgeGraphPicker}>
+              重新绑定
+            </Button>
+          ) : null}
+        </div>
+      );
+    }
+
+    return (
+      <div className="topic-knowledge-panel">
+        <div className="topic-knowledge-panel-summary">
+          <button
+            type="button"
+            className={`topic-knowledge-overview-btn ${knowledgeGraphSelection?.type === 'graph' ? 'is-active' : ''}`}
+            onClick={handleSelectKnowledgeGraphOverview}
+          >
+            <span className="topic-knowledge-overview-icon"><NodeIndexOutlined /></span>
+            <span className="topic-knowledge-overview-copy">
+              <strong>{knowledgeGraphGraph.name}</strong>
+              <span>{knowledgeGraphGraph.description || '点击查看图谱概览与阶段分布。'}</span>
+            </span>
+          </button>
+          <div className="topic-knowledge-panel-stats">
+            <span>{knowledgeGraphStages.length} 阶段</span>
+            <span>{knowledgeGraphPoints.length} 知识点</span>
+            <span>{knowledgeGraphBindingCount} 资料</span>
+          </div>
+          <div className="topic-knowledge-panel-actions">
+            <Button size="small" icon={<DatabaseOutlined />} onClick={handleOpenKnowledgeGraphPicker} disabled={!canEditCurrentVersion}>
+              {knowledgeGraphRef ? '更换图谱' : '绑定图谱'}
+            </Button>
+            <Button size="small" type="primary" onClick={handleOpenKnowledgeGraphEditor}>
+              编辑
+            </Button>
+            {canEditCurrentVersion ? (
+              <Button size="small" danger onClick={handleUnbindKnowledgeGraph}>
+                解除关联
+              </Button>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="topic-knowledge-stage-list">
+          {knowledgeGraphStages.map((stage) => {
+            const isExpanded = knowledgeGraphExpandedStageIds.has(stage.id);
+            const stageEntries = knowledgeGraphStagePointEntries[stage.id] || [];
+            const isSelectedStage = knowledgeGraphSelection?.type === 'stage' && knowledgeGraphSelection.id === stage.id;
+            return (
+              <div key={stage.id} className={`topic-knowledge-stage-card ${isSelectedStage ? 'is-selected' : ''}`}>
+                <div className="topic-knowledge-stage-head">
+                  <button
+                    type="button"
+                    className="topic-knowledge-stage-main"
+                    onClick={() => handleSelectKnowledgeGraphStage(stage.id)}
+                  >
+                    <strong>{stage.name}</strong>
+                    <span>{stageEntries.length} 个知识点 · {stageEntries.reduce((sum, entry) => sum + (entry.point.resourceBindings?.length || 0), 0)} 条资料</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="topic-knowledge-stage-toggle"
+                    onClick={() => handleToggleKnowledgeGraphStage(stage.id)}
+                  >
+                    {isExpanded ? <CaretDownOutlined /> : <CaretRightOutlined />}
+                  </button>
+                </div>
+                {isExpanded ? (
+                  <div className="topic-knowledge-point-list">
+                    {stageEntries.length ? stageEntries.map(({ point }) => {
+                      const isSelectedPoint = knowledgeGraphSelection?.type === 'point' && knowledgeGraphSelection.id === point.id;
+                      const bindings = point.resourceBindings || [];
+                      return (
+                        <div
+                          key={point.id}
+                          className={`topic-knowledge-point-card ${isSelectedPoint ? 'is-selected' : ''}`}
+                        >
+                          <button
+                            type="button"
+                            className={`topic-knowledge-point-item ${isSelectedPoint ? 'is-selected' : ''}`}
+                            onClick={() => handleSelectKnowledgeGraphPoint(stage.id, point.id)}
+                          >
+                            <strong>{point.title}</strong>
+                            <span>{point.summary || '未填写知识点摘要。'}</span>
+                            <div className="topic-knowledge-point-meta">
+                              <span>{bindings.length} 条资料</span>
+                              <span>{point.tags?.length || 0} 个标签</span>
+                            </div>
+                          </button>
+                          <div className="topic-knowledge-binding-list">
+                            {bindings.length ? bindings.map((binding) => {
+                              const liveResource = resourceLibraryItemMap.get(`${binding.libraryId}:${binding.resourceKey}`) || null;
+                              const bindingName = liveResource?.name || binding.resourceName || '未命名资料';
+                              const bindingPath = binding.snapshotPath
+                                ? `${binding.libraryName || '资料库'} / ${binding.snapshotPath}`
+                                : (binding.libraryName || '资料库');
+                              const isSelectedBinding = selectedKnowledgeGraphBindingId === binding.bindingId;
+                              return (
+                                <button
+                                  key={binding.bindingId}
+                                  type="button"
+                                  className={`topic-knowledge-binding-item ${isSelectedBinding ? 'is-selected' : ''}`}
+                                  onClick={() => handleSelectKnowledgeGraphPreviewBinding(binding)}
+                                >
+                                  <strong>{bindingName}</strong>
+                                  <span>{bindingPath}</span>
+                                </button>
+                              );
+                            }) : (
+                              <div className="topic-knowledge-binding-empty">当前知识点未绑定资料</div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    }) : (
+                      <div className="topic-knowledge-stage-empty">该阶段暂时没有知识点</div>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -2179,209 +2890,284 @@ function TopicDetail({
         <div className="detail-body" ref={detailBodyRef}>
           <div className="detail-left-panel" style={{ width: leftPanelWidth, minWidth: leftPanelWidth }}>
             <div className="panel-header">
-              <span className="panel-title">{resourcePanelTitle}</span>
-              <MoreOutlined className="panel-more-icon" />
+              <span className="panel-title">{resourcePanelView === 'knowledgeGraph' ? '知识图谱' : resourcePanelTitle}</span>
+              <Segmented
+                size="small"
+                value={resourcePanelView}
+                onChange={handleSwitchResourcePanelView}
+                options={[
+                  { label: '资料', value: 'resources' },
+                  { label: '知识图谱', value: 'knowledgeGraph' },
+                ]}
+                className="topic-panel-view-switcher"
+              />
             </div>
 
-            <div className="ai-qa-box">
-              <MessageOutlined style={{ color: '#999', fontSize: 14 }} />
-              <span className="ai-qa-text">AI 问答</span>
-            </div>
+            {resourcePanelView === 'resources' ? (
+              <>
+                <div className="ai-qa-box">
+                  <MessageOutlined style={{ color: '#999', fontSize: 14 }} />
+                  <span className="ai-qa-text">AI 问答</span>
+                </div>
 
-            <div className="panel-actions">
-              <div
-                className={`panel-action-btn ${!canEditCurrentVersion ? 'panel-action-btn-disabled' : ''}`}
-                onClick={() => canEditCurrentVersion && openAddResourceModal(currentListParentKey)}
-              >
-                <PlusOutlined style={{ fontSize: 12 }} />
-                <span>{addResourceLabel}</span>
-              </div>
-              <div className="panel-action-btn">
-                <AppstoreOutlined style={{ fontSize: 12 }} />
-                <span>{appLabel}</span>
-              </div>
-            </div>
+                <div className="panel-actions">
+                  <div
+                    className={`panel-action-btn ${!canEditDisplayedResources ? 'panel-action-btn-disabled' : ''}`}
+                    onClick={() => canEditDisplayedResources && openAddResourceModal(currentListParentKey)}
+                  >
+                    <PlusOutlined style={{ fontSize: 12 }} />
+                    <span>{addResourceLabel}</span>
+                  </div>
+                  <div className="panel-action-btn">
+                    <AppstoreOutlined style={{ fontSize: 12 }} />
+                    <span>{appLabel}</span>
+                  </div>
+                </div>
 
-            <div
-              className={`project-section ${dragOverSurface === 'tree' ? 'project-section-dragover' : ''}`}
-              onContextMenu={(event) => handleBgContextMenu(event, 'tree')}
-              onDragOver={handleTreeRootDragOver}
-              onDragLeave={handleTreeRootDragLeave}
-              onDrop={handleTreeRootDrop}
-            >
-              <div className="project-header">
-                <span className="project-title">项目</span>
-                <Dropdown
-                  overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
-                  menu={{
-                    items: [
-                      {
-                        key: 'add-resource',
-                        icon: <FileAddOutlined />,
-                        label: addResourceLabel,
-                        onClick: () => openAddResourceModal(null),
-                        disabled: !canEditCurrentVersion,
-                      },
-                      {
-                        key: 'new-folder',
-                        icon: <FolderAddOutlined />,
-                        label: '新建文件夹',
-                        onClick: () => createFolderAndStartRename(null, 'tree'),
-                        disabled: !canEditCurrentVersion,
-                      },
-                    ],
-                  }}
-                  trigger={['click']}
+                <div
+                  className={`project-section ${dragOverSurface === 'tree' ? 'project-section-dragover' : ''}`}
+                  onContextMenu={(event) => handleBgContextMenu(event, 'tree')}
+                  onDragOver={handleTreeRootDragOver}
+                  onDragLeave={handleTreeRootDragLeave}
+                  onDrop={handleTreeRootDrop}
                 >
-                  <MoreOutlined className="project-more-icon" />
-                </Dropdown>
-              </div>
+                  <div className="project-header">
+                    <span className="project-title">项目</span>
+                    <Dropdown
+                      overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
+                      menu={{
+                        items: [
+                          {
+                            key: 'add-resource',
+                            icon: <FileAddOutlined />,
+                            label: addResourceLabel,
+                            onClick: () => openAddResourceModal(null),
+                            disabled: !canEditDisplayedResources,
+                          },
+                          {
+                            key: 'new-folder',
+                            icon: <FolderAddOutlined />,
+                            label: '新建文件夹',
+                            onClick: () => createFolderAndStartRename(null, 'tree'),
+                            disabled: !canEditDisplayedResources,
+                          },
+                        ],
+                      }}
+                      trigger={['click']}
+                    >
+                      <MoreOutlined className="project-more-icon" />
+                    </Dropdown>
+                  </div>
 
-              <div className="project-list">
-                {rootItems.length === 0 ? (
-                  <div className="project-empty">暂无{resourcePanelTitle}</div>
-                ) : (
-                  rootItems.map((item) => renderTreeItem(item))
-                )}
+                  <div className="project-list">
+                    {rootItems.length === 0 ? (
+                      <div className="project-empty">暂无{resourcePanelTitle}</div>
+                    ) : (
+                      rootItems.map((item) => renderTreeItem(item))
+                    )}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="topic-knowledge-panel-shell">
+                {renderKnowledgeGraphSidebar()}
               </div>
-            </div>
+            )}
           </div>
 
           <div className="topic-sidebar-resize-handle" onMouseDown={handleSidebarResizeStart} />
 
           <div className="detail-right-panel">
-            {previewItem ? (
-              <div className="topic-preview-main">
-                <div className="topic-preview-main-head">
-                    <div className="topic-preview-main-head-left">
-                      <span className="topic-preview-main-icon">
-                        {renderFileIcon(getTopicResourceFileType(previewItem), { fontSize: 18 })}
-                      </span>
-                      <div className="topic-preview-main-copy">
-                        <div className="topic-preview-main-breadcrumb">
-                          {previewParentFolder ? previewParentFolder.name : currentVersion?.name || resourcePanelTitle}
+            {resourcePanelView === 'knowledgeGraph' ? renderKnowledgeGraphPreviewPane() : (
+              previewItem ? (
+                <div className="topic-preview-main">
+                  <div className="topic-preview-main-head">
+                      <div className="topic-preview-main-head-left">
+                        <span className="topic-preview-main-icon">
+                          {renderFileIcon(getTopicResourceFileType(previewItem), { fontSize: 18 })}
+                        </span>
+                        <div className="topic-preview-main-copy">
+                          <div className="topic-preview-main-breadcrumb">
+                            {previewParentFolder ? previewParentFolder.name : currentVersion?.name || resourcePanelTitle}
+                          </div>
+                          <div className="topic-preview-main-title">{previewItem.name}</div>
+                        <div className="topic-preview-main-meta">
+                          <span>{getResourceTypeLabel(previewItem, getTopicResourceFileType(previewItem))}</span>
+                          <span>{previewItem.owner || '--'}</span>
+                          <span>{previewItem.lastEdit || '--'}</span>
+                          {previewItemArchived ? <Tag color="success">已归档到我的档案</Tag> : null}
                         </div>
-                        <div className="topic-preview-main-title">{previewItem.name}</div>
-                      <div className="topic-preview-main-meta">
-                        <span>{getResourceTypeLabel(previewItem, getTopicResourceFileType(previewItem))}</span>
-                        <span>{previewItem.owner || '--'}</span>
-                        <span>{previewItem.lastEdit || '--'}</span>
-                        {previewItemArchived ? <Tag color="success">已归档到我的档案</Tag> : null}
+                        {tagConfig ? (
+                          <div className="topic-preview-main-tags">
+                            {renderPreviewTagTokens(previewItem)}
+                          </div>
+                        ) : null}
                       </div>
-                      {tagConfig ? (
-                        <div className="topic-preview-main-tags">
-                          {renderPreviewTagTokens(previewItem)}
-                        </div>
+                    </div>
+                    <div className="topic-preview-main-head-actions">
+                      {canArchiveSceneResource && !previewItem.__kgMirror ? (
+                        <Button
+                          size="small"
+                          type={previewItemArchived ? 'default' : 'primary'}
+                          ghost={!previewItemArchived}
+                          disabled={previewItemArchived}
+                          onClick={() => handleArchiveResourceToProfile(previewItem)}
+                        >
+                          {previewItemArchived ? '已归档到我的档案' : '归档到我的档案'}
+                        </Button>
+                      ) : null}
+                      {previewParentFolder ? (
+                        <Button size="small" onClick={() => setPreviewItem(null)}>
+                          返回文件夹
+                        </Button>
                       ) : null}
                     </div>
                   </div>
-                  <div className="topic-preview-main-head-actions">
-                    {canArchiveSceneResource ? (
-                      <Button
-                        size="small"
-                        type={previewItemArchived ? 'default' : 'primary'}
-                        ghost={!previewItemArchived}
-                        disabled={previewItemArchived}
-                        onClick={() => handleArchiveResourceToProfile(previewItem)}
-                      >
-                        {previewItemArchived ? '已归档到我的档案' : '归档到我的档案'}
-                      </Button>
-                    ) : null}
-                    {previewParentFolder ? (
-                      <Button size="small" onClick={() => setPreviewItem(null)}>
-                        返回文件夹
-                      </Button>
-                    ) : null}
+                  <div className="topic-preview-main-content">
+                    <div className="topic-preview-body topic-preview-body-main">
+                      {renderPreviewContent(previewItem)}
+                    </div>
                   </div>
                 </div>
-                <div className="topic-preview-main-content">
-                  <div className="topic-preview-body topic-preview-body-main">
-                    {renderPreviewContent(previewItem)}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <>
-                {selectedFolder ? (
-                  <>
-                    <div className="folder-info">
-                      <div className="folder-info-left">
-                        <div className="folder-big-icon"><FolderFilled /></div>
-                        <div className="folder-meta">
-                          <div className="folder-name">{selectedFolder.name}</div>
-                          <div className="folder-desc">
-                            {folderChildren.filter((child) => !child.isFolder).length} 个文件 {folderChildren.filter((child) => child.isFolder).length} 个文件夹
-                          </div>
-                          {tagConfig ? (
-                            <div className="folder-tag-section">
-                              <div className="folder-tag-row">
-                                <span className="folder-tag-label">标签</span>
-                                {renderResourceTagText(selectedFolder) || <span className="topic-tags-empty">未设置标签</span>}
-                                {canEditCurrentVersion ? (
-                                  <Button size="small" icon={<TagsOutlined />} onClick={() => handleOpenTagPicker(selectedFolder.key)}>
-                                    编辑标签
-                                  </Button>
-                                ) : null}
-                              </div>
+              ) : (
+                <>
+                  {selectedFolder ? (
+                    <>
+                      <div className="folder-info">
+                        <div className="folder-info-left">
+                          <div className="folder-big-icon"><FolderFilled /></div>
+                          <div className="folder-meta">
+                            <div className="folder-name">{selectedFolder.name}</div>
+                            <div className="folder-desc">
+                              {folderChildren.filter((child) => !child.isFolder).length} 个文件 {folderChildren.filter((child) => child.isFolder).length} 个文件夹
                             </div>
-                          ) : null}
+                            {tagConfig ? (
+                              <div className="folder-tag-section">
+                                <div className="folder-tag-row">
+                                  <span className="folder-tag-label">标签</span>
+                                  {renderResourceTagText(selectedFolder) || <span className="topic-tags-empty">未设置标签</span>}
+                                  {canEditDisplayedResources ? (
+                                    <Button size="small" icon={<TagsOutlined />} onClick={() => handleOpenTagPicker(selectedFolder.key)}>
+                                      编辑标签
+                                    </Button>
+                                  ) : null}
+                                </div>
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+                        <div className="folder-info-right">
+                          <Button icon={<PlusOutlined />} disabled={!canEditDisplayedResources} onClick={() => openAddResourceModal(currentListParentKey)}>{addResourceLabel}</Button>
                         </div>
                       </div>
-                      <div className="folder-info-right">
-                        <Button icon={<PlusOutlined />} disabled={!canEditCurrentVersion} onClick={() => openAddResourceModal(currentListParentKey)}>{addResourceLabel}</Button>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="folder-info">
-                      <div className="folder-info-left">
-                        <div className="folder-big-icon"><FolderFilled /></div>
-                        <div className="folder-meta">
-                          <div className="folder-name">{currentVersion?.name || resourcePanelTitle}</div>
-                          <div className="folder-desc">{fileCount} 个文件 {folderCount} 个文件夹</div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="folder-info">
+                        <div className="folder-info-left">
+                          <div className="folder-big-icon"><FolderFilled /></div>
+                          <div className="folder-meta">
+                            <div className="folder-name">{currentVersion?.name || resourcePanelTitle}</div>
+                            <div className="folder-desc">{fileCount} 个文件 {folderCount} 个文件夹</div>
+                          </div>
                         </div>
+                        <Button className="add-resource-btn" icon={<PlusOutlined />} disabled={!canEditDisplayedResources} onClick={() => openAddResourceModal(null)}>
+                          {addResourceLabel}
+                        </Button>
                       </div>
-                      <Button className="add-resource-btn" icon={<PlusOutlined />} disabled={!canEditCurrentVersion} onClick={() => openAddResourceModal(null)}>
-                        {addResourceLabel}
-                      </Button>
-                    </div>
-                  </>
-                )}
+                    </>
+                  )}
 
-                <div className="topic-right-content">
-                  <div className="topic-file-list-wrap">
-                    <div
-                      className={`topic-file-list ${tagConfig ? 'topic-file-list-with-tags' : 'topic-file-list-no-tags'} ${dragOverSurface === 'list' ? 'topic-file-list-dragover' : ''}`}
-                      onContextMenu={(event) => handleBgContextMenu(event, 'list')}
-                      onDragOver={handleListDragOver}
-                      onDragLeave={handleListDragLeave}
-                      onDrop={handleListDrop}
-                    >
-                      <div className="topic-file-list-header">
-                        <div className="topic-file-col topic-file-col-name">名称</div>
-                        {tagConfig ? <div className="topic-file-col topic-file-col-tags">标签</div> : null}
-                        <div className="topic-file-col topic-file-col-owner">所有者</div>
-                        <div className="topic-file-col topic-file-col-edit">最近编辑</div>
-                      </div>
-                      {currentListItems.length === 0 ? (
-                        <div className="topic-file-empty">
-                          <Empty
-                            image={Empty.PRESENTED_IMAGE_SIMPLE}
-                            description={selectedFolder ? `此${resourcePanelTitle}目录为空，可继续添加内容` : emptyStateText}
-                          />
+                  <div className="topic-right-content">
+                    <div className="topic-file-list-wrap">
+                      <div
+                        className={`topic-file-list ${tagConfig ? 'topic-file-list-with-tags' : 'topic-file-list-no-tags'} ${dragOverSurface === 'list' ? 'topic-file-list-dragover' : ''}`}
+                        onContextMenu={(event) => handleBgContextMenu(event, 'list')}
+                        onDragOver={handleListDragOver}
+                        onDragLeave={handleListDragLeave}
+                        onDrop={handleListDrop}
+                      >
+                        <div className="topic-file-list-header">
+                          <div className="topic-file-col topic-file-col-name">名称</div>
+                          {tagConfig ? <div className="topic-file-col topic-file-col-tags">标签</div> : null}
+                          <div className="topic-file-col topic-file-col-owner">所有者</div>
+                          <div className="topic-file-col topic-file-col-edit">最近编辑</div>
                         </div>
-                      ) : (
-                        currentListItems.map((item) => renderListRow(item))
-                      )}
+                        {currentListItems.length === 0 ? (
+                          <div className="topic-file-empty">
+                            <Empty
+                              image={Empty.PRESENTED_IMAGE_SIMPLE}
+                              description={selectedFolder ? `此${resourcePanelTitle}目录为空，可继续添加内容` : emptyStateText}
+                            />
+                          </div>
+                        ) : (
+                          currentListItems.map((item) => renderListRow(item))
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </>
+                </>
+              )
             )}
           </div>
         </div>
       )}
+
+      <Modal
+        title="从资料库绑定知识图谱"
+        open={knowledgeGraphPickerOpen}
+        onCancel={() => setKnowledgeGraphPickerOpen(false)}
+        onOk={handleConfirmKnowledgeGraphBinding}
+        okText="绑定图谱"
+        cancelText="取消"
+        okButtonProps={{ disabled: !selectedKnowledgeGraphResourceKey }}
+        width={720}
+        destroyOnClose
+      >
+        <div className="topic-knowledge-picker">
+          <div className="topic-knowledge-picker-toolbar">
+            <Segmented
+              size="small"
+              value={knowledgeGraphPickerScope}
+              onChange={setKnowledgeGraphPickerScope}
+              options={[
+                { label: '全部', value: 'all' },
+                { label: '个人库', value: 'personal' },
+                { label: '组织库', value: 'organization' },
+              ]}
+            />
+            <Input
+              allowClear
+              placeholder="搜索知识图谱名称"
+              value={knowledgeGraphPickerKeyword}
+              onChange={(event) => setKnowledgeGraphPickerKeyword(event.target.value)}
+            />
+          </div>
+          <div className="topic-knowledge-picker-list">
+            {knowledgeGraphPickerItems.length ? knowledgeGraphPickerItems.map((item) => (
+              <button
+                key={`${item.libraryId}:${item.key}`}
+                type="button"
+                className={`topic-knowledge-picker-item ${selectedKnowledgeGraphResourceKey === `${item.libraryId}:${item.key}` ? 'is-active' : ''}`}
+                onClick={() => setSelectedKnowledgeGraphResourceKey(`${item.libraryId}:${item.key}`)}
+              >
+                <span className="topic-knowledge-picker-item-icon">
+                  {renderFileIcon('knowledgeGraph', { fontSize: 18 })}
+                </span>
+                <span className="topic-knowledge-picker-item-copy">
+                  <strong>{item.name}</strong>
+                  <span>{item.libraryName} · {item.knowledgeGraphId}</span>
+                  {item.contentText ? <span>{item.contentText}</span> : null}
+                </span>
+              </button>
+            )) : (
+              <div className="topic-knowledge-picker-empty">
+                <Empty description="当前资料库里没有可绑定的知识图谱" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              </div>
+            )}
+          </div>
+        </div>
+      </Modal>
 
       <AddResourceModal
         open={modalOpen}

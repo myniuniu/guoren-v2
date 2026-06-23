@@ -917,6 +917,7 @@ function App() {
         <TopicDetail
           topicTitle={selectedScene.name}
           onBack={handleBackToHome}
+          onOpenKnowledgeGraph={openKnowledgeGraphPage}
           sceneConfig={selectedScene.templateSnapshot}
           sceneId={selectedScene.id}
           sceneType={selectedScene.sceneType}

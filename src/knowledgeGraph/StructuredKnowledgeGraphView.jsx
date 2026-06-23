@@ -467,6 +467,8 @@ function StructuredKnowledgeGraphView({
   onCreatePointRelation,
   onBindResourcesToPoint,
   readOnly = false,
+  interactiveReadOnly = false,
+  onPreviewBinding = null,
 }) {
   const [resourceData, setResourceData] = useState(() => loadResourceLib());
   const [resourceScope, setResourceScope] = useState('all');
@@ -680,7 +682,7 @@ function StructuredKnowledgeGraphView({
         type: 'kgStage',
         position,
         draggable: true,
-        selectable: true,
+        selectable: !readOnly || interactiveReadOnly,
         connectable: true,
         data: {
           stageId: stage.id,
@@ -733,7 +735,7 @@ function StructuredKnowledgeGraphView({
               y: stagePosition.y + relativePosition.y,
             },
         draggable: !readOnly,
-        selectable: !readOnly,
+        selectable: !readOnly || interactiveReadOnly,
         connectable: false,
         data: {
           pointId: point.id,
@@ -752,7 +754,7 @@ function StructuredKnowledgeGraphView({
           onMoveDown: () => handleMovePointByStep(point.id, 'down'),
           onDeletePoint,
           onResourceDrop: onBindResourcesToPoint,
-          onPreviewBinding: setPreviewBinding,
+          onPreviewBinding: onPreviewBinding || setPreviewBinding,
         },
         selected: selection?.type === 'point' && selection.id === point.id,
         style: {
@@ -1002,7 +1004,7 @@ function StructuredKnowledgeGraphView({
               nodesDraggable={!readOnly}
               nodesConnectable={!readOnly}
               edgesReconnectable={!readOnly}
-              elementsSelectable={!readOnly}
+              elementsSelectable={!readOnly || interactiveReadOnly}
               connectionMode={ConnectionMode.Strict}
               connectionRadius={36}
               reconnectRadius={36}
@@ -1012,19 +1014,19 @@ function StructuredKnowledgeGraphView({
               elevateNodesOnSelect={false}
               onNodesChange={handleNodesChange}
               onEdgesChange={handleEdgesChange}
-              onNodeClick={readOnly ? undefined : (_, node) => {
+              onNodeClick={readOnly && !interactiveReadOnly ? undefined : (_, node) => {
                 onSelectionChange?.({
                   type: stageIdSet.has(node.id) ? 'stage' : 'point',
                   id: node.id,
                 });
               }}
-              onEdgeClick={readOnly ? undefined : (_, edge) => {
+              onEdgeClick={readOnly && !interactiveReadOnly ? undefined : (_, edge) => {
                 onSelectionChange?.({
                   type: edge.data?.edgeType === 'stage-edge' ? 'stage-edge' : 'relation',
                   id: edge.id,
                 });
               }}
-              onPaneClick={readOnly ? undefined : () => onSelectionChange?.({ type: 'graph', id: graphId })}
+              onPaneClick={readOnly && !interactiveReadOnly ? undefined : () => onSelectionChange?.({ type: 'graph', id: graphId })}
               onConnect={readOnly ? undefined : handleConnect}
               onReconnect={readOnly ? undefined : handleReconnect}
               onNodeDragStart={readOnly ? undefined : handleNodeDragStart}
