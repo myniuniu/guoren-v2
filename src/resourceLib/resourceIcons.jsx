@@ -11,6 +11,7 @@ import {
   ExperimentFilled,
   PicLeftOutlined,
   FileUnknownFilled,
+  NodeIndexOutlined,
 } from '@ant-design/icons';
 
 // 文件类型 → 颜色 + 图标组件
@@ -27,11 +28,32 @@ const TYPE_META = {
   whiteboard: { color: '#7c4dff', Icon: PicLeftOutlined },
   note:       { color: '#fadb14', Icon: FileTextFilled },
   test:       { color: '#52c41a', Icon: ExperimentFilled },
+  knowledgeGraph: { color: '#1677ff', Icon: NodeIndexOutlined },
   other:      { color: '#8c8c8c', Icon: FileUnknownFilled },
+};
+
+const TYPE_LABEL_MAP = {
+  folder: '文件夹',
+  pdf: 'PDF',
+  pptx: 'PPT',
+  docx: 'Word',
+  xlsx: 'Excel',
+  image: '图片',
+  video: '视频',
+  audio: '音频',
+  whiteboard: '白板',
+  note: '笔记',
+  test: '测试',
+  knowledgeGraph: '知识图谱',
+  other: '文件',
 };
 
 export function getFileTypeMeta(type) {
   return TYPE_META[type] || TYPE_META.other;
+}
+
+export function getFileTypeLabel(type) {
+  return TYPE_LABEL_MAP[type] || TYPE_LABEL_MAP.other;
 }
 
 // 渲染文件图标

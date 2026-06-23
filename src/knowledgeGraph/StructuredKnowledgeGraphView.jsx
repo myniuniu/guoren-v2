@@ -11,6 +11,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   PlayCircleOutlined,
+  PlusOutlined,
   SoundOutlined,
   UpOutlined,
 } from '@ant-design/icons';
@@ -18,11 +19,13 @@ import ReactFlow, {
   applyEdgeChanges,
   applyNodeChanges,
   Background,
+  ConnectionMode,
   Controls,
   Handle,
   MarkerType,
   MiniMap,
   Position,
+  reconnectEdge,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { getAllItemsAcrossLibraries, loadResourceLib } from '../resourceLib/resourceLibStore';
@@ -256,6 +259,23 @@ function getEdgeDashArray(lineStyle) {
   return undefined;
 }
 
+function getEdgeMarker(markerType, color) {
+  if (markerType === 'arrow') {
+    return { type: MarkerType.Arrow, color };
+  }
+  if (markerType === 'arrowclosed') {
+    return { type: MarkerType.ArrowClosed, color };
+  }
+  return undefined;
+}
+
+const STAGE_HANDLE_CONFIGS = [
+  { key: 'top', position: Position.Top },
+  { key: 'right', position: Position.Right },
+  { key: 'bottom', position: Position.Bottom },
+  { key: 'left', position: Position.Left },
+];
+
 function StageNode({ data, selected }) {
   const stop = (event) => event.stopPropagation();
   const handleClassName = `kg-structured-handle${data.readOnly ? ' is-hidden' : ''}`;
@@ -267,7 +287,24 @@ function StageNode({ data, selected }) {
         height: data.height,
       }}
     >
-      <Handle type="target" position={Position.Left} className={handleClassName} />
+      {STAGE_HANDLE_CONFIGS.map((item) => (
+        <Handle
+          key={`target-${item.key}`}
+          id={`stage-target-${item.key}`}
+          type="target"
+          position={item.position}
+          className={`${handleClassName} is-${item.key} is-target`}
+        />
+      ))}
+      {STAGE_HANDLE_CONFIGS.map((item) => (
+        <Handle
+          key={`source-${item.key}`}
+          id={`stage-source-${item.key}`}
+          type="source"
+          position={item.position}
+          className={`${handleClassName} is-${item.key} is-source`}
+        />
+      ))}
       <div className="kg-structured-stage-head">
         <div className="kg-structured-stage-copy">
           <span className="kg-structured-stage-pill" />
@@ -278,6 +315,14 @@ function StageNode({ data, selected }) {
         </div>
         {data.readOnly ? null : (
           <div className="kg-structured-stage-actions nodrag nopan" onMouseDown={stop} onClick={stop}>
+            <Tooltip title="新增知识点">
+              <Button
+                size="small"
+                type="text"
+                icon={<PlusOutlined />}
+                onClick={() => data.onCreatePoint?.(data.stageId)}
+              />
+            </Tooltip>
             <Tooltip title="删除阶段">
               <Button
                 size="small"
@@ -302,7 +347,6 @@ function StageNode({ data, selected }) {
           </div>
         )}
       </div>
-      <Handle type="source" position={Position.Right} className={handleClassName} />
     </div>
   );
 }
@@ -413,11 +457,13 @@ function StructuredKnowledgeGraphView({
   selection,
   onSelectionChange,
   onCreateStage,
+  onCreatePoint,
   onDeleteStage,
   onDeletePoint,
   onUpdateStagePosition,
   onMovePoint,
   onCreateStageEdge,
+  onReconnectStageEdge,
   onCreatePointRelation,
   onBindResourcesToPoint,
   readOnly = false,
@@ -647,6 +693,7 @@ function StructuredKnowledgeGraphView({
           width: metric.width,
           disableDelete: stages.length <= 1,
           readOnly,
+          onCreatePoint,
           onDeleteStage,
         },
         selected: selection?.type === 'stage' && selection.id === stage.id,
@@ -720,6 +767,7 @@ function StructuredKnowledgeGraphView({
     return [...stageNodes, ...pointNodes];
   }, [
     onBindResourcesToPoint,
+    onCreatePoint,
     onDeletePoint,
     onDeleteStage,
     onMovePoint,
@@ -741,14 +789,23 @@ function StructuredKnowledgeGraphView({
       id: edge.id,
       source: edge.source,
       target: edge.target,
+      sourceHandle: edge.sourceHandle || 'stage-source-right',
+      targetHandle: edge.targetHandle || 'stage-target-left',
       label: edge.label || '阶段衔接',
-      type: 'smoothstep',
-      markerEnd: { type: MarkerType.ArrowClosed, color: edge.strokeColor || '#60a5fa' },
-      labelStyle: { fill: edge.strokeColor || '#60a5fa', fontSize: 12, fontWeight: 600 },
+      type: edge.pathStyle || 'smoothstep',
+      markerStart: getEdgeMarker(edge.startMarker, edge.strokeColor || '#60a5fa'),
+      markerEnd: getEdgeMarker(edge.markerType, edge.strokeColor || '#60a5fa'),
+      labelStyle: {
+        fill: edge.strokeColor || '#60a5fa',
+        fontSize: 12,
+        fontWeight: 600,
+        opacity: Number(edge.opacity ?? 100) / 100,
+      },
       style: {
         stroke: edge.strokeColor || '#60a5fa',
         strokeWidth: (edge.strokeWidth || 2) + (selection?.type === 'stage-edge' && selection.id === edge.id ? 0.8 : 0),
         strokeDasharray: getEdgeDashArray(edge.lineStyle),
+        opacity: Number(edge.opacity ?? 100) / 100,
       },
       data: { edgeType: 'stage-edge' },
       animated: Boolean(edge.animated),
@@ -773,14 +830,39 @@ function StructuredKnowledgeGraphView({
     setRenderEdges((current) => applyEdgeChanges(changes, current));
   };
 
-  const handleConnect = ({ source, target }) => {
+  const handleConnect = ({ source, target, sourceHandle, targetHandle }) => {
     if (readOnly) return;
     if (!source || !target || source === target) return;
     if (stageIdSet.has(source) && stageIdSet.has(target)) {
-      onCreateStageEdge?.({ source, target });
+      onCreateStageEdge?.({
+        source,
+        target,
+        sourceHandle,
+        targetHandle,
+      });
       return;
     }
     message.warning('结构化视图中只允许阶段与阶段之间连线。');
+  };
+
+  const handleReconnect = (oldEdge, nextConnection) => {
+    if (readOnly) return;
+    if (!oldEdge?.id || !nextConnection?.source || !nextConnection?.target) return;
+    if (nextConnection.source === nextConnection.target) {
+      message.warning('阶段连线不能连接到自身。');
+      return;
+    }
+    if (!stageIdSet.has(nextConnection.source) || !stageIdSet.has(nextConnection.target)) {
+      message.warning('结构化视图中只允许阶段与阶段之间连线。');
+      return;
+    }
+    setRenderEdges((current) => reconnectEdge(oldEdge, nextConnection, current));
+    onReconnectStageEdge?.(oldEdge.id, {
+      source: nextConnection.source,
+      target: nextConnection.target,
+      sourceHandle: nextConnection.sourceHandle,
+      targetHandle: nextConnection.targetHandle,
+    });
   };
 
   const handleNodeDragStart = (_, node) => {
@@ -919,7 +1001,11 @@ function StructuredKnowledgeGraphView({
               fitView
               nodesDraggable={!readOnly}
               nodesConnectable={!readOnly}
+              edgesReconnectable={!readOnly}
               elementsSelectable={!readOnly}
+              connectionMode={ConnectionMode.Strict}
+              connectionRadius={36}
+              reconnectRadius={36}
               nodeDragThreshold={1}
               connectionDragThreshold={6}
               onlyRenderVisibleElements
@@ -940,6 +1026,7 @@ function StructuredKnowledgeGraphView({
               }}
               onPaneClick={readOnly ? undefined : () => onSelectionChange?.({ type: 'graph', id: graphId })}
               onConnect={readOnly ? undefined : handleConnect}
+              onReconnect={readOnly ? undefined : handleReconnect}
               onNodeDragStart={readOnly ? undefined : handleNodeDragStart}
               onNodeDrag={readOnly ? undefined : handleNodeDrag}
               onNodeDragStop={readOnly ? undefined : handleNodeDragStop}

@@ -77,7 +77,13 @@ export default function ResourceLibraryOverlays({
       </Modal>
 
       <Modal
-        title={createEntry.type === 'folder' ? '新建文件夹' : '新建资料'}
+        title={
+          createEntry.type === 'folder'
+            ? '新建文件夹'
+            : createEntry.type === 'knowledgeGraph'
+              ? '新建知识图谱'
+              : '新建资料'
+        }
         open={createEntry.open}
         onCancel={createEntry.onClose}
         onOk={createEntry.onConfirm}
@@ -87,8 +93,21 @@ export default function ResourceLibraryOverlays({
       >
         <Form form={createEntry.form} layout="vertical" preserve={false}>
           <Form.Item label="名称" name="name" rules={[{ required: true, message: '请输入名称' }]}>
-            <Input placeholder={createEntry.type === 'folder' ? '请输入文件夹名称' : '请输入资料名称'} />
+            <Input
+              placeholder={
+                createEntry.type === 'folder'
+                  ? '请输入文件夹名称'
+                  : createEntry.type === 'knowledgeGraph'
+                    ? '请输入知识图谱名称'
+                    : '请输入资料名称'
+              }
+            />
           </Form.Item>
+          {createEntry.type === 'knowledgeGraph' && (
+            <Form.Item label="图谱描述" name="description">
+              <Input.TextArea rows={4} placeholder="可选，用于补充图谱用途或说明" />
+            </Form.Item>
+          )}
           {createEntry.type === 'file' && (
             <>
               <Form.Item label="文件类型" name="fileType" tooltip="留空则按文件名后缀自动识别">
@@ -125,6 +144,7 @@ export default function ResourceLibraryOverlays({
         open={resourceImport.open}
         onClose={resourceImport.onClose}
         onUpload={resourceImport.onUpload}
+        onPickEntry={resourceImport.onPickEntry}
       />
 
       <Drawer

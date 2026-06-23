@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Button,
@@ -12,6 +12,7 @@ import {
   Popconfirm,
   Segmented,
   Select,
+  Slider,
   Space,
   Switch,
   Table,
@@ -27,12 +28,20 @@ import {
   EditOutlined,
   FileAddOutlined,
   FolderAddOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
   NodeIndexOutlined,
   RobotOutlined,
+  SendOutlined,
   SettingOutlined,
   ShareAltOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
-import { getAllItemsAcrossLibraries, loadResourceLib } from '../resourceLib/resourceLibStore';
+import {
+  getAllItemsAcrossLibraries,
+  loadResourceLib,
+  removeKnowledgeGraphItemsByGraphIds,
+} from '../resourceLib/resourceLibStore';
 import {
   acceptGraphDraft,
   bindResourcesToPoint,
@@ -81,6 +90,210 @@ const EDGE_LINE_STYLE_OPTIONS = [
   { label: '虚线', value: 'dashed' },
   { label: '点线', value: 'dotted' },
 ];
+const EDGE_COLOR_PRESETS = ['#1f1f24', '#e03131', '#2f9e44', '#1971c2', '#f08c00', '#7c3aed'];
+const EDGE_WIDTH_PRESETS = [1.6, 2.8, 4.2];
+const EDGE_PATH_STYLE_OPTIONS = [
+  { value: 'straight', label: '直线' },
+  { value: 'smoothstep', label: '曲线' },
+  { value: 'step', label: '折线' },
+];
+const EDGE_MARKER_TYPE_OPTIONS = [
+  { value: 'arrow', label: '开放箭头' },
+  { value: 'arrowclosed', label: '实心箭头' },
+  { value: 'none', label: '无箭头' },
+];
+const EDGE_START_MARKER_OPTIONS = [
+  { value: 'none', label: '无线尾' },
+  { value: 'arrow', label: '箭头端点' },
+];
+
+function clampNumber(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function buildKnowledgeGraphAgentWelcome(graphName, stageCount, pointCount, bindingCount) {
+  return `你好！我是知识体系智能体。
+
+当前知识图谱「${graphName || '未命名图谱'}」包含 ${stageCount} 个阶段、${pointCount} 个知识点、${bindingCount} 条资料绑定。
+
+你可以直接描述你的知识体系设计需求，例如：
+• "帮我检查哪些阶段还缺少学习资料"
+• "这套知识图谱的学习路径是否清晰"
+• "请给出每个阶段的学习目标建议"
+
+请描述你希望优化的知识体系问题：`;
+}
+
+function buildKnowledgeGraphAgentReply(userMessage, context) {
+  const messageText = String(userMessage || '').trim().toLowerCase();
+  const {
+    graphName,
+    stageSummaries,
+    pointCount,
+    relationCount,
+    stageEdgeCount,
+    bindingCount,
+    unboundPoints,
+  } = context;
+
+  if (!messageText) {
+    return '可以直接告诉我你想优化的知识体系问题，我会基于当前图谱给出分阶段建议。';
+  }
+
+  if (messageText.includes('资料') || messageText.includes('资源') || messageText.includes('绑定')) {
+    if (!unboundPoints.length) {
+      return `当前图谱的 ${pointCount} 个知识点都已经绑定资料，总计 ${bindingCount} 条资料绑定。下一步建议优先检查资料覆盖是否和阶段目标一致。`;
+    }
+    const previewPoints = unboundPoints.slice(0, 5).map((point) => point.title).join('、');
+    return `当前还有 ${unboundPoints.length} 个知识点未绑定资料，例如：${previewPoints}。建议优先补齐这些知识点的学习资料，再让学员进入预览视图浏览。`;
+  }
+
+  if (messageText.includes('阶段') || messageText.includes('分区')) {
+    const summaryText = stageSummaries
+      .map((stage) => `${stage.name}（${stage.pointCount} 个知识点，${stage.bindingCount} 条资料）`)
+      .join('；');
+    return summaryText
+      ? `当前图谱「${graphName}」的阶段分布如下：${summaryText}。如果你希望我进一步优化，我可以继续按“阶段目标、核心知识点、资料覆盖”三个维度给建议。`
+      : '当前图谱还没有阶段。建议先按学习路径拆成 3 到 5 个阶段，再逐步补知识点。';
+  }
+
+  if (messageText.includes('路径') || messageText.includes('顺序') || messageText.includes('前置') || messageText.includes('连线')) {
+    if (!stageEdgeCount) {
+      return '当前阶段之间还没有学习路径连线。建议先补一条从基础到应用的主路径，再决定哪些阶段需要并行或分支学习。';
+    }
+    return `当前阶段之间已有 ${stageEdgeCount} 条路径连线，知识点总关系数为 ${relationCount}。建议重点检查每个阶段是否只承担一个主目标，避免学员在预览视图里看到过多交叉路径。`;
+  }
+
+  if (messageText.includes('学员') || messageText.includes('预览')) {
+    return `如果这套图谱要给学员预览，建议重点检查三件事：1. 阶段命名是否直观；2. 每个知识点是否都绑定了可直接学习的资料；3. 阶段之间的路径连线是否符合从基础到应用的顺序。`;
+  }
+
+  return `我建议先从三步检查当前图谱「${graphName}」：第一，阶段是否按学习路径递进；第二，${pointCount} 个知识点是否都归属清晰；第三，${bindingCount} 条资料绑定是否覆盖核心知识点。如果你愿意，我可以继续按“阶段目标”或“资料缺口”展开。`;
+}
+
+function EdgeStyleButton({ active, onClick, children }) {
+  return (
+    <button type="button" className={`kg-edge-style-button${active ? ' is-active' : ''}`} onClick={onClick}>
+      {children}
+    </button>
+  );
+}
+
+function EdgeStyleConfigurator({ form }) {
+  const strokeColor = Form.useWatch('strokeColor', form) || '#1f1f24';
+  const strokeWidth = Number(Form.useWatch('strokeWidth', form) || 2.8);
+  const lineStyle = Form.useWatch('lineStyle', form) || 'solid';
+  const pathStyle = Form.useWatch('pathStyle', form) || 'smoothstep';
+  const markerType = Form.useWatch('markerType', form) || 'arrowclosed';
+  const startMarker = Form.useWatch('startMarker', form) || 'none';
+  const opacity = Number(Form.useWatch('opacity', form) ?? 100);
+
+  const setField = (name, value) => {
+    form.setFieldValue(name, value);
+  };
+
+  return (
+    <div className="kg-edge-style-editor">
+      <div className="kg-edge-style-group">
+        <div className="kg-edge-style-label">描边</div>
+        <div className="kg-edge-color-row">
+          {EDGE_COLOR_PRESETS.map((color) => (
+            <button
+              key={color}
+              type="button"
+              className={`kg-edge-color-swatch${strokeColor === color ? ' is-active' : ''}`}
+              style={{ '--kg-edge-swatch': color }}
+              onClick={() => setField('strokeColor', color)}
+            />
+          ))}
+          <input
+            type="color"
+            className="kg-edge-color-picker"
+            value={strokeColor}
+            onChange={(event) => setField('strokeColor', event.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="kg-edge-style-group">
+        <div className="kg-edge-style-label">描边宽度</div>
+        <div className="kg-edge-style-grid is-compact">
+          {EDGE_WIDTH_PRESETS.map((item) => (
+            <EdgeStyleButton key={item} active={Math.abs(strokeWidth - item) < 0.21} onClick={() => setField('strokeWidth', item)}>
+              <span className="kg-edge-width-sample" style={{ '--kg-edge-width': `${item}px` }} />
+            </EdgeStyleButton>
+          ))}
+        </div>
+      </div>
+
+      <div className="kg-edge-style-group">
+        <div className="kg-edge-style-label">边框样式</div>
+        <div className="kg-edge-style-grid is-compact">
+          {EDGE_LINE_STYLE_OPTIONS.map((item) => (
+            <EdgeStyleButton key={item.value} active={lineStyle === item.value} onClick={() => setField('lineStyle', item.value)}>
+              <span className={`kg-edge-line-sample is-${item.value}`} />
+            </EdgeStyleButton>
+          ))}
+        </div>
+      </div>
+
+      <div className="kg-edge-style-group">
+        <div className="kg-edge-style-label">线条风格</div>
+        <div className="kg-edge-style-grid is-compact">
+          {EDGE_PATH_STYLE_OPTIONS.map((item) => (
+            <EdgeStyleButton key={item.value} active={pathStyle === item.value} onClick={() => setField('pathStyle', item.value)}>
+              <svg viewBox="0 0 40 24" className="kg-edge-path-icon">
+                {item.value === 'straight' ? <path d="M4 18 L36 6" /> : null}
+                {item.value === 'smoothstep' ? <path d="M4 18 C12 18 14 6 22 6 S32 18 36 10" /> : null}
+                {item.value === 'step' ? <path d="M4 18 L16 18 L16 8 L30 8 L30 12 L36 12" /> : null}
+              </svg>
+            </EdgeStyleButton>
+          ))}
+        </div>
+      </div>
+
+      <div className="kg-edge-style-group">
+        <div className="kg-edge-style-label">箭头类型</div>
+        <div className="kg-edge-style-grid is-compact">
+          {EDGE_MARKER_TYPE_OPTIONS.map((item) => (
+            <EdgeStyleButton key={item.value} active={markerType === item.value} onClick={() => setField('markerType', item.value)}>
+              <svg viewBox="0 0 40 24" className="kg-edge-arrow-icon">
+                <path d="M4 18 L30 6" />
+                {item.value === 'arrow' ? <path d="M24 6 L30 6 L30 12" /> : null}
+                {item.value === 'arrowclosed' ? <path d="M23 6 L30 6 L26 12 Z" className="is-fill" /> : null}
+                {item.value === 'none' ? <path d="M25 5 L31 11 M31 5 L25 11" /> : null}
+              </svg>
+            </EdgeStyleButton>
+          ))}
+        </div>
+      </div>
+
+      <div className="kg-edge-style-group">
+        <div className="kg-edge-style-label">端点</div>
+        <div className="kg-edge-style-grid is-compact">
+          {EDGE_START_MARKER_OPTIONS.map((item) => (
+            <EdgeStyleButton key={item.value} active={startMarker === item.value} onClick={() => setField('startMarker', item.value)}>
+              <svg viewBox="0 0 40 24" className="kg-edge-arrow-icon">
+                <path d="M8 12 L34 12" />
+                {item.value === 'none' ? <path d="M6 7 L12 13 M12 7 L6 13" /> : null}
+                {item.value === 'arrow' ? <path d="M8 12 L14 8 M8 12 L14 16" /> : null}
+              </svg>
+            </EdgeStyleButton>
+          ))}
+        </div>
+      </div>
+
+      <div className="kg-edge-style-group">
+        <div className="kg-edge-style-label">透明度</div>
+        <Slider min={0} max={100} value={opacity} onChange={(value) => setField('opacity', value)} />
+        <div className="kg-edge-opacity-scale">
+          <span>0</span>
+          <span>100</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function formatDateTime(value) {
   if (!value) return '-';
@@ -520,9 +733,16 @@ function DraftPreviewModal({
   );
 }
 
-function KnowledgeGraphModule() {
+function KnowledgeGraphModule({
+  entryGraphId = null,
+  entryCollectionId = null,
+  entryMode = 'curriculum',
+  entryRequestId = null,
+  embedded = false,
+  onExitEmbedded = null,
+}) {
   const [snapshot, setSnapshot] = useState(() => loadKnowledgeGraphStore());
-  const [pageMode, setPageMode] = useState('list');
+  const [pageMode, setPageMode] = useState(embedded ? 'editor' : 'list');
   const [selectedCollectionId, setSelectedCollectionId] = useState(() => getCollections(loadKnowledgeGraphStore())[0]?.id || null);
   const [selectedGraphId, setSelectedGraphId] = useState(() => {
     const initialState = loadKnowledgeGraphStore();
@@ -541,6 +761,11 @@ function KnowledgeGraphModule() {
   const [draftPreviewOpen, setDraftPreviewOpen] = useState(false);
   const [draftMergeMode, setDraftMergeMode] = useState('replace');
   const [draftEditor, setDraftEditor] = useState(null);
+  const [agentMessages, setAgentMessages] = useState([]);
+  const [agentInput, setAgentInput] = useState('');
+  const [agentTyping, setAgentTyping] = useState(false);
+  const [agentCollapsed, setAgentCollapsed] = useState(embedded);
+  const [agentWidth, setAgentWidth] = useState(360);
   const [collectionForm] = Form.useForm();
   const [graphForm] = Form.useForm();
   const [pointForm] = Form.useForm();
@@ -550,6 +775,9 @@ function KnowledgeGraphModule() {
   const [stageEditorForm] = Form.useForm();
   const [relationEditorForm] = Form.useForm();
   const [stageEdgeEditorForm] = Form.useForm();
+  const agentMessagesEndRef = useRef(null);
+  const agentReplyTimerRef = useRef(0);
+  const entryRequestHandledRef = useRef(null);
 
   useEffect(() => {
     const handleStoreChange = () => setSnapshot(loadKnowledgeGraphStore());
@@ -703,6 +931,10 @@ function KnowledgeGraphModule() {
         strokeColor: selectedRelation.strokeColor || '#a78bfa',
         strokeWidth: Number(selectedRelation.strokeWidth || 1.8),
         lineStyle: selectedRelation.lineStyle || 'solid',
+        pathStyle: selectedRelation.pathStyle || 'smoothstep',
+        markerType: selectedRelation.markerType || 'arrowclosed',
+        startMarker: selectedRelation.startMarker || 'none',
+        opacity: Number(selectedRelation.opacity ?? 100),
         animated: Boolean(selectedRelation.animated),
       });
     }
@@ -715,6 +947,10 @@ function KnowledgeGraphModule() {
         strokeColor: selectedStageEdge.strokeColor || '#60a5fa',
         strokeWidth: Number(selectedStageEdge.strokeWidth || 2),
         lineStyle: selectedStageEdge.lineStyle || 'solid',
+        pathStyle: selectedStageEdge.pathStyle || 'smoothstep',
+        markerType: selectedStageEdge.markerType || 'arrowclosed',
+        startMarker: selectedStageEdge.startMarker || 'none',
+        opacity: Number(selectedStageEdge.opacity ?? 100),
         animated: Boolean(selectedStageEdge.animated),
       });
     }
@@ -775,11 +1011,24 @@ function KnowledgeGraphModule() {
     setPageMode('editor');
   }, []);
 
+  useEffect(() => {
+    if (!entryGraphId || !entryRequestId) return;
+    if (entryRequestHandledRef.current === entryRequestId) return;
+    const targetGraph = getGraphById(snapshot, entryGraphId);
+    if (!targetGraph) return;
+    entryRequestHandledRef.current = entryRequestId;
+    openGraphWorkspace(targetGraph.id, entryCollectionId || targetGraph.collectionId, entryMode || 'curriculum');
+  }, [entryCollectionId, entryGraphId, entryMode, entryRequestId, openGraphWorkspace, snapshot]);
+
   const returnToListPage = useCallback(() => {
+    if (embedded) {
+      onExitEmbedded?.();
+      return;
+    }
     setPageMode('list');
     setInspectorOpen(false);
     setSelection(defaultSelection(selectedGraphId));
-  }, [selectedGraphId]);
+  }, [embedded, onExitEmbedded, selectedGraphId]);
 
   const openPointModal = (stageId = null) => {
     setPointModalState({ open: true });
@@ -885,12 +1134,19 @@ function KnowledgeGraphModule() {
   };
 
   const handleDeleteCollection = (collectionId) => {
+    const graphIds = snapshot.graphs
+      .filter((graph) => graph.collectionId === collectionId)
+      .map((graph) => graph.id);
     removeCollection(collectionId);
+    if (graphIds.length) {
+      removeKnowledgeGraphItemsByGraphIds(loadResourceLib(), graphIds);
+    }
     refreshAndMessage('图谱集已删除');
   };
 
   const handleDeleteGraph = (graphId) => {
     removeGraph(graphId);
+    removeKnowledgeGraphItemsByGraphIds(loadResourceLib(), [graphId]);
     refreshAndMessage('图谱已删除');
   };
 
@@ -965,7 +1221,6 @@ function KnowledgeGraphModule() {
   const handleBindResourcesToPointDirect = (pointId, resource) => {
     if (!selectedGraphId || !pointId || !resource) return;
     bindResourcesToPoint(selectedGraphId, pointId, [resource]);
-    setSelection({ type: 'point', id: pointId });
     refreshAndMessage('资料已绑定到知识点');
   };
 
@@ -1012,6 +1267,12 @@ function KnowledgeGraphModule() {
     if (!selectedGraphId) return;
     createStructuredStageEdge(selectedGraphId, payload);
     refreshAndMessage('阶段连线已创建');
+  };
+
+  const handleReconnectStructuredStageEdge = (edgeId, payload) => {
+    if (!selectedGraphId || !edgeId) return;
+    updateStructuredStageEdge(selectedGraphId, edgeId, payload);
+    setSnapshot(loadKnowledgeGraphStore());
   };
 
   const handleCreateStructuredRelation = (payload) => {
@@ -1067,6 +1328,115 @@ function KnowledgeGraphModule() {
       .slice(0, 6),
     [currentRelations],
   );
+  const totalBindingCount = useMemo(
+    () => currentPoints.reduce((sum, point) => sum + (point.resourceBindings?.length || 0), 0),
+    [currentPoints],
+  );
+  const unboundPoints = useMemo(
+    () => currentPoints.filter((point) => !(point.resourceBindings?.length)),
+    [currentPoints],
+  );
+  const agentWelcomeMessage = useMemo(
+    () => buildKnowledgeGraphAgentWelcome(currentGraph?.name, structuredStages.length, currentPoints.length, totalBindingCount),
+    [currentGraph?.name, currentPoints.length, structuredStages.length, totalBindingCount],
+  );
+  const agentReplyContext = useMemo(
+    () => ({
+      graphName: currentGraph?.name || '未命名图谱',
+      stageSummaries,
+      pointCount: currentPoints.length,
+      relationCount: currentRelations.length,
+      stageEdgeCount: structuredStageEdges.length,
+      bindingCount: totalBindingCount,
+      unboundPoints,
+    }),
+    [
+      currentGraph?.name,
+      currentPoints.length,
+      currentRelations.length,
+      stageSummaries,
+      structuredStageEdges.length,
+      totalBindingCount,
+      unboundPoints,
+    ],
+  );
+
+  useEffect(() => {
+    if (agentReplyTimerRef.current) {
+      window.clearTimeout(agentReplyTimerRef.current);
+      agentReplyTimerRef.current = 0;
+    }
+    return () => {
+      if (agentReplyTimerRef.current) {
+        window.clearTimeout(agentReplyTimerRef.current);
+        agentReplyTimerRef.current = 0;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (pageMode === 'editor' && viewMode === 'curriculum') return;
+    if (agentReplyTimerRef.current) {
+      window.clearTimeout(agentReplyTimerRef.current);
+      agentReplyTimerRef.current = 0;
+    }
+    setAgentTyping(false);
+  }, [pageMode, viewMode]);
+
+  useEffect(() => {
+    agentMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [agentMessages, agentTyping]);
+
+  useEffect(() => {
+    if (pageMode !== 'editor' || viewMode !== 'curriculum' || !currentGraph) return;
+    setAgentInput('');
+    setAgentTyping(false);
+    setAgentMessages([{ role: 'assistant', content: agentWelcomeMessage }]);
+  }, [currentGraph?.id, pageMode, viewMode]);
+
+  const handleAgentSend = useCallback(() => {
+    const text = String(agentInput || '').trim();
+    if (!text) return;
+
+    const userMessage = { role: 'user', content: text };
+    setAgentMessages((prev) => [...prev, userMessage]);
+    setAgentInput('');
+    setAgentTyping(true);
+
+    if (agentReplyTimerRef.current) {
+      window.clearTimeout(agentReplyTimerRef.current);
+    }
+
+    agentReplyTimerRef.current = window.setTimeout(() => {
+      const reply = buildKnowledgeGraphAgentReply(text, agentReplyContext);
+      setAgentMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
+      setAgentTyping(false);
+      agentReplyTimerRef.current = 0;
+    }, 720);
+  }, [agentInput, agentReplyContext]);
+
+  const handleAgentResizeStart = useCallback((event) => {
+    event.preventDefault();
+    const startX = event.clientX;
+    const startWidth = agentWidth;
+
+    const handleMove = (moveEvent) => {
+      const nextWidth = clampNumber(startWidth + (startX - moveEvent.clientX), 320, 520);
+      setAgentWidth(nextWidth);
+    };
+
+    const handleUp = () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleUp);
+  }, [agentWidth]);
 
   const inspectorTitle = selection?.type === 'stage'
     ? '阶段属性'
@@ -1267,19 +1637,16 @@ function KnowledgeGraphModule() {
           </div>
           <div className="kg-binding-list">
             {selectedPoint.resourceBindings?.length ? selectedPoint.resourceBindings.map((binding) => (
-              <Card
-                key={binding.bindingId}
-                size="small"
-                className="kg-binding-card"
-                extra={<Button type="text" danger icon={<DeleteOutlined />} onClick={() => {
+              <div key={binding.bindingId} className="kg-binding-card">
+                <div className="kg-binding-card-copy">
+                  <div className="kg-binding-name">{binding.resourceName}</div>
+                  <div className="kg-binding-path">{binding.snapshotPath}</div>
+                </div>
+                <Button type="text" danger icon={<DeleteOutlined />} className="kg-binding-remove" onClick={() => {
                   removeResourceBinding(selectedGraphId, selectedPoint.id, binding.bindingId);
                   refreshAndMessage('绑定资料已移除');
-                }} />}
-              >
-                <div className="kg-binding-name">{binding.resourceName}</div>
-                <div className="kg-binding-meta">{binding.libraryName} · {binding.fileType}</div>
-                <div className="kg-binding-path">{binding.snapshotPath}</div>
-              </Card>
+                }} />
+              </div>
             )) : (
               <div className="kg-binding-empty">当前知识点还没有绑定资料。</div>
             )}
@@ -1344,15 +1711,14 @@ function KnowledgeGraphModule() {
             <Form.Item label="连线标签" name="label">
               <Input placeholder="例如：下一阶段、依次推进、学习路径" />
             </Form.Item>
-            <Form.Item label="连线颜色" name="strokeColor">
-              <input type="color" className="kg-color-input" />
-            </Form.Item>
-            <Form.Item label="连线粗细" name="strokeWidth">
-              <InputNumber min={1} max={8} step={0.2} style={{ width: '100%' }} />
-            </Form.Item>
-            <Form.Item label="线型" name="lineStyle">
-              <Select options={EDGE_LINE_STYLE_OPTIONS} />
-            </Form.Item>
+            <Form.Item name="strokeColor" hidden><Input /></Form.Item>
+            <Form.Item name="strokeWidth" hidden><InputNumber /></Form.Item>
+            <Form.Item name="lineStyle" hidden><Input /></Form.Item>
+            <Form.Item name="pathStyle" hidden><Input /></Form.Item>
+            <Form.Item name="markerType" hidden><Input /></Form.Item>
+            <Form.Item name="startMarker" hidden><Input /></Form.Item>
+            <Form.Item name="opacity" hidden><InputNumber /></Form.Item>
+            <EdgeStyleConfigurator form={stageEdgeEditorForm} />
             <Form.Item label="动态效果" name="animated" valuePropName="checked">
               <Switch checkedChildren="开启" unCheckedChildren="关闭" />
             </Form.Item>
@@ -1433,15 +1799,14 @@ function KnowledgeGraphModule() {
             <Form.Item label="关系强度" name="weight">
               <InputNumber min={1} max={10} style={{ width: '100%' }} />
             </Form.Item>
-            <Form.Item label="连线颜色" name="strokeColor">
-              <input type="color" className="kg-color-input" />
-            </Form.Item>
-            <Form.Item label="连线粗细" name="strokeWidth">
-              <InputNumber min={1} max={8} step={0.2} style={{ width: '100%' }} />
-            </Form.Item>
-            <Form.Item label="线型" name="lineStyle">
-              <Select options={EDGE_LINE_STYLE_OPTIONS} />
-            </Form.Item>
+            <Form.Item name="strokeColor" hidden><Input /></Form.Item>
+            <Form.Item name="strokeWidth" hidden><InputNumber /></Form.Item>
+            <Form.Item name="lineStyle" hidden><Input /></Form.Item>
+            <Form.Item name="pathStyle" hidden><Input /></Form.Item>
+            <Form.Item name="markerType" hidden><Input /></Form.Item>
+            <Form.Item name="startMarker" hidden><Input /></Form.Item>
+            <Form.Item name="opacity" hidden><InputNumber /></Form.Item>
+            <EdgeStyleConfigurator form={relationEditorForm} />
             <Form.Item label="动态效果" name="animated" valuePropName="checked">
               <Switch checkedChildren="开启" unCheckedChildren="关闭" />
             </Form.Item>
@@ -1499,8 +1864,8 @@ function KnowledgeGraphModule() {
   );
 
   return (
-    <div className="kg-module kg-module-page">
-      {pageMode === 'list' ? (
+    <div className={`kg-module kg-module-page${embedded ? ' kg-module-embedded' : ''}`}>
+      {!embedded && pageMode === 'list' ? (
         <main className="kg-list-page">
           <div className="kg-list-hero">
             <div>
@@ -1681,12 +2046,14 @@ function KnowledgeGraphModule() {
               <div className="kg-toolbar">
                 <div className="kg-toolbar-copy">
                   <div className="kg-toolbar-title-row">
-                    <Button
-                      type="text"
-                      icon={<ArrowLeftOutlined />}
-                      className="kg-toolbar-back"
-                      onClick={returnToListPage}
-                    />
+                    {!embedded || onExitEmbedded ? (
+                      <Button
+                        type="text"
+                        icon={<ArrowLeftOutlined />}
+                        className="kg-toolbar-back"
+                        onClick={returnToListPage}
+                      />
+                    ) : null}
                     <div className="kg-toolbar-title">{currentGraph.name}</div>
                   </div>
                   <div className="kg-toolbar-subtitle">
@@ -1708,71 +2075,146 @@ function KnowledgeGraphModule() {
                       >
                         图谱属性
                       </Button>
-                      <Button type="primary" icon={<RobotOutlined />} onClick={() => setAiModalOpen(true)}>
-                        AI 生成图谱
-                      </Button>
                     </>
                   ) : null}
                 </Space>
               </div>
 
-              {viewMode === 'curriculum' && currentDraft ? (
-                <Alert
-                  type="warning"
-                  showIcon
-                  className="kg-draft-alert"
-                  message="当前图谱存在一份待确认的 AI 草稿"
-                  description="草稿尚未写入正式图谱，可先预览并决定替换或追加。"
-                  action={<Button size="small" onClick={() => openDraftPreview(currentDraft)}>查看草稿</Button>}
-                />
-              ) : null}
+              <div
+                className={`kg-editor-layout${viewMode === 'curriculum' ? '' : ' is-preview'}`}
+                style={viewMode === 'curriculum'
+                  ? { gridTemplateColumns: agentCollapsed ? 'minmax(0, 1fr) 56px' : `minmax(0, 1fr) ${agentWidth}px` }
+                  : undefined}
+              >
+                <div className="kg-editor-main">
+                  {viewMode === 'curriculum' && currentDraft ? (
+                    <Alert
+                      type="warning"
+                      showIcon
+                      className="kg-draft-alert"
+                      message="当前图谱存在一份待确认的 AI 草稿"
+                      description="草稿尚未写入正式图谱，可先预览并决定替换或追加。"
+                      action={<Button size="small" onClick={() => openDraftPreview(currentDraft)}>查看草稿</Button>}
+                    />
+                  ) : null}
 
-              <div className="kg-content kg-content-full">
-                <section className="kg-canvas-shell">
-                  {viewMode === 'graph' ? (
-                    <StructuredKnowledgeGraphView
-                      graphId={selectedGraphId}
-                      points={currentPoints}
-                      relations={currentRelations}
-                      structuredView={structuredView}
-                      pointTypeLabelMap={POINT_TYPE_LABEL_MAP}
-                      relationTypeLabelMap={RELATION_TYPE_LABEL_MAP}
-                      selection={null}
-                      onSelectionChange={() => {}}
-                      readOnly
-                    />
+                  <div className="kg-content kg-content-full">
+                    <section className="kg-canvas-shell">
+                      {viewMode === 'graph' ? (
+                        <StructuredKnowledgeGraphView
+                          graphId={selectedGraphId}
+                          points={currentPoints}
+                          relations={currentRelations}
+                          structuredView={structuredView}
+                          pointTypeLabelMap={POINT_TYPE_LABEL_MAP}
+                          relationTypeLabelMap={RELATION_TYPE_LABEL_MAP}
+                          selection={null}
+                          onSelectionChange={() => {}}
+                          readOnly
+                        />
+                      ) : (
+                        <StructuredKnowledgeGraphView
+                          graphId={selectedGraphId}
+                          points={currentPoints}
+                          relations={currentRelations}
+                          structuredView={structuredView}
+                          pointTypeLabelMap={POINT_TYPE_LABEL_MAP}
+                          relationTypeLabelMap={RELATION_TYPE_LABEL_MAP}
+                          selection={selection}
+                          onSelectionChange={(nextSelection) => {
+                            setSelection(nextSelection);
+                            setInspectorOpen(nextSelection?.type && nextSelection.type !== 'graph');
+                          }}
+                          onCreateStage={() => openSectionModal('create')}
+                          onCreatePoint={openPointModal}
+                          onDeleteStage={(stageId) => {
+                            removeStructuredStage(selectedGraphId, stageId);
+                            setInspectorOpen(false);
+                            refreshAndMessage('阶段已删除');
+                          }}
+                          onDeletePoint={(pointId) => {
+                            removePoint(selectedGraphId, pointId);
+                            setInspectorOpen(false);
+                            refreshAndMessage('知识点已删除');
+                          }}
+                          onUpdateStagePosition={(stageId, position) => updateStructuredStagePosition(selectedGraphId, stageId, position)}
+                          onMovePoint={handleMoveStructuredPoint}
+                          onCreateStageEdge={handleCreateStructuredStageEdge}
+                          onReconnectStageEdge={handleReconnectStructuredStageEdge}
+                          onCreatePointRelation={handleCreateStructuredRelation}
+                          onBindResourcesToPoint={handleBindResourcesToPointDirect}
+                        />
+                      )}
+                    </section>
+                  </div>
+                </div>
+
+                {viewMode === 'curriculum' ? (
+                  agentCollapsed ? (
+                    <div className="kg-agent-collapsed" onClick={() => setAgentCollapsed(false)}>
+                      <MenuUnfoldOutlined className="kg-agent-collapsed-icon" />
+                      <span className="kg-agent-collapsed-label">智能体</span>
+                    </div>
                   ) : (
-                    <StructuredKnowledgeGraphView
-                      graphId={selectedGraphId}
-                      points={currentPoints}
-                      relations={currentRelations}
-                      structuredView={structuredView}
-                      pointTypeLabelMap={POINT_TYPE_LABEL_MAP}
-                      relationTypeLabelMap={RELATION_TYPE_LABEL_MAP}
-                      selection={selection}
-                      onSelectionChange={(nextSelection) => {
-                        setSelection(nextSelection);
-                        setInspectorOpen(nextSelection?.type && nextSelection.type !== 'graph');
-                      }}
-                      onCreateStage={() => openSectionModal('create')}
-                      onDeleteStage={(stageId) => {
-                        removeStructuredStage(selectedGraphId, stageId);
-                        setInspectorOpen(false);
-                        refreshAndMessage('阶段已删除');
-                      }}
-                      onDeletePoint={(pointId) => {
-                        removePoint(selectedGraphId, pointId);
-                        setInspectorOpen(false);
-                        refreshAndMessage('知识点已删除');
-                      }}
-                      onUpdateStagePosition={(stageId, position) => updateStructuredStagePosition(selectedGraphId, stageId, position)}
-                      onMovePoint={handleMoveStructuredPoint}
-                      onCreateStageEdge={handleCreateStructuredStageEdge}
-                      onCreatePointRelation={handleCreateStructuredRelation}
-                      onBindResourcesToPoint={handleBindResourcesToPointDirect}
-                    />
-                  )}
-                </section>
+                    <>
+                      <aside className="kg-agent-panel" style={{ width: agentWidth }}>
+                        <div className="kg-agent-resize-handle" onMouseDown={handleAgentResizeStart} />
+                        <div className="kg-agent-header">
+                          <div className="kg-agent-header-main">
+                            <RobotOutlined className="kg-agent-header-icon" />
+                            <span>知识体系智能体</span>
+                          </div>
+                          <MenuFoldOutlined
+                            className="kg-agent-collapse-icon"
+                            title="折叠智能体"
+                            onClick={() => setAgentCollapsed(true)}
+                          />
+                        </div>
+                        <div className="kg-agent-messages">
+                          {agentMessages.map((item, index) => (
+                            <div key={`${item.role}-${index}`} className={`kg-agent-message kg-agent-message-${item.role}`}>
+                              <div className="kg-agent-message-avatar">
+                                {item.role === 'assistant' ? <RobotOutlined /> : <UserOutlined />}
+                              </div>
+                              <div className="kg-agent-message-bubble">{item.content}</div>
+                            </div>
+                          ))}
+                          {agentTyping ? (
+                            <div className="kg-agent-typing">
+                              <div className="kg-agent-typing-dot" />
+                              <div className="kg-agent-typing-dot" />
+                              <div className="kg-agent-typing-dot" />
+                            </div>
+                          ) : null}
+                          <div ref={agentMessagesEndRef} />
+                        </div>
+                        <div className="kg-agent-input">
+                          <Input.TextArea
+                            value={agentInput}
+                            onChange={(event) => setAgentInput(event.target.value)}
+                            onPressEnter={(event) => {
+                              if (!event.shiftKey) {
+                                event.preventDefault();
+                                handleAgentSend();
+                              }
+                            }}
+                            placeholder="描述你的知识体系需求..."
+                            autoSize={{ minRows: 1, maxRows: 4 }}
+                          />
+                          <Button
+                            type="primary"
+                            icon={<SendOutlined />}
+                            className="kg-agent-send"
+                            disabled={!agentInput.trim()}
+                            onClick={handleAgentSend}
+                          >
+                            发送
+                          </Button>
+                        </div>
+                      </aside>
+                    </>
+                  )
+                ) : null}
               </div>
 
               <Drawer
@@ -1782,6 +2224,7 @@ function KnowledgeGraphModule() {
                 width={380}
                 destroyOnClose={false}
                 className="kg-floating-drawer"
+                rootStyle={viewMode === 'curriculum' ? { right: agentCollapsed ? 72 : agentWidth + 44 } : undefined}
               >
                 {inspectorContent}
               </Drawer>

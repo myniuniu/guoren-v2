@@ -19,6 +19,9 @@ export const RELATION_TYPE_OPTIONS = [
 
 const RELATION_LABEL_MAP = Object.fromEntries(RELATION_TYPE_OPTIONS.map((item) => [item.value, item.label]));
 const EDGE_LINE_STYLE_OPTIONS = ['solid', 'dashed', 'dotted'];
+const EDGE_PATH_STYLE_OPTIONS = ['smoothstep', 'straight', 'step'];
+const EDGE_MARKER_TYPE_OPTIONS = ['arrowclosed', 'arrow', 'none'];
+const EDGE_START_MARKER_OPTIONS = ['none', 'arrow'];
 
 function createId(prefix) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -71,6 +74,24 @@ function sanitizeEdgeAnimated(value, fallback = false) {
   return fallback;
 }
 
+function sanitizeEdgePathStyle(value, fallback = 'smoothstep') {
+  return EDGE_PATH_STYLE_OPTIONS.includes(value) ? value : fallback;
+}
+
+function sanitizeEdgeMarkerType(value, fallback = 'arrowclosed') {
+  return EDGE_MARKER_TYPE_OPTIONS.includes(value) ? value : fallback;
+}
+
+function sanitizeEdgeStartMarker(value, fallback = 'none') {
+  return EDGE_START_MARKER_OPTIONS.includes(value) ? value : fallback;
+}
+
+function sanitizeEdgeOpacity(value, fallback = 100) {
+  const next = Number(value);
+  if (!Number.isFinite(next)) return fallback;
+  return Math.max(0, Math.min(100, next));
+}
+
 function normalizeRelationAppearance(relation = {}) {
   const relationType = relation.relationType || 'RELATED';
   const fallbackAnimated = relationType === 'PRECEDES';
@@ -78,6 +99,10 @@ function normalizeRelationAppearance(relation = {}) {
     strokeColor: sanitizeEdgeStrokeColor(relation.strokeColor, '#a78bfa'),
     strokeWidth: sanitizeEdgeStrokeWidth(relation.strokeWidth, 1.8),
     lineStyle: sanitizeEdgeLineStyle(relation.lineStyle, 'solid'),
+    pathStyle: sanitizeEdgePathStyle(relation.pathStyle, 'smoothstep'),
+    markerType: sanitizeEdgeMarkerType(relation.markerType, 'arrowclosed'),
+    startMarker: sanitizeEdgeStartMarker(relation.startMarker, 'none'),
+    opacity: sanitizeEdgeOpacity(relation.opacity, 100),
     animated: sanitizeEdgeAnimated(relation.animated, fallbackAnimated),
   };
 }
@@ -87,8 +112,28 @@ function normalizeStageEdgeAppearance(edge = {}) {
     strokeColor: sanitizeEdgeStrokeColor(edge.strokeColor, '#60a5fa'),
     strokeWidth: sanitizeEdgeStrokeWidth(edge.strokeWidth, 2),
     lineStyle: sanitizeEdgeLineStyle(edge.lineStyle, 'solid'),
+    pathStyle: sanitizeEdgePathStyle(edge.pathStyle, 'smoothstep'),
+    markerType: sanitizeEdgeMarkerType(edge.markerType, 'arrowclosed'),
+    startMarker: sanitizeEdgeStartMarker(edge.startMarker, 'none'),
+    opacity: sanitizeEdgeOpacity(edge.opacity, 100),
     animated: sanitizeEdgeAnimated(edge.animated, false),
   };
+}
+
+const STAGE_EDGE_HANDLE_IDS = new Set([
+  'stage-source-top',
+  'stage-source-right',
+  'stage-source-bottom',
+  'stage-source-left',
+  'stage-target-top',
+  'stage-target-right',
+  'stage-target-bottom',
+  'stage-target-left',
+]);
+
+function sanitizeStageEdgeHandle(handleId, fallback = null) {
+  if (!handleId) return fallback;
+  return STAGE_EDGE_HANDLE_IDS.has(handleId) ? handleId : fallback;
 }
 
 function buildSection(id, title, color, description, sortNo) {
@@ -304,6 +349,8 @@ function normalizeStructuredView(layout, pointsForGraph = []) {
         id: edge.id || createId('kg_stage_edge'),
         source: edge.source,
         target: edge.target,
+        sourceHandle: sanitizeStageEdgeHandle(edge.sourceHandle, 'stage-source-right'),
+        targetHandle: sanitizeStageEdgeHandle(edge.targetHandle, 'stage-target-left'),
         label: trimText(edge.label),
         ...normalizeStageEdgeAppearance(edge),
         createdAt: edge.createdAt || nowText(),
@@ -833,6 +880,8 @@ function createStageEdgeRecord(payload = {}) {
     id: createId('kg_stage_edge'),
     source: payload.source,
     target: payload.target,
+    sourceHandle: sanitizeStageEdgeHandle(payload.sourceHandle, 'stage-source-right'),
+    targetHandle: sanitizeStageEdgeHandle(payload.targetHandle, 'stage-target-left'),
     label: trimText(payload.label),
     ...appearance,
     createdAt,
@@ -1430,6 +1479,23 @@ export function updateStructuredStageEdge(graphId, edgeId, patch = {}) {
     const layout = ensureGraphLayout(state, graphId);
     const edge = (layout.structuredView.stageEdges || []).find((item) => item.id === edgeId);
     if (!edge) return;
+    const nextSource = patch.source || edge.source;
+    const nextTarget = patch.target || edge.target;
+    if (nextSource === nextTarget) return;
+    const duplicatedEdge = (layout.structuredView.stageEdges || []).find((item) => (
+      item.id !== edgeId
+      && item.source === nextSource
+      && item.target === nextTarget
+    ));
+    if (duplicatedEdge) return;
+    if (typeof patch.source !== 'undefined') edge.source = patch.source;
+    if (typeof patch.target !== 'undefined') edge.target = patch.target;
+    if (typeof patch.sourceHandle !== 'undefined') {
+      edge.sourceHandle = sanitizeStageEdgeHandle(patch.sourceHandle, edge.sourceHandle || 'stage-source-right');
+    }
+    if (typeof patch.targetHandle !== 'undefined') {
+      edge.targetHandle = sanitizeStageEdgeHandle(patch.targetHandle, edge.targetHandle || 'stage-target-left');
+    }
     if (typeof patch.label !== 'undefined') edge.label = trimText(patch.label);
     if (typeof patch.strokeColor !== 'undefined') {
       edge.strokeColor = sanitizeEdgeStrokeColor(patch.strokeColor, edge.strokeColor || '#60a5fa');

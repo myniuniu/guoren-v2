@@ -8,6 +8,7 @@ import {
   LeftOutlined, RightOutlined,
   FolderAddOutlined, FileAddOutlined,
   EditOutlined, DeleteOutlined,
+  FullscreenOutlined,
   FolderFilled, DesktopOutlined,
   DownloadOutlined, ClockCircleOutlined,
   CloudOutlined, ShareAltOutlined, GlobalOutlined,
@@ -26,7 +27,22 @@ import {
   getLibraryList, getLibraryId, getOrganizations, getTagGroups, setCurrentScope, setCurrentOrg, markItemOpened,
 } from './resourceLibStore';
 import { findResourceAssociationRule, inferResourceSourceKey } from '../shared/resourceRecordAssociations';
-import { renderFileIcon } from './resourceIcons.jsx';
+import { getFileTypeLabel, renderFileIcon } from './resourceIcons.jsx';
+import {
+  createCollection as createKnowledgeGraphCollection,
+  createGraph as createKnowledgeGraph,
+  getCollections as getKnowledgeGraphCollections,
+  getGraphById,
+  getGraphLayout,
+  getPointsByGraph,
+  getRelationsByGraph,
+  KNOWLEDGE_POINT_TYPE_OPTIONS,
+  loadKnowledgeGraphStore,
+  RELATION_TYPE_OPTIONS,
+  removeGraph as removeKnowledgeGraph,
+} from '../knowledgeGraph/store';
+import KnowledgeGraphModule from '../knowledgeGraph/KnowledgeGraphModule';
+import StructuredKnowledgeGraphView from '../knowledgeGraph/StructuredKnowledgeGraphView';
 import ResourceLibraryOverlays from './ResourceLibraryOverlays.jsx';
 import useResourceLibraryFileImport from './useResourceLibraryFileImport';
 import './ResourceLibrary.css';
@@ -52,6 +68,12 @@ const RESOURCE_SOURCE_LABELS = {
   research: '教研数据',
   archive: '档案数据',
 };
+const KNOWLEDGE_GRAPH_POINT_TYPE_LABEL_MAP = Object.fromEntries(
+  KNOWLEDGE_POINT_TYPE_OPTIONS.map((item) => [item.value, item.label]),
+);
+const KNOWLEDGE_GRAPH_RELATION_TYPE_LABEL_MAP = Object.fromEntries(
+  RELATION_TYPE_OPTIONS.map((item) => [item.value, item.label]),
+);
 
 const isEditableTarget = (target) => (
   target instanceof HTMLElement
@@ -68,7 +90,7 @@ const isRowDragHandleTarget = (target) => (
   && !!target.closest('.finder-file-icon, .finder-column-item-icon')
 );
 
-export default function ResourceLibrary() {
+export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
   const [data, setData] = useState(() => loadResourceLib());
   const [scope, setScope] = useState(() => data?.currentScope || 'personal');
   const [currentOrgId, setCurrentOrgId] = useState(() => data?.currentOrgId || 'org_default');
@@ -122,6 +144,7 @@ export default function ResourceLibrary() {
   const [navHistory, setNavHistory] = useState([null]); // 导航历史
   const [navIndex, setNavIndex] = useState(0);
   const [viewMode, setViewMode] = useState('detail'); // detail | column
+  const [knowledgeGraphPreviewMode, setKnowledgeGraphPreviewMode] = useState('preview');
   const [expandedFolders, setExpandedFolders] = useState(new Set()); // 详情视图中展开的文件夹 key
   const [sortBy, setSortBy] = useState('name'); // name | kind | date | size | tag
   const [sortOrder, setSortOrder] = useState('asc'); // asc | desc
@@ -550,10 +573,59 @@ export default function ResourceLibrary() {
     setData((d) => markItemOpened(d, scope, item.key));
   }, [scope]);
 
+  const resolveKnowledgeGraphTarget = useCallback((item) => {
+    if (!item || item.isFolder || item.fileType !== 'knowledgeGraph' || !item.knowledgeGraphId) return null;
+    const snapshot = loadKnowledgeGraphStore();
+    const targetGraph = (snapshot.graphs || []).find((graph) => graph.id === item.knowledgeGraphId) || null;
+    if (!targetGraph) return null;
+    return {
+      graphId: targetGraph.id,
+      collectionId: targetGraph.collectionId,
+    };
+  }, []);
+
+  const buildKnowledgeGraphPreviewData = useCallback((item) => {
+    const target = resolveKnowledgeGraphTarget(item);
+    if (!target) return null;
+
+    const snapshot = loadKnowledgeGraphStore();
+    const graph = getGraphById(snapshot, target.graphId);
+    if (!graph) return null;
+
+    const points = getPointsByGraph(snapshot, graph.id);
+    const relations = getRelationsByGraph(snapshot, graph.id);
+    const layout = getGraphLayout(snapshot, graph.id);
+
+    return {
+      graph,
+      points,
+      relations,
+      structuredView: layout.structuredView || {},
+    };
+  }, [resolveKnowledgeGraphTarget]);
+
+  const openKnowledgeGraphInNewTab = useCallback((graph, mode = 'graph') => {
+    if (!graph?.id || typeof window === 'undefined') return;
+    const params = new URLSearchParams({
+      graphId: graph.id,
+      mode,
+    });
+    if (graph.collectionId) {
+      params.set('collectionId', graph.collectionId);
+    }
+    const targetUrl = `${window.location.pathname}${window.location.search}#knowledge-graph?${params.toString()}`;
+    window.open(targetUrl, '_blank', 'noopener,noreferrer');
+  }, []);
+
   // 当前文件夹信息
   const currentFolder = useMemo(
     () => (selectedFolderKey ? list.find((r) => r.key === selectedFolderKey) : null),
     [list, selectedFolderKey],
+  );
+  const pendingCreateParentKey = addDialogParentKey === ROOT_PARENT_KEY ? null : (addDialogParentKey ?? selectedFolderKey);
+  const pendingCreateFolder = useMemo(
+    () => (pendingCreateParentKey ? list.find((item) => item.key === pendingCreateParentKey) || null : null),
+    [list, pendingCreateParentKey],
   );
 
   const detailContextItems = useMemo(() => {
@@ -812,7 +884,7 @@ export default function ResourceLibrary() {
       case 'lastOpenedAt': return item.lastOpenedAt || '--';
       case 'addedAt': return item.addedAt || item.lastEdit || '--';
       case 'size': return item.size ? `${(item.size / 1024).toFixed(1)} KB` : '--';
-      case 'kind': return item.isFolder ? '文件夹' : (item.fileType || '--');
+      case 'kind': return item.isFolder ? '文件夹' : getFileTypeLabel(item.fileType);
       case 'version': return item.version || '--';
       case 'comment': return item.comment || '--';
       case 'tags': {
@@ -1030,7 +1102,16 @@ export default function ResourceLibrary() {
       okButtonProps: { danger: true },
       cancelText: '取消',
       onOk: () => {
+        const deletingGraphIds = Array.from(new Set(
+          Array.from(deletingKeys)
+            .map((key) => folderContextItemMap.get(key))
+            .filter((item) => item?.fileType === 'knowledgeGraph' && item?.knowledgeGraphId)
+            .map((item) => item.knowledgeGraphId),
+        ));
         setData((d) => deleteItems(d, scope, targetKeys));
+        deletingGraphIds.forEach((graphId) => {
+          removeKnowledgeGraph(graphId);
+        });
         setContextMenuItemKey((prev) => (prev && deletingKeys.has(prev) ? null : prev));
         if (shouldResetFolderContext) {
           navigateTo(null);
@@ -1087,7 +1168,10 @@ export default function ResourceLibrary() {
       newFavs.splice(insertAt, 0, { key: itemData.key, name: itemData.name, isFolder: itemData.isFolder, fileType: itemData.fileType });
       saveFavorites(newFavs);
       message.success(`「${itemData.name}」已添加到收藏`);
-    } catch { /* ignore */ }
+    } catch (error) {
+      if (error?.errorFields) return;
+      message.error(error?.message || '创建失败');
+    }
   };
   const handleFavSectionDragOver = (e) => {
     e.preventDefault();
@@ -1171,9 +1255,69 @@ export default function ResourceLibrary() {
     message.success('已从边栏移除');
   };
 
+  const createKnowledgeGraphAsset = useCallback((values, parentKey = null) => {
+    let knowledgeGraphState = loadKnowledgeGraphStore();
+    let collection = getKnowledgeGraphCollections(knowledgeGraphState)[0] || null;
+
+    if (!collection) {
+      const previousCollectionIds = new Set((knowledgeGraphState.collections || []).map((item) => item.id));
+      knowledgeGraphState = createKnowledgeGraphCollection({
+        name: '默认图谱集',
+        description: '用于沉淀课程结构、知识关系与资料绑定。',
+      });
+      collection = getKnowledgeGraphCollections(knowledgeGraphState).find((item) => !previousCollectionIds.has(item.id))
+        || getKnowledgeGraphCollections(knowledgeGraphState)[0]
+        || null;
+    }
+
+    if (!collection?.id) {
+      throw new Error('未能创建默认图谱集');
+    }
+
+    const previousGraphIds = new Set((knowledgeGraphState.graphs || []).map((item) => item.id));
+    const nextKnowledgeGraphState = createKnowledgeGraph({
+      collectionId: collection.id,
+      name: values.name,
+      description: values.description,
+    });
+    const graph = nextKnowledgeGraphState.graphs.find((item) => !previousGraphIds.has(item.id));
+    if (!graph?.id) {
+      throw new Error('知识图谱创建失败');
+    }
+
+    setData((currentData) => addItem(currentData, scope, {
+      name: graph.name,
+      isFolder: false,
+      parentKey,
+      fileType: 'knowledgeGraph',
+      resourceKind: 'knowledgeGraph',
+      knowledgeGraphId: graph.id,
+      parseStatus: 'parsed',
+      contentText: graph.description || `知识图谱资产「${graph.name}」，点击可进入知识图谱编辑模式。`,
+      comment: graph.description || undefined,
+      lastEdit: graph.updatedAt || graph.createdAt,
+    }));
+
+    onOpenKnowledgeGraph?.({
+      graphId: graph.id,
+      collectionId: graph.collectionId,
+      mode: 'curriculum',
+    });
+    return graph;
+  }, [onOpenKnowledgeGraph, scope]);
+
   const handleAddSubmit = async () => {
     try {
       const v = await addForm.validateFields();
+      const parentKey = addDialogParentKey === ROOT_PARENT_KEY ? null : (addDialogParentKey ?? selectedFolderKey);
+      if (addType === 'knowledgeGraph') {
+        createKnowledgeGraphAsset(v, parentKey);
+        setAddOpen(false);
+        setAddDialogParentKey(null);
+        addForm.resetFields();
+        message.success('知识图谱已创建');
+        return;
+      }
       const isFolder = addType === 'folder';
       const fileType = isFolder ? 'folder' : (v.fileType || inferFileType(v.name));
       setData((d) => addItem(d, scope, {
@@ -1184,6 +1328,7 @@ export default function ResourceLibrary() {
         parseStatus: isFolder ? 'parsed' : 'parsing',
       }));
       setAddOpen(false);
+      setAddDialogParentKey(null);
       addForm.resetFields();
       message.success(`${isFolder ? '文件夹' : '资料'}已创建`);
     } catch { /* ignore */ }
@@ -1844,6 +1989,10 @@ export default function ResourceLibrary() {
     () => (previewItem && !previewItem.isFolder ? findResourceAssociationRule(previewItem) : null),
     [previewItem],
   );
+  const previewKnowledgeGraphData = useMemo(
+    () => (previewItem?.fileType === 'knowledgeGraph' ? buildKnowledgeGraphPreviewData(previewItem) : null),
+    [buildKnowledgeGraphPreviewData, previewItem],
+  );
   const toolbarMenuTargetItem = previewItem;
   const visibleSelectionItems = useMemo(
     () => (viewMode === 'column' ? columnContextItems : displayChildren),
@@ -1874,6 +2023,20 @@ export default function ResourceLibrary() {
     () => (columnSelectedItem && !columnSelectedItem.isFolder ? findResourceAssociationRule(columnSelectedItem) : null),
     [columnSelectedItem],
   );
+  const columnSelectedKnowledgeGraphData = useMemo(
+    () => (columnSelectedItem?.fileType === 'knowledgeGraph' ? buildKnowledgeGraphPreviewData(columnSelectedItem) : null),
+    [buildKnowledgeGraphPreviewData, columnSelectedItem],
+  );
+  const activeKnowledgeGraphPreviewKey = useMemo(() => {
+    if (viewMode === 'column') {
+      return columnSelectedItem?.fileType === 'knowledgeGraph' ? columnSelectedItem.key : null;
+    }
+    return previewItem?.fileType === 'knowledgeGraph' ? previewItem.key : null;
+  }, [columnSelectedItem, previewItem, viewMode]);
+
+  useEffect(() => {
+    setKnowledgeGraphPreviewMode('preview');
+  }, [activeKnowledgeGraphPreviewKey]);
   const [bgMenuPos, setBgMenuPos] = useState(null); // {x, y} 右键菜单位置
   const currentBlankAreaParentKey = viewMode === 'column'
     ? (columnPath[columnPath.length - 1] ?? null)
@@ -1944,6 +2107,78 @@ export default function ResourceLibrary() {
       </div>
     );
   }, []);
+
+  const renderKnowledgeGraphPreviewBlock = useCallback((previewData, fallbackName, itemKey) => {
+    if (!previewData) {
+      return (
+        <div className="finder-preview-placeholder">
+          {renderFileIcon('knowledgeGraph', { fontSize: 80 })}
+          <div>{fallbackName || '知识图谱'}</div>
+          <div style={{ color: '#8e8e93', fontSize: 13 }}>未找到关联图谱，当前仅保留资料库记录。</div>
+        </div>
+      );
+    }
+
+    if (knowledgeGraphPreviewMode === 'edit') {
+      return (
+        <div className="finder-kg-preview-embed finder-kg-preview-embed-edit">
+          <div className="finder-kg-preview-head">
+            <div className="finder-kg-preview-head-copy">
+              <div className="finder-kg-preview-head-title">{previewData.graph.name}</div>
+              <div className="finder-kg-preview-head-meta">
+                {previewData.graph.description || '知识图谱结构化编辑'}
+              </div>
+            </div>
+            <div className="finder-kg-preview-head-actions">
+              <Button icon={<FullscreenOutlined />} onClick={() => openKnowledgeGraphInNewTab(previewData.graph, 'curriculum')}>
+                全屏
+              </Button>
+            </div>
+          </div>
+          <KnowledgeGraphModule
+            embedded
+            entryGraphId={previewData.graph.id}
+            entryCollectionId={previewData.graph.collectionId}
+            entryMode="curriculum"
+            entryRequestId={`${itemKey || previewData.graph.id}-edit`}
+            onExitEmbedded={() => setKnowledgeGraphPreviewMode('preview')}
+          />
+        </div>
+      );
+    }
+
+    return (
+      <div className="finder-kg-preview-embed">
+        <div className="finder-kg-preview-head">
+          <div className="finder-kg-preview-head-copy">
+            <div className="finder-kg-preview-head-title">{previewData.graph.name}</div>
+            <div className="finder-kg-preview-head-meta">
+              {previewData.graph.description || '知识图谱结构化预览'}
+            </div>
+          </div>
+          <div className="finder-kg-preview-head-actions">
+            <Button type="primary" icon={<EditOutlined />} onClick={() => setKnowledgeGraphPreviewMode('edit')}>
+              编辑
+            </Button>
+            <Button icon={<FullscreenOutlined />} onClick={() => openKnowledgeGraphInNewTab(previewData.graph, 'graph')}>
+              全屏
+            </Button>
+          </div>
+        </div>
+        <StructuredKnowledgeGraphView
+          graphId={previewData.graph.id}
+          points={previewData.points}
+          relations={previewData.relations}
+          structuredView={previewData.structuredView}
+          pointTypeLabelMap={KNOWLEDGE_GRAPH_POINT_TYPE_LABEL_MAP}
+          relationTypeLabelMap={KNOWLEDGE_GRAPH_RELATION_TYPE_LABEL_MAP}
+          selection={null}
+          onSelectionChange={() => {}}
+          readOnly
+        />
+      </div>
+    );
+  }, [knowledgeGraphPreviewMode, openKnowledgeGraphInNewTab]);
 
   const toggleItemTagSelection = useCallback((itemKey, tagId, checked) => {
     setData((d) => (
@@ -2960,8 +3195,10 @@ export default function ResourceLibrary() {
                 <div className="finder-column-preview">
                   {columnSelectedItem ? (
                     <div className="finder-preview-content">
-                      <div className="finder-preview-body">
-                        {columnSelectedItem.fileType === 'image' && columnSelectedItem.url
+                      <div className={`finder-preview-body${columnSelectedItem.fileType === 'knowledgeGraph' ? ' has-knowledge-graph' : ''}`}>
+                        {columnSelectedItem.fileType === 'knowledgeGraph' ? (
+                          renderKnowledgeGraphPreviewBlock(columnSelectedKnowledgeGraphData, columnSelectedItem.name, columnSelectedItem.key)
+                        ) : columnSelectedItem.fileType === 'image' && columnSelectedItem.url
                           ? <img src={columnSelectedItem.url} alt={columnSelectedItem.name} className="finder-preview-image" />
                           : columnSelectedItem.fileType === 'pdf' && columnSelectedItem.url
                           ? <iframe src={columnSelectedItem.url} className="finder-preview-iframe" title="PDF 预览" />
@@ -2976,7 +3213,7 @@ export default function ResourceLibrary() {
                       <div className="finder-preview-footer">
                         <div className="finder-preview-name">{columnSelectedItem.name}</div>
                         <div className="finder-preview-meta-row">
-                          <span>{columnSelectedItem.fileType?.toUpperCase() || '文件'}</span>
+                          <span>{getFileTypeLabel(columnSelectedItem.fileType)}</span>
                           {columnSelectedItem.size && <span>{(columnSelectedItem.size / 1024).toFixed(1)} KB</span>}
                           {columnSelectedItem.lastEdit && <span>{columnSelectedItem.lastEdit}</span>}
                         </div>
@@ -3225,7 +3462,7 @@ export default function ResourceLibrary() {
                   {previewItem ? (
                     <div className="finder-preview-content">
                       {/* 内容预览区 */}
-                      <div className="finder-preview-body">
+                      <div className={`finder-preview-body${previewItem.fileType === 'knowledgeGraph' ? ' has-knowledge-graph' : ''}`}>
                         {previewItem.isFolder ? (
                           <div className="finder-preview-folder-grid">
                             <FolderFilled style={{ fontSize: 80, color: '#4facfe' }} />
@@ -3242,6 +3479,8 @@ export default function ResourceLibrary() {
                               添加资料
                             </Button>
                           </div>
+                        ) : previewItem.fileType === 'knowledgeGraph' ? (
+                          renderKnowledgeGraphPreviewBlock(previewKnowledgeGraphData, previewItem.name, previewItem.key)
                         ) : previewItem.fileType === 'image' ? (
                           previewItem.url
                             ? <img src={previewItem.url} alt={previewItem.name} className="finder-preview-image" />
@@ -3273,7 +3512,7 @@ export default function ResourceLibrary() {
                       <div className="finder-preview-footer">
                         <div className="finder-preview-name">{previewItem.name}</div>
                         <div className="finder-preview-meta-row">
-                          <span>{previewItem.fileType?.toUpperCase() || '文件'}</span>
+                          <span>{getFileTypeLabel(previewItem.fileType)}</span>
                           {previewItem.size && <span>{(previewItem.size / 1024).toFixed(1)} KB</span>}
                           {previewItem.lastEdit && <span>{previewItem.lastEdit}</span>}
                         </div>
@@ -3457,11 +3696,16 @@ export default function ResourceLibrary() {
         }}
         createEntry={{
           open: addOpen,
-          onClose: () => setAddOpen(false),
+          onClose: () => {
+            setAddOpen(false);
+            if (addType === 'knowledgeGraph') {
+              setAddDialogParentKey(null);
+            }
+          },
           onConfirm: handleAddSubmit,
           type: addType,
           form: addForm,
-          currentFolderName: currentFolder ? currentFolder.name : '根目录',
+          currentFolderName: pendingCreateFolder ? pendingCreateFolder.name : '根目录',
         }}
         resourceImport={{
           open: addDialogOpen,
@@ -3480,6 +3724,21 @@ export default function ResourceLibrary() {
                   : `已上传 ${successCount} 个文件`,
               );
             }
+          },
+          onPickEntry: (entry) => {
+            if (entry?.key === 'knowledge-graph') {
+              setAddDialogOpen(false);
+              setAddType('knowledgeGraph');
+              addForm.resetFields();
+              addForm.setFieldsValue({
+                name: '新建知识图谱',
+                description: '',
+              });
+              setAddOpen(true);
+              return;
+            }
+
+            message.info(`「${entry?.label || '该入口'}」功能开发中`);
           },
         }}
         parseDrawer={{

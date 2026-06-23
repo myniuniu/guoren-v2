@@ -1,6 +1,13 @@
+import {
+  createCollection as createKnowledgeGraphCollection,
+  createGraph as createKnowledgeGraph,
+  getCollections as getKnowledgeGraphCollections,
+  loadKnowledgeGraphStore,
+} from '../knowledgeGraph/store';
+
 // 资料库本地存储（独立于 versionStore，避免耦合）
 const STORAGE_KEY = 'guoren_resource_lib';
-const DATA_VERSION = 14;
+const DATA_VERSION = 15;
 
 // macOS 访达风格预设标签（7色 + 自定义）
 const PRESET_TAGS = [
@@ -14,7 +21,7 @@ const PRESET_TAGS = [
 ];
 
 // 解析状态：parsed=已解析 / parsing=解析中 / failed=解析失败 / pending=待解析
-// fileType：folder | pdf | pptx | docx | xlsx | image | video | audio | whiteboard | note | test | other
+// fileType：folder | pdf | pptx | docx | xlsx | image | video | audio | whiteboard | note | test | knowledgeGraph | other
 
 const now = () => new Date().toLocaleString('zh-CN', { hour12: false });
 
@@ -479,6 +486,107 @@ function createTeachingFolder({
   };
 }
 
+function ensureAiGeneralKnowledgeGraph() {
+  if (typeof window === 'undefined') return null;
+
+  let snapshot = loadKnowledgeGraphStore();
+  let graph = (snapshot.graphs || []).find((item) => item.name === 'AI 通识知识图谱') || null;
+  if (graph) return graph;
+
+  let collection = getKnowledgeGraphCollections(snapshot)[0] || null;
+  if (!collection) {
+    const nextState = createKnowledgeGraphCollection({
+      name: '默认图谱集',
+      description: '用于沉淀课程结构、知识关系与资料绑定。',
+    });
+    snapshot = nextState;
+    collection = getKnowledgeGraphCollections(nextState)[0] || null;
+  }
+
+  if (!collection) return null;
+
+  const previousGraphIds = new Set((snapshot.graphs || []).map((item) => item.id));
+  const nextState = createKnowledgeGraph({
+    collectionId: collection.id,
+    name: 'AI 通识知识图谱',
+    description: '演示图谱：用于展示两种视图和图谱编辑能力。',
+  });
+
+  return nextState.graphs.find((item) => !previousGraphIds.has(item.id))
+    || nextState.graphs.find((item) => item.name === 'AI 通识知识图谱')
+    || null;
+}
+
+function createKnowledgeGraphResourceRecord({
+  key,
+  name,
+  graphId,
+  description = '',
+  parentKey = null,
+  owner = PERSONAL_DEMO_OWNER,
+  lastEdit = now(),
+  tags = [],
+}) {
+  return {
+    key,
+    name,
+    isFolder: false,
+    parentKey,
+    fileType: 'knowledgeGraph',
+    resourceKind: 'knowledgeGraph',
+    knowledgeGraphId: graphId,
+    owner,
+    parseStatus: 'parsed',
+    lastEdit,
+    tags: dedupeTags(tags),
+    contentText: description || `知识图谱资产「${name}」，点击可进入知识图谱编辑模式。`,
+  };
+}
+
+function buildPersonalKnowledgeGraphDemoEntry() {
+  const graph = ensureAiGeneralKnowledgeGraph();
+  if (!graph?.id) return null;
+
+  return createKnowledgeGraphResourceRecord({
+    key: 'p_ai_general_knowledge_graph',
+    name: graph.name || 'AI 通识知识图谱',
+    graphId: graph.id,
+    description: graph.description || '演示图谱：用于展示两种视图和图谱编辑能力。',
+    parentKey: null,
+    owner: PERSONAL_DEMO_OWNER,
+    lastEdit: graph.updatedAt || graph.createdAt || now(),
+    tags: [PERSONAL_TEACHING_ROOT_TAG_ID],
+  });
+}
+
+function ensurePersonalKnowledgeGraphDemoEntry(items = []) {
+  const demoEntry = buildPersonalKnowledgeGraphDemoEntry();
+  if (!demoEntry) return items;
+
+  const nextItems = [...items];
+  const existingIndex = nextItems.findIndex((item) => (
+    !item?.isFolder
+    && item.fileType === 'knowledgeGraph'
+    && (
+      item.key === demoEntry.key
+      || item.knowledgeGraphId === demoEntry.knowledgeGraphId
+      || item.name === demoEntry.name
+    )
+  ));
+
+  if (existingIndex < 0) {
+    nextItems.unshift(demoEntry);
+    return nextItems;
+  }
+
+  nextItems[existingIndex] = {
+    ...nextItems[existingIndex],
+    ...demoEntry,
+    parentKey: nextItems[existingIndex].parentKey ?? demoEntry.parentKey,
+  };
+  return nextItems;
+}
+
 function buildPersonalTeachingDemo() {
   return AI_GENERAL_COURSES.flatMap((course, index) => {
     const folderKey = `p_course_${course.id}`;
@@ -710,7 +818,7 @@ function hydrateSearchContent(data) {
 const defaultData = {
   _dataVersion: DATA_VERSION,
   // 个人资料库
-  personal: ensureProfileAssociationDemoEntries(buildPersonalTeachingDemo()),
+  personal: ensureProfileAssociationDemoEntries(ensurePersonalKnowledgeGraphDemoEntry(buildPersonalTeachingDemo())),
   // 组织资料库（按 orgId 分组）
   organizations: {
     org_default: [
@@ -816,6 +924,7 @@ function migrate(old) {
   next.tagDefinitions = getScopedTagDefinitionState({ ...next, tagDefinitions: old.tagDefinitions });
   next.personal = stripInheritedTagsFromPersonalDemoFolders(next.personal);
   next.personal = applyPersonalTeachingRootTag(next.personal);
+  next.personal = ensurePersonalKnowledgeGraphDemoEntry(next.personal);
   next.personal = ensureProfileAssociationDemoEntries(next.personal);
   // 选中文件夹迁移
   if (old.selectedFolderKey) {
@@ -900,6 +1009,27 @@ export function deleteItems(data, scope, keys = []) {
 // 删除单项
 export function deleteItem(data, scope, key) {
   return deleteItems(data, scope, [key]);
+}
+
+export function removeKnowledgeGraphItemsByGraphIds(data, graphIds = []) {
+  const targetIds = new Set((graphIds || []).filter(Boolean));
+  if (targetIds.size === 0) return data;
+
+  const filterList = (items = []) => items.filter((item) => (
+    item?.fileType !== 'knowledgeGraph'
+    || !targetIds.has(item.knowledgeGraphId)
+  ));
+
+  const next = {
+    ...data,
+    personal: filterList(data.personal || []),
+    organizations: Object.fromEntries(
+      Object.entries(data.organizations || {}).map(([orgId, items]) => [orgId, filterList(items)]),
+    ),
+  };
+
+  saveResourceLib(next);
+  return next;
 }
 
 // 移动项目到目标文件夹

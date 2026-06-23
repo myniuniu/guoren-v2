@@ -83,11 +83,25 @@ import './App.css';
 const { Sider, Header, Content } = Layout;
 const EMPTY_MENU_INDICATOR = { x: 0, y: 0, width: 0, height: 0, opacity: 0 };
 
-function getInitialHashPage() {
-  if (typeof window === 'undefined') {
-    return '';
+function parseHashRoute(rawHash = '') {
+  const normalized = String(rawHash || '').replace(/^#/, '');
+  if (!normalized) {
+    return { page: '', params: {} };
   }
-  return window.location.hash.replace('#', '');
+
+  const [pagePart, queryPart = ''] = normalized.split('?');
+  const params = Object.fromEntries(new URLSearchParams(queryPart).entries());
+  return {
+    page: pagePart,
+    params,
+  };
+}
+
+function getInitialHashRoute() {
+  if (typeof window === 'undefined') {
+    return { page: '', params: {} };
+  }
+  return parseHashRoute(window.location.hash);
 }
 
 function getSceneTheme(scene) {
@@ -181,11 +195,21 @@ const iconBarItems = [
 
 function App() {
   const [selectedKeys, setSelectedKeys] = useState(['home']);
-  const [activeIconKey, setActiveIconKey] = useState(() => getInitialHashPage() || 'my-space');
-  const [currentPage, setCurrentPage] = useState(() => getInitialHashPage() || 'home'); // 'home', 'detail', or 'workflow'
+  const [activeIconKey, setActiveIconKey] = useState(() => getInitialHashRoute().page || 'my-space');
+  const [currentPage, setCurrentPage] = useState(() => getInitialHashRoute().page || 'home'); // 'home', 'detail', or 'workflow'
   const [agentQuotaEntryTab, setAgentQuotaEntryTab] = useState('plans');
   const [teacherEvaluationEntryContext, setTeacherEvaluationEntryContext] = useState(null);
   const [messageEntryConversationId, setMessageEntryConversationId] = useState(null);
+  const [knowledgeGraphEntry, setKnowledgeGraphEntry] = useState(() => {
+    const route = getInitialHashRoute();
+    if (route.page !== 'knowledge-graph' || !route.params.graphId) return null;
+    return {
+      graphId: route.params.graphId,
+      collectionId: route.params.collectionId || null,
+      mode: route.params.mode || 'curriculum',
+      requestId: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    };
+  });
   const [selectedScene, setSelectedScene] = useState(null);
   const [sceneTemplates, setSceneTemplates] = useState([]);
   const [scenes, setScenes] = useState([]);
@@ -418,6 +442,32 @@ function App() {
     setCurrentPage('resource-lib');
   }, []);
 
+  const openKnowledgeGraphPage = useCallback((payload = {}) => {
+    setActiveIconKey('knowledge-graph');
+    const nextEntry = payload?.graphId ? {
+      graphId: payload.graphId,
+      collectionId: payload.collectionId || null,
+      mode: payload.mode || 'curriculum',
+      requestId: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    } : null;
+    setKnowledgeGraphEntry(nextEntry);
+    if (typeof window !== 'undefined') {
+      if (nextEntry?.graphId) {
+        const params = new URLSearchParams({
+          graphId: nextEntry.graphId,
+          mode: nextEntry.mode || 'curriculum',
+        });
+        if (nextEntry.collectionId) {
+          params.set('collectionId', nextEntry.collectionId);
+        }
+        window.location.hash = `knowledge-graph?${params.toString()}`;
+      } else {
+        window.location.hash = 'knowledge-graph';
+      }
+    }
+    setCurrentPage('knowledge-graph');
+  }, []);
+
   const openSceneRecommendation = useCallback((payload = {}) => {
     setActiveIconKey('my-space');
     if (payload.menuKey) {
@@ -512,7 +562,7 @@ function App() {
     } else if (key === 'resource-parse') {
       setCurrentPage('resource-parse');
     } else if (key === 'knowledge-graph') {
-      setCurrentPage('knowledge-graph');
+      openKnowledgeGraphPage();
     } else if (key === 'archive') {
       setCurrentPage('archive');
     } else if (key === 'study-club') {
@@ -661,11 +711,16 @@ function App() {
       ) : currentPage === 'certificate-issue' ? (
         <CertificateIssueModule />
       ) : currentPage === 'resource-lib' ? (
-        <ResourceLibrary />
+        <ResourceLibrary onOpenKnowledgeGraph={openKnowledgeGraphPage} />
       ) : currentPage === 'resource-parse' ? (
         <ResourceParseStatus />
       ) : currentPage === 'knowledge-graph' ? (
-        <KnowledgeGraphModule />
+        <KnowledgeGraphModule
+          entryGraphId={knowledgeGraphEntry?.graphId || null}
+          entryCollectionId={knowledgeGraphEntry?.collectionId || null}
+          entryMode={knowledgeGraphEntry?.mode || 'curriculum'}
+          entryRequestId={knowledgeGraphEntry?.requestId || null}
+        />
       ) : currentPage === 'archive' ? (
         <ArchiveModule />
       ) : currentPage === 'study-club' ? (

@@ -10,6 +10,7 @@ import {
   InboxOutlined,
   GiftOutlined,
   FormOutlined,
+  NodeIndexOutlined,
 } from '@ant-design/icons';
 import './AddResourceDialog.css';
 
@@ -28,6 +29,7 @@ const thirdPartyItems = [
 
 const taskItems = [
   { key: 'training', icon: <ExperimentOutlined style={{ color: '#34c759' }} />, label: '实训任务' },
+  { key: 'knowledge-graph', icon: <NodeIndexOutlined style={{ color: '#1677ff' }} />, label: '新建知识图谱' },
 ];
 
 const otherItems = [
