@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Button, Checkbox, Empty, Input, Select } from 'antd';
+import { Button, Checkbox, Dropdown, Empty, Input, Select } from 'antd';
 import {
   CaretDownOutlined,
   CaretRightOutlined,
@@ -9,6 +9,7 @@ import {
   DesktopOutlined,
   FolderFilled,
   LeftOutlined,
+  MoreOutlined,
   RightOutlined,
   SearchOutlined,
   StarFilled,
@@ -53,6 +54,13 @@ const DETAIL_COL_MIN_WIDTHS = Object.freeze({
   added: 160,
 });
 const DETAIL_COL_KEYS = Object.freeze(['name', 'modified', 'size', 'kind', 'added']);
+const DETAIL_COLUMN_DEFS = Object.freeze([
+  { key: 'date', widthKey: 'modified', label: '修改日期', sortable: true, className: 'modified' },
+  { key: 'size', widthKey: 'size', label: '大小', sortable: true, className: 'size' },
+  { key: 'kind', widthKey: 'kind', label: '种类', sortable: true, className: 'kind' },
+  { key: 'addedAt', widthKey: 'added', label: '添加日期', sortable: false, className: 'added' },
+]);
+const DEFAULT_VISIBLE_COLUMN_KEYS = Object.freeze(['kind', 'addedAt']);
 
 function getSelectableFileType(item) {
   if (item?.isFolder) return 'folder';
@@ -103,8 +111,7 @@ function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
-function fitColumnWidths(preferredWidths, minWidths, availableWidth) {
-  const keys = DETAIL_COL_KEYS;
+function fitColumnWidths(preferredWidths, minWidths, availableWidth, keys = DETAIL_COL_KEYS) {
   const preferredTotal = keys.reduce((sum, key) => sum + preferredWidths[key], 0);
   const minTotal = keys.reduce((sum, key) => sum + minWidths[key], 0);
 
@@ -213,6 +220,7 @@ export default function SpaceResourceImportModal({
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
   const [detailColWidths, setDetailColWidths] = useState(DEFAULT_DETAIL_COL_WIDTHS);
+  const [visibleColumnKeys, setVisibleColumnKeys] = useState(DEFAULT_VISIBLE_COLUMN_KEYS);
   const [dragInteractionType, setDragInteractionType] = useState(null);
   const [modalFrame, setModalFrame] = useState(() => getInitialModalFrame());
   const lastClickedIndexRef = useRef(null);
@@ -258,6 +266,7 @@ export default function SpaceResourceImportModal({
     setSortBy('name');
     setSortOrder('asc');
     setDetailColWidths(DEFAULT_DETAIL_COL_WIDTHS);
+    setVisibleColumnKeys(DEFAULT_VISIBLE_COLUMN_KEYS);
     setDragInteractionType(null);
     setModalFrame(getInitialModalFrame());
     lastClickedIndexRef.current = null;
@@ -300,6 +309,13 @@ export default function SpaceResourceImportModal({
     setOrganizationId(organizations[0]?.id || 'org_default');
   }, [scope, organizationId, organizations]);
 
+  useEffect(() => {
+    if (sortBy === 'name') return;
+    if (visibleColumnKeys.includes(sortBy)) return;
+    setSortBy('name');
+    setSortOrder('asc');
+  }, [sortBy, visibleColumnKeys]);
+
   const favorites = useMemo(() => (
     getFavorites(libraryId)
       .map((entry) => itemMap.get(entry.key))
@@ -326,29 +342,50 @@ export default function SpaceResourceImportModal({
   const isNarrowLayout = !isCompactLayout && modalFrame.width < 1120;
   const sidebarWidth = isCompactLayout ? 0 : (isNarrowLayout ? 200 : 220);
   const toolbarSearchWidth = isCompactLayout ? null : (isNarrowLayout ? 164 : 184);
-  const detailColumnClassMap = {
-    name: 'name',
-    date: 'modified',
-    size: 'size',
-    kind: 'kind',
-    addedAt: 'added',
-  };
-  const detailColumns = [
-    { key: 'name', widthKey: 'name', label: '名称', sortable: true },
-    { key: 'date', widthKey: 'modified', label: '修改日期', sortable: true },
-    { key: 'size', widthKey: 'size', label: '大小', sortable: true },
-    { key: 'kind', widthKey: 'kind', label: '种类', sortable: true },
-    { key: 'addedAt', widthKey: 'added', label: '添加日期', sortable: false },
-  ];
+  const visibleDetailColumns = useMemo(
+    () => DETAIL_COLUMN_DEFS.filter((column) => visibleColumnKeys.includes(column.key)),
+    [visibleColumnKeys],
+  );
+  const activeWidthKeys = useMemo(
+    () => ['name', ...visibleDetailColumns.map((column) => column.widthKey)],
+    [visibleDetailColumns],
+  );
   const availableTableWidth = Math.max(
-    DETAIL_COL_KEYS.reduce((sum, key) => sum + DETAIL_COL_MIN_WIDTHS[key], 0),
+    activeWidthKeys.reduce((sum, key) => sum + DETAIL_COL_MIN_WIDTHS[key], 0),
     Math.floor(modalFrame.width - sidebarWidth - (isCompactLayout ? 28 : 46)),
   );
   const fittedDetailColWidths = useMemo(
-    () => fitColumnWidths(detailColWidths, DETAIL_COL_MIN_WIDTHS, availableTableWidth),
-    [availableTableWidth, detailColWidths],
+    () => fitColumnWidths(detailColWidths, DETAIL_COL_MIN_WIDTHS, availableTableWidth, activeWidthKeys),
+    [activeWidthKeys, availableTableWidth, detailColWidths],
   );
-  const detailGridTemplateColumns = `${fittedDetailColWidths.name}px ${fittedDetailColWidths.modified}px ${fittedDetailColWidths.size}px ${fittedDetailColWidths.kind}px ${fittedDetailColWidths.added}px`;
+  const detailGridTemplateColumns = useMemo(
+    () => activeWidthKeys.map((key) => `${fittedDetailColWidths[key]}px`).join(' '),
+    [activeWidthKeys, fittedDetailColWidths],
+  );
+  const columnVisibilityMenu = {
+    items: DETAIL_COLUMN_DEFS.map((column) => ({
+      key: column.key,
+      label: (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minWidth: 104 }}>
+          <span style={{ width: 14, display: 'inline-block', textAlign: 'center', color: '#1677ff' }}>
+            {visibleColumnKeys.includes(column.key) ? '✓' : ''}
+          </span>
+          {column.label}
+        </span>
+      ),
+    })),
+    onClick: ({ key, domEvent }) => {
+      domEvent.stopPropagation();
+      setVisibleColumnKeys((prev) => {
+        if (prev.includes(key)) {
+          if (prev.length === 1) return prev;
+          return prev.filter((item) => item !== key);
+        }
+        const next = [...prev, key];
+        return DETAIL_COLUMN_DEFS.map((column) => column.key).filter((item) => next.includes(item));
+      });
+    },
+  };
 
   const sortLibraryItems = (items) => [...items].sort((left, right) => {
     if (left.isFolder !== right.isFolder) return left.isFolder ? -1 : 1;
@@ -623,7 +660,7 @@ export default function SpaceResourceImportModal({
 
   const handleToolbarMouseDown = (event) => {
     const interactiveTarget = event.target.closest(
-      'button, input, .ant-input-affix-wrapper, .ant-input, .ant-select, .ant-checkbox-wrapper, .space-resource-import-close-btn',
+      'button, input, .ant-input-affix-wrapper, .ant-input, .ant-select, .ant-checkbox-wrapper, .space-resource-import-close-btn, .space-resource-import-field-btn',
     );
     if (interactiveTarget) return;
     startPointerInteraction(event, 'drag');
@@ -810,6 +847,20 @@ export default function SpaceResourceImportModal({
                   }}
                 />
               </div>
+              <Dropdown
+                menu={columnVisibilityMenu}
+                trigger={['click']}
+                overlayClassName="space-resource-import-col-menu"
+              >
+                <button
+                  type="button"
+                  className="space-resource-import-field-btn"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <span>字段</span>
+                  <MoreOutlined />
+                </button>
+              </Dropdown>
               <button
                 type="button"
                 className="space-resource-import-close-btn"
@@ -821,26 +872,47 @@ export default function SpaceResourceImportModal({
               </div>
 
               <div className="space-resource-import-table">
-                <div className="space-resource-import-list-header" style={{ gridTemplateColumns: detailGridTemplateColumns }}>
-                  {detailColumns.map((column) => (
+                <Dropdown
+                  menu={columnVisibilityMenu}
+                  trigger={['contextMenu']}
+                  overlayClassName="space-resource-import-col-menu"
+                >
+                  <div className="space-resource-import-list-header" style={{ gridTemplateColumns: detailGridTemplateColumns }}>
                     <span
-                      key={column.key}
-                      className={`space-resource-import-header-cell space-resource-import-col-${detailColumnClassMap[column.key]} ${column.sortable ? 'space-resource-import-col-sortable' : ''} ${sortBy === column.key ? 'is-active' : ''}`}
-                      onClick={() => column.sortable && handleHeaderSort(column.key)}
+                      className={`space-resource-import-header-cell space-resource-import-col-name space-resource-import-col-sortable ${sortBy === 'name' ? 'is-active' : ''}`}
+                      onClick={() => handleHeaderSort('name')}
                     >
                       <span className="space-resource-import-col-label">
-                        {column.label}
-                        {sortBy === column.key ? (
+                        名称
+                        {sortBy === 'name' ? (
                           <span className="space-resource-import-col-arrow">{sortOrder === 'asc' ? '▲' : '▼'}</span>
                         ) : null}
                       </span>
                       <span
                         className="space-resource-import-col-resize-handle"
-                        onMouseDown={(event) => handleDetailColResizeStart(column.widthKey, event)}
+                        onMouseDown={(event) => handleDetailColResizeStart('name', event)}
                       />
                     </span>
-                  ))}
-                </div>
+                    {visibleDetailColumns.map((column) => (
+                      <span
+                        key={column.key}
+                        className={`space-resource-import-header-cell space-resource-import-col-${column.className} ${column.sortable ? 'space-resource-import-col-sortable' : ''} ${sortBy === column.key ? 'is-active' : ''}`}
+                        onClick={() => column.sortable && handleHeaderSort(column.key)}
+                      >
+                        <span className="space-resource-import-col-label">
+                          {column.label}
+                          {sortBy === column.key ? (
+                            <span className="space-resource-import-col-arrow">{sortOrder === 'asc' ? '▲' : '▼'}</span>
+                          ) : null}
+                        </span>
+                        <span
+                          className="space-resource-import-col-resize-handle"
+                          onMouseDown={(event) => handleDetailColResizeStart(column.widthKey, event)}
+                        />
+                      </span>
+                    ))}
+                  </div>
+                </Dropdown>
 
                 <div className="space-resource-import-list-body">
                   {displayItems.length ? displayItems.map((item, index) => {
@@ -881,10 +953,21 @@ export default function SpaceResourceImportModal({
                             <span className="space-resource-import-row-name">{item.name}</span>
                           </span>
                         </span>
-                        <span className="space-resource-import-col-modified">{formatDate(item.lastEdit)}</span>
-                        <span className="space-resource-import-col-size">{formatSize(item.size)}</span>
-                        <span className="space-resource-import-col-kind">{formatKind(item)}</span>
-                        <span className="space-resource-import-col-added">{formatDate(item.addedAt || item.lastEdit)}</span>
+                        {visibleDetailColumns.map((column) => {
+                          if (column.key === 'date') {
+                            return <span key={column.key} className="space-resource-import-col-modified">{formatDate(item.lastEdit)}</span>;
+                          }
+                          if (column.key === 'size') {
+                            return <span key={column.key} className="space-resource-import-col-size">{formatSize(item.size)}</span>;
+                          }
+                          if (column.key === 'kind') {
+                            return <span key={column.key} className="space-resource-import-col-kind">{formatKind(item)}</span>;
+                          }
+                          if (column.key === 'addedAt') {
+                            return <span key={column.key} className="space-resource-import-col-added">{formatDate(item.addedAt || item.lastEdit)}</span>;
+                          }
+                          return null;
+                        })}
                       </div>
                     );
                   }) : (

@@ -245,6 +245,25 @@
   cursor: default;
 }
 
+.space-resource-import-field-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid rgba(60, 60, 67, 0.16);
+  border-radius: 7px;
+  background: linear-gradient(180deg, #fff 0%, #f0f0f3 100%);
+  color: #444;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.space-resource-import-field-btn:hover {
+  border-color: rgba(10, 132, 255, 0.4);
+  color: #0a84ff;
+}
+
 .space-resource-import-shell.is-compact .space-resource-import-toolbar-search {
   width: 100% !important;
 }
