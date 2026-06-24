@@ -982,6 +982,38 @@ export function addItem(data, scope, item) {
   return next;
 }
 
+export function addItemToLibraryId(data, libraryId = 'personal', item) {
+  const scopePrefix = libraryId === 'personal' ? 'p' : 'o';
+  const newItem = {
+    key: `${scopePrefix}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    isFolder: false,
+    parentKey: null,
+    fileType: 'other',
+    owner: 'zhanghl',
+    parseStatus: 'parsed',
+    lastEdit: now(),
+    tags: [],
+    contentText: '',
+    ...item,
+  };
+
+  const next = libraryId === 'personal'
+    ? {
+        ...data,
+        personal: [...(data.personal || []), newItem],
+      }
+    : {
+        ...data,
+        organizations: {
+          ...(data.organizations || {}),
+          [libraryId]: [...(data.organizations?.[libraryId] || []), newItem],
+        },
+      };
+
+  saveResourceLib(next);
+  return next;
+}
+
 // 重命名
 export function renameItem(data, scope, key, name) {
   const list = getLibraryList(data, scope);

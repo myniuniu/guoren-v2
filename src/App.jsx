@@ -73,6 +73,7 @@ import TeacherEvaluationModule from './teacherEvaluation/TeacherEvaluationModule
 import TeacherEvaluationSchemeModule from './teacherEvaluation/TeacherEvaluationSchemeModule';
 import TeacherDevelopmentModule from './teacherDevelopment/TeacherDevelopmentModule';
 import TeacherPortraitModule from './teacherPortrait/TeacherPortraitModule';
+import LuckyModule from './lucky/LuckyModule';
 import SceneCreateModal from './scene/SceneCreateModal';
 import { getSceneStoreChangeEventName, getSceneTypeLabel, getSceneVisibilityLabel, sceneApi } from './scene/api';
 import { getSceneThemeCoverStyle } from './scene/themeCovers';
@@ -540,7 +541,9 @@ function App() {
     } else if (key === 'messages') {
       openMessagesPage();
     } else if (key === 'lucky') {
-      openMessagesPage(getLuckyConversationId());
+      setCurrentPage('lucky');
+    } else if (key === 'lucky-backend') {
+      setCurrentPage('lucky-backend');
     } else if (key === 'process-management') {
       setCurrentPage('process-management');
     } else if (key === 'leave') {
@@ -619,6 +622,8 @@ function App() {
       currentPage === 'knowledge-graph' ||
       currentPage === 'archive' ||
       currentPage === 'study-club' ||
+      currentPage === 'lucky' ||
+      currentPage === 'lucky-backend' ||
       currentPage === 'learning-analytics' ||
       currentPage === 'agent-quota' ||
       currentPage === 'online-dev' ||
@@ -725,6 +730,10 @@ function App() {
         <ArchiveModule />
       ) : currentPage === 'study-club' ? (
         <StudyClubModule />
+      ) : currentPage === 'lucky' ? (
+        <LuckyModule key="lucky-workspace" mode="workspace" />
+      ) : currentPage === 'lucky-backend' ? (
+        <LuckyModule key="lucky-backend" mode="backend" />
       ) : currentPage === 'learning-analytics' ? (
         <ModelStatisticsModule onNavigateToQuota={openAgentQuotaPage} />
       ) : currentPage === 'agent-quota' ? (
