@@ -1114,9 +1114,11 @@ export default function SceneTemplateModule() {
           </Space>
         )}
         destroyOnClose
+        className="scene-template-editor-drawer"
       >
-        <Form form={templateForm} layout="vertical">
+        <Form form={templateForm} layout="vertical" className="scene-template-editor-form">
           <Tabs
+            className="scene-template-editor-tabs"
             items={[
               {
                 key: 'basic',
@@ -1148,7 +1150,7 @@ export default function SceneTemplateModule() {
                 key: 'metadata',
                 label: '主题元数据',
                 children: (
-                  <div className="scene-template-drawer-section">
+                  <div className="scene-template-drawer-section scene-template-metadata-section">
                     <div className="scene-template-metadata-form-designer">
                       <FormDesignerV2
                         value={watchedMetadataFields}
