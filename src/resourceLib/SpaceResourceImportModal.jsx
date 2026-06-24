@@ -52,6 +52,7 @@ const DETAIL_COL_MIN_WIDTHS = Object.freeze({
   kind: 110,
   added: 160,
 });
+const DETAIL_COL_KEYS = Object.freeze(['name', 'modified', 'size', 'kind', 'added']);
 
 function getSelectableFileType(item) {
   if (item?.isFolder) return 'folder';
@@ -100,6 +101,32 @@ function normalizeNavigationState(nextState = {}) {
 function clamp(value, min, max) {
   if (max < min) return min;
   return Math.min(Math.max(value, min), max);
+}
+
+function fitColumnWidths(preferredWidths, minWidths, availableWidth) {
+  const keys = DETAIL_COL_KEYS;
+  const preferredTotal = keys.reduce((sum, key) => sum + preferredWidths[key], 0);
+  const minTotal = keys.reduce((sum, key) => sum + minWidths[key], 0);
+
+  if (availableWidth >= preferredTotal) return preferredWidths;
+  if (availableWidth <= minTotal) return minWidths;
+
+  const ratio = (availableWidth - minTotal) / Math.max(1, preferredTotal - minTotal);
+  const fitted = {};
+
+  keys.forEach((key) => {
+    const min = minWidths[key];
+    const preferred = preferredWidths[key];
+    fitted[key] = Math.round(min + (preferred - min) * ratio);
+  });
+
+  const fittedTotal = keys.reduce((sum, key) => sum + fitted[key], 0);
+  const delta = availableWidth - fittedTotal;
+  if (delta !== 0) {
+    fitted.name = Math.max(minWidths.name, fitted.name + delta);
+  }
+
+  return fitted;
 }
 
 function getViewportBounds() {
@@ -295,6 +322,10 @@ export default function SpaceResourceImportModal({
     : specialView === 'recent'
       ? '最近使用'
       : currentFolder?.name || libraryName;
+  const isCompactLayout = modalFrame.width < 920;
+  const isNarrowLayout = !isCompactLayout && modalFrame.width < 1120;
+  const sidebarWidth = isCompactLayout ? 0 : (isNarrowLayout ? 200 : 220);
+  const toolbarSearchWidth = isCompactLayout ? null : (isNarrowLayout ? 164 : 184);
   const detailColumnClassMap = {
     name: 'name',
     date: 'modified',
@@ -309,7 +340,15 @@ export default function SpaceResourceImportModal({
     { key: 'kind', widthKey: 'kind', label: '种类', sortable: true },
     { key: 'addedAt', widthKey: 'added', label: '添加日期', sortable: false },
   ];
-  const detailGridTemplateColumns = `${detailColWidths.name}px ${detailColWidths.modified}px ${detailColWidths.size}px ${detailColWidths.kind}px ${detailColWidths.added}px`;
+  const availableTableWidth = Math.max(
+    DETAIL_COL_KEYS.reduce((sum, key) => sum + DETAIL_COL_MIN_WIDTHS[key], 0),
+    Math.floor(modalFrame.width - sidebarWidth - (isCompactLayout ? 28 : 46)),
+  );
+  const fittedDetailColWidths = useMemo(
+    () => fitColumnWidths(detailColWidths, DETAIL_COL_MIN_WIDTHS, availableTableWidth),
+    [availableTableWidth, detailColWidths],
+  );
+  const detailGridTemplateColumns = `${fittedDetailColWidths.name}px ${fittedDetailColWidths.modified}px ${fittedDetailColWidths.size}px ${fittedDetailColWidths.kind}px ${fittedDetailColWidths.added}px`;
 
   const sortLibraryItems = (items) => [...items].sort((left, right) => {
     if (left.isFolder !== right.isFolder) return left.isFolder ? -1 : 1;
@@ -644,11 +683,14 @@ export default function SpaceResourceImportModal({
         }}
       >
         <div
-          className={`space-resource-import-shell ${dragInteractionType === 'drag' ? 'is-dragging' : ''}`}
+          className={`space-resource-import-shell ${dragInteractionType === 'drag' ? 'is-dragging' : ''} ${isCompactLayout ? 'is-compact' : ''} ${isNarrowLayout ? 'is-narrow' : ''}`}
           style={{ height: `${modalFrame.height}px` }}
         >
           <div className="space-resource-import-main">
-            <aside className="space-resource-import-sidebar">
+            <aside
+              className="space-resource-import-sidebar"
+              style={isCompactLayout ? undefined : { width: `${sidebarWidth}px`, flexBasis: `${sidebarWidth}px` }}
+            >
             <div className="space-resource-import-scope-switcher">
               <button
                 type="button"
@@ -751,7 +793,10 @@ export default function SpaceResourceImportModal({
                 </button>
               </div>
               <div className="space-resource-import-toolbar-title">{currentTitle}</div>
-              <div className="space-resource-import-toolbar-search">
+              <div
+                className="space-resource-import-toolbar-search"
+                style={toolbarSearchWidth ? { width: `${toolbarSearchWidth}px` } : undefined}
+              >
                 <Input
                   allowClear
                   size="small"
