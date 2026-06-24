@@ -42,12 +42,15 @@ import {
 } from '@ant-design/icons';
 import AddResourceModal from './AddResourceModal';
 import AssessmentConfig from './AssessmentConfig';
+import SpaceResourceImportModal from './resourceLib/SpaceResourceImportModal.jsx';
 import ResourceLibraryTagPicker from './resourceLib/ResourceLibraryTagPicker.jsx';
 import { getAllItemsAcrossLibraries, inferFileType, loadResourceLib } from './resourceLib/resourceLibStore';
+import { buildTopicResourcesFromLibrarySelection } from './resourceLib/topicResourceImport.js';
 import { renderFileIcon } from './resourceLib/resourceIcons.jsx';
 import { getSceneThemeCoverPalette } from './scene/themeCovers';
 import {
   addResource,
+  addResources,
   createNewVersion,
   deleteResource,
   deleteVersion,
@@ -341,6 +344,8 @@ function TopicDetail({
   const [selectedFolderKey, setSelectedFolderKey] = useState(null);
   const [selectedItemKey, setSelectedItemKey] = useState(null);
   const [addResourceParentKey, setAddResourceParentKey] = useState(undefined);
+  const [resourceImportOpen, setResourceImportOpen] = useState(false);
+  const [resourceImportParentKey, setResourceImportParentKey] = useState(null);
   const [inlineRenameItemKey, setInlineRenameItemKey] = useState(null);
   const [inlineRenameName, setInlineRenameName] = useState('');
   const [inlineRenameSurface, setInlineRenameSurface] = useState('list');
@@ -389,6 +394,8 @@ function TopicDetail({
     setSelectedFolderKey(null);
     setSelectedItemKey(null);
     setAddResourceParentKey(undefined);
+    setResourceImportOpen(false);
+    setResourceImportParentKey(null);
     setInlineRenameItemKey(null);
     setInlineRenameName('');
     setInlineRenameSurface('list');
@@ -432,6 +439,9 @@ function TopicDetail({
   const addResourceLabel = currentModeConfig?.addResourceLabel || sceneConfig?.topicPage?.addResourceLabel || '添加资料';
   const appLabel = currentModeConfig?.appLabel || sceneConfig?.topicPage?.appLabel || '应用';
   const emptyStateText = currentModeConfig?.emptyStateText || sceneConfig?.topicPage?.emptyStateText || '暂无资料，右键新建文件夹或添加资料';
+  const enabledAddResourceEntries = Array.isArray(sceneConfig?.toolAreas?.resourceAreaTools) && sceneConfig.toolAreas.resourceAreaTools.length
+    ? sceneConfig.toolAreas.resourceAreaTools
+    : undefined;
   const useSceneTopicTheme = (sceneTheme?.topicThemeMode || 'DEFAULT') === 'SCENE';
   const sceneThemePalette = useMemo(
     () => getSceneThemeCoverPalette(sceneTheme || {}),
@@ -1473,6 +1483,11 @@ function TopicDetail({
     setAddResourceParentKey(undefined);
   };
 
+  const closeResourceImportModal = () => {
+    setResourceImportOpen(false);
+    setResourceImportParentKey(null);
+  };
+
   const openAddResourceModal = (parentKey = currentListParentKey) => {
     if (!canEditDisplayedResources) {
       message.warning(versioningEnabled ? '当前版本已发布，请新建版本后再添加资料' : '当前内容不可编辑');
@@ -1481,6 +1496,26 @@ function TopicDetail({
     clearPendingRenameTrigger();
     setAddResourceParentKey(parentKey ?? null);
     setModalOpen(true);
+  };
+
+  const openResourceImportModal = (parentKey = currentListParentKey) => {
+    if (!canEditDisplayedResources) {
+      message.warning(versioningEnabled ? '当前版本已发布，请新建版本后再添加资料' : '当前内容不可编辑');
+      return;
+    }
+    setResourceLibraryData(loadResourceLib());
+    setResourceImportParentKey(parentKey ?? null);
+    setResourceImportOpen(true);
+  };
+
+  const handlePickLibraryEntry = () => {
+    const parentKey = typeof addResourceParentKey === 'undefined'
+      ? currentListParentKey
+      : addResourceParentKey;
+    clearPendingRenameTrigger();
+    setModalOpen(false);
+    setAddResourceParentKey(undefined);
+    openResourceImportModal(parentKey ?? null);
   };
 
   const handleAddResource = (resource) => {
@@ -1515,6 +1550,34 @@ function TopicDetail({
     setVersionData(newData);
     setAddResourceParentKey(undefined);
     message.success('资料添加成功');
+  };
+
+  const handleImportResourcesFromLibrary = ({ selectedItems = [], includeDirectories = true, libraryId = 'personal' }) => {
+    if (!canEditDisplayedResources) {
+      message.warning(versioningEnabled ? '当前版本已发布，请新建版本后再添加资料' : '当前内容不可编辑');
+      return;
+    }
+    const latestResourceLibraryData = loadResourceLib();
+    setResourceLibraryData(latestResourceLibraryData);
+    const importedResources = buildTopicResourcesFromLibrarySelection(selectedItems, {
+      targetParentKey: resourceImportParentKey ?? null,
+      includeDirectories,
+      libraryData: latestResourceLibraryData,
+      libraryId,
+      existingResources: sourceResources,
+      excludedFileTypes: ['knowledgeGraph'],
+    });
+    if (!importedResources.length) {
+      message.warning('所选内容中没有可导入的资料');
+      return;
+    }
+    const nextData = addResources(versionData, currentVersion.id, importedResources, versioningConfig);
+    setVersionData(nextData);
+    closeResourceImportModal();
+    const folderCount = importedResources.filter((item) => item.isFolder).length;
+    const fileCount = importedResources.length - folderCount;
+    const suffix = includeDirectories ? '，已保留目录结构' : '，未保留目录';
+    message.success(`已导入 ${fileCount} 个文件${folderCount ? `、${folderCount} 个目录` : ''}${suffix}`);
   };
 
   const handleArchiveResourceToProfile = (resource) => {
@@ -3307,6 +3370,14 @@ function TopicDetail({
         open={modalOpen}
         onClose={closeAddResourceModal}
         onAdd={handleAddResource}
+        onPickLibrary={handlePickLibraryEntry}
+        enabledEntries={enabledAddResourceEntries}
+      />
+
+      <SpaceResourceImportModal
+        open={resourceImportOpen}
+        onClose={closeResourceImportModal}
+        onConfirm={handleImportResourcesFromLibrary}
       />
 
       <Modal

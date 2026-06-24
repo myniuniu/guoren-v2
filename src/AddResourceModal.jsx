@@ -8,7 +8,6 @@ import {
   EditOutlined,
   UserOutlined,
   RightOutlined,
-  ToolOutlined,
   NodeIndexOutlined,
 } from '@ant-design/icons';
 import './AddResourceModal.css';
@@ -18,7 +17,7 @@ const resourceCategories = [
     title: '从平台选择',
     items: [
       { key: 'cloud', icon: <CloudOutlined />, label: '云盘', type: 'file' },
-      { key: 'resource-lib', icon: <DatabaseOutlined />, label: '资料库', type: 'file' },
+      { key: 'resource-lib', icon: <DatabaseOutlined />, label: '资料库', type: 'file', moduleKey: 'RESOURCE_LIBRARY' },
     ],
   },
   {
@@ -46,8 +45,25 @@ const questionnaireItems = [
   { key: 'register', icon: <UserOutlined />, label: '报名', type: 'register' },
 ];
 
-function AddResourceModal({ open, onClose, onAdd }) {
+function AddResourceModal({ open, onClose, onAdd, onPickLibrary, enabledEntries }) {
+  const isEntryEnabled = (item) => {
+    if (!Array.isArray(enabledEntries) || !item?.moduleKey) return true;
+    return enabledEntries.includes(item.moduleKey);
+  };
+
+  const filteredCategories = resourceCategories
+    .map((category) => ({
+      ...category,
+      items: category.items.filter(isEntryEnabled),
+    }))
+    .filter((category) => category.items.length > 0);
+
   const handleItemClick = (item) => {
+    if (item.key === 'resource-lib') {
+      onPickLibrary?.();
+      onClose?.();
+      return;
+    }
     onAdd({
       name: `新建${item.label}资料`,
       type: item.type,
@@ -71,7 +87,7 @@ function AddResourceModal({ open, onClose, onAdd }) {
       <div className="modal-content">
         {/* Left Column */}
         <div className="modal-column">
-          {resourceCategories.map((category) => (
+          {filteredCategories.map((category) => (
             <div key={category.title} className="category-group">
               <div className="category-title">{category.title}</div>
               {category.items.map((item) => (

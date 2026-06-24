@@ -351,6 +351,30 @@ export function addResource(data, versionId, resource, versioningConfig) {
   return newData;
 }
 
+export function addResources(data, versionId, resources, versioningConfig) {
+  const version = data.versions.find((v) => v.id === versionId);
+  if (!isVersionEditable(version, versioningConfig)) return data;
+  if (!Array.isArray(resources) || resources.length === 0) return data;
+
+  const newResources = resources.map((resource) => ({
+    ...resource,
+    key: resource.key || `r_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    isFolder: resource.isFolder || false,
+    parentKey: resource.parentKey || null,
+    owner: resource.owner || 'zhanghl',
+    lastEdit: resource.lastEdit || nowText(),
+  }));
+
+  const newData = {
+    ...data,
+    versions: data.versions.map((v) => (
+      v.id === versionId ? { ...v, resources: [...v.resources, ...newResources] } : v
+    )),
+  };
+  saveToStorage(newData);
+  return newData;
+}
+
 // 更新资料（仅 draft）
 export function updateResource(data, versionId, resourceKey, updates, versioningConfig) {
   const version = data.versions.find((v) => v.id === versionId);

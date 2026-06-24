@@ -1392,6 +1392,94 @@ export function getAllItemsAcrossLibraries(data) {
   return out;
 }
 
+export function getLibraryItemsById(data, libraryId = 'personal') {
+  if (libraryId === 'personal') return data.personal || [];
+  return data.organizations?.[libraryId] || [];
+}
+
+export function getLibraryNameById(data, libraryId = 'personal') {
+  if (libraryId === 'personal') return '个人库';
+  const org = getOrganizations(data).find((item) => item.id === libraryId);
+  return org?.name || libraryId;
+}
+
+export function buildLibraryItemMap(data, libraryId = 'personal') {
+  return new Map(getLibraryItemsById(data, libraryId).map((item) => [item.key, item]));
+}
+
+export function getLibraryItemPath(data, libraryId = 'personal', itemOrKey) {
+  const itemMap = buildLibraryItemMap(data, libraryId);
+  const item = typeof itemOrKey === 'string' ? itemMap.get(itemOrKey) : itemOrKey;
+  if (!item) return getLibraryNameById(data, libraryId);
+
+  const pathParts = [getLibraryNameById(data, libraryId)];
+  const parents = [];
+  let cursor = item.parentKey ? itemMap.get(item.parentKey) : null;
+  while (cursor) {
+    parents.push(cursor.name);
+    cursor = cursor.parentKey ? itemMap.get(cursor.parentKey) : null;
+  }
+  pathParts.push(...parents.reverse(), item.name);
+  return pathParts.join(' / ');
+}
+
+export function getLibrarySubtreeItems(data, libraryId = 'personal', rootKey, options = {}) {
+  const { includeRoot = true } = options;
+  const list = getLibraryItemsById(data, libraryId);
+  const rootItem = list.find((item) => item.key === rootKey);
+  if (!rootItem) return [];
+  const childrenMap = new Map();
+  list.forEach((item) => {
+    const parentKey = item.parentKey ?? null;
+    if (!childrenMap.has(parentKey)) childrenMap.set(parentKey, []);
+    childrenMap.get(parentKey).push(item);
+  });
+
+  const result = [];
+  const visit = (item) => {
+    result.push(item);
+    const children = childrenMap.get(item.key) || [];
+    children.forEach(visit);
+  };
+
+  if (includeRoot) {
+    visit(rootItem);
+  } else {
+    const children = childrenMap.get(rootItem.key) || [];
+    children.forEach(visit);
+  }
+
+  return result;
+}
+
+export function getLibraryDescendantFiles(data, libraryId = 'personal', rootKey) {
+  return getLibrarySubtreeItems(data, libraryId, rootKey, { includeRoot: false })
+    .filter((item) => !item.isFolder);
+}
+
+export function getAllLibraryEntriesAcrossLibraries(data) {
+  const out = [];
+  const orgs = getOrganizations(data);
+  const orgNameMap = Object.fromEntries(orgs.map((o) => [o.id, o.name]));
+
+  (data.personal || []).forEach((item) => {
+    out.push({ ...item, libraryId: 'personal', libraryName: '个人库', libraryScope: 'personal' });
+  });
+
+  Object.entries(data.organizations || {}).forEach(([orgId, list]) => {
+    (list || []).forEach((item) => {
+      out.push({
+        ...item,
+        libraryId: orgId,
+        libraryName: orgNameMap[orgId] || orgId,
+        libraryScope: 'organization',
+      });
+    });
+  });
+
+  return out;
+}
+
 // 更新某资料的解析状态及附加字段
 export function updateItemParseStatus(data, libraryId, key, patch) {
   const apply = (list) => list.map((r) => (r.key === key ? { ...r, ...patch, lastEdit: now() } : r));
