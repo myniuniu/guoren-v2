@@ -13,6 +13,7 @@
 }
 
 .space-resource-import-shell {
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -36,7 +37,7 @@
 .space-resource-import-sidebar {
   width: 220px;
   flex: 0 0 220px;
-  padding: 12px 8px 8px;
+  padding: 14px 8px 8px;
   background: linear-gradient(180deg, #f2f2f5 0%, #ececf0 100%);
   border-right: 1px solid rgba(28, 28, 30, 0.08);
   overflow-y: auto;
@@ -46,7 +47,7 @@
   display: flex;
   gap: 6px;
   padding: 3px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   border-radius: 10px;
   background: rgba(60, 60, 67, 0.12);
 }
@@ -70,7 +71,7 @@
 
 .space-resource-import-org-select {
   width: 100%;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .space-resource-import-org-select .ant-select-selector {
@@ -79,11 +80,11 @@
 }
 
 .space-resource-import-sidebar-section + .space-resource-import-sidebar-section {
-  margin-top: 18px;
+  margin-top: 14px;
 }
 
 .space-resource-import-sidebar-title {
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   padding: 0 8px;
   color: #8d8d92;
   font-size: 12px;
@@ -162,8 +163,8 @@
 .space-resource-import-toolbar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 10px;
+  gap: 10px;
+  padding: 12px 10px 6px;
   border-bottom: 1px solid rgba(28, 28, 30, 0.08);
   background: linear-gradient(180deg, rgba(249, 249, 250, 0.98) 0%, rgba(241, 242, 244, 0.98) 100%);
   cursor: grab !important;
@@ -190,10 +191,10 @@
 }
 
 .space-resource-import-nav-btn {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border: 1px solid rgba(60, 60, 67, 0.16);
-  border-radius: 8px;
+  border-radius: 7px;
   background: linear-gradient(180deg, #fff 0%, #f0f0f3 100%);
   color: #444;
   cursor: pointer;
@@ -209,7 +210,7 @@
   flex: 1;
   min-width: 0;
   color: #2b2b31;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   text-align: center;
   overflow: hidden;
@@ -219,19 +220,19 @@
 }
 
 .space-resource-import-toolbar-search {
-  width: 190px;
+  width: 184px;
   cursor: default;
 }
 
 .space-resource-import-close-btn {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border: 0;
   border-radius: 999px;
   background: transparent;
   color: #7a7a82;
   cursor: pointer;
-  flex: 0 0 24px;
+  flex: 0 0 22px;
 }
 
 .space-resource-import-close-btn:hover {
@@ -489,23 +490,22 @@
   position: absolute;
   right: 0;
   bottom: 0;
-  width: 28px;
-  height: 28px;
+  width: 18px;
+  height: 18px;
   display: block;
   border: 0;
   padding: 0;
-  border-radius: 8px 0 0 0;
+  border-radius: 6px 0 0 0;
   background:
-    linear-gradient(135deg, transparent 0 50%, rgba(120, 120, 128, 0.5) 50% 56%, transparent 56% 100%),
-    linear-gradient(135deg, transparent 0 66%, rgba(120, 120, 128, 0.5) 66% 72%, transparent 72% 100%),
-    linear-gradient(135deg, transparent 0 82%, rgba(120, 120, 128, 0.5) 82% 88%, transparent 88% 100%);
+    linear-gradient(135deg, transparent 0 56%, rgba(120, 120, 128, 0.42) 56% 62%, transparent 62% 100%),
+    linear-gradient(135deg, transparent 0 74%, rgba(120, 120, 128, 0.42) 74% 80%, transparent 80% 100%);
   cursor: nwse-resize !important;
-  opacity: 0.8;
+  opacity: 0.6;
   z-index: 6;
 }
 
 .space-resource-import-resize-handle:hover {
-  opacity: 1;
+  opacity: 0.9;
   background-color: rgba(60, 60, 67, 0.06);
 }
 
