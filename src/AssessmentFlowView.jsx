@@ -11,7 +11,7 @@ import ReactFlow, {
   MarkerType,
 } from 'reactflow';
 import { InputNumber, Select, Tooltip, Modal, Input, Button, Radio, message, Popconfirm, Divider } from 'antd';
-import { FolderOutlined, AppstoreOutlined, DeleteOutlined, ClearOutlined, CloseOutlined, EditOutlined, FileOutlined, DatabaseOutlined, CopyOutlined } from '@ant-design/icons';
+import { FolderOutlined, AppstoreOutlined, DeleteOutlined, ClearOutlined, CloseOutlined, EditOutlined, FileOutlined, DatabaseOutlined, CopyOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 import 'reactflow/dist/style.css';
 import './AssessmentFlowView.css';
 
@@ -108,8 +108,40 @@ function ActivityNode({ data, selected }) {
         </div>
       )}
       <div className="flow-activity-header">
-        <AppstoreOutlined style={{ color }} />
-        <span className="flow-activity-title">{data.label}</span>
+        <div className="flow-activity-header-main">
+          <AppstoreOutlined style={{ color }} />
+          <span className="flow-activity-title">{data.label}</span>
+        </div>
+        {data.isDraft && (
+          <div className="flow-activity-header-actions nodrag nopan" onMouseDown={stop} onClick={stop}>
+            <Tooltip title="上移">
+              <Button
+                type="text"
+                size="small"
+                className="flow-activity-sort-btn"
+                icon={<ArrowUpOutlined />}
+                disabled={!data.canMoveUp}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  data.onMoveUp?.();
+                }}
+              />
+            </Tooltip>
+            <Tooltip title="下移">
+              <Button
+                type="text"
+                size="small"
+                className="flow-activity-sort-btn"
+                icon={<ArrowDownOutlined />}
+                disabled={!data.canMoveDown}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  data.onMoveDown?.();
+                }}
+              />
+            </Tooltip>
+          </div>
+        )}
       </div>
       <div className="flow-activity-body">
         <div className="flow-row">
@@ -332,16 +364,19 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
       const STAGE_WIDTH = 240;
       const HEADER_H = 54;
       const ACT_H = 150; // 活动节点高度估算
-      const ACT_VISUAL_H = 160; // 活动卡实际渲染高度（header+body 3行+padding）
+      const ACT_VISUAL_H = 144; // 活动卡实际渲染高度（header+body 3行+padding）
+      const ACT_STACK_GAP = 14; // 卡片之间保留明显但不过松的可视间距
+      const ACT_BINDING_HEADER_H = 32; // 绑定区标题、分割线与上下留白
+      const STAGE_BOTTOM_PAD = 16; // 阶段容器底部安全留白，避免最后一张卡贴边/溢出
       // 考虑 flowPositions 中可能保存了旧坐标（如早期更大的 ACT_H 拖拽过的位置），
       // stageHeight 取「默认堆叠高度」与「活动实际最大底部」中的较大值，避免卡片溢出容器
       const computeActVisualH = (a) => {
         const cnt = a.boundResources?.length || 0;
         if (cnt === 0 && !a.isCustomActivity) return ACT_VISUAL_H;
-        // 绑定区：margin+padding+border 约 17，title 约 20，列表 max-height 70
-        // 空态提示 约 32px；每项 约 28px；最多累加 2 项（超出列表内部滚动）
-        const bindContent = cnt === 0 ? 32 : Math.min(2, cnt) * 28 + (cnt > 2 ? 6 : 0);
-        const bindH = 17 + 20 + bindContent;
+        // 绑定区按真实视觉尺寸估算，避免把下一张卡片推得过远。
+        // 空态提示约 30px；列表单项约 23px，双项含 gap 后约 49px，再多则内部滚动。
+        const bindContent = cnt === 0 ? 30 : Math.min(49, cnt * 23 + Math.max(0, cnt - 1) * 3);
+        const bindH = ACT_BINDING_HEADER_H + bindContent;
         return ACT_VISUAL_H + bindH;
       };
       // 按现有 flowPositions 中 y 坐标排序，按每张卡片真实高度紧凑堆叠重排，
@@ -351,14 +386,16 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
         const yb = assessment.flowPositions?.[b.key]?.y ?? 0;
         return ya - yb;
       });
+      const actOrderIndexMap = new Map(sortedActs.map((a, idx) => [a.key, idx]));
       const computedActY = new Map();
       let cursorY = HEADER_H;
-      sortedActs.forEach((a) => {
+      sortedActs.forEach((a, idx) => {
         computedActY.set(a.key, cursorY);
-        cursorY += computeActVisualH(a) + 16;
+        cursorY += computeActVisualH(a);
+        if (idx < sortedActs.length - 1) cursorY += ACT_STACK_GAP;
       });
       const defaultBottom = HEADER_H + activities.length * ACT_H + 16;
-      const actualBottom = cursorY;
+      const actualBottom = cursorY + STAGE_BOTTOM_PAD;
       const stageHeight = Math.max(140, defaultBottom, actualBottom);
 
       nodes.push({
@@ -416,6 +453,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
       // 活动节点——作为阶段子节点嵌套在阶段容器内
       activities.forEach((act, aIdx) => {
         const rule = assessment.rules.find((r) => r.folderKey === act.key);
+        const actOrderIndex = actOrderIndexMap.get(act.key) ?? aIdx;
         nodes.push({
           id: act.key,
           type: 'activity',
@@ -431,6 +469,30 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
             weight: rule?.weight ?? 0,
             required: rule?.required ?? true,
             isDraft,
+            canMoveUp: actOrderIndex > 0,
+            canMoveDown: actOrderIndex < sortedActs.length - 1,
+            onMoveUp: () => {
+              if (!isDraft || actOrderIndex <= 0) return;
+              const nextOrder = sortedActs.map((item) => item.key);
+              [nextOrder[actOrderIndex - 1], nextOrder[actOrderIndex]] = [nextOrder[actOrderIndex], nextOrder[actOrderIndex - 1]];
+              const flowPositions = { ...(assessment.flowPositions || {}) };
+              nextOrder.forEach((key, idx) => {
+                flowPositions[key] = { ...(flowPositions[key] || {}), x: 20, y: HEADER_H + idx * ACT_H };
+              });
+              onUpdateAssessment({ ...assessment, flowPositions });
+              message.success(`已将「${act.name || '活动'}」上移一位`);
+            },
+            onMoveDown: () => {
+              if (!isDraft || actOrderIndex >= sortedActs.length - 1) return;
+              const nextOrder = sortedActs.map((item) => item.key);
+              [nextOrder[actOrderIndex], nextOrder[actOrderIndex + 1]] = [nextOrder[actOrderIndex + 1], nextOrder[actOrderIndex]];
+              const flowPositions = { ...(assessment.flowPositions || {}) };
+              nextOrder.forEach((key, idx) => {
+                flowPositions[key] = { ...(flowPositions[key] || {}), x: 20, y: HEADER_H + idx * ACT_H };
+              });
+              onUpdateAssessment({ ...assessment, flowPositions });
+              message.success(`已将「${act.name || '活动'}」下移一位`);
+            },
             onChange: (folderKey, field, value) => {
               // 实时类型一致性校验：切换 activityType 时，若已绑定资料与新类型不匹配则拒绝
               if (field === 'activityType' && value) {
@@ -611,14 +673,16 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
   // 节点拖动结束 -> 跨阶段归属 + 同阶段按 y 重排序以避免重叠
   const onNodeDragStop = useCallback((event, node) => {
     if (!isDraft) return;
+    const currentNodes = rfInstance?.getNodes ? rfInstance.getNodes() : nodes;
+    const clearDropTargets = (list) => list.map((n) =>
+      n.type === 'stage' && n.data?.isDropTarget
+        ? { ...n, data: { ...n.data, isDropTarget: false } }
+        : n
+    );
 
     if (node.type !== 'activity') {
       const flowPositions = { ...(assessment.flowPositions || {}), [node.id]: node.position };
-      setNodes((nds) => nds.map((n) =>
-        n.type === 'stage' && n.data?.isDropTarget
-          ? { ...n, data: { ...n.data, isDropTarget: false } }
-          : n
-      ));
+      setNodes(clearDropTargets(currentNodes));
       skipNextSyncRef.current = true;
       onUpdateAssessment({ ...assessment, flowPositions });
       return;
@@ -626,62 +690,41 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
 
     // 活动拖动：检测命中阶段 + 把被拖节点和同阶段同胞一起按 y 排序，按槽位重排避免重叠
     const positionsToWrite = {};
-    let newParentId = node.parentNode;
+    const draggedNode = currentNodes.find((n) => n.id === node.id) || node;
+    const stageNodes = currentNodes.filter((n) => n.type === 'stage');
+    const parentStage = stageNodes.find((s) => s.id === draggedNode.parentNode);
+    const hit = findHitStage(draggedNode, stageNodes);
+
+    if (!parentStage) {
+      setNodes(clearDropTargets(currentNodes));
+      return;
+    }
+
+    let newParentId = draggedNode.parentNode;
     let crossStage = false;
     let hitStageLabel = '';
-    let needPromote = false;
-    let promoteAbsX = 0;
-    let promoteAbsY = 0;
     let snappedBack = false;
 
-    setNodes((nds) => {
-      // 关键：从 state 中读取被拖节点的最新 position（ReactFlow 已经把拖动后的位置写进来了）
-      const draggedFromState = nds.find((n) => n.id === node.id) || node;
-      const stageNodes = nds.filter((n) => n.type === 'stage');
-      const parentStage = stageNodes.find((s) => s.id === draggedFromState.parentNode);
-      const hit = findHitStage(draggedFromState, stageNodes);
-
-      // 未命中任何阶段 -> 「活动」不允许脱离阶段容器，snap 回原阶段末位
-      if (!hit) {
-        if (parentStage) {
-          snappedBack = true;
-          // 保持原 parent，被拖节点重排到原阶段末位
-          const oldSiblings = nds
-            .filter((n) => n.type === 'activity' && n.id !== node.id && n.parentNode === parentStage.id)
-            .sort((a, b) => (a.position?.y ?? 0) - (b.position?.y ?? 0));
-          const order = [...oldSiblings, { id: node.id }];
-          order.forEach((n, i) => {
-            positionsToWrite[n.id] = { x: 20, y: HEADER_H + i * SLOT_H };
-          });
-          newParentId = parentStage.id;
-          crossStage = false;
-          return nds.map((n) => {
-            if (n.id === node.id) {
-              return { ...n, parentNode: parentStage.id, position: positionsToWrite[n.id] };
-            }
-            if (positionsToWrite[n.id]) {
-              return { ...n, position: positionsToWrite[n.id] };
-            }
-            if (n.type === 'stage' && n.data?.isDropTarget) {
-              return { ...n, data: { ...n.data, isDropTarget: false } };
-            }
-            return n;
-          });
-        }
-        // 无原 parent的孤节点（理论上不应出现）：仅清除 drop target 高亮
-        return nds.map((n) => {
-          if (n.type === 'stage' && n.data?.isDropTarget) {
-            return { ...n, data: { ...n.data, isDropTarget: false } };
-          }
-          return n;
-        });
+    // 未命中任何阶段 -> 「活动」不允许脱离阶段容器，snap 回原阶段末位
+    if (!hit) {
+      snappedBack = true;
+      const oldSiblings = currentNodes
+        .filter((n) => n.type === 'activity' && n.id !== node.id && n.parentNode === parentStage.id)
+        .sort((a, b) => (a.position?.y ?? 0) - (b.position?.y ?? 0));
+      const order = [...oldSiblings, { id: node.id }];
+      order.forEach((n, i) => {
+        positionsToWrite[n.id] = { x: 20, y: HEADER_H + i * SLOT_H };
+      });
+      newParentId = parentStage.id;
+    } else {
+      const targetStage = hit.id !== draggedNode.parentNode ? hit : parentStage;
+      if (!targetStage) {
+        setNodes(clearDropTargets(currentNodes));
+        return;
       }
 
-      const targetStage = (hit && hit.id !== draggedFromState.parentNode) ? hit : parentStage;
-      if (!targetStage) return nds;
-
       newParentId = targetStage.id;
-      crossStage = newParentId !== draggedFromState.parentNode;
+      crossStage = newParentId !== draggedNode.parentNode;
       hitStageLabel = targetStage.data?.label || '';
 
       // 计算被拖节点在目标阶段内的局部 y
@@ -689,16 +732,15 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
       // - 跨 stage：把绝对 y 减去目标 stage 的 y
       let nodeLocalY;
       if (!crossStage) {
-        nodeLocalY = draggedFromState.position?.y ?? 0;
+        nodeLocalY = draggedNode.position?.y ?? 0;
       } else {
-        const absY = draggedFromState.positionAbsolute?.y
-          ?? ((parentStage?.position.y ?? 0) + (draggedFromState.position?.y ?? 0));
+        const absY = draggedNode.positionAbsolute?.y
+          ?? ((parentStage.position?.y ?? 0) + (draggedNode.position?.y ?? 0));
         nodeLocalY = absY - targetStage.position.y;
       }
 
-      // 把被拖节点也参与目标阶段的整体排序
       const targetAll = [
-        ...nds
+        ...currentNodes
           .filter((n) => n.type === 'activity' && n.id !== node.id && n.parentNode === targetStage.id)
           .map((n) => ({ id: n.id, y: n.position?.y ?? 0 })),
         { id: node.id, y: nodeLocalY },
@@ -709,50 +751,26 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
       });
 
       // 跨阶段时，原阶段剩余活动也重排序避免空隔
-      if (crossStage && parentStage) {
-        const oldSiblings = nds
+      if (crossStage) {
+        const oldSiblings = currentNodes
           .filter((n) => n.type === 'activity' && n.id !== node.id && n.parentNode === parentStage.id)
           .sort((a, b) => (a.position?.y ?? 0) - (b.position?.y ?? 0));
         oldSiblings.forEach((n, i) => {
           positionsToWrite[n.id] = { x: 20, y: HEADER_H + i * SLOT_H };
         });
       }
-
-      return nds.map((n) => {
-        if (n.id === node.id) {
-          return { ...n, parentNode: newParentId, position: positionsToWrite[n.id] };
-        }
-        if (positionsToWrite[n.id]) {
-          return { ...n, position: positionsToWrite[n.id] };
-        }
-        if (n.type === 'stage' && n.data?.isDropTarget) {
-          return { ...n, data: { ...n.data, isDropTarget: false } };
-        }
-        return n;
-      });
-    });
-
-    // 持久化
-    if (needPromote) {
-      const next = { ...assessment };
-      const promotions = new Set(assessment.stagePromotions || []);
-      promotions.add(node.id);
-      next.stagePromotions = [...promotions];
-      if (next.parentOverrides && next.parentOverrides[node.id]) {
-        const { [node.id]: _omit, ...rest } = next.parentOverrides;
-        next.parentOverrides = rest;
-      }
-      next.flowPositions = {
-        ...(assessment.flowPositions || {}),
-        ...positionsToWrite,
-        [node.id]: { x: promoteAbsX, y: promoteAbsY },
-      };
-      // 注意：promote 会改变节点 type（activity → stage）与 parentNode 关系，
-      // 必须让 useEffect 重新同步 initialNodes，所以这里不能跳过同步。
-      onUpdateAssessment(next);
-      message.success(`已将「${node.data?.label || '活动'}」提升为阶段容器`);
-      return;
     }
+
+    const nextNodes = clearDropTargets(currentNodes).map((n) => {
+      if (n.id === node.id) {
+        return { ...n, parentNode: newParentId, position: positionsToWrite[n.id] || n.position };
+      }
+      if (positionsToWrite[n.id]) {
+        return { ...n, position: positionsToWrite[n.id] };
+      }
+      return n;
+    });
+    setNodes(nextNodes);
 
     const next = { ...assessment };
     next.flowPositions = { ...(next.flowPositions || {}), ...positionsToWrite };
@@ -764,7 +782,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
     }
     // 不跳过同步：让 useMemo 按卡片真实高度紧凑堆叠重新布局，避免拖动后重叠
     onUpdateAssessment(next);
-  }, [assessment, isDraft, onUpdateAssessment, setNodes, findHitStage]);
+  }, [assessment, isDraft, onUpdateAssessment, setNodes, findHitStage, rfInstance, nodes]);
 
   // 连线串联校验：仅允许 activity ↔ activity，且同阶段内，且每个节点只能一进一出
   const validateActivityConnection = useCallback((params, currentEdges) => {
