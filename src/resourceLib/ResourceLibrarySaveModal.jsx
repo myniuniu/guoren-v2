@@ -4,7 +4,6 @@ import { Button, Input, Select } from 'antd';
 import {
   CaretDownOutlined,
   CaretRightOutlined,
-  ClockCircleOutlined,
   CloseOutlined,
   DesktopOutlined,
   FolderFilled,
@@ -19,10 +18,10 @@ import {
   getTagDefinitions,
   inferFileType,
   loadResourceLib,
+  renameItemByLibraryId,
 } from './resourceLibStore';
 import './ResourceLibrarySaveModal.css';
 
-const ROOT_ROW_KEY = '__resource_library_save_root__';
 const VIEWPORT_MARGIN = 24;
 const DEFAULT_MODAL_FRAME = Object.freeze({
   width: 1080,
@@ -42,6 +41,12 @@ function formatNow() {
   const minute = String(date.getMinutes()).padStart(2, '0');
   const second = String(date.getSeconds()).padStart(2, '0');
   return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
+}
+
+function parseDateValue(value) {
+  if (!value) return 0;
+  const ts = Date.parse(String(value).replace(/\./g, '-').replace(/\//g, '-'));
+  return Number.isNaN(ts) ? 0 : ts;
 }
 
 function buildLuckySnapshot(item, draftName, libraryName, folderPath) {
@@ -157,10 +162,13 @@ export default function ResourceLibrarySaveModal({
   const [expandedFolderKeys, setExpandedFolderKeys] = useState(new Set());
   const [activeTagFilter, setActiveTagFilter] = useState(null);
   const [draftName, setDraftName] = useState('');
+  const [editingFolderKey, setEditingFolderKey] = useState(null);
+  const [editingFolderName, setEditingFolderName] = useState('');
   const [modalFrame, setModalFrame] = useState(() => getInitialModalFrame());
   const [dragging, setDragging] = useState(false);
   const modalFrameRef = useRef(modalFrame);
   const pointerStateRef = useRef(null);
+  const renameInputRef = useRef(null);
 
   useEffect(() => {
     if (!open) return;
@@ -174,6 +182,8 @@ export default function ResourceLibrarySaveModal({
     setExpandedFolderKeys(new Set());
     setActiveTagFilter(null);
     setDraftName(item?.title || '');
+    setEditingFolderKey(null);
+    setEditingFolderName('');
     setModalFrame(getInitialModalFrame());
     setDragging(false);
   }, [item, open]);
@@ -181,6 +191,12 @@ export default function ResourceLibrarySaveModal({
   useEffect(() => {
     modalFrameRef.current = modalFrame;
   }, [modalFrame]);
+
+  useEffect(() => {
+    if (!editingFolderKey || !renameInputRef.current) return;
+    renameInputRef.current.focus();
+    renameInputRef.current.select();
+  }, [editingFolderKey]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -250,15 +266,6 @@ export default function ResourceLibrarySaveModal({
   }, [folderItems]);
 
   const visibleRows = useMemo(() => {
-    const rootRow = {
-      key: ROOT_ROW_KEY,
-      name: libraryName,
-      isRoot: true,
-      _depth: 0,
-      lastEdit: '--',
-      path: libraryName,
-    };
-
     const normalizedKeyword = keyword.trim().toLowerCase();
     let sourceFolders = folderItems;
     if (activeTagFilter) {
@@ -266,20 +273,16 @@ export default function ResourceLibrarySaveModal({
     }
 
     if (normalizedKeyword || activeTagFilter) {
-      const matches = sourceFolders.filter((entry) => (
+      return sourceFolders.filter((entry) => (
         `${entry.name} ${getLibraryItemPath(data, libraryId, entry)}`.toLowerCase().includes(normalizedKeyword)
-      ));
-      return [
-        rootRow,
-        ...matches.map((entry) => ({
-          ...entry,
-          _depth: 0,
-          path: getLibraryItemPath(data, libraryId, entry),
-        })),
-      ];
+      )).map((entry) => ({
+        ...entry,
+        _depth: 0,
+        path: getLibraryItemPath(data, libraryId, entry),
+      }));
     }
 
-    const rows = [rootRow];
+    const rows = [];
     const visit = (parentKey, depth) => {
       const children = (childFolderMap.get(parentKey ?? null) || []).filter((entry) => !activeTagFilter || (entry.tags || []).includes(activeTagFilter));
       children.forEach((entry) => {
@@ -297,13 +300,17 @@ export default function ResourceLibrarySaveModal({
     return rows;
   }, [activeTagFilter, childFolderMap, data, expandedFolderKeys, folderItems, keyword, libraryId, libraryName]);
 
-  const selectedPath = useMemo(() => {
-    if (!selectedFolderKey) return libraryName;
-    const folder = folderMap.get(selectedFolderKey);
-    return folder ? getLibraryItemPath(data, libraryId, folder) : libraryName;
-  }, [data, folderMap, libraryId, libraryName, selectedFolderKey]);
-
   const canSubmit = draftName.trim().length > 0;
+
+  const createFolderName = () => {
+    const siblings = folderItems.filter((entry) => (entry.parentKey ?? null) === (selectedFolderKey ?? null));
+    const siblingNames = new Set(siblings.map((entry) => entry.name));
+    if (!siblingNames.has('新建文件夹')) return '新建文件夹';
+    let index = 2;
+    while (siblingNames.has(`新建文件夹 ${index}`)) index += 1;
+    return `新建文件夹 ${index}`;
+  };
+
   const stopPointerInteraction = () => {
     const pointerState = pointerStateRef.current;
     if (!pointerState) return;
@@ -364,6 +371,39 @@ export default function ResourceLibrarySaveModal({
     onClose?.();
   };
 
+  const commitFolderRename = (folderKey, fallbackName = '') => {
+    if (!folderKey) return;
+    const normalizedName = editingFolderName.trim() || fallbackName;
+    setEditingFolderKey(null);
+    setEditingFolderName('');
+    if (!normalizedName || normalizedName === fallbackName) return;
+    const nextData = renameItemByLibraryId(loadResourceLib(), libraryId, folderKey, normalizedName);
+    setData(nextData);
+  };
+
+  const handleCreateFolder = () => {
+    const nextFolderName = createFolderName();
+    const nextData = addItemToLibraryId(loadResourceLib(), libraryId, {
+      name: nextFolderName,
+      isFolder: true,
+      fileType: 'folder',
+      parentKey: selectedFolderKey,
+      tags: activeTagFilter ? [activeTagFilter] : [],
+    });
+    const nextFolder = [...getLibraryItemsById(nextData, libraryId)]
+      .filter((entry) => entry.isFolder && (entry.parentKey ?? null) === (selectedFolderKey ?? null))
+      .sort((left, right) => parseDateValue(right.lastEdit) - parseDateValue(left.lastEdit))[0];
+    setData(nextData);
+    if (nextFolder?.key) {
+      setSelectedFolderKey(nextFolder.key);
+      if (nextFolder.parentKey) {
+        setExpandedFolderKeys((prev) => new Set(prev).add(nextFolder.parentKey));
+      }
+      setEditingFolderKey(nextFolder.key);
+      setEditingFolderName(nextFolder.name || nextFolderName);
+    }
+  };
+
   if (!open || !item || typeof document === 'undefined') return null;
 
   return createPortal(
@@ -417,14 +457,6 @@ export default function ResourceLibrarySaveModal({
                   <span className="resource-library-save-sidebar-icon"><DesktopOutlined /></span>
                   <span className="resource-library-save-sidebar-text">全部目录</span>
                 </button>
-                <button
-                  type="button"
-                  className="resource-library-save-sidebar-item"
-                  onClick={() => setSelectedFolderKey(null)}
-                >
-                  <span className="resource-library-save-sidebar-icon"><ClockCircleOutlined /></span>
-                  <span className="resource-library-save-sidebar-text">保存到库根目录</span>
-                </button>
               </div>
 
               <div className="resource-library-save-sidebar-section">
@@ -468,27 +500,37 @@ export default function ResourceLibrarySaveModal({
                 </button>
               </div>
 
+              <div className="resource-library-save-meta">
+                <div className="resource-library-save-meta-row">
+                  <label htmlFor="resource-library-save-name">名称:</label>
+                  <Input
+                    id="resource-library-save-name"
+                    value={draftName}
+                    onChange={(event) => setDraftName(event.target.value)}
+                    placeholder="输入保存名称"
+                    maxLength={120}
+                  />
+                </div>
+              </div>
+
               <div className="resource-library-save-list-header">
                 <span className="col-name">目录</span>
                 <span className="col-time">修改日期</span>
-                <span className="col-path">路径</span>
               </div>
 
               <div className="resource-library-save-list">
                 {visibleRows.map((entry) => {
-                  const isRoot = entry.key === ROOT_ROW_KEY;
-                  const childCount = isRoot
-                    ? (childFolderMap.get(null) || []).length
-                    : (childFolderMap.get(entry.key) || []).length;
+                  const childCount = (childFolderMap.get(entry.key) || []).length;
                   const isExpanded = expandedFolderKeys.has(entry.key);
-                  const isSelected = isRoot ? selectedFolderKey === null : selectedFolderKey === entry.key;
+                  const isSelected = selectedFolderKey === entry.key;
+                  const isEditing = editingFolderKey === entry.key;
                   return (
                     <div
                       key={entry.key}
                       className={`resource-library-save-row ${isSelected ? 'is-selected' : ''}`}
-                      onClick={() => setSelectedFolderKey(isRoot ? null : entry.key)}
+                      onClick={() => setSelectedFolderKey(entry.key)}
                       onDoubleClick={() => {
-                        if (isRoot || childCount === 0) return;
+                        if (childCount === 0) return;
                         setExpandedFolderKeys((prev) => {
                           const next = new Set(prev);
                           if (next.has(entry.key)) next.delete(entry.key);
@@ -504,10 +546,10 @@ export default function ResourceLibrarySaveModal({
                         >
                           <button
                             type="button"
-                            className={`resource-library-save-expander ${childCount > 0 && !isRoot ? 'is-folder' : 'is-empty'}`}
+                            className={`resource-library-save-expander ${childCount > 0 ? 'is-folder' : 'is-empty'}`}
                             onClick={(event) => {
                               event.stopPropagation();
-                              if (childCount === 0 || isRoot) return;
+                              if (childCount === 0) return;
                               setExpandedFolderKeys((prev) => {
                                 const next = new Set(prev);
                                 if (next.has(entry.key)) next.delete(entry.key);
@@ -515,16 +557,38 @@ export default function ResourceLibrarySaveModal({
                                 return next;
                               });
                             }}
-                            aria-label={childCount > 0 && !isRoot ? (isExpanded ? '收起目录' : '展开目录') : '目录'}
+                            aria-label={childCount > 0 ? (isExpanded ? '收起目录' : '展开目录') : '目录'}
                           >
-                            {childCount > 0 && !isRoot ? (isExpanded ? <CaretDownOutlined /> : <CaretRightOutlined />) : null}
+                            {childCount > 0 ? (isExpanded ? <CaretDownOutlined /> : <CaretRightOutlined />) : null}
                           </button>
                           <span className="resource-library-save-folder-icon"><FolderFilled /></span>
-                          <span className="resource-library-save-folder-name">{entry.name}</span>
+                          {isEditing ? (
+                            <input
+                              ref={renameInputRef}
+                              type="text"
+                              className="resource-library-save-folder-rename-input"
+                              value={editingFolderName}
+                              onChange={(event) => setEditingFolderName(event.target.value)}
+                              onClick={(event) => event.stopPropagation()}
+                              onDoubleClick={(event) => event.stopPropagation()}
+                              onBlur={() => commitFolderRename(entry.key, entry.name)}
+                              onKeyDown={(event) => {
+                                if (event.key === 'Enter') {
+                                  event.preventDefault();
+                                  commitFolderRename(entry.key, entry.name);
+                                } else if (event.key === 'Escape') {
+                                  event.preventDefault();
+                                  setEditingFolderKey(null);
+                                  setEditingFolderName('');
+                                }
+                              }}
+                            />
+                          ) : (
+                            <span className="resource-library-save-folder-name">{entry.name}</span>
+                          )}
                         </span>
                       </span>
                       <span className="resource-library-save-col col-time">{entry.lastEdit || '--'}</span>
-                      <span className="resource-library-save-col col-path">{entry.path}</span>
                     </div>
                   );
                 })}
@@ -534,16 +598,7 @@ export default function ResourceLibrarySaveModal({
 
           <div className="resource-library-save-footer">
             <div className="resource-library-save-name-field">
-              <span>名称</span>
-              <div className="resource-library-save-name-field-main">
-                <Input
-                  value={draftName}
-                  onChange={(event) => setDraftName(event.target.value)}
-                  placeholder="输入保存名称"
-                  maxLength={120}
-                />
-                <div className="resource-library-save-path-inline" title={selectedPath}>{selectedPath}</div>
-              </div>
+              <Button onClick={handleCreateFolder}>新建文件夹</Button>
             </div>
             <div className="resource-library-save-actions">
               <Button onClick={onClose}>取消</Button>

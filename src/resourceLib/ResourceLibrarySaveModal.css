@@ -2,6 +2,7 @@
   position: fixed;
   inset: 0;
   z-index: 1000;
+  background: rgba(15, 23, 42, 0.28);
   pointer-events: none;
 }
 
@@ -191,6 +192,38 @@
   background: rgba(255, 255, 255, 0.88);
 }
 
+.resource-library-save-meta {
+  padding: 14px 20px 12px;
+  border-bottom: 1px solid rgba(28, 28, 30, 0.08);
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.resource-library-save-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.resource-library-save-meta-row + .resource-library-save-meta-row {
+  margin-top: 10px;
+}
+
+.resource-library-save-meta-row > label {
+  color: #5b5b63;
+  font-size: 13px;
+  flex: 0 0 44px;
+  text-align: right;
+}
+
+.resource-library-save-meta-row .ant-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.resource-library-save-meta-row .ant-input {
+  border-radius: 10px !important;
+}
+
 .resource-library-save-close-btn {
   width: 24px;
   height: 24px;
@@ -209,7 +242,7 @@
 .resource-library-save-list-header,
 .resource-library-save-row {
   display: grid;
-  grid-template-columns: minmax(280px, 1.7fr) 180px minmax(320px, 1.2fr);
+  grid-template-columns: minmax(320px, 1fr) 220px;
   align-items: center;
 }
 
@@ -305,6 +338,21 @@
   white-space: nowrap;
 }
 
+.resource-library-save-folder-rename-input {
+  width: min(360px, 100%);
+  min-width: 120px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid #0a84ff;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.98);
+  color: #1f1f24;
+  font-size: 13px;
+  line-height: 26px;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.16);
+}
+
 .resource-library-save-footer {
   display: flex;
   align-items: center;
@@ -316,31 +364,10 @@
 
 .resource-library-save-name-field {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
   flex: 1;
   min-width: 0;
-}
-
-.resource-library-save-name-field > span {
-  color: #5b5b63;
-  font-size: 13px;
-  flex: 0 0 auto;
-  line-height: 32px;
-}
-
-.resource-library-save-name-field-main {
-  min-width: 0;
-  flex: 1;
-}
-
-.resource-library-save-path-inline {
-  margin-top: 6px;
-  color: #7a7a82;
-  font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .resource-library-save-actions {

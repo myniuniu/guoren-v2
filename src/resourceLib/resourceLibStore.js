@@ -1014,6 +1014,31 @@ export function addItemToLibraryId(data, libraryId = 'personal', item) {
   return next;
 }
 
+export function renameItemByLibraryId(data, libraryId = 'personal', key, name) {
+  const normalizedName = String(name || '').trim();
+  if (!normalizedName) return data;
+
+  const next = libraryId === 'personal'
+    ? {
+        ...data,
+        personal: (data.personal || []).map((item) => (
+          item.key === key ? { ...item, name: normalizedName, lastEdit: now() } : item
+        )),
+      }
+    : {
+        ...data,
+        organizations: {
+          ...(data.organizations || {}),
+          [libraryId]: (data.organizations?.[libraryId] || []).map((item) => (
+            item.key === key ? { ...item, name: normalizedName, lastEdit: now() } : item
+          )),
+        },
+      };
+
+  saveResourceLib(next);
+  return next;
+}
+
 // 重命名
 export function renameItem(data, scope, key, name) {
   const list = getLibraryList(data, scope);
