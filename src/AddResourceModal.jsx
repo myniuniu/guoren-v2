@@ -1,49 +1,159 @@
 import { Modal } from 'antd';
 import {
-  CloudOutlined,
+  BorderOutlined,
+  CheckSquareOutlined,
   DatabaseOutlined,
   DesktopOutlined,
-  CheckSquareOutlined,
-  SmileOutlined,
   EditOutlined,
-  UserOutlined,
-  RightOutlined,
+  FileTextOutlined,
   NodeIndexOutlined,
+  RightOutlined,
+  SmileOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
 import './AddResourceModal.css';
 
-const resourceCategories = [
+const libraryEntry = {
+  key: 'resource-lib',
+  icon: <DatabaseOutlined />,
+  label: '资料库',
+  type: 'file',
+  moduleKey: 'RESOURCE_LIBRARY',
+  title: '从资料库添加资料',
+  description: '直接选择已有资料、目录和标签，减少重复创建。',
+  actionLabel: '选择资料',
+};
+
+const toolEntries = [
   {
-    title: '从平台选择',
-    items: [
-      { key: 'cloud', icon: <CloudOutlined />, label: '云盘', type: 'file' },
-      { key: 'resource-lib', icon: <DatabaseOutlined />, label: '资料库', type: 'file', moduleKey: 'RESOURCE_LIBRARY' },
-    ],
+    key: 'note',
+    icon: <FileTextOutlined />,
+    label: '笔记',
+    type: 'note',
+    description: '记录纪要、摘要和补充说明',
+    iconColor: '#1677ff',
+    iconBackground: '#eaf3ff',
   },
+  {
+    key: 'whiteboard',
+    icon: <BorderOutlined />,
+    label: '白板',
+    type: 'whiteboard',
+    description: '用于脑暴共创、流程梳理和讨论',
+    iconColor: '#7c3aed',
+    iconBackground: '#f2ebff',
+  },
+];
+
+const secondaryGroups = [
   {
     title: '活动',
     items: [
-      { key: 'seminar', icon: <DesktopOutlined />, label: '研讨会', type: 'activity' },
+      {
+        key: 'seminar',
+        icon: <DesktopOutlined />,
+        label: '研讨会',
+        type: 'activity',
+        description: '创建互动研讨活动',
+        iconColor: '#12b76a',
+        iconBackground: '#e8fff3',
+      },
     ],
   },
   {
-    title: '工具',
-    items: [],
+    title: '问卷',
+    items: [
+      {
+        key: 'survey',
+        icon: <CheckSquareOutlined />,
+        label: '调查',
+        type: 'survey',
+        description: '发起信息收集',
+        iconColor: '#1677ff',
+        iconBackground: '#eaf3ff',
+      },
+      {
+        key: 'vote',
+        icon: <SmileOutlined />,
+        label: '投票',
+        type: 'vote',
+        description: '快速收集意见',
+        iconColor: '#fa8c16',
+        iconBackground: '#fff2e8',
+      },
+      {
+        key: 'exam',
+        icon: <EditOutlined />,
+        label: '考试',
+        type: 'exam',
+        description: '组织测验考核',
+        iconColor: '#722ed1',
+        iconBackground: '#f4ebff',
+      },
+      {
+        key: 'register',
+        icon: <UserOutlined />,
+        label: '报名',
+        type: 'register',
+        description: '收集参与名单',
+        iconColor: '#13c2c2',
+        iconBackground: '#e6fffb',
+      },
+    ],
   },
   {
     title: '知识体系',
     items: [
-      { key: 'knowledge-graph', icon: <NodeIndexOutlined />, label: '知识图谱', type: 'knowledgeGraph' },
+      {
+        key: 'knowledge-graph',
+        icon: <NodeIndexOutlined />,
+        label: '知识图谱',
+        type: 'knowledgeGraph',
+        description: '梳理知识结构与关联',
+        iconColor: '#1677ff',
+        iconBackground: '#eef4ff',
+      },
     ],
   },
 ];
 
-const questionnaireItems = [
-  { key: 'survey', icon: <CheckSquareOutlined />, label: '调查', type: 'survey' },
-  { key: 'vote', icon: <SmileOutlined />, label: '投票', type: 'vote' },
-  { key: 'exam', icon: <EditOutlined />, label: '考试', type: 'exam' },
-  { key: 'register', icon: <UserOutlined />, label: '报名', type: 'register' },
-];
+function ResourceLibraryIllustration() {
+  return (
+    <svg viewBox="0 0 232 164" className="add-resource-modal-hero-art" aria-hidden="true">
+      <defs>
+        <linearGradient id="libraryCardBg" x1="16" y1="18" x2="220" y2="154" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#f8fbff" />
+          <stop offset="1" stopColor="#e7f0ff" />
+        </linearGradient>
+        <linearGradient id="libraryFolderFill" x1="76" y1="70" x2="172" y2="150" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#6aa8ff" />
+          <stop offset="1" stopColor="#1677ff" />
+        </linearGradient>
+      </defs>
+      <rect x="18" y="16" width="196" height="132" rx="26" fill="url(#libraryCardBg)" />
+      <rect x="54" y="32" width="74" height="14" rx="7" fill="#dbe9ff" />
+      <rect x="135" y="36" width="42" height="10" rx="5" fill="#c8dcff" />
+      <path
+        d="M74 72h34l12 14h46c10.493 0 19 8.507 19 19v21c0 10.493-8.507 19-19 19H74c-10.493 0-19-8.507-19-19V91c0-10.493 8.507-19 19-19z"
+        fill="url(#libraryFolderFill)"
+      />
+      <path
+        d="M74 72h34l12 14h46c10.493 0 19 8.507 19 19v5H55v-19c0-10.493 8.507-19 19-19z"
+        fill="#9ac4ff"
+        opacity="0.95"
+      />
+      <rect x="79" y="102" width="58" height="9" rx="4.5" fill="#ffffff" opacity="0.96" />
+      <rect x="79" y="117" width="77" height="9" rx="4.5" fill="#dceaff" />
+      <rect x="148" y="78" width="34" height="44" rx="10" fill="#ffffff" stroke="#c9ddff" strokeWidth="2" />
+      <rect x="156" y="90" width="18" height="4" rx="2" fill="#7eaefc" />
+      <rect x="156" y="99" width="12" height="4" rx="2" fill="#bfd6ff" />
+      <path d="M44 104l10-6 4 14-16-4 2-4z" fill="#fef3c7" stroke="#f59e0b" strokeWidth="2" strokeLinejoin="round" />
+      <path d="M47 90l4 8" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round" />
+      <path d="M193 70l8-8" stroke="#8ab6ff" strokeWidth="4" strokeLinecap="round" />
+      <path d="M199 84h10" stroke="#8ab6ff" strokeWidth="4" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 function AddResourceModal({ open, onClose, onAdd, onPickLibrary, enabledEntries }) {
   const isEntryEnabled = (item) => {
@@ -51,12 +161,14 @@ function AddResourceModal({ open, onClose, onAdd, onPickLibrary, enabledEntries 
     return enabledEntries.includes(item.moduleKey);
   };
 
-  const filteredCategories = resourceCategories
-    .map((category) => ({
-      ...category,
-      items: category.items.filter(isEntryEnabled),
+  const libraryEnabled = isEntryEnabled(libraryEntry);
+  const visibleToolEntries = toolEntries.filter(isEntryEnabled);
+  const visibleSecondaryGroups = secondaryGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter(isEntryEnabled),
     }))
-    .filter((category) => category.items.length > 0);
+    .filter((group) => group.items.length > 0);
 
   const handleItemClick = (item) => {
     if (item.key === 'resource-lib') {
@@ -64,11 +176,12 @@ function AddResourceModal({ open, onClose, onAdd, onPickLibrary, enabledEntries 
       onClose?.();
       return;
     }
-    onAdd({
+
+    onAdd?.({
       name: `新建${item.label}资料`,
       type: item.type,
     });
-    onClose();
+    onClose?.();
   };
 
   return (
@@ -77,50 +190,100 @@ function AddResourceModal({ open, onClose, onAdd, onPickLibrary, enabledEntries 
       onCancel={onClose}
       footer={null}
       title={null}
-      closable={true}
-      width={560}
+      closable
+      width={760}
       className="add-resource-modal"
       centered
+      destroyOnClose
     >
-      <div className="modal-title">添加资料</div>
-      <div className="modal-divider" />
-      <div className="modal-content">
-        {/* Left Column */}
-        <div className="modal-column">
-          {filteredCategories.map((category) => (
-            <div key={category.title} className="category-group">
-              <div className="category-title">{category.title}</div>
-              {category.items.map((item) => (
-                <div
-                  key={item.key}
-                  className="resource-item"
-                  onClick={() => handleItemClick(item)}
-                >
-                  <span className="resource-item-icon">{item.icon}</span>
-                  <span className="resource-item-label">{item.label}</span>
-                  <RightOutlined className="resource-item-arrow" />
-                </div>
-              ))}
-            </div>
-          ))}
+      <div className="add-resource-modal-shell">
+        <div className="add-resource-modal-heading">
+          <div className="add-resource-modal-title">添加资料</div>
+          <div className="add-resource-modal-subtitle">从资料库选择已有内容，或新建协作资料。</div>
         </div>
 
-        {/* Right Column */}
-        <div className="modal-column">
-          <div className="category-group">
-            <div className="category-title">问卷</div>
-            {questionnaireItems.map((item) => (
-              <div
-                key={item.key}
-                className="resource-item"
-                onClick={() => handleItemClick(item)}
-              >
-                <span className="resource-item-icon">{item.icon}</span>
-                <span className="resource-item-label">{item.label}</span>
-                <RightOutlined className="resource-item-arrow" />
+        {libraryEnabled ? (
+          <button
+            type="button"
+            className="add-resource-modal-hero"
+            onClick={() => handleItemClick(libraryEntry)}
+          >
+            <div className="add-resource-modal-hero-copy">
+              <div className="add-resource-modal-hero-title">{libraryEntry.title}</div>
+              <div className="add-resource-modal-hero-desc">{libraryEntry.description}</div>
+              <span className="add-resource-modal-hero-action">
+                {libraryEntry.actionLabel}
+                <RightOutlined />
+              </span>
+            </div>
+            <div className="add-resource-modal-hero-figure">
+              <ResourceLibraryIllustration />
+            </div>
+          </button>
+        ) : null}
+
+        <div className="add-resource-modal-grid">
+          {visibleToolEntries.length ? (
+            <section className="add-resource-modal-panel add-resource-modal-panel-tools">
+              <div className="add-resource-modal-panel-title">工具</div>
+              <div className="add-resource-modal-panel-subtitle">快速新建协作内容</div>
+              <div className="add-resource-modal-tool-list">
+                {visibleToolEntries.map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    className="add-resource-modal-tool-item"
+                    onClick={() => handleItemClick(item)}
+                  >
+                    <span
+                      className="add-resource-modal-tool-icon"
+                      style={{ color: item.iconColor, background: item.iconBackground }}
+                    >
+                      {item.icon}
+                    </span>
+                    <span className="add-resource-modal-tool-copy">
+                      <strong>{item.label}</strong>
+                      <span>{item.description}</span>
+                    </span>
+                    <RightOutlined className="add-resource-modal-item-arrow" />
+                  </button>
+                ))}
               </div>
-            ))}
-          </div>
+            </section>
+          ) : null}
+
+          {visibleSecondaryGroups.length ? (
+            <section className="add-resource-modal-panel add-resource-modal-panel-secondary">
+              <div className="add-resource-modal-panel-title">其它方式</div>
+              <div className="add-resource-modal-panel-subtitle">补充活动、问卷与知识结构内容</div>
+              <div className="add-resource-modal-secondary-groups">
+                {visibleSecondaryGroups.map((group) => (
+                  <div key={group.title} className="add-resource-modal-secondary-group">
+                    <div className="add-resource-modal-secondary-group-title">{group.title}</div>
+                    <div className="add-resource-modal-secondary-list">
+                      {group.items.map((item) => (
+                        <button
+                          key={item.key}
+                          type="button"
+                          className="add-resource-modal-secondary-item"
+                          onClick={() => handleItemClick(item)}
+                        >
+                          <span
+                            className="add-resource-modal-secondary-icon"
+                            style={{ color: item.iconColor, background: item.iconBackground }}
+                          >
+                            {item.icon}
+                          </span>
+                          <span className="add-resource-modal-secondary-label">{item.label}</span>
+                          <RightOutlined className="add-resource-modal-item-arrow" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
         </div>
       </div>
     </Modal>
