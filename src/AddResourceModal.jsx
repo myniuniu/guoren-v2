@@ -20,7 +20,6 @@ const libraryEntry = {
   type: 'file',
   moduleKey: 'RESOURCE_LIBRARY',
   title: '从资料库添加资料',
-  description: '直接选择已有资料、目录和标签，减少重复创建。',
   actionLabel: '选择资料',
 };
 
@@ -194,7 +193,6 @@ function AddResourceModal({ open, onClose, onAdd, onPickLibrary, enabledEntries 
           >
             <div className="add-resource-modal-hero-copy">
               <div className="add-resource-modal-hero-title">{libraryEntry.title}</div>
-              <div className="add-resource-modal-hero-desc">{libraryEntry.description}</div>
               <span className="add-resource-modal-hero-action">
                 <span>{libraryEntry.actionLabel}</span>
                 <span className="add-resource-modal-hero-action-arrow">
