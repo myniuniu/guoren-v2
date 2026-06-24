@@ -5,7 +5,7 @@
 }
 
 .add-resource-modal .ant-modal-body {
-  padding: 28px;
+  padding: 18px;
 }
 
 .add-resource-modal .ant-modal-close {
@@ -22,26 +22,26 @@
 .add-resource-modal-shell {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
 }
 
 .add-resource-modal-heading {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
   padding-right: 40px;
 }
 
 .add-resource-modal-title {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 600;
   line-height: 1.2;
   color: #101828;
 }
 
 .add-resource-modal-subtitle {
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 13px;
+  line-height: 1.4;
   color: #667085;
 }
 
@@ -50,11 +50,11 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) 240px;
   align-items: center;
-  gap: 20px;
+  gap: 14px;
   width: 100%;
-  padding: 22px 24px;
+  padding: 15px 18px;
   border: 1px solid #dbe7fb;
-  border-radius: 24px;
+  border-radius: 18px;
   background: linear-gradient(135deg, #fafdff 0%, #eff5ff 52%, #e7f0ff 100%);
   cursor: pointer;
   text-align: left;
@@ -72,11 +72,11 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 12px;
+  gap: 8px;
 }
 
 .add-resource-modal-hero-title {
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 700;
   line-height: 1.25;
   color: #101828;
@@ -84,22 +84,22 @@
 
 .add-resource-modal-hero-desc {
   max-width: 420px;
-  font-size: 14px;
-  line-height: 1.7;
+  font-size: 12px;
+  line-height: 1.5;
   color: #475467;
 }
 
 .add-resource-modal-hero-action {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  min-height: 48px;
-  padding: 0 12px 0 18px;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 10px 0 14px;
   border: 1px solid #0b63e5;
   border-radius: 14px;
   background: linear-gradient(135deg, #1677ff 0%, #0b63e5 100%);
   color: #fff;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.01em;
   box-shadow:
@@ -111,8 +111,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.18);
   font-size: 13px;
@@ -128,12 +128,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 164px;
+  min-height: 118px;
 }
 
 .add-resource-modal-hero-art {
-  width: 232px;
-  height: 164px;
+  width: 188px;
+  height: 132px;
   display: block;
 }
 
@@ -143,28 +143,28 @@
   grid-template-areas:
     "activity activity"
     "tools knowledge";
-  gap: 16px;
+  gap: 12px;
 }
 
 .add-resource-modal-panel {
   min-width: 0;
   border: 1px solid #eaecf0;
-  border-radius: 22px;
+  border-radius: 18px;
   background: #fff;
-  padding: 20px;
+  padding: 14px;
 }
 
 .add-resource-modal-panel-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   line-height: 1.25;
   color: #101828;
 }
 
 .add-resource-modal-panel-subtitle {
-  margin-top: 4px;
-  font-size: 13px;
-  line-height: 1.5;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.4;
   color: #98a2b3;
 }
 
@@ -182,8 +182,8 @@
 
 .add-resource-modal-card-grid {
   display: grid;
-  gap: 14px;
-  margin-top: 16px;
+  gap: 10px;
+  margin-top: 10px;
 }
 
 .add-resource-modal-card-grid-activity {
@@ -216,11 +216,11 @@
 .add-resource-modal-card-item {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   min-width: 0;
-  min-height: 96px;
-  padding: 18px 20px;
-  border-radius: 20px;
+  min-height: 72px;
+  padding: 12px 14px;
+  border-radius: 16px;
   overflow: hidden;
 }
 
@@ -233,22 +233,22 @@
 }
 
 .add-resource-modal-card-icon {
-  width: 56px;
-  height: 56px;
-  font-size: 24px;
+  width: 42px;
+  height: 42px;
+  font-size: 20px;
 }
 
 .add-resource-modal-card-copy {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
   min-width: 0;
 }
 
 .add-resource-modal-card-copy strong {
   display: block;
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 600;
   line-height: 1.25;
   color: #101828;
@@ -260,8 +260,8 @@
 
 .add-resource-modal-card-copy span {
   display: block;
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: 12px;
+  line-height: 1.35;
   color: #667085;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -277,7 +277,7 @@
 
 @media (max-width: 768px) {
   .add-resource-modal .ant-modal-body {
-    padding: 22px 18px 18px;
+    padding: 16px 14px 14px;
   }
 
   .add-resource-modal-heading {
@@ -290,12 +290,12 @@
 
   .add-resource-modal-hero {
     grid-template-columns: 1fr;
-    gap: 12px;
-    padding: 18px;
+    gap: 10px;
+    padding: 14px;
   }
 
   .add-resource-modal-hero-title {
-    font-size: 24px;
+    font-size: 20px;
   }
 
   .add-resource-modal-hero-desc {
@@ -320,6 +320,6 @@
   }
 
   .add-resource-modal-panel {
-    padding: 18px;
+    padding: 12px;
   }
 }
