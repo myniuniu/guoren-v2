@@ -45,75 +45,63 @@ const toolEntries = [
   },
 ];
 
-const secondaryGroups = [
+const activityEntries = [
   {
-    title: '活动',
-    items: [
-      {
-        key: 'seminar',
-        icon: <DesktopOutlined />,
-        label: '研讨会',
-        type: 'activity',
-        description: '创建互动研讨活动',
-        iconColor: '#12b76a',
-        iconBackground: '#e8fff3',
-      },
-    ],
+    key: 'seminar',
+    icon: <DesktopOutlined />,
+    label: '研讨会',
+    type: 'activity',
+    description: '创建互动研讨活动',
+    iconColor: '#12b76a',
+    iconBackground: '#e8fff3',
   },
   {
-    title: '问卷',
-    items: [
-      {
-        key: 'survey',
-        icon: <CheckSquareOutlined />,
-        label: '调查',
-        type: 'survey',
-        description: '发起信息收集',
-        iconColor: '#1677ff',
-        iconBackground: '#eaf3ff',
-      },
-      {
-        key: 'vote',
-        icon: <SmileOutlined />,
-        label: '投票',
-        type: 'vote',
-        description: '快速收集意见',
-        iconColor: '#fa8c16',
-        iconBackground: '#fff2e8',
-      },
-      {
-        key: 'exam',
-        icon: <EditOutlined />,
-        label: '考试',
-        type: 'exam',
-        description: '组织测验考核',
-        iconColor: '#722ed1',
-        iconBackground: '#f4ebff',
-      },
-      {
-        key: 'register',
-        icon: <UserOutlined />,
-        label: '报名',
-        type: 'register',
-        description: '收集参与名单',
-        iconColor: '#13c2c2',
-        iconBackground: '#e6fffb',
-      },
-    ],
+    key: 'survey',
+    icon: <CheckSquareOutlined />,
+    label: '调查',
+    type: 'survey',
+    description: '发起信息收集',
+    iconColor: '#1677ff',
+    iconBackground: '#eaf3ff',
   },
   {
-    title: '知识体系',
-    items: [
-      {
-        key: 'knowledge-graph',
-        icon: <NodeIndexOutlined />,
-        label: '知识图谱',
-        type: 'knowledgeGraph',
-        description: '梳理知识结构与关联',
-        iconColor: '#1677ff',
-        iconBackground: '#eef4ff',
-      },
-    ],
+    key: 'vote',
+    icon: <SmileOutlined />,
+    label: '投票',
+    type: 'vote',
+    description: '快速收集意见',
+    iconColor: '#fa8c16',
+    iconBackground: '#fff2e8',
+  },
+  {
+    key: 'exam',
+    icon: <EditOutlined />,
+    label: '考试',
+    type: 'exam',
+    description: '组织测验考核',
+    iconColor: '#722ed1',
+    iconBackground: '#f4ebff',
+  },
+  {
+    key: 'register',
+    icon: <UserOutlined />,
+    label: '报名',
+    type: 'register',
+    description: '收集参与名单',
+    iconColor: '#13c2c2',
+    iconBackground: '#e6fffb',
+  },
+];
+
+const knowledgeEntries = [
+  {
+    key: 'knowledge-graph',
+    icon: <NodeIndexOutlined />,
+    label: '知识图谱',
+    type: 'knowledgeGraph',
+    description: '梳理知识结构与关联',
+    iconColor: '#1677ff',
+    iconBackground: '#eef4ff',
   },
 ];
 
@@ -162,13 +150,9 @@ function AddResourceModal({ open, onClose, onAdd, onPickLibrary, enabledEntries 
   };
 
   const libraryEnabled = isEntryEnabled(libraryEntry);
+  const visibleActivityEntries = activityEntries.filter(isEntryEnabled);
   const visibleToolEntries = toolEntries.filter(isEntryEnabled);
-  const visibleSecondaryGroups = secondaryGroups
-    .map((group) => ({
-      ...group,
-      items: group.items.filter(isEntryEnabled),
-    }))
-    .filter((group) => group.items.length > 0);
+  const visibleKnowledgeEntries = knowledgeEntries.filter(isEntryEnabled);
 
   const handleItemClick = (item) => {
     if (item.key === 'resource-lib') {
@@ -212,8 +196,10 @@ function AddResourceModal({ open, onClose, onAdd, onPickLibrary, enabledEntries 
               <div className="add-resource-modal-hero-title">{libraryEntry.title}</div>
               <div className="add-resource-modal-hero-desc">{libraryEntry.description}</div>
               <span className="add-resource-modal-hero-action">
-                {libraryEntry.actionLabel}
-                <RightOutlined />
+                <span>{libraryEntry.actionLabel}</span>
+                <span className="add-resource-modal-hero-action-arrow">
+                  <RightOutlined />
+                </span>
               </span>
             </div>
             <div className="add-resource-modal-hero-figure">
@@ -223,25 +209,25 @@ function AddResourceModal({ open, onClose, onAdd, onPickLibrary, enabledEntries 
         ) : null}
 
         <div className="add-resource-modal-grid">
-          {visibleToolEntries.length ? (
-            <section className="add-resource-modal-panel add-resource-modal-panel-tools">
-              <div className="add-resource-modal-panel-title">工具</div>
-              <div className="add-resource-modal-panel-subtitle">快速新建协作内容</div>
-              <div className="add-resource-modal-tool-list">
-                {visibleToolEntries.map((item) => (
+          {visibleActivityEntries.length ? (
+            <section className="add-resource-modal-panel add-resource-modal-panel-activity">
+              <div className="add-resource-modal-panel-title">活动</div>
+              <div className="add-resource-modal-panel-subtitle">研讨会与问卷互动内容</div>
+              <div className="add-resource-modal-card-grid add-resource-modal-card-grid-activity">
+                {visibleActivityEntries.map((item) => (
                   <button
                     key={item.key}
                     type="button"
-                    className="add-resource-modal-tool-item"
+                    className="add-resource-modal-card-item"
                     onClick={() => handleItemClick(item)}
                   >
                     <span
-                      className="add-resource-modal-tool-icon"
+                      className="add-resource-modal-card-icon"
                       style={{ color: item.iconColor, background: item.iconBackground }}
                     >
                       {item.icon}
                     </span>
-                    <span className="add-resource-modal-tool-copy">
+                    <span className="add-resource-modal-card-copy">
                       <strong>{item.label}</strong>
                       <span>{item.description}</span>
                     </span>
@@ -252,34 +238,59 @@ function AddResourceModal({ open, onClose, onAdd, onPickLibrary, enabledEntries 
             </section>
           ) : null}
 
-          {visibleSecondaryGroups.length ? (
-            <section className="add-resource-modal-panel add-resource-modal-panel-secondary">
-              <div className="add-resource-modal-panel-title">其它方式</div>
-              <div className="add-resource-modal-panel-subtitle">补充活动、问卷与知识结构内容</div>
-              <div className="add-resource-modal-secondary-groups">
-                {visibleSecondaryGroups.map((group) => (
-                  <div key={group.title} className="add-resource-modal-secondary-group">
-                    <div className="add-resource-modal-secondary-group-title">{group.title}</div>
-                    <div className="add-resource-modal-secondary-list">
-                      {group.items.map((item) => (
-                        <button
-                          key={item.key}
-                          type="button"
-                          className="add-resource-modal-secondary-item"
-                          onClick={() => handleItemClick(item)}
-                        >
-                          <span
-                            className="add-resource-modal-secondary-icon"
-                            style={{ color: item.iconColor, background: item.iconBackground }}
-                          >
-                            {item.icon}
-                          </span>
-                          <span className="add-resource-modal-secondary-label">{item.label}</span>
-                          <RightOutlined className="add-resource-modal-item-arrow" />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+          {visibleToolEntries.length ? (
+            <section className="add-resource-modal-panel add-resource-modal-panel-tools">
+              <div className="add-resource-modal-panel-title">工具</div>
+              <div className="add-resource-modal-panel-subtitle">快速新建协作内容</div>
+              <div className="add-resource-modal-card-grid add-resource-modal-card-grid-tools">
+                {visibleToolEntries.map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    className="add-resource-modal-card-item"
+                    onClick={() => handleItemClick(item)}
+                  >
+                    <span
+                      className="add-resource-modal-card-icon"
+                      style={{ color: item.iconColor, background: item.iconBackground }}
+                    >
+                      {item.icon}
+                    </span>
+                    <span className="add-resource-modal-card-copy">
+                      <strong>{item.label}</strong>
+                      <span>{item.description}</span>
+                    </span>
+                    <RightOutlined className="add-resource-modal-item-arrow" />
+                  </button>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {visibleKnowledgeEntries.length ? (
+            <section className="add-resource-modal-panel add-resource-modal-panel-knowledge">
+              <div className="add-resource-modal-panel-title">知识体系</div>
+              <div className="add-resource-modal-panel-subtitle">搭建知识结构与关联视图</div>
+              <div className="add-resource-modal-card-grid add-resource-modal-card-grid-knowledge">
+                {visibleKnowledgeEntries.map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    className="add-resource-modal-card-item"
+                    onClick={() => handleItemClick(item)}
+                  >
+                    <span
+                      className="add-resource-modal-card-icon"
+                      style={{ color: item.iconColor, background: item.iconBackground }}
+                    >
+                      {item.icon}
+                    </span>
+                    <span className="add-resource-modal-card-copy">
+                      <strong>{item.label}</strong>
+                      <span>{item.description}</span>
+                    </span>
+                    <RightOutlined className="add-resource-modal-item-arrow" />
+                  </button>
                 ))}
               </div>
             </section>
