@@ -7,6 +7,7 @@ import {
   Input,
   Modal,
   Segmented,
+  Switch,
   Tag,
   message,
 } from 'antd';
@@ -15,7 +16,10 @@ import {
   CaretDownOutlined,
   CaretRightOutlined,
   CheckCircleOutlined,
+  CloseOutlined,
   LeftOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
   CommentOutlined,
   DeleteOutlined,
   EditOutlined,
@@ -27,19 +31,24 @@ import {
   FolderAddOutlined,
   FolderOpenFilled,
   FolderOutlined,
+  GlobalOutlined,
   HomeOutlined,
   MessageOutlined,
   MoreOutlined,
+  PaperClipOutlined,
   PlayCircleOutlined,
   PlusOutlined,
   RightOutlined,
+  SearchOutlined,
   SendOutlined,
   SoundOutlined,
+  ThunderboltOutlined,
   SwapOutlined,
   TagsOutlined,
   UserOutlined,
   NodeIndexOutlined,
   DatabaseOutlined,
+  SettingOutlined,
 } from '@ant-design/icons';
 import AddResourceModal from './AddResourceModal';
 import AssessmentConfig from './AssessmentConfig';
@@ -206,6 +215,16 @@ function getDefaultLeftPanelWidth() {
   if (window.innerWidth <= 1120) return 308;
   if (window.innerWidth <= 1360) return 332;
   return 360;
+}
+
+function getAiKnowledgeGraphLeftPanelWidth(containerWidth) {
+  const fallbackWidth = typeof window === 'undefined' ? 1280 : window.innerWidth;
+  const width = containerWidth || fallbackWidth;
+  const minLeftWidth = 280;
+  const minRightWidth = 320;
+  const maxWidth = Math.max(minLeftWidth, width - minRightWidth);
+  const targetWidth = Math.round(width * 0.6);
+  return Math.max(minLeftWidth, Math.min(maxWidth, targetWidth));
 }
 
 function getTopicPanelViewStorageKey(scopeKey = 'default') {
@@ -390,6 +409,17 @@ function TopicDetail({
   const [knowledgeGraphPreviewMode, setKnowledgeGraphPreviewMode] = useState('preview');
   const [knowledgeGraphDrawerOpen, setKnowledgeGraphDrawerOpen] = useState(false);
   const [tabIndicatorStyle, setTabIndicatorStyle] = useState(EMPTY_TAB_INDICATOR);
+  const [aiActivePanel, setAiActivePanel] = useState('course');
+  const [aiSelectedSkill, setAiSelectedSkill] = useState(null);
+  const [aiSelectedStructure, setAiSelectedStructure] = useState('ubd');
+  const [aiStructureTouched, setAiStructureTouched] = useState(false);
+  const [aiSelectedOutline, setAiSelectedOutline] = useState(null);
+  const [aiSelectedToolGroup, setAiSelectedToolGroup] = useState('aigc');
+  const [aiSelectedTools, setAiSelectedTools] = useState([]);
+  const [aiInternetSearchEnabled, setAiInternetSearchEnabled] = useState(true);
+  const [aiPromptValue, setAiPromptValue] = useState('');
+  const [aiLibraryCollapsed, setAiLibraryCollapsed] = useState(false);
+  const [aiFloatingPanelOffset, setAiFloatingPanelOffset] = useState(0);
   const detailBodyRef = useRef(null);
   const detailTabsRef = useRef(null);
   const detailTabRefs = useRef(new Map());
@@ -399,6 +429,11 @@ function TopicDetail({
   const tagPickerScrollTimerRef = useRef(null);
   const isDraggingRef = useRef(false);
   const dragPayloadRef = useRef(null);
+  const aiComposerRef = useRef(null);
+  const aiPromptInputRef = useRef(null);
+  const aiComposerToolbarRef = useRef(null);
+  const aiFloatingPanelRef = useRef(null);
+  const aiToolbarAnchorRefs = useRef(new Map());
 
   useEffect(() => {
     setVersionData(loadTopicVersionData(topicAdminConfig, sceneConfig, topicStorageScopeKey));
@@ -431,6 +466,16 @@ function TopicDetail({
     setNewTagColor('#1677ff');
     setKnowledgeGraphDrawerOpen(false);
     setTabIndicatorStyle(EMPTY_TAB_INDICATOR);
+    setAiActivePanel('course');
+    setAiSelectedSkill(null);
+    setAiSelectedStructure('ubd');
+    setAiStructureTouched(false);
+    setAiSelectedOutline(null);
+    setAiSelectedToolGroup('aigc');
+    setAiSelectedTools([]);
+    setAiInternetSearchEnabled(true);
+    setAiPromptValue('');
+    setAiLibraryCollapsed(false);
   }, [sceneConfig, topicAdminConfig, topicStorageScopeKey, topicTitle]);
 
   const currentVersion = getCurrentVersion(versionData);
@@ -612,9 +657,100 @@ function TopicDetail({
   const previewParentFolder = previewItem?.parentKey
     ? resources.find((resource) => resource.key === previewItem.parentKey && resource.isFolder) || null
     : null;
+  const aiStructureOptions = [
+    { key: 'five-step', label: '五步教学法', description: '导入-讲授-练习-小结-作业', icon: <BranchesOutlined /> },
+    { key: '5e', label: '5E教学法', description: '参与-探索-解释-拓展-评价', icon: <SwapOutlined /> },
+    { key: 'pbl', label: 'PBL教学法', description: '项目驱动，解决真实问题', icon: <AppstoreOutlined /> },
+    { key: 'flip', label: '翻转课堂', description: '课前自学-课堂互动深化', icon: <EditOutlined /> },
+    { key: 'ubd', label: 'UbD逆向设计', description: '从目标出发逆向规划教学', icon: <CheckCircleOutlined /> },
+    { key: 'custom', label: '自定义结构', description: '自由定义课程结构', icon: <NodeIndexOutlined /> },
+  ];
+  const aiOutlineOptions = [
+    '《北京市中小学人工智能教育地方课程纲要》',
+    '《上海市中小学人工智能课程指南》',
+    '《广东省中小学人工智能课程指导纲要》',
+    '《杭州市中小学人工智能教育地方课程纲要》',
+    '《内蒙古自治区中小学人工智能课程纲要》',
+    '《福州市中小学人工智能通识教育课程纲要与实施指南》',
+  ];
+  const aiToolGroups = [
+    { key: 'aigc', label: 'AIGC创作工坊', items: ['AI写作', 'AI绘画', 'AI视频', 'AI建模', 'AI音乐', 'AI编程'] },
+    { key: 'experience', label: 'AI体验馆', items: ['图像识别', '语音交互', '智能推荐', '机器翻译'] },
+    { key: 'training', label: 'AI训练馆', items: ['数据标注', '模型训练', '推理部署', '效果评测'] },
+  ];
+  const aiGenerationSkills = [
+    { key: 'course', label: '课程生成', description: '生成课程蓝图、目标、活动与课时安排。' },
+    { key: 'courseware', label: '课件生成', description: '生成适合授课展示的课件内容与页面结构。' },
+    { key: 'teaching-plan', label: '教案生成', description: '生成课堂流程、提问策略与教学组织建议。' },
+    { key: 'interactive-courseware', label: '互动课件生成', description: '生成包含互动环节与反馈机制的课件方案。' },
+  ];
+  const hasAiFloatingPanel = aiActivePanel === 'plus' || aiActivePanel === 'structure' || aiActivePanel === 'outline' || aiActivePanel === 'tool';
+  const selectedStructureOption = aiStructureOptions.find((item) => item.key === aiSelectedStructure) || aiStructureOptions[4];
+  const selectedToolGroup = aiToolGroups.find((group) => group.key === aiSelectedToolGroup) || aiToolGroups[0];
+  const aiStructureLabel = aiStructureTouched ? selectedStructureOption.label : '课程结构';
+  const aiOutlineLabel = aiSelectedOutline || '课程标准/纲要';
+  const aiToolLabel = aiSelectedTools.length === 0
+    ? '实训工具'
+    : aiSelectedTools.length <= 2
+      ? aiSelectedTools.join('、')
+      : `${aiSelectedTools.slice(0, 2).join('、')}等${aiSelectedTools.length}项`;
+  const aiVisibleSkills = aiSelectedSkill
+    ? aiGenerationSkills.filter((skill) => skill.label === aiSelectedSkill)
+    : aiGenerationSkills;
+  const isAiKnowledgeGraphLayout = activeTab === 'ai' && resourcePanelView === 'knowledgeGraph';
+  const aiComposerItems = aiSelectedSkill
+    ? [
+        { key: 'structure', label: aiStructureLabel },
+        { key: 'outline', label: aiOutlineLabel },
+        { key: 'tool', label: aiToolLabel },
+      ]
+    : [];
   const tagPickerItem = tagPickerTarget
     ? resources.find((resource) => resource.key === tagPickerTarget) || null
     : null;
+
+  const setAiToolbarAnchorRef = useCallback((key, node) => {
+    if (node) {
+      aiToolbarAnchorRefs.current.set(key, node);
+      return;
+    }
+    aiToolbarAnchorRefs.current.delete(key);
+  }, []);
+
+  const applyAiKnowledgeGraphLeftPanelWidth = useCallback(() => {
+    const containerWidth = detailBodyRef.current?.getBoundingClientRect().width || window.innerWidth;
+    setLeftPanelWidth(getAiKnowledgeGraphLeftPanelWidth(containerWidth));
+  }, []);
+
+  const updateAiFloatingPanelPosition = useCallback(() => {
+    if (!hasAiFloatingPanel) return;
+    const toolbarNode = aiComposerToolbarRef.current;
+    const panelNode = aiFloatingPanelRef.current;
+    const anchorNode = aiToolbarAnchorRefs.current.get(aiActivePanel) || null;
+
+    if (!toolbarNode || !panelNode || !anchorNode) return;
+
+    const toolbarRect = toolbarNode.getBoundingClientRect();
+    const panelRect = panelNode.getBoundingClientRect();
+    const anchorRect = anchorNode.getBoundingClientRect();
+    const anchorCenter = anchorRect.left - toolbarRect.left + (anchorRect.width / 2);
+    const maxLeft = Math.max(0, toolbarRect.width - panelRect.width);
+    const nextLeft = Math.max(0, Math.min(maxLeft, anchorCenter - (panelRect.width / 2)));
+
+    setAiFloatingPanelOffset((prev) => (Math.abs(prev - nextLeft) < 1 ? prev : nextLeft));
+  }, [aiActivePanel, hasAiFloatingPanel]);
+
+  const toggleAiPanel = useCallback((panelKey) => {
+    setAiActivePanel((prev) => (prev === panelKey ? 'course' : panelKey));
+  }, []);
+
+  const toggleAiToolSelection = (toolName) => {
+    setAiSelectedTools((prev) => (
+      prev.includes(toolName)
+        ? prev.filter((item) => item !== toolName)
+        : [...prev, toolName]
+    ));
+  };
 
   const clearTagPickerScrollTimer = () => {
     if (!tagPickerScrollTimerRef.current) return;
@@ -754,11 +890,15 @@ function TopicDetail({
       const minLeftWidth = 280;
       const minRightWidth = 320;
       const maxWidth = Math.max(minLeftWidth, containerWidth - minRightWidth);
+      if (isAiKnowledgeGraphLayout) {
+        setLeftPanelWidth(getAiKnowledgeGraphLeftPanelWidth(containerWidth));
+        return;
+      }
       setLeftPanelWidth((prev) => Math.min(prev, maxWidth));
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [isAiKnowledgeGraphLayout]);
 
   useEffect(() => {
     if (!knowledgeGraphPickerOpen && resourcePanelView !== 'knowledgeGraph') return;
@@ -1289,6 +1429,15 @@ function TopicDetail({
     return () => window.cancelAnimationFrame(frameId);
   }, [activeTab, updateTabIndicator]);
 
+  useLayoutEffect(() => {
+    if (!hasAiFloatingPanel) return undefined;
+    const frameId = window.requestAnimationFrame(() => {
+      updateAiFloatingPanelPosition();
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [aiActivePanel, hasAiFloatingPanel, updateAiFloatingPanelPosition]);
+
   useEffect(() => {
     const handleViewportChange = () => {
       updateTabIndicator();
@@ -1311,6 +1460,50 @@ function TopicDetail({
     };
   }, [activeTab, updateTabIndicator]);
 
+  useEffect(() => {
+    if (!hasAiFloatingPanel) return undefined;
+
+    const handleResize = () => {
+      updateAiFloatingPanelPosition();
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [hasAiFloatingPanel, updateAiFloatingPanelPosition]);
+
+  useEffect(() => {
+    if (!hasAiFloatingPanel || typeof ResizeObserver === 'undefined' || !aiComposerToolbarRef.current) return undefined;
+
+    const observer = new ResizeObserver(() => {
+      updateAiFloatingPanelPosition();
+    });
+
+    observer.observe(aiComposerToolbarRef.current);
+    return () => observer.disconnect();
+  }, [hasAiFloatingPanel, updateAiFloatingPanelPosition]);
+
+  useEffect(() => {
+    if (!hasAiFloatingPanel) return undefined;
+
+    const handlePointerDown = (event) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (aiFloatingPanelRef.current?.contains(target)) return;
+      if (target instanceof Element && target.closest('[data-ai-panel-trigger="true"]')) return;
+      setAiActivePanel('course');
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
+  }, [hasAiFloatingPanel]);
+
+  useLayoutEffect(() => {
+    const node = aiPromptInputRef.current;
+    if (!node) return;
+    node.style.height = '0px';
+    node.style.height = `${node.scrollHeight}px`;
+  }, [aiPromptValue]);
+
   const handleUpdateAssessment = (assessment) => {
     const newData = updateAssessment(versionData, currentVersion.id, assessment);
     setVersionData(newData);
@@ -1324,6 +1517,9 @@ function TopicDetail({
   const handleSwitchResourcePanelView = (nextView) => {
     setResourcePanelView(nextView);
     if (nextView === 'knowledgeGraph') {
+      if (activeTab === 'ai') {
+        applyAiKnowledgeGraphLeftPanelWidth();
+      }
       setResourceLibraryData(loadResourceLib());
       if (previewItem && !previewItem.__kgMirror) {
         setPreviewItem(null);
@@ -3199,7 +3395,12 @@ function TopicDetail({
                 key={tab.key}
                 ref={(node) => setDetailTabRef(tab.key, node)}
                 className={`detail-tab ${activeTab === tab.key ? 'detail-tab-active' : ''}`}
-                onClick={() => setActiveTab(tab.key)}
+                onClick={() => {
+                  setActiveTab(tab.key);
+                  if (tab.key === 'ai' && resourcePanelView === 'knowledgeGraph') {
+                    applyAiKnowledgeGraphLeftPanelWidth();
+                  }
+                }}
               >
                 {tab.label}
               </div>
@@ -3422,7 +3623,7 @@ function TopicDetail({
               </>
             ) : (
               <div className="topic-knowledge-panel-shell">
-                {renderKnowledgeGraphSidebar()}
+                {isAiKnowledgeGraphLayout ? renderKnowledgeGraphPreviewPane() : renderKnowledgeGraphSidebar()}
               </div>
             )}
           </div>
@@ -3430,7 +3631,328 @@ function TopicDetail({
           <div className="topic-sidebar-resize-handle" onMouseDown={handleSidebarResizeStart} />
 
           <div className="detail-right-panel">
-            {resourcePanelView === 'knowledgeGraph' ? renderKnowledgeGraphPreviewPane() : (
+            {activeTab === 'ai' ? (
+              <div className="topic-ai-shell">
+                <div className="topic-ai-main">
+                  <div className="topic-ai-workbench">
+                    <div className="topic-ai-toolbar">
+                      <div className="topic-ai-agent">
+                        <span className="topic-ai-agent-icon">
+                          <MessageOutlined />
+                        </span>
+                        <span>课程创作智能体</span>
+                      </div>
+                      <div className="topic-ai-toolbar-actions">
+                        <span className="topic-ai-toolbar-action">
+                          <CommentOutlined />
+                          <span>新会话</span>
+                        </span>
+                        <span className="topic-ai-toolbar-action">
+                          <EyeOutlined />
+                          <span>共创记录</span>
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="topic-ai-stage">
+                      <div className="topic-ai-stage-body" />
+
+                      <div className="topic-ai-composer" ref={aiComposerRef}>
+                        <textarea
+                          ref={aiPromptInputRef}
+                          className="topic-ai-composer-input"
+                          placeholder="请描述课程主题、适用年级、课程结构与额外要求"
+                          value={aiPromptValue}
+                          onChange={(event) => setAiPromptValue(event.target.value)}
+                          rows={1}
+                        />
+                        <div className="topic-ai-composer-toolbar" ref={aiComposerToolbarRef}>
+                          {hasAiFloatingPanel ? (
+                            <div
+                              ref={aiFloatingPanelRef}
+                              className={`topic-ai-floating-panel topic-ai-floating-panel-${aiActivePanel}`}
+                              style={{ left: `${aiFloatingPanelOffset}px` }}
+                            >
+                              {aiActivePanel === 'plus' ? (
+                                <div className="topic-ai-plus-panel">
+                                  <div className="topic-ai-plus-menu">
+                                    <button type="button" className="topic-ai-plus-menu-item">
+                                      <span className="topic-ai-plus-menu-icon"><PaperClipOutlined /></span>
+                                      <span>上传本地文件</span>
+                                    </button>
+                                    <button type="button" className="topic-ai-plus-menu-item">
+                                      <span className="topic-ai-plus-menu-icon"><FileAddOutlined /></span>
+                                      <span>从资料库中添加</span>
+                                    </button>
+                                    <div className="topic-ai-plus-menu-item topic-ai-plus-menu-item-active">
+                                      <span className="topic-ai-plus-menu-icon"><ThunderboltOutlined /></span>
+                                      <span>技能</span>
+                                      <RightOutlined />
+                                    </div>
+                                    <div className="topic-ai-plus-menu-item topic-ai-plus-menu-item-switch">
+                                      <span className="topic-ai-plus-menu-item-copy">
+                                        <span className="topic-ai-plus-menu-icon"><GlobalOutlined /></span>
+                                        <span>互联网检索</span>
+                                      </span>
+                                      <Switch
+                                        size="small"
+                                        checked={aiInternetSearchEnabled}
+                                        onChange={setAiInternetSearchEnabled}
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="topic-ai-plus-skills">
+                                    <div className="topic-ai-plus-skills-head">
+                                      <div className="topic-ai-plus-skills-title">技能</div>
+                                      <div className="topic-ai-plus-skills-search">
+                                        <SearchOutlined />
+                                        <span>搜索技能</span>
+                                      </div>
+                                    </div>
+                                    <div className="topic-ai-plus-skill-list">
+                                      {aiGenerationSkills.map((skill) => (
+                                        <button
+                                          key={skill.key}
+                                          type="button"
+                                          className={`topic-ai-plus-skill-card ${aiSelectedSkill === skill.label ? 'topic-ai-plus-skill-card-active' : ''}`}
+                                          onClick={() => {
+                                            setAiSelectedSkill(skill.label);
+                                            setAiActivePanel('course');
+                                          }}
+                                        >
+                                          <span className="topic-ai-plus-skill-icon"><ThunderboltOutlined /></span>
+                                          <span className="topic-ai-plus-skill-copy">
+                                            <span className="topic-ai-plus-skill-name">{skill.label}</span>
+                                            <span className="topic-ai-plus-skill-desc">{skill.description}</span>
+                                          </span>
+                                        </button>
+                                      ))}
+                                    </div>
+                                    <button type="button" className="topic-ai-plus-manage">
+                                      <SettingOutlined />
+                                      <span>管理技能</span>
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : null}
+
+                              {aiActivePanel === 'structure' ? (
+                                <div className="topic-ai-selector-panel">
+                                  <div className="topic-ai-selector-head">
+                                    <div className="topic-ai-selector-title topic-ai-selector-title-required">课程结构</div>
+                                    <div className="topic-ai-selector-hint">选择一种适合当前课程的教学组织方式</div>
+                                  </div>
+                                  <div className="topic-ai-structure-grid">
+                                    {aiStructureOptions.map((option) => (
+                                      <button
+                                        key={option.key}
+                                        type="button"
+                                        className={`topic-ai-structure-card ${option.key === aiSelectedStructure ? 'topic-ai-structure-card-active' : ''}`}
+                                        onClick={() => {
+                                          setAiSelectedStructure(option.key);
+                                          setAiStructureTouched(true);
+                                        }}
+                                      >
+                                        <div className="topic-ai-structure-icon">{option.icon}</div>
+                                        <div className="topic-ai-structure-title">{option.label}</div>
+                                        <div className="topic-ai-structure-desc">{option.description}</div>
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              ) : null}
+
+                              {aiActivePanel === 'outline' ? (
+                                <div className="topic-ai-selector-panel">
+                                  <div className="topic-ai-selector-head">
+                                    <div className="topic-ai-selector-title">课程标准/纲要</div>
+                                    <div className="topic-ai-selector-hint">选择一份参考纲要，用于约束课程目标和内容边界</div>
+                                  </div>
+                                  <div className="topic-ai-outline-list">
+                                    {aiOutlineOptions.map((item) => (
+                                      <button
+                                        key={item}
+                                        type="button"
+                                        className={`topic-ai-outline-item ${aiSelectedOutline === item ? 'topic-ai-outline-item-active' : ''}`}
+                                        onClick={() => setAiSelectedOutline(item)}
+                                      >
+                                        {item}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              ) : null}
+
+                              {aiActivePanel === 'tool' ? (
+                                <div className="topic-ai-selector-panel">
+                                  <div className="topic-ai-tool-panel">
+                                    <div className="topic-ai-selector-head">
+                                      <div className="topic-ai-selector-title">课程实训工具</div>
+                                      <div className="topic-ai-selector-hint">按分类多选工具，后续会自动纳入课程设计建议</div>
+                                    </div>
+                                    <div className="topic-ai-tool-search">
+                                      <span>{aiSelectedTools.length ? `已选择 ${aiSelectedTools.length} 项工具` : '请选择实训工具（可多选）'}</span>
+                                      <span>{selectedToolGroup.label}</span>
+                                    </div>
+                                    <div className="topic-ai-tool-content">
+                                      <div className="topic-ai-tool-groups">
+                                        {aiToolGroups.map((group) => (
+                                          <button
+                                            key={group.key}
+                                            type="button"
+                                            className={`topic-ai-tool-group ${group.key === aiSelectedToolGroup ? 'topic-ai-tool-group-active' : ''}`}
+                                            onClick={() => setAiSelectedToolGroup(group.key)}
+                                          >
+                                            <span>{group.label}</span>
+                                            <RightOutlined />
+                                          </button>
+                                        ))}
+                                      </div>
+                                      <div className="topic-ai-tool-options">
+                                        {selectedToolGroup.items.map((item) => (
+                                          <label
+                                            key={item}
+                                            className={`topic-ai-tool-option ${aiSelectedTools.includes(item) ? 'topic-ai-tool-option-active' : ''}`}
+                                          >
+                                            <input
+                                              type="checkbox"
+                                              checked={aiSelectedTools.includes(item)}
+                                              onChange={() => toggleAiToolSelection(item)}
+                                            />
+                                            <span>{item}</span>
+                                          </label>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : null}
+
+                          <button
+                            type="button"
+                            ref={(node) => setAiToolbarAnchorRef('plus', node)}
+                            className={`topic-ai-composer-plus ${aiActivePanel === 'plus' ? 'topic-ai-composer-plus-active' : ''}`}
+                            aria-label="添加"
+                            data-ai-panel-trigger="true"
+                            aria-expanded={aiActivePanel === 'plus' ? 'true' : undefined}
+                            onClick={() => toggleAiPanel('plus')}
+                          >
+                            <PlusOutlined />
+                          </button>
+                          <span className="topic-ai-composer-divider" />
+                          <div className="topic-ai-composer-skills">
+                            {aiVisibleSkills.map((skill) => (
+                              <button
+                                key={skill.key}
+                                type="button"
+                                className={`topic-ai-composer-skill ${aiSelectedSkill === skill.label ? 'topic-ai-composer-skill-active' : ''}`}
+                                title={skill.label}
+                                onClick={() => {
+                                  setAiSelectedSkill(skill.label);
+                                  setAiActivePanel('course');
+                                }}
+                              >
+                                <ThunderboltOutlined />
+                                <span className="topic-ai-composer-skill-label">{skill.label}</span>
+                                {aiSelectedSkill === skill.label ? (
+                                  <span
+                                    role="button"
+                                    tabIndex={0}
+                                    className="topic-ai-composer-skill-remove"
+                                    aria-label="清空技能"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      setAiSelectedSkill(null);
+                                      setAiActivePanel('course');
+                                    }}
+                                    onKeyDown={(event) => {
+                                      if (event.key !== 'Enter' && event.key !== ' ') return;
+                                      event.preventDefault();
+                                      event.stopPropagation();
+                                      setAiSelectedSkill(null);
+                                      setAiActivePanel('course');
+                                    }}
+                                  >
+                                    <CloseOutlined />
+                                  </span>
+                                ) : null}
+                              </button>
+                            ))}
+                          </div>
+                          {aiSelectedSkill ? <span className="topic-ai-composer-divider" /> : null}
+                          {aiComposerItems.map((item) => (
+                            <button
+                              key={item.key}
+                              type="button"
+                              ref={(node) => {
+                                if (item.key === 'structure') setAiToolbarAnchorRef('structure', node);
+                                if (item.key === 'outline') setAiToolbarAnchorRef('outline', node);
+                                if (item.key === 'tool') setAiToolbarAnchorRef('tool', node);
+                              }}
+                              className={`topic-ai-composer-chip ${(
+                                (item.key === 'structure' && aiActivePanel === 'structure')
+                                || (item.key === 'outline' && aiActivePanel === 'outline')
+                                || (item.key === 'tool' && aiActivePanel === 'tool')
+                              ) ? 'topic-ai-composer-chip-selected' : ''}`}
+                              data-ai-panel-trigger="true"
+                              aria-expanded={
+                                (item.key === 'structure' && aiActivePanel === 'structure')
+                                || (item.key === 'outline' && aiActivePanel === 'outline')
+                                || (item.key === 'tool' && aiActivePanel === 'tool')
+                                ? 'true'
+                                : undefined
+                              }
+                              title={item.label}
+                              onClick={() => {
+                                if (item.key === 'structure') toggleAiPanel('structure');
+                                if (item.key === 'outline') toggleAiPanel('outline');
+                                if (item.key === 'tool') toggleAiPanel('tool');
+                              }}
+                            >
+                              <span className="topic-ai-composer-chip-label">{item.label}</span>
+                              <CaretDownOutlined />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <aside className={`topic-ai-library ${aiLibraryCollapsed ? 'topic-ai-library-collapsed' : ''}`}>
+                  <div className="topic-ai-library-head">
+                    <span className="topic-ai-library-title">库</span>
+                    <button
+                      type="button"
+                      className="topic-ai-library-toggle"
+                      aria-label={aiLibraryCollapsed ? '展开库' : '收起库'}
+                      onClick={() => setAiLibraryCollapsed((prev) => !prev)}
+                    >
+                      {aiLibraryCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+                    </button>
+                  </div>
+                  {!aiLibraryCollapsed ? (
+                    <>
+                      <div className="topic-ai-library-body">
+                        <Empty
+                          image={Empty.PRESENTED_IMAGE_SIMPLE}
+                          description="暂无数据"
+                          className="topic-ai-library-empty"
+                        />
+                      </div>
+                      <div className="topic-ai-library-footer">
+                        <button type="button" className="topic-ai-library-create">
+                          <PlusOutlined />
+                          <span>新建笔记</span>
+                        </button>
+                      </div>
+                    </>
+                  ) : null}
+                </aside>
+              </div>
+            ) : resourcePanelView === 'knowledgeGraph' ? renderKnowledgeGraphPreviewPane() : (
               previewItem ? (
                 <div className="topic-preview-main">
                   <div className="topic-preview-main-head">

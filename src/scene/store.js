@@ -5,7 +5,7 @@ import { getDefaultSceneThemeCoverPresetId, getSceneThemeCoverPreset } from './t
 const TEMPLATE_STORAGE_KEY = 'gr.scene.templates.v1';
 const SCENE_STORAGE_KEY = 'gr.scenes.v1';
 const SEED_KEY = 'gr.scene.seeded.v1';
-const BUILT_IN_SYNC_KEY = 'gr.scene.builtin-sync.v4';
+const BUILT_IN_SYNC_KEY = 'gr.scene.builtin-sync.v6';
 const STORE_CHANGE_EVENT = 'gr:scene-store-change';
 const VERSION_STORAGE_KEY = 'guoren_version_data';
 
@@ -1513,19 +1513,19 @@ function buildPresetTemplates() {
       name: '课程创作中心',
       sceneType: 'RESEARCH',
       defaultMenuKey: 'course-creation-center',
-      description: '面向课程策划、课时设计、知识图谱映射与专家评审的课程创作空间模板。',
+      description: '面向人工智能通识体系课程策划、课时设计、知识图谱映射与专家评审的课程创作空间模板。',
       builtIn: true,
       theme: {
-        badgeText: '课程创作',
+        badgeText: '人工智能通识体系',
         emoji: '🧭',
         coverSource: 'PRESET',
         coverPresetId: 'abstract_sunset_flow',
         coverStart: '#2457ff',
         coverEnd: '#ff8b5d',
         accentColor: '#2f5bf2',
-        heroTitle: '围绕课程框架、知识图谱与课时共创的课程创作空间',
-        heroSubtitle: '支持课程负责人、设计师与评审专家协同完成课程设计和迭代。',
-        surfaceHint: '课程蓝图、知识图谱、课时设计、评审发布',
+        heroTitle: '人工智能通识体系下的课程创作中心',
+        heroSubtitle: '围绕课程框架、知识图谱映射与课时共创，支撑通识课程方案设计与专家评审。',
+        surfaceHint: '课程框架、知识图谱、课时设计、评审发布',
       },
       homepage: {
         templateName: '课程创作主页模板',
@@ -1799,9 +1799,9 @@ function buildPresetScenes(templates) {
     {
       id: 'scene_course_studio_seed_1',
       sceneCode: 'SCN-COURSE-STUDIO',
-      name: 'AI课程创作中心',
-      description: '围绕课程蓝图、知识图谱映射与课时设计的协同创作场景。',
-      owner: '课程研发组',
+      name: '课程创作中心',
+      description: '围绕人工智能通识体系开展课程框架梳理、知识图谱映射与课时设计共创。',
+      owner: '人工智能通识教研组',
       visibility: 'INTERNAL',
       menuKey: 'course-creation-center',
       topicCount: 11,
@@ -1851,17 +1851,48 @@ function mergeMissingBuiltInScenes(existingScenes, templates) {
 function migrateBuiltInCourseStudioEntries(existingTemplates, existingScenes) {
   let templateChanged = false;
   let sceneChanged = false;
+  const presetTemplates = buildPresetTemplates();
+  const presetTemplate = presetTemplates.find((template) => (
+    template?.id === 'tpl_course_studio_builtin' || template?.templateCode === 'TPL-COURSE-STUDIO'
+  )) || null;
+  const presetScenes = buildPresetScenes(presetTemplates);
+  const presetScene = presetScenes.find((scene) => (
+    scene?.id === 'scene_course_studio_seed_1' || scene?.sceneCode === 'SCN-COURSE-STUDIO'
+  )) || null;
 
   const nextTemplates = existingTemplates.map((template) => {
     if (
       template?.id === 'tpl_course_studio_builtin'
       || template?.templateCode === 'TPL-COURSE-STUDIO'
     ) {
-      if (template.defaultMenuKey !== 'course-creation-center') {
+      const nextTemplate = {
+        ...template,
+        defaultMenuKey: 'course-creation-center',
+        name: presetTemplate?.name || template.name,
+        description: presetTemplate?.description || template.description,
+        theme: presetTemplate?.theme ? clone(presetTemplate.theme) : template.theme,
+        homepage: presetTemplate?.homepage ? clone(presetTemplate.homepage) : template.homepage,
+        topicPage: presetTemplate?.topicPage ? clone(presetTemplate.topicPage) : template.topicPage,
+      };
+      const changed = JSON.stringify({
+        defaultMenuKey: template.defaultMenuKey,
+        name: template.name,
+        description: template.description,
+        theme: template.theme,
+        homepage: template.homepage,
+        topicPage: template.topicPage,
+      }) !== JSON.stringify({
+        defaultMenuKey: nextTemplate.defaultMenuKey,
+        name: nextTemplate.name,
+        description: nextTemplate.description,
+        theme: nextTemplate.theme,
+        homepage: nextTemplate.homepage,
+        topicPage: nextTemplate.topicPage,
+      });
+      if (changed) {
         templateChanged = true;
         return {
-          ...template,
-          defaultMenuKey: 'course-creation-center',
+          ...nextTemplate,
           updatedAt: nowIso(),
         };
       }
@@ -1874,11 +1905,31 @@ function migrateBuiltInCourseStudioEntries(existingTemplates, existingScenes) {
       scene?.id === 'scene_course_studio_seed_1'
       || scene?.sceneCode === 'SCN-COURSE-STUDIO'
     ) {
-      if (scene.menuKey !== 'course-creation-center') {
+      const nextScene = {
+        ...scene,
+        name: presetScene?.name || scene.name,
+        description: presetScene?.description || scene.description,
+        owner: presetScene?.owner || scene.owner,
+        menuKey: 'course-creation-center',
+        templateSnapshot: presetTemplate ? clone(presetTemplate) : scene.templateSnapshot,
+      };
+      const changed = JSON.stringify({
+        name: scene.name,
+        description: scene.description,
+        owner: scene.owner,
+        menuKey: scene.menuKey,
+        templateSnapshot: scene.templateSnapshot,
+      }) !== JSON.stringify({
+        name: nextScene.name,
+        description: nextScene.description,
+        owner: nextScene.owner,
+        menuKey: nextScene.menuKey,
+        templateSnapshot: nextScene.templateSnapshot,
+      });
+      if (changed) {
         sceneChanged = true;
         return {
-          ...scene,
-          menuKey: 'course-creation-center',
+          ...nextScene,
           updatedAt: nowIso(),
         };
       }

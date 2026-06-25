@@ -817,7 +817,7 @@ function App() {
           <Layout>
             {/* Header */}
             <Header className="app-header">
-              <div className="header-title">果仁-沉浸式AI学习空间</div>
+              <div className="header-title">人工智能通识体系</div>
               <div className="header-actions">
                 <Input
                   placeholder="搜索场景名称..."
