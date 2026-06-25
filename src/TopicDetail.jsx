@@ -408,6 +408,7 @@ function TopicDetail({
   const [selectedKnowledgeGraphBindingId, setSelectedKnowledgeGraphBindingId] = useState(null);
   const [knowledgeGraphPreviewMode, setKnowledgeGraphPreviewMode] = useState('preview');
   const [knowledgeGraphDrawerOpen, setKnowledgeGraphDrawerOpen] = useState(false);
+  const [aiKnowledgeGraphPreviewOpen, setAiKnowledgeGraphPreviewOpen] = useState(false);
   const [tabIndicatorStyle, setTabIndicatorStyle] = useState(EMPTY_TAB_INDICATOR);
   const [aiActivePanel, setAiActivePanel] = useState('course');
   const [aiSelectedSkill, setAiSelectedSkill] = useState(null);
@@ -441,6 +442,7 @@ function TopicDetail({
     setModalOpen(false);
     setPreviewItem(null);
     setLeftPanelWidth(getDefaultLeftPanelWidth());
+    setAiKnowledgeGraphPreviewOpen(false);
     setExpandedFolders(new Set());
     setSelectedFolderKey(null);
     setSelectedItemKey(null);
@@ -698,6 +700,7 @@ function TopicDetail({
     ? aiGenerationSkills.filter((skill) => skill.label === aiSelectedSkill)
     : aiGenerationSkills;
   const isAiKnowledgeGraphLayout = activeTab === 'ai' && resourcePanelView === 'knowledgeGraph';
+  const isAiKnowledgeGraphPreviewVisible = isAiKnowledgeGraphLayout && aiKnowledgeGraphPreviewOpen;
   const aiComposerItems = aiSelectedSkill
     ? [
         { key: 'structure', label: aiStructureLabel },
@@ -1519,12 +1522,15 @@ function TopicDetail({
     if (nextView === 'knowledgeGraph') {
       if (activeTab === 'ai') {
         applyAiKnowledgeGraphLeftPanelWidth();
+        setAiKnowledgeGraphPreviewOpen(false);
       }
       setResourceLibraryData(loadResourceLib());
       if (previewItem && !previewItem.__kgMirror) {
         setPreviewItem(null);
       }
+      return;
     }
+    setAiKnowledgeGraphPreviewOpen(false);
   };
 
   const handleOpenKnowledgeGraphPicker = () => {
@@ -1604,6 +1610,7 @@ function TopicDetail({
 
   const handleSelectKnowledgeGraphOverview = () => {
     if (!knowledgeGraphGraph?.id) return;
+    if (activeTab === 'ai') setAiKnowledgeGraphPreviewOpen(true);
     setKnowledgeGraphSelection({ type: 'graph', id: knowledgeGraphGraph.id });
     setSelectedKnowledgeGraphBindingId(null);
     setPreviewItem(null);
@@ -1620,6 +1627,7 @@ function TopicDetail({
   };
 
   const handleSelectKnowledgeGraphStage = (stageId) => {
+    if (activeTab === 'ai') setAiKnowledgeGraphPreviewOpen(true);
     setKnowledgeGraphExpandedStageIds((prev) => {
       const next = new Set(prev);
       next.add(stageId);
@@ -1632,6 +1640,7 @@ function TopicDetail({
   };
 
   const handleSelectKnowledgeGraphPoint = (stageId, pointId) => {
+    if (activeTab === 'ai') setAiKnowledgeGraphPreviewOpen(true);
     setKnowledgeGraphExpandedStageIds((prev) => {
       const next = new Set(prev);
       next.add(stageId);
@@ -1645,6 +1654,7 @@ function TopicDetail({
 
   const handleSelectKnowledgeGraphPreviewBinding = (binding) => {
     if (!binding?.bindingId) return;
+    if (activeTab === 'ai') setAiKnowledgeGraphPreviewOpen(true);
     const matchedResource = resources.find((item) => item.__kgBindingId === binding.bindingId) || null;
     if (!matchedResource) return;
     const location = knowledgeGraphBindingLocationMap.get(binding.bindingId);
@@ -1668,6 +1678,7 @@ function TopicDetail({
   const handleSelectKnowledgeGraphCanvasSelection = (nextSelection) => {
     const fallbackSelection = { type: 'graph', id: knowledgeGraphGraph?.id || null };
     const normalizedSelection = nextSelection?.type ? nextSelection : fallbackSelection;
+    if (activeTab === 'ai') setAiKnowledgeGraphPreviewOpen(true);
     setKnowledgeGraphSelection(normalizedSelection);
     if (normalizedSelection.type !== 'point') {
       setSelectedKnowledgeGraphBindingId(null);
@@ -3109,6 +3120,11 @@ function TopicDetail({
               </div>
             </div>
             <div className="finder-kg-preview-head-actions">
+              {activeTab === 'ai' ? (
+                <Button onClick={() => setAiKnowledgeGraphPreviewOpen(false)}>
+                  返回目录
+                </Button>
+              ) : null}
               <Button icon={<DatabaseOutlined />} onClick={handleOpenKnowledgeGraphPicker} disabled={!canEditCurrentVersion}>
                 {knowledgeGraphRef ? '更换图谱' : '绑定图谱'}
               </Button>
@@ -3144,6 +3160,11 @@ function TopicDetail({
             </div>
           </div>
           <div className="finder-kg-preview-head-actions">
+            {activeTab === 'ai' ? (
+              <Button onClick={() => setAiKnowledgeGraphPreviewOpen(false)}>
+                返回目录
+              </Button>
+            ) : null}
             <Button icon={<DatabaseOutlined />} onClick={handleOpenKnowledgeGraphPicker} disabled={!canEditCurrentVersion}>
               {knowledgeGraphRef ? '更换图谱' : '绑定图谱'}
             </Button>
@@ -3399,6 +3420,7 @@ function TopicDetail({
                   setActiveTab(tab.key);
                   if (tab.key === 'ai' && resourcePanelView === 'knowledgeGraph') {
                     applyAiKnowledgeGraphLeftPanelWidth();
+                    setAiKnowledgeGraphPreviewOpen(false);
                   }
                 }}
               >
@@ -3623,7 +3645,7 @@ function TopicDetail({
               </>
             ) : (
               <div className="topic-knowledge-panel-shell">
-                {isAiKnowledgeGraphLayout ? renderKnowledgeGraphPreviewPane() : renderKnowledgeGraphSidebar()}
+                {isAiKnowledgeGraphPreviewVisible ? renderKnowledgeGraphPreviewPane() : renderKnowledgeGraphSidebar()}
               </div>
             )}
           </div>
