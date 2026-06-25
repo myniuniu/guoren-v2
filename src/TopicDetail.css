@@ -2742,6 +2742,15 @@
   overflow: hidden;
 }
 
+.topic-kg-preview-canvas-area {
+  height: 100%;
+  min-height: 0;
+}
+
+.topic-kg-preview-canvas-area .kg-structured-shell,
+.topic-kg-preview-canvas-area .kg-structured-main,
+.topic-kg-preview-canvas-area .kg-structured-canvas,
+.topic-kg-preview-canvas-area .react-flow,
 .topic-kg-preview-stage .kg-structured-shell,
 .topic-kg-preview-stage .kg-structured-main,
 .topic-kg-preview-stage .kg-structured-canvas,

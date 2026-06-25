@@ -5,7 +5,7 @@ import { getDefaultSceneThemeCoverPresetId, getSceneThemeCoverPreset } from './t
 const TEMPLATE_STORAGE_KEY = 'gr.scene.templates.v1';
 const SCENE_STORAGE_KEY = 'gr.scenes.v1';
 const SEED_KEY = 'gr.scene.seeded.v1';
-const BUILT_IN_SYNC_KEY = 'gr.scene.builtin-sync.v6';
+const BUILT_IN_SYNC_KEY = 'gr.scene.builtin-sync.v7';
 const STORE_CHANGE_EVENT = 'gr:scene-store-change';
 const VERSION_STORAGE_KEY = 'guoren_version_data';
 
@@ -1539,9 +1539,10 @@ function buildPresetTemplates() {
         emptyStateText: '暂无课程素材，可先创建课程蓝图、知识图谱映射或课时设计目录',
         modeTabs: createModeTabs({
           knowledge: '课程框架',
-          ai: 'AI共创',
-          practice: '课时设计',
-          assessment: '评审发布',
+          ai: 'AI创作',
+        }, {
+          practice: { enabled: false },
+          assessment: { enabled: false },
         }),
       },
       roles: courseStudioRoles,

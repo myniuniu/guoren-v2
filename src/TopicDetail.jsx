@@ -435,6 +435,8 @@ function TopicDetail({
   const aiComposerToolbarRef = useRef(null);
   const aiFloatingPanelRef = useRef(null);
   const aiToolbarAnchorRefs = useRef(new Map());
+  const knowledgeGraphCanvasAreaRef = useRef(null);
+  const knowledgeGraphDrawerRef = useRef(null);
 
   useEffect(() => {
     setVersionData(loadTopicVersionData(topicAdminConfig, sceneConfig, topicStorageScopeKey));
@@ -1502,6 +1504,21 @@ function TopicDetail({
     document.addEventListener('pointerdown', handlePointerDown);
     return () => document.removeEventListener('pointerdown', handlePointerDown);
   }, [hasAiFloatingPanel]);
+
+  useEffect(() => {
+    if (!isAiMode || !isAiKnowledgeGraphPreviewVisible || !knowledgeGraphDrawerOpen) return undefined;
+
+    const handlePointerDown = (event) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (knowledgeGraphCanvasAreaRef.current?.contains(target)) return;
+      if (knowledgeGraphDrawerRef.current?.contains(target)) return;
+      setKnowledgeGraphDrawerOpen(false);
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
+  }, [isAiMode, isAiKnowledgeGraphPreviewVisible, knowledgeGraphDrawerOpen]);
 
   useLayoutEffect(() => {
     const node = aiPromptInputRef.current;
@@ -3191,21 +3208,23 @@ function TopicDetail({
           </div>
         </div>
         <div className="topic-kg-preview-stage">
-          <StructuredKnowledgeGraphView
-            graphId={previewData.graph.id}
-            points={previewData.points}
-            relations={previewData.relations}
-            structuredView={previewData.structuredView}
-            pointTypeLabelMap={KNOWLEDGE_GRAPH_POINT_TYPE_LABEL_MAP}
-            relationTypeLabelMap={KNOWLEDGE_GRAPH_RELATION_TYPE_LABEL_MAP}
-            selection={knowledgeGraphSelection}
-            onSelectionChange={handleSelectKnowledgeGraphCanvasSelection}
-            onPreviewBinding={handleSelectKnowledgeGraphPreviewBinding}
-            readOnly
-            interactiveReadOnly
-          />
+          <div className="topic-kg-preview-canvas-area" ref={knowledgeGraphCanvasAreaRef}>
+            <StructuredKnowledgeGraphView
+              graphId={previewData.graph.id}
+              points={previewData.points}
+              relations={previewData.relations}
+              structuredView={previewData.structuredView}
+              pointTypeLabelMap={KNOWLEDGE_GRAPH_POINT_TYPE_LABEL_MAP}
+              relationTypeLabelMap={KNOWLEDGE_GRAPH_RELATION_TYPE_LABEL_MAP}
+              selection={knowledgeGraphSelection}
+              onSelectionChange={handleSelectKnowledgeGraphCanvasSelection}
+              onPreviewBinding={handleSelectKnowledgeGraphPreviewBinding}
+              readOnly
+              interactiveReadOnly
+            />
+          </div>
           {knowledgeGraphDrawerOpen ? (
-            <aside className="topic-knowledge-drawer">
+            <aside className="topic-knowledge-drawer" ref={knowledgeGraphDrawerRef}>
               <div className="topic-knowledge-drawer-head">
                 <span className="topic-knowledge-drawer-head-label">{previewItem ? '绑定资源预览' : '右侧预览'}</span>
                 <button
