@@ -699,6 +699,9 @@ function TopicDetail({
   const aiVisibleSkills = aiSelectedSkill
     ? aiGenerationSkills.filter((skill) => skill.label === aiSelectedSkill)
     : aiGenerationSkills;
+  const aiPrimarySkills = aiSelectedSkill ? aiVisibleSkills : aiVisibleSkills.slice(0, 3);
+  const aiOverflowSkills = aiSelectedSkill ? [] : aiVisibleSkills.slice(3);
+  const isAiMode = activeTab === 'ai';
   const isAiKnowledgeGraphLayout = activeTab === 'ai' && resourcePanelView === 'knowledgeGraph';
   const isAiKnowledgeGraphPreviewVisible = isAiKnowledgeGraphLayout && aiKnowledgeGraphPreviewOpen;
   const aiComposerItems = aiSelectedSkill
@@ -3058,7 +3061,7 @@ function TopicDetail({
                 </div>
               </div>
             </div>
-            {canEditCurrentVersion ? (
+            {canEditCurrentVersion && !isAiMode ? (
               <div className="topic-preview-main-head-actions">
                 <Button type="primary" onClick={handleOpenKnowledgeGraphPicker}>
                   从资料库绑定
@@ -3089,7 +3092,7 @@ function TopicDetail({
                 </div>
               </div>
             </div>
-            {canEditCurrentVersion ? (
+            {canEditCurrentVersion && !isAiMode ? (
               <div className="topic-preview-main-head-actions">
                 <Button onClick={handleOpenKnowledgeGraphPicker}>重新绑定</Button>
               </div>
@@ -3109,7 +3112,7 @@ function TopicDetail({
       structuredView: knowledgeGraphStructuredView,
     };
 
-    if (knowledgeGraphPreviewMode === 'edit') {
+    if (knowledgeGraphPreviewMode === 'edit' && !isAiMode) {
       return (
         <div className="finder-kg-preview-embed finder-kg-preview-embed-edit">
           <div className="finder-kg-preview-head">
@@ -3118,24 +3121,26 @@ function TopicDetail({
               <div className="finder-kg-preview-head-meta">
                 {previewData.graph.description || '知识图谱结构化编辑'}
               </div>
-            </div>
-            <div className="finder-kg-preview-head-actions">
-              {activeTab === 'ai' ? (
-                <Button onClick={() => setAiKnowledgeGraphPreviewOpen(false)}>
-                  返回目录
-                </Button>
-              ) : null}
+          </div>
+          <div className="finder-kg-preview-head-actions">
+            {isAiMode ? (
+              <Button onClick={() => setAiKnowledgeGraphPreviewOpen(false)}>
+                返回目录
+              </Button>
+            ) : null}
+            {!isAiMode ? (
               <Button icon={<DatabaseOutlined />} onClick={handleOpenKnowledgeGraphPicker} disabled={!canEditCurrentVersion}>
                 {knowledgeGraphRef ? '更换图谱' : '绑定图谱'}
               </Button>
-              {canEditCurrentVersion ? (
-                <Button danger onClick={handleUnbindKnowledgeGraph}>
-                  解除关联
-                </Button>
-              ) : null}
-              <Button icon={<FullscreenOutlined />} onClick={() => openKnowledgeGraphInNewTab(previewData.graph, 'curriculum')}>
-                全屏
+            ) : null}
+            {canEditCurrentVersion && !isAiMode ? (
+              <Button danger onClick={handleUnbindKnowledgeGraph}>
+                解除关联
               </Button>
+            ) : null}
+            <Button icon={<FullscreenOutlined />} onClick={() => openKnowledgeGraphInNewTab(previewData.graph, 'curriculum')}>
+              全屏
+            </Button>
             </div>
           </div>
           <KnowledgeGraphModule
@@ -3160,22 +3165,26 @@ function TopicDetail({
             </div>
           </div>
           <div className="finder-kg-preview-head-actions">
-            {activeTab === 'ai' ? (
+            {isAiMode ? (
               <Button onClick={() => setAiKnowledgeGraphPreviewOpen(false)}>
                 返回目录
               </Button>
             ) : null}
-            <Button icon={<DatabaseOutlined />} onClick={handleOpenKnowledgeGraphPicker} disabled={!canEditCurrentVersion}>
-              {knowledgeGraphRef ? '更换图谱' : '绑定图谱'}
-            </Button>
-            {canEditCurrentVersion ? (
+            {!isAiMode ? (
+              <Button icon={<DatabaseOutlined />} onClick={handleOpenKnowledgeGraphPicker} disabled={!canEditCurrentVersion}>
+                {knowledgeGraphRef ? '更换图谱' : '绑定图谱'}
+              </Button>
+            ) : null}
+            {canEditCurrentVersion && !isAiMode ? (
               <Button danger onClick={handleUnbindKnowledgeGraph}>
                 解除关联
               </Button>
             ) : null}
-            <Button type="primary" icon={<EditOutlined />} onClick={() => setKnowledgeGraphPreviewMode('edit')}>
-              编辑
-            </Button>
+            {!isAiMode ? (
+              <Button type="primary" icon={<EditOutlined />} onClick={() => setKnowledgeGraphPreviewMode('edit')}>
+                编辑
+              </Button>
+            ) : null}
             <Button icon={<FullscreenOutlined />} onClick={() => openKnowledgeGraphInNewTab(previewData.graph, 'graph')}>
               全屏
             </Button>
@@ -3237,7 +3246,7 @@ function TopicDetail({
           <div className="topic-knowledge-panel-empty-text">
             从资料库中选择一张知识图谱，作为本主题的主学习路径视图。
           </div>
-          {canEditCurrentVersion ? (
+          {canEditCurrentVersion && !isAiMode ? (
             <Button type="primary" onClick={handleOpenKnowledgeGraphPicker}>
               从资料库绑定
             </Button>
@@ -3254,7 +3263,7 @@ function TopicDetail({
           <div className="topic-knowledge-panel-empty-text">
             当前绑定的图谱已失效，可重新从资料库绑定新的知识图谱。
           </div>
-          {canEditCurrentVersion ? (
+          {canEditCurrentVersion && !isAiMode ? (
             <Button type="primary" onClick={handleOpenKnowledgeGraphPicker}>
               重新绑定
             </Button>
@@ -3565,18 +3574,20 @@ function TopicDetail({
       ) : (
         <div className="detail-body" ref={detailBodyRef}>
           <div className="detail-left-panel" style={{ width: leftPanelWidth, minWidth: leftPanelWidth }}>
-            <div className="panel-header">
-              <span className="panel-title">{resourcePanelView === 'knowledgeGraph' ? '知识图谱' : resourcePanelTitle}</span>
-              {resourcePanelViewOptions.length > 1 ? (
-                <Segmented
-                  size="small"
-                  value={resourcePanelView}
-                  onChange={handleSwitchResourcePanelView}
-                  options={resourcePanelViewOptions}
-                  className="topic-panel-view-switcher"
-                />
-              ) : null}
-            </div>
+            {!isAiKnowledgeGraphPreviewVisible ? (
+              <div className="panel-header">
+                <span className="panel-title">{resourcePanelView === 'knowledgeGraph' ? '知识图谱' : resourcePanelTitle}</span>
+                {resourcePanelViewOptions.length > 1 ? (
+                  <Segmented
+                    size="small"
+                    value={resourcePanelView}
+                    onChange={handleSwitchResourcePanelView}
+                    options={resourcePanelViewOptions}
+                    className="topic-panel-view-switcher"
+                  />
+                ) : null}
+              </div>
+            ) : null}
 
             {resourcePanelView === 'resources' ? (
               <>
@@ -3865,7 +3876,7 @@ function TopicDetail({
                           </button>
                           <span className="topic-ai-composer-divider" />
                           <div className="topic-ai-composer-skills">
-                            {aiVisibleSkills.map((skill) => (
+                            {aiPrimarySkills.map((skill) => (
                               <button
                                 key={skill.key}
                                 type="button"
@@ -3903,6 +3914,32 @@ function TopicDetail({
                               </button>
                             ))}
                           </div>
+                          {aiOverflowSkills.length ? (
+                            <Dropdown
+                              overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
+                              menu={{
+                                items: aiOverflowSkills.map((skill) => ({
+                                  key: skill.key,
+                                  label: skill.label,
+                                })),
+                                onClick: ({ key }) => {
+                                  const targetSkill = aiOverflowSkills.find((skill) => skill.key === key) || null;
+                                  if (!targetSkill) return;
+                                  setAiSelectedSkill(targetSkill.label);
+                                  setAiActivePanel('course');
+                                },
+                              }}
+                              trigger={['click']}
+                            >
+                              <button
+                                type="button"
+                                className="topic-ai-composer-overflow-btn"
+                                aria-label="更多技能"
+                              >
+                                ...
+                              </button>
+                            </Dropdown>
+                          ) : null}
                           {aiSelectedSkill ? <span className="topic-ai-composer-divider" /> : null}
                           {aiComposerItems.map((item) => (
                             <button
