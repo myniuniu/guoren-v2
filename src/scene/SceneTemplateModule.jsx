@@ -56,6 +56,7 @@ import {
   getStatusRuleControlLabel,
   getStatusRuleStageDescription,
   getStatusRuleStageLabel,
+  normalizeVersioningConfig,
   sceneApi,
 } from './api';
 import FormDesignerV2 from '../processV2/form/FormDesignerV2';
@@ -168,6 +169,20 @@ function getFunctionalPermissionSummary(role) {
 
 function getVersionCreateModeLabel(value) {
   return VERSION_CREATE_MODE_OPTIONS.find((item) => item.value === value)?.label || value || '-';
+}
+
+function applyTemplateVersioningDisplayDefaults(template) {
+  if (!template?.builtIn) return template;
+  const shouldEnable = template.sceneType === 'TRAINING';
+  const normalizedVersioning = normalizeVersioningConfig(template.versioning || {}, template.sceneType || 'CUSTOM');
+  if (normalizedVersioning.enabled === shouldEnable) return template;
+  return {
+    ...template,
+    versioning: {
+      ...normalizedVersioning,
+      enabled: shouldEnable,
+    },
+  };
 }
 
 function getTopicThemeModeLabel(value) {
@@ -613,7 +628,14 @@ export default function SceneTemplateModule() {
     [editingTemplate, watchedStatusPresetSceneTypeValue],
   );
   const watchedTheme = useMemo(() => watchedThemeValue || {}, [watchedThemeValue]);
-  const watchedVersioning = useMemo(() => watchedVersioningValue || {}, [watchedVersioningValue]);
+  const watchedVersioningEnabled = useMemo(
+    () => normalizeVersioningConfig(
+      watchedVersioningValue || editingTemplate?.versioning || {},
+      editingTemplate?.sceneType || 'CUSTOM',
+    ).enabled !== false,
+    [editingTemplate?.sceneType, editingTemplate?.versioning, watchedVersioningValue],
+  );
+  const versioningSupported = (editingTemplate?.sceneType || 'CUSTOM') === 'TRAINING';
   const uploadedThemeCoverImage = watchedTheme.coverSource === 'UPLOAD' ? watchedTheme.coverImage : '';
   const roleOptions = useMemo(
     () => watchedRoles
@@ -696,12 +718,13 @@ export default function SceneTemplateModule() {
         sceneApi.listTemplates(),
         sceneApi.listScenes(),
       ]);
-      setTemplates(templateList);
+      const normalizedTemplateList = templateList.map(applyTemplateVersioningDisplayDefaults);
+      setTemplates(normalizedTemplateList);
       setScenes(sceneList);
       setSelectedTemplateId((prev) => (
-        prev && templateList.some((item) => item.id === prev)
+        prev && normalizedTemplateList.some((item) => item.id === prev)
           ? prev
-          : templateList[0]?.id || null
+          : normalizedTemplateList[0]?.id || null
       ));
     } catch (error) {
       message.error(getErrorMessage(error, '加载模板数据失败'));
@@ -1579,12 +1602,14 @@ export default function SceneTemplateModule() {
                     <div className="scene-template-list-card">
                       <div className="scene-template-form-grid">
                         <Form.Item label="启用版本管理" name={['versioning', 'enabled']} valuePropName="checked">
-                          <Switch />
+                          <Switch disabled={!versioningSupported} />
                         </Form.Item>
                         <div className="scene-template-mode-hint">
-                          关闭后主题内不显示版本切换入口，当前内容直接在单份资料上维护。
+                          {versioningSupported
+                            ? '关闭后主题内不显示版本切换入口，当前内容直接在单份资料上维护。'
+                            : '当前仅组织培训场景支持版本管理，其他场景固定为单份内容维护。'}
                         </div>
-                        {watchedVersioning.enabled !== false ? (
+                        {watchedVersioningEnabled ? (
                           <>
                             <Form.Item label="最多版本数" name={['versioning', 'maxVersions']}>
                               <InputNumber min={1} max={20} precision={0} style={{ width: '100%' }} />

@@ -9,7 +9,6 @@ import {
   DesktopOutlined,
   FolderFilled,
   LeftOutlined,
-  MoreOutlined,
   RightOutlined,
   SearchOutlined,
   StarFilled,
@@ -847,20 +846,6 @@ export default function SpaceResourceImportModal({
                   }}
                 />
               </div>
-              <Dropdown
-                menu={columnVisibilityMenu}
-                trigger={['click']}
-                overlayClassName="space-resource-import-col-menu"
-              >
-                <button
-                  type="button"
-                  className="space-resource-import-field-btn"
-                  onClick={(event) => event.stopPropagation()}
-                >
-                  <span>字段</span>
-                  <MoreOutlined />
-                </button>
-              </Dropdown>
               <button
                 type="button"
                 className="space-resource-import-close-btn"

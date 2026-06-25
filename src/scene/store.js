@@ -5,6 +5,7 @@ import { getDefaultSceneThemeCoverPresetId, getSceneThemeCoverPreset } from './t
 const TEMPLATE_STORAGE_KEY = 'gr.scene.templates.v1';
 const SCENE_STORAGE_KEY = 'gr.scenes.v1';
 const SEED_KEY = 'gr.scene.seeded.v1';
+const BUILT_IN_SYNC_KEY = 'gr.scene.builtin-sync.v4';
 const STORE_CHANGE_EVENT = 'gr:scene-store-change';
 const VERSION_STORAGE_KEY = 'guoren_version_data';
 
@@ -23,6 +24,7 @@ export const SCENE_MENU_OPTIONS = [
   { value: 'my-classroom', label: '我的课堂' },
   { value: 'workshop-cloud', label: '工作坊' },
   { value: 'teaching-research', label: '教研空间' },
+  { value: 'course-creation-center', label: '课程创作中心' },
   { value: 'org-training', label: '组织培训' },
 ];
 
@@ -250,7 +252,7 @@ const MODE_TAB_LABEL_MAP = Object.fromEntries(
 );
 
 const DEFAULT_VERSIONING_CONFIG = Object.freeze({
-  enabled: true,
+  enabled: false,
   maxVersions: 5,
   namePattern: '版本 {index}',
   createMode: 'COPY_ACTIVE',
@@ -258,6 +260,14 @@ const DEFAULT_VERSIONING_CONFIG = Object.freeze({
   allowDeletePublished: true,
   description: '',
 });
+
+function isSceneVersioningSupported(sceneType = 'CUSTOM') {
+  return sceneType === 'TRAINING';
+}
+
+function isSceneVersioningEnabledByDefault(sceneType = 'CUSTOM') {
+  return isSceneVersioningSupported(sceneType);
+}
 
 const SCENE_TYPE_STATUS_PRESETS = Object.freeze({
   TEACHING: {
@@ -683,10 +693,17 @@ function ensureModeTabs(modeTabs) {
   ));
 }
 
-export function normalizeVersioningConfig(input = {}) {
+export function normalizeVersioningConfig(input = {}, sceneType = null) {
   const maxVersions = Number.parseInt(input?.maxVersions, 10);
+  const versioningSupported = typeof sceneType === 'string' ? isSceneVersioningSupported(sceneType) : null;
   return {
-    enabled: input?.enabled !== false,
+    enabled: versioningSupported === false
+      ? false
+      : typeof input?.enabled === 'boolean'
+        ? input.enabled
+        : versioningSupported === true
+          ? true
+          : DEFAULT_VERSIONING_CONFIG.enabled,
     maxVersions: Number.isFinite(maxVersions)
       ? Math.min(Math.max(maxVersions, 1), 20)
       : DEFAULT_VERSIONING_CONFIG.maxVersions,
@@ -1097,7 +1114,7 @@ function normalizeTemplate(input = {}) {
       resourceScope: trimToNull(input.recommendation?.resourceScope) || '',
       description: trimToNull(input.recommendation?.description) || '',
     },
-    versioning: normalizeVersioningConfig(input.versioning),
+    versioning: normalizeVersioningConfig(input.versioning, sceneType),
     createdAt: input.createdAt || nowIso(),
     updatedAt: input.updatedAt || nowIso(),
   };
@@ -1149,6 +1166,41 @@ function assertUniqueCode(list, fieldName, code, currentId, label) {
 }
 
 function buildPresetTemplates() {
+  const courseStudioRoles = [
+    {
+      key: 'leader',
+      name: '课程负责人',
+      agentName: '课程策划助手',
+      functionalPermissions: ['TOPIC_EDIT', 'RESOURCE_CREATE', 'RESOURCE_EDIT', 'TOOL_USE', 'ASSESSMENT_CONFIG', 'MEMBER_MANAGE', 'DATA_EXPORT'],
+      permissionSummary: '维护课程目标、结构与发布节奏',
+      dataAccessScope: 'ALL',
+      dataAccessAreas: ['TOPIC_METADATA', 'RESOURCE_AREA', 'RESULT_AREA', 'ASSESSMENT_DATA', 'MEMBER_DATA'],
+      scopeSummary: '可管理全部课程资料、目录与评审数据',
+      description: '负责课程定位、结构设计和版本发布。',
+    },
+    {
+      key: 'teacher',
+      name: '课程设计师',
+      agentName: '教案共创助手',
+      functionalPermissions: ['RESOURCE_CREATE', 'RESOURCE_EDIT', 'TOOL_USE', 'RESULT_SUBMIT', 'COMMENT_INTERACT'],
+      permissionSummary: '参与课程共创、课时设计和素材整理',
+      dataAccessScope: 'PARTICIPATED',
+      dataAccessAreas: ['RESOURCE_AREA', 'RESULT_AREA', 'TOPIC_METADATA'],
+      scopeSummary: '可编辑参与的课程蓝图、课时方案与知识映射内容',
+      description: '负责大纲编写、课时设计和课程素材整理。',
+    },
+    {
+      key: 'expert',
+      name: '评审专家',
+      agentName: '评审助手',
+      functionalPermissions: ['TOOL_USE', 'RESULT_REVIEW', 'COMMENT_INTERACT'],
+      permissionSummary: '对指定目录进行评审、批注与反馈',
+      dataAccessScope: 'ASSIGNED',
+      dataAccessAreas: ['FOLDER::knowledge_map', 'FOLDER::review_feedback'],
+      scopeSummary: '聚焦知识映射与评审反馈目录进行审阅',
+      description: '负责课程质量把关和改进建议输出。',
+    },
+  ];
   const presets = [
     {
       id: 'tpl_teaching_builtin',
@@ -1456,6 +1508,117 @@ function buildPresetTemplates() {
       },
     },
     {
+      id: 'tpl_course_studio_builtin',
+      templateCode: 'TPL-COURSE-STUDIO',
+      name: '课程创作中心',
+      sceneType: 'RESEARCH',
+      defaultMenuKey: 'course-creation-center',
+      description: '面向课程策划、课时设计、知识图谱映射与专家评审的课程创作空间模板。',
+      builtIn: true,
+      theme: {
+        badgeText: '课程创作',
+        emoji: '🧭',
+        coverSource: 'PRESET',
+        coverPresetId: 'abstract_sunset_flow',
+        coverStart: '#2457ff',
+        coverEnd: '#ff8b5d',
+        accentColor: '#2f5bf2',
+        heroTitle: '围绕课程框架、知识图谱与课时共创的课程创作空间',
+        heroSubtitle: '支持课程负责人、设计师与评审专家协同完成课程设计和迭代。',
+        surfaceHint: '课程蓝图、知识图谱、课时设计、评审发布',
+      },
+      homepage: {
+        templateName: '课程创作主页模板',
+        introMode: 'AI_OR_MANUAL',
+        introText: '聚合课程定位、目标人群、结构设计、知识映射与评审进度。',
+      },
+      topicPage: {
+        resourcePanelTitle: '课程素材',
+        addResourceLabel: '添加课程素材',
+        appLabel: '创作工具',
+        emptyStateText: '暂无课程素材，可先创建课程蓝图、知识图谱映射或课时设计目录',
+        modeTabs: createModeTabs({
+          knowledge: '课程框架',
+          ai: 'AI共创',
+          practice: '课时设计',
+          assessment: '评审发布',
+        }),
+      },
+      roles: courseStudioRoles,
+      metadataFields: [
+        { key: 'course_name', label: '课程名称', type: 'TEXT', required: true },
+        { key: 'subject', label: '学科领域', type: 'TEXT', required: true },
+        { key: 'target_audience', label: '适用对象', type: 'TEXT', required: false },
+        { key: 'lesson_count', label: '课时数', type: 'NUMBER', required: false },
+        { key: 'design_goal', label: '设计目标', type: 'TEXTAREA', required: false },
+      ],
+      statusRules: [
+        {
+          key: 'planning',
+          name: '策划中',
+          stage: 'PREPARING',
+          controlMode: 'ADMIN_ONLY',
+          entryEnabled: false,
+          roleIds: ['leader', 'teacher'],
+          description: '用于明确课程目标、能力要求与整体结构。',
+        },
+        {
+          key: 'co_creation',
+          name: '共创中',
+          stage: 'RUNNING',
+          controlMode: 'COLLABORATIVE',
+          entryEnabled: true,
+          roleIds: ['leader', 'teacher', 'expert'],
+          description: '开放大纲编写、知识映射、课时设计与讨论协作。',
+        },
+        {
+          key: 'reviewing',
+          name: '评审中',
+          stage: 'REVIEWING',
+          controlMode: 'REVIEW_ONLY',
+          entryEnabled: false,
+          roleIds: ['leader', 'expert'],
+          description: '用于专家评审、问题反馈与版本修订建议。',
+        },
+        {
+          key: 'published',
+          name: '已定稿',
+          stage: 'CLOSED',
+          controlMode: 'READ_ONLY',
+          entryEnabled: false,
+          roleIds: ['leader', 'teacher', 'expert'],
+          description: '保留课程方案、设计依据和发布素材的查看与复盘。',
+        },
+      ],
+      toolAreas: {
+        resourceAreaTools: ['ONLINE_DOC', 'RESOURCE_LIBRARY', 'WHITEBOARD', 'KNOWLEDGE_GRAPH', 'OFFICE_UPLOAD'],
+        resultAreaTools: ['FORUM', 'SURVEY', 'URL'],
+      },
+      toolConfigs: [
+        { key: 'knowledge_graph', name: '知识图谱', placement: 'RESOURCE_AREA', enabled: true, description: '梳理课程知识点、能力目标与活动映射。' },
+        { key: 'whiteboard', name: '白板', placement: 'RESOURCE_AREA', enabled: true, description: '用于课程结构脑暴与课时流程共创。' },
+        { key: 'forum', name: '评审讨论', placement: 'RESULT_AREA', enabled: true, description: '沉淀专家点评、问题清单与修订建议。' },
+      ],
+      folderTypes: [
+        { key: 'curriculum_blueprint', name: '课程蓝图', required: true, allowedTools: ['ONLINE_DOC', 'OFFICE_UPLOAD'], roleIds: ['leader', 'teacher'], description: '沉淀课程定位、目标、课时结构和能力要求。' },
+        { key: 'knowledge_map', name: '知识图谱映射', required: true, allowedTools: ['KNOWLEDGE_GRAPH', 'ONLINE_DOC'], roleIds: ['leader', 'teacher', 'expert'], description: '映射知识点、能力点与教学活动。' },
+        { key: 'lesson_design', name: '课时设计', required: true, allowedTools: ['ONLINE_DOC', 'WHITEBOARD', 'OFFICE_UPLOAD'], roleIds: ['leader', 'teacher'], description: '按课时沉淀任务、活动与资源设计。' },
+        { key: 'review_feedback', name: '评审反馈', required: false, allowedTools: ['FORUM', 'SURVEY'], roleIds: ['leader', 'expert'], description: '集中管理专家意见、修订记录与确认结论。' },
+        { key: 'release_asset', name: '发布素材', required: false, allowedTools: ['URL', 'OFFICE_UPLOAD'], roleIds: ['leader'], description: '沉淀封面、课程介绍、推广文案和发布链接。' },
+      ],
+      agents: [
+        { name: '课程策划助手', roleIds: ['leader'], knowledgeSource: '课程蓝图与知识图谱映射', prompt: '辅助梳理课程定位、课时结构和发布节奏。', avatar: '🧭' },
+        { name: '教案共创助手', roleIds: ['teacher'], knowledgeSource: '课时设计与课程素材', prompt: '帮助生成课时目标、活动流程和资源建议。', avatar: '✍️' },
+        { name: '评审助手', roleIds: ['expert'], knowledgeSource: '评审反馈与课程蓝图', prompt: '辅助汇总评审意见、识别风险并形成修订建议。', avatar: '🔍' },
+      ],
+      entryMethods: ['MANUAL', 'INVITATION'],
+      recommendation: {
+        enabled: true,
+        resourceScope: '课程蓝图、知识图谱映射与课时设计资料',
+        description: '根据课程结构、知识点和历史评审意见推荐参考素材与设计样例。',
+      },
+    },
+    {
       id: 'tpl_community_builtin',
       templateCode: 'TPL-COMMUNITY',
       name: '社区共创场景',
@@ -1634,6 +1797,17 @@ function buildPresetScenes(templates) {
       templateId: byCode.get('TPL-TRAINING')?.id,
     },
     {
+      id: 'scene_course_studio_seed_1',
+      sceneCode: 'SCN-COURSE-STUDIO',
+      name: 'AI课程创作中心',
+      description: '围绕课程蓝图、知识图谱映射与课时设计的协同创作场景。',
+      owner: '课程研发组',
+      visibility: 'INTERNAL',
+      menuKey: 'course-creation-center',
+      topicCount: 11,
+      templateId: byCode.get('TPL-COURSE-STUDIO')?.id,
+    },
+    {
       id: 'scene_community_seed_1',
       sceneCode: 'SCN-SENIOR-COMMUNITY',
       name: '老年社区',
@@ -1651,21 +1825,145 @@ function buildPresetScenes(templates) {
     .map((item) => normalizeScene(item, templates));
 }
 
+function mergeMissingBuiltInTemplates(existingTemplates, presetTemplates) {
+  const existingIdentitySet = new Set();
+  existingTemplates.forEach((template) => {
+    if (template?.id) existingIdentitySet.add(`id:${template.id}`);
+    if (template?.templateCode) existingIdentitySet.add(`code:${template.templateCode}`);
+  });
+  return presetTemplates.filter((template) => (
+    !existingIdentitySet.has(`id:${template.id}`) && !existingIdentitySet.has(`code:${template.templateCode}`)
+  ));
+}
+
+function mergeMissingBuiltInScenes(existingScenes, templates) {
+  const presetScenes = buildPresetScenes(templates);
+  const existingIdentitySet = new Set();
+  existingScenes.forEach((scene) => {
+    if (scene?.id) existingIdentitySet.add(`id:${scene.id}`);
+    if (scene?.sceneCode) existingIdentitySet.add(`code:${scene.sceneCode}`);
+  });
+  return presetScenes.filter((scene) => (
+    !existingIdentitySet.has(`id:${scene.id}`) && !existingIdentitySet.has(`code:${scene.sceneCode}`)
+  ));
+}
+
+function migrateBuiltInCourseStudioEntries(existingTemplates, existingScenes) {
+  let templateChanged = false;
+  let sceneChanged = false;
+
+  const nextTemplates = existingTemplates.map((template) => {
+    if (
+      template?.id === 'tpl_course_studio_builtin'
+      || template?.templateCode === 'TPL-COURSE-STUDIO'
+    ) {
+      if (template.defaultMenuKey !== 'course-creation-center') {
+        templateChanged = true;
+        return {
+          ...template,
+          defaultMenuKey: 'course-creation-center',
+          updatedAt: nowIso(),
+        };
+      }
+    }
+    return template;
+  });
+
+  const nextScenes = existingScenes.map((scene) => {
+    if (
+      scene?.id === 'scene_course_studio_seed_1'
+      || scene?.sceneCode === 'SCN-COURSE-STUDIO'
+    ) {
+      if (scene.menuKey !== 'course-creation-center') {
+        sceneChanged = true;
+        return {
+          ...scene,
+          menuKey: 'course-creation-center',
+          updatedAt: nowIso(),
+        };
+      }
+    }
+    return scene;
+  });
+
+  return {
+    nextTemplates,
+    nextScenes,
+    templateChanged,
+    sceneChanged,
+  };
+}
+
+function migrateTemplateVersioningPolicy(existingTemplates) {
+  let changed = false;
+  const nextTemplates = existingTemplates.map((template) => {
+    const shouldEnableVersioning = template?.sceneType === 'TRAINING';
+    const normalizedVersioning = normalizeVersioningConfig(template?.versioning, template?.sceneType || 'CUSTOM');
+    if (normalizedVersioning.enabled === shouldEnableVersioning) {
+      return template;
+    }
+    changed = true;
+    return {
+      ...template,
+      versioning: {
+        ...normalizedVersioning,
+        enabled: shouldEnableVersioning,
+      },
+      updatedAt: nowIso(),
+    };
+  });
+  return {
+    nextTemplates,
+    changed,
+  };
+}
+
 export function seedSceneData() {
   try {
-    if (localStorage.getItem(SEED_KEY)) return;
-    const existingTemplates = readList(TEMPLATE_STORAGE_KEY);
+    const existingTemplates = readTemplates();
     const existingScenes = readList(SCENE_STORAGE_KEY);
-    if (existingTemplates.length > 0 || existingScenes.length > 0) {
+
+    if (existingTemplates.length === 0 && existingScenes.length === 0) {
+      const templates = buildPresetTemplates();
+      const scenes = buildPresetScenes(templates);
+      writeList(TEMPLATE_STORAGE_KEY, templates);
+      writeList(SCENE_STORAGE_KEY, scenes);
       localStorage.setItem(SEED_KEY, '1');
+      localStorage.setItem(BUILT_IN_SYNC_KEY, '1');
+      emitChange();
       return;
     }
-    const templates = buildPresetTemplates();
-    const scenes = buildPresetScenes(templates);
-    writeList(TEMPLATE_STORAGE_KEY, templates);
-    writeList(SCENE_STORAGE_KEY, scenes);
-    localStorage.setItem(SEED_KEY, '1');
-    emitChange();
+
+    if (!localStorage.getItem(SEED_KEY)) {
+      localStorage.setItem(SEED_KEY, '1');
+    }
+    if (localStorage.getItem(BUILT_IN_SYNC_KEY)) {
+      return;
+    }
+
+    const presetTemplates = buildPresetTemplates();
+    const templatesToAppend = mergeMissingBuiltInTemplates(existingTemplates, presetTemplates);
+    const mergedTemplates = templatesToAppend.length > 0
+      ? [...existingTemplates, ...templatesToAppend]
+      : existingTemplates;
+    const { nextTemplates: migratedMenuTemplates, nextScenes, templateChanged, sceneChanged } = migrateBuiltInCourseStudioEntries(
+      mergedTemplates,
+      existingScenes,
+    );
+    const { nextTemplates, changed: versioningChanged } = migrateTemplateVersioningPolicy(migratedMenuTemplates);
+    const scenesToAppend = mergeMissingBuiltInScenes(nextScenes, nextTemplates);
+
+    if (templatesToAppend.length > 0 || templateChanged || versioningChanged) {
+      writeList(TEMPLATE_STORAGE_KEY, nextTemplates);
+    }
+    if (scenesToAppend.length > 0 || sceneChanged) {
+      writeList(SCENE_STORAGE_KEY, [...nextScenes, ...scenesToAppend]);
+    }
+
+    localStorage.setItem(BUILT_IN_SYNC_KEY, '1');
+    if (templatesToAppend.length > 0 || scenesToAppend.length > 0 || templateChanged || sceneChanged || versioningChanged) {
+      emitChange();
+    }
   } catch (error) {
     console.warn('[scene-store] seed failed', error);
   }
@@ -1685,6 +1983,9 @@ export function createTemplateDraft(sceneType = 'CUSTOM') {
     sceneType,
     status: 'ACTIVE',
     statusPresetSceneType: sceneType,
+    versioning: {
+      enabled: isSceneVersioningEnabledByDefault(sceneType),
+    },
     roles,
     statusRules: buildSceneTypeStatusRules(sceneType, roles),
     topicPage: {

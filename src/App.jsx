@@ -37,6 +37,7 @@ import {
   ScanOutlined,
   FileTextOutlined,
   NodeIndexOutlined,
+  ReadOutlined,
 } from '@ant-design/icons';
 import TopicDetail from './TopicDetail';
 import LeaveWorkflow from './workflow/LeaveWorkflow';
@@ -62,6 +63,7 @@ import DevBackendPage from './appCenter/DevBackendPage';
 import DmsModule from './dms/DmsModule';
 import IntegrationModule from './integration/IntegrationModule';
 import KnowledgeGraphModule from './knowledgeGraph/KnowledgeGraphModule';
+import CourseStudioModule from './courseStudio/CourseStudioModule';
 import MyProfileModule from './myProfile/MyProfileModule';
 import MessagesModule from './messages/MessagesModule';
 import AgentQuotaModule from './agentQuota/AgentQuotaModule';
@@ -145,6 +147,7 @@ const menuItems = [
     label: '',
     children: [
       { key: 'teaching-research', icon: <BookOutlined />, label: '教研空间' },
+      { key: 'course-creation-center', icon: <ReadOutlined />, label: '课程创作中心' },
       { key: 'org-training', icon: <DatabaseOutlined />, label: '组织培训' },
     ],
   },
@@ -158,6 +161,7 @@ const iconBarItems = [
   { key: 'resource-parse', icon: <ScanOutlined />, label: '资料解析' },
   { key: 'knowledge-space', icon: <BulbOutlined />, label: '知识空间' },
   { key: 'knowledge-graph', icon: <NodeIndexOutlined />, label: '知识图谱' },
+  { key: 'course-studio', icon: <ReadOutlined />, label: '课程创作中心' },
   { key: 'messages', icon: <MessageOutlined />, label: '消息' },
   { key: 'org-management', icon: <TeamOutlined />, label: '组织管理' },
   { key: 'workflow', icon: <ApartmentOutlined />, label: '工作流' },
@@ -566,6 +570,8 @@ function App() {
       setCurrentPage('resource-parse');
     } else if (key === 'knowledge-graph') {
       openKnowledgeGraphPage();
+    } else if (key === 'course-studio') {
+      setCurrentPage('course-studio');
     } else if (key === 'archive') {
       setCurrentPage('archive');
     } else if (key === 'study-club') {
@@ -620,6 +626,7 @@ function App() {
       currentPage === 'resource-lib' ||
       currentPage === 'resource-parse' ||
       currentPage === 'knowledge-graph' ||
+      currentPage === 'course-studio' ||
       currentPage === 'archive' ||
       currentPage === 'study-club' ||
       currentPage === 'lucky' ||
@@ -726,6 +733,8 @@ function App() {
           entryMode={knowledgeGraphEntry?.mode || 'curriculum'}
           entryRequestId={knowledgeGraphEntry?.requestId || null}
         />
+      ) : currentPage === 'course-studio' ? (
+        <CourseStudioModule />
       ) : currentPage === 'archive' ? (
         <ArchiveModule />
       ) : currentPage === 'study-club' ? (

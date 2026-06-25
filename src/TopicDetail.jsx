@@ -15,6 +15,7 @@ import {
   CaretDownOutlined,
   CaretRightOutlined,
   CheckCircleOutlined,
+  LeftOutlined,
   CommentOutlined,
   DeleteOutlined,
   EditOutlined,
@@ -185,6 +186,19 @@ function hexToRgba(hex, alpha) {
   const g = (value >> 8) & 255;
   const b = value & 255;
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function formatTopicGraphDateTime(value) {
+  if (!value) return '--';
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return new Intl.DateTimeFormat('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date).replace(/\//g, '-');
 }
 
 function getDefaultLeftPanelWidth() {
@@ -374,10 +388,12 @@ function TopicDetail({
   const [knowledgeGraphExpandedStageIds, setKnowledgeGraphExpandedStageIds] = useState(new Set());
   const [selectedKnowledgeGraphBindingId, setSelectedKnowledgeGraphBindingId] = useState(null);
   const [knowledgeGraphPreviewMode, setKnowledgeGraphPreviewMode] = useState('preview');
+  const [knowledgeGraphDrawerOpen, setKnowledgeGraphDrawerOpen] = useState(false);
   const [tabIndicatorStyle, setTabIndicatorStyle] = useState(EMPTY_TAB_INDICATOR);
   const detailBodyRef = useRef(null);
   const detailTabsRef = useRef(null);
   const detailTabRefs = useRef(new Map());
+  const knowledgeGraphBindingItemRefs = useRef(new Map());
   const inlineRenameInputRef = useRef(null);
   const pendingRenameTimerRef = useRef(null);
   const tagPickerScrollTimerRef = useRef(null);
@@ -413,6 +429,7 @@ function TopicDetail({
     setAddTagOpen(false);
     setNewTagName('');
     setNewTagColor('#1677ff');
+    setKnowledgeGraphDrawerOpen(false);
     setTabIndicatorStyle(EMPTY_TAB_INDICATOR);
   }, [sceneConfig, topicAdminConfig, topicStorageScopeKey, topicTitle]);
 
@@ -421,8 +438,8 @@ function TopicDetail({
   const isDraft = currentVersion?.status === 'draft';
   const isActive = currentVersion?.status === 'active';
   const versioningConfig = useMemo(
-    () => normalizeVersioningConfig(sceneConfig?.versioning),
-    [sceneConfig],
+    () => normalizeVersioningConfig(sceneConfig?.versioning, sceneType || sceneConfig?.sceneType || 'CUSTOM'),
+    [sceneConfig, sceneType],
   );
   const versioningEnabled = versioningConfig.enabled !== false;
   const canEditCurrentVersion = isVersionEditable(currentVersion, versioningConfig);
@@ -550,6 +567,23 @@ function TopicDetail({
   const knowledgeGraphBindingCount = useMemo(
     () => knowledgeGraphPoints.reduce((sum, point) => sum + (point.resourceBindings?.length || 0), 0),
     [knowledgeGraphPoints],
+  );
+  const knowledgeGraphBindingLocationMap = useMemo(() => {
+    const map = new Map();
+    Object.entries(knowledgeGraphStagePointEntries).forEach(([stageId, entries]) => {
+      entries.forEach(({ point }) => {
+        (point.resourceBindings || []).forEach((binding) => {
+          if (binding?.bindingId) {
+            map.set(binding.bindingId, { stageId, pointId: point.id });
+          }
+        });
+      });
+    });
+    return map;
+  }, [knowledgeGraphStagePointEntries]);
+  const knowledgeGraphStageEdgeMap = useMemo(
+    () => new Map((knowledgeGraphStructuredView.stageEdges || []).map((edge) => [edge.id, edge])),
+    [knowledgeGraphStructuredView.stageEdges],
   );
   const knowledgeGraphPickerItems = useMemo(() => {
     const keyword = knowledgeGraphPickerKeyword.trim().toLowerCase();
@@ -827,6 +861,15 @@ function TopicDetail({
   const selectedKnowledgeGraphStage = knowledgeGraphSelection?.type === 'stage'
     ? knowledgeGraphStageMap.get(knowledgeGraphSelection.id) || null
     : null;
+  const selectedKnowledgeGraphStageEdge = knowledgeGraphSelection?.type === 'stage-edge'
+    ? knowledgeGraphStageEdgeMap.get(knowledgeGraphSelection.id) || null
+    : null;
+  const selectedKnowledgeGraphPointPlacement = selectedKnowledgeGraphPoint
+    ? knowledgeGraphPointPlacements[selectedKnowledgeGraphPoint.id] || null
+    : null;
+  const selectedKnowledgeGraphPointStage = selectedKnowledgeGraphPointPlacement?.stageId
+    ? knowledgeGraphStageMap.get(selectedKnowledgeGraphPointPlacement.stageId) || null
+    : null;
 
   useEffect(() => {
     if (!selectedKnowledgeGraphPoint) {
@@ -845,7 +888,17 @@ function TopicDetail({
 
   useEffect(() => {
     setKnowledgeGraphPreviewMode('preview');
+    setKnowledgeGraphDrawerOpen(false);
   }, [knowledgeGraphGraph?.id]);
+
+  useEffect(() => {
+    if (!selectedKnowledgeGraphBindingId || resourcePanelView !== 'knowledgeGraph') return undefined;
+    const timer = window.setTimeout(() => {
+      const target = knowledgeGraphBindingItemRefs.current.get(selectedKnowledgeGraphBindingId);
+      target?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+    }, 60);
+    return () => window.clearTimeout(timer);
+  }, [knowledgeGraphExpandedStageIds, resourcePanelView, selectedKnowledgeGraphBindingId]);
 
   const getResourceTagIds = (resource) => {
     if (!resource || !tagConfig) return [];
@@ -1340,18 +1393,6 @@ function TopicDetail({
     });
   };
 
-  const handleOpenKnowledgeGraphEditor = () => {
-    if (!knowledgeGraphGraph?.id) {
-      message.warning('当前主题还没有可编辑的知识图谱');
-      return;
-    }
-    onOpenKnowledgeGraph?.({
-      graphId: knowledgeGraphGraph.id,
-      collectionId: knowledgeGraphGraph.collectionId || null,
-      mode: 'curriculum',
-    });
-  };
-
   const openKnowledgeGraphInNewTab = useCallback((graph, mode = 'graph') => {
     if (!graph?.id || typeof window === 'undefined') return;
     const params = new URLSearchParams({
@@ -1370,6 +1411,7 @@ function TopicDetail({
     setKnowledgeGraphSelection({ type: 'graph', id: knowledgeGraphGraph.id });
     setSelectedKnowledgeGraphBindingId(null);
     setPreviewItem(null);
+    setKnowledgeGraphDrawerOpen(true);
   };
 
   const handleToggleKnowledgeGraphStage = (stageId) => {
@@ -1390,6 +1432,7 @@ function TopicDetail({
     setKnowledgeGraphSelection({ type: 'stage', id: stageId });
     setSelectedKnowledgeGraphBindingId(null);
     setPreviewItem(null);
+    setKnowledgeGraphDrawerOpen(true);
   };
 
   const handleSelectKnowledgeGraphPoint = (stageId, pointId) => {
@@ -1399,24 +1442,42 @@ function TopicDetail({
       return next;
     });
     setKnowledgeGraphSelection({ type: 'point', id: pointId });
-    const point = knowledgeGraphPointMap.get(pointId) || null;
-    const firstBinding = point?.resourceBindings?.[0] || null;
-    if (firstBinding) {
-      handleSelectKnowledgeGraphPreviewBinding(firstBinding);
-      return;
-    }
     setSelectedKnowledgeGraphBindingId(null);
     setPreviewItem(null);
+    setKnowledgeGraphDrawerOpen(true);
   };
 
   const handleSelectKnowledgeGraphPreviewBinding = (binding) => {
     if (!binding?.bindingId) return;
     const matchedResource = resources.find((item) => item.__kgBindingId === binding.bindingId) || null;
     if (!matchedResource) return;
+    const location = knowledgeGraphBindingLocationMap.get(binding.bindingId);
+    if (location?.stageId) {
+      setKnowledgeGraphExpandedStageIds((prev) => {
+        const next = new Set(prev);
+        next.add(location.stageId);
+        return next;
+      });
+    }
+    if (location?.pointId) {
+      setKnowledgeGraphSelection({ type: 'point', id: location.pointId });
+    }
     setSelectedKnowledgeGraphBindingId(binding.bindingId);
     setSelectedItemKey(matchedResource.key);
     setSelectedFolderKey(matchedResource.parentKey || null);
     setPreviewItem(matchedResource);
+    setKnowledgeGraphDrawerOpen(true);
+  };
+
+  const handleSelectKnowledgeGraphCanvasSelection = (nextSelection) => {
+    const fallbackSelection = { type: 'graph', id: knowledgeGraphGraph?.id || null };
+    const normalizedSelection = nextSelection?.type ? nextSelection : fallbackSelection;
+    setKnowledgeGraphSelection(normalizedSelection);
+    if (normalizedSelection.type !== 'point') {
+      setSelectedKnowledgeGraphBindingId(null);
+    }
+    setPreviewItem(null);
+    setKnowledgeGraphDrawerOpen(true);
   };
 
   useEffect(() => {
@@ -2539,6 +2600,241 @@ function TopicDetail({
   };
 
   const renderKnowledgeGraphPreviewPane = () => {
+    const renderKnowledgeGraphDrawerContent = () => {
+      if (!knowledgeGraphGraph) return null;
+
+      if (previewItem && !previewItem.isFolder) {
+        const previewType = getTopicResourceFileType(previewItem);
+        const previewSummary = getPreviewSummary(previewItem, previewType);
+        return (
+          <div className="topic-knowledge-inspector topic-knowledge-inspector-resource">
+            <div className="topic-knowledge-inspector-kicker">绑定资源预览</div>
+            <div className="topic-knowledge-inspector-title">{previewItem.name}</div>
+            <div className="topic-knowledge-inspector-desc">
+              {previewSummary || '当前资源已绑定到知识图谱节点，可在抽屉内直接查看预览内容。'}
+            </div>
+            <div className="topic-knowledge-inspector-list">
+              <div className="topic-knowledge-inspector-list-item">
+                <span>资源类型</span>
+                <strong>{getResourceTypeLabel(previewItem, previewType)}</strong>
+              </div>
+              <div className="topic-knowledge-inspector-list-item">
+                <span>所在目录</span>
+                <strong>{previewParentFolder ? previewParentFolder.name : knowledgeGraphGraph.name}</strong>
+              </div>
+              <div className="topic-knowledge-inspector-list-item">
+                <span>所有者</span>
+                <strong>{previewItem.owner || '--'}</strong>
+              </div>
+              <div className="topic-knowledge-inspector-list-item">
+                <span>更新时间</span>
+                <strong>{previewItem.lastEdit || '--'}</strong>
+              </div>
+            </div>
+            {getResourceTags(previewItem).length ? (
+              <div className="topic-knowledge-inspector-section">
+                <div className="topic-knowledge-inspector-section-title">资源标签</div>
+                <div className="topic-preview-main-tags">
+                  {renderPreviewTagTokens(previewItem)}
+                </div>
+              </div>
+            ) : null}
+            <div className="topic-knowledge-drawer-preview">
+              {renderPreviewContent(previewItem)}
+            </div>
+          </div>
+        );
+      }
+
+      if (selectedKnowledgeGraphPoint) {
+        const pointBindings = selectedKnowledgeGraphPoint.resourceBindings || [];
+        return (
+          <div className="topic-knowledge-inspector">
+            <div className="topic-knowledge-inspector-kicker">知识点属性</div>
+            <div className="topic-knowledge-inspector-title">{selectedKnowledgeGraphPoint.title}</div>
+            <div className="topic-knowledge-inspector-desc">
+              {selectedKnowledgeGraphPoint.summary || '当前知识点未填写摘要。'}
+            </div>
+            <div className="topic-knowledge-inspector-grid">
+              <div className="topic-knowledge-inspector-metric">
+                <span>所属阶段</span>
+                <strong>{selectedKnowledgeGraphPointStage?.name || '--'}</strong>
+              </div>
+              <div className="topic-knowledge-inspector-metric">
+                <span>知识点类型</span>
+                <strong>{KNOWLEDGE_GRAPH_POINT_TYPE_LABEL_MAP[selectedKnowledgeGraphPoint.type] || selectedKnowledgeGraphPoint.type || '--'}</strong>
+              </div>
+              <div className="topic-knowledge-inspector-metric">
+                <span>标签数</span>
+                <strong>{selectedKnowledgeGraphPoint.tags?.length || 0}</strong>
+              </div>
+              <div className="topic-knowledge-inspector-metric">
+                <span>绑定资料</span>
+                <strong>{pointBindings.length}</strong>
+              </div>
+            </div>
+            <div className="topic-knowledge-inspector-section">
+              <div className="topic-knowledge-inspector-section-title">基础信息</div>
+              <div className="topic-knowledge-inspector-list">
+                <div className="topic-knowledge-inspector-list-item">
+                  <span>最后更新</span>
+                  <strong>{formatTopicGraphDateTime(selectedKnowledgeGraphPoint.updatedAt)}</strong>
+                </div>
+                <div className="topic-knowledge-inspector-list-item">
+                  <span>点位颜色</span>
+                  <strong>{selectedKnowledgeGraphPoint.meta?.color || '--'}</strong>
+                </div>
+              </div>
+            </div>
+            <div className="topic-knowledge-inspector-section">
+              <div className="topic-knowledge-inspector-section-title">绑定资料</div>
+              <div className="topic-knowledge-inspector-chip-list">
+                {pointBindings.length ? pointBindings.map((binding) => (
+                  <button
+                    key={binding.bindingId}
+                    type="button"
+                    className={`topic-knowledge-inspector-chip ${selectedKnowledgeGraphBindingId === binding.bindingId ? 'is-active' : ''}`}
+                    onClick={() => handleSelectKnowledgeGraphPreviewBinding(binding)}
+                  >
+                    {binding.resourceName || '未命名资料'}
+                  </button>
+                )) : (
+                  <div className="topic-knowledge-inspector-empty">当前知识点暂无绑定资料。</div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (selectedKnowledgeGraphStage) {
+        const stageEntries = knowledgeGraphStagePointEntries[selectedKnowledgeGraphStage.id] || [];
+        const stageBindingCount = stageEntries.reduce((sum, entry) => sum + (entry.point.resourceBindings?.length || 0), 0);
+        return (
+          <div className="topic-knowledge-inspector">
+            <div className="topic-knowledge-inspector-kicker">阶段属性</div>
+            <div className="topic-knowledge-inspector-title">{selectedKnowledgeGraphStage.name}</div>
+            <div className="topic-knowledge-inspector-desc">
+              {selectedKnowledgeGraphStage.description || '当前阶段未填写描述。'}
+            </div>
+            <div className="topic-knowledge-inspector-grid">
+              <div className="topic-knowledge-inspector-metric">
+                <span>知识点数</span>
+                <strong>{stageEntries.length}</strong>
+              </div>
+              <div className="topic-knowledge-inspector-metric">
+                <span>绑定资料</span>
+                <strong>{stageBindingCount}</strong>
+              </div>
+              <div className="topic-knowledge-inspector-metric">
+                <span>布局列数</span>
+                <strong>{selectedKnowledgeGraphStage.layoutColumns || 1}</strong>
+              </div>
+              <div className="topic-knowledge-inspector-metric">
+                <span>阶段颜色</span>
+                <strong>{selectedKnowledgeGraphStage.color || '--'}</strong>
+              </div>
+            </div>
+            <div className="topic-knowledge-inspector-section">
+              <div className="topic-knowledge-inspector-section-title">阶段知识点</div>
+              <div className="topic-knowledge-inspector-list">
+                {stageEntries.length ? stageEntries.map(({ point }) => (
+                  <button
+                    key={point.id}
+                    type="button"
+                    className="topic-knowledge-inspector-row"
+                    onClick={() => handleSelectKnowledgeGraphCanvasSelection({ type: 'point', id: point.id })}
+                  >
+                    <span>{point.title}</span>
+                    <strong>{point.resourceBindings?.length || 0} 条资料</strong>
+                  </button>
+                )) : (
+                  <div className="topic-knowledge-inspector-empty">当前阶段还没有知识点。</div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (selectedKnowledgeGraphStageEdge) {
+        const sourceStage = knowledgeGraphStageMap.get(selectedKnowledgeGraphStageEdge.source) || null;
+        const targetStage = knowledgeGraphStageMap.get(selectedKnowledgeGraphStageEdge.target) || null;
+        return (
+          <div className="topic-knowledge-inspector">
+            <div className="topic-knowledge-inspector-kicker">阶段连线</div>
+            <div className="topic-knowledge-inspector-title">{selectedKnowledgeGraphStageEdge.label || '未命名连线'}</div>
+            <div className="topic-knowledge-inspector-desc">当前为只读查看模式，连线属性不可编辑。</div>
+            <div className="topic-knowledge-inspector-list">
+              <div className="topic-knowledge-inspector-list-item">
+                <span>起点阶段</span>
+                <strong>{sourceStage?.name || '--'}</strong>
+              </div>
+              <div className="topic-knowledge-inspector-list-item">
+                <span>终点阶段</span>
+                <strong>{targetStage?.name || '--'}</strong>
+              </div>
+              <div className="topic-knowledge-inspector-list-item">
+                <span>线条样式</span>
+                <strong>{selectedKnowledgeGraphStageEdge.lineStyle || 'solid'}</strong>
+              </div>
+              <div className="topic-knowledge-inspector-list-item">
+                <span>更新时间</span>
+                <strong>{formatTopicGraphDateTime(selectedKnowledgeGraphStageEdge.updatedAt)}</strong>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="topic-knowledge-inspector">
+          <div className="topic-knowledge-inspector-kicker">图谱属性</div>
+          <div className="topic-knowledge-inspector-title">{knowledgeGraphGraph.name}</div>
+          <div className="topic-knowledge-inspector-desc">
+            {knowledgeGraphGraph.description || '当前图谱用于组织阶段路径、知识点结构与资料绑定。'}
+          </div>
+          <div className="topic-knowledge-inspector-grid">
+            <div className="topic-knowledge-inspector-metric">
+              <span>阶段数</span>
+              <strong>{knowledgeGraphStages.length}</strong>
+            </div>
+            <div className="topic-knowledge-inspector-metric">
+              <span>知识点数</span>
+              <strong>{knowledgeGraphPoints.length}</strong>
+            </div>
+            <div className="topic-knowledge-inspector-metric">
+              <span>资料绑定</span>
+              <strong>{knowledgeGraphBindingCount}</strong>
+            </div>
+            <div className="topic-knowledge-inspector-metric">
+              <span>最后更新</span>
+              <strong>{formatTopicGraphDateTime(knowledgeGraphGraph.updatedAt)}</strong>
+            </div>
+          </div>
+          <div className="topic-knowledge-inspector-section">
+            <div className="topic-knowledge-inspector-section-title">阶段概览</div>
+            <div className="topic-knowledge-inspector-list">
+              {knowledgeGraphStages.map((stage) => {
+                const stageEntries = knowledgeGraphStagePointEntries[stage.id] || [];
+                return (
+                  <button
+                    key={stage.id}
+                    type="button"
+                    className="topic-knowledge-inspector-row"
+                    onClick={() => handleSelectKnowledgeGraphCanvasSelection({ type: 'stage', id: stage.id })}
+                  >
+                    <span>{stage.name}</span>
+                    <strong>{stageEntries.length} 个点</strong>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      );
+    };
+
     if (!knowledgeGraphRef) {
       return (
         <div className="topic-preview-main topic-knowledge-preview-main">
@@ -2599,87 +2895,21 @@ function TopicDetail({
       );
     }
 
-    if (previewItem && !previewItem.isFolder) {
+    const previewData = {
+      graph: knowledgeGraphGraph,
+      points: knowledgeGraphPoints,
+      relations: knowledgeGraphRelations,
+      structuredView: knowledgeGraphStructuredView,
+    };
+
+    if (knowledgeGraphPreviewMode === 'edit') {
       return (
-        <div className="topic-preview-main">
-          <div className="topic-preview-main-head">
-            <div className="topic-preview-main-head-left">
-              <span className="topic-preview-main-icon">
-                {renderFileIcon(getTopicResourceFileType(previewItem), { fontSize: 18 })}
-              </span>
-              <div className="topic-preview-main-copy">
-                <div className="topic-preview-main-breadcrumb">
-                  {previewParentFolder ? previewParentFolder.name : knowledgeGraphGraph.name}
-                </div>
-                <div className="topic-preview-main-title">{previewItem.name}</div>
-                <div className="topic-preview-main-meta">
-                  <span>{getResourceTypeLabel(previewItem, getTopicResourceFileType(previewItem))}</span>
-                  <span>{previewItem.owner || '--'}</span>
-                  <span>{previewItem.lastEdit || '--'}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="topic-preview-main-content">
-            <div className="topic-preview-body topic-preview-body-main">
-              {renderPreviewContent(previewItem)}
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    if (knowledgeGraphSelection?.type === 'graph') {
-      const previewData = {
-        graph: knowledgeGraphGraph,
-        points: knowledgeGraphPoints,
-        relations: knowledgeGraphRelations,
-        structuredView: knowledgeGraphStructuredView,
-      };
-
-      if (knowledgeGraphPreviewMode === 'edit') {
-        return (
-          <div className="finder-kg-preview-embed finder-kg-preview-embed-edit">
-            <div className="finder-kg-preview-head">
-              <div className="finder-kg-preview-head-copy">
-                <div className="finder-kg-preview-head-title">{previewData.graph.name}</div>
-                <div className="finder-kg-preview-head-meta">
-                  {previewData.graph.description || '知识图谱结构化编辑'}
-                </div>
-              </div>
-              <div className="finder-kg-preview-head-actions">
-                <Button icon={<DatabaseOutlined />} onClick={handleOpenKnowledgeGraphPicker} disabled={!canEditCurrentVersion}>
-                  {knowledgeGraphRef ? '更换图谱' : '绑定图谱'}
-                </Button>
-                {canEditCurrentVersion ? (
-                  <Button danger onClick={handleUnbindKnowledgeGraph}>
-                    解除关联
-                  </Button>
-                ) : null}
-                <Button icon={<FullscreenOutlined />} onClick={() => openKnowledgeGraphInNewTab(previewData.graph, 'curriculum')}>
-                  全屏
-                </Button>
-              </div>
-            </div>
-            <KnowledgeGraphModule
-              embedded
-              entryGraphId={previewData.graph.id}
-              entryCollectionId={previewData.graph.collectionId}
-              entryMode="curriculum"
-              entryRequestId={`topic-${currentVersion?.id || 'default'}-${previewData.graph.id}-edit`}
-              onExitEmbedded={() => setKnowledgeGraphPreviewMode('preview')}
-            />
-          </div>
-        );
-      }
-
-      return (
-        <div className="finder-kg-preview-embed topic-kg-preview-embed">
+        <div className="finder-kg-preview-embed finder-kg-preview-embed-edit">
           <div className="finder-kg-preview-head">
             <div className="finder-kg-preview-head-copy">
               <div className="finder-kg-preview-head-title">{previewData.graph.name}</div>
               <div className="finder-kg-preview-head-meta">
-                {previewData.graph.description || '知识图谱结构化预览'}
+                {previewData.graph.description || '知识图谱结构化编辑'}
               </div>
             </div>
             <div className="finder-kg-preview-head-actions">
@@ -2691,14 +2921,50 @@ function TopicDetail({
                   解除关联
                 </Button>
               ) : null}
-              <Button type="primary" icon={<EditOutlined />} onClick={() => setKnowledgeGraphPreviewMode('edit')}>
-                编辑
-              </Button>
-              <Button icon={<FullscreenOutlined />} onClick={() => openKnowledgeGraphInNewTab(previewData.graph, 'graph')}>
+              <Button icon={<FullscreenOutlined />} onClick={() => openKnowledgeGraphInNewTab(previewData.graph, 'curriculum')}>
                 全屏
               </Button>
             </div>
           </div>
+          <KnowledgeGraphModule
+            embedded
+            entryGraphId={previewData.graph.id}
+            entryCollectionId={previewData.graph.collectionId}
+            entryMode="curriculum"
+            entryRequestId={`topic-${currentVersion?.id || 'default'}-${previewData.graph.id}-edit`}
+            onExitEmbedded={() => setKnowledgeGraphPreviewMode('preview')}
+          />
+        </div>
+      );
+    }
+
+    return (
+      <div className="finder-kg-preview-embed topic-kg-preview-embed">
+        <div className="finder-kg-preview-head">
+          <div className="finder-kg-preview-head-copy">
+            <div className="finder-kg-preview-head-title">{previewData.graph.name}</div>
+            <div className="finder-kg-preview-head-meta">
+              {previewData.graph.description || '知识图谱结构化预览'}
+            </div>
+          </div>
+          <div className="finder-kg-preview-head-actions">
+            <Button icon={<DatabaseOutlined />} onClick={handleOpenKnowledgeGraphPicker} disabled={!canEditCurrentVersion}>
+              {knowledgeGraphRef ? '更换图谱' : '绑定图谱'}
+            </Button>
+            {canEditCurrentVersion ? (
+              <Button danger onClick={handleUnbindKnowledgeGraph}>
+                解除关联
+              </Button>
+            ) : null}
+            <Button type="primary" icon={<EditOutlined />} onClick={() => setKnowledgeGraphPreviewMode('edit')}>
+              编辑
+            </Button>
+            <Button icon={<FullscreenOutlined />} onClick={() => openKnowledgeGraphInNewTab(previewData.graph, 'graph')}>
+              全屏
+            </Button>
+          </div>
+        </div>
+        <div className="topic-kg-preview-stage">
           <StructuredKnowledgeGraphView
             graphId={previewData.graph.id}
             points={previewData.points}
@@ -2706,55 +2972,40 @@ function TopicDetail({
             structuredView={previewData.structuredView}
             pointTypeLabelMap={KNOWLEDGE_GRAPH_POINT_TYPE_LABEL_MAP}
             relationTypeLabelMap={KNOWLEDGE_GRAPH_RELATION_TYPE_LABEL_MAP}
-            selection={null}
-            onSelectionChange={() => {}}
+            selection={knowledgeGraphSelection}
+            onSelectionChange={handleSelectKnowledgeGraphCanvasSelection}
             onPreviewBinding={handleSelectKnowledgeGraphPreviewBinding}
             readOnly
+            interactiveReadOnly
           />
-        </div>
-      );
-    }
-
-    const selectedPointBindings = selectedKnowledgeGraphPoint?.resourceBindings || [];
-    const placeholderTitle = selectedKnowledgeGraphPoint?.title
-      || selectedKnowledgeGraphStage?.name
-      || knowledgeGraphGraph.name;
-    const placeholderText = selectedKnowledgeGraphPoint
-      ? (selectedPointBindings.length
-        ? '请在左侧点击该知识点下的绑定资料，在右侧查看具体内容。'
-        : '当前知识点还没有绑定资料，请在左侧切换其他知识点。')
-      : selectedKnowledgeGraphStage
-        ? '请在左侧点击该阶段下某个知识点绑定的资料，在右侧查看预览。'
-        : '请在左侧知识图谱中点击绑定资料，在右侧查看具体预览。';
-
-    return (
-      <div className="topic-preview-main topic-knowledge-preview-main">
-        <div className="topic-preview-main-head">
-          <div className="topic-preview-main-head-left">
-            <span className="topic-preview-main-icon">
-              <NodeIndexOutlined />
-            </span>
-            <div className="topic-preview-main-copy">
-              <div className="topic-preview-main-breadcrumb">
-                {selectedKnowledgeGraphPoint ? '知识点资料预览' : selectedKnowledgeGraphStage ? '阶段资料预览' : '知识图谱资料预览'}
+          {knowledgeGraphDrawerOpen ? (
+            <aside className="topic-knowledge-drawer">
+              <div className="topic-knowledge-drawer-head">
+                <span className="topic-knowledge-drawer-head-label">{previewItem ? '绑定资源预览' : '右侧预览'}</span>
+                <button
+                  type="button"
+                  className="topic-knowledge-drawer-action"
+                  onClick={() => setKnowledgeGraphDrawerOpen(false)}
+                  aria-label="收起右侧预览"
+                >
+                  <RightOutlined />
+                </button>
               </div>
-              <div className="topic-preview-main-title">{placeholderTitle}</div>
-              <div className="topic-preview-main-meta">
-                <span>{placeholderText}</span>
+              <div className="topic-knowledge-drawer-body">
+                {renderKnowledgeGraphDrawerContent()}
               </div>
-            </div>
-          </div>
-          <div className="topic-preview-main-head-actions">
-            <Button type="primary" onClick={handleOpenKnowledgeGraphEditor}>
-              编辑
-            </Button>
-          </div>
-        </div>
-        <div className="topic-preview-main-content topic-knowledge-preview-empty-shell">
-          <Empty
-            description="左侧知识图谱用于导航，点击绑定资料后会在这里显示资源预览。"
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-          />
+            </aside>
+          ) : (
+            <button
+              type="button"
+              className="topic-knowledge-drawer-toggle"
+              onClick={() => setKnowledgeGraphDrawerOpen(true)}
+              aria-label="展开右侧预览"
+            >
+              <LeftOutlined />
+              <span>展开预览</span>
+            </button>
+          )}
         </div>
       </div>
     );
@@ -2877,6 +3128,10 @@ function TopicDetail({
                                   key={binding.bindingId}
                                   type="button"
                                   className={`topic-knowledge-binding-item ${isSelectedBinding ? 'is-selected' : ''}`}
+                                  ref={(node) => {
+                                    if (node) knowledgeGraphBindingItemRefs.current.set(binding.bindingId, node);
+                                    else knowledgeGraphBindingItemRefs.current.delete(binding.bindingId);
+                                  }}
                                   onClick={() => handleSelectKnowledgeGraphPreviewBinding(binding)}
                                 >
                                   <strong>{bindingName}</strong>
@@ -2903,7 +3158,7 @@ function TopicDetail({
   };
 
   return (
-    <div className="topic-detail" style={detailThemeStyle}>
+    <div className={`topic-detail ${sceneConfig ? 'topic-detail-scene-theme' : ''}`} style={detailThemeStyle}>
       <div className="detail-header">
         <div className="detail-header-left">
           <HomeOutlined className="detail-home-icon" onClick={onBack} />

@@ -347,3 +347,30 @@ export function markLuckyConversationRead() {
   emitLuckyChange();
   return nextConversation;
 }
+
+export function appendLuckyConversationMessage(message = {}) {
+  const conversation = readLuckyConversation();
+  const nextMessage = {
+    id: message.id || createId('lucky_msg'),
+    sender: message.sender || 'Lucky',
+    time: message.time || nowTimeText(),
+    content: message.content || '',
+    summary: message.summary || '',
+    messageType: message.messageType || 'custom',
+    createdAt: message.createdAt || nowIso(),
+    recommendations: (message.recommendations || []).map(normalizeLuckyRecommendation),
+    self: Boolean(message.self),
+    ...message,
+  };
+  const nextConversation = {
+    ...conversation,
+    preview: nextMessage.summary || nextMessage.content || conversation.preview,
+    time: nextMessage.time || nowTimeText(),
+    unread: conversation.unread + (nextMessage.self ? 0 : 1),
+    lastPushAt: nextMessage.createdAt,
+    messages: [...(conversation.messages || []), nextMessage].slice(-20),
+  };
+  writeStoredConversation(nextConversation);
+  emitLuckyChange();
+  return nextConversation;
+}
