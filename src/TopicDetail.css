@@ -161,6 +161,17 @@
   -webkit-backdrop-filter: blur(18px) saturate(1.28);
 }
 
+.detail-tabs-single {
+  padding: 0;
+  border: none;
+  border-radius: 16px;
+  overflow: visible;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
 .detail-tabs::before,
 .detail-tabs::after {
   content: '';
@@ -186,6 +197,11 @@
   opacity: 0.82;
   mix-blend-mode: screen;
   z-index: 0;
+}
+
+.detail-tabs-single::before,
+.detail-tabs-single::after {
+  display: none;
 }
 
 .detail-tabs-liquid-indicator {
@@ -283,11 +299,39 @@
   transition: all 0.18s ease;
 }
 
+.detail-tab-single {
+  min-width: 112px;
+  min-height: 40px;
+  padding: 8px 28px;
+  border: 1px solid rgba(230, 234, 239, 0.98);
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(245, 247, 250, 0.94) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 10px 22px rgba(148, 163, 184, 0.12);
+  color: #253041;
+  cursor: default;
+  font-size: 14px;
+  font-weight: 700;
+  text-shadow: none;
+}
+
 .detail-tab:hover {
   background: rgba(255, 255, 255, 0.16);
   border-color: rgba(255, 255, 255, 0.38);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32);
   color: #111827;
+}
+
+.detail-tab-single:hover {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(245, 247, 250, 0.94) 100%);
+  border-color: rgba(230, 234, 239, 0.98);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 10px 22px rgba(148, 163, 184, 0.12);
+  color: #253041;
 }
 
 .detail-tab-active {
@@ -297,6 +341,17 @@
   color: #111827;
   font-weight: 700;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.detail-tab-single.detail-tab-active {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(245, 247, 250, 0.94) 100%);
+  border-color: rgba(230, 234, 239, 0.98);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 10px 22px rgba(148, 163, 184, 0.12);
+  color: #253041;
+  text-shadow: none;
 }
 
 .detail-tab-active:hover {
@@ -649,6 +704,10 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   margin-bottom: 16px;
+}
+
+.panel-actions-single {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .panel-action-btn {

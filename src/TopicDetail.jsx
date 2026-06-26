@@ -227,6 +227,15 @@ function getAiKnowledgeGraphLeftPanelWidth(containerWidth) {
   return Math.max(minLeftWidth, Math.min(maxWidth, targetWidth));
 }
 
+function getBoundedDefaultLeftPanelWidth(containerWidth) {
+  const fallbackWidth = typeof window === 'undefined' ? 1280 : window.innerWidth;
+  const width = containerWidth || fallbackWidth;
+  const minLeftWidth = 280;
+  const minRightWidth = 320;
+  const maxWidth = Math.max(minLeftWidth, width - minRightWidth);
+  return Math.max(minLeftWidth, Math.min(maxWidth, getDefaultLeftPanelWidth()));
+}
+
 function getTopicPanelViewStorageKey(scopeKey = 'default') {
   return `gr:topic-panel-view:${scopeKey}`;
 }
@@ -731,6 +740,11 @@ function TopicDetail({
   const applyAiKnowledgeGraphLeftPanelWidth = useCallback(() => {
     const containerWidth = detailBodyRef.current?.getBoundingClientRect().width || window.innerWidth;
     setLeftPanelWidth(getAiKnowledgeGraphLeftPanelWidth(containerWidth));
+  }, []);
+
+  const applyDefaultLeftPanelWidth = useCallback(() => {
+    const containerWidth = detailBodyRef.current?.getBoundingClientRect().width || window.innerWidth;
+    setLeftPanelWidth(getBoundedDefaultLeftPanelWidth(containerWidth));
   }, []);
 
   const updateAiFloatingPanelPosition = useCallback(() => {
@@ -1552,6 +1566,9 @@ function TopicDetail({
         setPreviewItem(null);
       }
       return;
+    }
+    if (activeTab === 'ai') {
+      applyDefaultLeftPanelWidth();
     }
     setAiKnowledgeGraphPreviewOpen(false);
   };
@@ -3420,21 +3437,23 @@ function TopicDetail({
           ) : null}
         </div>
         <div className="detail-header-center">
-          <div className="detail-tabs" ref={detailTabsRef}>
-            <div
-              className={`detail-tabs-liquid-indicator ${tabIndicatorStyle.opacity ? 'is-visible' : ''}`}
-              style={{
-                width: `${tabIndicatorStyle.width}px`,
-                height: `${tabIndicatorStyle.height}px`,
-                transform: `translate3d(${tabIndicatorStyle.x}px, ${tabIndicatorStyle.y}px, 0)`,
-                opacity: tabIndicatorStyle.opacity,
-              }}
-            />
+          <div className={`detail-tabs ${tabs.length === 1 ? 'detail-tabs-single' : ''}`} ref={detailTabsRef}>
+            {tabs.length > 1 ? (
+              <div
+                className={`detail-tabs-liquid-indicator ${tabIndicatorStyle.opacity ? 'is-visible' : ''}`}
+                style={{
+                  width: `${tabIndicatorStyle.width}px`,
+                  height: `${tabIndicatorStyle.height}px`,
+                  transform: `translate3d(${tabIndicatorStyle.x}px, ${tabIndicatorStyle.y}px, 0)`,
+                  opacity: tabIndicatorStyle.opacity,
+                }}
+              />
+            ) : null}
             {tabs.map((tab) => (
               <div
                 key={tab.key}
                 ref={(node) => setDetailTabRef(tab.key, node)}
-                className={`detail-tab ${activeTab === tab.key ? 'detail-tab-active' : ''}`}
+                className={`detail-tab ${activeTab === tab.key ? 'detail-tab-active' : ''} ${tabs.length === 1 ? 'detail-tab-single' : ''}`}
                 onClick={() => {
                   setActiveTab(tab.key);
                   if (tab.key === 'ai' && resourcePanelView === 'knowledgeGraph') {
@@ -3603,12 +3622,7 @@ function TopicDetail({
 
                 {resourcePanelView === 'resources' ? (
                   <>
-                    <div className="ai-qa-box">
-                      <MessageOutlined style={{ color: '#999', fontSize: 14 }} />
-                      <span className="ai-qa-text">AI 问答</span>
-                    </div>
-
-                    <div className="panel-actions">
+                    <div className={`panel-actions ${isAiMode ? 'panel-actions-single' : ''}`}>
                       <div
                         className={`panel-action-btn ${!canEditDisplayedResources ? 'panel-action-btn-disabled' : ''}`}
                         onClick={() => canEditDisplayedResources && openAddResourceModal(currentListParentKey)}
@@ -3616,10 +3630,12 @@ function TopicDetail({
                         <PlusOutlined style={{ fontSize: 12 }} />
                         <span>{addResourceLabel}</span>
                       </div>
-                      <div className="panel-action-btn">
-                        <AppstoreOutlined style={{ fontSize: 12 }} />
-                        <span>{appLabel}</span>
-                      </div>
+                      {!isAiMode ? (
+                        <div className="panel-action-btn">
+                          <AppstoreOutlined style={{ fontSize: 12 }} />
+                          <span>{appLabel}</span>
+                        </div>
+                      ) : null}
                     </div>
 
                     <div
