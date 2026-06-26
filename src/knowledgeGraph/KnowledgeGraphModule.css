@@ -215,7 +215,7 @@
 }
 
 .kg-toolbar {
-  padding: 22px 28px 16px;
+  padding: 18px 22px 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -254,8 +254,8 @@
 .kg-draft-alert,
 .kg-stats-row,
 .kg-content {
-  margin-left: 28px;
-  margin-right: 28px;
+  margin-left: 22px;
+  margin-right: 22px;
 }
 
 .kg-stats-row {
@@ -283,6 +283,7 @@
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 4px 360px;
+  position: relative;
 }
 
 .kg-editor-layout.is-preview {
@@ -298,7 +299,7 @@
 
 .kg-editor-main .kg-draft-alert,
 .kg-editor-main .kg-content {
-  margin-right: 12px;
+  margin-right: 10px;
 }
 
 .kg-agent-resize-handle {
@@ -323,13 +324,13 @@
   position: relative;
   min-width: 0;
   min-height: 0;
-  margin-right: 28px;
-  margin-bottom: 24px;
-  border-radius: 26px;
+  margin-right: 22px;
+  margin-bottom: 18px;
+  border-radius: 22px;
   border: 1px solid rgba(15, 23, 42, 0.08);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(246, 248, 251, 0.96) 100%);
-  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.06);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -489,18 +490,52 @@
   align-items: center;
   gap: 8px;
   align-self: start;
-  width: 56px;
-  margin-right: 28px;
-  margin-bottom: 24px;
+  width: 48px;
+  margin-right: 22px;
+  margin-bottom: 18px;
   margin-top: 6px;
-  padding: 18px 0 16px;
-  border-radius: 22px;
+  padding: 16px 0 14px;
+  border-radius: 18px;
   border: 1px solid rgba(15, 23, 42, 0.08);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(244, 247, 251, 0.92) 100%);
-  box-shadow: 0 20px 36px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.05);
   cursor: pointer;
   user-select: none;
+}
+
+.kg-inspector-collapsed {
+  position: absolute;
+  top: 18px;
+  right: 12px;
+  z-index: 4;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 44px;
+  padding: 12px 0 10px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(244, 247, 251, 0.92) 100%);
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.05);
+  color: #667085;
+  cursor: pointer;
+}
+
+.kg-inspector-collapsed:hover {
+  color: #2563eb;
+  border-color: rgba(37, 99, 235, 0.18);
+}
+
+.kg-inspector-collapsed-icon {
+  font-size: 15px;
+}
+
+.kg-inspector-collapsed-label {
+  writing-mode: vertical-rl;
+  letter-spacing: 2px;
+  font-size: 11px;
 }
 
 .kg-agent-collapsed-icon {
@@ -523,10 +558,10 @@
 .kg-graph-canvas,
 .kg-curriculum-view,
 .kg-inspector {
-  border-radius: 24px;
+  border-radius: 22px;
   background: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: 0 22px 48px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.05);
 }
 
 .kg-graph-canvas {
@@ -766,7 +801,7 @@
 
 .kg-inspector {
   overflow: auto;
-  padding: 20px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
 }
@@ -777,7 +812,7 @@
   border: none;
   background: transparent;
   box-shadow: none;
-  padding: 20px;
+  padding: 18px;
   overflow: auto;
 }
 
@@ -1237,15 +1272,18 @@
 }
 
 .kg-floating-drawer .ant-drawer-content {
-  background: rgba(244, 247, 251, 0.98);
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.98) 0%, rgba(242, 246, 250, 0.98) 100%);
   display: flex;
   flex-direction: column;
+  border-radius: 22px 0 0 22px;
+  box-shadow: -16px 18px 38px rgba(15, 23, 42, 0.08);
 }
 
 .kg-floating-drawer .ant-drawer-header {
-  background: rgba(244, 247, 251, 0.98);
+  background: transparent;
   border-bottom: 1px solid rgba(15, 23, 42, 0.08);
   flex-shrink: 0;
+  padding: 16px 18px;
 }
 
 .kg-floating-drawer .ant-drawer-body {
@@ -1259,10 +1297,10 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.8);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.82);
   border: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: 0 22px 48px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.05);
   overflow: hidden;
 }
 
@@ -1307,41 +1345,36 @@
 
 .kg-resource-drawer {
   min-width: 0;
-  border-right: 1px solid rgba(15, 23, 42, 0.08);
-  background: linear-gradient(180deg, rgba(247, 249, 252, 0.96) 0%, rgba(242, 245, 249, 0.96) 100%);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  padding: 0;
   min-height: 0;
 }
 
 .kg-resource-drawer-floating {
   position: absolute;
-  left: 18px;
-  top: 18px;
-  bottom: 108px;
-  width: 260px;
+  left: 16px;
+  top: 16px;
+  min-width: 380px;
+  min-height: 360px;
+  max-width: calc(100% - 32px);
+  max-height: calc(100% - 32px);
+  overflow: hidden;
   z-index: 5;
-  border-radius: 22px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
-  transition: transform 180ms ease, opacity 180ms ease, width 180ms ease;
+  transition: transform 180ms ease, opacity 180ms ease, width 180ms ease, height 180ms ease;
 }
 
 .kg-resource-drawer-toggle {
   position: absolute;
-  left: 18px;
-  top: 18px;
+  left: 16px;
+  top: 16px;
   z-index: 5;
-  width: 44px;
-  min-width: 44px;
-  height: 44px;
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
   padding: 0;
-  border-radius: 14px;
+  border-radius: 12px;
   border: 1px solid rgba(15, 23, 42, 0.08);
   background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
 }
 
 .kg-resource-drawer-head {

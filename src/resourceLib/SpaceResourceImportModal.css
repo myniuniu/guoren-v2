@@ -17,11 +17,17 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  background: linear-gradient(180deg, #fbfbfc 0%, #f3f3f6 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #fafbfd 100%);
   color: #1f1f24;
   border-radius: 14px;
   overflow: hidden;
   box-shadow: 0 24px 64px rgba(15, 23, 42, 0.22);
+}
+
+.space-resource-import-shell.is-embedded {
+  height: 100%;
+  border-radius: 22px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
 }
 
 .space-resource-import-shell.is-dragging {
@@ -42,7 +48,7 @@
   width: 220px;
   flex: 0 0 220px;
   padding: 14px 8px 8px;
-  background: linear-gradient(180deg, #f2f2f5 0%, #ececf0 100%);
+  background: linear-gradient(180deg, #f8f9fb 0%, #f4f6f8 100%);
   border-right: 1px solid rgba(28, 28, 30, 0.08);
   overflow-y: auto;
 }
@@ -60,7 +66,7 @@
   padding: 3px;
   margin-bottom: 8px;
   border-radius: 10px;
-  background: rgba(60, 60, 67, 0.12);
+  background: rgba(15, 23, 42, 0.06);
 }
 
 .space-resource-import-scope-btn {
@@ -168,21 +174,84 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.97);
 }
 
 .space-resource-import-toolbar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
   padding: 12px 10px 6px;
   border-bottom: 1px solid rgba(28, 28, 30, 0.08);
-  background: linear-gradient(180deg, rgba(249, 249, 250, 0.98) 0%, rgba(241, 242, 244, 0.98) 100%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(250, 251, 253, 0.98) 100%);
   cursor: grab !important;
+}
+
+.space-resource-import-toolbar.is-static,
+.space-resource-import-toolbar.is-static *,
+.space-resource-import-shell.is-embedded .space-resource-import-toolbar,
+.space-resource-import-shell.is-embedded .space-resource-import-toolbar * {
+  cursor: default !important;
 }
 
 .space-resource-import-shell.is-compact .space-resource-import-toolbar {
   flex-wrap: wrap;
+}
+
+.space-resource-import-toolbar.is-relaxed {
+  display: block;
+  padding: 10px 12px 8px;
+}
+
+.space-resource-import-toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.space-resource-import-toolbar-row + .space-resource-import-toolbar-row {
+  margin-top: 8px;
+}
+
+.space-resource-import-toolbar-row-primary {
+  justify-content: space-between;
+}
+
+.space-resource-import-toolbar-row-secondary {
+  gap: 12px;
+}
+
+.space-resource-import-toolbar.is-relaxed .space-resource-import-toolbar-search {
+  width: auto;
+}
+
+.space-resource-import-toolbar-scope {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+  cursor: default;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.space-resource-import-scope-switcher.is-toolbar {
+  margin-bottom: 0;
+  min-width: 188px;
+}
+
+.space-resource-import-toolbar-org-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.space-resource-import-org-select-toolbar {
+  width: 152px;
+  margin-bottom: 0;
 }
 
 .space-resource-import-toolbar.is-dragging,
@@ -196,7 +265,9 @@
 }
 
 .space-resource-import-toolbar > :not(.space-resource-import-toolbar-search):not(.space-resource-import-close-btn),
-.space-resource-import-toolbar > :not(.space-resource-import-toolbar-search):not(.space-resource-import-close-btn) * {
+.space-resource-import-toolbar > :not(.space-resource-import-toolbar-search):not(.space-resource-import-close-btn) *,
+.space-resource-import-toolbar-row > :not(.space-resource-import-toolbar-search):not(.space-resource-import-close-btn),
+.space-resource-import-toolbar-row > :not(.space-resource-import-toolbar-search):not(.space-resource-import-close-btn) * {
   cursor: inherit;
 }
 
@@ -240,9 +311,30 @@
   text-align: left;
 }
 
+.space-resource-import-shell.is-compact .space-resource-import-toolbar-scope {
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.space-resource-import-shell.is-compact .space-resource-import-toolbar-org-field {
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.space-resource-import-shell.is-compact .space-resource-import-scope-switcher.is-toolbar,
+.space-resource-import-shell.is-compact .space-resource-import-org-select-toolbar {
+  width: 100%;
+}
+
 .space-resource-import-toolbar-search {
   width: 184px;
   cursor: default;
+}
+
+.space-resource-import-toolbar-search.is-fluid {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
 }
 
 .space-resource-import-shell.is-compact .space-resource-import-toolbar-search {
@@ -267,7 +359,7 @@
 
 .space-resource-import-toolbar-search .ant-input-affix-wrapper {
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.96);
 }
 
 .space-resource-import-table {
@@ -294,7 +386,7 @@
   color: #8a8a91;
   font-size: 12px;
   font-weight: 600;
-  background: rgba(248, 248, 250, 0.96);
+  background: rgba(252, 253, 255, 0.98);
   user-select: none;
   -webkit-user-select: none;
 }
@@ -366,13 +458,22 @@
 }
 
 .space-resource-import-row {
-  padding: 6px 10px;
+  padding: 8px 12px;
   border-bottom: 1px solid rgba(28, 28, 30, 0.06);
-  color: #2f2f35;
+  color: #4a525d;
   font-size: 13px;
+  line-height: 1.4;
   cursor: default;
   user-select: none;
   -webkit-user-select: none;
+}
+
+.space-resource-import-row.is-draggable {
+  cursor: grab;
+}
+
+.space-resource-import-row.is-draggable:active {
+  cursor: grabbing;
 }
 
 .space-resource-import-row:hover {
@@ -415,6 +516,7 @@
 .space-resource-import-row-name-wrap {
   display: flex;
   align-items: center;
+  gap: 6px;
   min-width: 0;
   width: 100%;
 }
@@ -425,14 +527,14 @@
   justify-content: center;
   width: 16px;
   height: 16px;
-  margin-right: 4px;
   border: 0;
   border-radius: 4px;
   background: transparent;
-  color: #6d6d74;
+  color: #8a8f98;
   flex: 0 0 16px;
   padding: 0;
   cursor: default;
+  font-size: 10px;
 }
 
 .space-resource-import-row-expander.is-folder {
@@ -451,8 +553,17 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  flex: 0 0 18px;
+  width: 20px;
+  flex: 0 0 20px;
+}
+
+.space-resource-import-row-icon.is-folder .anticon {
+  font-size: 19px !important;
+  color: #46baf7 !important;
+}
+
+.space-resource-import-row-icon.is-file .anticon {
+  font-size: 17px !important;
 }
 
 .space-resource-import-row-name {
@@ -461,6 +572,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
 }
 
 .space-resource-import-row.is-selected .space-resource-import-row-expander {
@@ -488,7 +602,7 @@
   gap: 12px;
   padding: 8px 10px;
   border-top: 1px solid rgba(28, 28, 30, 0.08);
-  background: linear-gradient(180deg, #f7f7f8 0%, #efeff2 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
 }
 
 .space-resource-import-shell.is-compact .space-resource-import-footer {
@@ -497,7 +611,11 @@
 }
 
 .space-resource-import-footer-left {
-  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .space-resource-import-footer-summary {
@@ -510,9 +628,37 @@
   font-size: 13px;
 }
 
+.space-resource-import-footer-summary.is-empty {
+  visibility: hidden;
+}
+
 .space-resource-import-shell.is-compact .space-resource-import-footer-summary {
   justify-content: flex-start;
   flex-wrap: wrap;
+}
+
+.space-resource-import-footer-path {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  color: #5f6470;
+  font-size: 12px;
+}
+
+.space-resource-import-footer-path-label {
+  flex: 0 0 auto;
+  color: #8a8f99;
+  font-weight: 600;
+}
+
+.space-resource-import-footer-path-value {
+  min-width: 0;
+  color: #2f3542;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .space-resource-import-footer-actions {
@@ -576,6 +722,10 @@
     flex-wrap: wrap;
   }
 
+  .space-resource-import-toolbar.is-relaxed {
+    display: block;
+  }
+
   .space-resource-import-toolbar-title {
     order: 3;
     width: 100%;
@@ -598,6 +748,10 @@
 
   .space-resource-import-footer-summary {
     justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .space-resource-import-footer-left {
     flex-wrap: wrap;
   }
 

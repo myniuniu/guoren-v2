@@ -9,6 +9,7 @@ import {
   DesktopOutlined,
   FolderFilled,
   LeftOutlined,
+  MenuFoldOutlined,
   RightOutlined,
   SearchOutlined,
   StarFilled,
@@ -198,11 +199,31 @@ function getInitialModalFrame() {
   };
 }
 
-export default function SpaceResourceImportModal({
-  open,
+export function SpaceResourceImportBrowser({
+  active = true,
   onClose,
   onConfirm,
   excludeFileTypes = ['knowledgeGraph'],
+  frameWidth = null,
+  shellStyle,
+  dragging = false,
+  embedded = false,
+  showCloseButton = true,
+  showFooter = true,
+  showFooterActions = true,
+  showIncludeDirectories = true,
+  showFooterSummary = true,
+  onToolbarMouseDown,
+  onResizeMouseDown,
+  itemDragConfig = null,
+  defaultVisibleColumnKeys = DEFAULT_VISIBLE_COLUMN_KEYS,
+  allowColumnVisibilityMenu = true,
+  disableCompactLayout = false,
+  showSidebar = true,
+  showScopeSwitcherInToolbar = false,
+  showToolbarTitle = true,
+  showFooterPath = false,
+  closeButtonMode = 'close',
 }) {
   const [data, setData] = useState(() => loadResourceLib());
   const [scope, setScope] = useState('personal');
@@ -219,13 +240,11 @@ export default function SpaceResourceImportModal({
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
   const [detailColWidths, setDetailColWidths] = useState(DEFAULT_DETAIL_COL_WIDTHS);
-  const [visibleColumnKeys, setVisibleColumnKeys] = useState(DEFAULT_VISIBLE_COLUMN_KEYS);
-  const [dragInteractionType, setDragInteractionType] = useState(null);
-  const [modalFrame, setModalFrame] = useState(() => getInitialModalFrame());
+  const [visibleColumnKeys, setVisibleColumnKeys] = useState(defaultVisibleColumnKeys);
+  const [measuredWidth, setMeasuredWidth] = useState(() => frameWidth || DEFAULT_MODAL_FRAME.width);
   const lastClickedIndexRef = useRef(null);
-  const modalFrameRef = useRef(modalFrame);
-  const pointerStateRef = useRef(null);
   const detailColResizeRef = useRef(null);
+  const shellRef = useRef(null);
 
   const organizations = useMemo(() => getOrganizations(data), [data]);
   const libraryId = scope === 'personal' ? 'personal' : organizationId;
@@ -247,7 +266,7 @@ export default function SpaceResourceImportModal({
   };
 
   useEffect(() => {
-    if (!open) return;
+    if (!active) return;
     const nextData = loadResourceLib();
     const nextOrganizations = getOrganizations(nextData);
     setData(nextData);
@@ -265,33 +284,27 @@ export default function SpaceResourceImportModal({
     setSortBy('name');
     setSortOrder('asc');
     setDetailColWidths(DEFAULT_DETAIL_COL_WIDTHS);
-    setVisibleColumnKeys(DEFAULT_VISIBLE_COLUMN_KEYS);
-    setDragInteractionType(null);
-    setModalFrame(getInitialModalFrame());
+    setVisibleColumnKeys(defaultVisibleColumnKeys);
     lastClickedIndexRef.current = null;
-  }, [open]);
+  }, [active, defaultVisibleColumnKeys]);
 
   useEffect(() => {
-    modalFrameRef.current = modalFrame;
-  }, [modalFrame]);
-
-  useEffect(() => {
-    if (!open) return undefined;
-    const handleWindowResize = () => {
-      setModalFrame((prev) => clampFrame(prev));
+    if (!active || frameWidth) return undefined;
+    const node = shellRef.current;
+    if (!node) return undefined;
+    const updateWidth = () => {
+      const nextWidth = Math.max(640, Math.round(node.clientWidth || DEFAULT_MODAL_FRAME.width));
+      setMeasuredWidth(nextWidth);
     };
-    window.addEventListener('resize', handleWindowResize);
-    return () => window.removeEventListener('resize', handleWindowResize);
-  }, [open]);
-
-  useEffect(() => () => {
-    const pointerState = pointerStateRef.current;
-    if (!pointerState) return;
-    window.removeEventListener('mousemove', pointerState.onMove);
-    window.removeEventListener('mouseup', pointerState.onUp);
-    document.body.style.userSelect = '';
-    document.body.style.cursor = '';
-  }, []);
+    updateWidth();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', updateWidth);
+      return () => window.removeEventListener('resize', updateWidth);
+    }
+    const observer = new ResizeObserver(() => updateWidth());
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [active, frameWidth]);
 
   useEffect(() => () => {
     const resizeState = detailColResizeRef.current;
@@ -337,9 +350,23 @@ export default function SpaceResourceImportModal({
     : specialView === 'recent'
       ? '最近使用'
       : currentFolder?.name || libraryName;
-  const isCompactLayout = modalFrame.width < 920;
-  const isNarrowLayout = !isCompactLayout && modalFrame.width < 1120;
-  const sidebarWidth = isCompactLayout ? 0 : (isNarrowLayout ? 200 : 220);
+  const currentPathLabel = useMemo(() => {
+    if (activeTagFilter) {
+      return `${libraryName} / 标签 / ${tagDefMap.get(activeTagFilter)?.name || '标签'}`;
+    }
+    if (specialView === 'recent') {
+      return `${libraryName} / 最近使用`;
+    }
+    if (currentFolder) {
+      return getLibraryItemPath(data, libraryId, currentFolder);
+    }
+    return libraryName;
+  }, [activeTagFilter, currentFolder, data, libraryId, libraryName, specialView, tagDefMap]);
+  const effectiveWidth = Math.max(640, Math.round(frameWidth || measuredWidth || DEFAULT_MODAL_FRAME.width));
+  const isCompactLayout = !disableCompactLayout && effectiveWidth < 920;
+  const isNarrowLayout = !disableCompactLayout && !isCompactLayout && effectiveWidth < 1120;
+  const relaxedToolbarLayout = showScopeSwitcherInToolbar && !showToolbarTitle;
+  const sidebarWidth = showSidebar ? (isCompactLayout ? 0 : (isNarrowLayout ? 200 : 220)) : 0;
   const toolbarSearchWidth = isCompactLayout ? null : (isNarrowLayout ? 164 : 184);
   const visibleDetailColumns = useMemo(
     () => DETAIL_COLUMN_DEFS.filter((column) => visibleColumnKeys.includes(column.key)),
@@ -351,8 +378,10 @@ export default function SpaceResourceImportModal({
   );
   const availableTableWidth = Math.max(
     activeWidthKeys.reduce((sum, key) => sum + DETAIL_COL_MIN_WIDTHS[key], 0),
-    Math.floor(modalFrame.width - sidebarWidth - (isCompactLayout ? 28 : 46)),
+    Math.floor(effectiveWidth - sidebarWidth - (isCompactLayout ? 28 : 46)),
   );
+  const closeButtonIcon = closeButtonMode === 'collapse' ? <MenuFoldOutlined /> : <CloseOutlined />;
+  const closeButtonLabel = closeButtonMode === 'collapse' ? '收起' : '关闭';
   const fittedDetailColWidths = useMemo(
     () => fitColumnWidths(detailColWidths, DETAIL_COL_MIN_WIDTHS, availableTableWidth, activeWidthKeys),
     [activeWidthKeys, availableTableWidth, detailColWidths],
@@ -389,7 +418,7 @@ export default function SpaceResourceImportModal({
   const sortLibraryItems = (items) => [...items].sort((left, right) => {
     if (left.isFolder !== right.isFolder) return left.isFolder ? -1 : 1;
 
-    let comparison = 0;
+    let comparison;
     switch (sortBy) {
       case 'date':
         comparison = parseDateValue(left.lastEdit) - parseDateValue(right.lastEdit);
@@ -610,66 +639,6 @@ export default function SpaceResourceImportModal({
     lastClickedIndexRef.current = rowIndex;
   };
 
-  const stopPointerInteraction = () => {
-    const pointerState = pointerStateRef.current;
-    if (!pointerState) return;
-    window.removeEventListener('mousemove', pointerState.onMove);
-    window.removeEventListener('mouseup', pointerState.onUp);
-    document.body.style.userSelect = '';
-    document.body.style.cursor = '';
-    pointerStateRef.current = null;
-    setDragInteractionType(null);
-  };
-
-  const startPointerInteraction = (event, type) => {
-    if (event.button !== 0) return;
-    event.preventDefault();
-
-    stopPointerInteraction();
-
-    const originFrame = modalFrameRef.current;
-    const onMove = (moveEvent) => {
-      const deltaX = moveEvent.clientX - event.clientX;
-      const deltaY = moveEvent.clientY - event.clientY;
-
-      if (type === 'drag') {
-        setModalFrame(clampFrame({
-          ...originFrame,
-          left: originFrame.left + deltaX,
-          top: originFrame.top + deltaY,
-        }));
-        return;
-      }
-
-      setModalFrame(clampFrame({
-        ...originFrame,
-        width: originFrame.width + deltaX,
-        height: originFrame.height + deltaY,
-      }));
-    };
-    const onUp = () => stopPointerInteraction();
-
-    pointerStateRef.current = { onMove, onUp };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-    setDragInteractionType(type);
-    document.body.style.userSelect = 'none';
-    document.body.style.cursor = type === 'drag' ? 'grabbing' : 'nwse-resize';
-  };
-
-  const handleToolbarMouseDown = (event) => {
-    const interactiveTarget = event.target.closest(
-      'button, input, .ant-input-affix-wrapper, .ant-input, .ant-select, .ant-checkbox-wrapper, .space-resource-import-close-btn, .space-resource-import-field-btn',
-    );
-    if (interactiveTarget) return;
-    startPointerInteraction(event, 'drag');
-  };
-
-  const handleResizeMouseDown = (event) => {
-    event.stopPropagation();
-    startPointerInteraction(event, 'resize');
-  };
-
   const handleDetailColResizeStart = (widthKey, event) => {
     event.preventDefault();
     event.stopPropagation();
@@ -698,35 +667,28 @@ export default function SpaceResourceImportModal({
   };
 
   useEffect(() => {
-    if (!open) return undefined;
+    if (!active) return undefined;
     const handleKeyDown = (event) => {
       if (event.key === 'Escape') onClose?.();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose, open]);
+  }, [active, onClose]);
 
-  if (!open || typeof document === 'undefined') return null;
+  if (!active) return null;
 
-  return createPortal(
-    <div className="space-resource-import-layer">
-      <div
-        className="space-resource-import-window-frame"
-        style={{
-          left: `${modalFrame.left}px`,
-          top: `${modalFrame.top}px`,
-          width: `${modalFrame.width}px`,
-        }}
-      >
-        <div
-          className={`space-resource-import-shell ${dragInteractionType === 'drag' ? 'is-dragging' : ''} ${isCompactLayout ? 'is-compact' : ''} ${isNarrowLayout ? 'is-narrow' : ''}`}
-          style={{ height: `${modalFrame.height}px` }}
-        >
-          <div className="space-resource-import-main">
-            <aside
-              className="space-resource-import-sidebar"
-              style={isCompactLayout ? undefined : { width: `${sidebarWidth}px`, flexBasis: `${sidebarWidth}px` }}
-            >
+  return (
+    <div
+      ref={shellRef}
+      className={`space-resource-import-shell ${dragging ? 'is-dragging' : ''} ${embedded ? 'is-embedded' : ''} ${isCompactLayout ? 'is-compact' : ''} ${isNarrowLayout ? 'is-narrow' : ''}`}
+      style={shellStyle}
+    >
+      <div className="space-resource-import-main">
+        {showSidebar ? (
+          <aside
+            className="space-resource-import-sidebar"
+            style={isCompactLayout ? undefined : { width: `${sidebarWidth}px`, flexBasis: `${sidebarWidth}px` }}
+          >
             <div className="space-resource-import-scope-switcher">
               <button
                 type="button"
@@ -801,68 +763,228 @@ export default function SpaceResourceImportModal({
                 </button>
               )) : (
                 <div className="space-resource-import-sidebar-empty">当前资料库暂无标签</div>
-              )}
-            </div>
+                )}
+              </div>
           </aside>
+        ) : null}
 
-            <section className="space-resource-import-content">
-              <div
-                className={`space-resource-import-toolbar ${dragInteractionType === 'drag' ? 'is-dragging' : ''}`}
-                onMouseDown={handleToolbarMouseDown}
-              >
-              <div className="space-resource-import-toolbar-nav">
-                <button
-                  type="button"
-                  className="space-resource-import-nav-btn"
-                  onClick={handleBack}
-                  disabled={!canNavigateBack}
+        <section className="space-resource-import-content">
+          <div
+            className={`space-resource-import-toolbar ${dragging ? 'is-dragging' : ''} ${onToolbarMouseDown ? '' : 'is-static'} ${relaxedToolbarLayout ? 'is-relaxed' : ''}`}
+            onMouseDown={onToolbarMouseDown}
+          >
+            {relaxedToolbarLayout ? (
+              <>
+                <div className="space-resource-import-toolbar-row space-resource-import-toolbar-row-primary">
+                  {showScopeSwitcherInToolbar ? (
+                    <div className="space-resource-import-toolbar-scope">
+                      <div className="space-resource-import-scope-switcher is-toolbar">
+                        <button
+                          type="button"
+                          className={`space-resource-import-scope-btn ${scope === 'personal' ? 'is-active' : ''}`}
+                          onClick={() => handleScopeChange('personal')}
+                        >
+                          个人库
+                        </button>
+                        <button
+                          type="button"
+                          className={`space-resource-import-scope-btn ${scope === 'organization' ? 'is-active' : ''}`}
+                          onClick={() => handleScopeChange('organization')}
+                        >
+                          组织库
+                        </button>
+                      </div>
+                      {scope === 'organization' ? (
+                        <div className="space-resource-import-toolbar-org-field">
+                          <Select
+                            size="small"
+                            value={organizationId}
+                            onChange={handleOrganizationChange}
+                            options={organizations.map((item) => ({ label: item.name, value: item.id }))}
+                            className="space-resource-import-org-select space-resource-import-org-select-toolbar"
+                          />
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {showCloseButton ? (
+                    <button
+                      type="button"
+                      className="space-resource-import-close-btn"
+                      onClick={onClose}
+                      aria-label={closeButtonLabel}
+                      title={closeButtonLabel}
+                    >
+                      {closeButtonIcon}
+                    </button>
+                  ) : null}
+                </div>
+                <div className="space-resource-import-toolbar-row space-resource-import-toolbar-row-secondary">
+                  <div className="space-resource-import-toolbar-nav">
+                    <button
+                      type="button"
+                      className="space-resource-import-nav-btn"
+                      onClick={handleBack}
+                      disabled={!canNavigateBack}
+                    >
+                      <LeftOutlined />
+                    </button>
+                    <button
+                      type="button"
+                      className="space-resource-import-nav-btn"
+                      onClick={handleForward}
+                      disabled={!canNavigateForward}
+                    >
+                      <RightOutlined />
+                    </button>
+                  </div>
+                  <div className="space-resource-import-toolbar-search is-fluid">
+                    <Input
+                      allowClear
+                      size="small"
+                      prefix={<SearchOutlined style={{ fontSize: 12, color: '#8d8d92' }} />}
+                      placeholder="搜索"
+                      value={keyword}
+                      onChange={(event) => {
+                        setKeyword(event.target.value);
+                        setSelectedKeys([]);
+                        lastClickedIndexRef.current = null;
+                      }}
+                    />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {showScopeSwitcherInToolbar ? (
+                  <div className="space-resource-import-toolbar-scope">
+                    <div className="space-resource-import-scope-switcher is-toolbar">
+                      <button
+                        type="button"
+                        className={`space-resource-import-scope-btn ${scope === 'personal' ? 'is-active' : ''}`}
+                        onClick={() => handleScopeChange('personal')}
+                      >
+                        个人库
+                      </button>
+                      <button
+                        type="button"
+                        className={`space-resource-import-scope-btn ${scope === 'organization' ? 'is-active' : ''}`}
+                        onClick={() => handleScopeChange('organization')}
+                      >
+                        组织库
+                      </button>
+                    </div>
+                    {scope === 'organization' ? (
+                      <div className="space-resource-import-toolbar-org-field">
+                        <Select
+                          size="small"
+                          value={organizationId}
+                          onChange={handleOrganizationChange}
+                          options={organizations.map((item) => ({ label: item.name, value: item.id }))}
+                          className="space-resource-import-org-select space-resource-import-org-select-toolbar"
+                        />
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+                <div className="space-resource-import-toolbar-nav">
+                  <button
+                    type="button"
+                    className="space-resource-import-nav-btn"
+                    onClick={handleBack}
+                    disabled={!canNavigateBack}
+                  >
+                    <LeftOutlined />
+                  </button>
+                  <button
+                    type="button"
+                    className="space-resource-import-nav-btn"
+                    onClick={handleForward}
+                    disabled={!canNavigateForward}
+                  >
+                    <RightOutlined />
+                  </button>
+                </div>
+                {showToolbarTitle ? (
+                  <div className="space-resource-import-toolbar-title">{currentTitle}</div>
+                ) : null}
+                <div
+                  className={`space-resource-import-toolbar-search ${showToolbarTitle ? '' : 'is-fluid'}`}
+                  style={showToolbarTitle && toolbarSearchWidth ? { width: `${toolbarSearchWidth}px` } : undefined}
                 >
-                  <LeftOutlined />
-                </button>
-                <button
-                  type="button"
-                  className="space-resource-import-nav-btn"
-                  onClick={handleForward}
-                  disabled={!canNavigateForward}
-                >
-                  <RightOutlined />
-                </button>
-              </div>
-              <div className="space-resource-import-toolbar-title">{currentTitle}</div>
-              <div
-                className="space-resource-import-toolbar-search"
-                style={toolbarSearchWidth ? { width: `${toolbarSearchWidth}px` } : undefined}
-              >
-                <Input
-                  allowClear
-                  size="small"
-                  prefix={<SearchOutlined style={{ fontSize: 12, color: '#8d8d92' }} />}
-                  placeholder="搜索"
-                  value={keyword}
-                  onChange={(event) => {
-                    setKeyword(event.target.value);
-                    setSelectedKeys([]);
-                    lastClickedIndexRef.current = null;
-                  }}
-                />
-              </div>
-              <button
-                type="button"
-                className="space-resource-import-close-btn"
-                onClick={onClose}
-                aria-label="关闭"
-              >
-                <CloseOutlined />
-              </button>
-              </div>
+                  <Input
+                    allowClear
+                    size="small"
+                    prefix={<SearchOutlined style={{ fontSize: 12, color: '#8d8d92' }} />}
+                    placeholder="搜索"
+                    value={keyword}
+                    onChange={(event) => {
+                      setKeyword(event.target.value);
+                      setSelectedKeys([]);
+                      lastClickedIndexRef.current = null;
+                    }}
+                  />
+                </div>
+                {showCloseButton ? (
+                  <button
+                    type="button"
+                    className="space-resource-import-close-btn"
+                    onClick={onClose}
+                    aria-label={closeButtonLabel}
+                    title={closeButtonLabel}
+                  >
+                    {closeButtonIcon}
+                  </button>
+                ) : null}
+              </>
+            )}
+          </div>
 
-              <div className="space-resource-import-table">
-                <Dropdown
-                  menu={columnVisibilityMenu}
-                  trigger={['contextMenu']}
-                  overlayClassName="space-resource-import-col-menu"
-                >
-                  <div className="space-resource-import-list-header" style={{ gridTemplateColumns: detailGridTemplateColumns }}>
+          <div className="space-resource-import-table">
+            {allowColumnVisibilityMenu ? (
+              <Dropdown
+                menu={columnVisibilityMenu}
+                trigger={['contextMenu']}
+                overlayClassName="space-resource-import-col-menu"
+              >
+                <div className="space-resource-import-list-header" style={{ gridTemplateColumns: detailGridTemplateColumns }}>
+                  <span
+                    className={`space-resource-import-header-cell space-resource-import-col-name space-resource-import-col-sortable ${sortBy === 'name' ? 'is-active' : ''}`}
+                    onClick={() => handleHeaderSort('name')}
+                  >
+                    <span className="space-resource-import-col-label">
+                      名称
+                      {sortBy === 'name' ? (
+                        <span className="space-resource-import-col-arrow">{sortOrder === 'asc' ? '▲' : '▼'}</span>
+                      ) : null}
+                    </span>
+                    <span
+                      className="space-resource-import-col-resize-handle"
+                      onMouseDown={(event) => handleDetailColResizeStart('name', event)}
+                    />
+                  </span>
+                  {visibleDetailColumns.map((column) => (
+                    <span
+                      key={column.key}
+                      className={`space-resource-import-header-cell space-resource-import-col-${column.className} ${column.sortable ? 'space-resource-import-col-sortable' : ''} ${sortBy === column.key ? 'is-active' : ''}`}
+                      onClick={() => column.sortable && handleHeaderSort(column.key)}
+                    >
+                      <span className="space-resource-import-col-label">
+                        {column.label}
+                        {sortBy === column.key ? (
+                          <span className="space-resource-import-col-arrow">{sortOrder === 'asc' ? '▲' : '▼'}</span>
+                        ) : null}
+                      </span>
+                      <span
+                        className="space-resource-import-col-resize-handle"
+                        onMouseDown={(event) => handleDetailColResizeStart(column.widthKey, event)}
+                      />
+                    </span>
+                  ))}
+                </div>
+              </Dropdown>
+            ) : (
+              <div className="space-resource-import-list-header" style={{ gridTemplateColumns: detailGridTemplateColumns }}>
                     <span
                       className={`space-resource-import-header-cell space-resource-import-col-name space-resource-import-col-sortable ${sortBy === 'name' ? 'is-active' : ''}`}
                       onClick={() => handleHeaderSort('name')}
@@ -896,23 +1018,44 @@ export default function SpaceResourceImportModal({
                         />
                       </span>
                     ))}
-                  </div>
-                </Dropdown>
+              </div>
+            )}
 
-                <div className="space-resource-import-list-body">
-                  {displayItems.length ? displayItems.map((item, index) => {
-                    const isSelected = selectedKeys.includes(item.key);
-                    const isExpanded = expandedFolderKeys.has(item.key);
-                    return (
-                      <div
-                        key={item.key}
-                        className={`space-resource-import-row ${isSelected ? 'is-selected' : ''}`}
-                        style={{ gridTemplateColumns: detailGridTemplateColumns }}
-                        onClick={(event) => handleSelectRow(item, index, event)}
-                        onDoubleClick={() => {
-                          if (item.isFolder) handleOpenFolder(item.key);
-                        }}
-                      >
+            <div className="space-resource-import-list-body">
+              {displayItems.length ? displayItems.map((item, index) => {
+                const isSelected = selectedKeys.includes(item.key);
+                const isExpanded = expandedFolderKeys.has(item.key);
+                const isRowDraggable = Boolean(itemDragConfig && !item.isFolder);
+                return (
+                  <div
+                    key={item.key}
+                    className={`space-resource-import-row ${isSelected ? 'is-selected' : ''} ${isRowDraggable ? 'is-draggable' : ''}`}
+                    style={{ gridTemplateColumns: detailGridTemplateColumns }}
+                    onClick={(event) => handleSelectRow(item, index, event)}
+                    onDoubleClick={() => {
+                      if (item.isFolder) {
+                        handleOpenFolder(item.key);
+                        return;
+                      }
+                      itemDragConfig?.onItemDoubleClick?.(item, {
+                        libraryId,
+                        libraryName,
+                        libraryScope: scope,
+                        path: getLibraryItemPath(data, libraryId, item),
+                      });
+                    }}
+                    draggable={isRowDraggable}
+                    onDragStart={isRowDraggable ? (event) => {
+                      const payload = itemDragConfig.serialize?.(item, {
+                        libraryId,
+                        libraryName,
+                        libraryScope: scope,
+                        path: getLibraryItemPath(data, libraryId, item),
+                      }) ?? item;
+                      event.dataTransfer.setData(itemDragConfig.type, JSON.stringify(payload));
+                      event.dataTransfer.effectAllowed = itemDragConfig.effectAllowed || 'copy';
+                    } : undefined}
+                  >
                         <span className="space-resource-import-col-name">
                           <span
                             className="space-resource-import-row-name-wrap"
@@ -932,7 +1075,7 @@ export default function SpaceResourceImportModal({
                                 isExpanded ? <CaretDownOutlined /> : <CaretRightOutlined />
                               ) : null}
                             </button>
-                            <span className="space-resource-import-row-icon">
+                            <span className={`space-resource-import-row-icon ${item.isFolder ? 'is-folder' : 'is-file'}`}>
                               {renderFileIcon(getSelectableFileType(item), { fontSize: 18 })}
                             </span>
                             <span className="space-resource-import-row-name">{item.name}</span>
@@ -953,32 +1096,46 @@ export default function SpaceResourceImportModal({
                           }
                           return null;
                         })}
-                      </div>
-                    );
-                  }) : (
-                    <div className="space-resource-import-empty">
-                      <Empty
-                        image={Empty.PRESENTED_IMAGE_SIMPLE}
-                        description={keyword ? `没有匹配“${keyword}”的资料` : '当前目录没有可导入的资料'}
-                      />
-                    </div>
-                  )}
+                  </div>
+                );
+              }) : (
+                <div className="space-resource-import-empty">
+                  <Empty
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    description={keyword ? `没有匹配“${keyword}”的资料` : '当前目录没有可导入的资料'}
+                  />
                 </div>
-              </div>
-            </section>
-          </div>
-
-          <div className="space-resource-import-footer">
-            <div className="space-resource-import-footer-left">
-              <Checkbox checked={includeDirectories} onChange={(event) => setIncludeDirectories(event.target.checked)}>
-                包括目录
-              </Checkbox>
+              )}
             </div>
+          </div>
+        </section>
+      </div>
+
+      {showFooter ? (
+        <div className="space-resource-import-footer">
+          {showFooterPath || showIncludeDirectories ? (
+            <div className="space-resource-import-footer-left">
+              {showFooterPath ? (
+                <div className="space-resource-import-footer-path" title={currentPathLabel}>
+                  <span className="space-resource-import-footer-path-label">路径</span>
+                  <span className="space-resource-import-footer-path-value">{currentPathLabel}</span>
+                </div>
+              ) : null}
+              {showIncludeDirectories ? (
+                <Checkbox checked={includeDirectories} onChange={(event) => setIncludeDirectories(event.target.checked)}>
+                  包括目录
+                </Checkbox>
+              ) : null}
+            </div>
+          ) : null}
+          {showFooterSummary ? (
             <div className="space-resource-import-footer-summary">
               <span>已选 {selectedItems.length} 项</span>
               <span>{selectedFolderCount} 个文件夹</span>
               <span>{selectedFileCount} 个文件</span>
             </div>
+          ) : showFooterActions ? <div className="space-resource-import-footer-summary is-empty" /> : null}
+          {showFooterActions ? (
             <div className="space-resource-import-footer-actions">
               <Button onClick={onClose}>取消</Button>
               <Button
@@ -989,14 +1146,143 @@ export default function SpaceResourceImportModal({
                 导入
               </Button>
             </div>
+          ) : null}
+          {onResizeMouseDown ? (
             <button
               type="button"
               className="space-resource-import-resize-handle"
-              onMouseDown={handleResizeMouseDown}
+              onMouseDown={onResizeMouseDown}
               aria-label="调整窗口大小"
             />
-          </div>
+          ) : null}
         </div>
+      ) : null}
+    </div>
+  );
+}
+
+export default function SpaceResourceImportModal({
+  open,
+  onClose,
+  onConfirm,
+  excludeFileTypes = ['knowledgeGraph'],
+}) {
+  const [modalFrame, setModalFrame] = useState(() => getInitialModalFrame());
+  const [dragInteractionType, setDragInteractionType] = useState(null);
+  const modalFrameRef = useRef(modalFrame);
+  const pointerStateRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setModalFrame(getInitialModalFrame());
+    setDragInteractionType(null);
+  }, [open]);
+
+  useEffect(() => {
+    modalFrameRef.current = modalFrame;
+  }, [modalFrame]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const handleWindowResize = () => {
+      setModalFrame((prev) => clampFrame(prev));
+    };
+    window.addEventListener('resize', handleWindowResize);
+    return () => window.removeEventListener('resize', handleWindowResize);
+  }, [open]);
+
+  useEffect(() => () => {
+    const pointerState = pointerStateRef.current;
+    if (!pointerState) return;
+    window.removeEventListener('mousemove', pointerState.onMove);
+    window.removeEventListener('mouseup', pointerState.onUp);
+    document.body.style.userSelect = '';
+    document.body.style.cursor = '';
+  }, []);
+
+  const stopPointerInteraction = () => {
+    const pointerState = pointerStateRef.current;
+    if (!pointerState) return;
+    window.removeEventListener('mousemove', pointerState.onMove);
+    window.removeEventListener('mouseup', pointerState.onUp);
+    document.body.style.userSelect = '';
+    document.body.style.cursor = '';
+    pointerStateRef.current = null;
+    setDragInteractionType(null);
+  };
+
+  const startPointerInteraction = (event, type) => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+
+    stopPointerInteraction();
+
+    const originFrame = modalFrameRef.current;
+    const onMove = (moveEvent) => {
+      const deltaX = moveEvent.clientX - event.clientX;
+      const deltaY = moveEvent.clientY - event.clientY;
+
+      if (type === 'drag') {
+        setModalFrame(clampFrame({
+          ...originFrame,
+          left: originFrame.left + deltaX,
+          top: originFrame.top + deltaY,
+        }));
+        return;
+      }
+
+      setModalFrame(clampFrame({
+        ...originFrame,
+        width: originFrame.width + deltaX,
+        height: originFrame.height + deltaY,
+      }));
+    };
+    const onUp = () => stopPointerInteraction();
+
+    pointerStateRef.current = { onMove, onUp };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    setDragInteractionType(type);
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = type === 'drag' ? 'grabbing' : 'nwse-resize';
+  };
+
+  const handleToolbarMouseDown = (event) => {
+    const interactiveTarget = event.target.closest(
+      'button, input, .ant-input-affix-wrapper, .ant-input, .ant-select, .ant-checkbox-wrapper, .space-resource-import-close-btn, .space-resource-import-field-btn',
+    );
+    if (interactiveTarget) return;
+    startPointerInteraction(event, 'drag');
+  };
+
+  const handleResizeMouseDown = (event) => {
+    event.stopPropagation();
+    startPointerInteraction(event, 'resize');
+  };
+
+  if (!open || typeof document === 'undefined') return null;
+
+  return createPortal(
+    <div className="space-resource-import-layer">
+      <div
+        className="space-resource-import-window-frame"
+        style={{
+          left: `${modalFrame.left}px`,
+          top: `${modalFrame.top}px`,
+          width: `${modalFrame.width}px`,
+        }}
+      >
+        <SpaceResourceImportBrowser
+          active={open}
+          onClose={onClose}
+          onConfirm={onConfirm}
+          excludeFileTypes={excludeFileTypes}
+          frameWidth={modalFrame.width}
+          shellStyle={{ height: `${modalFrame.height}px` }}
+          dragging={dragInteractionType === 'drag'}
+          onToolbarMouseDown={handleToolbarMouseDown}
+          onResizeMouseDown={handleResizeMouseDown}
+        />
       </div>
     </div>,
     document.body,

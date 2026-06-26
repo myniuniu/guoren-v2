@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Empty, Input, Modal, Segmented, Tag, Tooltip, message } from 'antd';
+import { Button, Empty, Modal, Tag, Tooltip, message } from 'antd';
 import {
+  ApartmentOutlined,
   DownOutlined,
   DeleteOutlined,
   FileExcelOutlined,
@@ -8,7 +9,6 @@ import {
   FilePdfOutlined,
   FilePptOutlined,
   FileTextOutlined,
-  MenuFoldOutlined,
   MenuUnfoldOutlined,
   PlayCircleOutlined,
   PlusOutlined,
@@ -28,7 +28,7 @@ import ReactFlow, {
   reconnectEdge,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { getAllItemsAcrossLibraries, loadResourceLib } from '../resourceLib/resourceLibStore';
+import { SpaceResourceImportBrowser } from '../resourceLib/SpaceResourceImportModal.jsx';
 
 const STAGE_WIDTH = 332;
 const STAGE_MIN_HEIGHT = 288;
@@ -39,9 +39,32 @@ const POINT_MIN_WIDTH = 280;
 const POINT_HEIGHT = 196;
 const POINT_GAP = 16;
 const RESOURCE_DRAG_TYPE = 'application/x-kg-resource';
+const NAME_ONLY_COLUMN_KEYS = Object.freeze([]);
+const DEFAULT_RESOURCE_PANEL_FRAME = Object.freeze({
+  width: 460,
+  height: 800,
+});
+const MIN_RESOURCE_PANEL_FRAME = Object.freeze({
+  width: 380,
+  height: 360,
+});
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
+}
+
+function clampResourcePanelFrame(frame, hostNode) {
+  const hostWidth = Math.max(0, hostNode?.clientWidth || 0);
+  const hostHeight = Math.max(0, hostNode?.clientHeight || 0);
+  const maxWidth = Math.max(320, hostWidth - 32);
+  const maxHeight = Math.max(280, hostHeight - 32);
+  const minWidth = Math.min(MIN_RESOURCE_PANEL_FRAME.width, maxWidth);
+  const minHeight = Math.min(MIN_RESOURCE_PANEL_FRAME.height, maxHeight);
+
+  return {
+    width: clamp(Math.round(frame?.width || DEFAULT_RESOURCE_PANEL_FRAME.width), minWidth, maxWidth),
+    height: clamp(Math.round(frame?.height || DEFAULT_RESOURCE_PANEL_FRAME.height), minHeight, maxHeight),
+  };
 }
 
 function buildStageHeight(pointCount) {
@@ -286,12 +309,6 @@ function StageNode({ data, selected }) {
       event.nativeEvent.stopImmediatePropagation();
     }
   };
-  const stopBubbleOnly = (event) => {
-    event.stopPropagation();
-    if (event.nativeEvent?.stopImmediatePropagation) {
-      event.nativeEvent.stopImmediatePropagation();
-    }
-  };
   const handleClassName = `kg-structured-handle${data.readOnly ? ' is-hidden' : ''}`;
   return (
     <div
@@ -493,10 +510,8 @@ const nodeTypes = {
 function StructuredKnowledgeGraphView({
   graphId,
   points,
-  relations,
   structuredView,
   pointTypeLabelMap,
-  relationTypeLabelMap,
   selection,
   onSelectionChange,
   onCreateStage,
@@ -507,16 +522,13 @@ function StructuredKnowledgeGraphView({
   onMovePoint,
   onCreateStageEdge,
   onReconnectStageEdge,
-  onCreatePointRelation,
   onBindResourcesToPoint,
   readOnly = false,
   interactiveReadOnly = false,
   onPreviewBinding = null,
 }) {
-  const [resourceData, setResourceData] = useState(() => loadResourceLib());
-  const [resourceScope, setResourceScope] = useState('all');
-  const [resourceKeyword, setResourceKeyword] = useState('');
   const [resourcePanelOpen, setResourcePanelOpen] = useState(false);
+  const [resourcePanelFrame, setResourcePanelFrame] = useState(DEFAULT_RESOURCE_PANEL_FRAME);
   const [rfInstance, setRfInstance] = useState(null);
   const [dragPreview, setDragPreview] = useState(null);
   const [stageDragPreview, setStageDragPreview] = useState(null);
@@ -525,10 +537,9 @@ function StructuredKnowledgeGraphView({
   const [previewBinding, setPreviewBinding] = useState(null);
   const dragFrameRef = useRef(0);
   const dragNodeRef = useRef(null);
-
-  useEffect(() => {
-    setResourceData(loadResourceLib());
-  }, [graphId]);
+  const resourcePanelHostRef = useRef(null);
+  const resourcePanelFrameRef = useRef(DEFAULT_RESOURCE_PANEL_FRAME);
+  const resourceResizeStateRef = useRef(null);
 
   useEffect(() => {
     if (!rfInstance) return;
@@ -542,6 +553,34 @@ function StructuredKnowledgeGraphView({
     if (dragFrameRef.current) {
       window.cancelAnimationFrame(dragFrameRef.current);
     }
+  }, []);
+
+  useEffect(() => {
+    resourcePanelFrameRef.current = resourcePanelFrame;
+  }, [resourcePanelFrame]);
+
+  useEffect(() => {
+    const handleViewportResize = () => {
+      setResourcePanelFrame((prev) => clampResourcePanelFrame(prev, resourcePanelHostRef.current));
+    };
+    handleViewportResize();
+    const hostNode = resourcePanelHostRef.current;
+    if (typeof ResizeObserver === 'undefined' || !hostNode) {
+      window.addEventListener('resize', handleViewportResize);
+      return () => window.removeEventListener('resize', handleViewportResize);
+    }
+    const observer = new ResizeObserver(() => handleViewportResize());
+    observer.observe(hostNode);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => () => {
+    const resizeState = resourceResizeStateRef.current;
+    if (!resizeState) return;
+    window.removeEventListener('mousemove', resizeState.onMove);
+    window.removeEventListener('mouseup', resizeState.onUp);
+    document.body.style.userSelect = '';
+    document.body.style.cursor = '';
   }, []);
 
   const pointMap = useMemo(
@@ -705,16 +744,6 @@ function StructuredKnowledgeGraphView({
       });
     });
   };
-
-  const resourceItems = useMemo(() => {
-    const keyword = String(resourceKeyword || '').trim().toLowerCase();
-    return getAllItemsAcrossLibraries(resourceData).filter((item) => {
-      if (resourceScope !== 'all' && item.libraryScope !== resourceScope) return false;
-      if (!keyword) return true;
-      const haystack = `${item.name} ${item.libraryName} ${item.fileType}`.toLowerCase();
-      return haystack.includes(keyword);
-    });
-  }, [resourceData, resourceKeyword, resourceScope]);
 
   const nodes = useMemo(() => {
     const stageNodes = stages.map((stage, index) => {
@@ -963,61 +992,77 @@ function StructuredKnowledgeGraphView({
     onMovePoint?.(node.id, nextPreview.stageId, nextPreview.targetIndex);
   };
 
+  const handleResourcePanelResizeStart = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const startFrame = resourcePanelFrameRef.current;
+    const onMove = (moveEvent) => {
+      setResourcePanelFrame(clampResourcePanelFrame({
+        width: startFrame.width + (moveEvent.clientX - startX),
+        height: startFrame.height + (moveEvent.clientY - startY),
+      }, resourcePanelHostRef.current));
+    };
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+      resourceResizeStateRef.current = null;
+    };
+    resourceResizeStateRef.current = { onMove, onUp };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'nwse-resize';
+  };
+
   return (
     <div className="kg-structured-shell">
-      <div className="kg-structured-main">
+      <div ref={resourcePanelHostRef} className="kg-structured-main">
         <div className="kg-structured-canvas kg-structured-canvas-overlay">
           {!readOnly && resourcePanelOpen ? (
-            <aside className="kg-resource-drawer kg-resource-drawer-floating is-open">
-              <div className="kg-resource-drawer-head">
-                <div>
-                  <div className="kg-resource-drawer-title">资料来源</div>
-                  <div className="kg-resource-drawer-subtitle">可拖到知识点节点上直接绑定。</div>
-                </div>
-                <div className="kg-resource-drawer-head-actions">
-                  <Button
-                    size="small"
-                    type="text"
-                    icon={<MenuFoldOutlined />}
-                    onClick={() => setResourcePanelOpen(false)}
-                  />
-                </div>
-              </div>
-              <Segmented
-                block
-                size="small"
-                value={resourceScope}
-                onChange={setResourceScope}
-                options={[
-                  { label: '全部', value: 'all' },
-                  { label: '个人库', value: 'personal' },
-                  { label: '组织库', value: 'organization' },
-                ]}
+            <aside
+              className="kg-resource-drawer kg-resource-drawer-floating is-open"
+              style={{
+                width: `${resourcePanelFrame.width}px`,
+                height: `${resourcePanelFrame.height}px`,
+              }}
+            >
+              <SpaceResourceImportBrowser
+                active={resourcePanelOpen}
+                embedded
+                frameWidth={resourcePanelFrame.width}
+                showFooter
+                showFooterActions={false}
+                showIncludeDirectories={false}
+                showFooterSummary={false}
+                showFooterPath
+                onClose={() => setResourcePanelOpen(false)}
+                onResizeMouseDown={handleResourcePanelResizeStart}
+                excludeFileTypes={['knowledgeGraph']}
+                shellStyle={{ height: '100%' }}
+                defaultVisibleColumnKeys={NAME_ONLY_COLUMN_KEYS}
+                allowColumnVisibilityMenu={false}
+                disableCompactLayout
+                showSidebar={false}
+                showScopeSwitcherInToolbar
+                showToolbarTitle={false}
+                closeButtonMode="collapse"
+                itemDragConfig={{
+                  type: RESOURCE_DRAG_TYPE,
+                  effectAllowed: 'copy',
+                  serialize: (item, context) => ({
+                    ...item,
+                    fileType: item.fileType || 'other',
+                    libraryId: context.libraryId,
+                    libraryName: context.libraryName,
+                    libraryScope: context.libraryScope,
+                    path: context.path,
+                  }),
+                }}
               />
-              <Input.Search
-                allowClear
-                placeholder="搜索资料"
-                value={resourceKeyword}
-                onChange={(event) => setResourceKeyword(event.target.value)}
-              />
-              <div className="kg-resource-drawer-list">
-                {resourceItems.length ? resourceItems.map((item) => (
-                  <div
-                    key={item.key}
-                    className="kg-resource-drawer-item"
-                    draggable
-                    onDragStart={(event) => {
-                      event.dataTransfer.setData(RESOURCE_DRAG_TYPE, JSON.stringify(item));
-                      event.dataTransfer.effectAllowed = 'copy';
-                    }}
-                  >
-                    <div className="kg-resource-drawer-item-name">{item.name}</div>
-                    <div className="kg-resource-drawer-item-meta">{item.libraryName} · {item.fileType}</div>
-                  </div>
-                )) : (
-                  <div className="kg-resource-drawer-empty">当前筛选条件下没有可用资料。</div>
-                )}
-              </div>
             </aside>
           ) : !readOnly ? (
             <Button

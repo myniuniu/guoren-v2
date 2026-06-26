@@ -766,7 +766,7 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
   const [agentInput, setAgentInput] = useState('');
   const [agentTyping, setAgentTyping] = useState(false);
   const [agentCollapsed, setAgentCollapsed] = useState(embedded);
-  const [agentWidth, setAgentWidth] = useState(360);
+  const [agentWidth, setAgentWidth] = useState(320);
   const [collectionForm] = Form.useForm();
   const [graphForm] = Form.useForm();
   const [pointForm] = Form.useForm();
@@ -1520,6 +1520,13 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
         : selection?.type === 'relation'
           ? '关系属性'
           : '图谱属性';
+  const inspectorDrawerOffset = viewMode === 'curriculum'
+    ? (agentCollapsed ? 64 : agentWidth + 28)
+    : undefined;
+  const showInspectorToggle = viewMode === 'curriculum'
+    && !inspectorOpen
+    && selection?.type
+    && selection.type !== 'graph';
 
   const inspectorContent = (
     <div className="kg-inspector kg-inspector-drawer">
@@ -2164,7 +2171,7 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
               <div
                 className={`kg-editor-layout${viewMode === 'curriculum' ? '' : ' is-preview'}`}
                 style={viewMode === 'curriculum'
-                  ? { gridTemplateColumns: agentCollapsed ? 'minmax(0, 1fr) 56px' : `minmax(0, 1fr) ${agentWidth}px` }
+                  ? { gridTemplateColumns: agentCollapsed ? 'minmax(0, 1fr) 48px' : `minmax(0, 1fr) ${agentWidth}px` }
                   : undefined}
               >
                 <div className="kg-editor-main">
@@ -2229,6 +2236,18 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
                     </section>
                   </div>
                 </div>
+
+                {showInspectorToggle ? (
+                  <button
+                    type="button"
+                    className="kg-inspector-collapsed"
+                    style={agentCollapsed ? undefined : { right: `${agentWidth + 22}px` }}
+                    onClick={() => setInspectorOpen(true)}
+                  >
+                    <MenuUnfoldOutlined className="kg-inspector-collapsed-icon" />
+                    <span className="kg-inspector-collapsed-label">属性</span>
+                  </button>
+                ) : null}
 
                 {viewMode === 'curriculum' ? (
                   agentCollapsed ? (
@@ -2302,10 +2321,10 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
                 title={inspectorTitle}
                 open={inspectorOpen}
                 onClose={() => setInspectorOpen(false)}
-                width={380}
+                width={336}
                 destroyOnClose={false}
                 className="kg-floating-drawer"
-                rootStyle={viewMode === 'curriculum' ? { right: agentCollapsed ? 72 : agentWidth + 44 } : undefined}
+                rootStyle={viewMode === 'curriculum' ? { right: inspectorDrawerOffset } : undefined}
               >
                 {inspectorContent}
               </Drawer>
