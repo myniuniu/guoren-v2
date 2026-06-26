@@ -250,6 +250,9 @@ export default function ResourceLibrarySaveModal({
     () => new Map(folderItems.map((entry) => [entry.key, entry])),
     [folderItems],
   );
+  const activeSelectedFolderKey = selectedFolderKey && folderMap.has(selectedFolderKey)
+    ? selectedFolderKey
+    : null;
 
   const childFolderMap = useMemo(() => {
     const nextMap = new Map();
@@ -298,12 +301,25 @@ export default function ResourceLibrarySaveModal({
     };
     visit(null, 0);
     return rows;
-  }, [activeTagFilter, childFolderMap, data, expandedFolderKeys, folderItems, keyword, libraryId, libraryName]);
+  }, [activeTagFilter, childFolderMap, data, expandedFolderKeys, folderItems, keyword, libraryId]);
+
+  const selectedFolderTrail = useMemo(() => {
+    if (!activeSelectedFolderKey) return [];
+    const trail = [];
+    const visited = new Set();
+    let cursor = folderMap.get(activeSelectedFolderKey) || null;
+    while (cursor && !visited.has(cursor.key)) {
+      trail.push(cursor);
+      visited.add(cursor.key);
+      cursor = cursor.parentKey ? folderMap.get(cursor.parentKey) || null : null;
+    }
+    return trail.reverse();
+  }, [activeSelectedFolderKey, folderMap]);
 
   const canSubmit = draftName.trim().length > 0;
 
   const createFolderName = () => {
-    const siblings = folderItems.filter((entry) => (entry.parentKey ?? null) === (selectedFolderKey ?? null));
+    const siblings = folderItems.filter((entry) => (entry.parentKey ?? null) === (activeSelectedFolderKey ?? null));
     const siblingNames = new Set(siblings.map((entry) => entry.name));
     if (!siblingNames.has('新建文件夹')) return '新建文件夹';
     let index = 2;
@@ -350,22 +366,51 @@ export default function ResourceLibrarySaveModal({
     document.body.style.cursor = 'grabbing';
   };
 
+  const expandFolderAncestors = (folderKey) => {
+    if (!folderKey) return;
+    const ancestorKeys = [];
+    const visited = new Set();
+    let cursor = folderMap.get(folderKey) || null;
+    while (cursor?.parentKey && !visited.has(cursor.parentKey)) {
+      ancestorKeys.push(cursor.parentKey);
+      visited.add(cursor.parentKey);
+      cursor = folderMap.get(cursor.parentKey) || null;
+    }
+    if (!ancestorKeys.length) return;
+    setExpandedFolderKeys((prev) => {
+      const next = new Set(prev);
+      ancestorKeys.forEach((key) => next.add(key));
+      return next;
+    });
+  };
+
+  const handleSelectFolder = (folderKey) => {
+    const nextKey = activeSelectedFolderKey === folderKey ? null : folderKey;
+    setSelectedFolderKey(nextKey);
+    if (nextKey) expandFolderAncestors(nextKey);
+  };
+
+  const handleSwitchPath = (folderKey) => {
+    setSelectedFolderKey(folderKey);
+    if (folderKey) expandFolderAncestors(folderKey);
+  };
+
   const handleSave = () => {
     if (!item || !canSubmit) return;
 
-    const folderPath = selectedFolderKey
-      ? getLibraryItemPath(data, libraryId, selectedFolderKey).replace(`${libraryName} / `, '')
+    const folderPath = activeSelectedFolderKey
+      ? getLibraryItemPath(data, libraryId, activeSelectedFolderKey).replace(`${libraryName} / `, '')
       : '';
     const snapshot = buildLuckySnapshot(item, draftName, libraryName, folderPath);
     const nextData = addItemToLibraryId(loadResourceLib(), libraryId, {
       ...snapshot,
-      parentKey: selectedFolderKey,
+      parentKey: activeSelectedFolderKey,
     });
     setData(nextData);
     onSaved?.({
       libraryId,
       libraryName,
-      folderKey: selectedFolderKey,
+      folderKey: activeSelectedFolderKey,
       name: draftName.trim(),
     });
     onClose?.();
@@ -387,11 +432,11 @@ export default function ResourceLibrarySaveModal({
       name: nextFolderName,
       isFolder: true,
       fileType: 'folder',
-      parentKey: selectedFolderKey,
+      parentKey: activeSelectedFolderKey,
       tags: activeTagFilter ? [activeTagFilter] : [],
     });
     const nextFolder = [...getLibraryItemsById(nextData, libraryId)]
-      .filter((entry) => entry.isFolder && (entry.parentKey ?? null) === (selectedFolderKey ?? null))
+      .filter((entry) => entry.isFolder && (entry.parentKey ?? null) === (activeSelectedFolderKey ?? null))
       .sort((left, right) => parseDateValue(right.lastEdit) - parseDateValue(left.lastEdit))[0];
     setData(nextData);
     if (nextFolder?.key) {
@@ -522,13 +567,13 @@ export default function ResourceLibrarySaveModal({
                 {visibleRows.map((entry) => {
                   const childCount = (childFolderMap.get(entry.key) || []).length;
                   const isExpanded = expandedFolderKeys.has(entry.key);
-                  const isSelected = selectedFolderKey === entry.key;
+                  const isSelected = activeSelectedFolderKey === entry.key;
                   const isEditing = editingFolderKey === entry.key;
                   return (
                     <div
                       key={entry.key}
                       className={`resource-library-save-row ${isSelected ? 'is-selected' : ''}`}
-                      onClick={() => setSelectedFolderKey(entry.key)}
+                      onClick={() => handleSelectFolder(entry.key)}
                       onDoubleClick={() => {
                         if (childCount === 0) return;
                         setExpandedFolderKeys((prev) => {
@@ -593,12 +638,40 @@ export default function ResourceLibrarySaveModal({
                   );
                 })}
               </div>
+
             </section>
           </div>
 
           <div className="resource-library-save-footer">
             <div className="resource-library-save-name-field">
               <Button onClick={handleCreateFolder}>新建文件夹</Button>
+            </div>
+            <div className="resource-library-save-pathbar">
+              <button
+                type="button"
+                className={`resource-library-save-pathbar-segment ${selectedFolderTrail.length === 0 ? 'is-current' : ''}`}
+                onClick={() => handleSwitchPath(null)}
+              >
+                <span className="resource-library-save-pathbar-icon"><DesktopOutlined /></span>
+                <span>{libraryName}</span>
+              </button>
+              {selectedFolderTrail.map((entry, index) => {
+                const isCurrent = index === selectedFolderTrail.length - 1;
+                return (
+                  <span key={entry.key} className="resource-library-save-pathbar-item">
+                    <span className="resource-library-save-pathbar-sep">›</span>
+                    <button
+                      type="button"
+                      className={`resource-library-save-pathbar-segment ${isCurrent ? 'is-current' : ''}`}
+                      onClick={() => handleSwitchPath(entry.key)}
+                      disabled={isCurrent}
+                    >
+                      <span className="resource-library-save-pathbar-icon"><FolderFilled /></span>
+                      <span>{entry.name}</span>
+                    </button>
+                  </span>
+                );
+              })}
             </div>
             <div className="resource-library-save-actions">
               <Button onClick={onClose}>取消</Button>

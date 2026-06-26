@@ -362,11 +362,91 @@
   background: linear-gradient(180deg, #f7f7f8 0%, #efeff2 100%);
 }
 
+.resource-library-save-pathbar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #86868b;
+  font-size: 13px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+
+.resource-library-save-pathbar::-webkit-scrollbar {
+  display: none;
+}
+
+.resource-library-save-pathbar-item {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.resource-library-save-pathbar-segment {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.resource-library-save-pathbar-segment:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.04);
+  color: #1d1d1f;
+}
+
+.resource-library-save-pathbar-segment.is-current,
+.resource-library-save-pathbar-segment:disabled {
+  color: #1d1d1f;
+  font-weight: 500;
+  cursor: default;
+}
+
+.resource-library-save-pathbar-segment.is-current:hover,
+.resource-library-save-pathbar-segment:disabled:hover {
+  background: transparent;
+}
+
+.resource-library-save-pathbar-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  color: #4ea7ff;
+  flex: 0 0 14px;
+}
+
+.resource-library-save-pathbar-segment.is-current .resource-library-save-pathbar-icon,
+.resource-library-save-pathbar-segment:disabled .resource-library-save-pathbar-icon {
+  color: inherit;
+}
+
+.resource-library-save-pathbar-sep {
+  color: #c7c7c7;
+  font-size: 11px;
+  padding: 0 2px;
+}
+
 .resource-library-save-name-field {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex: 1;
+  flex: 0 0 auto;
   min-width: 0;
 }
 
