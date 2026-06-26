@@ -463,6 +463,21 @@
   margin-bottom: 14px;
 }
 
+.topic-standalone-panel-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.topic-standalone-panel-header .panel-title {
+  justify-self: start;
+}
+
+.topic-standalone-panel-header .topic-panel-view-switcher {
+  justify-self: center;
+}
+
 .panel-title {
   color: var(--td-text);
   font-size: 15px;
@@ -1457,6 +1472,11 @@
   overflow: hidden;
 }
 
+.topic-ai-stage-body-knowledge {
+  display: flex;
+  flex-direction: column;
+}
+
 .topic-ai-stage-body::-webkit-scrollbar {
   width: 4px;
 }
@@ -1985,6 +2005,11 @@
   overflow: hidden;
 }
 
+.topic-ai-composer-skills-has-selection {
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
 .topic-ai-composer-skill {
   display: inline-flex;
   flex: 0 0 auto;
@@ -2016,6 +2041,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.topic-ai-composer-skill-active .topic-ai-composer-skill-label {
+  max-width: none;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 .topic-ai-composer-overflow-btn {

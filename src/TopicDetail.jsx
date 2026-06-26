@@ -271,7 +271,7 @@ function buildTopicBindingPreviewResource(binding, liveResource, pointTitle, sta
       paragraphs: Array.isArray(liveResource?.meta?.paragraphs) && liveResource.meta.paragraphs.length
         ? liveResource.meta.paragraphs
         : [
-            `资料来源于知识图谱中的知识点「${pointTitle}」，所属阶段「${stageName}」。`,
+            `资料来源于知识图谱中的知识点「${pointTitle}」，所属分区「${stageName}」。`,
             binding?.libraryName ? `当前资料库：${binding.libraryName}。` : '该资料来自外部资料库绑定快照。',
             binding?.snapshotPath ? `资料路径：${binding.snapshotPath}` : '可在资料库中维护该资料内容。',
           ],
@@ -291,7 +291,7 @@ function buildKnowledgeGraphMirrorResources(stages, stagePointEntries, resourceL
       owner: '知识图谱',
       lastEdit: '--',
       meta: {
-        summary: stage.description || '知识图谱阶段目录',
+        summary: stage.description || '知识图谱分区目录',
       },
       __kgMirror: true,
       __kgEntityType: 'stage',
@@ -436,6 +436,7 @@ function TopicDetail({
   const aiFloatingPanelRef = useRef(null);
   const aiToolbarAnchorRefs = useRef(new Map());
   const knowledgeGraphCanvasAreaRef = useRef(null);
+  const knowledgeGraphPanelRef = useRef(null);
   const knowledgeGraphDrawerRef = useRef(null);
 
   useEffect(() => {
@@ -704,8 +705,10 @@ function TopicDetail({
   const aiPrimarySkills = aiSelectedSkill ? aiVisibleSkills : aiVisibleSkills.slice(0, 3);
   const aiOverflowSkills = aiSelectedSkill ? [] : aiVisibleSkills.slice(3);
   const isAiMode = activeTab === 'ai';
-  const isAiKnowledgeGraphLayout = activeTab === 'ai' && resourcePanelView === 'knowledgeGraph';
+  const isKnowledgeGraphView = resourcePanelView === 'knowledgeGraph';
+  const isAiKnowledgeGraphLayout = activeTab === 'ai' && isKnowledgeGraphView;
   const isAiKnowledgeGraphPreviewVisible = isAiKnowledgeGraphLayout && aiKnowledgeGraphPreviewOpen;
+  const isStandaloneKnowledgeGraphView = isKnowledgeGraphView && !isAiMode;
   const aiComposerItems = aiSelectedSkill
     ? [
         { key: 'structure', label: aiStructureLabel },
@@ -1506,19 +1509,19 @@ function TopicDetail({
   }, [hasAiFloatingPanel]);
 
   useEffect(() => {
-    if (!isAiMode || !isAiKnowledgeGraphPreviewVisible || !knowledgeGraphDrawerOpen) return undefined;
+    if (!isKnowledgeGraphView || !knowledgeGraphDrawerOpen) return undefined;
 
     const handlePointerDown = (event) => {
       const target = event.target;
       if (!(target instanceof Node)) return;
-      if (knowledgeGraphCanvasAreaRef.current?.contains(target)) return;
+      if (knowledgeGraphPanelRef.current?.contains(target)) return;
       if (knowledgeGraphDrawerRef.current?.contains(target)) return;
       setKnowledgeGraphDrawerOpen(false);
     };
 
     document.addEventListener('pointerdown', handlePointerDown);
     return () => document.removeEventListener('pointerdown', handlePointerDown);
-  }, [isAiMode, isAiKnowledgeGraphPreviewVisible, knowledgeGraphDrawerOpen]);
+  }, [isKnowledgeGraphView, knowledgeGraphDrawerOpen]);
 
   useLayoutEffect(() => {
     const node = aiPromptInputRef.current;
@@ -1810,6 +1813,10 @@ function TopicDetail({
     if (resource?.type === 'knowledgeGraph') {
       if (!canEditCurrentVersion) {
         message.warning(versioningEnabled ? '当前版本已发布，请新建版本后再导入知识图谱' : '当前内容不可编辑');
+        return;
+      }
+      if (knowledgeGraphRef) {
+        message.warning('当前主题最多添加 1 张知识图谱，如需调整请使用“更换图谱”');
         return;
       }
       setKnowledgeGraphPickerMode('add');
@@ -2884,7 +2891,7 @@ function TopicDetail({
             </div>
             <div className="topic-knowledge-inspector-grid">
               <div className="topic-knowledge-inspector-metric">
-                <span>所属阶段</span>
+                <span>所属分区</span>
                 <strong>{selectedKnowledgeGraphPointStage?.name || '--'}</strong>
               </div>
               <div className="topic-knowledge-inspector-metric">
@@ -2939,10 +2946,10 @@ function TopicDetail({
         const stageBindingCount = stageEntries.reduce((sum, entry) => sum + (entry.point.resourceBindings?.length || 0), 0);
         return (
           <div className="topic-knowledge-inspector">
-            <div className="topic-knowledge-inspector-kicker">阶段属性</div>
+            <div className="topic-knowledge-inspector-kicker">分区属性</div>
             <div className="topic-knowledge-inspector-title">{selectedKnowledgeGraphStage.name}</div>
             <div className="topic-knowledge-inspector-desc">
-              {selectedKnowledgeGraphStage.description || '当前阶段未填写描述。'}
+              {selectedKnowledgeGraphStage.description || '当前分区未填写描述。'}
             </div>
             <div className="topic-knowledge-inspector-grid">
               <div className="topic-knowledge-inspector-metric">
@@ -2958,12 +2965,12 @@ function TopicDetail({
                 <strong>{selectedKnowledgeGraphStage.layoutColumns || 1}</strong>
               </div>
               <div className="topic-knowledge-inspector-metric">
-                <span>阶段颜色</span>
+                <span>分区颜色</span>
                 <strong>{selectedKnowledgeGraphStage.color || '--'}</strong>
               </div>
             </div>
             <div className="topic-knowledge-inspector-section">
-              <div className="topic-knowledge-inspector-section-title">阶段知识点</div>
+              <div className="topic-knowledge-inspector-section-title">分区知识点</div>
               <div className="topic-knowledge-inspector-list">
                 {stageEntries.length ? stageEntries.map(({ point }) => (
                   <button
@@ -2976,7 +2983,7 @@ function TopicDetail({
                     <strong>{point.resourceBindings?.length || 0} 条资料</strong>
                   </button>
                 )) : (
-                  <div className="topic-knowledge-inspector-empty">当前阶段还没有知识点。</div>
+                  <div className="topic-knowledge-inspector-empty">当前分区还没有知识点。</div>
                 )}
               </div>
             </div>
@@ -2989,16 +2996,16 @@ function TopicDetail({
         const targetStage = knowledgeGraphStageMap.get(selectedKnowledgeGraphStageEdge.target) || null;
         return (
           <div className="topic-knowledge-inspector">
-            <div className="topic-knowledge-inspector-kicker">阶段连线</div>
+            <div className="topic-knowledge-inspector-kicker">分区连线</div>
             <div className="topic-knowledge-inspector-title">{selectedKnowledgeGraphStageEdge.label || '未命名连线'}</div>
             <div className="topic-knowledge-inspector-desc">当前为只读查看模式，连线属性不可编辑。</div>
             <div className="topic-knowledge-inspector-list">
               <div className="topic-knowledge-inspector-list-item">
-                <span>起点阶段</span>
+                <span>起点分区</span>
                 <strong>{sourceStage?.name || '--'}</strong>
               </div>
               <div className="topic-knowledge-inspector-list-item">
-                <span>终点阶段</span>
+                <span>终点分区</span>
                 <strong>{targetStage?.name || '--'}</strong>
               </div>
               <div className="topic-knowledge-inspector-list-item">
@@ -3019,11 +3026,11 @@ function TopicDetail({
           <div className="topic-knowledge-inspector-kicker">图谱属性</div>
           <div className="topic-knowledge-inspector-title">{knowledgeGraphGraph.name}</div>
           <div className="topic-knowledge-inspector-desc">
-            {knowledgeGraphGraph.description || '当前图谱用于组织阶段路径、知识点结构与资料绑定。'}
+            {knowledgeGraphGraph.description || '当前图谱用于组织分区路径、知识点结构与资料绑定。'}
           </div>
           <div className="topic-knowledge-inspector-grid">
             <div className="topic-knowledge-inspector-metric">
-              <span>阶段数</span>
+              <span>分区数</span>
               <strong>{knowledgeGraphStages.length}</strong>
             </div>
             <div className="topic-knowledge-inspector-metric">
@@ -3040,7 +3047,7 @@ function TopicDetail({
             </div>
           </div>
           <div className="topic-knowledge-inspector-section">
-            <div className="topic-knowledge-inspector-section-title">阶段概览</div>
+            <div className="topic-knowledge-inspector-section-title">分区概览</div>
             <div className="topic-knowledge-inspector-list">
               {knowledgeGraphStages.map((stage) => {
                 const stageEntries = knowledgeGraphStagePointEntries[stage.id] || [];
@@ -3064,7 +3071,7 @@ function TopicDetail({
 
     if (!knowledgeGraphRef) {
       return (
-        <div className="topic-preview-main topic-knowledge-preview-main">
+        <div className="topic-preview-main topic-knowledge-preview-main" ref={knowledgeGraphPanelRef}>
           <div className="topic-preview-main-head">
             <div className="topic-preview-main-head-left">
               <span className="topic-preview-main-icon">
@@ -3095,7 +3102,7 @@ function TopicDetail({
 
     if (!knowledgeGraphGraph) {
       return (
-        <div className="topic-preview-main topic-knowledge-preview-main">
+        <div className="topic-preview-main topic-knowledge-preview-main" ref={knowledgeGraphPanelRef}>
           <div className="topic-preview-main-head">
             <div className="topic-preview-main-head-left">
               <span className="topic-preview-main-icon">
@@ -3131,7 +3138,7 @@ function TopicDetail({
 
     if (knowledgeGraphPreviewMode === 'edit' && !isAiMode) {
       return (
-        <div className="finder-kg-preview-embed finder-kg-preview-embed-edit">
+        <div className="finder-kg-preview-embed finder-kg-preview-embed-edit" ref={knowledgeGraphPanelRef}>
           <div className="finder-kg-preview-head">
             <div className="finder-kg-preview-head-copy">
               <div className="finder-kg-preview-head-title">{previewData.graph.name}</div>
@@ -3140,11 +3147,6 @@ function TopicDetail({
               </div>
           </div>
           <div className="finder-kg-preview-head-actions">
-            {isAiMode ? (
-              <Button onClick={() => setAiKnowledgeGraphPreviewOpen(false)}>
-                返回目录
-              </Button>
-            ) : null}
             {!isAiMode ? (
               <Button icon={<DatabaseOutlined />} onClick={handleOpenKnowledgeGraphPicker} disabled={!canEditCurrentVersion}>
                 {knowledgeGraphRef ? '更换图谱' : '绑定图谱'}
@@ -3173,7 +3175,7 @@ function TopicDetail({
     }
 
     return (
-      <div className="finder-kg-preview-embed topic-kg-preview-embed">
+      <div className="finder-kg-preview-embed topic-kg-preview-embed" ref={knowledgeGraphPanelRef}>
         <div className="finder-kg-preview-head">
           <div className="finder-kg-preview-head-copy">
             <div className="finder-kg-preview-head-title">{previewData.graph.name}</div>
@@ -3182,11 +3184,6 @@ function TopicDetail({
             </div>
           </div>
           <div className="finder-kg-preview-head-actions">
-            {isAiMode ? (
-              <Button onClick={() => setAiKnowledgeGraphPreviewOpen(false)}>
-                返回目录
-              </Button>
-            ) : null}
             {!isAiMode ? (
               <Button icon={<DatabaseOutlined />} onClick={handleOpenKnowledgeGraphPicker} disabled={!canEditCurrentVersion}>
                 {knowledgeGraphRef ? '更换图谱' : '绑定图谱'}
@@ -3303,12 +3300,12 @@ function TopicDetail({
               <span className="topic-knowledge-overview-icon"><NodeIndexOutlined /></span>
               <span className="topic-knowledge-overview-copy">
                 <strong>{knowledgeGraphGraph.name}</strong>
-                <span>{knowledgeGraphGraph.description || '点击查看图谱概览与阶段分布。'}</span>
+                <span>{knowledgeGraphGraph.description || '点击查看图谱概览与分区分布。'}</span>
               </span>
             </button>
           </div>
           <div className="topic-knowledge-panel-stats">
-            <span>{knowledgeGraphStages.length} 阶段</span>
+            <span>{knowledgeGraphStages.length} 分区</span>
             <span>{knowledgeGraphPoints.length} 知识点</span>
             <span>{knowledgeGraphBindingCount} 资料</span>
           </div>
@@ -3390,7 +3387,7 @@ function TopicDetail({
                         </div>
                       );
                     }) : (
-                      <div className="topic-knowledge-stage-empty">该阶段暂时没有知识点</div>
+                      <div className="topic-knowledge-stage-empty">该分区暂时没有知识点</div>
                     )}
                   </div>
                 ) : null}
@@ -3592,98 +3589,120 @@ function TopicDetail({
         />
       ) : (
         <div className="detail-body" ref={detailBodyRef}>
-          <div className="detail-left-panel" style={{ width: leftPanelWidth, minWidth: leftPanelWidth }}>
-            {!isAiKnowledgeGraphPreviewVisible ? (
-              <div className="panel-header">
-                <span className="panel-title">{resourcePanelView === 'knowledgeGraph' ? '知识图谱' : resourcePanelTitle}</span>
-                {resourcePanelViewOptions.length > 1 ? (
-                  <Segmented
-                    size="small"
-                    value={resourcePanelView}
-                    onChange={handleSwitchResourcePanelView}
-                    options={resourcePanelViewOptions}
-                    className="topic-panel-view-switcher"
-                  />
+          {!isStandaloneKnowledgeGraphView ? (
+            <>
+              <div className="detail-left-panel" style={{ width: leftPanelWidth, minWidth: leftPanelWidth }}>
+                {(!isAiKnowledgeGraphPreviewVisible || isAiKnowledgeGraphLayout) ? (
+                  <div className="panel-header">
+                    <span className="panel-title">{resourcePanelView === 'knowledgeGraph' ? '知识图谱' : resourcePanelTitle}</span>
+                    {resourcePanelViewOptions.length > 1 ? (
+                      <Segmented
+                        size="small"
+                        value={resourcePanelView}
+                        onChange={handleSwitchResourcePanelView}
+                        options={resourcePanelViewOptions}
+                        className="topic-panel-view-switcher"
+                      />
+                    ) : null}
+                  </div>
                 ) : null}
-              </div>
-            ) : null}
 
-            {resourcePanelView === 'resources' ? (
-              <>
-                <div className="ai-qa-box">
-                  <MessageOutlined style={{ color: '#999', fontSize: 14 }} />
-                  <span className="ai-qa-text">AI 问答</span>
-                </div>
+                {resourcePanelView === 'resources' ? (
+                  <>
+                    <div className="ai-qa-box">
+                      <MessageOutlined style={{ color: '#999', fontSize: 14 }} />
+                      <span className="ai-qa-text">AI 问答</span>
+                    </div>
 
-                <div className="panel-actions">
-                  <div
-                    className={`panel-action-btn ${!canEditDisplayedResources ? 'panel-action-btn-disabled' : ''}`}
-                    onClick={() => canEditDisplayedResources && openAddResourceModal(currentListParentKey)}
-                  >
-                    <PlusOutlined style={{ fontSize: 12 }} />
-                    <span>{addResourceLabel}</span>
-                  </div>
-                  <div className="panel-action-btn">
-                    <AppstoreOutlined style={{ fontSize: 12 }} />
-                    <span>{appLabel}</span>
-                  </div>
-                </div>
+                    <div className="panel-actions">
+                      <div
+                        className={`panel-action-btn ${!canEditDisplayedResources ? 'panel-action-btn-disabled' : ''}`}
+                        onClick={() => canEditDisplayedResources && openAddResourceModal(currentListParentKey)}
+                      >
+                        <PlusOutlined style={{ fontSize: 12 }} />
+                        <span>{addResourceLabel}</span>
+                      </div>
+                      <div className="panel-action-btn">
+                        <AppstoreOutlined style={{ fontSize: 12 }} />
+                        <span>{appLabel}</span>
+                      </div>
+                    </div>
 
-                <div
-                  className={`project-section ${dragOverSurface === 'tree' ? 'project-section-dragover' : ''}`}
-                  onContextMenu={(event) => handleBgContextMenu(event, 'tree')}
-                  onDragOver={handleTreeRootDragOver}
-                  onDragLeave={handleTreeRootDragLeave}
-                  onDrop={handleTreeRootDrop}
-                >
-                  <div className="project-header">
-                    <span className="project-title">项目</span>
-                    <Dropdown
-                      overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
-                      menu={{
-                        items: [
-                          {
-                            key: 'add-resource',
-                            icon: <FileAddOutlined />,
-                            label: addResourceLabel,
-                            onClick: () => openAddResourceModal(null),
-                            disabled: !canEditDisplayedResources,
-                          },
-                          {
-                            key: 'new-folder',
-                            icon: <FolderAddOutlined />,
-                            label: '新建文件夹',
-                            onClick: () => createFolderAndStartRename(null, 'tree'),
-                            disabled: !canEditDisplayedResources,
-                          },
-                        ],
-                      }}
-                      trigger={['click']}
+                    <div
+                      className={`project-section ${dragOverSurface === 'tree' ? 'project-section-dragover' : ''}`}
+                      onContextMenu={(event) => handleBgContextMenu(event, 'tree')}
+                      onDragOver={handleTreeRootDragOver}
+                      onDragLeave={handleTreeRootDragLeave}
+                      onDrop={handleTreeRootDrop}
                     >
-                      <MoreOutlined className="project-more-icon" />
-                    </Dropdown>
-                  </div>
+                      <div className="project-header">
+                        <span className="project-title">项目</span>
+                        <Dropdown
+                          overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
+                          menu={{
+                            items: [
+                              {
+                                key: 'add-resource',
+                                icon: <FileAddOutlined />,
+                                label: addResourceLabel,
+                                onClick: () => openAddResourceModal(null),
+                                disabled: !canEditDisplayedResources,
+                              },
+                              {
+                                key: 'new-folder',
+                                icon: <FolderAddOutlined />,
+                                label: '新建文件夹',
+                                onClick: () => createFolderAndStartRename(null, 'tree'),
+                                disabled: !canEditDisplayedResources,
+                              },
+                            ],
+                          }}
+                          trigger={['click']}
+                        >
+                          <MoreOutlined className="project-more-icon" />
+                        </Dropdown>
+                      </div>
 
-                  <div className="project-list">
-                    {rootItems.length === 0 ? (
-                      <div className="project-empty">暂无{resourcePanelTitle}</div>
-                    ) : (
-                      rootItems.map((item) => renderTreeItem(item))
-                    )}
+                      <div className="project-list">
+                        {rootItems.length === 0 ? (
+                          <div className="project-empty">暂无{resourcePanelTitle}</div>
+                        ) : (
+                          rootItems.map((item) => renderTreeItem(item))
+                        )}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="topic-knowledge-panel-shell">
+                    {isAiKnowledgeGraphLayout
+                      ? renderKnowledgeGraphPreviewPane()
+                      : (isAiKnowledgeGraphPreviewVisible ? renderKnowledgeGraphPreviewPane() : renderKnowledgeGraphSidebar())}
                   </div>
-                </div>
-              </>
-            ) : (
-              <div className="topic-knowledge-panel-shell">
-                {isAiKnowledgeGraphPreviewVisible ? renderKnowledgeGraphPreviewPane() : renderKnowledgeGraphSidebar()}
+                )}
               </div>
-            )}
-          </div>
 
-          <div className="topic-sidebar-resize-handle" onMouseDown={handleSidebarResizeStart} />
+              <div className="topic-sidebar-resize-handle" onMouseDown={handleSidebarResizeStart} />
+            </>
+          ) : null}
 
           <div className="detail-right-panel">
-            {activeTab === 'ai' ? (
+            {isStandaloneKnowledgeGraphView ? (
+              <>
+                <div className="panel-header topic-standalone-panel-header">
+                  <span className="panel-title">知识图谱</span>
+                  {resourcePanelViewOptions.length > 1 ? (
+                    <Segmented
+                      size="small"
+                      value={resourcePanelView}
+                      onChange={handleSwitchResourcePanelView}
+                      options={resourcePanelViewOptions}
+                      className="topic-panel-view-switcher"
+                    />
+                  ) : null}
+                </div>
+                {renderKnowledgeGraphPreviewPane()}
+              </>
+            ) : activeTab === 'ai' ? (
               <div className="topic-ai-shell">
                 <div className="topic-ai-main">
                   <div className="topic-ai-workbench">
@@ -3707,7 +3726,7 @@ function TopicDetail({
                     </div>
 
                     <div className="topic-ai-stage">
-                      <div className="topic-ai-stage-body" />
+                      <div className={`topic-ai-stage-body ${isKnowledgeGraphView ? 'topic-ai-stage-body-knowledge' : ''}`} />
 
                       <div className="topic-ai-composer" ref={aiComposerRef}>
                         <textarea
@@ -3894,7 +3913,7 @@ function TopicDetail({
                             <PlusOutlined />
                           </button>
                           <span className="topic-ai-composer-divider" />
-                          <div className="topic-ai-composer-skills">
+                          <div className={`topic-ai-composer-skills ${aiSelectedSkill ? 'topic-ai-composer-skills-has-selection' : ''}`}>
                             {aiPrimarySkills.map((skill) => (
                               <button
                                 key={skill.key}
@@ -4030,7 +4049,7 @@ function TopicDetail({
                   ) : null}
                 </aside>
               </div>
-            ) : resourcePanelView === 'knowledgeGraph' ? renderKnowledgeGraphPreviewPane() : (
+            ) : (
               previewItem ? (
                 <div className="topic-preview-main">
                   <div className="topic-preview-main-head">
@@ -4227,6 +4246,7 @@ function TopicDetail({
         onAdd={handleAddResource}
         onPickLibrary={handlePickLibraryEntry}
         enabledEntries={enabledAddResourceEntries}
+        hiddenTypes={knowledgeGraphRef ? ['knowledgeGraph'] : []}
       />
 
       <SpaceResourceImportModal

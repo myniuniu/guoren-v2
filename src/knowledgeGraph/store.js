@@ -222,7 +222,7 @@ function buildStructuredViewFromLegacy(layout, pointsForGraph = []) {
   const legacyCards = layout?.curriculumView?.cards || {};
   const stages = legacySections.map((section, index) => buildStructuredStage(
     section.id,
-    trimText(section.title) || trimText(section.name) || `阶段 ${index + 1}`,
+    trimText(section.title) || trimText(section.name) || `分区 ${index + 1}`,
     section.color || '#4667d6',
     trimText(section.description),
     Number(section.sortNo || index + 1),
@@ -284,7 +284,7 @@ function normalizeStructuredView(layout, pointsForGraph = []) {
     .map((stage, index) => ({
       ...buildStructuredStage(
         stage.id || createId('kg_stage'),
-        trimText(stage.name) || trimText(stage.title) || `阶段 ${index + 1}`,
+        trimText(stage.name) || trimText(stage.title) || `分区 ${index + 1}`,
         stage.color || '#4667d6',
         trimText(stage.description),
         Number(stage.sortNo || index + 1),
@@ -1334,7 +1334,7 @@ export function createStructuredStage(graphId, payload = {}) {
     layout.structuredView.stages.push({
       ...buildStructuredStage(
       createId('kg_stage'),
-      trimText(payload.name || payload.title) || `阶段 ${layout.structuredView.stages.length + 1}`,
+      trimText(payload.name || payload.title) || `分区 ${layout.structuredView.stages.length + 1}`,
       payload.color || '#4667d6',
       trimText(payload.description),
       layout.structuredView.stages.length + 1,

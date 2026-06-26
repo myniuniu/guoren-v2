@@ -142,16 +142,24 @@ function ResourceLibraryIllustration() {
   );
 }
 
-function AddResourceModal({ open, onClose, onAdd, onPickLibrary, enabledEntries }) {
+function AddResourceModal({
+  open,
+  onClose,
+  onAdd,
+  onPickLibrary,
+  enabledEntries,
+  hiddenTypes = [],
+}) {
   const isEntryEnabled = (item) => {
     if (!Array.isArray(enabledEntries) || !item?.moduleKey) return true;
     return enabledEntries.includes(item.moduleKey);
   };
+  const isTypeVisible = (item) => !hiddenTypes.includes(item?.type);
 
   const libraryEnabled = isEntryEnabled(libraryEntry);
   const visibleActivityEntries = activityEntries.filter(isEntryEnabled);
   const visibleToolEntries = toolEntries.filter(isEntryEnabled);
-  const visibleKnowledgeEntries = knowledgeEntries.filter(isEntryEnabled);
+  const visibleKnowledgeEntries = knowledgeEntries.filter((item) => isEntryEnabled(item) && isTypeVisible(item));
 
   const handleItemClick = (item) => {
     if (item.key === 'resource-lib') {

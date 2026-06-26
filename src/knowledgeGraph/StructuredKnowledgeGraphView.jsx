@@ -324,7 +324,7 @@ function StageNode({ data, selected }) {
           <span className="kg-structured-stage-pill" />
           <div>
             <div className="kg-structured-stage-title">{data.label}</div>
-            <div className="kg-structured-stage-description">{data.description || '用于承载一组知识点与阶段路径。'}</div>
+            <div className="kg-structured-stage-description">{data.description || '用于承载一组知识点与路径关系。'}</div>
           </div>
         </div>
         {data.readOnly ? null : (
@@ -337,7 +337,7 @@ function StageNode({ data, selected }) {
                 onClick={() => data.onCreatePoint?.(data.stageId)}
               />
             </Tooltip>
-            <Tooltip title="删除阶段">
+            <Tooltip title="删除分区">
               <Button
                 size="small"
                 type="text"
@@ -357,7 +357,7 @@ function StageNode({ data, selected }) {
       <div className="kg-structured-stage-body">
         {data.pointCount ? null : (
           <div className="kg-structured-stage-empty">
-            {data.readOnly ? '当前阶段还没有知识点。' : '可在这里拖入已有知识点进行编排。'}
+            {data.readOnly ? '当前分区还没有知识点。' : '可在这里拖入已有知识点进行编排。'}
           </div>
         )}
       </div>
@@ -836,7 +836,7 @@ function StructuredKnowledgeGraphView({
       target: edge.target,
       sourceHandle: edge.sourceHandle || 'stage-source-right',
       targetHandle: edge.targetHandle || 'stage-target-left',
-      label: edge.label || '阶段衔接',
+      label: edge.label || '分区衔接',
       type: edge.pathStyle || 'smoothstep',
       markerStart: getEdgeMarker(edge.startMarker, edge.strokeColor || '#60a5fa'),
       markerEnd: getEdgeMarker(edge.markerType, edge.strokeColor || '#60a5fa'),
@@ -887,18 +887,18 @@ function StructuredKnowledgeGraphView({
       });
       return;
     }
-    message.warning('结构化视图中只允许阶段与阶段之间连线。');
+    message.warning('结构化视图中只允许分区与分区之间连线。');
   };
 
   const handleReconnect = (oldEdge, nextConnection) => {
     if (readOnly) return;
     if (!oldEdge?.id || !nextConnection?.source || !nextConnection?.target) return;
     if (nextConnection.source === nextConnection.target) {
-      message.warning('阶段连线不能连接到自身。');
+      message.warning('分区连线不能连接到自身。');
       return;
     }
     if (!stageIdSet.has(nextConnection.source) || !stageIdSet.has(nextConnection.target)) {
-      message.warning('结构化视图中只允许阶段与阶段之间连线。');
+      message.warning('结构化视图中只允许分区与分区之间连线。');
       return;
     }
     setRenderEdges((current) => reconnectEdge(oldEdge, nextConnection, current));
@@ -1030,11 +1030,11 @@ function StructuredKnowledgeGraphView({
           {!stages.length ? (
             <div className="kg-empty-shell">
               {readOnly ? (
-                <Empty description="当前预览图谱还没有阶段内容" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                <Empty description="当前预览图谱还没有分区内容" image={Empty.PRESENTED_IMAGE_SIMPLE} />
               ) : (
-                <Empty description="当前图谱还没有阶段" image={Empty.PRESENTED_IMAGE_SIMPLE}>
+                <Empty description="当前图谱还没有分区" image={Empty.PRESENTED_IMAGE_SIMPLE}>
                   <Button type="primary" icon={<ApartmentOutlined />} onClick={() => onCreateStage?.()}>
-                    新增阶段
+                    新增分区
                   </Button>
                 </Empty>
               )}

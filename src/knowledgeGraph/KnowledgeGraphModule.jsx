@@ -114,12 +114,12 @@ function clampNumber(value, min, max) {
 function buildKnowledgeGraphAgentWelcome(graphName, stageCount, pointCount, bindingCount) {
   return `你好！我是知识体系智能体。
 
-当前知识图谱「${graphName || '未命名图谱'}」包含 ${stageCount} 个阶段、${pointCount} 个知识点、${bindingCount} 条资料绑定。
+当前知识图谱「${graphName || '未命名图谱'}」包含 ${stageCount} 个分区、${pointCount} 个知识点、${bindingCount} 条资料绑定。
 
 你可以直接描述你的知识体系设计需求，例如：
-• "帮我检查哪些阶段还缺少学习资料"
+• "帮我检查哪些分区还缺少学习资料"
 • "这套知识图谱的学习路径是否清晰"
-• "请给出每个阶段的学习目标建议"
+• "请给出每个分区的学习目标建议"
 
 请描述你希望优化的知识体系问题：`;
 }
@@ -137,12 +137,12 @@ function buildKnowledgeGraphAgentReply(userMessage, context) {
   } = context;
 
   if (!messageText) {
-    return '可以直接告诉我你想优化的知识体系问题，我会基于当前图谱给出分阶段建议。';
+    return '可以直接告诉我你想优化的知识体系问题，我会基于当前图谱给出分区建议。';
   }
 
   if (messageText.includes('资料') || messageText.includes('资源') || messageText.includes('绑定')) {
     if (!unboundPoints.length) {
-      return `当前图谱的 ${pointCount} 个知识点都已经绑定资料，总计 ${bindingCount} 条资料绑定。下一步建议优先检查资料覆盖是否和阶段目标一致。`;
+      return `当前图谱的 ${pointCount} 个知识点都已经绑定资料，总计 ${bindingCount} 条资料绑定。下一步建议优先检查资料覆盖是否和分区目标一致。`;
     }
     const previewPoints = unboundPoints.slice(0, 5).map((point) => point.title).join('、');
     return `当前还有 ${unboundPoints.length} 个知识点未绑定资料，例如：${previewPoints}。建议优先补齐这些知识点的学习资料，再让学员进入预览视图浏览。`;
@@ -153,22 +153,22 @@ function buildKnowledgeGraphAgentReply(userMessage, context) {
       .map((stage) => `${stage.name}（${stage.pointCount} 个知识点，${stage.bindingCount} 条资料）`)
       .join('；');
     return summaryText
-      ? `当前图谱「${graphName}」的阶段分布如下：${summaryText}。如果你希望我进一步优化，我可以继续按“阶段目标、核心知识点、资料覆盖”三个维度给建议。`
-      : '当前图谱还没有阶段。建议先按学习路径拆成 3 到 5 个阶段，再逐步补知识点。';
+      ? `当前图谱「${graphName}」的分区分布如下：${summaryText}。如果你希望我进一步优化，我可以继续按“分区目标、核心知识点、资料覆盖”三个维度给建议。`
+      : '当前图谱还没有分区。建议先按学习路径拆成 3 到 5 个分区，再逐步补知识点。';
   }
 
   if (messageText.includes('路径') || messageText.includes('顺序') || messageText.includes('前置') || messageText.includes('连线')) {
     if (!stageEdgeCount) {
-      return '当前阶段之间还没有学习路径连线。建议先补一条从基础到应用的主路径，再决定哪些阶段需要并行或分支学习。';
+      return '当前分区之间还没有学习路径连线。建议先补一条从基础到应用的主路径，再决定哪些分区需要并行或分支学习。';
     }
-    return `当前阶段之间已有 ${stageEdgeCount} 条路径连线，知识点总关系数为 ${relationCount}。建议重点检查每个阶段是否只承担一个主目标，避免学员在预览视图里看到过多交叉路径。`;
+    return `当前分区之间已有 ${stageEdgeCount} 条路径连线，知识点总关系数为 ${relationCount}。建议重点检查每个分区是否只承担一个主目标，避免学员在预览视图里看到过多交叉路径。`;
   }
 
   if (messageText.includes('学员') || messageText.includes('预览')) {
-    return `如果这套图谱要给学员预览，建议重点检查三件事：1. 阶段命名是否直观；2. 每个知识点是否都绑定了可直接学习的资料；3. 阶段之间的路径连线是否符合从基础到应用的顺序。`;
+    return `如果这套图谱要给学员预览，建议重点检查三件事：1. 分区命名是否直观；2. 每个知识点是否都绑定了可直接学习的资料；3. 分区之间的路径连线是否符合从基础到应用的顺序。`;
   }
 
-  return `我建议先从三步检查当前图谱「${graphName}」：第一，阶段是否按学习路径递进；第二，${pointCount} 个知识点是否都归属清晰；第三，${bindingCount} 条资料绑定是否覆盖核心知识点。如果你愿意，我可以继续按“阶段目标”或“资料缺口”展开。`;
+  return `我建议先从三步检查当前图谱「${graphName}」：第一，分区是否按学习路径递进；第二，${pointCount} 个知识点是否都归属清晰；第三，${bindingCount} 条资料绑定是否覆盖核心知识点。如果你愿意，我可以继续按“分区目标”或“资料缺口”展开。`;
 }
 
 function EdgeStyleButton({ active, onClick, children }) {
@@ -1122,10 +1122,10 @@ function KnowledgeGraphModule({
       const values = await sectionForm.validateFields();
       if (sectionModalState.mode === 'edit' && sectionModalState.record) {
         updateStructuredStage(selectedGraphId, sectionModalState.record.id, values);
-        refreshAndMessage('阶段已更新');
+        refreshAndMessage('分区已更新');
       } else {
         createStructuredStage(selectedGraphId, values);
-        refreshAndMessage('阶段已创建');
+        refreshAndMessage('分区已创建');
       }
       setSectionModalState({ open: false, mode: 'create', record: null });
     } catch {
@@ -1183,7 +1183,7 @@ function KnowledgeGraphModule({
     try {
       const values = await stageEditorForm.validateFields();
       updateStructuredStage(selectedGraphId, selectedStage.id, values);
-      refreshAndMessage('阶段已保存');
+      refreshAndMessage('分区已保存');
     } catch {
       // validation handled by antd
     }
@@ -1205,7 +1205,7 @@ function KnowledgeGraphModule({
     try {
       const values = await stageEdgeEditorForm.validateFields();
       updateStructuredStageEdge(selectedGraphId, selectedStageEdge.id, values);
-      refreshAndMessage('阶段连线已保存');
+      refreshAndMessage('分区连线已保存');
     } catch {
       // validation handled by antd
     }
@@ -1266,7 +1266,7 @@ function KnowledgeGraphModule({
   const handleCreateStructuredStageEdge = (payload) => {
     if (!selectedGraphId) return;
     createStructuredStageEdge(selectedGraphId, payload);
-    refreshAndMessage('阶段连线已创建');
+    refreshAndMessage('分区连线已创建');
   };
 
   const handleReconnectStructuredStageEdge = (edgeId, payload) => {
@@ -1439,11 +1439,11 @@ function KnowledgeGraphModule({
   }, [agentWidth]);
 
   const inspectorTitle = selection?.type === 'stage'
-    ? '阶段属性'
+    ? '分区属性'
     : selection?.type === 'point'
       ? '知识点属性'
       : selection?.type === 'stage-edge'
-        ? '阶段连线'
+        ? '分区连线'
         : selection?.type === 'relation'
           ? '关系属性'
           : '图谱属性';
@@ -1508,13 +1508,13 @@ function KnowledgeGraphModule({
         <div className="kg-inspector-block">
           <Form form={stageEditorForm} layout="vertical">
             <Form.Item
-              label="阶段名称"
+              label="分区名称"
               name="name"
-              rules={[{ required: true, message: '请输入阶段名称' }]}
+              rules={[{ required: true, message: '请输入分区名称' }]}
             >
               <Input />
             </Form.Item>
-            <Form.Item label="阶段描述" name="description">
+            <Form.Item label="分区描述" name="description">
               <Input.TextArea rows={4} />
             </Form.Item>
             <Form.Item label="列数布局" name="layoutColumns">
@@ -1526,20 +1526,20 @@ function KnowledgeGraphModule({
                 ]}
               />
             </Form.Item>
-            <Form.Item label="阶段颜色" name="color">
+            <Form.Item label="分区颜色" name="color">
               <input type="color" className="kg-color-input" />
             </Form.Item>
             <Space className="kg-inspector-actions">
-              <Button type="primary" onClick={handleSaveStageEditor}>保存阶段</Button>
+              <Button type="primary" onClick={handleSaveStageEditor}>保存分区</Button>
               <Popconfirm
-                title="删除阶段"
-                description="阶段中的知识点会自动迁移到首个阶段。"
+                title="删除分区"
+                description="分区中的知识点会自动迁移到首个分区。"
                 okText="删除"
                 cancelText="取消"
                 onConfirm={() => {
                   removeStructuredStage(selectedGraphId, selectedStage.id);
                   setInspectorOpen(false);
-                  refreshAndMessage('阶段已删除');
+                  refreshAndMessage('分区已删除');
                 }}
               >
                 <Button danger disabled={structuredStages.length <= 1}>删除</Button>
@@ -1549,7 +1549,7 @@ function KnowledgeGraphModule({
           <div className="kg-inspector-divider" />
           <div className="kg-inspector-fill">
             <div className="kg-fill-panel">
-              <div className="kg-fill-panel-title">阶段概览</div>
+              <div className="kg-fill-panel-title">分区概览</div>
               <div className="kg-fill-feature-grid">
                 <div className="kg-fill-feature">
                   <span className="kg-fill-feature-label">知识点数</span>
@@ -1570,7 +1570,7 @@ function KnowledgeGraphModule({
               </div>
             </div>
             <div className="kg-fill-panel">
-              <div className="kg-fill-panel-title">阶段内知识点</div>
+              <div className="kg-fill-panel-title">分区内知识点</div>
               <div className="kg-fill-list">
                 {(pointsByStage[selectedStage.id] || []).length ? (pointsByStage[selectedStage.id] || []).map((entry) => (
                   <div key={entry.point.id} className="kg-fill-list-item">
@@ -1580,7 +1580,7 @@ function KnowledgeGraphModule({
                     </div>
                   </div>
                 )) : (
-                  <div className="kg-fill-empty">当前阶段还没有知识点。</div>
+                  <div className="kg-fill-empty">当前分区还没有知识点。</div>
                 )}
               </div>
             </div>
@@ -1657,7 +1657,7 @@ function KnowledgeGraphModule({
               <div className="kg-fill-panel-title">所在位置</div>
               <div className="kg-fill-feature-grid">
                 <div className="kg-fill-feature">
-                  <span className="kg-fill-feature-label">结构化阶段</span>
+                  <span className="kg-fill-feature-label">结构化分区</span>
                   <strong>{selectedPointStage?.name || '未归类'}</strong>
                 </div>
                 <div className="kg-fill-feature">
@@ -1702,14 +1702,14 @@ function KnowledgeGraphModule({
       {selection?.type === 'stage-edge' && selectedStageEdge ? (
         <div className="kg-inspector-block">
           <Form form={stageEdgeEditorForm} layout="vertical">
-            <Form.Item label="起始阶段">
-              <Input value={structuredStages.find((stage) => stage.id === selectedStageEdge.source)?.name || '未知阶段'} disabled />
+            <Form.Item label="起始分区">
+              <Input value={structuredStages.find((stage) => stage.id === selectedStageEdge.source)?.name || '未知分区'} disabled />
             </Form.Item>
-            <Form.Item label="目标阶段">
-              <Input value={structuredStages.find((stage) => stage.id === selectedStageEdge.target)?.name || '未知阶段'} disabled />
+            <Form.Item label="目标分区">
+              <Input value={structuredStages.find((stage) => stage.id === selectedStageEdge.target)?.name || '未知分区'} disabled />
             </Form.Item>
             <Form.Item label="连线标签" name="label">
-              <Input placeholder="例如：下一阶段、依次推进、学习路径" />
+              <Input placeholder="例如：下一分区、依次推进、学习路径" />
             </Form.Item>
             <Form.Item name="strokeColor" hidden><Input /></Form.Item>
             <Form.Item name="strokeWidth" hidden><InputNumber /></Form.Item>
@@ -1725,13 +1725,13 @@ function KnowledgeGraphModule({
             <Space className="kg-inspector-actions">
               <Button type="primary" onClick={handleSaveStageEdgeEditor}>保存连线</Button>
               <Popconfirm
-                title="删除阶段连线"
+                title="删除分区连线"
                 okText="删除"
                 cancelText="取消"
                 onConfirm={() => {
                   removeStructuredStageEdge(selectedGraphId, selectedStageEdge.id);
                   setInspectorOpen(false);
-                  refreshAndMessage('阶段连线已删除');
+                  refreshAndMessage('分区连线已删除');
                 }}
               >
                 <Button danger>删除</Button>
@@ -1746,9 +1746,9 @@ function KnowledgeGraphModule({
                 <div className="kg-fill-list-item">
                   <div className="kg-fill-list-copy">
                     <div className="kg-fill-list-name">
-                      {structuredStages.find((stage) => stage.id === selectedStageEdge.source)?.name || '未知阶段'}
+                      {structuredStages.find((stage) => stage.id === selectedStageEdge.source)?.name || '未知分区'}
                       {' → '}
-                      {structuredStages.find((stage) => stage.id === selectedStageEdge.target)?.name || '未知阶段'}
+                      {structuredStages.find((stage) => stage.id === selectedStageEdge.target)?.name || '未知分区'}
                     </div>
                     <div className="kg-fill-list-meta">
                       {selectedStageEdge.label || '未填写标签'} · {selectedStageEdge.lineStyle || 'solid'} · {selectedStageEdge.strokeWidth || 2}px · 最近更新 {formatDateTime(selectedStageEdge.updatedAt)}
@@ -1758,7 +1758,7 @@ function KnowledgeGraphModule({
               </div>
             </div>
             <div className="kg-fill-panel">
-              <div className="kg-fill-panel-title">最近阶段连线</div>
+              <div className="kg-fill-panel-title">最近分区连线</div>
               <div className="kg-fill-list">
                 {[...structuredStageEdges]
                   .sort((left, right) => String(right.updatedAt || '').localeCompare(String(left.updatedAt || '')))
@@ -2066,7 +2066,7 @@ function KnowledgeGraphModule({
                   {viewMode === 'curriculum' ? (
                     <>
                       <Button icon={<ApartmentOutlined />} onClick={() => openSectionModal('create')}>
-                        新增阶段
+                        新增分区
                       </Button>
                       <Button icon={<SettingOutlined />} onClick={() => {
                         setSelection(defaultSelection(currentGraph.id));
@@ -2130,7 +2130,7 @@ function KnowledgeGraphModule({
                           onDeleteStage={(stageId) => {
                             removeStructuredStage(selectedGraphId, stageId);
                             setInspectorOpen(false);
-                            refreshAndMessage('阶段已删除');
+                            refreshAndMessage('分区已删除');
                           }}
                           onDeletePoint={(pointId) => {
                             removePoint(selectedGraphId, pointId);
@@ -2284,7 +2284,7 @@ function KnowledgeGraphModule({
           <Form.Item label="知识点名称" name="title" rules={[{ required: true, message: '请输入知识点名称' }]}>
             <Input />
           </Form.Item>
-          <Form.Item label="所属阶段" name="stageId" rules={[{ required: true, message: '请选择所属阶段' }]}>
+          <Form.Item label="所属分区" name="stageId" rules={[{ required: true, message: '请选择所属分区' }]}>
             <Select options={structuredStages.map((stage) => ({ label: stage.name, value: stage.id }))} />
           </Form.Item>
           <Form.Item label="知识点摘要" name="summary">
@@ -2300,7 +2300,7 @@ function KnowledgeGraphModule({
       </Modal>
 
       <Modal
-        title={sectionModalState.mode === 'edit' ? '编辑阶段' : '新建阶段'}
+        title={sectionModalState.mode === 'edit' ? '编辑分区' : '新建分区'}
         open={sectionModalState.open}
         onCancel={() => setSectionModalState({ open: false, mode: 'create', record: null })}
         onOk={handleSectionSubmit}
@@ -2308,13 +2308,13 @@ function KnowledgeGraphModule({
         cancelText="取消"
       >
         <Form form={sectionForm} layout="vertical">
-          <Form.Item label="阶段名称" name="title" rules={[{ required: true, message: '请输入阶段名称' }]}>
+          <Form.Item label="分区名称" name="title" rules={[{ required: true, message: '请输入分区名称' }]}>
             <Input />
           </Form.Item>
-          <Form.Item label="阶段描述" name="description">
+          <Form.Item label="分区描述" name="description">
             <Input.TextArea rows={3} />
           </Form.Item>
-          <Form.Item label="阶段颜色" name="color">
+          <Form.Item label="分区颜色" name="color">
             <input type="color" className="kg-color-input" />
           </Form.Item>
         </Form>
