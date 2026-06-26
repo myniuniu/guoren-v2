@@ -21,7 +21,7 @@ import {
   StarOutlined, StarFilled,
 } from '@ant-design/icons';
 import {
-  loadResourceLib, addItem, renameItem, deleteItems, setSelectedFolder, inferFileType, moveItem,
+  loadResourceLib, addItem, renameItem, deleteItems, saveResourceLib, setSelectedFolder, inferFileType, moveItem,
   getTagDefinitions, addTagDefinition, reorderTagDefinition,
   addTagToItem, removeTagFromItem, toggleTagQuickAccess,
   getLibraryList, getLibraryId, getOrganizations, getTagGroups, setCurrentScope, setCurrentOrg, markItemOpened,
@@ -36,10 +36,12 @@ import {
   getGraphLayout,
   getPointsByGraph,
   getRelationsByGraph,
+  getKnowledgeGraphStoreEventName,
   KNOWLEDGE_POINT_TYPE_OPTIONS,
   loadKnowledgeGraphStore,
   RELATION_TYPE_OPTIONS,
   removeGraph as removeKnowledgeGraph,
+  updateGraph as updateKnowledgeGraph,
 } from '../knowledgeGraph/store';
 import KnowledgeGraphModule from '../knowledgeGraph/KnowledgeGraphModule';
 import StructuredKnowledgeGraphView from '../knowledgeGraph/StructuredKnowledgeGraphView';
@@ -145,6 +147,8 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
   const [navIndex, setNavIndex] = useState(0);
   const [viewMode, setViewMode] = useState('detail'); // detail | column
   const [knowledgeGraphPreviewMode, setKnowledgeGraphPreviewMode] = useState('preview');
+  const [editingKnowledgeGraphTitleKey, setEditingKnowledgeGraphTitleKey] = useState(null);
+  const [editingKnowledgeGraphTitleValue, setEditingKnowledgeGraphTitleValue] = useState('');
   const [expandedFolders, setExpandedFolders] = useState(new Set()); // 详情视图中展开的文件夹 key
   const [sortBy, setSortBy] = useState('name'); // name | kind | date | size | tag
   const [sortOrder, setSortOrder] = useState('asc'); // asc | desc
@@ -155,10 +159,13 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
   });
   // 详情视图可见列（顺序决定显示顺序）
   const [visibleCols, setVisibleCols] = useState(['date', 'size', 'kind']);
+  const [detailDraggingColKey, setDetailDraggingColKey] = useState(null);
+  const [detailDragOverColKey, setDetailDragOverColKey] = useState(null);
   // 名称列是否被拖过：默认 false 时名称列使用 flex:1 占满剩余空间
   const [nameColResized, setNameColResized] = useState(false);
   const detailColResizeRef = useRef(null);
   const knowledgeGraphEditorRef = useRef(null);
+  const knowledgeGraphTitleInputRef = useRef(null);
   const handleDetailColResizeStart = (field, e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -196,6 +203,44 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
       setSortOrder(field === 'name' || field === 'kind' ? 'asc' : 'desc');
     }
   };
+  const handleDetailColumnDragStart = useCallback((colKey, event) => {
+    setDetailDraggingColKey(colKey);
+    setDetailDragOverColKey(colKey);
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', colKey);
+  }, []);
+
+  const handleDetailColumnDragOver = useCallback((colKey, event) => {
+    if (!detailDraggingColKey || detailDraggingColKey === colKey) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    setDetailDragOverColKey(colKey);
+  }, [detailDraggingColKey]);
+
+  const handleDetailColumnDrop = useCallback((colKey, event) => {
+    event.preventDefault();
+    const sourceKey = detailDraggingColKey || event.dataTransfer.getData('text/plain');
+    if (!sourceKey || sourceKey === colKey) {
+      setDetailDraggingColKey(null);
+      setDetailDragOverColKey(null);
+      return;
+    }
+    setVisibleCols((prev) => {
+      if (!prev.includes(sourceKey) || !prev.includes(colKey)) return prev;
+      const next = prev.filter((key) => key !== sourceKey);
+      const targetIndex = next.indexOf(colKey);
+      if (targetIndex < 0) return prev;
+      next.splice(targetIndex, 0, sourceKey);
+      return next;
+    });
+    setDetailDraggingColKey(null);
+    setDetailDragOverColKey(null);
+  }, [detailDraggingColKey]);
+
+  const handleDetailColumnDragEnd = useCallback(() => {
+    setDetailDraggingColKey(null);
+    setDetailDragOverColKey(null);
+  }, []);
   const [newFolderInline, setNewFolderInline] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const newFolderInputRef = useRef(null);
@@ -605,6 +650,75 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     };
   }, [resolveKnowledgeGraphTarget]);
 
+  const syncKnowledgeGraphResourceItems = useCallback((currentData) => {
+    const graphSnapshot = loadKnowledgeGraphStore();
+    const graphMap = new Map((graphSnapshot.graphs || []).map((graph) => [graph.id, graph]));
+    let changed = false;
+
+    const syncList = (items = []) => {
+      let listChanged = false;
+      const nextItems = items.map((item) => {
+        if (item?.fileType !== 'knowledgeGraph' || !item?.knowledgeGraphId) return item;
+        const graph = graphMap.get(item.knowledgeGraphId);
+        if (!graph) return item;
+        const nextName = graph.name || item.name;
+        const nextDescription = graph.description || '';
+        const nextContentText = nextDescription || `知识图谱资产「${nextName}」，点击可进入知识图谱编辑模式。`;
+        const nextLastEdit = graph.updatedAt || graph.createdAt || item.lastEdit;
+        if (
+          item.name === nextName
+          && item.comment === (nextDescription || undefined)
+          && item.contentText === nextContentText
+          && item.lastEdit === nextLastEdit
+        ) {
+          return item;
+        }
+        changed = true;
+        listChanged = true;
+        return {
+          ...item,
+          name: nextName,
+          comment: nextDescription || undefined,
+          contentText: nextContentText,
+          lastEdit: nextLastEdit,
+        };
+      });
+      return listChanged ? nextItems : items;
+    };
+
+    const nextPersonal = syncList(currentData.personal || []);
+    const organizationEntries = Object.entries(currentData.organizations || {});
+    let organizationsChanged = false;
+    const nextOrganizations = organizationEntries.reduce((acc, [orgId, items]) => {
+      const nextItems = syncList(items || []);
+      if (nextItems !== items) organizationsChanged = true;
+      acc[orgId] = nextItems;
+      return acc;
+    }, {});
+
+    if (!changed && !organizationsChanged) return currentData;
+
+    const nextData = {
+      ...currentData,
+      personal: nextPersonal,
+      organizations: organizationsChanged ? nextOrganizations : currentData.organizations,
+    };
+    saveResourceLib(nextData);
+    return nextData;
+  }, []);
+
+  const renameLibraryEntry = useCallback((item, nextName) => {
+    const trimmed = String(nextName || '').trim();
+    if (!item?.key || !trimmed || trimmed === item.name) return false;
+
+    if (item.fileType === 'knowledgeGraph' && item.knowledgeGraphId) {
+      updateKnowledgeGraph(item.knowledgeGraphId, { name: trimmed });
+    }
+
+    setData((currentData) => syncKnowledgeGraphResourceItems(renameItem(currentData, scope, item.key, trimmed)));
+    return true;
+  }, [scope, syncKnowledgeGraphResourceItems]);
+
   const openKnowledgeGraphInNewTab = useCallback((graph, mode = 'graph') => {
     if (!graph?.id || typeof window === 'undefined') return;
     const params = new URLSearchParams({
@@ -624,6 +738,81 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
       message.warning('当前没有可保存的知识图谱内容');
     }
   }, []);
+
+  const cancelKnowledgeGraphTitleEdit = useCallback(() => {
+    setEditingKnowledgeGraphTitleKey(null);
+    setEditingKnowledgeGraphTitleValue('');
+  }, []);
+
+  const startKnowledgeGraphTitleEdit = useCallback((itemKey, currentName) => {
+    if (!itemKey) return;
+    setEditingKnowledgeGraphTitleKey(itemKey);
+    setEditingKnowledgeGraphTitleValue(currentName || '');
+  }, []);
+
+  const confirmKnowledgeGraphTitleEdit = useCallback((itemKey) => {
+    if (!itemKey || editingKnowledgeGraphTitleKey !== itemKey) return;
+    const targetItem = list.find((item) => item.key === itemKey);
+    const trimmed = editingKnowledgeGraphTitleValue.trim();
+
+    if (targetItem && trimmed && trimmed !== targetItem.name) {
+      renameLibraryEntry(targetItem, trimmed);
+      message.success('图谱名称已更新');
+    }
+
+    cancelKnowledgeGraphTitleEdit();
+  }, [cancelKnowledgeGraphTitleEdit, editingKnowledgeGraphTitleKey, editingKnowledgeGraphTitleValue, list, renameLibraryEntry]);
+
+  const renderKnowledgeGraphPreviewTitle = useCallback((graph, itemKey) => {
+    const isEditing = editingKnowledgeGraphTitleKey === itemKey;
+    return (
+      <div className="finder-kg-preview-head-title-row">
+        {isEditing ? (
+          <Input
+            ref={knowledgeGraphTitleInputRef}
+            value={editingKnowledgeGraphTitleValue}
+            onChange={(event) => setEditingKnowledgeGraphTitleValue(event.target.value)}
+            onPressEnter={() => confirmKnowledgeGraphTitleEdit(itemKey)}
+            onBlur={() => confirmKnowledgeGraphTitleEdit(itemKey)}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') {
+                event.preventDefault();
+                cancelKnowledgeGraphTitleEdit();
+              }
+            }}
+            className="finder-kg-preview-head-title-input"
+            placeholder="请输入图谱名称"
+          />
+        ) : (
+          <>
+            <div className="finder-kg-preview-head-title">{graph.name}</div>
+            <Button
+              type="text"
+              icon={<EditOutlined />}
+              className="finder-kg-preview-head-title-edit"
+              onClick={() => startKnowledgeGraphTitleEdit(itemKey, graph.name)}
+            />
+          </>
+        )}
+      </div>
+    );
+  }, [
+    cancelKnowledgeGraphTitleEdit,
+    confirmKnowledgeGraphTitleEdit,
+    editingKnowledgeGraphTitleKey,
+    editingKnowledgeGraphTitleValue,
+    startKnowledgeGraphTitleEdit,
+  ]);
+
+  useEffect(() => {
+    setData((currentData) => syncKnowledgeGraphResourceItems(currentData));
+    const eventName = getKnowledgeGraphStoreEventName();
+    const handleKnowledgeGraphChange = () => {
+      setData((currentData) => syncKnowledgeGraphResourceItems(currentData));
+    };
+    window.addEventListener(eventName, handleKnowledgeGraphChange);
+    return () => window.removeEventListener(eventName, handleKnowledgeGraphChange);
+  }, [syncKnowledgeGraphResourceItems]);
 
   // 当前文件夹信息
   const currentFolder = useMemo(
@@ -1241,7 +1430,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     },
   });
 
-  const renameSidebarFolder = (folder) => {
+  const renameSidebarFolder = useCallback((folder) => {
     let newName = folder.name;
     Modal.confirm({
       title: '重命名文件夹',
@@ -1250,11 +1439,11 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
       onOk: () => {
         const trimmed = (newName || '').trim();
         if (!trimmed) { message.warning('名称不能为空'); return Promise.reject(); }
-        setData((d) => renameItem(d, scope, folder.key, trimmed));
+        renameLibraryEntry(folder, trimmed);
         message.success('已重命名');
       },
     });
-  };
+  }, [renameLibraryEntry]);
 
   const hideSidebarFolder = (key) => {
     const newHidden = [...hiddenSidebarFolders, key];
@@ -1930,12 +2119,12 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     const trimmed = inlineRenameName.trim();
 
     if (targetItem && trimmed && trimmed !== targetItem.name) {
-      setData((d) => renameItem(d, scope, targetItem.key, trimmed));
+      renameLibraryEntry(targetItem, trimmed);
       message.success('已重命名');
     }
 
     cancelInlineRename(inlineRenameItemKey);
-  }, [cancelInlineRename, inlineRenameItemKey, inlineRenameName, list, scope]);
+  }, [cancelInlineRename, inlineRenameItemKey, inlineRenameName, list, renameLibraryEntry]);
 
   const startInlineRename = useCallback((item) => {
     if (!item?.key) return;
@@ -2044,7 +2233,18 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
 
   useEffect(() => {
     setKnowledgeGraphPreviewMode('preview');
+    setEditingKnowledgeGraphTitleKey(null);
+    setEditingKnowledgeGraphTitleValue('');
   }, [activeKnowledgeGraphPreviewKey]);
+
+  useEffect(() => {
+    if (!editingKnowledgeGraphTitleKey) return undefined;
+    const timer = window.setTimeout(() => {
+      knowledgeGraphTitleInputRef.current?.focus?.();
+      knowledgeGraphTitleInputRef.current?.select?.();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [editingKnowledgeGraphTitleKey]);
   const [bgMenuPos, setBgMenuPos] = useState(null); // {x, y} 右键菜单位置
   const currentBlankAreaParentKey = viewMode === 'column'
     ? (columnPath[columnPath.length - 1] ?? null)
@@ -2132,10 +2332,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
         <div className="finder-kg-preview-embed finder-kg-preview-embed-edit">
           <div className="finder-kg-preview-head">
             <div className="finder-kg-preview-head-copy">
-              <div className="finder-kg-preview-head-title">{previewData.graph.name}</div>
-              <div className="finder-kg-preview-head-meta">
-                {previewData.graph.description || '知识图谱结构化编辑'}
-              </div>
+              {renderKnowledgeGraphPreviewTitle(previewData.graph, itemKey || previewData.graph.id)}
             </div>
             <div className="finder-kg-preview-head-actions">
               <Button type="primary" onClick={handleSaveKnowledgeGraphPreview}>
@@ -2163,10 +2360,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
       <div className="finder-kg-preview-embed">
         <div className="finder-kg-preview-head">
           <div className="finder-kg-preview-head-copy">
-            <div className="finder-kg-preview-head-title">{previewData.graph.name}</div>
-            <div className="finder-kg-preview-head-meta">
-              {previewData.graph.description || '知识图谱结构化预览'}
-            </div>
+            {renderKnowledgeGraphPreviewTitle(previewData.graph, itemKey || previewData.graph.id)}
           </div>
           <div className="finder-kg-preview-head-actions">
             <Button type="primary" icon={<EditOutlined />} onClick={() => openKnowledgeGraphInNewTab(previewData.graph, 'curriculum')}>
@@ -2190,7 +2384,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
         />
       </div>
     );
-  }, [handleSaveKnowledgeGraphPreview, knowledgeGraphPreviewMode, openKnowledgeGraphInNewTab]);
+  }, [handleSaveKnowledgeGraphPreview, knowledgeGraphPreviewMode, openKnowledgeGraphInNewTab, renderKnowledgeGraphPreviewTitle]);
 
   const toggleItemTagSelection = useCallback((itemKey, tagId, checked) => {
     setData((d) => (
@@ -3268,9 +3462,14 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                           return (
                             <span
                               key={colKey}
-                              className={`finder-detail-col-${colKey} ${def.sortable ? 'finder-detail-col-sortable' : ''} ${sortBy === colKey ? 'finder-detail-col-active' : ''}`}
+                              className={`finder-detail-col-${colKey} ${def.sortable ? 'finder-detail-col-sortable' : ''} ${sortBy === colKey ? 'finder-detail-col-active' : ''} ${detailDraggingColKey === colKey ? 'finder-detail-col-dragging' : ''} ${detailDragOverColKey === colKey && detailDraggingColKey !== colKey ? 'finder-detail-col-dragover' : ''}`}
                               style={{ width: detailColWidths[colKey] }}
                               onClick={() => def.sortable && handleHeaderSort(colKey)}
+                              draggable
+                              onDragStart={(e) => handleDetailColumnDragStart(colKey, e)}
+                              onDragOver={(e) => handleDetailColumnDragOver(colKey, e)}
+                              onDrop={(e) => handleDetailColumnDrop(colKey, e)}
+                              onDragEnd={handleDetailColumnDragEnd}
                             >
                               {def.label}{sortBy === colKey && <span className="finder-detail-col-arrow">{sortOrder === 'asc' ? '▲' : '▼'}</span>}
                               <span className="finder-detail-col-resize-handle" onMouseDown={(e) => handleDetailColResizeStart(colKey, e)} onClick={(e) => e.stopPropagation()} />
