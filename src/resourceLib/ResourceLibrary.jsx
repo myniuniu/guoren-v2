@@ -158,6 +158,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
   // 名称列是否被拖过：默认 false 时名称列使用 flex:1 占满剩余空间
   const [nameColResized, setNameColResized] = useState(false);
   const detailColResizeRef = useRef(null);
+  const knowledgeGraphEditorRef = useRef(null);
   const handleDetailColResizeStart = (field, e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -613,8 +614,15 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     if (graph.collectionId) {
       params.set('collectionId', graph.collectionId);
     }
-    const targetUrl = `${window.location.pathname}${window.location.search}#knowledge-graph?${params.toString()}`;
+    const targetUrl = `${window.location.pathname}${window.location.search}#knowledge-graph-full?${params.toString()}`;
     window.open(targetUrl, '_blank', 'noopener,noreferrer');
+  }, []);
+
+  const handleSaveKnowledgeGraphPreview = useCallback(async () => {
+    const saved = await knowledgeGraphEditorRef.current?.saveCurrentSelection?.();
+    if (!saved) {
+      message.warning('当前没有可保存的知识图谱内容');
+    }
   }, []);
 
   // 当前文件夹信息
@@ -2130,12 +2138,16 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
               </div>
             </div>
             <div className="finder-kg-preview-head-actions">
+              <Button type="primary" onClick={handleSaveKnowledgeGraphPreview}>
+                保存
+              </Button>
               <Button icon={<FullscreenOutlined />} onClick={() => openKnowledgeGraphInNewTab(previewData.graph, 'curriculum')}>
                 全屏
               </Button>
             </div>
           </div>
           <KnowledgeGraphModule
+            ref={knowledgeGraphEditorRef}
             embedded
             entryGraphId={previewData.graph.id}
             entryCollectionId={previewData.graph.collectionId}
@@ -2157,7 +2169,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
             </div>
           </div>
           <div className="finder-kg-preview-head-actions">
-            <Button type="primary" icon={<EditOutlined />} onClick={() => setKnowledgeGraphPreviewMode('edit')}>
+            <Button type="primary" icon={<EditOutlined />} onClick={() => openKnowledgeGraphInNewTab(previewData.graph, 'curriculum')}>
               编辑
             </Button>
             <Button icon={<FullscreenOutlined />} onClick={() => openKnowledgeGraphInNewTab(previewData.graph, 'graph')}>
@@ -2178,7 +2190,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
         />
       </div>
     );
-  }, [knowledgeGraphPreviewMode, openKnowledgeGraphInNewTab]);
+  }, [handleSaveKnowledgeGraphPreview, knowledgeGraphPreviewMode, openKnowledgeGraphInNewTab]);
 
   const toggleItemTagSelection = useCallback((itemKey, tagId, checked) => {
     setData((d) => (

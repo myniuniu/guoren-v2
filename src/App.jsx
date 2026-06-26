@@ -170,6 +170,14 @@ function getInitialHashRoute() {
   return parseHashRoute(window.location.hash);
 }
 
+function getInitialActiveIconKey() {
+  const route = getInitialHashRoute();
+  if (route.page === 'knowledge-graph-full') {
+    return 'knowledge-graph';
+  }
+  return route.page || 'my-space';
+}
+
 function getSceneTheme(scene) {
   return scene?.templateSnapshot?.theme || {};
 }
@@ -273,14 +281,14 @@ const baseIconBarItems = [
 
 function App() {
   const [selectedKeys, setSelectedKeys] = useState(['home']);
-  const [activeIconKey, setActiveIconKey] = useState(() => getInitialHashRoute().page || 'my-space');
+  const [activeIconKey, setActiveIconKey] = useState(() => getInitialActiveIconKey());
   const [currentPage, setCurrentPage] = useState(() => getInitialHashRoute().page || 'home'); // 'home', 'detail', or 'workflow'
   const [agentQuotaEntryTab, setAgentQuotaEntryTab] = useState('plans');
   const [teacherEvaluationEntryContext, setTeacherEvaluationEntryContext] = useState(null);
   const [messageEntryConversationId, setMessageEntryConversationId] = useState(null);
   const [knowledgeGraphEntry, setKnowledgeGraphEntry] = useState(() => {
     const route = getInitialHashRoute();
-    if (route.page !== 'knowledge-graph' || !route.params.graphId) return null;
+    if ((route.page !== 'knowledge-graph' && route.page !== 'knowledge-graph-full') || !route.params.graphId) return null;
     return {
       graphId: route.params.graphId,
       collectionId: route.params.collectionId || null,
@@ -1004,6 +1012,19 @@ function App() {
   // 开发者后台页面（独立全屏）
   if (currentPage === 'dev-backend') {
     return <DevBackendPage />;
+  }
+
+  // 知识图谱全屏页面（独立全屏，不带侧边图标栏）
+  if (currentPage === 'knowledge-graph-full') {
+    return (
+      <KnowledgeGraphModule
+        entryGraphId={knowledgeGraphEntry?.graphId || null}
+        entryCollectionId={knowledgeGraphEntry?.collectionId || null}
+        entryMode={knowledgeGraphEntry?.mode || 'curriculum'}
+        entryRequestId={knowledgeGraphEntry?.requestId || null}
+        showBackButton={false}
+      />
+    );
   }
 
   return (

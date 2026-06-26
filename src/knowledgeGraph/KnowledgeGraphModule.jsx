@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Button,
@@ -733,14 +733,15 @@ function DraftPreviewModal({
   );
 }
 
-function KnowledgeGraphModule({
+const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
   entryGraphId = null,
   entryCollectionId = null,
   entryMode = 'curriculum',
   entryRequestId = null,
   embedded = false,
+  showBackButton = true,
   onExitEmbedded = null,
-}) {
+}, ref) {
   const [snapshot, setSnapshot] = useState(() => loadKnowledgeGraphStore());
   const [pageMode, setPageMode] = useState(embedded ? 'editor' : 'list');
   const [selectedCollectionId, setSelectedCollectionId] = useState(() => getCollections(loadKnowledgeGraphStore())[0]?.id || null);
@@ -1020,7 +1021,7 @@ function KnowledgeGraphModule({
     openGraphWorkspace(targetGraph.id, entryCollectionId || targetGraph.collectionId, entryMode || 'curriculum');
   }, [entryCollectionId, entryGraphId, entryMode, entryRequestId, openGraphWorkspace, snapshot]);
 
-  const returnToListPage = useCallback(() => {
+  const completeExitEditor = useCallback(() => {
     if (embedded) {
       onExitEmbedded?.();
       return;
@@ -1151,18 +1152,20 @@ function KnowledgeGraphModule({
   };
 
   const handleSaveGraphEditor = async () => {
-    if (!currentGraph) return;
+    if (!currentGraph) return false;
     try {
       const values = await graphEditorForm.validateFields();
       updateGraph(currentGraph.id, values);
       refreshAndMessage('图谱信息已保存');
+      return true;
     } catch {
       // validation handled by antd
+      return false;
     }
   };
 
   const handleSavePointEditor = async () => {
-    if (!selectedPoint || !selectedGraphId) return;
+    if (!selectedPoint || !selectedGraphId) return false;
     try {
       const values = await pointEditorForm.validateFields();
       updatePoint(selectedGraphId, selectedPoint.id, {
@@ -1173,43 +1176,113 @@ function KnowledgeGraphModule({
         meta: { color: values.color },
       });
       refreshAndMessage('知识点已保存');
+      return true;
     } catch {
       // validation handled by antd
+      return false;
     }
   };
 
   const handleSaveStageEditor = async () => {
-    if (!selectedStage || !selectedGraphId) return;
+    if (!selectedStage || !selectedGraphId) return false;
     try {
       const values = await stageEditorForm.validateFields();
       updateStructuredStage(selectedGraphId, selectedStage.id, values);
       refreshAndMessage('分区已保存');
+      return true;
     } catch {
       // validation handled by antd
+      return false;
     }
   };
 
   const handleSaveRelationEditor = async () => {
-    if (!selectedRelation || !selectedGraphId) return;
+    if (!selectedRelation || !selectedGraphId) return false;
     try {
       const values = await relationEditorForm.validateFields();
       updateRelation(selectedGraphId, selectedRelation.id, values);
       refreshAndMessage('关系已保存');
+      return true;
     } catch {
       // validation handled by antd
+      return false;
     }
   };
 
   const handleSaveStageEdgeEditor = async () => {
-    if (!selectedStageEdge || !selectedGraphId) return;
+    if (!selectedStageEdge || !selectedGraphId) return false;
     try {
       const values = await stageEdgeEditorForm.validateFields();
       updateStructuredStageEdge(selectedGraphId, selectedStageEdge.id, values);
       refreshAndMessage('分区连线已保存');
+      return true;
     } catch {
       // validation handled by antd
+      return false;
     }
   };
+
+  const enterEditMode = useCallback(() => {
+    if (!currentGraph) return false;
+    setViewMode('curriculum');
+    setSelection(defaultSelection(currentGraph.id));
+    setInspectorOpen(false);
+    return true;
+  }, [currentGraph]);
+
+  const saveCurrentSelection = useCallback(async () => {
+    if (!currentGraph) return false;
+    if (viewMode === 'graph') {
+      message.warning('当前为预览模式，请先进入编辑模式');
+      return false;
+    }
+    if (selection?.type === 'stage' && selectedStage) return handleSaveStageEditor();
+    if (selection?.type === 'point' && selectedPoint) return handleSavePointEditor();
+    if (selection?.type === 'stage-edge' && selectedStageEdge) return handleSaveStageEdgeEditor();
+    if (selection?.type === 'relation' && selectedRelation) return handleSaveRelationEditor();
+    if (selection?.type === 'graph') return handleSaveGraphEditor();
+    setSnapshot(loadKnowledgeGraphStore());
+    message.success('当前修改已保存');
+    return true;
+  }, [
+    currentGraph,
+    handleSaveGraphEditor,
+    handleSavePointEditor,
+    handleSaveRelationEditor,
+    handleSaveStageEditor,
+    handleSaveStageEdgeEditor,
+    selectedPoint,
+    selectedRelation,
+    selectedStage,
+    selectedStageEdge,
+    selection,
+    viewMode,
+  ]);
+
+  useImperativeHandle(ref, () => ({
+    enterEditMode,
+    saveCurrentSelection,
+  }), [enterEditMode, saveCurrentSelection]);
+
+  const returnToListPage = useCallback(() => {
+    if (pageMode !== 'editor' || viewMode !== 'curriculum') {
+      completeExitEditor();
+      return;
+    }
+    Modal.confirm({
+      title: '退出编辑',
+      content: '退出前请先保存当前编辑内容；点击“保存并退出”后将保存当前属性修改并返回。',
+      okText: '保存并退出',
+      cancelText: '取消',
+      onOk: async () => {
+        const saved = await saveCurrentSelection();
+        if (!saved) {
+          throw new Error('knowledge-graph-save-before-exit-failed');
+        }
+        completeExitEditor();
+      },
+    });
+  }, [completeExitEditor, pageMode, saveCurrentSelection, viewMode]);
 
   const handleBindResources = (resources) => {
     if (!selectedGraphId || !selectedPoint) return;
@@ -2046,7 +2119,7 @@ function KnowledgeGraphModule({
               <div className="kg-toolbar">
                 <div className="kg-toolbar-copy">
                   <div className="kg-toolbar-title-row">
-                    {!embedded || onExitEmbedded ? (
+                    {(embedded ? Boolean(onExitEmbedded) : showBackButton) ? (
                       <Button
                         type="text"
                         icon={<ArrowLeftOutlined />}
@@ -2063,8 +2136,16 @@ function KnowledgeGraphModule({
                   </div>
                 </div>
                 <Space wrap>
+                  {viewMode === 'graph' ? (
+                    <Button type="primary" icon={<EditOutlined />} onClick={enterEditMode}>
+                      编辑
+                    </Button>
+                  ) : null}
                   {viewMode === 'curriculum' ? (
                     <>
+                      <Button type="primary" onClick={saveCurrentSelection}>
+                        保存
+                      </Button>
                       <Button icon={<ApartmentOutlined />} onClick={() => openSectionModal('create')}>
                         新增分区
                       </Button>
@@ -2347,6 +2428,6 @@ function KnowledgeGraphModule({
       />
     </div>
   );
-}
+});
 
 export default KnowledgeGraphModule;

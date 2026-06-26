@@ -456,6 +456,7 @@ function TopicDetail({
   const courseStudioDefaultKnowledgeViewAppliedRef = useRef(false);
   const knowledgeGraphCanvasAreaRef = useRef(null);
   const knowledgeGraphPanelRef = useRef(null);
+  const knowledgeGraphEditorRef = useRef(null);
   const knowledgeGraphDrawerRef = useRef(null);
 
   useEffect(() => {
@@ -1741,8 +1742,15 @@ function TopicDetail({
     if (graph.collectionId) {
       params.set('collectionId', graph.collectionId);
     }
-    const targetUrl = `${window.location.pathname}${window.location.search}#knowledge-graph?${params.toString()}`;
+    const targetUrl = `${window.location.pathname}${window.location.search}#knowledge-graph-full?${params.toString()}`;
     window.open(targetUrl, '_blank', 'noopener,noreferrer');
+  }, []);
+
+  const handleSaveKnowledgeGraphPreview = useCallback(async () => {
+    const saved = await knowledgeGraphEditorRef.current?.saveCurrentSelection?.();
+    if (!saved) {
+      message.warning('当前没有可保存的知识图谱内容');
+    }
   }, []);
 
   const handleSelectKnowledgeGraphOverview = () => {
@@ -3269,12 +3277,16 @@ function TopicDetail({
                 解除关联
               </Button>
             ) : null}
+            <Button type="primary" onClick={handleSaveKnowledgeGraphPreview}>
+              保存
+            </Button>
             <Button icon={<FullscreenOutlined />} onClick={() => openKnowledgeGraphInNewTab(previewData.graph, 'curriculum')}>
               全屏
             </Button>
             </div>
           </div>
           <KnowledgeGraphModule
+            ref={knowledgeGraphEditorRef}
             embedded
             entryGraphId={previewData.graph.id}
             entryCollectionId={previewData.graph.collectionId}
@@ -3304,7 +3316,7 @@ function TopicDetail({
                 解除关联
               </Button>
             ) : null}
-            <Button type="primary" icon={<EditOutlined />} onClick={() => setKnowledgeGraphPreviewMode('edit')} disabled={!canEditCurrentVersion}>
+            <Button type="primary" icon={<EditOutlined />} onClick={() => openKnowledgeGraphInNewTab(previewData.graph, 'curriculum')} disabled={!canEditCurrentVersion}>
               编辑
             </Button>
             <Button icon={<FullscreenOutlined />} onClick={() => openKnowledgeGraphInNewTab(previewData.graph, 'graph')}>
