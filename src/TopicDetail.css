@@ -1589,11 +1589,14 @@
 }
 
 .topic-ai-floating-panel {
+  --topic-ai-floating-panel-width: 760px;
   position: absolute;
   bottom: calc(100% + 10px);
   z-index: 4;
-  width: 760px;
+  width: min(100%, var(--topic-ai-floating-panel-width));
+  max-width: 100%;
   padding: 14px;
+  box-sizing: border-box;
   border: 1px solid rgba(218, 223, 232, 0.96);
   border-radius: 20px;
   background:
@@ -1604,21 +1607,21 @@
 }
 
 .topic-ai-floating-panel-plus {
-  width: 980px;
+  --topic-ai-floating-panel-width: 980px;
   padding: 0;
   overflow: hidden;
 }
 
 .topic-ai-floating-panel-structure {
-  width: 760px;
+  --topic-ai-floating-panel-width: 760px;
 }
 
 .topic-ai-floating-panel-outline {
-  width: 520px;
+  --topic-ai-floating-panel-width: 520px;
 }
 
 .topic-ai-floating-panel-tool {
-  width: 700px;
+  --topic-ai-floating-panel-width: 700px;
 }
 
 .topic-ai-selector-head {
@@ -1813,7 +1816,7 @@
 
 .topic-ai-structure-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 10px;
 }
 
@@ -2052,13 +2055,25 @@
 }
 
 .topic-ai-composer-toolbar {
+  position: relative;
+  min-width: 0;
+  overflow: visible;
+}
+
+.topic-ai-composer-toolbar-row {
   display: flex;
   align-items: center;
   gap: 14px;
   flex-wrap: nowrap;
-  position: relative;
+  width: 100%;
   min-width: 0;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.topic-ai-composer-toolbar-row::-webkit-scrollbar {
+  display: none;
 }
 
 .topic-ai-composer-plus {

@@ -3935,118 +3935,119 @@ function TopicDetail({
                               ) : null}
                             </div>
                           ) : null}
-
-                          <button
-                            type="button"
-                            ref={(node) => setAiToolbarAnchorRef('plus', node)}
-                            className={`topic-ai-composer-plus ${aiActivePanel === 'plus' ? 'topic-ai-composer-plus-active' : ''}`}
-                            aria-label="添加"
-                            data-ai-panel-trigger="true"
-                            aria-expanded={aiActivePanel === 'plus' ? 'true' : undefined}
-                            onClick={() => toggleAiPanel('plus')}
-                          >
-                            <PlusOutlined />
-                          </button>
-                          <span className="topic-ai-composer-divider" />
-                          <div className={`topic-ai-composer-skills ${aiSelectedSkill ? 'topic-ai-composer-skills-has-selection' : ''}`}>
-                            {aiPrimarySkills.map((skill) => (
+                          <div className="topic-ai-composer-toolbar-row">
+                            <button
+                              type="button"
+                              ref={(node) => setAiToolbarAnchorRef('plus', node)}
+                              className={`topic-ai-composer-plus ${aiActivePanel === 'plus' ? 'topic-ai-composer-plus-active' : ''}`}
+                              aria-label="添加"
+                              data-ai-panel-trigger="true"
+                              aria-expanded={aiActivePanel === 'plus' ? 'true' : undefined}
+                              onClick={() => toggleAiPanel('plus')}
+                            >
+                              <PlusOutlined />
+                            </button>
+                            <span className="topic-ai-composer-divider" />
+                            <div className={`topic-ai-composer-skills ${aiSelectedSkill ? 'topic-ai-composer-skills-has-selection' : ''}`}>
+                              {aiPrimarySkills.map((skill) => (
+                                <button
+                                  key={skill.key}
+                                  type="button"
+                                  className={`topic-ai-composer-skill ${aiSelectedSkill === skill.label ? 'topic-ai-composer-skill-active' : ''}`}
+                                  title={skill.label}
+                                  onClick={() => {
+                                    setAiSelectedSkill(skill.label);
+                                    setAiActivePanel('course');
+                                  }}
+                                >
+                                  <ThunderboltOutlined />
+                                  <span className="topic-ai-composer-skill-label">{skill.label}</span>
+                                  {aiSelectedSkill === skill.label ? (
+                                    <span
+                                      role="button"
+                                      tabIndex={0}
+                                      className="topic-ai-composer-skill-remove"
+                                      aria-label="清空技能"
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        setAiSelectedSkill(null);
+                                        setAiActivePanel('course');
+                                      }}
+                                      onKeyDown={(event) => {
+                                        if (event.key !== 'Enter' && event.key !== ' ') return;
+                                        event.preventDefault();
+                                        event.stopPropagation();
+                                        setAiSelectedSkill(null);
+                                        setAiActivePanel('course');
+                                      }}
+                                    >
+                                      <CloseOutlined />
+                                    </span>
+                                  ) : null}
+                                </button>
+                              ))}
+                            </div>
+                            {aiOverflowSkills.length ? (
+                              <Dropdown
+                                overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
+                                menu={{
+                                  items: aiOverflowSkills.map((skill) => ({
+                                    key: skill.key,
+                                    label: skill.label,
+                                  })),
+                                  onClick: ({ key }) => {
+                                    const targetSkill = aiOverflowSkills.find((skill) => skill.key === key) || null;
+                                    if (!targetSkill) return;
+                                    setAiSelectedSkill(targetSkill.label);
+                                    setAiActivePanel('course');
+                                  },
+                                }}
+                                trigger={['click']}
+                              >
+                                <button
+                                  type="button"
+                                  className="topic-ai-composer-overflow-btn"
+                                  aria-label="更多技能"
+                                >
+                                  ...
+                                </button>
+                              </Dropdown>
+                            ) : null}
+                            {aiSelectedSkill ? <span className="topic-ai-composer-divider" /> : null}
+                            {aiComposerItems.map((item) => (
                               <button
-                                key={skill.key}
+                                key={item.key}
                                 type="button"
-                                className={`topic-ai-composer-skill ${aiSelectedSkill === skill.label ? 'topic-ai-composer-skill-active' : ''}`}
-                                title={skill.label}
+                                ref={(node) => {
+                                  if (item.key === 'structure') setAiToolbarAnchorRef('structure', node);
+                                  if (item.key === 'outline') setAiToolbarAnchorRef('outline', node);
+                                  if (item.key === 'tool') setAiToolbarAnchorRef('tool', node);
+                                }}
+                                className={`topic-ai-composer-chip ${(
+                                  (item.key === 'structure' && aiActivePanel === 'structure')
+                                  || (item.key === 'outline' && aiActivePanel === 'outline')
+                                  || (item.key === 'tool' && aiActivePanel === 'tool')
+                                ) ? 'topic-ai-composer-chip-selected' : ''}`}
+                                data-ai-panel-trigger="true"
+                                aria-expanded={
+                                  (item.key === 'structure' && aiActivePanel === 'structure')
+                                  || (item.key === 'outline' && aiActivePanel === 'outline')
+                                  || (item.key === 'tool' && aiActivePanel === 'tool')
+                                    ? 'true'
+                                    : undefined
+                                }
+                                title={item.label}
                                 onClick={() => {
-                                  setAiSelectedSkill(skill.label);
-                                  setAiActivePanel('course');
+                                  if (item.key === 'structure') toggleAiPanel('structure');
+                                  if (item.key === 'outline') toggleAiPanel('outline');
+                                  if (item.key === 'tool') toggleAiPanel('tool');
                                 }}
                               >
-                                <ThunderboltOutlined />
-                                <span className="topic-ai-composer-skill-label">{skill.label}</span>
-                                {aiSelectedSkill === skill.label ? (
-                                  <span
-                                    role="button"
-                                    tabIndex={0}
-                                    className="topic-ai-composer-skill-remove"
-                                    aria-label="清空技能"
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      setAiSelectedSkill(null);
-                                      setAiActivePanel('course');
-                                    }}
-                                    onKeyDown={(event) => {
-                                      if (event.key !== 'Enter' && event.key !== ' ') return;
-                                      event.preventDefault();
-                                      event.stopPropagation();
-                                      setAiSelectedSkill(null);
-                                      setAiActivePanel('course');
-                                    }}
-                                  >
-                                    <CloseOutlined />
-                                  </span>
-                                ) : null}
+                                <span className="topic-ai-composer-chip-label">{item.label}</span>
+                                <CaretDownOutlined />
                               </button>
                             ))}
                           </div>
-                          {aiOverflowSkills.length ? (
-                            <Dropdown
-                              overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
-                              menu={{
-                                items: aiOverflowSkills.map((skill) => ({
-                                  key: skill.key,
-                                  label: skill.label,
-                                })),
-                                onClick: ({ key }) => {
-                                  const targetSkill = aiOverflowSkills.find((skill) => skill.key === key) || null;
-                                  if (!targetSkill) return;
-                                  setAiSelectedSkill(targetSkill.label);
-                                  setAiActivePanel('course');
-                                },
-                              }}
-                              trigger={['click']}
-                            >
-                              <button
-                                type="button"
-                                className="topic-ai-composer-overflow-btn"
-                                aria-label="更多技能"
-                              >
-                                ...
-                              </button>
-                            </Dropdown>
-                          ) : null}
-                          {aiSelectedSkill ? <span className="topic-ai-composer-divider" /> : null}
-                          {aiComposerItems.map((item) => (
-                            <button
-                              key={item.key}
-                              type="button"
-                              ref={(node) => {
-                                if (item.key === 'structure') setAiToolbarAnchorRef('structure', node);
-                                if (item.key === 'outline') setAiToolbarAnchorRef('outline', node);
-                                if (item.key === 'tool') setAiToolbarAnchorRef('tool', node);
-                              }}
-                              className={`topic-ai-composer-chip ${(
-                                (item.key === 'structure' && aiActivePanel === 'structure')
-                                || (item.key === 'outline' && aiActivePanel === 'outline')
-                                || (item.key === 'tool' && aiActivePanel === 'tool')
-                              ) ? 'topic-ai-composer-chip-selected' : ''}`}
-                              data-ai-panel-trigger="true"
-                              aria-expanded={
-                                (item.key === 'structure' && aiActivePanel === 'structure')
-                                || (item.key === 'outline' && aiActivePanel === 'outline')
-                                || (item.key === 'tool' && aiActivePanel === 'tool')
-                                ? 'true'
-                                : undefined
-                              }
-                              title={item.label}
-                              onClick={() => {
-                                if (item.key === 'structure') toggleAiPanel('structure');
-                                if (item.key === 'outline') toggleAiPanel('outline');
-                                if (item.key === 'tool') toggleAiPanel('tool');
-                              }}
-                            >
-                              <span className="topic-ai-composer-chip-label">{item.label}</span>
-                              <CaretDownOutlined />
-                            </button>
-                          ))}
                         </div>
                       </div>
                     </div>
