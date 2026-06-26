@@ -556,6 +556,15 @@ export function SpaceResourceImportBrowser({
   const selectedItems = useMemo(() => (
     selectedKeys.map((key) => itemMap.get(key)).filter(Boolean)
   ), [itemMap, selectedKeys]);
+  const contextualSelectedItems = useMemo(() => (
+    selectedItems.map((item) => ({
+      ...item,
+      libraryId,
+      libraryName,
+      libraryScope: scope,
+      path: getLibraryItemPath(data, libraryId, item),
+    }))
+  ), [data, libraryId, libraryName, scope, selectedItems]);
   const selectedFolderCount = selectedItems.filter((item) => item.isFolder).length;
   const selectedFileCount = selectedItems.length - selectedFolderCount;
   const canNavigateBack = navIndex > 0;
@@ -1138,13 +1147,13 @@ export function SpaceResourceImportBrowser({
           {showFooterActions ? (
             <div className="space-resource-import-footer-actions">
               <Button onClick={onClose}>取消</Button>
-              <Button
-                type="primary"
-                disabled={selectedItems.length === 0}
-                onClick={() => onConfirm?.({ selectedItems, includeDirectories, libraryId })}
-              >
-                导入
-              </Button>
+                <Button
+                  type="primary"
+                  disabled={selectedItems.length === 0}
+                  onClick={() => onConfirm?.({ selectedItems: contextualSelectedItems, includeDirectories, libraryId })}
+                >
+                  导入
+                </Button>
             </div>
           ) : null}
           {onResizeMouseDown ? (

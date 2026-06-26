@@ -42,6 +42,7 @@ import {
   loadResourceLib,
   removeKnowledgeGraphItemsByGraphIds,
 } from '../resourceLib/resourceLibStore';
+import SpaceResourceImportModal from '../resourceLib/SpaceResourceImportModal.jsx';
 import {
   acceptGraphDraft,
   bindResourcesToPoint,
@@ -310,107 +311,6 @@ function clone(data) {
 
 function defaultSelection(graphId) {
   return graphId ? { type: 'graph', id: graphId } : null;
-}
-
-function ResourceBindingModal({ open, onCancel, onConfirm, disabledKeys = [] }) {
-  const [data, setData] = useState(() => loadResourceLib());
-  const [scope, setScope] = useState('all');
-  const [keyword, setKeyword] = useState('');
-  const [selectedKeys, setSelectedKeys] = useState([]);
-
-  useEffect(() => {
-    if (!open) return;
-    setData(loadResourceLib());
-    setKeyword('');
-    setSelectedKeys([]);
-  }, [open]);
-
-  const items = useMemo(() => {
-    const allItems = getAllItemsAcrossLibraries(data);
-    const normalizedKeyword = normalizeSearchText(keyword);
-    return allItems.filter((item) => {
-      if (scope !== 'all' && item.libraryScope !== scope) return false;
-      if (!normalizedKeyword) return true;
-      const haystack = `${item.name} ${item.libraryName} ${item.fileType}`.toLowerCase();
-      return haystack.includes(normalizedKeyword);
-    });
-  }, [data, keyword, scope]);
-
-  const selectedRows = useMemo(() => {
-    const keySet = new Set(selectedKeys);
-    return items.filter((item) => keySet.has(item.key));
-  }, [items, selectedKeys]);
-
-  return (
-    <Modal
-      title="绑定资料库资料"
-      open={open}
-      onCancel={onCancel}
-      onOk={() => onConfirm(selectedRows)}
-      okText="绑定到知识点"
-      cancelText="取消"
-      width={860}
-      okButtonProps={{ disabled: selectedRows.length === 0 }}
-      destroyOnClose
-    >
-      <div className="kg-modal-toolbar">
-        <Segmented
-          value={scope}
-          onChange={setScope}
-          options={[
-            { label: '全部资料', value: 'all' },
-            { label: '个人库', value: 'personal' },
-            { label: '组织库', value: 'organization' },
-          ]}
-        />
-        <Input.Search
-          allowClear
-          placeholder="搜索资料名称、资料库"
-          value={keyword}
-          onChange={(event) => setKeyword(event.target.value)}
-          className="kg-modal-search"
-        />
-      </div>
-      <Table
-        rowKey="key"
-        size="small"
-        className="kg-resource-table"
-        columns={[
-          {
-            title: '资料',
-            dataIndex: 'name',
-            render: (value, record) => (
-              <div className="kg-resource-name-cell">
-                <div className="kg-resource-name">{value}</div>
-                <div className="kg-resource-meta">{record.libraryName} · {record.fileType}</div>
-              </div>
-            ),
-          },
-          {
-            title: '资料库',
-            dataIndex: 'libraryName',
-            width: 140,
-          },
-          {
-            title: '类型',
-            dataIndex: 'fileType',
-            width: 110,
-            render: (value) => <Tag>{value}</Tag>,
-          },
-        ]}
-        dataSource={items}
-        pagination={{ pageSize: 8, hideOnSinglePage: true }}
-        locale={{ emptyText: '资料库暂无可绑定资料' }}
-        rowSelection={{
-          selectedRowKeys: selectedKeys,
-          onChange: (keys) => setSelectedKeys(keys),
-          getCheckboxProps: (record) => ({
-            disabled: disabledKeys.includes(record.key),
-          }),
-        }}
-      />
-    </Modal>
-  );
 }
 
 function AIGenerateModal({ open, graph, onCancel, onGenerate }) {
@@ -1284,9 +1184,9 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
     });
   }, [completeExitEditor, pageMode, saveCurrentSelection, viewMode]);
 
-  const handleBindResources = (resources) => {
+  const handleBindResources = ({ selectedItems = [] } = {}) => {
     if (!selectedGraphId || !selectedPoint) return;
-    bindResourcesToPoint(selectedGraphId, selectedPoint.id, resources);
+    bindResourcesToPoint(selectedGraphId, selectedPoint.id, selectedItems);
     setResourceModalOpen(false);
     refreshAndMessage('资料已绑定到知识点');
   };
@@ -1360,10 +1260,6 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
     setSnapshot(loadKnowledgeGraphStore());
   };
 
-  const boundResourceKeys = useMemo(
-    () => (selectedPoint?.resourceBindings || []).map((binding) => binding.resourceKey),
-    [selectedPoint],
-  );
   const selectedPointPlacement = useMemo(
     () => (selectedPoint ? structuredPlacements[selectedPoint.id] || null : null),
     [selectedPoint, structuredPlacements],
@@ -2420,11 +2316,11 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
         </Form>
       </Modal>
 
-      <ResourceBindingModal
+      <SpaceResourceImportModal
         open={resourceModalOpen}
-        onCancel={() => setResourceModalOpen(false)}
+        onClose={() => setResourceModalOpen(false)}
         onConfirm={handleBindResources}
-        disabledKeys={boundResourceKeys}
+        excludeFileTypes={['knowledgeGraph']}
       />
 
       <AIGenerateModal
