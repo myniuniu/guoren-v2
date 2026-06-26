@@ -1472,6 +1472,39 @@
   overflow: hidden;
 }
 
+.topic-ai-resource-stage {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.topic-ai-resource-stage-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 6px 4px 0;
+}
+
+.topic-ai-resource-stage-copy {
+  min-width: 0;
+}
+
+.topic-ai-resource-stage-title {
+  color: #1f2937;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.topic-ai-resource-stage-meta {
+  margin-top: 6px;
+  color: #98a2b3;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .topic-ai-stage-body-knowledge {
   display: flex;
   flex-direction: column;

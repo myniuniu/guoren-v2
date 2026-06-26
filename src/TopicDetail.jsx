@@ -3085,7 +3085,7 @@ function TopicDetail({
                 </div>
               </div>
             </div>
-            {canEditCurrentVersion && !isAiMode ? (
+            {canEditCurrentVersion ? (
               <div className="topic-preview-main-head-actions">
                 <Button type="primary" onClick={handleOpenKnowledgeGraphPicker}>
                   从资料库绑定
@@ -3116,7 +3116,7 @@ function TopicDetail({
                 </div>
               </div>
             </div>
-            {canEditCurrentVersion && !isAiMode ? (
+            {canEditCurrentVersion ? (
               <div className="topic-preview-main-head-actions">
                 <Button onClick={handleOpenKnowledgeGraphPicker}>重新绑定</Button>
               </div>
@@ -3136,7 +3136,7 @@ function TopicDetail({
       structuredView: knowledgeGraphStructuredView,
     };
 
-    if (knowledgeGraphPreviewMode === 'edit' && !isAiMode) {
+    if (knowledgeGraphPreviewMode === 'edit') {
       return (
         <div className="finder-kg-preview-embed finder-kg-preview-embed-edit" ref={knowledgeGraphPanelRef}>
           <div className="finder-kg-preview-head">
@@ -3147,12 +3147,10 @@ function TopicDetail({
               </div>
           </div>
           <div className="finder-kg-preview-head-actions">
-            {!isAiMode ? (
-              <Button icon={<DatabaseOutlined />} onClick={handleOpenKnowledgeGraphPicker} disabled={!canEditCurrentVersion}>
-                {knowledgeGraphRef ? '更换图谱' : '绑定图谱'}
-              </Button>
-            ) : null}
-            {canEditCurrentVersion && !isAiMode ? (
+            <Button icon={<DatabaseOutlined />} onClick={handleOpenKnowledgeGraphPicker} disabled={!canEditCurrentVersion}>
+              {knowledgeGraphRef ? '更换图谱' : '绑定图谱'}
+            </Button>
+            {canEditCurrentVersion ? (
               <Button danger onClick={handleUnbindKnowledgeGraph}>
                 解除关联
               </Button>
@@ -3184,21 +3182,17 @@ function TopicDetail({
             </div>
           </div>
           <div className="finder-kg-preview-head-actions">
-            {!isAiMode ? (
-              <Button icon={<DatabaseOutlined />} onClick={handleOpenKnowledgeGraphPicker} disabled={!canEditCurrentVersion}>
-                {knowledgeGraphRef ? '更换图谱' : '绑定图谱'}
-              </Button>
-            ) : null}
-            {canEditCurrentVersion && !isAiMode ? (
+            <Button icon={<DatabaseOutlined />} onClick={handleOpenKnowledgeGraphPicker} disabled={!canEditCurrentVersion}>
+              {knowledgeGraphRef ? '更换图谱' : '绑定图谱'}
+            </Button>
+            {canEditCurrentVersion ? (
               <Button danger onClick={handleUnbindKnowledgeGraph}>
                 解除关联
               </Button>
             ) : null}
-            {!isAiMode ? (
-              <Button type="primary" icon={<EditOutlined />} onClick={() => setKnowledgeGraphPreviewMode('edit')}>
-                编辑
-              </Button>
-            ) : null}
+            <Button type="primary" icon={<EditOutlined />} onClick={() => setKnowledgeGraphPreviewMode('edit')} disabled={!canEditCurrentVersion}>
+              编辑
+            </Button>
             <Button icon={<FullscreenOutlined />} onClick={() => openKnowledgeGraphInNewTab(previewData.graph, 'graph')}>
               全屏
             </Button>
@@ -3726,7 +3720,32 @@ function TopicDetail({
                     </div>
 
                     <div className="topic-ai-stage">
-                      <div className={`topic-ai-stage-body ${isKnowledgeGraphView ? 'topic-ai-stage-body-knowledge' : ''}`} />
+                      <div className={`topic-ai-stage-body ${isKnowledgeGraphView ? 'topic-ai-stage-body-knowledge' : ''}`}>
+                        {!isKnowledgeGraphView ? (
+                          <div className="topic-ai-resource-stage">
+                            <div className="topic-ai-resource-stage-head">
+                              <div className="topic-ai-resource-stage-copy">
+                                <div className="topic-ai-resource-stage-title">
+                                  {selectedFolder ? selectedFolder.name : currentVersion?.name || resourcePanelTitle}
+                                </div>
+                                <div className="topic-ai-resource-stage-meta">
+                                  {selectedFolder
+                                    ? `${folderChildren.filter((child) => !child.isFolder).length} 个文件 ${folderChildren.filter((child) => child.isFolder).length} 个文件夹`
+                                    : `${fileCount} 个文件 ${folderCount} 个文件夹`}
+                                </div>
+                              </div>
+                              <Button
+                                type="primary"
+                                icon={<PlusOutlined />}
+                                disabled={!canEditDisplayedResources}
+                                onClick={() => openAddResourceModal(currentListParentKey)}
+                              >
+                                {addResourceLabel}
+                              </Button>
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
 
                       <div className="topic-ai-composer" ref={aiComposerRef}>
                         <textarea
