@@ -42,7 +42,11 @@ const RESOURCE_DRAG_TYPE = 'application/x-kg-resource';
 const NAME_ONLY_COLUMN_KEYS = Object.freeze([]);
 const DEFAULT_RESOURCE_PANEL_FRAME = Object.freeze({
   width: 460,
-  height: 800,
+  height: 860,
+});
+const DEFAULT_RESOURCE_PANEL_POSITION = Object.freeze({
+  left: 16,
+  top: 40,
 });
 const MIN_RESOURCE_PANEL_FRAME = Object.freeze({
   width: 380,
@@ -57,13 +61,27 @@ function clampResourcePanelFrame(frame, hostNode) {
   const hostWidth = Math.max(0, hostNode?.clientWidth || 0);
   const hostHeight = Math.max(0, hostNode?.clientHeight || 0);
   const maxWidth = Math.max(320, hostWidth - 32);
-  const maxHeight = Math.max(280, hostHeight - 32);
+  const maxHeight = Math.max(280, hostHeight - 56);
   const minWidth = Math.min(MIN_RESOURCE_PANEL_FRAME.width, maxWidth);
   const minHeight = Math.min(MIN_RESOURCE_PANEL_FRAME.height, maxHeight);
 
   return {
     width: clamp(Math.round(frame?.width || DEFAULT_RESOURCE_PANEL_FRAME.width), minWidth, maxWidth),
     height: clamp(Math.round(frame?.height || DEFAULT_RESOURCE_PANEL_FRAME.height), minHeight, maxHeight),
+  };
+}
+
+function clampResourcePanelPosition(position, frame, hostNode) {
+  const hostWidth = Math.max(0, hostNode?.clientWidth || 0);
+  const hostHeight = Math.max(0, hostNode?.clientHeight || 0);
+  const minLeft = DEFAULT_RESOURCE_PANEL_POSITION.left;
+  const minTop = DEFAULT_RESOURCE_PANEL_POSITION.top;
+  const maxLeft = Math.max(minLeft, hostWidth - frame.width - 16);
+  const maxTop = Math.max(minTop, hostHeight - frame.height - 16);
+
+  return {
+    left: clamp(Math.round(position?.left ?? minLeft), minLeft, maxLeft),
+    top: clamp(Math.round(position?.top ?? minTop), minTop, maxTop),
   };
 }
 
@@ -529,6 +547,8 @@ function StructuredKnowledgeGraphView({
 }) {
   const [resourcePanelOpen, setResourcePanelOpen] = useState(false);
   const [resourcePanelFrame, setResourcePanelFrame] = useState(DEFAULT_RESOURCE_PANEL_FRAME);
+  const [resourcePanelPosition, setResourcePanelPosition] = useState(DEFAULT_RESOURCE_PANEL_POSITION);
+  const [resourcePanelDragging, setResourcePanelDragging] = useState(false);
   const [rfInstance, setRfInstance] = useState(null);
   const [dragPreview, setDragPreview] = useState(null);
   const [stageDragPreview, setStageDragPreview] = useState(null);
@@ -539,7 +559,9 @@ function StructuredKnowledgeGraphView({
   const dragNodeRef = useRef(null);
   const resourcePanelHostRef = useRef(null);
   const resourcePanelFrameRef = useRef(DEFAULT_RESOURCE_PANEL_FRAME);
+  const resourcePanelPositionRef = useRef(DEFAULT_RESOURCE_PANEL_POSITION);
   const resourceResizeStateRef = useRef(null);
+  const resourceDragStateRef = useRef(null);
 
   useEffect(() => {
     if (!rfInstance) return;
@@ -560,8 +582,16 @@ function StructuredKnowledgeGraphView({
   }, [resourcePanelFrame]);
 
   useEffect(() => {
+    resourcePanelPositionRef.current = resourcePanelPosition;
+  }, [resourcePanelPosition]);
+
+  useEffect(() => {
     const handleViewportResize = () => {
-      setResourcePanelFrame((prev) => clampResourcePanelFrame(prev, resourcePanelHostRef.current));
+      const hostNode = resourcePanelHostRef.current;
+      const nextFrame = clampResourcePanelFrame(resourcePanelFrameRef.current, hostNode);
+      const nextPosition = clampResourcePanelPosition(resourcePanelPositionRef.current, nextFrame, hostNode);
+      setResourcePanelFrame(nextFrame);
+      setResourcePanelPosition(nextPosition);
     };
     handleViewportResize();
     const hostNode = resourcePanelHostRef.current;
@@ -579,6 +609,15 @@ function StructuredKnowledgeGraphView({
     if (!resizeState) return;
     window.removeEventListener('mousemove', resizeState.onMove);
     window.removeEventListener('mouseup', resizeState.onUp);
+    document.body.style.userSelect = '';
+    document.body.style.cursor = '';
+  }, []);
+
+  useEffect(() => () => {
+    const dragState = resourceDragStateRef.current;
+    if (!dragState) return;
+    window.removeEventListener('mousemove', dragState.onMove);
+    window.removeEventListener('mouseup', dragState.onUp);
     document.body.style.userSelect = '';
     document.body.style.cursor = '';
   }, []);
@@ -998,11 +1037,14 @@ function StructuredKnowledgeGraphView({
     const startX = event.clientX;
     const startY = event.clientY;
     const startFrame = resourcePanelFrameRef.current;
+    const startPosition = resourcePanelPositionRef.current;
     const onMove = (moveEvent) => {
-      setResourcePanelFrame(clampResourcePanelFrame({
+      const nextFrame = clampResourcePanelFrame({
         width: startFrame.width + (moveEvent.clientX - startX),
         height: startFrame.height + (moveEvent.clientY - startY),
-      }, resourcePanelHostRef.current));
+      }, resourcePanelHostRef.current);
+      setResourcePanelFrame(nextFrame);
+      setResourcePanelPosition(clampResourcePanelPosition(startPosition, nextFrame, resourcePanelHostRef.current));
     };
     const onUp = () => {
       window.removeEventListener('mousemove', onMove);
@@ -1018,6 +1060,39 @@ function StructuredKnowledgeGraphView({
     document.body.style.cursor = 'nwse-resize';
   };
 
+  const handleResourcePanelToolbarMouseDown = (event) => {
+    const interactiveTarget = event.target.closest(
+      'button, input, .ant-input-affix-wrapper, .ant-input, .ant-select, .ant-checkbox-wrapper, .space-resource-import-close-btn, .space-resource-import-field-btn',
+    );
+    if (interactiveTarget || event.button !== 0) return;
+    event.preventDefault();
+
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const startPosition = resourcePanelPositionRef.current;
+    const frame = resourcePanelFrameRef.current;
+    const onMove = (moveEvent) => {
+      setResourcePanelPosition(clampResourcePanelPosition({
+        left: startPosition.left + (moveEvent.clientX - startX),
+        top: startPosition.top + (moveEvent.clientY - startY),
+      }, frame, resourcePanelHostRef.current));
+    };
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+      resourceDragStateRef.current = null;
+      setResourcePanelDragging(false);
+    };
+    resourceDragStateRef.current = { onMove, onUp };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'grabbing';
+    setResourcePanelDragging(true);
+  };
+
   return (
     <div className="kg-structured-shell">
       <div ref={resourcePanelHostRef} className="kg-structured-main">
@@ -1026,6 +1101,8 @@ function StructuredKnowledgeGraphView({
             <aside
               className="kg-resource-drawer kg-resource-drawer-floating is-open"
               style={{
+                left: `${resourcePanelPosition.left}px`,
+                top: `${resourcePanelPosition.top}px`,
                 width: `${resourcePanelFrame.width}px`,
                 height: `${resourcePanelFrame.height}px`,
               }}
@@ -1033,13 +1110,16 @@ function StructuredKnowledgeGraphView({
               <SpaceResourceImportBrowser
                 active={resourcePanelOpen}
                 embedded
+                dragging={resourcePanelDragging}
                 frameWidth={resourcePanelFrame.width}
                 showFooter
                 showFooterActions={false}
                 showIncludeDirectories={false}
                 showFooterSummary={false}
                 showFooterPath
+                footerHint="可直接拖动资料到知识点上绑定"
                 onClose={() => setResourcePanelOpen(false)}
+                onToolbarMouseDown={handleResourcePanelToolbarMouseDown}
                 onResizeMouseDown={handleResourcePanelResizeStart}
                 excludeFileTypes={['knowledgeGraph']}
                 shellStyle={{ height: '100%' }}

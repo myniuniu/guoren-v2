@@ -1352,12 +1352,20 @@
 .kg-resource-drawer-floating {
   position: absolute;
   left: 16px;
-  top: 16px;
+  top: 40px;
   min-width: 380px;
   min-height: 360px;
   max-width: calc(100% - 32px);
-  max-height: calc(100% - 32px);
-  overflow: hidden;
+  max-height: calc(100% - 56px);
+  overflow: visible;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.38) 0%, rgba(245, 249, 252, 0.22) 100%);
+  box-shadow:
+    0 28px 60px rgba(15, 23, 42, 0.14),
+    0 10px 24px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   z-index: 5;
   transition: transform 180ms ease, opacity 180ms ease, width 180ms ease, height 180ms ease;
 }
@@ -1365,7 +1373,7 @@
 .kg-resource-drawer-toggle {
   position: absolute;
   left: 16px;
-  top: 16px;
+  top: 40px;
   z-index: 5;
   width: 40px;
   min-width: 40px;

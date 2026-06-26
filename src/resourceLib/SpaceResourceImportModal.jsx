@@ -223,6 +223,7 @@ export function SpaceResourceImportBrowser({
   showScopeSwitcherInToolbar = false,
   showToolbarTitle = true,
   showFooterPath = false,
+  footerHint = '',
   closeButtonMode = 'close',
 }) {
   const [data, setData] = useState(() => loadResourceLib());
@@ -1143,6 +1144,8 @@ export function SpaceResourceImportBrowser({
               <span>{selectedFolderCount} 个文件夹</span>
               <span>{selectedFileCount} 个文件</span>
             </div>
+          ) : footerHint ? (
+            <div className="space-resource-import-footer-hint">{footerHint}</div>
           ) : showFooterActions ? <div className="space-resource-import-footer-summary is-empty" /> : null}
           {showFooterActions ? (
             <div className="space-resource-import-footer-actions">

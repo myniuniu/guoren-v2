@@ -27,7 +27,11 @@
 .space-resource-import-shell.is-embedded {
   height: 100%;
   border-radius: 22px;
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.985) 0%, rgba(248, 251, 255, 0.98) 100%);
+  box-shadow:
+    0 20px 42px rgba(15, 23, 42, 0.08),
+    0 6px 18px rgba(15, 23, 42, 0.05);
 }
 
 .space-resource-import-shell.is-dragging {
@@ -174,7 +178,7 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  background: rgba(255, 255, 255, 0.97);
+  background: rgba(255, 255, 255, 0.985);
 }
 
 .space-resource-import-toolbar {
@@ -188,10 +192,14 @@
   cursor: grab !important;
 }
 
+.space-resource-import-shell.is-embedded .space-resource-import-toolbar {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.995) 0%, rgba(248, 251, 255, 0.985) 100%);
+}
+
 .space-resource-import-toolbar.is-static,
 .space-resource-import-toolbar.is-static *,
-.space-resource-import-shell.is-embedded .space-resource-import-toolbar,
-.space-resource-import-shell.is-embedded .space-resource-import-toolbar * {
+.space-resource-import-shell.is-embedded .space-resource-import-toolbar.is-static,
+.space-resource-import-shell.is-embedded .space-resource-import-toolbar.is-static * {
   cursor: default !important;
 }
 
@@ -605,6 +613,10 @@
   background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
 }
 
+.space-resource-import-shell.is-embedded .space-resource-import-footer {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.995) 0%, rgba(246, 249, 253, 0.985) 100%);
+}
+
 .space-resource-import-shell.is-compact .space-resource-import-footer {
   flex-direction: column;
   align-items: stretch;
@@ -626,6 +638,17 @@
   min-width: 0;
   color: #6f6f76;
   font-size: 13px;
+}
+
+.space-resource-import-footer-hint {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  color: #6d7a8f;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .space-resource-import-footer-summary.is-empty {
