@@ -2076,6 +2076,20 @@
   display: none;
 }
 
+.topic-ai-composer-skill-measure {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  visibility: hidden;
+  pointer-events: none;
+  white-space: nowrap;
+  height: 0;
+  overflow: hidden;
+}
+
 .topic-ai-composer-plus {
   display: inline-flex;
   align-items: center;
@@ -2104,7 +2118,7 @@
 
 .topic-ai-composer-skills {
   display: inline-flex;
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   align-items: center;
   gap: 8px;
   flex-wrap: nowrap;

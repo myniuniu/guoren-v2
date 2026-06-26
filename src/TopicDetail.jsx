@@ -251,6 +251,11 @@ function loadTopicPanelView(scopeKey = 'default') {
   }
 }
 
+function isCourseCreationCenterTopic(sceneConfig, topicTitle) {
+  const sceneKey = sceneConfig?.menuKey || sceneConfig?.defaultMenuKey || '';
+  return sceneKey === 'course-creation-center' || topicTitle === '课程创作中心';
+}
+
 function persistTopicPanelView(scopeKey = 'default', view = 'resources') {
   if (typeof window === 'undefined') return;
   try {
@@ -430,6 +435,7 @@ function TopicDetail({
   const [aiPromptValue, setAiPromptValue] = useState('');
   const [aiLibraryCollapsed, setAiLibraryCollapsed] = useState(false);
   const [aiFloatingPanelOffset, setAiFloatingPanelOffset] = useState(0);
+  const [aiVisibleSkillCount, setAiVisibleSkillCount] = useState(4);
   const detailBodyRef = useRef(null);
   const detailTabsRef = useRef(null);
   const detailTabRefs = useRef(new Map());
@@ -444,6 +450,10 @@ function TopicDetail({
   const aiComposerToolbarRef = useRef(null);
   const aiFloatingPanelRef = useRef(null);
   const aiToolbarAnchorRefs = useRef(new Map());
+  const aiComposerSkillsRef = useRef(null);
+  const aiSkillMeasureRefs = useRef(new Map());
+  const aiOverflowMeasureRef = useRef(null);
+  const courseStudioDefaultKnowledgeViewAppliedRef = useRef(false);
   const knowledgeGraphCanvasAreaRef = useRef(null);
   const knowledgeGraphPanelRef = useRef(null);
   const knowledgeGraphDrawerRef = useRef(null);
@@ -490,6 +500,8 @@ function TopicDetail({
     setAiInternetSearchEnabled(true);
     setAiPromptValue('');
     setAiLibraryCollapsed(false);
+    setResourcePanelView(loadTopicPanelView(topicStorageScopeKey));
+    courseStudioDefaultKnowledgeViewAppliedRef.current = false;
   }, [sceneConfig, topicAdminConfig, topicStorageScopeKey, topicTitle]);
 
   const currentVersion = getCurrentVersion(versionData);
@@ -503,6 +515,7 @@ function TopicDetail({
   const versioningEnabled = versioningConfig.enabled !== false;
   const canEditCurrentVersion = isVersionEditable(currentVersion, versioningConfig);
   const sourceResources = currentVersion?.resources || [];
+  const isCourseStudioTopic = isCourseCreationCenterTopic(sceneConfig, topicTitle);
   const tagConfig = topicAdminConfig?.tagConfig || null;
   const sceneTheme = sceneConfig?.theme || null;
   const currentModeConfig = useMemo(() => {
@@ -711,8 +724,8 @@ function TopicDetail({
   const aiVisibleSkills = aiSelectedSkill
     ? aiGenerationSkills.filter((skill) => skill.label === aiSelectedSkill)
     : aiGenerationSkills;
-  const aiPrimarySkills = aiSelectedSkill ? aiVisibleSkills : aiVisibleSkills.slice(0, 3);
-  const aiOverflowSkills = aiSelectedSkill ? [] : aiVisibleSkills.slice(3);
+  const aiPrimarySkills = aiSelectedSkill ? aiVisibleSkills : aiVisibleSkills.slice(0, aiVisibleSkillCount);
+  const aiOverflowSkills = aiSelectedSkill ? [] : aiVisibleSkills.slice(aiVisibleSkillCount);
   const isAiMode = activeTab === 'ai';
   const isKnowledgeGraphView = resourcePanelView === 'knowledgeGraph';
   const isAiKnowledgeGraphLayout = activeTab === 'ai' && isKnowledgeGraphView;
@@ -735,6 +748,14 @@ function TopicDetail({
       return;
     }
     aiToolbarAnchorRefs.current.delete(key);
+  }, []);
+
+  const setAiSkillMeasureRef = useCallback((key, node) => {
+    if (node) {
+      aiSkillMeasureRefs.current.set(key, node);
+      return;
+    }
+    aiSkillMeasureRefs.current.delete(key);
   }, []);
 
   const applyAiKnowledgeGraphLeftPanelWidth = useCallback(() => {
@@ -764,6 +785,50 @@ function TopicDetail({
 
     setAiFloatingPanelOffset((prev) => (Math.abs(prev - nextLeft) < 1 ? prev : nextLeft));
   }, [aiActivePanel, hasAiFloatingPanel]);
+
+  const updateAiVisibleSkillCount = useCallback(() => {
+    if (aiSelectedSkill) {
+      setAiVisibleSkillCount(aiVisibleSkills.length);
+      return;
+    }
+
+    const skillsNode = aiComposerSkillsRef.current;
+    if (!skillsNode) return;
+
+    const containerWidth = skillsNode.getBoundingClientRect().width;
+    if (!containerWidth) return;
+
+    const gap = 8;
+    const overflowWidth = aiOverflowMeasureRef.current?.getBoundingClientRect().width || 0;
+    const skillWidths = aiVisibleSkills.map((skill) => (
+      aiSkillMeasureRefs.current.get(skill.key)?.getBoundingClientRect().width || 0
+    ));
+
+    if (skillWidths.some((width) => !width)) return;
+
+    const totalWidth = skillWidths.reduce((sum, width) => sum + width, 0) + (Math.max(0, skillWidths.length - 1) * gap);
+    if (totalWidth <= containerWidth + 0.5) {
+      setAiVisibleSkillCount(skillWidths.length);
+      return;
+    }
+
+    let usedWidth = 0;
+    let nextVisibleCount = 0;
+
+    for (let index = 0; index < skillWidths.length; index += 1) {
+      const nextWidth = nextVisibleCount === 0 ? skillWidths[index] : usedWidth + gap + skillWidths[index];
+      const hasRemaining = index < skillWidths.length - 1;
+      const requiredWidth = hasRemaining ? nextWidth + gap + overflowWidth : nextWidth;
+      if (requiredWidth <= containerWidth + 0.5) {
+        usedWidth = nextWidth;
+        nextVisibleCount = index + 1;
+        continue;
+      }
+      break;
+    }
+
+    setAiVisibleSkillCount(Math.max(1, nextVisibleCount));
+  }, [aiSelectedSkill, aiVisibleSkills]);
 
   const toggleAiPanel = useCallback((panelKey) => {
     setAiActivePanel((prev) => (prev === panelKey ? 'course' : panelKey));
@@ -1412,6 +1477,19 @@ function TopicDetail({
     setActiveTab(tabs[0].key);
   }, [activeTab, tabs]);
 
+  useEffect(() => {
+    if (!isCourseStudioTopic || !knowledgeGraphRef || courseStudioDefaultKnowledgeViewAppliedRef.current) return;
+    if (tabs.length > 0 && !tabs.some((tab) => tab.key === activeTab)) return;
+
+    courseStudioDefaultKnowledgeViewAppliedRef.current = true;
+    setResourcePanelView('knowledgeGraph');
+
+    if (activeTab === 'ai') {
+      applyAiKnowledgeGraphLeftPanelWidth();
+      setAiKnowledgeGraphPreviewOpen(false);
+    }
+  }, [activeTab, applyAiKnowledgeGraphLeftPanelWidth, isCourseStudioTopic, knowledgeGraphRef, tabs]);
+
   const setDetailTabRef = useCallback((key, node) => {
     if (node) {
       detailTabRefs.current.set(key, node);
@@ -1506,6 +1584,25 @@ function TopicDetail({
     observer.observe(aiComposerToolbarRef.current);
     return () => observer.disconnect();
   }, [hasAiFloatingPanel, updateAiFloatingPanelPosition]);
+
+  useEffect(() => {
+    const frameId = window.requestAnimationFrame(() => {
+      updateAiVisibleSkillCount();
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [updateAiVisibleSkillCount]);
+
+  useEffect(() => {
+    if (typeof ResizeObserver === 'undefined' || !aiComposerSkillsRef.current) return undefined;
+
+    const observer = new ResizeObserver(() => {
+      updateAiVisibleSkillCount();
+    });
+
+    observer.observe(aiComposerSkillsRef.current);
+    return () => observer.disconnect();
+  }, [updateAiVisibleSkillCount]);
 
   useEffect(() => {
     if (!hasAiFloatingPanel) return undefined;
@@ -3935,6 +4032,28 @@ function TopicDetail({
                               ) : null}
                             </div>
                           ) : null}
+                          <div className="topic-ai-composer-skill-measure" aria-hidden="true">
+                            {aiVisibleSkills.map((skill) => (
+                              <button
+                                key={skill.key}
+                                type="button"
+                                ref={(node) => setAiSkillMeasureRef(skill.key, node)}
+                                className="topic-ai-composer-skill"
+                                tabIndex={-1}
+                              >
+                                <ThunderboltOutlined />
+                                <span className="topic-ai-composer-skill-label">{skill.label}</span>
+                              </button>
+                            ))}
+                            <button
+                              type="button"
+                              ref={aiOverflowMeasureRef}
+                              className="topic-ai-composer-overflow-btn"
+                              tabIndex={-1}
+                            >
+                              ...
+                            </button>
+                          </div>
                           <div className="topic-ai-composer-toolbar-row">
                             <button
                               type="button"
@@ -3948,7 +4067,10 @@ function TopicDetail({
                               <PlusOutlined />
                             </button>
                             <span className="topic-ai-composer-divider" />
-                            <div className={`topic-ai-composer-skills ${aiSelectedSkill ? 'topic-ai-composer-skills-has-selection' : ''}`}>
+                            <div
+                              ref={aiComposerSkillsRef}
+                              className={`topic-ai-composer-skills ${aiSelectedSkill ? 'topic-ai-composer-skills-has-selection' : ''}`}
+                            >
                               {aiPrimarySkills.map((skill) => (
                                 <button
                                   key={skill.key}
@@ -3986,33 +4108,33 @@ function TopicDetail({
                                   ) : null}
                                 </button>
                               ))}
-                            </div>
-                            {aiOverflowSkills.length ? (
-                              <Dropdown
-                                overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
-                                menu={{
-                                  items: aiOverflowSkills.map((skill) => ({
-                                    key: skill.key,
-                                    label: skill.label,
-                                  })),
-                                  onClick: ({ key }) => {
-                                    const targetSkill = aiOverflowSkills.find((skill) => skill.key === key) || null;
-                                    if (!targetSkill) return;
-                                    setAiSelectedSkill(targetSkill.label);
-                                    setAiActivePanel('course');
-                                  },
-                                }}
-                                trigger={['click']}
-                              >
-                                <button
-                                  type="button"
-                                  className="topic-ai-composer-overflow-btn"
-                                  aria-label="更多技能"
+                              {aiOverflowSkills.length ? (
+                                <Dropdown
+                                  overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
+                                  menu={{
+                                    items: aiOverflowSkills.map((skill) => ({
+                                      key: skill.key,
+                                      label: skill.label,
+                                    })),
+                                    onClick: ({ key }) => {
+                                      const targetSkill = aiOverflowSkills.find((skill) => skill.key === key) || null;
+                                      if (!targetSkill) return;
+                                      setAiSelectedSkill(targetSkill.label);
+                                      setAiActivePanel('course');
+                                    },
+                                  }}
+                                  trigger={['click']}
                                 >
-                                  ...
-                                </button>
-                              </Dropdown>
-                            ) : null}
+                                  <button
+                                    type="button"
+                                    className="topic-ai-composer-overflow-btn"
+                                    aria-label="更多技能"
+                                  >
+                                    ...
+                                  </button>
+                                </Dropdown>
+                              ) : null}
+                            </div>
                             {aiSelectedSkill ? <span className="topic-ai-composer-divider" /> : null}
                             {aiComposerItems.map((item) => (
                               <button

@@ -8,6 +8,10 @@
   gap: 20px;
 }
 
+.scene-create-layout-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .scene-create-template-panel,
 .scene-create-form-panel {
   min-width: 0;

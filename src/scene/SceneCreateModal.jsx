@@ -22,15 +22,21 @@ function getTemplateToolSummary(template) {
   return Array.from(keys);
 }
 
+const DEFAULT_SCENE_GROUP_NAME = '人工智能通识体系';
+
 export default function SceneCreateModal({
   open,
   templates,
+  sceneGroupOptions = [],
   initialValues,
   defaultMenuKey,
+  defaultSceneGroupName,
+  mode = 'scene',
   onCancel,
   onSubmit,
 }) {
   const [form] = Form.useForm();
+  const isSceneMode = mode === 'scene';
 
   const sortedTemplates = useMemo(() => {
     return [...templates].sort((a, b) => {
@@ -48,13 +54,28 @@ export default function SceneCreateModal({
     [sortedTemplates, selectedTemplateId],
   );
 
+  const firstAvailableTemplate = useMemo(() => {
+    const activeTemplates = sortedTemplates.filter((item) => item.status === 'ACTIVE');
+    if (initialValues?.templateId) {
+      return sortedTemplates.find((item) => item.id === initialValues.templateId) || activeTemplates[0] || sortedTemplates[0] || null;
+    }
+    if (defaultMenuKey) {
+      return activeTemplates.find((item) => item.defaultMenuKey === defaultMenuKey)
+        || sortedTemplates.find((item) => item.defaultMenuKey === defaultMenuKey)
+        || activeTemplates[0]
+        || sortedTemplates[0]
+        || null;
+    }
+    return activeTemplates[0] || sortedTemplates[0] || null;
+  }, [defaultMenuKey, initialValues?.templateId, sortedTemplates]);
+
   useEffect(() => {
     if (!open) return;
-    const firstAvailableTemplate = sortedTemplates.find((item) => item.status === 'ACTIVE') || sortedTemplates[0] || null;
     const editing = initialValues || null;
     form.setFieldsValue({
       id: editing?.id,
       name: editing?.name || '',
+      sceneGroupName: editing?.sceneGroupName || defaultSceneGroupName || sceneGroupOptions[0]?.value || editing?.name || DEFAULT_SCENE_GROUP_NAME,
       sceneCode: editing?.sceneCode || '',
       owner: editing?.owner || '',
       visibility: editing?.visibility || 'PUBLIC',
@@ -64,7 +85,7 @@ export default function SceneCreateModal({
       templateId: editing?.templateId || firstAvailableTemplate?.id,
       topicCount: editing?.topicCount ?? 0,
     });
-  }, [defaultMenuKey, form, initialValues, open, sortedTemplates]);
+  }, [defaultMenuKey, defaultSceneGroupName, firstAvailableTemplate, form, initialValues, open, sceneGroupOptions]);
 
   const handleSelectTemplate = (template) => {
     if (!template || (template.status !== 'ACTIVE' && template.id !== initialValues?.templateId)) return;
@@ -84,7 +105,11 @@ export default function SceneCreateModal({
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
-      await onSubmit?.(values);
+      await onSubmit?.(
+        isSceneMode
+          ? { ...values, sceneGroupName: values.name || DEFAULT_SCENE_GROUP_NAME }
+          : values,
+      );
     } catch (error) {
       if (error?.errorFields) return;
     }
@@ -94,11 +119,11 @@ export default function SceneCreateModal({
 
   return (
     <Modal
-      title={initialValues?.id ? '编辑场景' : '新建场景'}
+      title={initialValues?.id ? (isSceneMode ? '编辑场景' : '编辑空间') : (isSceneMode ? '新建场景' : '新建空间')}
       open={open}
       onCancel={onCancel}
       onOk={handleOk}
-      okText={initialValues?.id ? '保存场景' : '创建场景'}
+      okText={initialValues?.id ? (isSceneMode ? '保存场景' : '保存空间') : (isSceneMode ? '创建场景' : '创建空间')}
       cancelText="取消"
       width={1040}
       destroyOnClose
@@ -111,7 +136,7 @@ export default function SceneCreateModal({
         <Form.Item
           name="templateId"
           hidden
-          rules={[{ required: true, message: '请选择场景模板' }]}
+          rules={[{ required: true, message: isSceneMode ? '请选择场景模板' : '请选择空间模板' }]}
         >
           <Input />
         </Form.Item>
@@ -128,75 +153,101 @@ export default function SceneCreateModal({
           <Input />
         </Form.Item>
 
-        <div className="scene-create-layout">
-          <div className="scene-create-template-panel">
-            <div className="scene-create-panel-head">
-              <div className="scene-create-panel-title">1. 选择场景模板</div>
-              <div className="scene-create-panel-desc">模板定义了角色、主题样式、资料目录和可用工具。</div>
-            </div>
-            <div className="scene-create-template-grid">
-              {sortedTemplates.map((template) => {
-                const active = template.id === selectedTemplateId;
-                const disabled = template.status !== 'ACTIVE' && template.id !== initialValues?.templateId;
-                return (
-                  <button
-                    key={template.id}
-                    type="button"
-                    className={`scene-create-template-card ${active ? 'is-active' : ''} ${disabled ? 'is-disabled' : ''}`}
-                    onClick={() => handleSelectTemplate(template)}
-                  >
-                    <div
-                      className="scene-create-template-card-cover"
-                      style={getSceneThemeCoverStyle(template.theme, {
-                        overlayStart: 'rgba(15, 23, 42, 0.16)',
-                        overlayEnd: 'rgba(15, 23, 42, 0.02)',
-                      })}
+        <div className={`scene-create-layout ${isSceneMode ? '' : 'scene-create-layout-single'}`}>
+          {isSceneMode ? (
+            <div className="scene-create-template-panel">
+              <div className="scene-create-panel-head">
+                <div className="scene-create-panel-title">1. 选择场景模板</div>
+                <div className="scene-create-panel-desc">模板定义了角色、主题样式、资料目录和可用工具。</div>
+              </div>
+              <div className="scene-create-template-grid">
+                {sortedTemplates.map((template) => {
+                  const active = template.id === selectedTemplateId;
+                  const disabled = template.status !== 'ACTIVE' && template.id !== initialValues?.templateId;
+                  return (
+                    <button
+                      key={template.id}
+                      type="button"
+                      className={`scene-create-template-card ${active ? 'is-active' : ''} ${disabled ? 'is-disabled' : ''}`}
+                      onClick={() => handleSelectTemplate(template)}
                     >
-                      <span className="scene-create-template-card-badge">{template.theme.badgeText}</span>
-                    </div>
-                    <div className="scene-create-template-card-body">
-                      <div className="scene-create-template-card-title-row">
-                        <span className="scene-create-template-card-title">{template.name}</span>
-                        {template.builtIn ? <Tag color="gold">内置</Tag> : null}
+                      <div
+                        className="scene-create-template-card-cover"
+                        style={getSceneThemeCoverStyle(template.theme, {
+                          overlayStart: 'rgba(15, 23, 42, 0.16)',
+                          overlayEnd: 'rgba(15, 23, 42, 0.02)',
+                        })}
+                      >
+                        <span className="scene-create-template-card-badge">{template.theme.badgeText}</span>
                       </div>
-                      <div className="scene-create-template-card-meta">
-                        {getSceneTypeLabel(template.sceneType)}
+                      <div className="scene-create-template-card-body">
+                        <div className="scene-create-template-card-title-row">
+                          <span className="scene-create-template-card-title">{template.name}</span>
+                          {template.builtIn ? <Tag color="gold">内置</Tag> : null}
+                        </div>
+                        <div className="scene-create-template-card-meta">
+                          {getSceneTypeLabel(template.sceneType)}
+                        </div>
+                        <div className="scene-create-template-card-desc">{template.description}</div>
+                        <div className="scene-create-template-card-foot">
+                          <span>{template.roles.length} 个角色</span>
+                          <span>{getTemplateToolSummary(template).length} 个工具</span>
+                          <span>{template.folderTypes.length} 类目录</span>
+                        </div>
                       </div>
-                      <div className="scene-create-template-card-desc">{template.description}</div>
-                      <div className="scene-create-template-card-foot">
-                        <span>{template.roles.length} 个角色</span>
-                        <span>{getTemplateToolSummary(template).length} 个工具</span>
-                        <span>{template.folderTypes.length} 类目录</span>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          ) : null}
 
           <div className="scene-create-form-panel">
             <div className="scene-create-panel-head">
-              <div className="scene-create-panel-title">2. 填写场景信息</div>
-              <div className="scene-create-panel-desc">创建后会复制一份模板快照到该场景中。</div>
+              <div className="scene-create-panel-title">{isSceneMode ? '2. 填写场景信息' : '填写空间信息'}</div>
+              <div className="scene-create-panel-desc">
+                {isSceneMode
+                  ? '创建场景时会根据所选模板生成默认结构。'
+                  : '新建空间会沿用当前场景模板，不需要再次选择模板。'}
+              </div>
             </div>
 
             <div className="scene-create-form-grid">
               <Form.Item
-                label="场景名称"
+                label={isSceneMode ? '场景名称' : '空间名称'}
                 name="name"
-                rules={[{ required: true, message: '请输入场景名称' }]}
+                rules={[{ required: true, message: isSceneMode ? '请输入场景名称' : '请输入空间名称' }]}
               >
                 <Input placeholder="例如：新教师岗前培训" />
               </Form.Item>
-              <Form.Item label="场景编码" name="sceneCode">
+              <Form.Item label={isSceneMode ? '场景编码' : '空间编码'} name="sceneCode">
                 <Input placeholder="留空则自动生成" />
               </Form.Item>
-              <Form.Item className="scene-create-form-span-2" label="可见范围" name="visibility">
-                <Select options={SCENE_VISIBILITY_OPTIONS} />
-              </Form.Item>
-              <Form.Item className="scene-create-form-span-2" label="场景简介" name="description">
-                <TextArea rows={4} placeholder="填写场景简介，用于首页卡片和空间说明。" />
+              {isSceneMode ? (
+                <Form.Item label="可见范围" name="visibility">
+                  <Select options={SCENE_VISIBILITY_OPTIONS} />
+                </Form.Item>
+              ) : (
+                <>
+                  <Form.Item
+                    label="所属场景"
+                    name="sceneGroupName"
+                    rules={[{ required: true, message: '请选择所属场景' }]}
+                  >
+                    <Select
+                      options={sceneGroupOptions}
+                      placeholder="请选择所属场景"
+                      showSearch
+                      optionFilterProp="label"
+                    />
+                  </Form.Item>
+                  <Form.Item name="visibility" hidden>
+                    <Input />
+                  </Form.Item>
+                </>
+              )}
+              <Form.Item className="scene-create-form-span-2" label={isSceneMode ? '场景简介' : '空间简介'} name="description">
+                <TextArea rows={4} placeholder={isSceneMode ? '填写场景简介，用于后续空间创建和展示说明。' : '填写空间简介，用于首页卡片和空间说明。'} />
               </Form.Item>
             </div>
 

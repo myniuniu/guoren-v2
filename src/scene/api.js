@@ -3,8 +3,10 @@ import {
   createTemplateDraft,
   duplicateSceneTemplate,
   getScene,
+  getSceneMenuLabel,
   getSceneStoreChangeEventName,
   getSceneTemplate,
+  listSceneSystemMenuShortcuts,
   listSceneTemplates,
   listScenes,
   removeScene,
@@ -12,11 +14,14 @@ import {
   saveScene,
   saveSceneTemplate,
   seedSceneData,
+  toggleSceneMenuShortcut,
+  toggleSceneSystemMenuShortcut,
 } from './store';
 
 export const sceneApi = {
   seed: async () => seedSceneData(),
   listTemplates: async () => listSceneTemplates(),
+  listSceneSystemMenuShortcuts: async () => listSceneSystemMenuShortcuts(),
   detailTemplate: async (id) => getSceneTemplate(id),
   saveTemplate: async (template) => saveSceneTemplate(template),
   removeTemplate: async (id) => removeSceneTemplate(id),
@@ -24,9 +29,12 @@ export const sceneApi = {
   listScenes: async () => listScenes(),
   detailScene: async (id) => getScene(id),
   saveScene: async (scene) => saveScene(scene),
+  toggleSceneMenuShortcut: async (id, enabled) => toggleSceneMenuShortcut(id, enabled),
+  toggleSceneSystemMenuShortcut: async (menuKey, enabled) => toggleSceneSystemMenuShortcut(menuKey, enabled),
   removeScene: async (id) => removeScene(id),
   createTemplateDraft,
   buildSceneInitialVersionData,
+  getSceneMenuLabel,
   getStoreEventName: getSceneStoreChangeEventName,
 };
 

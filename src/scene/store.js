@@ -4,10 +4,12 @@ import { getDefaultSceneThemeCoverPresetId, getSceneThemeCoverPreset } from './t
 
 const TEMPLATE_STORAGE_KEY = 'gr.scene.templates.v1';
 const SCENE_STORAGE_KEY = 'gr.scenes.v1';
+const SCENE_SYSTEM_MENU_SHORTCUT_STORAGE_KEY = 'gr.scene.system-menu-shortcuts.v1';
 const SEED_KEY = 'gr.scene.seeded.v1';
 const BUILT_IN_SYNC_KEY = 'gr.scene.builtin-sync.v9';
 const STORE_CHANGE_EVENT = 'gr:scene-store-change';
 const VERSION_STORAGE_KEY = 'guoren_version_data';
+const DEFAULT_SCENE_GROUP_NAME = '人工智能通识体系';
 
 export const SCENE_TYPE_OPTIONS = [
   { value: 'TEACHING', label: '教学场景' },
@@ -591,6 +593,39 @@ export function getSceneMenuLabel(value) {
   return optionLabel(SCENE_MENU_OPTIONS, value, value || '-');
 }
 
+export function listSceneSystemMenuShortcuts() {
+  const validKeys = new Set(SCENE_MENU_OPTIONS.map((item) => item.value));
+  return readList(SCENE_SYSTEM_MENU_SHORTCUT_STORAGE_KEY)
+    .map((item) => trimToNull(typeof item === 'string' ? item : item?.menuKey))
+    .filter((item, index, list) => item && validKeys.has(item) && list.indexOf(item) === index);
+}
+
+export function toggleSceneSystemMenuShortcut(menuKey, enabled) {
+  const normalizedMenuKey = trimToNull(menuKey);
+  if (!normalizedMenuKey || !SCENE_MENU_OPTIONS.some((item) => item.value === normalizedMenuKey)) {
+    throw new Error('场景分类不存在');
+  }
+
+  const currentList = listSceneSystemMenuShortcuts();
+  const nextEnabled = enabled !== false;
+  const nextList = nextEnabled
+    ? (currentList.includes(normalizedMenuKey) ? currentList : [...currentList, normalizedMenuKey])
+    : currentList.filter((item) => item !== normalizedMenuKey);
+
+  writeList(SCENE_SYSTEM_MENU_SHORTCUT_STORAGE_KEY, nextList);
+  trackEvent(nextEnabled ? 'space_scene_category_system_menu_add' : 'space_scene_category_system_menu_remove', {
+    module: 'space',
+    objectType: 'scene_category',
+    objectId: normalizedMenuKey,
+    properties: {
+      menuKey: normalizedMenuKey,
+      label: getSceneMenuLabel(normalizedMenuKey),
+    },
+  });
+  emitChange();
+  return nextList;
+}
+
 export function getSceneVisibilityLabel(value) {
   return optionLabel(SCENE_VISIBILITY_OPTIONS, value, value || '-');
 }
@@ -1125,12 +1160,13 @@ function normalizeScene(input = {}, templates = []) {
     templates.find((item) => item.id === input.templateId) ||
     (input.templateSnapshot ? normalizeTemplate(input.templateSnapshot) : null);
   if (!template) {
-    throw new Error('场景缺少有效模板');
+    throw new Error('空间缺少有效模板');
   }
   return {
     id: input.id || createId('scene'),
     sceneCode: trimToNull(input.sceneCode) || `SCN-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
-    name: trimToNull(input.name) || '未命名场景',
+    name: trimToNull(input.name) || '未命名空间',
+    sceneGroupName: trimToNull(input.sceneGroupName) || DEFAULT_SCENE_GROUP_NAME,
     description: trimToNull(input.description) || template.theme.heroSubtitle || '',
     owner: trimToNull(input.owner) || '',
     visibility: trimToNull(input.visibility) || 'PUBLIC',
@@ -1141,6 +1177,10 @@ function normalizeScene(input = {}, templates = []) {
     templateName: template.name,
     templateCode: template.templateCode,
     sceneType: template.sceneType,
+    menuShortcutEnabled: input.menuShortcutEnabled === true,
+    menuShortcutAt: input.menuShortcutEnabled === true
+      ? (trimToNull(input.menuShortcutAt) || input.updatedAt || nowIso())
+      : null,
     storageScopeKey: trimToNull(input.storageScopeKey) || `scene:${input.id || createId('scope')}`,
     templateSnapshot: clone(template),
     createdAt: input.createdAt || nowIso(),
@@ -1735,6 +1775,7 @@ function buildPresetScenes(templates) {
       id: 'scene_teaching_seed_1',
       sceneCode: 'SCN-CLASS-AI',
       name: '人工智能通识课堂',
+      sceneGroupName: DEFAULT_SCENE_GROUP_NAME,
       description: '面向班级授课的 AI 通识教学场景。',
       owner: '张老师',
       visibility: 'PUBLIC',
@@ -1746,6 +1787,7 @@ function buildPresetScenes(templates) {
       id: 'scene_teaching_seed_2',
       sceneCode: 'SCN-BLOCK-CODE',
       name: '积木编程第二课',
+      sceneGroupName: DEFAULT_SCENE_GROUP_NAME,
       description: '聚焦课堂练习与作业反馈的教学场景。',
       owner: '李老师',
       visibility: 'INTERNAL',
@@ -1757,6 +1799,7 @@ function buildPresetScenes(templates) {
       id: 'scene_research_seed_1',
       sceneCode: 'SCN-CHN-RESEARCH',
       name: '语文组课堂教学质量教研会',
+      sceneGroupName: DEFAULT_SCENE_GROUP_NAME,
       description: '用于课堂观察、听评课记录和教研共创。',
       owner: '王主任',
       visibility: 'INTERNAL',
@@ -1768,6 +1811,7 @@ function buildPresetScenes(templates) {
       id: 'scene_research_seed_2',
       sceneCode: 'SCN-WS-DESIGN',
       name: '跨校教学设计工作坊',
+      sceneGroupName: DEFAULT_SCENE_GROUP_NAME,
       description: '跨校教师围绕教学设计议题协作共创。',
       owner: '陈老师',
       visibility: 'PUBLIC',
@@ -1779,6 +1823,7 @@ function buildPresetScenes(templates) {
       id: 'scene_training_seed_1',
       sceneCode: 'SCN-NEW-TEACHER',
       name: '新教师岗前培训',
+      sceneGroupName: DEFAULT_SCENE_GROUP_NAME,
       description: '围绕课程、直播、考试和结营成果的培训场景。',
       owner: '培训中心',
       visibility: 'INTERNAL',
@@ -1790,6 +1835,7 @@ function buildPresetScenes(templates) {
       id: 'scene_training_seed_2',
       sceneCode: 'SCN-LEADER-CAMP',
       name: '青年干部训练营',
+      sceneGroupName: DEFAULT_SCENE_GROUP_NAME,
       description: '支持直播授课、项目研修与成果评阅。',
       owner: '组织部',
       visibility: 'PRIVATE',
@@ -1801,6 +1847,7 @@ function buildPresetScenes(templates) {
       id: 'scene_course_studio_seed_1',
       sceneCode: 'SCN-COURSE-STUDIO',
       name: '课程创作中心',
+      sceneGroupName: DEFAULT_SCENE_GROUP_NAME,
       description: '围绕人工智能通识体系开展课程框架梳理、知识图谱映射与课时设计共创。',
       owner: '人工智能通识教研组',
       visibility: 'INTERNAL',
@@ -1812,6 +1859,7 @@ function buildPresetScenes(templates) {
       id: 'scene_community_seed_1',
       sceneCode: 'SCN-SENIOR-COMMUNITY',
       name: '老年社区',
+      sceneGroupName: DEFAULT_SCENE_GROUP_NAME,
       description: '围绕智慧助老、康养服务与社区陪伴的共创频道。',
       owner: '社区运营组',
       visibility: 'PUBLIC',
@@ -2140,9 +2188,9 @@ export function saveScene(scene) {
     updatedAt: nowIso(),
   }, templates);
   if (!trimToNull(normalized.name)) {
-    throw new Error('场景名称不能为空');
+    throw new Error('空间名称不能为空');
   }
-  assertUniqueCode(list, 'sceneCode', normalized.sceneCode, normalized.id, '场景编码');
+  assertUniqueCode(list, 'sceneCode', normalized.sceneCode, normalized.id, '空间编码');
   const nextList = existing
     ? list.map((item) => (item.id === normalized.id ? normalized : item))
     : [normalized, ...list];
@@ -2157,6 +2205,44 @@ export function saveScene(scene) {
       sceneType: normalized.sceneType,
       templateName: normalized.templateName,
       visibility: normalized.visibility,
+      menuKey: normalized.menuKey,
+    },
+  });
+  emitChange();
+  return normalized;
+}
+
+export function toggleSceneMenuShortcut(id, enabled) {
+  const templates = readTemplates();
+  const list = readScenes(templates);
+  const target = list.find((item) => item.id === id);
+  if (!target) {
+    throw new Error('空间不存在');
+  }
+
+  const nextShortcutEnabled = enabled !== false;
+  const normalized = normalizeScene({
+    ...target,
+    menuShortcutEnabled: nextShortcutEnabled,
+    menuShortcutAt: nextShortcutEnabled
+      ? (target.menuShortcutEnabled ? target.menuShortcutAt : nowIso())
+      : null,
+    updatedAt: target.updatedAt,
+  }, templates);
+
+  writeList(
+    SCENE_STORAGE_KEY,
+    list.map((item) => (item.id === normalized.id ? normalized : item)),
+  );
+  trackEvent(nextShortcutEnabled ? 'space_scene_shortcut_add' : 'space_scene_shortcut_remove', {
+    module: 'space',
+    objectType: 'scene',
+    objectId: normalized.id,
+    properties: {
+      sceneName: normalized.name,
+      sceneCode: normalized.sceneCode,
+      sceneType: normalized.sceneType,
+      templateName: normalized.templateName,
       menuKey: normalized.menuKey,
     },
   });
