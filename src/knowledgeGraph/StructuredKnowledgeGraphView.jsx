@@ -85,6 +85,16 @@ function clampResourcePanelPosition(position, frame, hostNode) {
   };
 }
 
+function getDefaultResourcePanelPosition(hostNode, frame) {
+  const hostHeight = Math.max(0, hostNode?.clientHeight || 0);
+  const freeVerticalSpace = Math.max(0, hostHeight - frame.height);
+  const preferredTop = DEFAULT_RESOURCE_PANEL_POSITION.top + freeVerticalSpace * 0.28;
+  return clampResourcePanelPosition({
+    left: DEFAULT_RESOURCE_PANEL_POSITION.left,
+    top: preferredTop,
+  }, frame, hostNode);
+}
+
 function buildStageHeight(pointCount) {
   return Math.max(
     STAGE_MIN_HEIGHT,
@@ -584,6 +594,15 @@ function StructuredKnowledgeGraphView({
   useEffect(() => {
     resourcePanelPositionRef.current = resourcePanelPosition;
   }, [resourcePanelPosition]);
+
+  useEffect(() => {
+    if (!resourcePanelOpen) return;
+    const hostNode = resourcePanelHostRef.current;
+    const nextFrame = clampResourcePanelFrame(resourcePanelFrameRef.current, hostNode);
+    const nextPosition = getDefaultResourcePanelPosition(hostNode, nextFrame);
+    setResourcePanelFrame(nextFrame);
+    setResourcePanelPosition(nextPosition);
+  }, [resourcePanelOpen]);
 
   useEffect(() => {
     const handleViewportResize = () => {
