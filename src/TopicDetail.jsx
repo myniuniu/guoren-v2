@@ -118,6 +118,95 @@ const KNOWLEDGE_GRAPH_RELATION_TYPE_LABEL_MAP = Object.fromEntries(
   RELATION_TYPE_OPTIONS.map((item) => [item.value, item.label]),
 );
 
+function StandardAiSelectorPanel({ schema }) {
+  if (!schema) return null;
+
+  const renderGrid = () => (
+    <div className="topic-ai-standard-grid">
+      {schema.options.map((option) => (
+        <button
+          key={option.key}
+          type="button"
+          className={`topic-ai-standard-card ${option.active ? 'is-active' : ''}`}
+          onClick={() => schema.onSelect?.(option)}
+        >
+          {option.icon ? <div className="topic-ai-standard-card-icon">{option.icon}</div> : null}
+          <div className="topic-ai-standard-card-title">{option.label}</div>
+          {option.description ? <div className="topic-ai-standard-card-desc">{option.description}</div> : null}
+        </button>
+      ))}
+    </div>
+  );
+
+  const renderList = () => (
+    <div className="topic-ai-standard-list">
+      {schema.options.map((option) => (
+        <button
+          key={option.key}
+          type="button"
+          className={`topic-ai-standard-list-item ${option.active ? 'is-active' : ''}`}
+          onClick={() => schema.onSelect?.(option)}
+        >
+          <span className="topic-ai-standard-list-item-label">{option.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+
+  const renderGroupedMulti = () => (
+    <div className="topic-ai-standard-grouped">
+      {schema.summary ? (
+        <div className="topic-ai-standard-summary">
+          <span>{schema.summary.primary}</span>
+          <span>{schema.summary.secondary}</span>
+        </div>
+      ) : null}
+      <div className="topic-ai-standard-grouped-body">
+        <div className="topic-ai-standard-grouped-nav">
+          {schema.groups.map((group) => (
+            <button
+              key={group.key}
+              type="button"
+              className={`topic-ai-standard-grouped-nav-item ${group.active ? 'is-active' : ''}`}
+              onClick={() => schema.onSelectGroup?.(group)}
+            >
+              <span>{group.label}</span>
+              <RightOutlined />
+            </button>
+          ))}
+        </div>
+        <div className="topic-ai-standard-grouped-options">
+          {schema.options.map((option) => (
+            <label
+              key={option.key}
+              className={`topic-ai-standard-grouped-option ${option.active ? 'is-active' : ''}`}
+            >
+              <input
+                type="checkbox"
+                checked={option.active}
+                onChange={() => schema.onToggleOption?.(option)}
+              />
+              <span>{option.label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="topic-ai-selector-panel topic-ai-standard-panel">
+      <div className="topic-ai-selector-head">
+        <div className={`topic-ai-selector-title ${schema.required ? 'topic-ai-selector-title-required' : ''}`}>{schema.title}</div>
+        {schema.hint ? <div className="topic-ai-selector-hint">{schema.hint}</div> : null}
+      </div>
+      {schema.kind === 'grid-single' ? renderGrid() : null}
+      {schema.kind === 'list-single' ? renderList() : null}
+      {schema.kind === 'grouped-multi' ? renderGroupedMulti() : null}
+    </div>
+  );
+}
+
 function getResourceIcon(resource) {
   const type = resource?.type;
   const fileType = resource?.fileType;
@@ -860,6 +949,57 @@ function TopicDetail({
         { key: 'tool', label: aiToolLabel },
       ]
     : [];
+  const aiSelectorSchemas = {
+    structure: {
+      kind: 'grid-single',
+      title: '课程结构',
+      hint: '选择一种适合当前课程的教学组织方式',
+      required: true,
+      options: aiStructureOptions.map((option) => ({
+        key: option.key,
+        label: option.label,
+        description: option.description,
+        icon: option.icon,
+        active: option.key === aiSelectedStructure,
+      })),
+      onSelect: (option) => {
+        setAiSelectedStructure(option.key);
+        setAiStructureTouched(true);
+      },
+    },
+    outline: {
+      kind: 'list-single',
+      title: '课程标准/纲要',
+      hint: '选择一份参考纲要，用于约束课程目标和内容边界',
+      options: aiOutlineOptions.map((item) => ({
+        key: item,
+        label: item,
+        active: aiSelectedOutline === item,
+      })),
+      onSelect: (option) => setAiSelectedOutline(option.key),
+    },
+    tool: {
+      kind: 'grouped-multi',
+      title: '课程实训工具',
+      hint: '按分类多选工具，后续会自动纳入课程设计建议',
+      summary: {
+        primary: aiSelectedTools.length ? `已选择 ${aiSelectedTools.length} 项工具` : '请选择实训工具（可多选）',
+        secondary: selectedToolGroup.label,
+      },
+      groups: aiToolGroups.map((group) => ({
+        key: group.key,
+        label: group.label,
+        active: group.key === aiSelectedToolGroup,
+      })),
+      options: selectedToolGroup.items.map((item) => ({
+        key: item,
+        label: item,
+        active: aiSelectedTools.includes(item),
+      })),
+      onSelectGroup: (group) => setAiSelectedToolGroup(group.key),
+      onToggleOption: (option) => toggleAiToolSelection(option.key),
+    },
+  };
   const tagPickerItem = tagPickerTarget
     ? resources.find((resource) => resource.key === tagPickerTarget) || null
     : null;
@@ -2968,11 +3108,11 @@ function TopicDetail({
   const resourcePanelViewOptions = useMemo(() => (
     knowledgeGraphRef
       ? [
-          { label: '资料', value: 'resources' },
+          { label: '列表', value: 'resources' },
           { label: '知识图谱', value: 'knowledgeGraph' },
         ]
       : [
-          { label: '资料', value: 'resources' },
+          { label: '列表', value: 'resources' },
         ]
   ), [knowledgeGraphRef]);
 
@@ -4366,97 +4506,11 @@ function TopicDetail({
                                 </div>
                               ) : null}
 
-                              {aiActivePanel === 'structure' ? (
-                                <div className="topic-ai-selector-panel">
-                                  <div className="topic-ai-selector-head">
-                                    <div className="topic-ai-selector-title topic-ai-selector-title-required">课程结构</div>
-                                    <div className="topic-ai-selector-hint">选择一种适合当前课程的教学组织方式</div>
-                                  </div>
-                                  <div className="topic-ai-structure-grid">
-                                    {aiStructureOptions.map((option) => (
-                                      <button
-                                        key={option.key}
-                                        type="button"
-                                        className={`topic-ai-structure-card ${option.key === aiSelectedStructure ? 'topic-ai-structure-card-active' : ''}`}
-                                        onClick={() => {
-                                          setAiSelectedStructure(option.key);
-                                          setAiStructureTouched(true);
-                                        }}
-                                      >
-                                        <div className="topic-ai-structure-icon">{option.icon}</div>
-                                        <div className="topic-ai-structure-title">{option.label}</div>
-                                        <div className="topic-ai-structure-desc">{option.description}</div>
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-                              ) : null}
+                              {aiActivePanel === 'structure' ? <StandardAiSelectorPanel schema={aiSelectorSchemas.structure} /> : null}
 
-                              {aiActivePanel === 'outline' ? (
-                                <div className="topic-ai-selector-panel">
-                                  <div className="topic-ai-selector-head">
-                                    <div className="topic-ai-selector-title">课程标准/纲要</div>
-                                    <div className="topic-ai-selector-hint">选择一份参考纲要，用于约束课程目标和内容边界</div>
-                                  </div>
-                                  <div className="topic-ai-outline-list">
-                                    {aiOutlineOptions.map((item) => (
-                                      <button
-                                        key={item}
-                                        type="button"
-                                        className={`topic-ai-outline-item ${aiSelectedOutline === item ? 'topic-ai-outline-item-active' : ''}`}
-                                        onClick={() => setAiSelectedOutline(item)}
-                                      >
-                                        {item}
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-                              ) : null}
+                              {aiActivePanel === 'outline' ? <StandardAiSelectorPanel schema={aiSelectorSchemas.outline} /> : null}
 
-                              {aiActivePanel === 'tool' ? (
-                                <div className="topic-ai-selector-panel">
-                                  <div className="topic-ai-tool-panel">
-                                    <div className="topic-ai-selector-head">
-                                      <div className="topic-ai-selector-title">课程实训工具</div>
-                                      <div className="topic-ai-selector-hint">按分类多选工具，后续会自动纳入课程设计建议</div>
-                                    </div>
-                                    <div className="topic-ai-tool-search">
-                                      <span>{aiSelectedTools.length ? `已选择 ${aiSelectedTools.length} 项工具` : '请选择实训工具（可多选）'}</span>
-                                      <span>{selectedToolGroup.label}</span>
-                                    </div>
-                                    <div className="topic-ai-tool-content">
-                                      <div className="topic-ai-tool-groups">
-                                        {aiToolGroups.map((group) => (
-                                          <button
-                                            key={group.key}
-                                            type="button"
-                                            className={`topic-ai-tool-group ${group.key === aiSelectedToolGroup ? 'topic-ai-tool-group-active' : ''}`}
-                                            onClick={() => setAiSelectedToolGroup(group.key)}
-                                          >
-                                            <span>{group.label}</span>
-                                            <RightOutlined />
-                                          </button>
-                                        ))}
-                                      </div>
-                                      <div className="topic-ai-tool-options">
-                                        {selectedToolGroup.items.map((item) => (
-                                          <label
-                                            key={item}
-                                            className={`topic-ai-tool-option ${aiSelectedTools.includes(item) ? 'topic-ai-tool-option-active' : ''}`}
-                                          >
-                                            <input
-                                              type="checkbox"
-                                              checked={aiSelectedTools.includes(item)}
-                                              onChange={() => toggleAiToolSelection(item)}
-                                            />
-                                            <span>{item}</span>
-                                          </label>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              ) : null}
+                              {aiActivePanel === 'tool' ? <StandardAiSelectorPanel schema={aiSelectorSchemas.tool} /> : null}
                             </div>
                           ) : null}
                           <div className="topic-ai-composer-skill-measure" aria-hidden="true">

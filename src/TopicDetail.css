@@ -1814,13 +1814,15 @@
   cursor: pointer;
 }
 
-.topic-ai-structure-grid {
+.topic-ai-structure-grid,
+.topic-ai-standard-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 10px;
 }
 
-.topic-ai-structure-card {
+.topic-ai-structure-card,
+.topic-ai-standard-card {
   display: flex;
   min-height: 128px;
   flex-direction: column;
@@ -1841,14 +1843,16 @@
   transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
 }
 
-.topic-ai-structure-card:hover {
+.topic-ai-structure-card:hover,
+.topic-ai-standard-card:hover {
   border-color: #c7d4e6;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.96),
     0 10px 18px rgba(148, 163, 184, 0.08);
 }
 
-.topic-ai-structure-card-active {
+.topic-ai-structure-card-active,
+.topic-ai-standard-card.is-active {
   border-color: rgba(59, 130, 246, 0.9);
   background:
     linear-gradient(180deg, rgba(239, 246, 255, 0.96) 0%, rgba(229, 239, 255, 0.84) 100%);
@@ -1857,30 +1861,35 @@
     0 10px 18px rgba(96, 165, 250, 0.1);
 }
 
-.topic-ai-structure-icon {
+.topic-ai-structure-icon,
+.topic-ai-standard-card-icon {
   color: #98a2b3;
   font-size: 20px;
   line-height: 1;
 }
 
-.topic-ai-structure-card-active .topic-ai-structure-icon {
+.topic-ai-structure-card-active .topic-ai-structure-icon,
+.topic-ai-standard-card.is-active .topic-ai-standard-card-icon {
   color: #3b82f6;
 }
 
-.topic-ai-structure-title {
+.topic-ai-structure-title,
+.topic-ai-standard-card-title {
   color: #273244;
   font-size: 14px;
   font-weight: 700;
   line-height: 1.4;
 }
 
-.topic-ai-structure-desc {
+.topic-ai-structure-desc,
+.topic-ai-standard-card-desc {
   color: #95a0af;
   font-size: 11px;
   line-height: 1.45;
 }
 
-.topic-ai-outline-list {
+.topic-ai-outline-list,
+.topic-ai-standard-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -1889,7 +1898,8 @@
   padding-right: 2px;
 }
 
-.topic-ai-outline-item {
+.topic-ai-outline-item,
+.topic-ai-standard-list-item {
   padding: 13px 14px;
   border: 1px solid #dbe2ec;
   border-radius: 12px;
@@ -1904,12 +1914,14 @@
   transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
 }
 
-.topic-ai-outline-item:hover {
+.topic-ai-outline-item:hover,
+.topic-ai-standard-list-item:hover {
   border-color: #c8d5e8;
   box-shadow: 0 10px 20px rgba(148, 163, 184, 0.08);
 }
 
-.topic-ai-outline-item-active {
+.topic-ai-outline-item-active,
+.topic-ai-standard-list-item.is-active {
   border-color: rgba(59, 130, 246, 0.82);
   background:
     linear-gradient(180deg, rgba(239, 246, 255, 0.96) 0%, rgba(229, 239, 255, 0.84) 100%);
@@ -1917,13 +1929,15 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
 }
 
-.topic-ai-tool-panel {
+.topic-ai-tool-panel,
+.topic-ai-standard-grouped {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.topic-ai-tool-search {
+.topic-ai-tool-search,
+.topic-ai-standard-summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1936,7 +1950,8 @@
   font-size: 12px;
 }
 
-.topic-ai-tool-content {
+.topic-ai-tool-content,
+.topic-ai-standard-grouped-body {
   display: grid;
   grid-template-columns: 180px minmax(0, 1fr);
   min-height: 270px;
@@ -1948,14 +1963,16 @@
   box-shadow: 0 10px 20px rgba(148, 163, 184, 0.06);
 }
 
-.topic-ai-tool-groups {
+.topic-ai-tool-groups,
+.topic-ai-standard-grouped-nav {
   display: flex;
   flex-direction: column;
   border-right: 1px solid rgba(224, 228, 235, 0.92);
   background: rgba(247, 249, 252, 0.96);
 }
 
-.topic-ai-tool-group {
+.topic-ai-tool-group,
+.topic-ai-standard-grouped-nav-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1971,13 +1988,15 @@
   font: inherit;
 }
 
-.topic-ai-tool-group-active {
+.topic-ai-tool-group-active,
+.topic-ai-standard-grouped-nav-item.is-active {
   border-left-color: #4f46e5;
   background: linear-gradient(90deg, rgba(79, 70, 229, 0.08) 0%, rgba(255, 255, 255, 0.96) 100%);
   color: #4f46e5;
 }
 
-.topic-ai-tool-options {
+.topic-ai-tool-options,
+.topic-ai-standard-grouped-options {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
@@ -1985,7 +2004,8 @@
   align-content: start;
 }
 
-.topic-ai-tool-option {
+.topic-ai-tool-option,
+.topic-ai-standard-grouped-option {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2001,19 +2021,22 @@
   transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
 
-.topic-ai-tool-option:hover {
+.topic-ai-tool-option:hover,
+.topic-ai-standard-grouped-option:hover {
   border-color: #c8d5e8;
   box-shadow: 0 10px 18px rgba(148, 163, 184, 0.08);
   transform: translateY(-1px);
 }
 
-.topic-ai-tool-option-active {
+.topic-ai-tool-option-active,
+.topic-ai-standard-grouped-option.is-active {
   border-color: rgba(79, 70, 229, 0.42);
   background: linear-gradient(180deg, rgba(242, 245, 255, 0.98) 0%, rgba(255, 255, 255, 0.92) 100%);
   box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.08);
 }
 
-.topic-ai-tool-option input {
+.topic-ai-tool-option input,
+.topic-ai-standard-grouped-option input {
   width: 14px;
   height: 14px;
   accent-color: #4f46e5;
@@ -2211,6 +2234,7 @@
   align-items: center;
   gap: 6px;
   max-width: 220px;
+  min-width: 0;
   min-height: 34px;
   border: none;
   background: transparent;
@@ -2218,6 +2242,8 @@
   font-size: 13px;
   cursor: pointer;
   font: inherit;
+  flex: 0 1 220px;
+  overflow: hidden;
 }
 
 .topic-ai-composer-chip-active {
@@ -2233,6 +2259,9 @@
 }
 
 .topic-ai-composer-chip-label {
+  display: block;
+  min-width: 0;
+  flex: 1 1 auto;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -3915,11 +3944,13 @@
     min-width: 224px;
   }
 
-  .topic-ai-structure-grid {
+  .topic-ai-structure-grid,
+  .topic-ai-standard-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .topic-ai-tool-content {
+  .topic-ai-tool-content,
+  .topic-ai-standard-grouped-body {
     grid-template-columns: 260px minmax(0, 1fr);
   }
 
@@ -4058,19 +4089,24 @@
   }
 
   .topic-ai-structure-grid,
-  .topic-ai-tool-content {
+  .topic-ai-standard-grid,
+  .topic-ai-tool-content,
+  .topic-ai-standard-grouped-body {
     grid-template-columns: 1fr;
   }
 
-  .topic-ai-tool-options {
+  .topic-ai-tool-options,
+  .topic-ai-standard-grouped-options {
     grid-template-columns: 1fr;
   }
 
-  .topic-ai-tool-content {
+  .topic-ai-tool-content,
+  .topic-ai-standard-grouped-body {
     min-height: auto;
   }
 
-  .topic-ai-tool-groups {
+  .topic-ai-tool-groups,
+  .topic-ai-standard-grouped-nav {
     border-right: none;
     border-bottom: 1px solid rgba(224, 228, 235, 0.92);
   }
