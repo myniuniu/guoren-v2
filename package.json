@@ -1,0 +1,76 @@
+{
+  "name": "guoren-v2",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Guoren desktop shell for the main Vite application.",
+  "author": "Guoren",
+  "main": "electron/main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:electron": "wait-on tcp:127.0.0.1:5173 && ELECTRON_RENDERER_URL=http://127.0.0.1:5173 electron .",
+    "dev:desktop": "concurrently -k \"npm:dev\" \"npm:dev:electron\"",
+    "build": "vite build",
+    "build:web": "vite build",
+    "build:desktop": "npm run build:web && electron-builder --mac",
+    "pack:desktop": "npm run build:web && electron-builder --mac dir",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "code-server": "code-server --bind-addr 0.0.0.0:8443 --auth none",
+    "amis:dev": "npm --prefix amis-designer run dev",
+    "amis:build": "npm --prefix amis-designer run build"
+  },
+  "dependencies": {
+    "@ant-design/icons": "^6.2.3",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "antd": "^6.4.3",
+    "axios": "^1.16.1",
+    "fabric": "^6.7.1",
+    "qrcode": "^1.5.4",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "react-grid-layout": "^2.2.3",
+    "react-hook-form": "^7.76.1",
+    "reactflow": "^11.11.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "concurrently": "^9.2.1",
+    "electron": "^37.2.1",
+    "electron-builder": "^26.0.12",
+    "eslint": "^10.3.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.6.0",
+    "vite": "^8.0.12",
+    "wait-on": "^8.0.5"
+  },
+  "build": {
+    "appId": "com.guoren.v2.desktop",
+    "productName": "Guoren",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "npmRebuild": false,
+    "nodeGypRebuild": false,
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        "dmg",
+        "dir"
+      ]
+    },
+    "artifactName": "${productName}-${version}-${arch}.${ext}"
+  }
+}

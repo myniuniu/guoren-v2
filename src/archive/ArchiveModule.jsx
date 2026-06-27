@@ -42,6 +42,7 @@ import {
 } from '@ant-design/icons';
 import ArchiveFormModal from './ArchiveFormModal';
 import { archiveApi, ARCHIVE_TYPE_MAP, ARCHIVE_STATUS_MAP } from './api';
+import DesktopServiceNotice from '../shared/DesktopServiceNotice';
 import './ArchiveModule.css';
 
 const PROCESS_API = '/api/workflow/process';
@@ -600,6 +601,12 @@ export default function ArchiveModule() {
             ),
             children: (
               <div className="archive-process-config">
+                <DesktopServiceNotice
+                  title="流程设计器依赖外部 workflow-designer 服务"
+                  serviceName="workflow-designer"
+                  serviceUrl={DESIGNER_BASE}
+                  extraText="桌面版未内置流程设计器；修改审批流程前，请先启动 5176 端口对应的设计器服务。"
+                />
                 <Alert
                   message="通过BPMN流程设计器自定义档案审批节点，支持多级审批、条件分支、会签等"
                   type="info"

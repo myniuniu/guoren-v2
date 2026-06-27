@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Modal, Spin, message, Space, Tag, Button } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 import { leaveModuleApi } from './api';
+import DesktopServiceNotice from '../shared/DesktopServiceNotice';
 import './ProcessDiagramModal.css';
 
 // 设计器静态资源地址（vue-bpmn-designer 编译产物）
@@ -149,6 +150,14 @@ export default function ProcessDiagramModal({ open, processInstanceId, onClose }
       className="process-diagram-modal"
       styles={{ body: { padding: 0, height: '70vh', position: 'relative' } }}
     >
+      <div style={{ position: 'absolute', top: 12, left: 12, right: 12, zIndex: 6 }}>
+        <DesktopServiceNotice
+          title="流程图查看依赖外部 workflow-designer 画布"
+          serviceName="workflow-designer"
+          serviceUrl="http://localhost:5176"
+          extraText="如果图形区域持续空白或一直处于加载中，请先确认本地 5176 服务可访问。"
+        />
+      </div>
       {(loading || rendering || !modelerReady) && (
         <div className="pdm-loading-mask">
           <Spin tip={!modelerReady ? '正在加载设计器...' : rendering ? '正在渲染流程图...' : '正在加载数据...'} />

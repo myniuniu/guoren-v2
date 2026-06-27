@@ -8,6 +8,7 @@ import {
   CopyOutlined,
 } from '@ant-design/icons';
 import { pageApi } from './api';
+import DesktopServiceNotice from '../shared/DesktopServiceNotice';
 import './PageDesignerModule.css';
 
 const AMIS_DESIGNER_URL =
@@ -181,6 +182,12 @@ export default function PageDesignerModule() {
         </div>
       </div>
       <div className="pd-content">
+        <DesktopServiceNotice
+          title="页面设计器依赖外部 amis 服务"
+          serviceName="amis-designer"
+          serviceUrl={AMIS_DESIGNER_URL}
+          extraText="桌面版会继续复用你本地运行的 amis-designer；如果服务未启动，设计和预览窗口将无法打开。"
+        />
         <div className="pd-list-table">
           <Table
             rowKey="id"

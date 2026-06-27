@@ -6,6 +6,7 @@ import {
   EyeOutlined,
   ExportOutlined,
 } from '@ant-design/icons';
+import DesktopServiceNotice from '../shared/DesktopServiceNotice';
 
 // 独立部署的 amis 设计器地址（开发期 vite，端口 5177）
 const AMIS_DESIGNER_URL =
@@ -124,6 +125,14 @@ export default function PageDesigner({ page, onSave, onPreview, onBack }) {
             预览
           </Button>
         </Space>
+      </div>
+      <div style={{ padding: '12px 16px 0' }}>
+        <DesktopServiceNotice
+          title="当前页面设计依赖外部 amis 设计器"
+          serviceName="amis-designer"
+          serviceUrl={AMIS_DESIGNER_URL}
+          extraText="如果桌面版里看到持续加载，请先确认 5177 服务已启动。"
+        />
       </div>
       <div className="pd-designer-body">
         <iframe

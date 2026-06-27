@@ -51,6 +51,7 @@ import {
 } from '@ant-design/icons';
 import { dataManageApi } from './dataManageApi';
 import LeaveModule from '../leave/LeaveModule';
+import DesktopServiceNotice from '../shared/DesktopServiceNotice';
 import './OnlineDevModule.css';
 
 const DEFAULT_VSCODE_URL = 'http://localhost:8443/?folder=/Users/hongleizhang/Documents/GitHub/guoren-v2';
@@ -913,6 +914,14 @@ function OnlineDevModule() {
 
   return (
     <div className="online-dev-module">
+      <div style={{ padding: '16px 16px 0' }}>
+        <DesktopServiceNotice
+          title="在线开发依赖外部 code-server"
+          serviceName="code-server"
+          serviceUrl={vscodeUrl}
+          extraText="桌面版会直接连接你本地运行的 code-server；未启动时，代码页签会停留在加载状态。"
+        />
+      </div>
       {/* 主体区域 - 左右并排 */}
       <div className="online-dev-body">
         {/* 左侧对话区 */}

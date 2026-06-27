@@ -29,3 +29,7 @@ leave-workflow-backend/.mvn/
 *.class
 *.jar
 *.war
+*.tsbuildinfo
+release/
+!/package.json
+!/package-lock.json
