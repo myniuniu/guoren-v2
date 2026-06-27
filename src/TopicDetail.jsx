@@ -6,6 +6,7 @@ import {
   Empty,
   Input,
   Modal,
+  Select,
   Segmented,
   Switch,
   Tag,
@@ -54,7 +55,12 @@ import AddResourceModal from './AddResourceModal';
 import AssessmentConfig from './AssessmentConfig';
 import SpaceResourceImportModal from './resourceLib/SpaceResourceImportModal.jsx';
 import ResourceLibraryTagPicker from './resourceLib/ResourceLibraryTagPicker.jsx';
-import { getAllItemsAcrossLibraries, inferFileType, loadResourceLib } from './resourceLib/resourceLibStore';
+import {
+  addItemToLibraryId,
+  getAllItemsAcrossLibraries,
+  inferFileType,
+  loadResourceLib,
+} from './resourceLib/resourceLibStore';
 import { buildTopicResourcesFromLibrarySelection } from './resourceLib/topicResourceImport.js';
 import { renderFileIcon } from './resourceLib/resourceIcons.jsx';
 import { getSceneThemeCoverPalette } from './scene/themeCovers';
@@ -83,8 +89,15 @@ import { buildSceneInitialVersionData, normalizeVersioningConfig } from './scene
 import { buildSceneResourceArchiveMeta, isSceneResourceArchived } from './shared/sceneGrowthRecords';
 import { getTopicAdminConfig } from './studyClub/adminTopicMapping';
 import {
+  capabilityModelApi,
+  createCapabilityModelDraft,
+} from './capabilityModel/api';
+import {
+  createCollection as createKnowledgeGraphCollection,
+  createGraph as createKnowledgeGraph,
   getGraphById,
   getGraphLayout,
+  getCollections as getKnowledgeGraphCollections,
   getPointsByGraph,
   getRelationsByGraph,
   KNOWLEDGE_POINT_TYPE_OPTIONS,
@@ -105,7 +118,12 @@ const KNOWLEDGE_GRAPH_RELATION_TYPE_LABEL_MAP = Object.fromEntries(
   RELATION_TYPE_OPTIONS.map((item) => [item.value, item.label]),
 );
 
-function getResourceIcon(type) {
+function getResourceIcon(resource) {
+  const type = resource?.type;
+  const fileType = resource?.fileType;
+  if (fileType === 'knowledgeGraph' || fileType === 'capabilityModel') {
+    return renderFileIcon(fileType, { fontSize: 16 });
+  }
   switch (type) {
     case 'video':
       return <PlayCircleOutlined style={{ color: '#7d8797' }} />;
@@ -117,7 +135,7 @@ function getResourceIcon(type) {
     case 'register':
       return <EditOutlined style={{ color: '#3b82f6' }} />;
     default:
-      return renderFileIcon('other', { fontSize: 16, color: '#98a2b3' });
+      return renderFileIcon(fileType && fileType !== 'other' ? fileType : 'other', { fontSize: 16, color: '#98a2b3' });
   }
 }
 
@@ -145,6 +163,7 @@ function getResourceTypeLabel(resource, fileType) {
   if (!resource) return '文件';
   if (resource.isFolder) return '文件夹';
   if (resource.fileType === 'knowledgeGraph' || fileType === 'knowledgeGraph') return '知识图谱';
+  if (resource.fileType === 'capabilityModel' || fileType === 'capabilityModel') return '能力模型';
   switch (resource.type) {
     case 'video':
       return '视频课件';
@@ -182,6 +201,59 @@ function buildPreviewParagraphs(name) {
     '内容会随着后台主题版本同步更新，方便在知识模式内持续维护和查看。',
     '如需进一步补充，可继续在当前版本中更新资料名称、标签或内容结构。',
   ];
+}
+
+function getCapabilityModelItemCount(model) {
+  return (model?.dimensions || []).reduce((sum, dimension) => sum + (dimension.items?.length || 0), 0);
+}
+
+function buildCapabilityModelResourceMeta(model, role = null, roleLevel = null) {
+  const dimensionNames = (model?.dimensions || []).map((dimension) => dimension.name).filter(Boolean);
+  const itemCount = getCapabilityModelItemCount(model);
+  const roleText = [role?.name, roleLevel?.name].filter(Boolean).join(' / ');
+  const summary = [
+    roleText || '能力模型',
+    `${model?.dimensions?.length || 0} 个能力类`,
+    `${itemCount} 个能力项`,
+  ].join(' · ');
+
+  return {
+    summary,
+    detail: {
+      toc: dimensionNames,
+      body: [
+        {
+          type: 'paragraph',
+          text: model?.description || `${model?.name || '当前能力模型'}用于沉淀岗位能力结构、能力分级与证据要求。`,
+        },
+        {
+          type: 'highlight',
+          text: summary,
+        },
+        {
+          type: 'heading',
+          text: '能力结构',
+        },
+        {
+          type: 'list',
+          items: (model?.dimensions || []).map((dimension) => {
+            const itemNames = (dimension.items || []).map((item) => item.name).filter(Boolean);
+            return `${dimension.name || '未命名能力类'}：${itemNames.join('、') || '待补充能力项'}`;
+          }),
+        },
+      ],
+    },
+  };
+}
+
+function createCapabilityModelCode(name) {
+  const normalized = String(name || '')
+    .trim()
+    .replace(/[^A-Za-z0-9\u4e00-\u9fa5]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .toUpperCase();
+  const prefix = normalized || 'CAPABILITY_MODEL';
+  return `${prefix}_${Date.now().toString(36).toUpperCase()}`;
 }
 
 function hexToRgba(hex, alpha) {
@@ -417,6 +489,22 @@ function TopicDetail({
   const [knowledgeGraphPickerScope, setKnowledgeGraphPickerScope] = useState('all');
   const [knowledgeGraphPickerKeyword, setKnowledgeGraphPickerKeyword] = useState('');
   const [selectedKnowledgeGraphResourceKey, setSelectedKnowledgeGraphResourceKey] = useState(null);
+  const [capabilityModelPickerOpen, setCapabilityModelPickerOpen] = useState(false);
+  const [capabilityModelPickerKeyword, setCapabilityModelPickerKeyword] = useState('');
+  const [selectedCapabilityModelId, setSelectedCapabilityModelId] = useState(null);
+  const [capabilityModelCreateOpen, setCapabilityModelCreateOpen] = useState(false);
+  const [capabilityModelCreateDraft, setCapabilityModelCreateDraft] = useState({
+    name: '',
+    description: '',
+    roleId: '',
+    roleLevelId: '',
+  });
+  const [capabilityModelTargetParentKey, setCapabilityModelTargetParentKey] = useState(null);
+  const [capabilityModelCatalog, setCapabilityModelCatalog] = useState({
+    models: [],
+    roles: [],
+    sequences: [],
+  });
   const [knowledgeGraphSelection, setKnowledgeGraphSelection] = useState({ type: 'graph', id: null });
   const [knowledgeGraphExpandedStageIds, setKnowledgeGraphExpandedStageIds] = useState(new Set());
   const [selectedKnowledgeGraphBindingId, setSelectedKnowledgeGraphBindingId] = useState(null);
@@ -668,6 +756,39 @@ function TopicDetail({
       return haystack.includes(keyword);
     });
   }, [allLibraryItems, knowledgeGraphPickerKeyword, knowledgeGraphPickerScope]);
+  const capabilityRoleMap = useMemo(
+    () => new Map((capabilityModelCatalog.roles || []).map((item) => [item.id, item])),
+    [capabilityModelCatalog.roles],
+  );
+  const capabilitySequenceMap = useMemo(
+    () => new Map((capabilityModelCatalog.sequences || []).map((item) => [item.id, item])),
+    [capabilityModelCatalog.sequences],
+  );
+  const capabilityModelPickerItems = useMemo(() => {
+    const keyword = capabilityModelPickerKeyword.trim().toLowerCase();
+    return (capabilityModelCatalog.models || []).filter((item) => {
+      if (item.status === 'DISABLED') return false;
+      if (!keyword) return true;
+      const role = capabilityRoleMap.get(item.roleId);
+      const sequence = role ? capabilitySequenceMap.get(role.sequenceId) : null;
+      const roleLevel = sequence?.levels?.find((level) => level.id === item.roleLevelId) || null;
+      const haystack = [
+        item.name,
+        item.modelCode,
+        role?.name,
+        roleLevel?.name,
+      ].filter(Boolean).join(' ').toLowerCase();
+      return haystack.includes(keyword);
+    });
+  }, [capabilityModelCatalog.models, capabilityModelPickerKeyword, capabilityRoleMap, capabilitySequenceMap]);
+  const capabilityCreateRoleLevelOptions = useMemo(() => {
+    const role = capabilityRoleMap.get(capabilityModelCreateDraft.roleId) || null;
+    const sequence = role ? capabilitySequenceMap.get(role.sequenceId) : null;
+    return (sequence?.levels || []).map((level) => ({
+      label: level.name,
+      value: level.id,
+    }));
+  }, [capabilityModelCreateDraft.roleId, capabilityRoleMap, capabilitySequenceMap]);
   const knowledgeGraphMirrorResources = useMemo(
     () => buildKnowledgeGraphMirrorResources(knowledgeGraphStages, knowledgeGraphStagePointEntries, resourceLibraryItemMap),
     [knowledgeGraphStagePointEntries, knowledgeGraphStages, resourceLibraryItemMap],
@@ -1896,9 +2017,39 @@ function TopicDetail({
     setAddResourceParentKey(undefined);
   };
 
+  const closeCapabilityModelPickerModal = () => {
+    setCapabilityModelPickerOpen(false);
+    setCapabilityModelPickerKeyword('');
+    setSelectedCapabilityModelId(null);
+    setCapabilityModelTargetParentKey(null);
+  };
+
+  const closeCapabilityModelCreateModal = () => {
+    setCapabilityModelCreateOpen(false);
+    setCapabilityModelCreateDraft({
+      name: '',
+      description: '',
+      roleId: '',
+      roleLevelId: '',
+    });
+    setCapabilityModelTargetParentKey(null);
+  };
+
   const closeResourceImportModal = () => {
     setResourceImportOpen(false);
     setResourceImportParentKey(null);
+  };
+
+  const loadCapabilityModelCatalog = async () => {
+    await capabilityModelApi.seed();
+    const [models, roles, sequences] = await Promise.all([
+      capabilityModelApi.listModels(),
+      capabilityModelApi.listRoles(),
+      capabilityModelApi.listSequences(),
+    ]);
+    const nextCatalog = { models, roles, sequences };
+    setCapabilityModelCatalog(nextCatalog);
+    return nextCatalog;
   };
 
   const openAddResourceModal = (parentKey = currentListParentKey) => {
@@ -1931,26 +2082,207 @@ function TopicDetail({
     openResourceImportModal(parentKey ?? null);
   };
 
+  const handlePickCapabilityModelEntry = async () => {
+    if (!canEditDisplayedResources) {
+      message.warning(versioningEnabled ? '当前版本已发布，请新建版本后再添加资料' : '当前内容不可编辑');
+      return;
+    }
+    const parentKey = typeof addResourceParentKey === 'undefined'
+      ? currentListParentKey
+      : addResourceParentKey;
+    try {
+      const catalog = await loadCapabilityModelCatalog();
+      setCapabilityModelTargetParentKey(parentKey ?? null);
+      setCapabilityModelPickerKeyword('');
+      setSelectedCapabilityModelId(catalog.models.find((item) => item.status !== 'DISABLED')?.id || null);
+      setCapabilityModelPickerOpen(true);
+    } catch (error) {
+      message.error(error?.message || '加载能力模型失败');
+    }
+  };
+
+  const buildCapabilityModelTopicResource = (model, parentKey = null) => {
+    const role = capabilityRoleMap.get(model.roleId) || null;
+    const sequence = role ? capabilitySequenceMap.get(role.sequenceId) : null;
+    const roleLevel = sequence?.levels?.find((item) => item.id === model.roleLevelId) || null;
+    const meta = buildCapabilityModelResourceMeta(model, role, roleLevel);
+
+    return {
+      key: `r_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      name: model.name,
+      parentKey,
+      fileType: 'capabilityModel',
+      resourceKind: 'capabilityModel',
+      capabilityModelId: model.id,
+      parseStatus: 'parsed',
+      contentText: meta.summary,
+      comment: model.description || undefined,
+      meta,
+      lastEdit: model.updatedAt || model.createdAt,
+    };
+  };
+
+  const openCapabilityModelCreateModal = async (initialName = '新建能力模型', parentKey = null) => {
+    if (!canEditDisplayedResources) {
+      message.warning(versioningEnabled ? '当前版本已发布，请新建版本后再添加资料' : '当前内容不可编辑');
+      return;
+    }
+    try {
+      const catalog = await loadCapabilityModelCatalog();
+      const defaultRole = (catalog.roles || []).find((role) => {
+        const sequence = (catalog.sequences || []).find((item) => item.id === role.sequenceId);
+        return sequence?.levels?.length;
+      }) || null;
+      const defaultSequence = defaultRole
+        ? (catalog.sequences || []).find((item) => item.id === defaultRole.sequenceId) || null
+        : null;
+      const defaultLevel = defaultSequence?.levels?.[0] || null;
+
+      if (!defaultRole?.id || !defaultLevel?.id) {
+        message.warning('当前没有可用的岗位/序列等级，无法新建能力模型');
+        return;
+      }
+
+      setCapabilityModelTargetParentKey(parentKey ?? null);
+      setCapabilityModelCreateDraft({
+        name: initialName,
+        description: '',
+        roleId: defaultRole.id,
+        roleLevelId: defaultLevel.id,
+      });
+      setCapabilityModelCreateOpen(true);
+    } catch (error) {
+      message.error(error?.message || '加载能力模型配置失败');
+    }
+  };
+
+  const openKnowledgeGraphImportModal = () => {
+    if (!canEditCurrentVersion) {
+      message.warning(versioningEnabled ? '当前版本已发布，请新建版本后再导入知识图谱' : '当前内容不可编辑');
+      return;
+    }
+    if (knowledgeGraphRef) {
+      message.warning('当前主题最多添加 1 张知识图谱，如需调整请使用“更换图谱”');
+      return;
+    }
+    setKnowledgeGraphPickerMode('add');
+    setResourceLibraryData(loadResourceLib());
+    setKnowledgeGraphPickerScope('all');
+    setKnowledgeGraphPickerKeyword('');
+    setSelectedKnowledgeGraphResourceKey(
+      knowledgeGraphRef?.libraryId && knowledgeGraphRef?.resourceKey
+        ? `${knowledgeGraphRef.libraryId}:${knowledgeGraphRef.resourceKey}`
+        : null,
+    );
+    setKnowledgeGraphPickerOpen(true);
+  };
+
+  const handleCreateKnowledgeGraph = (resource = {}) => {
+    if (!canEditCurrentVersion) {
+      message.warning(versioningEnabled ? '当前版本已发布，请新建版本后再新建知识图谱' : '当前内容不可编辑');
+      return;
+    }
+    if (knowledgeGraphRef) {
+      message.warning('当前主题最多添加 1 张知识图谱，如需调整请使用“更换图谱”');
+      return;
+    }
+
+    const nextName = (resource.name || '新建知识图谱').trim() || '新建知识图谱';
+    const nextDescription = (resource.description || '').trim();
+
+    let latestKnowledgeGraphStore = loadKnowledgeGraphStore();
+    let collection = getKnowledgeGraphCollections(latestKnowledgeGraphStore)[0] || null;
+    if (!collection?.id) {
+      const previousCollectionIds = new Set((latestKnowledgeGraphStore.collections || []).map((item) => item.id));
+      latestKnowledgeGraphStore = createKnowledgeGraphCollection({
+        name: '默认图谱集',
+        description: '用于沉淀课程结构、知识关系与资料绑定。',
+      });
+      collection = getKnowledgeGraphCollections(latestKnowledgeGraphStore).find((item) => !previousCollectionIds.has(item.id))
+        || getKnowledgeGraphCollections(latestKnowledgeGraphStore)[0]
+        || null;
+    }
+
+    if (!collection?.id) {
+      message.error('未能创建默认图谱集');
+      return;
+    }
+
+    const previousGraphIds = new Set((latestKnowledgeGraphStore.graphs || []).map((item) => item.id));
+    const nextKnowledgeGraphStore = createKnowledgeGraph({
+      collectionId: collection.id,
+      name: nextName,
+      description: nextDescription,
+    });
+    const graph = nextKnowledgeGraphStore.graphs.find((item) => !previousGraphIds.has(item.id))
+      || nextKnowledgeGraphStore.graphs.find((item) => item.collectionId === collection.id && item.name === nextName)
+      || null;
+
+    if (!graph?.id) {
+      message.error('知识图谱创建失败');
+      return;
+    }
+
+    const latestResourceLibraryData = loadResourceLib();
+    const targetLibraryId = latestResourceLibraryData.currentScope === 'organization'
+      && latestResourceLibraryData.currentOrgId
+      && latestResourceLibraryData.organizations?.[latestResourceLibraryData.currentOrgId]
+      ? latestResourceLibraryData.currentOrgId
+      : 'personal';
+    const nextResourceLibraryData = addItemToLibraryId(latestResourceLibraryData, targetLibraryId, {
+      name: graph.name,
+      parentKey: null,
+      fileType: 'knowledgeGraph',
+      resourceKind: 'knowledgeGraph',
+      knowledgeGraphId: graph.id,
+      parseStatus: 'parsed',
+      contentText: graph.description || `知识图谱资产「${graph.name}」，点击可进入知识图谱编辑模式。`,
+      comment: graph.description || undefined,
+      lastEdit: graph.updatedAt || graph.createdAt,
+    });
+    const createdResource = getAllItemsAcrossLibraries(nextResourceLibraryData).find((item) => (
+      item.libraryId === targetLibraryId
+      && item.fileType === 'knowledgeGraph'
+      && item.knowledgeGraphId === graph.id
+    )) || null;
+
+    if (!createdResource?.key) {
+      message.error('知识图谱资产创建失败');
+      return;
+    }
+
+    setResourceLibraryData(nextResourceLibraryData);
+    const nextData = updateVersionKnowledgeGraphRef(versionData, currentVersion.id, {
+      resourceKey: createdResource.key,
+      knowledgeGraphId: graph.id,
+      libraryId: targetLibraryId,
+      name: graph.name,
+    }, versioningConfig);
+    setVersionData(nextData);
+    setResourcePanelView('knowledgeGraph');
+    setKnowledgeGraphPreviewMode('preview');
+    setKnowledgeGraphSelection({ type: 'graph', id: graph.id });
+    message.success(`已新建知识图谱「${graph.name}」`);
+  };
+
   const handleAddResource = (resource) => {
+    if (resource?.type === 'knowledgeGraphImport') {
+      openKnowledgeGraphImportModal();
+      return;
+    }
+    if (resource?.type === 'capabilityModelImport') {
+      void handlePickCapabilityModelEntry();
+      return;
+    }
     if (resource?.type === 'knowledgeGraph') {
-      if (!canEditCurrentVersion) {
-        message.warning(versioningEnabled ? '当前版本已发布，请新建版本后再导入知识图谱' : '当前内容不可编辑');
-        return;
-      }
-      if (knowledgeGraphRef) {
-        message.warning('当前主题最多添加 1 张知识图谱，如需调整请使用“更换图谱”');
-        return;
-      }
-      setKnowledgeGraphPickerMode('add');
-      setResourceLibraryData(loadResourceLib());
-      setKnowledgeGraphPickerScope('all');
-      setKnowledgeGraphPickerKeyword('');
-      setSelectedKnowledgeGraphResourceKey(
-        knowledgeGraphRef?.libraryId && knowledgeGraphRef?.resourceKey
-          ? `${knowledgeGraphRef.libraryId}:${knowledgeGraphRef.resourceKey}`
-          : null,
-      );
-      setKnowledgeGraphPickerOpen(true);
+      handleCreateKnowledgeGraph(resource);
+      return;
+    }
+    if (resource?.type === 'capabilityModel') {
+      const parentKey = typeof addResourceParentKey === 'undefined'
+        ? currentListParentKey
+        : addResourceParentKey;
+      void openCapabilityModelCreateModal(resource.name || '新建能力模型', parentKey ?? null);
       return;
     }
     if (!canEditDisplayedResources) {
@@ -1967,6 +2299,89 @@ function TopicDetail({
     setVersionData(newData);
     setAddResourceParentKey(undefined);
     message.success('资料添加成功');
+  };
+
+  const handleConfirmCapabilityModelImport = () => {
+    if (!canEditDisplayedResources) {
+      message.warning(versioningEnabled ? '当前版本已发布，请新建版本后再添加资料' : '当前内容不可编辑');
+      return;
+    }
+    const selectedModel = (capabilityModelCatalog.models || []).find((item) => item.id === selectedCapabilityModelId) || null;
+    if (!selectedModel) {
+      message.warning('请选择一份能力模型');
+      return;
+    }
+    const nextResource = buildCapabilityModelTopicResource(selectedModel, capabilityModelTargetParentKey ?? null);
+    const nextData = addResource(versionData, currentVersion.id, nextResource, versioningConfig);
+    setVersionData(nextData);
+    setPreviewItem(nextResource);
+    setSelectedItemKey(nextResource.key);
+    closeCapabilityModelPickerModal();
+    message.success(`已导入能力模型「${selectedModel.name}」`);
+  };
+
+  const handleConfirmCreateCapabilityModel = async () => {
+    if (!canEditDisplayedResources) {
+      message.warning(versioningEnabled ? '当前版本已发布，请新建版本后再添加资料' : '当前内容不可编辑');
+      return;
+    }
+    const name = capabilityModelCreateDraft.name.trim();
+    if (!name) {
+      message.warning('请输入能力模型名称');
+      return;
+    }
+    if (!capabilityModelCreateDraft.roleId || !capabilityModelCreateDraft.roleLevelId) {
+      message.warning('请选择岗位和序列等级');
+      return;
+    }
+
+    const role = capabilityRoleMap.get(capabilityModelCreateDraft.roleId) || null;
+    const sequence = role ? capabilitySequenceMap.get(role.sequenceId) : null;
+    const roleLevel = sequence?.levels?.find((item) => item.id === capabilityModelCreateDraft.roleLevelId) || null;
+    if (!role?.id || !roleLevel?.id) {
+      message.warning('当前岗位配置不可用，请重新选择');
+      return;
+    }
+
+    try {
+      const modelDraft = createCapabilityModelDraft({
+        modelCode: createCapabilityModelCode(name),
+        name,
+        description: capabilityModelCreateDraft.description.trim(),
+        industryId: role.industryId,
+        roleId: role.id,
+        roleLevelId: roleLevel.id,
+        status: 'DRAFT',
+        tags: [role.name, roleLevel.name].filter(Boolean),
+        dimensions: [
+          {
+            name: '能力结构',
+            description: '用于沉淀该主题下的能力类与能力项。',
+            items: [
+              {
+                name: '核心能力项',
+                description: '请继续补充该能力项的分级描述、证据要求与示例。',
+              },
+            ],
+          },
+        ],
+      });
+      const savedModel = await capabilityModelApi.saveModel(modelDraft);
+      const nextCatalog = {
+        ...capabilityModelCatalog,
+        models: [savedModel, ...(capabilityModelCatalog.models || []).filter((item) => item.id !== savedModel.id)],
+      };
+      setCapabilityModelCatalog(nextCatalog);
+      const nextResource = buildCapabilityModelTopicResource(savedModel, capabilityModelTargetParentKey ?? null);
+      const nextData = addResource(versionData, currentVersion.id, nextResource, versioningConfig);
+      setVersionData(nextData);
+      setPreviewItem(nextResource);
+      setSelectedItemKey(nextResource.key);
+      closeCapabilityModelCreateModal();
+      message.success(`已新建能力模型「${savedModel.name}」`);
+    } catch (error) {
+      message.error(error?.message || '新建能力模型失败');
+    }
   };
 
   const handleImportResourcesFromLibrary = ({ selectedItems = [], includeDirectories = true, libraryId = 'personal' }) => {
@@ -2703,7 +3118,7 @@ function TopicDetail({
             handleActivateItem(item, 'tree');
           }}
         >
-          <span className="project-item-icon">{getResourceIcon(item.type)}</span>
+          <span className="project-item-icon">{getResourceIcon(item)}</span>
           {isInlineRenaming ? (
             <Input
               ref={inlineRenameInputRef}
@@ -2787,7 +3202,7 @@ function TopicDetail({
             <span className="topic-file-icon">
               {item.isFolder
                 ? <FolderFilled style={{ color: '#56a8f5' }} />
-                : getResourceIcon(item.type)}
+                : getResourceIcon(item)}
             </span>
             {isInlineRenaming ? (
               <Input
@@ -4410,13 +4825,135 @@ function TopicDetail({
         </div>
       </Modal>
 
+      <Modal
+        title="导入能力模型"
+        open={capabilityModelPickerOpen}
+        onCancel={closeCapabilityModelPickerModal}
+        onOk={handleConfirmCapabilityModelImport}
+        okText="导入模型"
+        cancelText="取消"
+        okButtonProps={{ disabled: !selectedCapabilityModelId }}
+        width={720}
+        destroyOnClose
+      >
+        <div className="topic-knowledge-picker">
+          <div className="topic-knowledge-picker-toolbar">
+            <Input
+              allowClear
+              placeholder="搜索能力模型名称"
+              value={capabilityModelPickerKeyword}
+              onChange={(event) => setCapabilityModelPickerKeyword(event.target.value)}
+            />
+          </div>
+          <div className="topic-knowledge-picker-list">
+            {capabilityModelPickerItems.length ? capabilityModelPickerItems.map((item) => {
+              const role = capabilityRoleMap.get(item.roleId) || null;
+              const sequence = role ? capabilitySequenceMap.get(role.sequenceId) : null;
+              const roleLevel = sequence?.levels?.find((level) => level.id === item.roleLevelId) || null;
+              const itemCount = getCapabilityModelItemCount(item);
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`topic-knowledge-picker-item ${selectedCapabilityModelId === item.id ? 'is-active' : ''}`}
+                  onClick={() => setSelectedCapabilityModelId(item.id)}
+                >
+                  <span className="topic-knowledge-picker-item-icon">
+                    {renderFileIcon('capabilityModel', { fontSize: 18 })}
+                  </span>
+                  <span className="topic-knowledge-picker-item-copy">
+                    <strong>{item.name}</strong>
+                    <span>{role?.name || '未关联岗位'} · {roleLevel?.name || '未分级'}</span>
+                    <span>{item.dimensions?.length || 0} 个能力类 · {itemCount} 个能力项 · {item.modelCode}</span>
+                  </span>
+                  <Tag color={item.status === 'PUBLISHED' ? 'success' : 'processing'}>
+                    {item.status === 'PUBLISHED' ? '已发布' : '草稿'}
+                  </Tag>
+                </button>
+              );
+            }) : (
+              <div className="topic-knowledge-picker-empty">
+                <Empty description="当前没有可导入的能力模型" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              </div>
+            )}
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        title="新建能力模型"
+        open={capabilityModelCreateOpen}
+        onCancel={closeCapabilityModelCreateModal}
+        onOk={() => { void handleConfirmCreateCapabilityModel(); }}
+        okText="创建模型"
+        cancelText="取消"
+        okButtonProps={{
+          disabled: !capabilityModelCreateDraft.name.trim()
+            || !capabilityModelCreateDraft.roleId
+            || !capabilityModelCreateDraft.roleLevelId,
+        }}
+        width={560}
+        destroyOnClose
+      >
+        <div style={{ display: 'grid', gap: 16 }}>
+          <div>
+            <div style={{ marginBottom: 8, fontSize: 13, color: '#344054' }}>模型名称</div>
+            <Input
+              value={capabilityModelCreateDraft.name}
+              onChange={(event) => setCapabilityModelCreateDraft((prev) => ({ ...prev, name: event.target.value }))}
+              placeholder="请输入能力模型名称"
+            />
+          </div>
+          <div>
+            <div style={{ marginBottom: 8, fontSize: 13, color: '#344054' }}>岗位</div>
+            <Select
+              style={{ width: '100%' }}
+              value={capabilityModelCreateDraft.roleId || undefined}
+              placeholder="选择岗位"
+              options={(capabilityModelCatalog.roles || []).map((role) => ({ label: role.name, value: role.id }))}
+              onChange={(value) => {
+                const role = capabilityRoleMap.get(value) || null;
+                const sequence = role ? capabilitySequenceMap.get(role.sequenceId) : null;
+                const firstLevel = sequence?.levels?.[0] || null;
+                setCapabilityModelCreateDraft((prev) => ({
+                  ...prev,
+                  roleId: value,
+                  roleLevelId: firstLevel?.id || '',
+                }));
+              }}
+            />
+          </div>
+          <div>
+            <div style={{ marginBottom: 8, fontSize: 13, color: '#344054' }}>序列等级</div>
+            <Select
+              style={{ width: '100%' }}
+              value={capabilityModelCreateDraft.roleLevelId || undefined}
+              placeholder="选择序列等级"
+              options={capabilityCreateRoleLevelOptions}
+              onChange={(value) => setCapabilityModelCreateDraft((prev) => ({ ...prev, roleLevelId: value }))}
+            />
+          </div>
+          <div>
+            <div style={{ marginBottom: 8, fontSize: 13, color: '#344054' }}>模型说明</div>
+            <Input.TextArea
+              rows={4}
+              value={capabilityModelCreateDraft.description}
+              onChange={(event) => setCapabilityModelCreateDraft((prev) => ({ ...prev, description: event.target.value }))}
+              placeholder="可选，用于补充该能力模型的使用场景或说明"
+            />
+          </div>
+        </div>
+      </Modal>
+
       <AddResourceModal
         open={modalOpen}
         onClose={closeAddResourceModal}
         onAdd={handleAddResource}
         onPickLibrary={handlePickLibraryEntry}
+        onPickKnowledgeGraph={openKnowledgeGraphImportModal}
+        onPickCapabilityModel={handlePickCapabilityModelEntry}
         enabledEntries={enabledAddResourceEntries}
-        hiddenTypes={knowledgeGraphRef ? ['knowledgeGraph'] : []}
+        hiddenTypes={knowledgeGraphRef ? ['knowledgeGraph', 'knowledgeGraphImport'] : []}
       />
 
       <SpaceResourceImportModal

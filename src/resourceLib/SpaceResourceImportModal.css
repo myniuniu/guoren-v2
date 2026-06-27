@@ -640,15 +640,27 @@
   font-size: 13px;
 }
 
-.space-resource-import-footer-hint {
-  flex: 1;
-  min-width: 0;
-  text-align: center;
-  color: #6d7a8f;
+.space-resource-import-footer-hint-badge {
+  position: absolute;
+  right: 12px;
+  bottom: 100%;
+  transform: translateY(-8px);
+  max-width: min(280px, calc(100% - 24px));
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(63, 114, 255, 0.18);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow:
+    0 10px 24px rgba(31, 45, 85, 0.12),
+    0 2px 8px rgba(31, 45, 85, 0.08);
+  color: #4767c8;
   font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  pointer-events: none;
 }
 
 .space-resource-import-footer-summary.is-empty {

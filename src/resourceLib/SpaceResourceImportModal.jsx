@@ -1123,6 +1123,9 @@ export function SpaceResourceImportBrowser({
 
       {showFooter ? (
         <div className="space-resource-import-footer">
+          {footerHint ? (
+            <div className="space-resource-import-footer-hint-badge">{footerHint}</div>
+          ) : null}
           {showFooterPath || showIncludeDirectories ? (
             <div className="space-resource-import-footer-left">
               {showFooterPath ? (
@@ -1144,8 +1147,6 @@ export function SpaceResourceImportBrowser({
               <span>{selectedFolderCount} 个文件夹</span>
               <span>{selectedFileCount} 个文件</span>
             </div>
-          ) : footerHint ? (
-            <div className="space-resource-import-footer-hint">{footerHint}</div>
           ) : showFooterActions ? <div className="space-resource-import-footer-summary is-empty" /> : null}
           {showFooterActions ? (
             <div className="space-resource-import-footer-actions">

@@ -16,12 +16,76 @@ export const RELATION_TYPE_OPTIONS = [
   { value: 'CASE_OF', label: '案例' },
   { value: 'APPLIES_TO', label: '应用于' },
 ];
+export const STAGE_EDGE_SEMANTIC_OPTIONS = [
+  { value: 'PRECEDES', label: '前置', description: '目标分区建立在源分区之后，表示课程或学习路径上的先后依赖。' },
+  { value: 'CONTAINS', label: '包含', description: '源分区对目标分区形成结构归属，表示上层主题包含下层模块。' },
+  { value: 'SUPPORTS', label: '支撑', description: '源分区为目标分区提供背景、工具或能力支撑。' },
+  { value: 'PARALLEL', label: '并行', description: '两个分区并列推进或协同展开，没有严格先后顺序。' },
+];
 
 const RELATION_LABEL_MAP = Object.fromEntries(RELATION_TYPE_OPTIONS.map((item) => [item.value, item.label]));
 const EDGE_LINE_STYLE_OPTIONS = ['solid', 'dashed', 'dotted'];
 const EDGE_PATH_STYLE_OPTIONS = ['smoothstep', 'straight', 'step'];
 const EDGE_MARKER_TYPE_OPTIONS = ['arrowclosed', 'arrow', 'none'];
 const EDGE_START_MARKER_OPTIONS = ['none', 'arrow'];
+const STAGE_EDGE_SEMANTIC_META = Object.freeze({
+  PRECEDES: {
+    label: '前置',
+    description: '目标分区建立在源分区之后，表示课程或学习路径上的先后依赖。',
+    appearance: {
+      strokeColor: '#60a5fa',
+      strokeWidth: 2,
+      lineStyle: 'solid',
+      pathStyle: 'smoothstep',
+      markerType: 'arrowclosed',
+      startMarker: 'none',
+      opacity: 100,
+      animated: false,
+    },
+  },
+  CONTAINS: {
+    label: '包含',
+    description: '源分区对目标分区形成结构归属，表示上层主题包含下层模块。',
+    appearance: {
+      strokeColor: '#2bb7c6',
+      strokeWidth: 2,
+      lineStyle: 'solid',
+      pathStyle: 'smoothstep',
+      markerType: 'arrow',
+      startMarker: 'none',
+      opacity: 100,
+      animated: false,
+    },
+  },
+  SUPPORTS: {
+    label: '支撑',
+    description: '源分区为目标分区提供背景、工具或能力支撑。',
+    appearance: {
+      strokeColor: '#8b5cf6',
+      strokeWidth: 2,
+      lineStyle: 'dashed',
+      pathStyle: 'smoothstep',
+      markerType: 'arrow',
+      startMarker: 'none',
+      opacity: 100,
+      animated: false,
+    },
+  },
+  PARALLEL: {
+    label: '并行',
+    description: '两个分区并列推进或协同展开，没有严格先后顺序。',
+    appearance: {
+      strokeColor: '#94a3b8',
+      strokeWidth: 2,
+      lineStyle: 'dotted',
+      pathStyle: 'smoothstep',
+      markerType: 'arrow',
+      startMarker: 'arrow',
+      opacity: 100,
+      animated: false,
+    },
+  },
+});
 
 function createId(prefix) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -86,6 +150,16 @@ function sanitizeEdgeStartMarker(value, fallback = 'none') {
   return EDGE_START_MARKER_OPTIONS.includes(value) ? value : fallback;
 }
 
+function sanitizeStageEdgeSemanticType(value, fallback = '') {
+  const next = trimText(value);
+  return Object.prototype.hasOwnProperty.call(STAGE_EDGE_SEMANTIC_META, next) ? next : fallback;
+}
+
+export function getStageEdgeSemanticMeta(value) {
+  const semanticType = sanitizeStageEdgeSemanticType(value);
+  return semanticType ? STAGE_EDGE_SEMANTIC_META[semanticType] : null;
+}
+
 function sanitizeEdgeOpacity(value, fallback = 100) {
   const next = Number(value);
   if (!Number.isFinite(next)) return fallback;
@@ -108,6 +182,19 @@ function normalizeRelationAppearance(relation = {}) {
 }
 
 function normalizeStageEdgeAppearance(edge = {}) {
+  const semanticMeta = getStageEdgeSemanticMeta(edge.semanticType);
+  if (semanticMeta) {
+    return {
+      strokeColor: sanitizeEdgeStrokeColor(semanticMeta.appearance.strokeColor, '#60a5fa'),
+      strokeWidth: sanitizeEdgeStrokeWidth(semanticMeta.appearance.strokeWidth, 2),
+      lineStyle: sanitizeEdgeLineStyle(semanticMeta.appearance.lineStyle, 'solid'),
+      pathStyle: sanitizeEdgePathStyle(semanticMeta.appearance.pathStyle, 'smoothstep'),
+      markerType: sanitizeEdgeMarkerType(semanticMeta.appearance.markerType, 'arrowclosed'),
+      startMarker: sanitizeEdgeStartMarker(semanticMeta.appearance.startMarker, 'none'),
+      opacity: sanitizeEdgeOpacity(semanticMeta.appearance.opacity, 100),
+      animated: sanitizeEdgeAnimated(semanticMeta.appearance.animated, false),
+    };
+  }
   return {
     strokeColor: sanitizeEdgeStrokeColor(edge.strokeColor, '#60a5fa'),
     strokeWidth: sanitizeEdgeStrokeWidth(edge.strokeWidth, 2),
@@ -351,6 +438,7 @@ function normalizeStructuredView(layout, pointsForGraph = []) {
         target: edge.target,
         sourceHandle: sanitizeStageEdgeHandle(edge.sourceHandle, 'stage-source-right'),
         targetHandle: sanitizeStageEdgeHandle(edge.targetHandle, 'stage-target-left'),
+        semanticType: sanitizeStageEdgeSemanticType(edge.semanticType, '') || undefined,
         label: trimText(edge.label),
         ...normalizeStageEdgeAppearance(edge),
         createdAt: edge.createdAt || nowText(),
@@ -875,13 +963,15 @@ function createRelationRecord(graphId, payload = {}) {
 
 function createStageEdgeRecord(payload = {}) {
   const createdAt = nowText();
-  const appearance = normalizeStageEdgeAppearance(payload);
+  const semanticType = sanitizeStageEdgeSemanticType(payload.semanticType, 'PRECEDES');
+  const appearance = normalizeStageEdgeAppearance({ ...payload, semanticType });
   return {
     id: createId('kg_stage_edge'),
     source: payload.source,
     target: payload.target,
     sourceHandle: sanitizeStageEdgeHandle(payload.sourceHandle, 'stage-source-right'),
     targetHandle: sanitizeStageEdgeHandle(payload.targetHandle, 'stage-target-left'),
+    semanticType,
     label: trimText(payload.label),
     ...appearance,
     createdAt,
@@ -914,18 +1004,6 @@ function createCollectionRecord(payload = {}, sortNo = 1) {
     createdAt,
     updatedAt: createdAt,
   };
-}
-
-function reorderCards(cards, sectionId) {
-  const scopedCards = Object.values(cards)
-    .filter((item) => item.sectionId === sectionId)
-    .sort((left, right) => (left.order || 0) - (right.order || 0));
-  scopedCards.forEach((card, index) => {
-    cards[card.pointId] = {
-      ...card,
-      order: index + 1,
-    };
-  });
 }
 
 function buildDraftLayout(nodes) {
@@ -1496,18 +1574,39 @@ export function updateStructuredStageEdge(graphId, edgeId, patch = {}) {
     if (typeof patch.targetHandle !== 'undefined') {
       edge.targetHandle = sanitizeStageEdgeHandle(patch.targetHandle, edge.targetHandle || 'stage-target-left');
     }
+    if (typeof patch.semanticType !== 'undefined') {
+      const nextSemanticType = sanitizeStageEdgeSemanticType(patch.semanticType, '');
+      if (nextSemanticType) edge.semanticType = nextSemanticType;
+      else delete edge.semanticType;
+    }
     if (typeof patch.label !== 'undefined') edge.label = trimText(patch.label);
-    if (typeof patch.strokeColor !== 'undefined') {
-      edge.strokeColor = sanitizeEdgeStrokeColor(patch.strokeColor, edge.strokeColor || '#60a5fa');
-    }
-    if (typeof patch.strokeWidth !== 'undefined') {
-      edge.strokeWidth = sanitizeEdgeStrokeWidth(patch.strokeWidth, edge.strokeWidth || 2);
-    }
-    if (typeof patch.lineStyle !== 'undefined') {
-      edge.lineStyle = sanitizeEdgeLineStyle(patch.lineStyle, edge.lineStyle || 'solid');
-    }
-    if (typeof patch.animated !== 'undefined') {
-      edge.animated = sanitizeEdgeAnimated(patch.animated, edge.animated ?? false);
+    if (edge.semanticType) {
+      Object.assign(edge, normalizeStageEdgeAppearance(edge));
+    } else {
+      if (typeof patch.strokeColor !== 'undefined') {
+        edge.strokeColor = sanitizeEdgeStrokeColor(patch.strokeColor, edge.strokeColor || '#60a5fa');
+      }
+      if (typeof patch.strokeWidth !== 'undefined') {
+        edge.strokeWidth = sanitizeEdgeStrokeWidth(patch.strokeWidth, edge.strokeWidth || 2);
+      }
+      if (typeof patch.lineStyle !== 'undefined') {
+        edge.lineStyle = sanitizeEdgeLineStyle(patch.lineStyle, edge.lineStyle || 'solid');
+      }
+      if (typeof patch.pathStyle !== 'undefined') {
+        edge.pathStyle = sanitizeEdgePathStyle(patch.pathStyle, edge.pathStyle || 'smoothstep');
+      }
+      if (typeof patch.markerType !== 'undefined') {
+        edge.markerType = sanitizeEdgeMarkerType(patch.markerType, edge.markerType || 'arrowclosed');
+      }
+      if (typeof patch.startMarker !== 'undefined') {
+        edge.startMarker = sanitizeEdgeStartMarker(patch.startMarker, edge.startMarker || 'none');
+      }
+      if (typeof patch.opacity !== 'undefined') {
+        edge.opacity = sanitizeEdgeOpacity(patch.opacity, edge.opacity ?? 100);
+      }
+      if (typeof patch.animated !== 'undefined') {
+        edge.animated = sanitizeEdgeAnimated(patch.animated, edge.animated ?? false);
+      }
     }
     edge.updatedAt = nowText();
   });

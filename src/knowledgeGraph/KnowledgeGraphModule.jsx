@@ -65,6 +65,7 @@ import {
   KNOWLEDGE_POINT_TYPE_OPTIONS,
   loadKnowledgeGraphStore,
   RELATION_TYPE_OPTIONS,
+  STAGE_EDGE_SEMANTIC_OPTIONS,
   removeCollection,
   removeGraph,
   removePoint,
@@ -81,11 +82,13 @@ import {
   updateStructuredStagePosition,
   moveStructuredPoint,
   generateGraphDraft,
+  getStageEdgeSemanticMeta,
 } from './store';
 import StructuredKnowledgeGraphView from './StructuredKnowledgeGraphView';
 import './KnowledgeGraphModule.css';
 const RELATION_TYPE_LABEL_MAP = Object.fromEntries(RELATION_TYPE_OPTIONS.map((item) => [item.value, item.label]));
 const POINT_TYPE_LABEL_MAP = Object.fromEntries(KNOWLEDGE_POINT_TYPE_OPTIONS.map((item) => [item.value, item.label]));
+const STAGE_EDGE_SEMANTIC_LABEL_MAP = Object.fromEntries(STAGE_EDGE_SEMANTIC_OPTIONS.map((item) => [item.value, item.label]));
 const EDGE_LINE_STYLE_OPTIONS = [
   { label: '实线', value: 'solid' },
   { label: '虚线', value: 'dashed' },
@@ -311,6 +314,73 @@ function clone(data) {
 
 function defaultSelection(graphId) {
   return graphId ? { type: 'graph', id: graphId } : null;
+}
+
+function getStageEdgeLineDashArray(lineStyle) {
+  if (lineStyle === 'dashed') return '5 4';
+  if (lineStyle === 'dotted') return '2 4';
+  return undefined;
+}
+
+function getStageEdgeDisplayMeta(edge) {
+  const semanticMeta = getStageEdgeSemanticMeta(edge?.semanticType);
+  if (semanticMeta) return semanticMeta;
+  return {
+    label: '历史自定义',
+    description: '保留旧的自由样式表达，尚未纳入分区关系语义规范。',
+    appearance: {
+      strokeColor: edge?.strokeColor || '#94a3b8',
+      strokeWidth: edge?.strokeWidth || 2,
+      lineStyle: edge?.lineStyle || 'solid',
+      markerType: edge?.markerType || 'arrowclosed',
+      startMarker: edge?.startMarker || 'none',
+    },
+  };
+}
+
+function StageEdgeSemanticPreview({ edge }) {
+  const meta = getStageEdgeDisplayMeta(edge);
+  const appearance = meta.appearance || {};
+  const strokeColor = appearance.strokeColor || '#94a3b8';
+  const strokeWidth = appearance.strokeWidth || 2;
+  const dashArray = getStageEdgeLineDashArray(appearance.lineStyle);
+
+  return (
+    <div className="kg-stage-edge-preview">
+      <svg viewBox="0 0 64 18" className="kg-stage-edge-preview-icon" aria-hidden="true">
+        <path
+          d="M10 9 L54 9"
+          style={{
+            stroke: strokeColor,
+            strokeWidth,
+            strokeDasharray: dashArray,
+            fill: 'none',
+            strokeLinecap: 'round',
+            strokeLinejoin: 'round',
+          }}
+        />
+        {appearance.startMarker === 'arrow' ? (
+          <>
+            <path d="M10 9 L16 5" style={{ stroke: strokeColor, strokeWidth: 2, fill: 'none', strokeLinecap: 'round' }} />
+            <path d="M10 9 L16 13" style={{ stroke: strokeColor, strokeWidth: 2, fill: 'none', strokeLinecap: 'round' }} />
+          </>
+        ) : null}
+        {appearance.markerType === 'arrow' ? (
+          <>
+            <path d="M54 9 L48 5" style={{ stroke: strokeColor, strokeWidth: 2, fill: 'none', strokeLinecap: 'round' }} />
+            <path d="M54 9 L48 13" style={{ stroke: strokeColor, strokeWidth: 2, fill: 'none', strokeLinecap: 'round' }} />
+          </>
+        ) : null}
+        {appearance.markerType === 'arrowclosed' ? (
+          <path d="M54 9 L46 4 L46 14 Z" style={{ fill: strokeColor, stroke: strokeColor, strokeWidth: 1.4 }} />
+        ) : null}
+      </svg>
+      <div className="kg-stage-edge-preview-copy">
+        <div className="kg-stage-edge-preview-name">{meta.label}</div>
+        <div className="kg-stage-edge-preview-desc">{meta.description}</div>
+      </div>
+    </div>
+  );
 }
 
 function AIGenerateModal({ open, graph, onCancel, onGenerate }) {
@@ -658,6 +728,7 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
   const [pointModalState, setPointModalState] = useState({ open: false });
   const [sectionModalState, setSectionModalState] = useState({ open: false, mode: 'create', record: null });
   const [resourceModalOpen, setResourceModalOpen] = useState(false);
+  const [pendingStageEdge, setPendingStageEdge] = useState(null);
   const [aiModalOpen, setAiModalOpen] = useState(false);
   const [draftPreviewOpen, setDraftPreviewOpen] = useState(false);
   const [draftMergeMode, setDraftMergeMode] = useState('replace');
@@ -676,6 +747,7 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
   const [stageEditorForm] = Form.useForm();
   const [relationEditorForm] = Form.useForm();
   const [stageEdgeEditorForm] = Form.useForm();
+  const stageEdgeEditorSemanticType = Form.useWatch('semanticType', stageEdgeEditorForm);
   const agentMessagesEndRef = useRef(null);
   const agentReplyTimerRef = useRef(0);
   const entryRequestHandledRef = useRef(null);
@@ -708,12 +780,14 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
     if (!graphs.length) {
       setSelectedGraphId(null);
       setSelection(null);
+      setPendingStageEdge(null);
       setPageMode('list');
       return;
     }
     if (!graphs.some((item) => item.id === selectedGraphId)) {
       setSelectedGraphId(graphs[0].id);
       setSelection(defaultSelection(graphs[0].id));
+      setPendingStageEdge(null);
     }
   }, [graphs, selectedGraphId]);
 
@@ -790,6 +864,10 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
     () => (selection?.type === 'stage-edge' ? structuredStageEdges.find((edge) => edge.id === selection.id) || null : null),
     [selection, structuredStageEdges],
   );
+  const selectedStageEdgeMeta = useMemo(
+    () => (selectedStageEdge ? getStageEdgeDisplayMeta(selectedStageEdge) : null),
+    [selectedStageEdge],
+  );
 
   useEffect(() => {
     if (selection?.type === 'graph' && currentGraph) {
@@ -844,15 +922,8 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
   useEffect(() => {
     if (selection?.type === 'stage-edge' && selectedStageEdge) {
       stageEdgeEditorForm.setFieldsValue({
+        semanticType: selectedStageEdge.semanticType,
         label: selectedStageEdge.label,
-        strokeColor: selectedStageEdge.strokeColor || '#60a5fa',
-        strokeWidth: Number(selectedStageEdge.strokeWidth || 2),
-        lineStyle: selectedStageEdge.lineStyle || 'solid',
-        pathStyle: selectedStageEdge.pathStyle || 'smoothstep',
-        markerType: selectedStageEdge.markerType || 'arrowclosed',
-        startMarker: selectedStageEdge.startMarker || 'none',
-        opacity: Number(selectedStageEdge.opacity ?? 100),
-        animated: Boolean(selectedStageEdge.animated),
       });
     }
   }, [selectedStageEdge, selection, stageEdgeEditorForm]);
@@ -1238,8 +1309,34 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
 
   const handleCreateStructuredStageEdge = (payload) => {
     if (!selectedGraphId) return;
-    createStructuredStageEdge(selectedGraphId, payload);
-    refreshAndMessage('分区连线已创建');
+    const exists = structuredStageEdges.some((edge) => edge.source === payload.source && edge.target === payload.target);
+    if (exists) {
+      message.warning('这两个分区之间已经存在连线。');
+      return;
+    }
+    setPendingStageEdge(payload);
+  };
+
+  const handleCancelPendingStageEdge = () => {
+    setPendingStageEdge(null);
+  };
+
+  const handleConfirmPendingStageEdge = (semanticType) => {
+    if (!selectedGraphId || !pendingStageEdge) return;
+    const nextState = createStructuredStageEdge(selectedGraphId, {
+      ...pendingStageEdge,
+      semanticType,
+    });
+    setSnapshot(nextState);
+    const createdEdge = getGraphLayout(nextState, selectedGraphId).structuredView?.stageEdges?.find((edge) => (
+      edge.source === pendingStageEdge.source && edge.target === pendingStageEdge.target
+    ));
+    setPendingStageEdge(null);
+    if (createdEdge) {
+      setSelection({ type: 'stage-edge', id: createdEdge.id });
+      setInspectorOpen(true);
+    }
+    refreshAndMessage(`${STAGE_EDGE_SEMANTIC_LABEL_MAP[semanticType] || '分区'}关系已创建`);
   };
 
   const handleReconnectStructuredStageEdge = (edgeId, payload) => {
@@ -1684,20 +1781,34 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
             <Form.Item label="目标分区">
               <Input value={structuredStages.find((stage) => stage.id === selectedStageEdge.target)?.name || '未知分区'} disabled />
             </Form.Item>
-            <Form.Item label="连线标签" name="label">
-              <Input placeholder="例如：下一分区、依次推进、学习路径" />
+            <Form.Item label="关系类型" name="semanticType">
+              <Select
+                allowClear={!selectedStageEdge.semanticType}
+                placeholder={selectedStageEdge.semanticType ? undefined : '为历史连线选择关系类型后纳入规范'}
+                options={STAGE_EDGE_SEMANTIC_OPTIONS}
+              />
             </Form.Item>
-            <Form.Item name="strokeColor" hidden><Input /></Form.Item>
-            <Form.Item name="strokeWidth" hidden><InputNumber /></Form.Item>
-            <Form.Item name="lineStyle" hidden><Input /></Form.Item>
-            <Form.Item name="pathStyle" hidden><Input /></Form.Item>
-            <Form.Item name="markerType" hidden><Input /></Form.Item>
-            <Form.Item name="startMarker" hidden><Input /></Form.Item>
-            <Form.Item name="opacity" hidden><InputNumber /></Form.Item>
-            <EdgeStyleConfigurator form={stageEdgeEditorForm} />
-            <Form.Item label="动态效果" name="animated" valuePropName="checked">
-              <Switch checkedChildren="开启" unCheckedChildren="关闭" />
+            {!selectedStageEdge.semanticType ? (
+              <Alert
+                type="info"
+                showIcon
+                className="kg-stage-edge-legacy-alert"
+                message="当前为历史自定义连线"
+                description="它会保留现有箭头、方向和线型。选择关系类型并保存后，这条连线会按新的分区关系规范重绘。"
+              />
+            ) : null}
+            <Form.Item label="补充说明" name="label">
+              <Input placeholder="例如：建议先完成本分区，再进入下一分区" />
             </Form.Item>
+            <div className="kg-stage-edge-preview-shell">
+              <div className="kg-stage-edge-preview-title">语义预览</div>
+              <StageEdgeSemanticPreview
+                edge={{
+                  ...selectedStageEdge,
+                  semanticType: stageEdgeEditorSemanticType || selectedStageEdge.semanticType,
+                }}
+              />
+            </div>
             <Space className="kg-inspector-actions">
               <Button type="primary" onClick={handleSaveStageEdgeEditor}>保存连线</Button>
               <Popconfirm
@@ -1727,7 +1838,10 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
                       {structuredStages.find((stage) => stage.id === selectedStageEdge.target)?.name || '未知分区'}
                     </div>
                     <div className="kg-fill-list-meta">
-                      {selectedStageEdge.label || '未填写标签'} · {selectedStageEdge.lineStyle || 'solid'} · {selectedStageEdge.strokeWidth || 2}px · 最近更新 {formatDateTime(selectedStageEdge.updatedAt)}
+                      {(selectedStageEdgeMeta?.label || '历史自定义')}
+                      {selectedStageEdge.label ? ` · ${selectedStageEdge.label}` : ''}
+                      {' · '}
+                      最近更新 {formatDateTime(selectedStageEdge.updatedAt)}
                     </div>
                   </div>
                 </div>
@@ -1747,7 +1861,12 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
                           {' → '}
                           {structuredStages.find((stage) => stage.id === edge.target)?.name || '未知'}
                         </div>
-                        <div className="kg-fill-list-meta">{edge.label || '未填写标签'} · {formatDateTime(edge.updatedAt)}</div>
+                        <div className="kg-fill-list-meta">
+                          {getStageEdgeDisplayMeta(edge).label}
+                          {edge.label ? ` · ${edge.label}` : ''}
+                          {' · '}
+                          {formatDateTime(edge.updatedAt)}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -2314,6 +2433,39 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
             <input type="color" className="kg-color-input" />
           </Form.Item>
         </Form>
+      </Modal>
+
+      <Modal
+        title="选择分区关系"
+        open={!!pendingStageEdge}
+        onCancel={handleCancelPendingStageEdge}
+        footer={null}
+        destroyOnClose
+      >
+        <div className="kg-stage-edge-semantic-modal-copy">
+          {pendingStageEdge ? (
+            <>
+              <div className="kg-stage-edge-semantic-modal-title">
+                {(structuredStages.find((stage) => stage.id === pendingStageEdge.source)?.name || '未知分区')}
+                {' → '}
+                {(structuredStages.find((stage) => stage.id === pendingStageEdge.target)?.name || '未知分区')}
+              </div>
+              <div className="kg-stage-edge-semantic-modal-subtitle">选择这条分区连线要表达的教学语义</div>
+            </>
+          ) : null}
+        </div>
+        <div className="kg-stage-edge-semantic-grid">
+          {STAGE_EDGE_SEMANTIC_OPTIONS.map((item) => (
+            <button
+              key={item.value}
+              type="button"
+              className="kg-stage-edge-semantic-card"
+              onClick={() => handleConfirmPendingStageEdge(item.value)}
+            >
+              <StageEdgeSemanticPreview edge={{ semanticType: item.value }} />
+            </button>
+          ))}
+        </div>
       </Modal>
 
       <SpaceResourceImportModal

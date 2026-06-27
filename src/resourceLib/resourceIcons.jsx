@@ -1,4 +1,5 @@
 import {
+  AppstoreOutlined,
   FolderFilled,
   FilePdfFilled,
   FilePptFilled,
@@ -29,6 +30,7 @@ const TYPE_META = {
   note:       { color: '#fadb14', Icon: FileTextFilled },
   test:       { color: '#52c41a', Icon: ExperimentFilled },
   knowledgeGraph: { color: '#1677ff', Icon: NodeIndexOutlined },
+  capabilityModel: { color: '#0f766e', Icon: AppstoreOutlined },
   other:      { color: '#8c8c8c', Icon: FileUnknownFilled },
 };
 
@@ -45,6 +47,7 @@ const TYPE_LABEL_MAP = {
   note: '笔记',
   test: '测试',
   knowledgeGraph: '知识图谱',
+  capabilityModel: '能力模型',
   other: '文件',
 };
 

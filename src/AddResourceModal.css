@@ -192,6 +192,10 @@
 
 .add-resource-modal-card-grid-tools,
 .add-resource-modal-card-grid-knowledge {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.add-resource-modal-card-grid-tools {
   grid-template-columns: 1fr;
 }
 
@@ -215,10 +219,10 @@
 
 .add-resource-modal-card-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   min-width: 0;
-  min-height: 72px;
+  min-height: 104px;
   padding: 12px 14px;
   border-radius: 16px;
   overflow: hidden;
@@ -252,9 +256,8 @@
   font-weight: 600;
   line-height: 1.25;
   color: #101828;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
   writing-mode: horizontal-tb;
 }
 
@@ -263,10 +266,14 @@
   font-size: 12px;
   line-height: 1.35;
   color: #667085;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
   writing-mode: horizontal-tb;
+}
+
+.add-resource-modal-card-grid-knowledge .add-resource-modal-card-copy strong {
+  font-size: 14px;
+  white-space: nowrap;
 }
 
 .add-resource-modal-item-arrow {
@@ -316,6 +323,10 @@
   }
 
   .add-resource-modal-card-grid-activity {
+    grid-template-columns: 1fr;
+  }
+
+  .add-resource-modal-card-grid-knowledge {
     grid-template-columns: 1fr;
   }
 

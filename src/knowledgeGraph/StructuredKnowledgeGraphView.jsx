@@ -29,6 +29,7 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { SpaceResourceImportBrowser } from '../resourceLib/SpaceResourceImportModal.jsx';
+import { getStageEdgeSemanticMeta } from './store';
 
 const STAGE_WIDTH = 332;
 const STAGE_MIN_HEIGHT = 288;
@@ -253,6 +254,7 @@ function reconcileFlowEdges(previousEdges = [], nextEdges = []) {
       && previous.type === edge.type
       && previous.animated === edge.animated
       && JSON.stringify(previous.style || {}) === JSON.stringify(edge.style || {})
+      && JSON.stringify(previous.markerStart || {}) === JSON.stringify(edge.markerStart || {})
       && JSON.stringify(previous.markerEnd || {}) === JSON.stringify(edge.markerEnd || {})
       && JSON.stringify(previous.labelStyle || {}) === JSON.stringify(edge.labelStyle || {})
     );
@@ -559,6 +561,7 @@ function StructuredKnowledgeGraphView({
   const [resourcePanelFrame, setResourcePanelFrame] = useState(DEFAULT_RESOURCE_PANEL_FRAME);
   const [resourcePanelPosition, setResourcePanelPosition] = useState(DEFAULT_RESOURCE_PANEL_POSITION);
   const [resourcePanelDragging, setResourcePanelDragging] = useState(false);
+  const [hoveredStageEdgeId, setHoveredStageEdgeId] = useState(null);
   const [rfInstance, setRfInstance] = useState(null);
   const [dragPreview, setDragPreview] = useState(null);
   const [stageDragPreview, setStageDragPreview] = useState(null);
@@ -917,34 +920,49 @@ function StructuredKnowledgeGraphView({
   ]);
 
   const edges = useMemo(() => {
-    const stageFlowEdges = stageEdges.map((edge) => ({
-      id: edge.id,
-      source: edge.source,
-      target: edge.target,
-      sourceHandle: edge.sourceHandle || 'stage-source-right',
-      targetHandle: edge.targetHandle || 'stage-target-left',
-      label: edge.label || '分区衔接',
-      type: edge.pathStyle || 'smoothstep',
-      markerStart: getEdgeMarker(edge.startMarker, edge.strokeColor || '#60a5fa'),
-      markerEnd: getEdgeMarker(edge.markerType, edge.strokeColor || '#60a5fa'),
-      labelStyle: {
-        fill: edge.strokeColor || '#60a5fa',
-        fontSize: 12,
-        fontWeight: 600,
-        opacity: Number(edge.opacity ?? 100) / 100,
-      },
-      style: {
-        stroke: edge.strokeColor || '#60a5fa',
-        strokeWidth: (edge.strokeWidth || 2) + (selection?.type === 'stage-edge' && selection.id === edge.id ? 0.8 : 0),
-        strokeDasharray: getEdgeDashArray(edge.lineStyle),
-        opacity: Number(edge.opacity ?? 100) / 100,
-      },
-      data: { edgeType: 'stage-edge' },
-      animated: Boolean(edge.animated),
-    }));
+    const stageFlowEdges = stageEdges.map((edge) => {
+      const semanticMeta = getStageEdgeSemanticMeta(edge.semanticType);
+      const isHighlighted = hoveredStageEdgeId === edge.id || (selection?.type === 'stage-edge' && selection.id === edge.id);
+      const hoverLabel = semanticMeta?.label || edge.label || '历史连线';
+      return {
+        id: edge.id,
+        source: edge.source,
+        target: edge.target,
+        sourceHandle: edge.sourceHandle || 'stage-source-right',
+        targetHandle: edge.targetHandle || 'stage-target-left',
+        label: isHighlighted ? hoverLabel : undefined,
+        type: edge.pathStyle || 'smoothstep',
+        markerStart: getEdgeMarker(edge.startMarker, edge.strokeColor || '#60a5fa'),
+        markerEnd: getEdgeMarker(edge.markerType, edge.strokeColor || '#60a5fa'),
+        labelShowBg: isHighlighted,
+        labelBgPadding: [8, 4],
+        labelBgBorderRadius: 999,
+        labelBgStyle: {
+          fill: 'rgba(255, 255, 255, 0.96)',
+          stroke: 'rgba(148, 163, 184, 0.18)',
+        },
+        labelStyle: {
+          fill: edge.strokeColor || '#60a5fa',
+          fontSize: 12,
+          fontWeight: 600,
+          opacity: Number(edge.opacity ?? 100) / 100,
+        },
+        style: {
+          stroke: edge.strokeColor || '#60a5fa',
+          strokeWidth: (edge.strokeWidth || 2) + (selection?.type === 'stage-edge' && selection.id === edge.id ? 0.8 : 0),
+          strokeDasharray: getEdgeDashArray(edge.lineStyle),
+          opacity: Number(edge.opacity ?? 100) / 100,
+        },
+        data: {
+          edgeType: 'stage-edge',
+          semanticType: edge.semanticType || null,
+        },
+        animated: Boolean(edge.animated),
+      };
+    });
 
     return stageFlowEdges;
-  }, [selection, stageEdges]);
+  }, [hoveredStageEdgeId, selection, stageEdges]);
 
   useEffect(() => {
     setRenderNodes((current) => reconcileFlowNodes(current, nodes));
@@ -1136,7 +1154,6 @@ function StructuredKnowledgeGraphView({
                 showIncludeDirectories={false}
                 showFooterSummary={false}
                 showFooterPath
-                footerHint="可直接拖动资料到知识点上绑定"
                 onClose={() => setResourcePanelOpen(false)}
                 onToolbarMouseDown={handleResourcePanelToolbarMouseDown}
                 onResizeMouseDown={handleResourcePanelResizeStart}
@@ -1162,6 +1179,7 @@ function StructuredKnowledgeGraphView({
                   }),
                 }}
               />
+              <div className="kg-resource-drawer-tip">可直接拖动资料到知识点上绑定</div>
             </aside>
           ) : !readOnly ? (
             <Button
@@ -1212,6 +1230,12 @@ function StructuredKnowledgeGraphView({
                   type: edge.data?.edgeType === 'stage-edge' ? 'stage-edge' : 'relation',
                   id: edge.id,
                 });
+              }}
+              onEdgeMouseEnter={(_, edge) => {
+                if (edge.data?.edgeType === 'stage-edge') setHoveredStageEdgeId(edge.id);
+              }}
+              onEdgeMouseLeave={(_, edge) => {
+                if (edge.data?.edgeType === 'stage-edge') setHoveredStageEdgeId((current) => (current === edge.id ? null : current));
               }}
               onPaneClick={readOnly && !interactiveReadOnly ? undefined : () => onSelectionChange?.({ type: 'graph', id: graphId })}
               onConnect={readOnly ? undefined : handleConnect}

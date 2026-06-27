@@ -1,5 +1,6 @@
 import { Modal } from 'antd';
 import {
+  AppstoreOutlined,
   BorderOutlined,
   CheckSquareOutlined,
   DatabaseOutlined,
@@ -94,13 +95,43 @@ const activityEntries = [
 
 const knowledgeEntries = [
   {
-    key: 'knowledge-graph',
+    key: 'knowledge-graph-import',
+    icon: <DatabaseOutlined />,
+    label: '导入知识图谱',
+    type: 'knowledgeGraphImport',
+    description: '从资料库选择已有图谱',
+    iconColor: '#2563eb',
+    iconBackground: '#eaf2ff',
+    requiresLibrary: true,
+  },
+  {
+    key: 'knowledge-graph-create',
     icon: <NodeIndexOutlined />,
-    label: '知识图谱',
+    label: '新建知识图谱',
     type: 'knowledgeGraph',
-    description: '梳理知识结构与关联',
+    defaultName: '新建知识图谱',
+    description: '创建并绑定当前主题图谱',
     iconColor: '#1677ff',
     iconBackground: '#eef4ff',
+  },
+  {
+    key: 'capability-model-import',
+    icon: <DatabaseOutlined />,
+    label: '导入能力模型',
+    type: 'capabilityModelImport',
+    description: '选择已有能力模型作为空间资料',
+    iconColor: '#0f766e',
+    iconBackground: '#e6fffb',
+  },
+  {
+    key: 'capability-model-create',
+    icon: <AppstoreOutlined />,
+    label: '新建能力模型',
+    type: 'capabilityModel',
+    defaultName: '新建能力模型',
+    description: '创建一份新的能力模型资料',
+    iconColor: '#0f766e',
+    iconBackground: '#ecfeff',
   },
 ];
 
@@ -147,6 +178,8 @@ function AddResourceModal({
   onClose,
   onAdd,
   onPickLibrary,
+  onPickKnowledgeGraph,
+  onPickCapabilityModel,
   enabledEntries,
   hiddenTypes = [],
 }) {
@@ -155,11 +188,16 @@ function AddResourceModal({
     return enabledEntries.includes(item.moduleKey);
   };
   const isTypeVisible = (item) => !hiddenTypes.includes(item?.type);
+  const isKnowledgeEntryVisible = (item) => (
+    isEntryEnabled(item)
+    && isTypeVisible(item)
+    && (!item.requiresLibrary || libraryEnabled)
+  );
 
   const libraryEnabled = isEntryEnabled(libraryEntry);
   const visibleActivityEntries = activityEntries.filter(isEntryEnabled);
   const visibleToolEntries = toolEntries.filter(isEntryEnabled);
-  const visibleKnowledgeEntries = knowledgeEntries.filter((item) => isEntryEnabled(item) && isTypeVisible(item));
+  const visibleKnowledgeEntries = knowledgeEntries.filter(isKnowledgeEntryVisible);
 
   const handleItemClick = (item) => {
     if (item.key === 'resource-lib') {
@@ -167,9 +205,19 @@ function AddResourceModal({
       onClose?.();
       return;
     }
+    if (item.key === 'knowledge-graph-import') {
+      onPickKnowledgeGraph?.();
+      onClose?.();
+      return;
+    }
+    if (item.key === 'capability-model-import') {
+      onPickCapabilityModel?.();
+      onClose?.();
+      return;
+    }
 
     onAdd?.({
-      name: `新建${item.label}资料`,
+      name: item.defaultName || `新建${item.label}资料`,
       type: item.type,
     });
     onClose?.();
@@ -182,7 +230,7 @@ function AddResourceModal({
       footer={null}
       title={null}
       closable
-      width={760}
+      width={1040}
       className="add-resource-modal"
       centered
       destroyOnClose
@@ -190,7 +238,7 @@ function AddResourceModal({
       <div className="add-resource-modal-shell">
         <div className="add-resource-modal-heading">
           <div className="add-resource-modal-title">添加资料</div>
-          <div className="add-resource-modal-subtitle">从资料库选择已有内容，或新建协作资料。</div>
+          <div className="add-resource-modal-subtitle">从资料库导入内容，或直接新建协作资料与知识图谱。</div>
         </div>
 
         {libraryEnabled ? (
