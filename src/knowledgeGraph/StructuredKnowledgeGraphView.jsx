@@ -250,6 +250,8 @@ function reconcileFlowEdges(previousEdges = [], nextEdges = []) {
       previous.id === edge.id
       && previous.source === edge.source
       && previous.target === edge.target
+      && previous.sourceHandle === edge.sourceHandle
+      && previous.targetHandle === edge.targetHandle
       && previous.label === edge.label
       && previous.type === edge.type
       && previous.animated === edge.animated
@@ -312,12 +314,26 @@ function getEdgeDashArray(lineStyle) {
   return undefined;
 }
 
-function getEdgeMarker(markerType, color) {
+function getEdgeMarker(markerType, color, isStart = false) {
   if (markerType === 'arrow') {
-    return { type: MarkerType.Arrow, color };
+    return {
+      type: MarkerType.Arrow,
+      color,
+      width: 18,
+      height: 18,
+      strokeWidth: 2.2,
+      orient: isStart ? 'auto-start-reverse' : 'auto',
+    };
   }
   if (markerType === 'arrowclosed') {
-    return { type: MarkerType.ArrowClosed, color };
+    return {
+      type: MarkerType.ArrowClosed,
+      color,
+      width: 18,
+      height: 18,
+      strokeWidth: 2.2,
+      orient: isStart ? 'auto-start-reverse' : 'auto',
+    };
   }
   return undefined;
 }
@@ -328,6 +344,50 @@ const STAGE_HANDLE_CONFIGS = [
   { key: 'bottom', position: Position.Bottom },
   { key: 'left', position: Position.Left },
 ];
+
+function getStageHandleId(type, side) {
+  return `stage-${type}-${side}`;
+}
+
+function resolveAutoStageHandles(sourceId, targetId, stageRects) {
+  const sourceRect = stageRects[sourceId];
+  const targetRect = stageRects[targetId];
+  if (!sourceRect || !targetRect) {
+    return {
+      sourceHandle: getStageHandleId('source', 'right'),
+      targetHandle: getStageHandleId('target', 'left'),
+    };
+  }
+
+  const sourceCenterX = sourceRect.x + sourceRect.width / 2;
+  const sourceCenterY = sourceRect.y + sourceRect.height / 2;
+  const targetCenterX = targetRect.x + targetRect.width / 2;
+  const targetCenterY = targetRect.y + targetRect.height / 2;
+  const dx = targetCenterX - sourceCenterX;
+  const dy = targetCenterY - sourceCenterY;
+
+  if (Math.abs(dx) >= Math.abs(dy)) {
+    return dx >= 0
+      ? {
+          sourceHandle: getStageHandleId('source', 'right'),
+          targetHandle: getStageHandleId('target', 'left'),
+        }
+      : {
+          sourceHandle: getStageHandleId('source', 'left'),
+          targetHandle: getStageHandleId('target', 'right'),
+        };
+  }
+
+  return dy >= 0
+    ? {
+        sourceHandle: getStageHandleId('source', 'bottom'),
+        targetHandle: getStageHandleId('target', 'top'),
+      }
+    : {
+        sourceHandle: getStageHandleId('source', 'top'),
+        targetHandle: getStageHandleId('target', 'bottom'),
+      };
+}
 
 function StageNode({ data, selected }) {
   const stop = (event) => {
@@ -705,6 +765,20 @@ function StructuredKnowledgeGraphView({
     })),
     [stagePointEntries, stages],
   );
+  const stageRects = useMemo(
+    () => Object.fromEntries(stages.map((stage, index) => {
+      const position = effectiveStagePositions[stage.id] || { x: index * 380, y: 0 };
+      const metric = stageMetrics[stage.id]
+        || getStageGridMetrics(stage.layoutColumns, (stagePointEntries[stage.id] || []).length);
+      return [stage.id, {
+        x: position.x,
+        y: position.y,
+        width: metric.width || STAGE_WIDTH,
+        height: metric.height || buildStageHeight(0),
+      }];
+    })),
+    [effectiveStagePositions, stageMetrics, stagePointEntries, stages],
+  );
 
   const stageIdSet = useMemo(() => new Set(stages.map((stage) => stage.id)), [stages]);
   const pointIdSet = useMemo(() => new Set(points.map((point) => point.id)), [points]);
@@ -924,15 +998,17 @@ function StructuredKnowledgeGraphView({
       const semanticMeta = getStageEdgeSemanticMeta(edge.semanticType);
       const isHighlighted = hoveredStageEdgeId === edge.id || (selection?.type === 'stage-edge' && selection.id === edge.id);
       const hoverLabel = semanticMeta?.label || edge.label || '历史连线';
+      const autoHandles = resolveAutoStageHandles(edge.source, edge.target, stageRects);
       return {
         id: edge.id,
         source: edge.source,
         target: edge.target,
-        sourceHandle: edge.sourceHandle || 'stage-source-right',
-        targetHandle: edge.targetHandle || 'stage-target-left',
+        zIndex: 3,
+        sourceHandle: autoHandles.sourceHandle,
+        targetHandle: autoHandles.targetHandle,
         label: isHighlighted ? hoverLabel : undefined,
         type: edge.pathStyle || 'smoothstep',
-        markerStart: getEdgeMarker(edge.startMarker, edge.strokeColor || '#60a5fa'),
+        markerStart: getEdgeMarker(edge.startMarker, edge.strokeColor || '#60a5fa', true),
         markerEnd: getEdgeMarker(edge.markerType, edge.strokeColor || '#60a5fa'),
         labelShowBg: isHighlighted,
         labelBgPadding: [8, 4],
@@ -962,7 +1038,7 @@ function StructuredKnowledgeGraphView({
     });
 
     return stageFlowEdges;
-  }, [hoveredStageEdgeId, selection, stageEdges]);
+  }, [hoveredStageEdgeId, selection, stageEdges, stageRects]);
 
   useEffect(() => {
     setRenderNodes((current) => reconcileFlowNodes(current, nodes));
@@ -980,15 +1056,16 @@ function StructuredKnowledgeGraphView({
     setRenderEdges((current) => applyEdgeChanges(changes, current));
   };
 
-  const handleConnect = ({ source, target, sourceHandle, targetHandle }) => {
+  const handleConnect = ({ source, target }) => {
     if (readOnly) return;
     if (!source || !target || source === target) return;
     if (stageIdSet.has(source) && stageIdSet.has(target)) {
+      const autoHandles = resolveAutoStageHandles(source, target, stageRects);
       onCreateStageEdge?.({
         source,
         target,
-        sourceHandle,
-        targetHandle,
+        sourceHandle: autoHandles.sourceHandle,
+        targetHandle: autoHandles.targetHandle,
       });
       return;
     }
@@ -1006,12 +1083,18 @@ function StructuredKnowledgeGraphView({
       message.warning('结构化视图中只允许分区与分区之间连线。');
       return;
     }
-    setRenderEdges((current) => reconnectEdge(oldEdge, nextConnection, current));
+    const autoHandles = resolveAutoStageHandles(nextConnection.source, nextConnection.target, stageRects);
+    const nextEdgeConnection = {
+      ...nextConnection,
+      sourceHandle: autoHandles.sourceHandle,
+      targetHandle: autoHandles.targetHandle,
+    };
+    setRenderEdges((current) => reconnectEdge(oldEdge, nextEdgeConnection, current));
     onReconnectStageEdge?.(oldEdge.id, {
       source: nextConnection.source,
       target: nextConnection.target,
-      sourceHandle: nextConnection.sourceHandle,
-      targetHandle: nextConnection.targetHandle,
+      sourceHandle: autoHandles.sourceHandle,
+      targetHandle: autoHandles.targetHandle,
     });
   };
 
@@ -1211,10 +1294,10 @@ function StructuredKnowledgeGraphView({
               edgesReconnectable={!readOnly}
               elementsSelectable={!readOnly || interactiveReadOnly}
               connectionMode={ConnectionMode.Strict}
-              connectionRadius={36}
-              reconnectRadius={36}
+              connectionRadius={112}
+              reconnectRadius={112}
               nodeDragThreshold={1}
-              connectionDragThreshold={6}
+              connectionDragThreshold={2}
               onlyRenderVisibleElements
               elevateNodesOnSelect={false}
               onNodesChange={handleNodesChange}
