@@ -3511,6 +3511,14 @@ function TopicDetail({
   };
 
   const renderKnowledgeGraphPreviewPane = () => {
+    const knowledgeGraphDrawerHeading = (() => {
+      if (previewItem && !previewItem.isFolder) return '绑定资源预览';
+      if (selectedKnowledgeGraphPoint) return '知识点属性';
+      if (selectedKnowledgeGraphStage) return '分区属性';
+      if (selectedKnowledgeGraphStageEdge) return '分区连线';
+      return '图谱属性';
+    })();
+
     const renderKnowledgeGraphDrawerContent = () => {
       if (!knowledgeGraphGraph) return null;
 
@@ -3519,7 +3527,6 @@ function TopicDetail({
         const previewSummary = getPreviewSummary(previewItem, previewType);
         return (
           <div className="topic-knowledge-inspector topic-knowledge-inspector-resource">
-            <div className="topic-knowledge-inspector-kicker">绑定资源预览</div>
             <div className="topic-knowledge-inspector-title">{previewItem.name}</div>
             <div className="topic-knowledge-inspector-desc">
               {previewSummary || '当前资源已绑定到知识图谱节点，可在抽屉内直接查看预览内容。'}
@@ -3561,7 +3568,6 @@ function TopicDetail({
         const pointBindings = selectedKnowledgeGraphPoint.resourceBindings || [];
         return (
           <div className="topic-knowledge-inspector">
-            <div className="topic-knowledge-inspector-kicker">知识点属性</div>
             <div className="topic-knowledge-inspector-title">{selectedKnowledgeGraphPoint.title}</div>
             <div className="topic-knowledge-inspector-desc">
               {selectedKnowledgeGraphPoint.summary || '当前知识点未填写摘要。'}
@@ -3623,7 +3629,6 @@ function TopicDetail({
         const stageBindingCount = stageEntries.reduce((sum, entry) => sum + (entry.point.resourceBindings?.length || 0), 0);
         return (
           <div className="topic-knowledge-inspector">
-            <div className="topic-knowledge-inspector-kicker">分区属性</div>
             <div className="topic-knowledge-inspector-title">{selectedKnowledgeGraphStage.name}</div>
             <div className="topic-knowledge-inspector-desc">
               {selectedKnowledgeGraphStage.description || '当前分区未填写描述。'}
@@ -3673,7 +3678,6 @@ function TopicDetail({
         const targetStage = knowledgeGraphStageMap.get(selectedKnowledgeGraphStageEdge.target) || null;
         return (
           <div className="topic-knowledge-inspector">
-            <div className="topic-knowledge-inspector-kicker">分区连线</div>
             <div className="topic-knowledge-inspector-title">{selectedKnowledgeGraphStageEdge.label || '未命名连线'}</div>
             <div className="topic-knowledge-inspector-desc">当前为只读查看模式，连线属性不可编辑。</div>
             <div className="topic-knowledge-inspector-list">
@@ -3700,7 +3704,6 @@ function TopicDetail({
 
       return (
         <div className="topic-knowledge-inspector">
-          <div className="topic-knowledge-inspector-kicker">图谱属性</div>
           <div className="topic-knowledge-inspector-title">{knowledgeGraphGraph.name}</div>
           <div className="topic-knowledge-inspector-desc">
             {knowledgeGraphGraph.description || '当前图谱用于组织分区路径、知识点结构与资料绑定。'}
@@ -3898,7 +3901,7 @@ function TopicDetail({
           {knowledgeGraphDrawerOpen ? (
             <aside className="topic-knowledge-drawer" ref={knowledgeGraphDrawerRef}>
               <div className="topic-knowledge-drawer-head">
-                <span className="topic-knowledge-drawer-head-label">{previewItem ? '绑定资源预览' : '右侧预览'}</span>
+                <div className="topic-knowledge-drawer-head-title">{knowledgeGraphDrawerHeading}</div>
                 <button
                   type="button"
                   className="topic-knowledge-drawer-action"
