@@ -282,7 +282,7 @@
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 4px 360px;
+  grid-template-columns: minmax(0, 1fr);
   position: relative;
 }
 

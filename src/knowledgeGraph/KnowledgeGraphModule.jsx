@@ -28,14 +28,10 @@ import {
   EditOutlined,
   FileAddOutlined,
   FolderAddOutlined,
-  MenuFoldOutlined,
   MenuUnfoldOutlined,
   NodeIndexOutlined,
-  RobotOutlined,
-  SendOutlined,
   SettingOutlined,
   ShareAltOutlined,
-  UserOutlined,
 } from '@ant-design/icons';
 import {
   getAllItemsAcrossLibraries,
@@ -110,70 +106,6 @@ const EDGE_START_MARKER_OPTIONS = [
   { value: 'none', label: '无线尾' },
   { value: 'arrow', label: '箭头端点' },
 ];
-
-function clampNumber(value, min, max) {
-  return Math.max(min, Math.min(max, value));
-}
-
-function buildKnowledgeGraphAgentWelcome(graphName, stageCount, pointCount, bindingCount) {
-  return `你好！我是知识体系智能体。
-
-当前知识图谱「${graphName || '未命名图谱'}」包含 ${stageCount} 个分区、${pointCount} 个知识点、${bindingCount} 条资料绑定。
-
-你可以直接描述你的知识体系设计需求，例如：
-• "帮我检查哪些分区还缺少学习资料"
-• "这套知识图谱的学习路径是否清晰"
-• "请给出每个分区的学习目标建议"
-
-请描述你希望优化的知识体系问题：`;
-}
-
-function buildKnowledgeGraphAgentReply(userMessage, context) {
-  const messageText = String(userMessage || '').trim().toLowerCase();
-  const {
-    graphName,
-    stageSummaries,
-    pointCount,
-    relationCount,
-    stageEdgeCount,
-    bindingCount,
-    unboundPoints,
-  } = context;
-
-  if (!messageText) {
-    return '可以直接告诉我你想优化的知识体系问题，我会基于当前图谱给出分区建议。';
-  }
-
-  if (messageText.includes('资料') || messageText.includes('资源') || messageText.includes('绑定')) {
-    if (!unboundPoints.length) {
-      return `当前图谱的 ${pointCount} 个知识点都已经绑定资料，总计 ${bindingCount} 条资料绑定。下一步建议优先检查资料覆盖是否和分区目标一致。`;
-    }
-    const previewPoints = unboundPoints.slice(0, 5).map((point) => point.title).join('、');
-    return `当前还有 ${unboundPoints.length} 个知识点未绑定资料，例如：${previewPoints}。建议优先补齐这些知识点的学习资料，再让学员进入预览视图浏览。`;
-  }
-
-  if (messageText.includes('阶段') || messageText.includes('分区')) {
-    const summaryText = stageSummaries
-      .map((stage) => `${stage.name}（${stage.pointCount} 个知识点，${stage.bindingCount} 条资料）`)
-      .join('；');
-    return summaryText
-      ? `当前图谱「${graphName}」的分区分布如下：${summaryText}。如果你希望我进一步优化，我可以继续按“分区目标、核心知识点、资料覆盖”三个维度给建议。`
-      : '当前图谱还没有分区。建议先按学习路径拆成 3 到 5 个分区，再逐步补知识点。';
-  }
-
-  if (messageText.includes('路径') || messageText.includes('顺序') || messageText.includes('前置') || messageText.includes('连线')) {
-    if (!stageEdgeCount) {
-      return '当前分区之间还没有学习路径连线。建议先补一条从基础到应用的主路径，再决定哪些分区需要并行或分支学习。';
-    }
-    return `当前分区之间已有 ${stageEdgeCount} 条路径连线，知识点总关系数为 ${relationCount}。建议重点检查每个分区是否只承担一个主目标，避免学员在预览视图里看到过多交叉路径。`;
-  }
-
-  if (messageText.includes('学员') || messageText.includes('预览')) {
-    return `如果这套图谱要给学员预览，建议重点检查三件事：1. 分区命名是否直观；2. 每个知识点是否都绑定了可直接学习的资料；3. 分区之间的路径连线是否符合从基础到应用的顺序。`;
-  }
-
-  return `我建议先从三步检查当前图谱「${graphName}」：第一，分区是否按学习路径递进；第二，${pointCount} 个知识点是否都归属清晰；第三，${bindingCount} 条资料绑定是否覆盖核心知识点。如果你愿意，我可以继续按“分区目标”或“资料缺口”展开。`;
-}
 
 function EdgeStyleButton({ active, onClick, children }) {
   return (
@@ -734,11 +666,6 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
   const [draftPreviewOpen, setDraftPreviewOpen] = useState(false);
   const [draftMergeMode, setDraftMergeMode] = useState('replace');
   const [draftEditor, setDraftEditor] = useState(null);
-  const [agentMessages, setAgentMessages] = useState([]);
-  const [agentInput, setAgentInput] = useState('');
-  const [agentTyping, setAgentTyping] = useState(false);
-  const [agentCollapsed, setAgentCollapsed] = useState(embedded);
-  const [agentWidth, setAgentWidth] = useState(320);
   const [collectionForm] = Form.useForm();
   const [graphForm] = Form.useForm();
   const [pointForm] = Form.useForm();
@@ -749,8 +676,6 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
   const [relationEditorForm] = Form.useForm();
   const [stageEdgeEditorForm] = Form.useForm();
   const stageEdgeEditorSemanticType = Form.useWatch('semanticType', stageEdgeEditorForm);
-  const agentMessagesEndRef = useRef(null);
-  const agentReplyTimerRef = useRef(0);
   const entryRequestHandledRef = useRef(null);
 
   useEffect(() => {
@@ -1415,116 +1340,6 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
       .slice(0, 6),
     [currentRelations],
   );
-  const totalBindingCount = useMemo(
-    () => currentPoints.reduce((sum, point) => sum + (point.resourceBindings?.length || 0), 0),
-    [currentPoints],
-  );
-  const unboundPoints = useMemo(
-    () => currentPoints.filter((point) => !(point.resourceBindings?.length)),
-    [currentPoints],
-  );
-  const agentWelcomeMessage = useMemo(
-    () => buildKnowledgeGraphAgentWelcome(currentGraph?.name, structuredStages.length, currentPoints.length, totalBindingCount),
-    [currentGraph?.name, currentPoints.length, structuredStages.length, totalBindingCount],
-  );
-  const agentReplyContext = useMemo(
-    () => ({
-      graphName: currentGraph?.name || '未命名图谱',
-      stageSummaries,
-      pointCount: currentPoints.length,
-      relationCount: currentRelations.length,
-      stageEdgeCount: structuredStageEdges.length,
-      bindingCount: totalBindingCount,
-      unboundPoints,
-    }),
-    [
-      currentGraph?.name,
-      currentPoints.length,
-      currentRelations.length,
-      stageSummaries,
-      structuredStageEdges.length,
-      totalBindingCount,
-      unboundPoints,
-    ],
-  );
-
-  useEffect(() => {
-    if (agentReplyTimerRef.current) {
-      window.clearTimeout(agentReplyTimerRef.current);
-      agentReplyTimerRef.current = 0;
-    }
-    return () => {
-      if (agentReplyTimerRef.current) {
-        window.clearTimeout(agentReplyTimerRef.current);
-        agentReplyTimerRef.current = 0;
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (pageMode === 'editor' && viewMode === 'curriculum') return;
-    if (agentReplyTimerRef.current) {
-      window.clearTimeout(agentReplyTimerRef.current);
-      agentReplyTimerRef.current = 0;
-    }
-    setAgentTyping(false);
-  }, [pageMode, viewMode]);
-
-  useEffect(() => {
-    agentMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [agentMessages, agentTyping]);
-
-  useEffect(() => {
-    if (pageMode !== 'editor' || viewMode !== 'curriculum' || !currentGraph) return;
-    setAgentInput('');
-    setAgentTyping(false);
-    setAgentMessages([{ role: 'assistant', content: agentWelcomeMessage }]);
-  }, [currentGraph?.id, pageMode, viewMode]);
-
-  const handleAgentSend = useCallback(() => {
-    const text = String(agentInput || '').trim();
-    if (!text) return;
-
-    const userMessage = { role: 'user', content: text };
-    setAgentMessages((prev) => [...prev, userMessage]);
-    setAgentInput('');
-    setAgentTyping(true);
-
-    if (agentReplyTimerRef.current) {
-      window.clearTimeout(agentReplyTimerRef.current);
-    }
-
-    agentReplyTimerRef.current = window.setTimeout(() => {
-      const reply = buildKnowledgeGraphAgentReply(text, agentReplyContext);
-      setAgentMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
-      setAgentTyping(false);
-      agentReplyTimerRef.current = 0;
-    }, 720);
-  }, [agentInput, agentReplyContext]);
-
-  const handleAgentResizeStart = useCallback((event) => {
-    event.preventDefault();
-    const startX = event.clientX;
-    const startWidth = agentWidth;
-
-    const handleMove = (moveEvent) => {
-      const nextWidth = clampNumber(startWidth + (startX - moveEvent.clientX), 320, 520);
-      setAgentWidth(nextWidth);
-    };
-
-    const handleUp = () => {
-      window.removeEventListener('mousemove', handleMove);
-      window.removeEventListener('mouseup', handleUp);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    };
-
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-    window.addEventListener('mousemove', handleMove);
-    window.addEventListener('mouseup', handleUp);
-  }, [agentWidth]);
-
   const inspectorTitle = selection?.type === 'stage'
     ? '分区属性'
     : selection?.type === 'point'
@@ -1534,9 +1349,6 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
         : selection?.type === 'relation'
           ? '关系属性'
           : '图谱属性';
-  const inspectorDrawerOffset = viewMode === 'curriculum'
-    ? (agentCollapsed ? 64 : agentWidth + 28)
-    : undefined;
   const showInspectorToggle = viewMode === 'curriculum'
     && !inspectorOpen
     && selection?.type
@@ -2184,9 +1996,6 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
 
               <div
                 className={`kg-editor-layout${viewMode === 'curriculum' ? '' : ' is-preview'}`}
-                style={viewMode === 'curriculum'
-                  ? { gridTemplateColumns: agentCollapsed ? 'minmax(0, 1fr) 48px' : `minmax(0, 1fr) ${agentWidth}px` }
-                  : undefined}
               >
                 <div className="kg-editor-main">
                   {viewMode === 'curriculum' && currentDraft ? (
@@ -2255,79 +2064,11 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
                   <button
                     type="button"
                     className="kg-inspector-collapsed"
-                    style={agentCollapsed ? undefined : { right: `${agentWidth + 22}px` }}
                     onClick={() => setInspectorOpen(true)}
                   >
                     <MenuUnfoldOutlined className="kg-inspector-collapsed-icon" />
                     <span className="kg-inspector-collapsed-label">属性</span>
                   </button>
-                ) : null}
-
-                {viewMode === 'curriculum' ? (
-                  agentCollapsed ? (
-                    <div className="kg-agent-collapsed" onClick={() => setAgentCollapsed(false)}>
-                      <MenuUnfoldOutlined className="kg-agent-collapsed-icon" />
-                      <span className="kg-agent-collapsed-label">智能体</span>
-                    </div>
-                  ) : (
-                    <>
-                      <aside className="kg-agent-panel" style={{ width: agentWidth }}>
-                        <div className="kg-agent-resize-handle" onMouseDown={handleAgentResizeStart} />
-                        <div className="kg-agent-header">
-                          <div className="kg-agent-header-main">
-                            <RobotOutlined className="kg-agent-header-icon" />
-                            <span>知识体系智能体</span>
-                          </div>
-                          <MenuFoldOutlined
-                            className="kg-agent-collapse-icon"
-                            title="折叠智能体"
-                            onClick={() => setAgentCollapsed(true)}
-                          />
-                        </div>
-                        <div className="kg-agent-messages">
-                          {agentMessages.map((item, index) => (
-                            <div key={`${item.role}-${index}`} className={`kg-agent-message kg-agent-message-${item.role}`}>
-                              <div className="kg-agent-message-avatar">
-                                {item.role === 'assistant' ? <RobotOutlined /> : <UserOutlined />}
-                              </div>
-                              <div className="kg-agent-message-bubble">{item.content}</div>
-                            </div>
-                          ))}
-                          {agentTyping ? (
-                            <div className="kg-agent-typing">
-                              <div className="kg-agent-typing-dot" />
-                              <div className="kg-agent-typing-dot" />
-                              <div className="kg-agent-typing-dot" />
-                            </div>
-                          ) : null}
-                          <div ref={agentMessagesEndRef} />
-                        </div>
-                        <div className="kg-agent-input">
-                          <Input.TextArea
-                            value={agentInput}
-                            onChange={(event) => setAgentInput(event.target.value)}
-                            onPressEnter={(event) => {
-                              if (!event.shiftKey) {
-                                event.preventDefault();
-                                handleAgentSend();
-                              }
-                            }}
-                            placeholder="描述你的知识体系需求..."
-                            autoSize={{ minRows: 1, maxRows: 4 }}
-                          />
-                          <Button
-                            type="primary"
-                            icon={<SendOutlined />}
-                            className="kg-agent-send"
-                            disabled={!agentInput.trim()}
-                            onClick={handleAgentSend}
-                          >
-                            发送
-                          </Button>
-                        </div>
-                      </aside>
-                    </>
-                  )
                 ) : null}
               </div>
 
@@ -2338,7 +2079,6 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
                 width={336}
                 destroyOnClose={false}
                 className="kg-floating-drawer"
-                rootStyle={viewMode === 'curriculum' ? { right: inspectorDrawerOffset } : undefined}
               >
                 {inspectorContent}
               </Drawer>
