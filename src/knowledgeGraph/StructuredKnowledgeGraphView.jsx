@@ -349,6 +349,10 @@ function getStageHandleId(type, side) {
   return `stage-${type}-${side}`;
 }
 
+function isValidStageHandleId(type, handleId) {
+  return STAGE_HANDLE_CONFIGS.some((item) => handleId === getStageHandleId(type, item.key));
+}
+
 function resolveAutoStageHandles(sourceId, targetId, stageRects) {
   const sourceRect = stageRects[sourceId];
   const targetRect = stageRects[targetId];
@@ -389,6 +393,39 @@ function resolveAutoStageHandles(sourceId, targetId, stageRects) {
       };
 }
 
+function resolveStageEdgeHandles({ source, target, sourceHandle, targetHandle }, stageRects) {
+  const autoHandles = resolveAutoStageHandles(source, target, stageRects);
+  return {
+    sourceHandle: isValidStageHandleId('source', sourceHandle) ? sourceHandle : autoHandles.sourceHandle,
+    targetHandle: isValidStageHandleId('target', targetHandle) ? targetHandle : autoHandles.targetHandle,
+  };
+}
+
+function getStageEdgePathConfig(pathStyle) {
+  if (pathStyle === 'straight') {
+    return {
+      type: 'straight',
+      pathOptions: undefined,
+    };
+  }
+  if (pathStyle === 'step') {
+    return {
+      type: 'smoothstep',
+      pathOptions: {
+        borderRadius: 0,
+        offset: 28,
+      },
+    };
+  }
+  return {
+    type: 'smoothstep',
+    pathOptions: {
+      borderRadius: 18,
+      offset: 28,
+    },
+  };
+}
+
 function StageNode({ data, selected }) {
   const stop = (event) => {
     event.stopPropagation();
@@ -399,7 +436,7 @@ function StageNode({ data, selected }) {
       event.nativeEvent.stopImmediatePropagation();
     }
   };
-  const handleClassName = `kg-structured-handle${data.readOnly ? ' is-hidden' : ''}`;
+  const handleClassName = `kg-structured-handle${data.readOnly ? ' is-hidden' : ''}${data.edgeReconnectActive ? ' is-reconnect-active' : ''}`;
   return (
     <div
       className={`kg-structured-stage ${selected ? 'is-selected' : ''}`}
@@ -622,6 +659,7 @@ function StructuredKnowledgeGraphView({
   const [resourcePanelPosition, setResourcePanelPosition] = useState(DEFAULT_RESOURCE_PANEL_POSITION);
   const [resourcePanelDragging, setResourcePanelDragging] = useState(false);
   const [hoveredStageEdgeId, setHoveredStageEdgeId] = useState(null);
+  const [edgeReconnectActive, setEdgeReconnectActive] = useState(false);
   const [rfInstance, setRfInstance] = useState(null);
   const [dragPreview, setDragPreview] = useState(null);
   const [stageDragPreview, setStageDragPreview] = useState(null);
@@ -902,6 +940,7 @@ function StructuredKnowledgeGraphView({
           width: metric.width,
           disableDelete: stages.length <= 1,
           readOnly,
+          edgeReconnectActive,
           onCreatePoint,
           onDeleteStage,
         },
@@ -982,6 +1021,7 @@ function StructuredKnowledgeGraphView({
     onMovePoint,
     readOnly,
     dragPreview,
+    edgeReconnectActive,
     effectivePointPlacements,
     pointPlacements,
     pointTypeLabelMap,
@@ -997,25 +1037,28 @@ function StructuredKnowledgeGraphView({
     const stageFlowEdges = stageEdges.map((edge) => {
       const semanticMeta = getStageEdgeSemanticMeta(edge.semanticType);
       const isHighlighted = hoveredStageEdgeId === edge.id || (selection?.type === 'stage-edge' && selection.id === edge.id);
-      const hoverLabel = semanticMeta?.label || edge.label || '历史连线';
-      const autoHandles = resolveAutoStageHandles(edge.source, edge.target, stageRects);
+      const visibleLabel = semanticMeta?.label || edge.label || '历史连线';
+      const resolvedHandles = resolveStageEdgeHandles(edge, stageRects);
+      const pathConfig = getStageEdgePathConfig(edge.pathStyle || 'smoothstep');
       return {
         id: edge.id,
         source: edge.source,
         target: edge.target,
+        className: 'kg-stage-flow-edge',
         zIndex: 3,
-        sourceHandle: autoHandles.sourceHandle,
-        targetHandle: autoHandles.targetHandle,
-        label: isHighlighted ? hoverLabel : undefined,
-        type: edge.pathStyle || 'smoothstep',
+        sourceHandle: resolvedHandles.sourceHandle,
+        targetHandle: resolvedHandles.targetHandle,
+        label: visibleLabel,
+        type: pathConfig.type,
+        pathOptions: pathConfig.pathOptions,
         markerStart: getEdgeMarker(edge.startMarker, edge.strokeColor || '#60a5fa', true),
         markerEnd: getEdgeMarker(edge.markerType, edge.strokeColor || '#60a5fa'),
-        labelShowBg: isHighlighted,
+        labelShowBg: true,
         labelBgPadding: [8, 4],
         labelBgBorderRadius: 999,
         labelBgStyle: {
-          fill: 'rgba(255, 255, 255, 0.96)',
-          stroke: 'rgba(148, 163, 184, 0.18)',
+          fill: isHighlighted ? 'rgba(255, 255, 255, 0.98)' : 'rgba(255, 255, 255, 0.92)',
+          stroke: isHighlighted ? 'rgba(96, 165, 250, 0.28)' : 'rgba(148, 163, 184, 0.18)',
         },
         labelStyle: {
           fill: edge.strokeColor || '#60a5fa',
@@ -1033,6 +1076,9 @@ function StructuredKnowledgeGraphView({
           edgeType: 'stage-edge',
           semanticType: edge.semanticType || null,
         },
+        focusable: true,
+        reconnectable: true,
+        interactionWidth: 40,
         animated: Boolean(edge.animated),
       };
     });
@@ -1056,16 +1102,16 @@ function StructuredKnowledgeGraphView({
     setRenderEdges((current) => applyEdgeChanges(changes, current));
   };
 
-  const handleConnect = ({ source, target }) => {
+  const handleConnect = ({ source, target, sourceHandle, targetHandle }) => {
     if (readOnly) return;
     if (!source || !target || source === target) return;
     if (stageIdSet.has(source) && stageIdSet.has(target)) {
-      const autoHandles = resolveAutoStageHandles(source, target, stageRects);
+      const resolvedHandles = resolveStageEdgeHandles({ source, target, sourceHandle, targetHandle }, stageRects);
       onCreateStageEdge?.({
         source,
         target,
-        sourceHandle: autoHandles.sourceHandle,
-        targetHandle: autoHandles.targetHandle,
+        sourceHandle: resolvedHandles.sourceHandle,
+        targetHandle: resolvedHandles.targetHandle,
       });
       return;
     }
@@ -1083,18 +1129,18 @@ function StructuredKnowledgeGraphView({
       message.warning('结构化视图中只允许分区与分区之间连线。');
       return;
     }
-    const autoHandles = resolveAutoStageHandles(nextConnection.source, nextConnection.target, stageRects);
+    const resolvedHandles = resolveStageEdgeHandles(nextConnection, stageRects);
     const nextEdgeConnection = {
       ...nextConnection,
-      sourceHandle: autoHandles.sourceHandle,
-      targetHandle: autoHandles.targetHandle,
+      sourceHandle: resolvedHandles.sourceHandle,
+      targetHandle: resolvedHandles.targetHandle,
     };
     setRenderEdges((current) => reconnectEdge(oldEdge, nextEdgeConnection, current));
     onReconnectStageEdge?.(oldEdge.id, {
       source: nextConnection.source,
       target: nextConnection.target,
-      sourceHandle: autoHandles.sourceHandle,
-      targetHandle: autoHandles.targetHandle,
+      sourceHandle: resolvedHandles.sourceHandle,
+      targetHandle: resolvedHandles.targetHandle,
     });
   };
 
@@ -1320,6 +1366,8 @@ function StructuredKnowledgeGraphView({
               onEdgeMouseLeave={(_, edge) => {
                 if (edge.data?.edgeType === 'stage-edge') setHoveredStageEdgeId((current) => (current === edge.id ? null : current));
               }}
+              onReconnectStart={readOnly ? undefined : () => setEdgeReconnectActive(true)}
+              onReconnectEnd={readOnly ? undefined : () => setEdgeReconnectActive(false)}
               onPaneClick={readOnly && !interactiveReadOnly ? undefined : () => onSelectionChange?.({ type: 'graph', id: graphId })}
               onConnect={readOnly ? undefined : handleConnect}
               onReconnect={readOnly ? undefined : handleReconnect}

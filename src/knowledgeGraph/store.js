@@ -183,16 +183,17 @@ function normalizeRelationAppearance(relation = {}) {
 
 function normalizeStageEdgeAppearance(edge = {}) {
   const semanticMeta = getStageEdgeSemanticMeta(edge.semanticType);
+  const semanticAppearance = semanticMeta?.appearance || {};
   if (semanticMeta) {
     return {
-      strokeColor: sanitizeEdgeStrokeColor(semanticMeta.appearance.strokeColor, '#60a5fa'),
-      strokeWidth: sanitizeEdgeStrokeWidth(semanticMeta.appearance.strokeWidth, 2),
-      lineStyle: sanitizeEdgeLineStyle(semanticMeta.appearance.lineStyle, 'solid'),
-      pathStyle: sanitizeEdgePathStyle(semanticMeta.appearance.pathStyle, 'smoothstep'),
-      markerType: sanitizeEdgeMarkerType(semanticMeta.appearance.markerType, 'arrowclosed'),
-      startMarker: sanitizeEdgeStartMarker(semanticMeta.appearance.startMarker, 'none'),
-      opacity: sanitizeEdgeOpacity(semanticMeta.appearance.opacity, 100),
-      animated: sanitizeEdgeAnimated(semanticMeta.appearance.animated, false),
+      strokeColor: sanitizeEdgeStrokeColor(edge.strokeColor, semanticAppearance.strokeColor || '#60a5fa'),
+      strokeWidth: sanitizeEdgeStrokeWidth(edge.strokeWidth, semanticAppearance.strokeWidth || 2),
+      lineStyle: sanitizeEdgeLineStyle(edge.lineStyle, semanticAppearance.lineStyle || 'solid'),
+      pathStyle: sanitizeEdgePathStyle(edge.pathStyle, semanticAppearance.pathStyle || 'smoothstep'),
+      markerType: sanitizeEdgeMarkerType(edge.markerType, semanticAppearance.markerType || 'arrowclosed'),
+      startMarker: sanitizeEdgeStartMarker(edge.startMarker, semanticAppearance.startMarker || 'none'),
+      opacity: sanitizeEdgeOpacity(edge.opacity, semanticAppearance.opacity || 100),
+      animated: sanitizeEdgeAnimated(edge.animated, semanticAppearance.animated || false),
     };
   }
   return {
@@ -1580,34 +1581,20 @@ export function updateStructuredStageEdge(graphId, edgeId, patch = {}) {
       else delete edge.semanticType;
     }
     if (typeof patch.label !== 'undefined') edge.label = trimText(patch.label);
-    if (edge.semanticType) {
-      Object.assign(edge, normalizeStageEdgeAppearance(edge));
-    } else {
-      if (typeof patch.strokeColor !== 'undefined') {
-        edge.strokeColor = sanitizeEdgeStrokeColor(patch.strokeColor, edge.strokeColor || '#60a5fa');
-      }
-      if (typeof patch.strokeWidth !== 'undefined') {
-        edge.strokeWidth = sanitizeEdgeStrokeWidth(patch.strokeWidth, edge.strokeWidth || 2);
-      }
-      if (typeof patch.lineStyle !== 'undefined') {
-        edge.lineStyle = sanitizeEdgeLineStyle(patch.lineStyle, edge.lineStyle || 'solid');
-      }
-      if (typeof patch.pathStyle !== 'undefined') {
-        edge.pathStyle = sanitizeEdgePathStyle(patch.pathStyle, edge.pathStyle || 'smoothstep');
-      }
-      if (typeof patch.markerType !== 'undefined') {
-        edge.markerType = sanitizeEdgeMarkerType(patch.markerType, edge.markerType || 'arrowclosed');
-      }
-      if (typeof patch.startMarker !== 'undefined') {
-        edge.startMarker = sanitizeEdgeStartMarker(patch.startMarker, edge.startMarker || 'none');
-      }
-      if (typeof patch.opacity !== 'undefined') {
-        edge.opacity = sanitizeEdgeOpacity(patch.opacity, edge.opacity ?? 100);
-      }
-      if (typeof patch.animated !== 'undefined') {
-        edge.animated = sanitizeEdgeAnimated(patch.animated, edge.animated ?? false);
-      }
-    }
+    const appearanceSource = edge.semanticType && typeof patch.semanticType !== 'undefined'
+      ? { semanticType: edge.semanticType }
+      : edge;
+    Object.assign(edge, normalizeStageEdgeAppearance({
+      ...appearanceSource,
+      ...(typeof patch.strokeColor !== 'undefined' ? { strokeColor: patch.strokeColor } : {}),
+      ...(typeof patch.strokeWidth !== 'undefined' ? { strokeWidth: patch.strokeWidth } : {}),
+      ...(typeof patch.lineStyle !== 'undefined' ? { lineStyle: patch.lineStyle } : {}),
+      ...(typeof patch.pathStyle !== 'undefined' ? { pathStyle: patch.pathStyle } : {}),
+      ...(typeof patch.markerType !== 'undefined' ? { markerType: patch.markerType } : {}),
+      ...(typeof patch.startMarker !== 'undefined' ? { startMarker: patch.startMarker } : {}),
+      ...(typeof patch.opacity !== 'undefined' ? { opacity: patch.opacity } : {}),
+      ...(typeof patch.animated !== 'undefined' ? { animated: patch.animated } : {}),
+    }));
     edge.updatedAt = nowText();
   });
 }
