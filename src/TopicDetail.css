@@ -443,13 +443,15 @@
 }
 
 .topic-sidebar-resize-handle {
-  width: 6px;
+  width: 10px;
   cursor: col-resize;
   flex-shrink: 0;
   position: relative;
   z-index: 2;
-  margin-left: -3px;
-  margin-right: -3px;
+  margin-left: -5px;
+  margin-right: -5px;
+  border-radius: 999px;
+  transition: background 0.18s ease;
 }
 
 .topic-sidebar-resize-handle::before {
@@ -458,22 +460,23 @@
   top: 0;
   bottom: 0;
   left: 50%;
-  width: 1px;
+  width: 0;
   transform: translateX(-50%);
   border-radius: 999px;
-  background: rgba(220, 226, 234, 0.82);
-  transition: background 0.18s ease, box-shadow 0.18s ease;
+  background: transparent;
+  opacity: 0;
+  transition: none;
 }
 
 .topic-sidebar-resize-handle:hover,
 .topic-sidebar-resize-handle:active {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(148, 163, 184, 0.08);
 }
 
 .topic-sidebar-resize-handle:hover::before,
 .topic-sidebar-resize-handle:active::before {
-  background: rgba(201, 206, 214, 0.96);
-  box-shadow: 0 0 0 3px rgba(226, 229, 234, 0.52);
+  background: transparent;
+  box-shadow: none;
 }
 
 /* ====== Left Panel ====== */
@@ -487,7 +490,7 @@
   padding: 16px 14px 16px 18px;
   overflow: hidden;
   border: none;
-  border-right: 1px solid var(--td-divider);
+  border-right: none;
   border-radius: 0;
   background: var(--td-panel-bg);
   box-shadow: none;
