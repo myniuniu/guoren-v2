@@ -23,8 +23,10 @@ import {
   MenuUnfoldOutlined,
   CommentOutlined,
   DeleteOutlined,
+  DesktopOutlined,
   EditOutlined,
   EyeOutlined,
+  FileTextOutlined,
   FileAddOutlined,
   FullscreenOutlined,
   AppstoreOutlined,
@@ -63,7 +65,7 @@ import {
 } from './resourceLib/resourceLibStore';
 import { buildTopicResourcesFromLibrarySelection } from './resourceLib/topicResourceImport.js';
 import { renderFileIcon } from './resourceLib/resourceIcons.jsx';
-import { getSceneThemeCoverPalette } from './scene/themeCovers';
+import { getSceneThemeCoverPalette, getSceneThemeCoverStyle } from './scene/themeCovers';
 import {
   addResource,
   addResources,
@@ -117,6 +119,95 @@ const KNOWLEDGE_GRAPH_POINT_TYPE_LABEL_MAP = Object.fromEntries(
 const KNOWLEDGE_GRAPH_RELATION_TYPE_LABEL_MAP = Object.fromEntries(
   RELATION_TYPE_OPTIONS.map((item) => [item.value, item.label]),
 );
+const HOME_INTRO_MODE_LABEL_MAP = Object.freeze({
+  MANUAL: '人工编辑',
+  AI: 'AI 生成',
+  AI_OR_MANUAL: '人工 / AI 均可',
+});
+const SCENE_HOME_PRIMARY_ACTION_MAP = Object.freeze({
+  TEACHING: '开始上课',
+  RESEARCH: '开始研讨',
+  TRAINING: '开始培训',
+  COMMUNITY: '进入频道',
+  CUSTOM: '进入空间',
+});
+const SCENE_HOME_WORK_MODE_MAP = Object.freeze({
+  TEACHING: { label: '投屏授课', hint: '授课方式' },
+  RESEARCH: { label: '线上研讨', hint: '协作方式' },
+  TRAINING: { label: '直播培训', hint: '培训方式' },
+  COMMUNITY: { label: '活动共创', hint: '运营方式' },
+  CUSTOM: { label: '协作空间', hint: '进入方式' },
+});
+const SCENE_HOME_MEMBER_LABEL_MAP = Object.freeze({
+  TEACHING: '课堂成员',
+  RESEARCH: '研修成员',
+  TRAINING: '培训成员',
+  COMMUNITY: '频道成员',
+  CUSTOM: '空间成员',
+});
+const SCENE_HOME_MEMBER_PANEL_TITLE_MAP = Object.freeze({
+  TEACHING: '课堂人员',
+  RESEARCH: '研修成员',
+  TRAINING: '培训成员',
+  COMMUNITY: '频道成员',
+  CUSTOM: '空间成员',
+});
+const SCENE_HOME_TASK_TITLE_MAP = Object.freeze({
+  TEACHING: '课堂任务',
+  RESEARCH: '研讨任务',
+  TRAINING: '培训任务',
+  COMMUNITY: '频道任务',
+  CUSTOM: '任务进度',
+});
+
+function getDefaultTopicTabKey(sceneConfig) {
+  return sceneConfig ? 'home' : 'knowledge';
+}
+
+function isInteractiveResource(resource) {
+  return ['activity', 'survey', 'vote', 'exam', 'register'].includes(resource?.type);
+}
+
+function isLiveLikeResource(resource) {
+  const haystack = `${resource?.name || ''} ${resource?.comment || ''}`;
+  return resource?.type === 'live'
+    || resource?.fileType === 'live'
+    || /直播|授课|会议|连线|课堂/i.test(haystack);
+}
+
+function isDocumentLikeResource(resource) {
+  if (!resource || resource.isFolder) return false;
+  if (isInteractiveResource(resource) || isLiveLikeResource(resource)) return false;
+  const fileType = getTopicResourceFileType(resource);
+  return !['folder', 'video', 'audio', 'image'].includes(fileType);
+}
+
+function buildResourceChildrenMap(resources = []) {
+  const map = new Map();
+  resources.forEach((resource) => {
+    const parentKey = resource?.parentKey ?? '__root__';
+    if (!map.has(parentKey)) map.set(parentKey, []);
+    map.get(parentKey).push(resource);
+  });
+  return map;
+}
+
+function countResourceBranchItems(childrenMap, folderKey) {
+  if (!folderKey) return 0;
+  let count = 0;
+  const queue = [folderKey];
+
+  while (queue.length > 0) {
+    const currentKey = queue.shift();
+    const children = childrenMap.get(currentKey) || [];
+    children.forEach((child) => {
+      count += 1;
+      if (child?.isFolder) queue.push(child.key);
+    });
+  }
+
+  return count;
+}
 
 function getResourceIcon(resource) {
   const type = resource?.type;
@@ -453,7 +544,7 @@ function TopicDetail({
 }) {
   const topicAdminConfig = sceneConfig ? null : getTopicAdminConfig(topicTitle);
   const topicStorageScopeKey = storageScopeKey || topicAdminConfig?.storageScopeKey || 'default';
-  const [activeTab, setActiveTab] = useState('knowledge');
+  const [activeTab, setActiveTab] = useState(() => getDefaultTopicTabKey(sceneConfig));
   const [modalOpen, setModalOpen] = useState(false);
   const [previewItem, setPreviewItem] = useState(null);
   const [versionData, setVersionData] = useState(() => loadTopicVersionData(topicAdminConfig, sceneConfig, topicStorageScopeKey));
@@ -549,7 +640,7 @@ function TopicDetail({
 
   useEffect(() => {
     setVersionData(loadTopicVersionData(topicAdminConfig, sceneConfig, topicStorageScopeKey));
-    setActiveTab('knowledge');
+    setActiveTab(getDefaultTopicTabKey(sceneConfig));
     setModalOpen(false);
     setPreviewItem(null);
     setLeftPanelWidth(getDefaultLeftPanelWidth());
@@ -1577,7 +1668,10 @@ function TopicDetail({
       ? sceneConfig.topicPage.modeTabs.filter((item) => item.enabled !== false)
       : [];
     if (hasConfiguredTabs) {
-      return configuredTabs.map((item, index) => ({
+      const normalizedTabs = sceneConfig && !configuredTabs.some((item) => item?.key === 'home')
+        ? [{ key: 'home', label: '首页' }, ...configuredTabs]
+        : configuredTabs;
+      return normalizedTabs.map((item, index) => ({
         key: item.key,
         label: item.label || item.key || `模式 ${index + 1}`,
       }));
@@ -1589,6 +1683,8 @@ function TopicDetail({
       { key: 'assessment', label: '考核配置模式' },
     ];
   }, [sceneConfig]);
+  const hasHomeTab = tabs.some((tab) => tab.key === 'home');
+  const isHomeTab = hasHomeTab && activeTab === 'home';
 
   useEffect(() => {
     if (tabs.length === 0) {
@@ -1611,6 +1707,213 @@ function TopicDetail({
       setAiKnowledgeGraphPreviewOpen(false);
     }
   }, [activeTab, applyAiKnowledgeGraphLeftPanelWidth, isCourseStudioTopic, knowledgeGraphRef, tabs]);
+
+  const handleSelectTab = useCallback((tabKey) => {
+    setActiveTab(tabKey);
+    if (tabKey === 'ai' && resourcePanelView === 'knowledgeGraph') {
+      applyAiKnowledgeGraphLeftPanelWidth();
+      setAiKnowledgeGraphPreviewOpen(false);
+      return;
+    }
+    setAiKnowledgeGraphPreviewOpen(false);
+  }, [applyAiKnowledgeGraphLeftPanelWidth, resourcePanelView]);
+  const homePrimaryTargetTab = tabs.find((tab) => tab.key !== 'home')?.key || tabs[0]?.key || '';
+  const homeTaskTargetTab = tabs.find((tab) => tab.key === 'practice')?.key || homePrimaryTargetTab;
+  const isTeachingScene = activeSceneType === 'TEACHING';
+  const homeWorkMode = SCENE_HOME_WORK_MODE_MAP[activeSceneType || 'CUSTOM'] || SCENE_HOME_WORK_MODE_MAP.CUSTOM;
+  const homePrimaryActionLabel = SCENE_HOME_PRIMARY_ACTION_MAP[activeSceneType || 'CUSTOM'] || SCENE_HOME_PRIMARY_ACTION_MAP.CUSTOM;
+  const homeMemberLabel = SCENE_HOME_MEMBER_LABEL_MAP[activeSceneType || 'CUSTOM'] || SCENE_HOME_MEMBER_LABEL_MAP.CUSTOM;
+  const homeMemberPanelTitle = SCENE_HOME_MEMBER_PANEL_TITLE_MAP[activeSceneType || 'CUSTOM'] || SCENE_HOME_MEMBER_PANEL_TITLE_MAP.CUSTOM;
+  const homeTaskPanelTitle = SCENE_HOME_TASK_TITLE_MAP[activeSceneType || 'CUSTOM'] || SCENE_HOME_TASK_TITLE_MAP.CUSTOM;
+  const homeStageLabel = (
+    (sceneConfig?.statusRules || []).find((rule) => ['CLOSED', 'ARCHIVED'].includes(rule.stage))?.name
+    || sceneTypeLabel
+    || '空间状态'
+  );
+  const homeIntroText = sceneConfig?.homepage?.introText
+    || sceneDescription
+    || sceneTheme?.heroSubtitle
+    || '当前首页用于概览空间目标、资料、任务与成员信息。';
+  const homeIntroModeLabel = HOME_INTRO_MODE_LABEL_MAP[sceneConfig?.homepage?.introMode] || HOME_INTRO_MODE_LABEL_MAP.AI_OR_MANUAL;
+  const homeRoleCards = (
+    (Array.isArray(sceneConfig?.roles) && sceneConfig.roles.length > 0
+      ? sceneConfig.roles
+      : [{ key: 'member', name: '成员', description: '默认空间成员' }])
+  ).slice(0, 4).map((role) => ({
+    key: role.key || role.name,
+    label: role.name || '空间成员',
+    value: 1,
+    hint: role.agentName || role.permissionSummary || role.description || '空间成员',
+  }));
+  const teachingRoleKeys = new Set(['teacher', 'student']);
+  const homeFileItems = sourceResources.filter((resource) => !resource.isFolder);
+  const homeChildrenMap = buildResourceChildrenMap(sourceResources);
+  const homeFolderTypeMap = new Map((sceneConfig?.folderTypes || []).map((folder) => [folder.key, folder]));
+  const homeMetadataFieldMap = new Map((sceneConfig?.metadataFields || []).map((field) => [field.key, field]));
+  const homeTeachingSupportAgents = Array.from(
+    new Set(
+      (sceneConfig?.agents || [])
+        .filter((agent) => Array.isArray(agent?.roleIds) && agent.roleIds.some((roleId) => teachingRoleKeys.has(roleId)))
+        .map((agent) => agent.name)
+        .filter(Boolean),
+    ),
+  );
+  const homeTeachingPathLabels = Array.from(
+    new Set(
+      (sceneConfig?.folderTypes || [])
+        .slice(0, 4)
+        .map((folder) => folder.name)
+        .filter(Boolean),
+    ),
+  );
+  const homeVideoCount = homeFileItems.filter((resource) => (
+    getTopicResourceFileType(resource) === 'video' && !isLiveLikeResource(resource)
+  )).length;
+  const homeDocumentCount = Math.max(
+    homeFileItems.filter(isDocumentLikeResource).length,
+    Array.isArray(sceneConfig?.folderTypes) ? sceneConfig.folderTypes.length : 0,
+  );
+  const homePracticeCount = homeFileItems.filter(isInteractiveResource).length;
+  const homeLiveCount = Math.max(
+    homeFileItems.filter(isLiveLikeResource).length,
+    (sceneConfig?.toolConfigs || []).some((tool) => (
+      tool?.enabled !== false
+      && ((tool?.key || '').includes('live') || /直播|授课|会议/.test(tool?.name || ''))
+    )) ? 1 : 0,
+  );
+  const homeResourceStats = [
+    { key: 'video', label: '视频', value: homeVideoCount, icon: <PlayCircleOutlined /> },
+    { key: 'document', label: '文档', value: homeDocumentCount, icon: <FileTextOutlined /> },
+    { key: 'practice', label: '实训任务', value: homePracticeCount, icon: <AppstoreOutlined /> },
+    { key: 'live', label: '线上课堂', value: homeLiveCount, icon: <DesktopOutlined /> },
+  ];
+  const homeTotalResourceCount = homeResourceStats.reduce((sum, item) => sum + item.value, 0);
+  const homeTaskStatusSequence = isTeachingScene
+    ? [
+        { status: '进行中', tone: 'running' },
+        { status: '待开始', tone: 'pending' },
+        { status: '已结束', tone: 'done' },
+      ]
+    : [
+        { status: '进行中', tone: 'running' },
+        { status: '进行中', tone: 'running' },
+        { status: homeStageLabel || '已结束', tone: 'done' },
+      ];
+  const homeTaskCandidates = sourceResources
+    .filter((resource) => !resource.isFolder && !isLiveLikeResource(resource))
+    .sort((left, right) => String(right.lastEdit || '').localeCompare(String(left.lastEdit || '')));
+  const homePrioritizedTaskCandidates = homeTaskCandidates.filter(isInteractiveResource);
+  const homeSelectedTaskCandidates = (homePrioritizedTaskCandidates.length
+    ? homePrioritizedTaskCandidates
+    : homeTaskCandidates).slice(0, 3);
+  const homeClosedTaskLabel = homeStageLabel || '已结束';
+  const homeTaskItems = homeSelectedTaskCandidates.length > 0
+    ? homeSelectedTaskCandidates.map((resource, index) => ({
+        key: resource.key,
+        title: resource.name,
+        status: homeTaskStatusSequence[index]?.status || homeClosedTaskLabel,
+        tone: homeTaskStatusSequence[index]?.tone || 'done',
+      }))
+    : (sceneConfig?.folderTypes || []).slice(0, 3).map((folder, index, list) => ({
+        key: folder.key || `task_${index + 1}`,
+        title: folder.name || `任务 ${index + 1}`,
+        status: homeTaskStatusSequence[index]?.status || (index < list.length ? homeClosedTaskLabel : '待开始'),
+        tone: homeTaskStatusSequence[index]?.tone || 'done',
+      }));
+  const teachingRoleCards = homeRoleCards.filter((item) => teachingRoleKeys.has(String(item.key || '').toLowerCase()));
+  const homeDisplayedRoleCards = isTeachingScene && teachingRoleCards.length > 0
+    ? teachingRoleCards
+    : homeRoleCards;
+  const homeDisplayedMemberTotal = homeDisplayedRoleCards.reduce((sum, item) => sum + item.value, 0);
+  const teachingCourseInfoFields = isTeachingScene
+    ? [
+        {
+          key: 'class_name',
+          label: homeMetadataFieldMap.get('class_name')?.label || '授课班级',
+          value: '待补充',
+          hint: homeMetadataFieldMap.get('class_name')?.description || '例如：高一(3)班',
+        },
+        {
+          key: 'start_time',
+          label: homeMetadataFieldMap.get('start_time')?.label || '开始时间',
+          value: '待补充',
+          hint: '建议补充课堂开始时间',
+        },
+        {
+          key: 'end_time',
+          label: homeMetadataFieldMap.get('end_time')?.label || '结束时间',
+          value: '待补充',
+          hint: '建议补充课堂结束时间',
+        },
+        {
+          key: 'course_target',
+          label: homeMetadataFieldMap.get('course_target')?.label || '课程目标',
+          value: sceneDescription || sceneConfig?.homepage?.introText || '用于呈现课程目标、学习路径、课前提醒与课堂说明。',
+          hint: '当前根据空间说明自动生成',
+          span: 2,
+          multiline: true,
+        },
+      ]
+    : [];
+  const findHomeFolderByKey = (folderKey, fallbackName) => {
+    const folderName = homeFolderTypeMap.get(folderKey)?.name || fallbackName;
+    if (!folderName) return null;
+    return sourceResources.find((resource) => resource.isFolder && resource.name === folderName) || null;
+  };
+  const homeCoursewareFolder = findHomeFolderByKey('courseware', '课程课件');
+  const homePracticeFolder = findHomeFolderByKey('practice', '课堂练习');
+  const homeHomeworkFolder = findHomeFolderByKey('homework', '作业提交');
+  const homeCoursewareCount = countResourceBranchItems(homeChildrenMap, homeCoursewareFolder?.key);
+  const homePracticeFolderCount = countResourceBranchItems(homeChildrenMap, homePracticeFolder?.key);
+  const homeHomeworkCount = countResourceBranchItems(homeChildrenMap, homeHomeworkFolder?.key);
+  const homeLiveEnabled = (sceneConfig?.toolConfigs || []).some((tool) => (
+    tool?.enabled !== false
+    && ((tool?.key || '').includes('live') || /直播|授课|会议/.test(tool?.name || ''))
+  )) || homeLiveCount > 0;
+  const teachingProgressItems = isTeachingScene
+    ? [
+        {
+          key: 'courseware',
+          title: '课件准备',
+          description: homeCoursewareCount > 0
+            ? `已准备 ${homeCoursewareCount} 项课程资料，可直接用于讲解与投屏。`
+            : '课程课件目录已创建，建议先补充讲义、讲稿和参考资料。',
+          status: homeCoursewareCount > 0 ? '已就绪' : '待准备',
+          tone: homeCoursewareCount > 0 ? 'ready' : 'pending',
+        },
+        {
+          key: 'practice',
+          title: '课堂练习',
+          description: Math.max(homePracticeFolderCount, homePracticeCount) > 0
+            ? `已配置 ${Math.max(homePracticeFolderCount, homePracticeCount)} 项练习/互动内容，可用于课堂反馈。`
+            : '课堂练习尚未配置，建议补充测验、问卷或即时互动内容。',
+          status: Math.max(homePracticeFolderCount, homePracticeCount) > 0 ? '已配置' : '待配置',
+          tone: Math.max(homePracticeFolderCount, homePracticeCount) > 0 ? 'ready' : 'pending',
+        },
+        {
+          key: 'homework',
+          title: '作业安排',
+          description: homeHomeworkCount > 0
+            ? `已准备 ${homeHomeworkCount} 项作业相关内容，可继续发布课后任务。`
+            : '课后作业目录已预置，建议补充作业说明与提交要求。',
+          status: homeHomeworkCount > 0 ? '已发布' : '待发布',
+          tone: homeHomeworkCount > 0 ? 'ready' : 'pending',
+        },
+        {
+          key: 'live',
+          title: '授课方式',
+          description: homeLiveEnabled
+            ? '已启用投屏/直播授课支持，可组织课堂讲解、答疑与回放。'
+            : '当前未启用线上授课能力，仅展示离线资料与课堂任务。',
+          status: homeLiveEnabled ? '已开启' : '未开启',
+          tone: homeLiveEnabled ? 'active' : 'pending',
+        },
+      ]
+    : [];
+  const teachingPendingProgressItems = teachingProgressItems.filter((item) => item.tone === 'pending');
+  const teachingReminderText = teachingPendingProgressItems.length > 0
+    ? `建议优先补充：${teachingPendingProgressItems.map((item) => item.title).join('、')}。`
+    : '课前准备项已基本就绪，可直接开始上课。';
 
   const setDetailTabRef = useCallback((key, node) => {
     if (node) {
@@ -3934,6 +4237,233 @@ function TopicDetail({
     );
   };
 
+  const renderSceneHomePage = () => {
+    if (!sceneConfig) return null;
+
+    return (
+      <div className="topic-home-shell">
+        <section className="topic-home-main">
+          <div
+            className="topic-home-cover"
+            style={getSceneThemeCoverStyle(sceneTheme || {}, {
+              overlayStart: 'rgba(15, 23, 42, 0.16)',
+              overlayEnd: 'rgba(15, 23, 42, 0.04)',
+            })}
+          >
+            <div className="topic-home-cover-top">
+              <span className="topic-home-cover-badge">{sceneConfig.homepage?.templateName || '标准主页模板'}</span>
+              <span className="topic-home-cover-glow" />
+            </div>
+            <div className="topic-home-cover-bottom">
+              <div className="topic-home-cover-title">{sceneTheme?.heroTitle || topicTitle}</div>
+              <div className="topic-home-cover-subtitle">{sceneTheme?.surfaceHint || sceneTypeLabel || '空间首页'}</div>
+            </div>
+          </div>
+
+          <div className="topic-home-intro-card">
+            <div className="topic-home-intro-copy">
+              <div className="topic-home-intro-title">{homeIntroText}</div>
+              <div className="topic-home-intro-subtitle">
+                当前首页模板为「{sceneConfig.homepage?.templateName || '标准主页模板'}」，支持 {homeIntroModeLabel}。
+              </div>
+            </div>
+            <span className="topic-home-intro-edit">
+              <EditOutlined />
+            </span>
+          </div>
+
+          <div className="topic-home-section">
+            <div className="topic-home-section-title">资源统计</div>
+            <div className="topic-home-stat-grid">
+              {homeResourceStats.map((item) => (
+                <div key={item.key} className={`topic-home-stat-card topic-home-stat-card-${item.key}`}>
+                  <div className={`topic-home-stat-icon topic-home-stat-icon-${item.key}`}>
+                    {item.icon}
+                  </div>
+                  <div className="topic-home-stat-copy">
+                    <strong>{item.value}</strong>
+                    <span>{item.label}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <aside className="topic-home-side">
+          <div className="topic-home-summary-card">
+            <div className="topic-home-summary-status">
+              <span className="topic-home-summary-status-dot" />
+              <span>{homeStageLabel}</span>
+            </div>
+            <div className="topic-home-summary-grid">
+              <div className="topic-home-summary-metric">
+                <span>{homeWorkMode.hint}</span>
+                <strong>{homeWorkMode.label}</strong>
+              </div>
+              <div className="topic-home-summary-metric">
+                <span>资源总数</span>
+                <strong>{homeTotalResourceCount}</strong>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="topic-home-primary-btn"
+              disabled={!homePrimaryTargetTab || homePrimaryTargetTab === 'home'}
+              onClick={() => {
+                if (!homePrimaryTargetTab || homePrimaryTargetTab === 'home') return;
+                handleSelectTab(homePrimaryTargetTab);
+              }}
+            >
+              <PlayCircleOutlined />
+              <span>{homePrimaryActionLabel}</span>
+            </button>
+          </div>
+
+          {isTeachingScene ? (
+            <div className="topic-home-card topic-home-course-card">
+              <div className="topic-home-card-head">
+                <div>
+                  <div className="topic-home-card-title">课程信息</div>
+                  <div className="topic-home-card-subtitle">课堂模式基础信息与教学支持</div>
+                </div>
+              </div>
+              <div className="topic-home-course-grid">
+                {teachingCourseInfoFields.map((item) => (
+                  <div
+                    key={item.key}
+                    className={`topic-home-course-field ${item.span === 2 ? 'topic-home-course-field-span-2' : ''} ${item.multiline ? 'topic-home-course-field-multiline' : ''}`}
+                  >
+                    <span className="topic-home-course-label">{item.label}</span>
+                    <strong className="topic-home-course-value">{item.value}</strong>
+                    <span className="topic-home-course-hint">{item.hint}</span>
+                  </div>
+                ))}
+              </div>
+              {homeTeachingSupportAgents.length ? (
+                <div className="topic-home-course-support">
+                  <span className="topic-home-course-support-label">课堂支持</span>
+                  <div className="topic-home-chip-list">
+                    {homeTeachingSupportAgents.map((item) => (
+                      <span key={item} className="topic-home-chip">{item}</span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+              {homeTeachingPathLabels.length ? (
+                <div className="topic-home-course-support">
+                  <span className="topic-home-course-support-label">学习路径</span>
+                  <div className="topic-home-chip-list">
+                    {homeTeachingPathLabels.map((item) => (
+                      <span key={item} className="topic-home-chip">{item}</span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          <div className="topic-home-card">
+            <div className="topic-home-card-head">
+              <div>
+                <div className="topic-home-card-title">{homeTaskPanelTitle}</div>
+                <div className="topic-home-card-subtitle">最近 {homeTaskItems.length} 条任务记录</div>
+              </div>
+              <button
+                type="button"
+                className="topic-home-link-btn"
+                disabled={!homeTaskTargetTab || homeTaskTargetTab === 'home'}
+                onClick={() => {
+                  if (!homeTaskTargetTab || homeTaskTargetTab === 'home') return;
+                  handleSelectTab(homeTaskTargetTab);
+                }}
+              >
+                <span>查看任务</span>
+                <RightOutlined />
+              </button>
+            </div>
+            <button
+              type="button"
+              className="topic-home-task-download"
+              disabled={!homeTaskTargetTab || homeTaskTargetTab === 'home'}
+              onClick={() => {
+                if (!homeTaskTargetTab || homeTaskTargetTab === 'home') return;
+                handleSelectTab(homeTaskTargetTab);
+              }}
+            >
+              <span>下发任务</span>
+            </button>
+            <div className="topic-home-task-list">
+              <div className="topic-home-task-header">
+                <span>任务内容</span>
+                <span>状态</span>
+              </div>
+              {homeTaskItems.length ? homeTaskItems.map((item) => (
+                <div key={item.key} className="topic-home-task-item">
+                  <span className="topic-home-task-name">{item.title}</span>
+                  <span className={`topic-home-task-status topic-home-task-status-${item.tone}`}>{item.status}</span>
+                </div>
+              )) : (
+                <div className="topic-home-task-empty">当前暂无任务记录</div>
+              )}
+            </div>
+          </div>
+
+          {isTeachingScene ? (
+            <div className="topic-home-card topic-home-progress-card">
+              <div className="topic-home-card-head">
+                <div>
+                  <div className="topic-home-card-title">教学进度</div>
+                  <div className="topic-home-card-subtitle">根据课堂目录与工具自动推导</div>
+                </div>
+              </div>
+              <div className="topic-home-progress-list">
+                {teachingProgressItems.map((item) => (
+                  <div key={item.key} className="topic-home-progress-item">
+                    <div className="topic-home-progress-main">
+                      <strong>{item.title}</strong>
+                      <span>{item.description}</span>
+                    </div>
+                    <span className={`topic-home-progress-status topic-home-progress-status-${item.tone}`}>{item.status}</span>
+                  </div>
+                ))}
+              </div>
+              <div className={`topic-home-reminder ${teachingPendingProgressItems.length > 0 ? 'topic-home-reminder-warning' : 'topic-home-reminder-ready'}`}>
+                <strong>课前提醒</strong>
+                <span>{teachingReminderText}</span>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="topic-home-card">
+            <div className="topic-home-card-head">
+              <div>
+                <div className="topic-home-card-title">{homeMemberPanelTitle}</div>
+                <div className="topic-home-card-subtitle">{sceneTypeLabel || '空间成员'}</div>
+              </div>
+              <span className="topic-home-link-btn topic-home-link-btn-passive">
+                <span>查看成员</span>
+                <RightOutlined />
+              </span>
+            </div>
+            <div className="topic-home-member-total">
+              <strong>{homeDisplayedMemberTotal}</strong>
+              <span>名{homeMemberLabel}</span>
+            </div>
+            <div className="topic-home-member-grid">
+              {homeDisplayedRoleCards.map((item) => (
+                <div key={item.key} className="topic-home-member-card" title={item.hint}>
+                  <span>{item.label}</span>
+                  <strong>{item.value} 名</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+        </aside>
+      </div>
+    );
+  };
+
   return (
     <div className={`topic-detail ${sceneConfig ? 'topic-detail-scene-theme' : ''}`} style={detailThemeStyle}>
       <div className="detail-header">
@@ -3978,13 +4508,7 @@ function TopicDetail({
                 key={tab.key}
                 ref={(node) => setDetailTabRef(tab.key, node)}
                 className={`detail-tab ${activeTab === tab.key ? 'detail-tab-active' : ''} ${tabs.length === 1 ? 'detail-tab-single' : ''}`}
-                onClick={() => {
-                  setActiveTab(tab.key);
-                  if (tab.key === 'ai' && resourcePanelView === 'knowledgeGraph') {
-                    applyAiKnowledgeGraphLeftPanelWidth();
-                    setAiKnowledgeGraphPreviewOpen(false);
-                  }
-                }}
+                onClick={() => handleSelectTab(tab.key)}
               >
                 {tab.label}
               </div>
@@ -4106,7 +4630,11 @@ function TopicDetail({
         </Dropdown>
       ) : null}
 
-      {activeTab === 'assessment' ? (
+      {isHomeTab ? (
+        <div className="detail-body topic-home-body">
+          {renderSceneHomePage()}
+        </div>
+      ) : activeTab === 'assessment' ? (
         <AssessmentConfig
           assessment={currentVersion?.assessment}
           assessmentChat={currentVersion?.assessmentChat}

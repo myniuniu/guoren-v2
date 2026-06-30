@@ -78,6 +78,7 @@ import TeacherEvaluationSchemeModule from './teacherEvaluation/TeacherEvaluation
 import TeacherDevelopmentModule from './teacherDevelopment/TeacherDevelopmentModule';
 import TeacherPortraitModule from './teacherPortrait/TeacherPortraitModule';
 import LuckyModule from './lucky/LuckyModule';
+import TasksModule from './tasks/TasksModule';
 import SceneCreateModal from './scene/SceneCreateModal';
 import { getSceneStoreChangeEventName, getSceneTypeLabel, getSceneVisibilityLabel, sceneApi } from './scene/api';
 import { getSceneThemeCoverStyle } from './scene/themeCovers';
@@ -937,6 +938,8 @@ function App() {
       setCurrentPage('quick-build');
     } else if (key === 'page-designer') {
       setCurrentPage('page-designer');
+    } else if (key === 'tasks') {
+      setCurrentPage('tasks');
     } else if (key === 'tag-management') {
       setCurrentPage('tag-management');
     } else if (key === 'app-center') {
@@ -987,6 +990,7 @@ function App() {
       currentPage === 'online-dev' ||
       currentPage === 'quick-build' ||
       currentPage === 'page-designer' ||
+      currentPage === 'tasks' ||
       currentPage === 'tag-management' ||
       currentPage === 'app-center' ||
       currentPage === 'scene-template' ||
@@ -1118,6 +1122,8 @@ function App() {
         <QuickBuildModule />
       ) : currentPage === 'page-designer' ? (
         <PageDesignerModule />
+      ) : currentPage === 'tasks' ? (
+        <TasksModule />
       ) : currentPage === 'tag-management' ? (
         <TagManagement />
       ) : currentPage === 'app-center' ? (

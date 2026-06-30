@@ -70,6 +70,7 @@ import './SceneTemplateModule.css';
 
 const { TextArea } = Input;
 const MODE_TAB_HINT_MAP = {
+  home: '用于展示空间总览、资源统计、任务和成员摘要；通常建议保持启用并放在最左侧。',
   knowledge: '用于知识资料、课程内容等展示；停用后该页签不会出现在主题中。',
   ai: '用于 AI 问答、辅学、共创助手等内容；停用后该页签不会出现在主题中。',
   practice: '用于实训任务、项目练习和过程产出；停用后该页签不会出现在主题中。',

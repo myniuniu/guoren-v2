@@ -216,6 +216,7 @@ export const ROLE_DATA_ACCESS_AREA_OPTIONS = [
 ];
 
 export const MODE_TAB_PRESET_OPTIONS = [
+  { value: 'home', label: '首页' },
   { value: 'knowledge', label: '知识模式' },
   { value: 'ai', label: 'AI模式' },
   { value: 'practice', label: '实训模式' },
@@ -714,6 +715,15 @@ function createModeTabs(labels = {}, modeConfigs = {}) {
   }, item, index));
 }
 
+function buildMissingModeTabConfig(preset, hasConfiguredTabs) {
+  if (!hasConfiguredTabs) return null;
+  // 历史模板没有首页页签，这里默认补齐并启用，避免旧空间升级后仍然缺失首页。
+  if (preset?.value === 'home') {
+    return { key: preset.value, enabled: true };
+  }
+  return { key: preset.value, enabled: false };
+}
+
 function ensureModeTabs(modeTabs) {
   const hasConfiguredTabs = Array.isArray(modeTabs);
   const byKey = new Map(
@@ -722,7 +732,7 @@ function ensureModeTabs(modeTabs) {
       .map((item) => [item?.key, item]),
   );
   return MODE_TAB_PRESET_OPTIONS.map((item, index) => normalizeModeTab(
-    byKey.get(item.value) || (hasConfiguredTabs ? { key: item.value, enabled: false } : null),
+    byKey.get(item.value) || buildMissingModeTabConfig(item, hasConfiguredTabs),
     item,
     index,
   ));

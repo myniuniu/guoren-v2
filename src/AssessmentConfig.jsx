@@ -519,7 +519,7 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
   };
 
   const layoutStyle = {
-    gridTemplateColumns: `${leftCollapsed ? 36 : leftWidth}px 4px 1fr 4px ${rightCollapsed ? 36 : rightWidth}px`,
+    gridTemplateColumns: `${leftCollapsed ? 36 : leftWidth}px 10px 1fr 10px ${rightCollapsed ? 36 : rightWidth}px`,
   };
 
   return (
