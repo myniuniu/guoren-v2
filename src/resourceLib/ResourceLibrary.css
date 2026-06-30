@@ -12,6 +12,8 @@
   --finder-selected-text: #303846;
   --finder-selected-meta: #667085;
   --finder-selected-accent: #8a94a6;
+  --finder-pane-divider: rgba(15, 23, 42, 0.08);
+  --finder-pane-divider-hover: rgba(0, 122, 255, 0.08);
   background: #ffffff;
   overflow: hidden;
 }
@@ -20,7 +22,7 @@
 .finder-sidebar {
   width: 200px;
   background: #fff;
-  border-right: 1px solid #d4d4d4;
+  border-right: 1px solid var(--finder-pane-divider);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -43,7 +45,7 @@
 
 .finder-sidebar-resize-handle:hover,
 .finder-sidebar-resize-handle:active {
-  background: rgba(0, 122, 255, 0.15);
+  background: var(--finder-pane-divider-hover);
 }
 
 .finder-sidebar-section {
@@ -1462,7 +1464,7 @@
 
 .finder-preview-resize-handle:hover,
 .finder-preview-resize-handle:active {
-  background: rgba(0, 122, 255, 0.15);
+  background: var(--finder-pane-divider-hover);
 }
 
 .finder-preview-panel {
@@ -1474,7 +1476,7 @@
   background: #fafafa;
   display: flex;
   flex-direction: column;
-  border-left: 1px solid #e0e0e0;
+  border-left: 1px solid var(--finder-pane-divider);
 }
 
 .finder-preview-empty {
@@ -1791,7 +1793,7 @@
   max-width: 280px;
   min-height: 0;
   flex-shrink: 0;
-  border-right: 1px solid #e0e0e0;
+  border-right: 1px solid var(--finder-pane-divider);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -1811,7 +1813,7 @@
 
 .finder-column-resize-handle:hover,
 .finder-column-resize-handle:active {
-  background: rgba(0, 122, 255, 0.15);
+  background: var(--finder-pane-divider-hover);
 }
 
 .finder-column-empty {
@@ -2034,7 +2036,7 @@
   display: flex;
   flex-direction: column;
   background: #fafafa;
-  border-left: 1px solid #e0e0e0;
+  border-left: 1px solid var(--finder-pane-divider);
   overflow-y: auto;
 }
 
