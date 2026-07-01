@@ -677,7 +677,6 @@
     linear-gradient(112deg, rgba(255, 255, 255, 0) 20%, rgba(255, 255, 255, 0.78) 42%, rgba(201, 222, 255, 0.54) 50%, rgba(255, 255, 255, 0) 72%);
   opacity: 0.92;
   filter: blur(0.5px);
-  animation: space-resource-import-row-liquid-flow 1.45s cubic-bezier(0.22, 1, 0.36, 1) infinite alternate;
 }
 
 .space-resource-import-selection-indicator.is-visible {
@@ -729,7 +728,6 @@
 
 .space-resource-import-row.is-selected::after {
   opacity: 0.92;
-  animation: space-resource-import-row-liquid-flow 1.45s cubic-bezier(0.22, 1, 0.36, 1) infinite alternate;
 }
 
 .space-resource-import-row.is-selected .space-resource-import-row-name {
@@ -849,26 +847,6 @@
   animation: none;
 }
 
-@keyframes space-resource-import-row-liquid-flow {
-  0% {
-    transform: translate3d(-18%, -2%, 0) scale(1.02);
-    opacity: 0.68;
-    filter: blur(0.5px);
-  }
-
-  50% {
-    transform: translate3d(2%, 1%, 0) scale(1.06);
-    opacity: 0.9;
-    filter: blur(1px);
-  }
-
-  100% {
-    transform: translate3d(18%, 2%, 0) scale(1.03);
-    opacity: 0.74;
-    filter: blur(0.6px);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .space-resource-import-row::before,
   .space-resource-import-row::after,
@@ -892,7 +870,7 @@
   }
 
   .space-resource-import-selection-indicator::before {
-    animation: none;
+    filter: blur(0.5px);
   }
 }
 
