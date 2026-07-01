@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState, useEffect } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState, useEffect } from 'react';
 import {
   Button, Input, Empty, Tooltip, Dropdown,
   Modal, Form, Select, message,
@@ -181,6 +181,12 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     sequences: [],
     models: [],
   });
+  const capabilityModelCatalogRef = useRef({
+    industries: [],
+    roles: [],
+    sequences: [],
+    models: [],
+  });
   const [capabilityModelEditorDraft, setCapabilityModelEditorDraft] = useState(null);
   const [capabilityModelActiveDimensionId, setCapabilityModelActiveDimensionId] = useState(undefined);
   const [capabilityModelActiveItemId, setCapabilityModelActiveItemId] = useState(undefined);
@@ -300,8 +306,28 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
   const contentAreaRef = useRef(null);
   const searchBoxRef = useRef(null);
   const folderHoverTipTimerRef = useRef(null);
+  const detailListRef = useRef(null);
+  const detailRowNodeMapRef = useRef(new Map());
+  const columnSelectedItemRef = useRef(null);
   // 记录用户是否在列表视图下手动拖过，避免覆盖用户选择
   const previewListResizedRef = useRef(false);
+  const [detailSelectionIndicator, setDetailSelectionIndicator] = useState({
+    visible: false,
+    top: 0,
+    height: 0,
+    key: null,
+  });
+  const [columnSelectionIndicator, setColumnSelectionIndicator] = useState({
+    visible: false,
+    top: 0,
+    height: 0,
+    key: null,
+    colIdx: null,
+  });
+  useEffect(() => {
+    capabilityModelCatalogRef.current = capabilityModelCatalog;
+  }, [capabilityModelCatalog]);
+
   const handleSidebarResizeStart = useCallback((e) => {
     e.preventDefault();
     const startX = e.clientX;
@@ -699,11 +725,12 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
       capabilityModelApi.listModels(),
     ]);
     const nextCatalog = { industries, roles, sequences, models };
+    capabilityModelCatalogRef.current = nextCatalog;
     setCapabilityModelCatalog(nextCatalog);
     return nextCatalog;
   }, []);
 
-  const syncCapabilityModelResourceItems = useCallback((currentData, catalog = capabilityModelCatalog) => {
+  const syncCapabilityModelResourceItems = useCallback((currentData, catalog = capabilityModelCatalogRef.current) => {
     const modelMap = new Map((catalog.models || []).map((model) => [model.id, model]));
     const roleMap = new Map((catalog.roles || []).map((role) => [role.id, role]));
     const sequenceMap = new Map((catalog.sequences || []).map((sequence) => [sequence.id, sequence]));
@@ -765,7 +792,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     };
     saveResourceLib(nextData);
     return nextData;
-  }, [buildCapabilityModelResourceMeta, capabilityModelCatalog]);
+  }, []);
 
   const syncKnowledgeGraphResourceItems = useCallback((currentData) => {
     const graphSnapshot = loadKnowledgeGraphStore();
@@ -2218,6 +2245,81 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
       return items;
     });
   }, [activeTagFilter, columnContextItems, columnPath, hasActiveSearch, isRecentView, list, recentItems, searchResults, sortLibraryItems]);
+
+  useLayoutEffect(() => {
+    if (viewMode !== 'detail' || selectedItemKeys.length !== 1) {
+      setDetailSelectionIndicator((prev) => (prev.visible ? { visible: false, top: 0, height: 0, key: null } : prev));
+      return;
+    }
+    const selectedKey = selectedItemKeys[0];
+    if (!displayChildren.some((item) => item.key === selectedKey)) {
+      setDetailSelectionIndicator((prev) => (prev.visible ? { visible: false, top: 0, height: 0, key: null } : prev));
+      return;
+    }
+    const listNode = detailListRef.current;
+    const rowNode = detailRowNodeMapRef.current.get(selectedKey);
+    if (!listNode || !rowNode) return;
+    const listRect = listNode.getBoundingClientRect();
+    const rowRect = rowNode.getBoundingClientRect();
+    const nextTop = Math.max(0, rowRect.top - listRect.top);
+    const nextHeight = rowRect.height;
+    setDetailSelectionIndicator((prev) => {
+      if (
+        prev.visible
+        && prev.key === selectedKey
+        && Math.abs(prev.top - nextTop) < 0.5
+        && Math.abs(prev.height - nextHeight) < 0.5
+      ) {
+        return prev;
+      }
+      return {
+        visible: true,
+        top: nextTop,
+        height: nextHeight,
+        key: selectedKey,
+      };
+    });
+  }, [displayChildren, selectedItemKeys, viewMode]);
+
+  useEffect(() => {
+    if (viewMode !== 'column' || selectedItemKeys.length !== 1) {
+      setColumnSelectionIndicator((prev) => (prev.visible ? { visible: false, top: 0, height: 0, key: null, colIdx: null } : prev));
+      return;
+    }
+    const selectedKey = selectedItemKeys[0];
+    const rowNode = columnSelectedItemRef.current;
+    if (!rowNode) return;
+    const nextColIdx = Number(rowNode.dataset.columnIndex ?? -1);
+    if (Number.isNaN(nextColIdx) || nextColIdx < 0) {
+      setColumnSelectionIndicator((prev) => (prev.visible ? { visible: false, top: 0, height: 0, key: null, colIdx: null } : prev));
+      return;
+    }
+    const columnItems = columnLevels[nextColIdx] || [];
+    if (!columnItems.some((item) => item.key === selectedKey)) {
+      setColumnSelectionIndicator((prev) => (prev.visible ? { visible: false, top: 0, height: 0, key: null, colIdx: null } : prev));
+      return;
+    }
+    const nextTop = rowNode.offsetTop;
+    const nextHeight = rowNode.offsetHeight;
+    setColumnSelectionIndicator((prev) => {
+      if (
+        prev.visible
+        && prev.key === selectedKey
+        && prev.colIdx === nextColIdx
+        && Math.abs(prev.top - nextTop) < 0.5
+        && Math.abs(prev.height - nextHeight) < 0.5
+      ) {
+        return prev;
+      }
+      return {
+        visible: true,
+        top: nextTop,
+        height: nextHeight,
+        key: selectedKey,
+        colIdx: nextColIdx,
+      };
+    });
+  }, [columnLevels, selectedItemKeys, viewMode]);
 
   const stopSwipeSelection = useCallback(() => {
     const gesture = swipeSelectionRef.current;
@@ -4049,15 +4151,24 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                   const colWidth = columnWidths[colIdx];
                   return (
                   <div
-                    className="finder-column"
+                    className={`finder-column ${columnSelectionIndicator.visible && columnSelectionIndicator.colIdx === colIdx ? 'finder-column-has-single-selection' : ''}`}
                     key={colIdx}
                     style={colWidth ? { width: colWidth, minWidth: colWidth, maxWidth: colWidth } : undefined}
                     onClick={(e) => handleColumnBlankClick(e, colIdx)}
                   >
+                    <div
+                      className={`finder-column-selection-indicator ${columnSelectionIndicator.visible && columnSelectionIndicator.colIdx === colIdx ? 'is-visible' : ''}`}
+                      style={{
+                        transform: `translateY(${columnSelectionIndicator.colIdx === colIdx ? columnSelectionIndicator.top : 0}px)`,
+                        height: `${columnSelectionIndicator.colIdx === colIdx ? columnSelectionIndicator.height : 0}px`,
+                      }}
+                      aria-hidden="true"
+                    />
                     {items.length === 0 && colIdx === 0 && hasActiveSearch ? (
                       <div className="finder-column-empty">无匹配资料</div>
                     ) : items.map((item, itemIdx) => {
                       const isActive = columnPath[colIdx + 1] === item.key || (columnSelectedItem?.key === item.key);
+                      const isSingleSelected = selectedItemKeys.length === 1 && selectedItemKeys[0] === item.key;
                       const isContextMenuTarget = contextMenuItemKey === item.key;
                       const isInlineRenaming = inlineRenameItemKey === item.key;
                       const itemMoreMenu = getItemMoreMenu(item, {
@@ -4074,6 +4185,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                           overlayClassName={buildMenuOverlayClassName()}
                         >
                           <div
+                            ref={isSingleSelected ? columnSelectedItemRef : undefined}
                             className={`finder-column-item ${isActive ? 'finder-column-item-active' : ''} ${selectedItemKeys.includes(item.key) && !isActive ? 'finder-column-item-selected' : ''} ${isContextMenuTarget ? 'finder-column-item-context-open' : ''} ${item.isFolder && dragOverFolderKey === item.key ? 'finder-column-item-dragover' : ''}`}
                             data-column-index={colIdx}
                             data-item-index={itemIdx}
@@ -4252,12 +4364,21 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
               <>
                 {/* ==== 列表/详情视图 ==== */}
                 <div
-                  className="finder-file-list"
+                  ref={detailListRef}
+                  className={`finder-file-list ${detailSelectionIndicator.visible && selectedItemKeys.length === 1 ? 'finder-file-list-has-single-selection' : ''}`}
                   onContextMenu={handleBgContextMenu}
                   onDragOver={handleListDragOver}
                   onDrop={handleListDrop}
                   onClick={handleListBlankClick}
                 >
+              <div
+                className={`finder-file-selection-indicator ${detailSelectionIndicator.visible ? 'is-visible' : ''}`}
+                style={{
+                  transform: `translateY(${detailSelectionIndicator.top}px)`,
+                  height: `${detailSelectionIndicator.height}px`,
+                }}
+                aria-hidden="true"
+              />
               {/* 详情模式表头 */}
                   {viewMode === 'detail' && currentChildren.length > 0 && (
                     <Dropdown
@@ -4321,6 +4442,10 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                   const rowMoreMenu = getItemMoreMenu(item, { includeFavorite: true });
                   const rowContent = (
                     <div
+                      ref={(node) => {
+                        if (node) detailRowNodeMapRef.current.set(item.key, node);
+                        else detailRowNodeMapRef.current.delete(item.key);
+                      }}
                       className={`finder-file-row ${isSelected ? 'finder-file-row-selected' : ''} ${isContextMenuTarget ? 'finder-file-row-context-open' : ''} ${item.isFolder && dragOverFolderKey === item.key ? 'finder-file-row-dragover' : ''}`}
                       data-item-index={idx}
                       data-item-key={item.key}
