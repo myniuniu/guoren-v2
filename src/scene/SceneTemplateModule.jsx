@@ -19,19 +19,24 @@ import {
   message,
 } from 'antd';
 import {
+  CheckCircleOutlined,
   CopyOutlined,
   DeleteOutlined,
+  DownOutlined,
   EditOutlined,
   EyeOutlined,
   PlusOutlined,
   ReloadOutlined,
   SaveOutlined,
   SearchOutlined,
+  StopOutlined,
+  UpOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
 import {
   ASSIGNED_ACCESS_RULE_OPTIONS,
   ENTRY_METHOD_OPTIONS,
+  HOME_COMPONENT_OPTIONS,
   MODE_TAB_PRESET_OPTIONS,
   ROLE_DATA_ACCESS_AREA_OPTIONS,
   ROLE_FUNCTION_PERMISSION_MODE_OPTIONS,
@@ -48,6 +53,7 @@ import {
   createRoleDraft,
   createTemplateDraft,
   getAssignedAccessRuleLabel,
+  getHomeComponentLabel,
   getRoleFunctionPermissionModeLabel,
   getSceneStoreChangeEventName,
   getSceneTypeLabel,
@@ -69,13 +75,6 @@ import '../system/SystemModule.css';
 import './SceneTemplateModule.css';
 
 const { TextArea } = Input;
-const MODE_TAB_HINT_MAP = {
-  home: '用于展示空间总览、资源统计、任务和成员摘要；通常建议保持启用并放在最左侧。',
-  knowledge: '用于知识资料、课程内容等展示；停用后该页签不会出现在主题中。',
-  ai: '用于 AI 问答、辅学、共创助手等内容；停用后该页签不会出现在主题中。',
-  practice: '用于实训任务、项目练习和过程产出；停用后该页签不会出现在主题中。',
-  assessment: '用于考试、量规、评阅等考核配置；启用后会进入专用的考核配置页。',
-};
 const TOPIC_THEME_MODE_OPTIONS = [
   { value: 'DEFAULT', label: '默认浅灰白' },
   { value: 'SCENE', label: '跟随场景色' },
@@ -247,11 +246,94 @@ function SceneTemplatePreview({ template, sceneCount }) {
   const statusPresetSceneType = template.statusPresetSceneType || template.sceneType || 'CUSTOM';
   const statusPreset = getSceneTypeStatusPreset(statusPresetSceneType);
   const statusGuidance = getSceneTypeStatusGuidance(statusPresetSceneType, template.statusRules);
+  const modeTabs = Array.isArray(template.topicPage?.modeTabs) ? template.topicPage.modeTabs : [];
+  const enabledModeCount = modeTabs.filter((mode) => mode.enabled !== false).length;
+  const enabledToolCount = countEnabledTools(template);
+  const previewSummaryItems = [
+    {
+      label: '启用模式',
+      value: `${enabledModeCount} 个`,
+      hint: `共配置 ${modeTabs.length} 个主题模式`,
+    },
+    {
+      label: '角色数量',
+      value: `${template.roles?.length || 0} 个`,
+      hint: '角色限定与授权配置',
+    },
+    {
+      label: '工具能力',
+      value: `${enabledToolCount} 个`,
+      hint: '资料区与成果区工具',
+    },
+    {
+      label: '资料目录',
+      value: `${template.folderTypes?.length || 0} 类`,
+      hint: '默认资料目录类型',
+    },
+  ];
 
   return (
     <div className="scene-template-preview-card">
+      <div
+        className="scene-template-preview-hero"
+        style={getSceneThemeCoverStyle(template.theme, {
+          overlayStart: 'rgba(15, 23, 42, 0.26)',
+          overlayEnd: 'rgba(15, 23, 42, 0.08)',
+        })}
+      >
+        <div>
+          <div className="scene-template-preview-kicker">
+            {template.theme?.badgeText || getSceneTypeLabel(template.sceneType)}
+          </div>
+          <div className="scene-template-preview-title">{template.name || '未命名模板'}</div>
+          <div className="scene-template-preview-desc">
+            {template.description || template.theme?.heroSubtitle || '未填写模板描述'}
+          </div>
+          <div className="scene-template-preview-meta">
+            {renderStatusTag(template.status)}
+            <Tag>{getSceneTypeLabel(template.sceneType)}</Tag>
+            <Tag color="blue">{sceneCount} 个引用场景</Tag>
+            <Tag color={template.versioning?.enabled !== false ? 'geekblue' : 'default'}>
+              {template.versioning?.enabled !== false ? '启用版本管理' : '未启用版本管理'}
+            </Tag>
+          </div>
+        </div>
+        <div className="scene-template-preview-emoji">{template.theme?.emoji || '🧩'}</div>
+      </div>
+
+      <div className="scene-template-preview-summary-grid">
+        {previewSummaryItems.map((item) => (
+          <div key={item.label} className="scene-template-preview-summary-card">
+            <span className="scene-template-preview-summary-label">{item.label}</span>
+            <strong className="scene-template-preview-summary-value">{item.value}</strong>
+            <span className="scene-template-preview-summary-hint">{item.hint}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="scene-template-preview-order-panel">
+        <div className="scene-template-preview-order-title">主题模式顺序</div>
+        <div className="scene-template-preview-order-list">
+          {modeTabs.length ? modeTabs.map((mode, index) => (
+            <div key={mode.id || mode.key || index} className="scene-template-preview-order-item">
+              <span className="scene-template-preview-order-index">{index + 1}</span>
+              <div className="scene-template-preview-order-copy">
+                <div className="scene-template-preview-order-head">
+                  <strong>{mode.label || mode.key || `模式 ${index + 1}`}</strong>
+                  <Tag color={mode.enabled !== false ? 'blue' : 'default'}>
+                    {mode.enabled !== false ? '已启用' : '未启用'}
+                  </Tag>
+                </div>
+                <span>{`模式标识：${mode.key || '-'}`}</span>
+              </div>
+            </div>
+          )) : <Empty description="未配置主题模式" />}
+        </div>
+      </div>
+
       <Tabs
         key={template.id}
+        className="scene-template-preview-tabs"
         items={[
           {
             key: 'basic',
@@ -344,10 +426,19 @@ function SceneTemplatePreview({ template, sceneCount }) {
                       <div className="scene-template-form-grid">
                         <SceneTemplateStaticField label="模式标识" value={mode.key} />
                         <SceneTemplateStaticField label="页签名称" value={mode.label} />
-                        <SceneTemplateStaticField label="资料区标题" value={mode.resourcePanelTitle || template.topicPage?.resourcePanelTitle} />
-                        <SceneTemplateStaticField label="新增资料按钮" value={mode.addResourceLabel || template.topicPage?.addResourceLabel} />
-                        <SceneTemplateStaticField label="应用区按钮" value={mode.appLabel || template.topicPage?.appLabel} />
-                        <SceneTemplateStaticField label="空状态文案" value={mode.emptyStateText || template.topicPage?.emptyStateText} />
+                        {mode.key === 'home' ? (
+                          <SceneTemplateStaticField
+                            label="首页组件"
+                            value={getHomeComponentLabel(mode.homeComponent) || template.homepage?.templateName}
+                          />
+                        ) : (
+                          <>
+                            <SceneTemplateStaticField label="资料区标题" value={mode.resourcePanelTitle || template.topicPage?.resourcePanelTitle} />
+                            <SceneTemplateStaticField label="新增资料按钮" value={mode.addResourceLabel || template.topicPage?.addResourceLabel} />
+                            <SceneTemplateStaticField label="应用区按钮" value={mode.appLabel || template.topicPage?.appLabel} />
+                            <SceneTemplateStaticField label="空状态文案" value={mode.emptyStateText || template.topicPage?.emptyStateText} />
+                          </>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -618,6 +709,7 @@ export default function SceneTemplateModule() {
   const watchedStatusRulesValue = Form.useWatch('statusRules', { form: templateForm, preserve: true });
   const watchedStatusPresetSceneTypeValue = Form.useWatch('statusPresetSceneType', { form: templateForm, preserve: true });
   const watchedThemeValue = Form.useWatch('theme', { form: templateForm, preserve: true });
+  const watchedModeTabsValue = Form.useWatch(['topicPage', 'modeTabs'], { form: templateForm, preserve: true });
   const watchedVersioningValue = Form.useWatch('versioning', { form: templateForm, preserve: true });
   const watchedRoles = useMemo(() => watchedRolesValue || [], [watchedRolesValue]);
   const watchedMetadataFields = useMemo(() => watchedMetadataFieldsValue || [], [watchedMetadataFieldsValue]);
@@ -629,6 +721,12 @@ export default function SceneTemplateModule() {
     [editingTemplate, watchedStatusPresetSceneTypeValue],
   );
   const watchedTheme = useMemo(() => watchedThemeValue || {}, [watchedThemeValue]);
+  const watchedModeTabs = useMemo(
+    () => (Array.isArray(watchedModeTabsValue) && watchedModeTabsValue.length > 0
+      ? watchedModeTabsValue
+      : (editingTemplate?.topicPage?.modeTabs || [])),
+    [editingTemplate?.topicPage?.modeTabs, watchedModeTabsValue],
+  );
   const watchedVersioningEnabled = useMemo(
     () => normalizeVersioningConfig(
       watchedVersioningValue || editingTemplate?.versioning || {},
@@ -643,6 +741,10 @@ export default function SceneTemplateModule() {
       .filter((role) => role?.id && role?.name)
       .map((role) => ({ value: role.id, label: role.name })),
     [watchedRoles],
+  );
+  const modePresetMap = useMemo(
+    () => new Map(MODE_TAB_PRESET_OPTIONS.map((item) => [item.value, item])),
+    [],
   );
   const assignedResourceTypeOptions = useMemo(
     () => watchedFolderTypes
@@ -687,7 +789,6 @@ export default function SceneTemplateModule() {
   const summary = useMemo(() => ({
     templateCount: templates.length,
     activeCount: templates.filter((item) => item.status === 'ACTIVE').length,
-    builtInCount: templates.filter((item) => item.builtIn).length,
     usedSceneCount: scenes.length,
   }), [templates, scenes]);
 
@@ -710,6 +811,10 @@ export default function SceneTemplateModule() {
   const isExistingEditing = useMemo(
     () => !!editingTemplate && templates.some((item) => item.id === editingTemplate.id),
     [editingTemplate, templates],
+  );
+  const editingTemplateSceneCount = useMemo(
+    () => (editingTemplate?.id ? (sceneCountMap[editingTemplate.id] || 0) : 0),
+    [editingTemplate?.id, sceneCountMap],
   );
 
   const loadAll = useCallback(async (withLoading = true) => {
@@ -791,6 +896,15 @@ export default function SceneTemplateModule() {
       ...currentTheme,
       ...patch,
     });
+  }
+
+  function moveModeTab(index, offset) {
+    const currentModeTabs = [...(templateForm.getFieldValue(['topicPage', 'modeTabs']) || [])];
+    const targetIndex = index + offset;
+    if (targetIndex < 0 || targetIndex >= currentModeTabs.length) return;
+    const [movedMode] = currentModeTabs.splice(index, 1);
+    currentModeTabs.splice(targetIndex, 0, movedMode);
+    templateForm.setFieldValue(['topicPage', 'modeTabs'], currentModeTabs);
   }
 
   function handleSelectThemeCoverPreset(presetId) {
@@ -891,6 +1005,14 @@ export default function SceneTemplateModule() {
         message.error(`角色“${invalidAssignedRole.name || invalidAssignedRole.key || '未命名角色'}”需完善授权配置`);
         return;
       }
+      if (
+        editingTemplateSceneCount > 0
+        && editingTemplate?.status !== 'DISABLED'
+        && values.status === 'DISABLED'
+      ) {
+        message.error('该模板已有引用场景，不能停用');
+        return;
+      }
       const saved = await sceneApi.saveTemplate({
         ...editingTemplate,
         ...values,
@@ -920,6 +1042,30 @@ export default function SceneTemplateModule() {
     }
   }
 
+  async function handleTemplateStatusChange(record, status) {
+    try {
+      if (status === 'DISABLED' && (sceneCountMap[record.id] || 0) > 0) {
+        message.error('该模板已有引用场景，不能停用');
+        return;
+      }
+      const saved = await sceneApi.saveTemplate({
+        ...record,
+        status,
+      });
+      setSelectedTemplateId(saved.id);
+      message.success(
+        status === 'ACTIVE'
+          ? '模板已启用'
+          : status === 'DISABLED'
+            ? '模板已停用'
+            : '模板状态已更新',
+      );
+      await loadAll(false);
+    } catch (error) {
+      message.error(getErrorMessage(error));
+    }
+  }
+
   async function handleDeleteTemplate(id) {
     try {
       await sceneApi.removeTemplate(id);
@@ -938,27 +1084,15 @@ export default function SceneTemplateModule() {
     {
       title: '模板名称',
       key: 'name',
+      width: 280,
       render: (_, record) => (
         <div className="scene-template-name-cell">
           <div className="scene-template-name-row">
             <button type="button" className="scene-template-name-btn" onClick={() => openPreviewDrawer(record)}>
               {record.name}
             </button>
-            {record.builtIn ? <Tag color="gold">内置</Tag> : null}
           </div>
           <div className="scene-template-subline">{record.description || '未填写描述'}</div>
-        </div>
-      ),
-    },
-    {
-      title: '配置摘要',
-      key: 'summary',
-      width: 220,
-      render: (_, record) => (
-        <div className="scene-template-summary-cell">
-          <span>{record.roles.length} 个角色</span>
-          <span>{countEnabledTools(record)} 个工具</span>
-          <span>{record.folderTypes.length} 类目录</span>
         </div>
       ),
     },
@@ -985,15 +1119,52 @@ export default function SceneTemplateModule() {
     {
       title: '操作',
       key: 'actions',
-      width: 210,
-      render: (_, record) => (
-        <Space size={4} onClick={(event) => event.stopPropagation()}>
+      width: 300,
+      render: (_, record) => {
+        const referencedSceneCount = sceneCountMap[record.id] || 0;
+        const disableBlocked = referencedSceneCount > 0;
+        return (
+        <Space size={4} wrap onClick={(event) => event.stopPropagation()}>
           <Button type="link" icon={<EyeOutlined />} onClick={() => openPreviewDrawer(record)}>
             查看
           </Button>
           <Button type="link" icon={<EditOutlined />} onClick={() => openEditDrawer(record)}>
             编辑
           </Button>
+          {record.status !== 'ACTIVE' ? (
+            <Popconfirm
+              title="启用模板"
+              description="启用后新建场景时可直接选择该模板。"
+              onConfirm={() => handleTemplateStatusChange(record, 'ACTIVE')}
+              okText="启用"
+              cancelText="取消"
+            >
+              <Button type="link" icon={<CheckCircleOutlined />}>
+                启用
+              </Button>
+            </Popconfirm>
+          ) : (
+            disableBlocked ? (
+              <span title="该模板已有引用场景，不能停用">
+                <Button type="link" danger icon={<StopOutlined />} disabled>
+                  停用
+                </Button>
+              </span>
+            ) : (
+              <Popconfirm
+                title="停用模板"
+                description="停用后新建场景时不可选择该模板，已创建场景不受影响。"
+                onConfirm={() => handleTemplateStatusChange(record, 'DISABLED')}
+                okText="停用"
+                okButtonProps={{ danger: true }}
+                cancelText="取消"
+              >
+                <Button type="link" danger icon={<StopOutlined />}>
+                  停用
+                </Button>
+              </Popconfirm>
+            )
+          )}
           <Button type="link" icon={<CopyOutlined />} onClick={() => handleDuplicateTemplate(record.id)}>
             复制
           </Button>
@@ -1010,7 +1181,8 @@ export default function SceneTemplateModule() {
             </Button>
           </Popconfirm>
         </Space>
-      ),
+        );
+      },
     },
   ];
 
@@ -1042,11 +1214,6 @@ export default function SceneTemplateModule() {
             <div className="scene-template-stat-label">启用模板</div>
             <div className="scene-template-stat-value">{summary.activeCount}</div>
             <div className="scene-template-stat-hint">新建场景时可直接选择</div>
-          </div>
-          <div className="scene-template-stat-card">
-            <div className="scene-template-stat-label">内置模板</div>
-            <div className="scene-template-stat-value">{summary.builtInCount}</div>
-            <div className="scene-template-stat-hint">覆盖教学、教研、培训、社区等典型场景</div>
           </div>
           <div className="scene-template-stat-card">
             <div className="scene-template-stat-label">已创建场景</div>
@@ -1118,7 +1285,7 @@ export default function SceneTemplateModule() {
       <Drawer
         title={isExistingEditing ? '编辑场景模板' : '新建场景模板'}
         open={drawerOpen}
-        width={1040}
+        width={860}
         onClose={() => {
           setDrawerOpen(false);
           setEditingTemplate(null);
@@ -1161,7 +1328,14 @@ export default function SceneTemplateModule() {
                         <Input placeholder="留空则自动生成" />
                       </Form.Item>
                       <Form.Item label="模板状态" name="status">
-                        <Select options={TEMPLATE_STATUS_OPTIONS} />
+                        <Select
+                          options={TEMPLATE_STATUS_OPTIONS.map((item) => ({
+                            ...item,
+                            disabled: item.value === 'DISABLED'
+                              && editingTemplateSceneCount > 0
+                              && editingTemplate?.status !== 'DISABLED',
+                          }))}
+                        />
                       </Form.Item>
                       <Form.Item className="scene-template-form-span-2" label="模板描述" name="description">
                         <TextArea rows={3} placeholder="描述这个模板适用的场景和目标对象" />
@@ -1222,8 +1396,11 @@ export default function SceneTemplateModule() {
                 children: (
                   <div className="scene-template-mode-page">
                     <div className="scene-template-mode-grid">
-                      {MODE_TAB_PRESET_OPTIONS.map((mode, index) => (
-                        <div key={mode.value} className="scene-template-mode-card">
+                      {watchedModeTabs.map((mode, index) => {
+                        const preset = modePresetMap.get(mode?.key) || null;
+                        const modeLabel = preset?.label || mode?.label || mode?.key || `模式 ${index + 1}`;
+                        return (
+                        <div key={mode.id || mode.key || index} className="scene-template-mode-card">
                           <Form.Item name={['topicPage', 'modeTabs', index, 'id']} hidden>
                             <Input />
                           </Form.Item>
@@ -1231,12 +1408,34 @@ export default function SceneTemplateModule() {
                             <Input />
                           </Form.Item>
                           <div className="scene-template-list-card-head">
-                            <strong>{mode.label}</strong>
-                            <div className="scene-template-mode-toggle">
-                              <span>启用</span>
-                              <Form.Item name={['topicPage', 'modeTabs', index, 'enabled']} valuePropName="checked" noStyle>
-                                <Switch />
-                              </Form.Item>
+                            <strong>{modeLabel}</strong>
+                            <div className="scene-template-mode-head-actions">
+                              <div className="scene-template-mode-sort-actions">
+                                <Button
+                                  type="text"
+                                  size="small"
+                                  icon={<UpOutlined />}
+                                  disabled={index === 0}
+                                  onClick={() => moveModeTab(index, -1)}
+                                >
+                                  上移
+                                </Button>
+                                <Button
+                                  type="text"
+                                  size="small"
+                                  icon={<DownOutlined />}
+                                  disabled={index === watchedModeTabs.length - 1}
+                                  onClick={() => moveModeTab(index, 1)}
+                                >
+                                  下移
+                                </Button>
+                              </div>
+                              <div className="scene-template-mode-toggle">
+                                <span>启用</span>
+                                <Form.Item name={['topicPage', 'modeTabs', index, 'enabled']} valuePropName="checked" noStyle>
+                                  <Switch />
+                                </Form.Item>
+                              </div>
                             </div>
                           </div>
                           <div className="scene-template-form-grid">
@@ -1245,31 +1444,45 @@ export default function SceneTemplateModule() {
                               name={['topicPage', 'modeTabs', index, 'label']}
                               rules={[{ required: true, message: '请输入页签名称' }]}
                             >
-                              <Input placeholder={mode.label} />
+                              <Input placeholder={modeLabel} />
                             </Form.Item>
-                            <div className="scene-template-mode-hint">
-                              {MODE_TAB_HINT_MAP[mode.value] || '可修改名称和模式内文案配置。'}
-                            </div>
-                            <Form.Item label="资料区标题" name={['topicPage', 'modeTabs', index, 'resourcePanelTitle']}>
-                              <Input placeholder="留空则使用上方默认资料区标题" />
-                            </Form.Item>
-                            <Form.Item label="新增资料按钮" name={['topicPage', 'modeTabs', index, 'addResourceLabel']}>
-                              <Input placeholder="留空则使用上方默认新增按钮文案" />
-                            </Form.Item>
-                            <Form.Item label="应用区按钮" name={['topicPage', 'modeTabs', index, 'appLabel']}>
-                              <Input placeholder="留空则使用上方默认应用区按钮文案" />
-                            </Form.Item>
-                            <div />
-                            <Form.Item
-                              className="scene-template-form-span-2"
-                              label="空状态文案"
-                              name={['topicPage', 'modeTabs', index, 'emptyStateText']}
-                            >
-                              <TextArea rows={2} placeholder="留空则使用上方默认空状态文案" />
-                            </Form.Item>
+                            {mode.key === 'home' ? (
+                              <Form.Item
+                                label="首页组件"
+                                name={['topicPage', 'modeTabs', index, 'homeComponent']}
+                                rules={[{ required: true, message: '请选择首页组件' }]}
+                              >
+                                <Select
+                                  placeholder="请选择首页组件"
+                                  options={HOME_COMPONENT_OPTIONS}
+                                  optionFilterProp="label"
+                                  showSearch
+                                />
+                              </Form.Item>
+                            ) : (
+                              <>
+                                <Form.Item label="资料区标题" name={['topicPage', 'modeTabs', index, 'resourcePanelTitle']}>
+                                  <Input placeholder="留空则使用上方默认资料区标题" />
+                                </Form.Item>
+                                <Form.Item label="新增资料按钮" name={['topicPage', 'modeTabs', index, 'addResourceLabel']}>
+                                  <Input placeholder="留空则使用上方默认新增按钮文案" />
+                                </Form.Item>
+                                <Form.Item label="应用区按钮" name={['topicPage', 'modeTabs', index, 'appLabel']}>
+                                  <Input placeholder="留空则使用上方默认应用区按钮文案" />
+                                </Form.Item>
+                                <Form.Item
+                                  className="scene-template-form-span-2"
+                                  label="空状态文案"
+                                  name={['topicPage', 'modeTabs', index, 'emptyStateText']}
+                                >
+                                  <TextArea rows={2} placeholder="留空则使用上方默认空状态文案" />
+                                </Form.Item>
+                              </>
+                            )}
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 ),

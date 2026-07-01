@@ -223,6 +223,12 @@ export const MODE_TAB_PRESET_OPTIONS = [
   { value: 'assessment', label: '考核配置模式' },
 ];
 
+export const HOME_COMPONENT_OPTIONS = [
+  { value: 'TEACHING_HOME_1', label: '教学首页1' },
+  { value: 'TEACHING_HOME_2', label: '教学首页2' },
+  { value: 'TRAINING_HOME_1', label: '培训首页1' },
+];
+
 export const VERSION_CREATE_MODE_OPTIONS = [
   { value: 'COPY_ACTIVE', label: '继承当前版本内容' },
   { value: 'EMPTY', label: '创建空白版本' },
@@ -253,6 +259,14 @@ const LEGACY_METADATA_FIELD_TYPE_MAP = Object.freeze({
 const MODE_TAB_LABEL_MAP = Object.fromEntries(
   MODE_TAB_PRESET_OPTIONS.map((item) => [item.value, item.label]),
 );
+const HOME_COMPONENT_TEMPLATE_NAME_MAP = Object.freeze({
+  '标准主页模板': 'TEACHING_HOME_1',
+  '课程主页模板': 'TEACHING_HOME_1',
+  '教研主页模板': 'TEACHING_HOME_2',
+  '课程创作主页模板': 'TEACHING_HOME_2',
+  '频道主页模板': 'TEACHING_HOME_2',
+  '培训营主页模板': 'TRAINING_HOME_1',
+});
 
 const DEFAULT_VERSIONING_CONFIG = Object.freeze({
   enabled: false,
@@ -655,6 +669,10 @@ export function getStatusRuleControlLabel(value) {
   return optionLabel(STATUS_RULE_CONTROL_OPTIONS, value, value || '-');
 }
 
+export function getHomeComponentLabel(value) {
+  return optionLabel(HOME_COMPONENT_OPTIONS, value, '');
+}
+
 function normalizeStatusPresetSceneType(sceneType) {
   return Object.prototype.hasOwnProperty.call(SCENE_TYPE_STATUS_PRESETS, sceneType)
     ? sceneType
@@ -693,7 +711,33 @@ function getDefaultRoleAuthorization(sceneType, roleKey) {
   return BUILT_IN_ROLE_AUTHORIZATION[`${sceneType}:${roleKey}`] || null;
 }
 
-function normalizeModeTab(modeTab, preset, index) {
+function getDefaultHomeComponent(sceneType = 'CUSTOM', homepageTemplateName = '') {
+  const normalizedTemplateName = trimToNull(homepageTemplateName);
+  if (normalizedTemplateName && HOME_COMPONENT_TEMPLATE_NAME_MAP[normalizedTemplateName]) {
+    return HOME_COMPONENT_TEMPLATE_NAME_MAP[normalizedTemplateName];
+  }
+  switch (sceneType) {
+    case 'TRAINING':
+      return 'TRAINING_HOME_1';
+    case 'TEACHING':
+      return 'TEACHING_HOME_1';
+    case 'RESEARCH':
+    case 'COMMUNITY':
+    case 'CUSTOM':
+    default:
+      return 'TEACHING_HOME_2';
+  }
+}
+
+function normalizeHomeComponentValue(value, sceneType = 'CUSTOM', homepageTemplateName = '') {
+  const normalizedValue = trimToNull(value);
+  if (HOME_COMPONENT_OPTIONS.some((item) => item.value === normalizedValue)) {
+    return normalizedValue;
+  }
+  return getDefaultHomeComponent(sceneType, homepageTemplateName);
+}
+
+function normalizeModeTab(modeTab, preset, index, sceneType = 'CUSTOM', homepageTemplateName = '') {
   return {
     id: modeTab?.id || `mode_${preset.value}_${index + 1}`,
     key: preset.value,
@@ -703,16 +747,19 @@ function normalizeModeTab(modeTab, preset, index) {
     addResourceLabel: trimToNull(modeTab?.addResourceLabel) || '',
     appLabel: trimToNull(modeTab?.appLabel) || '',
     emptyStateText: trimToNull(modeTab?.emptyStateText) || '',
+    homeComponent: preset.value === 'home'
+      ? normalizeHomeComponentValue(modeTab?.homeComponent, sceneType, homepageTemplateName)
+      : '',
   };
 }
 
-function createModeTabs(labels = {}, modeConfigs = {}) {
+function createModeTabs(labels = {}, modeConfigs = {}, sceneType = 'CUSTOM', homepageTemplateName = '') {
   return MODE_TAB_PRESET_OPTIONS.map((item, index) => normalizeModeTab({
     ...(modeConfigs[item.value] || {}),
     key: item.value,
     label: labels[item.value] || modeConfigs[item.value]?.label || item.label,
     enabled: modeConfigs[item.value]?.enabled !== false,
-  }, item, index));
+  }, item, index, sceneType, homepageTemplateName));
 }
 
 function buildMissingModeTabConfig(preset, hasConfiguredTabs) {
@@ -724,17 +771,40 @@ function buildMissingModeTabConfig(preset, hasConfiguredTabs) {
   return { key: preset.value, enabled: false };
 }
 
-function ensureModeTabs(modeTabs) {
+function orderModeTabPresets(modeTabs) {
+  const orderedPresets = [];
+  const seenKeys = new Set();
+
+  (Array.isArray(modeTabs) ? modeTabs : []).forEach((item) => {
+    const preset = MODE_TAB_PRESET_OPTIONS.find((option) => option.value === item?.key);
+    if (!preset || seenKeys.has(preset.value)) return;
+    orderedPresets.push(preset);
+    seenKeys.add(preset.value);
+  });
+
+  MODE_TAB_PRESET_OPTIONS.forEach((preset) => {
+    if (seenKeys.has(preset.value)) return;
+    orderedPresets.push(preset);
+    seenKeys.add(preset.value);
+  });
+
+  return orderedPresets;
+}
+
+function ensureModeTabs(modeTabs, sceneType = 'CUSTOM', homepageTemplateName = '') {
   const hasConfiguredTabs = Array.isArray(modeTabs);
+  const configuredTabs = hasConfiguredTabs ? modeTabs : [];
   const byKey = new Map(
-    (hasConfiguredTabs ? modeTabs : [])
+    configuredTabs
       .filter((item) => item !== null && typeof item !== 'undefined')
       .map((item) => [item?.key, item]),
   );
-  return MODE_TAB_PRESET_OPTIONS.map((item, index) => normalizeModeTab(
+  return orderModeTabPresets(configuredTabs).map((item, index) => normalizeModeTab(
     byKey.get(item.value) || buildMissingModeTabConfig(item, hasConfiguredTabs),
     item,
     index,
+    sceneType,
+    homepageTemplateName,
   ));
 }
 
@@ -1125,7 +1195,7 @@ function normalizeTemplate(input = {}) {
       addResourceLabel: trimToNull(input.topicPage?.addResourceLabel) || '添加资料',
       appLabel: trimToNull(input.topicPage?.appLabel) || '应用',
       emptyStateText: trimToNull(input.topicPage?.emptyStateText) || '暂无资料，右键新建文件夹或添加资料',
-      modeTabs: ensureModeTabs(input.topicPage?.modeTabs),
+      modeTabs: ensureModeTabs(input.topicPage?.modeTabs, sceneType, input.homepage?.templateName),
     },
     roles,
     metadataFields: (Array.isArray(input.metadataFields) ? input.metadataFields : []).map(normalizeMetadataField),
@@ -2099,7 +2169,7 @@ export function createTemplateDraft(sceneType = 'CUSTOM') {
     roles,
     statusRules: buildSceneTypeStatusRules(sceneType, roles),
     topicPage: {
-      modeTabs: createModeTabs(),
+      modeTabs: createModeTabs({}, {}, sceneType),
     },
   });
 }
@@ -2115,6 +2185,12 @@ export function saveSceneTemplate(template) {
   });
   if (!trimToNull(normalized.name)) {
     throw new Error('模板名称不能为空');
+  }
+  if (existing?.status !== 'DISABLED' && normalized.status === 'DISABLED') {
+    const referenced = readList(SCENE_STORAGE_KEY).some((item) => item?.templateId === normalized.id);
+    if (referenced) {
+      throw new Error('该模板已有引用场景，不能停用');
+    }
   }
   assertUniqueCode(list, 'templateCode', normalized.templateCode, normalized.id, '模板编码');
   const nextList = existing

@@ -171,6 +171,48 @@ function getInitialHashRoute() {
   return parseHashRoute(window.location.hash);
 }
 
+const APP_HASH_ROUTE_PAGES = new Set([
+  'knowledge-graph',
+  'knowledge-graph-full',
+  'capability-model',
+  'capability-model-full',
+]);
+
+function replaceAppHash(nextHash = '') {
+  if (typeof window === 'undefined') return;
+  const normalizedHash = String(nextHash || '').replace(/^#/, '');
+  const nextUrl = `${window.location.pathname}${window.location.search}${normalizedHash ? `#${normalizedHash}` : ''}`;
+  const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  if (currentUrl === nextUrl) return;
+  window.history.replaceState(window.history.state, '', nextUrl);
+}
+
+function buildPersistentHashRoute(page, knowledgeGraphEntry, capabilityModelEntry) {
+  if (page === 'knowledge-graph-full' && knowledgeGraphEntry?.graphId) {
+    const params = new URLSearchParams({
+      graphId: knowledgeGraphEntry.graphId,
+      mode: knowledgeGraphEntry.mode || 'curriculum',
+    });
+    if (knowledgeGraphEntry.collectionId) {
+      params.set('collectionId', knowledgeGraphEntry.collectionId);
+    }
+    return `knowledge-graph-full?${params.toString()}`;
+  }
+
+  if (page === 'capability-model-full' && capabilityModelEntry?.modelId) {
+    const params = new URLSearchParams({
+      modelId: capabilityModelEntry.modelId,
+      mode: capabilityModelEntry.mode || 'preview',
+    });
+    if (capabilityModelEntry.requestId) {
+      params.set('requestId', capabilityModelEntry.requestId);
+    }
+    return `capability-model-full?${params.toString()}`;
+  }
+
+  return '';
+}
+
 function getInitialActiveIconKey() {
   const route = getInitialHashRoute();
   if (route.page === 'knowledge-graph-full') {
@@ -695,6 +737,21 @@ function App() {
   }, [sceneSiderWidth]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const nextHash = buildPersistentHashRoute(currentPage, knowledgeGraphEntry, capabilityModelEntry);
+    if (nextHash) {
+      replaceAppHash(nextHash);
+      return;
+    }
+
+    const route = parseHashRoute(window.location.hash);
+    if (APP_HASH_ROUTE_PAGES.has(route.page)) {
+      replaceAppHash('');
+    }
+  }, [capabilityModelEntry, currentPage, knowledgeGraphEntry]);
+
+  useEffect(() => {
     const pageId = currentPage === 'detail' && selectedScene ? 'space_detail' : currentPage;
     const pageName = currentPage === 'detail' && selectedScene ? selectedScene.name : currentPage;
     const module = currentPage === 'home' || currentPage === 'detail'
@@ -792,20 +849,6 @@ function App() {
       requestId: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     } : null;
     setKnowledgeGraphEntry(nextEntry);
-    if (typeof window !== 'undefined') {
-      if (nextEntry?.graphId) {
-        const params = new URLSearchParams({
-          graphId: nextEntry.graphId,
-          mode: nextEntry.mode || 'curriculum',
-        });
-        if (nextEntry.collectionId) {
-          params.set('collectionId', nextEntry.collectionId);
-        }
-        window.location.hash = `knowledge-graph?${params.toString()}`;
-      } else {
-        window.location.hash = 'knowledge-graph';
-      }
-    }
     setCurrentPage('knowledge-graph');
   }, []);
 

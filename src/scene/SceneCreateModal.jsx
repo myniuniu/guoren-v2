@@ -3,6 +3,7 @@ import { Form, Input, Modal, Select, Tag } from 'antd';
 import {
   SCENE_VISIBILITY_OPTIONS,
   TOOL_OPTIONS,
+  getHomeComponentLabel,
   getSceneTypeLabel,
 } from './api';
 import { getSceneThemeCoverStyle } from './themeCovers';
@@ -42,8 +43,6 @@ export default function SceneCreateModal({
     return [...templates].sort((a, b) => {
       if (a.status === 'ACTIVE' && b.status !== 'ACTIVE') return -1;
       if (a.status !== 'ACTIVE' && b.status === 'ACTIVE') return 1;
-      if (a.builtIn && !b.builtIn) return -1;
-      if (!a.builtIn && b.builtIn) return 1;
       return String(a.name).localeCompare(String(b.name));
     });
   }, [templates]);
@@ -116,6 +115,10 @@ export default function SceneCreateModal({
   };
 
   const templateTools = getTemplateToolSummary(selectedTemplate);
+  const selectedTemplateHomeMode = selectedTemplate?.topicPage?.modeTabs?.find((item) => item?.key === 'home') || null;
+  const selectedTemplateHomeComponentLabel = getHomeComponentLabel(selectedTemplateHomeMode?.homeComponent)
+    || selectedTemplate?.homepage?.templateName
+    || '标准主页模板';
 
   return (
     <Modal
@@ -183,7 +186,6 @@ export default function SceneCreateModal({
                       <div className="scene-create-template-card-body">
                         <div className="scene-create-template-card-title-row">
                           <span className="scene-create-template-card-title">{template.name}</span>
-                          {template.builtIn ? <Tag color="gold">内置</Tag> : null}
                         </div>
                         <div className="scene-create-template-card-meta">
                           {getSceneTypeLabel(template.sceneType)}
@@ -279,7 +281,7 @@ export default function SceneCreateModal({
                     <div className="scene-create-inline-meta">
                       <span>资料区：{selectedTemplate.topicPage.resourcePanelTitle}</span>
                       <span>新增按钮：{selectedTemplate.topicPage.addResourceLabel}</span>
-                      <span>主页模板：{selectedTemplate.homepage.templateName}</span>
+                      <span>首页组件：{selectedTemplateHomeComponentLabel}</span>
                     </div>
                     <div className="scene-create-tag-list">
                       {selectedTemplate.topicPage.modeTabs.filter((item) => item.enabled !== false).map((item) => (

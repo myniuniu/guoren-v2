@@ -88,7 +88,7 @@ import {
   updateResource,
   updateVersionTagLibrary,
 } from './versionStore';
-import { buildSceneInitialVersionData, normalizeVersioningConfig } from './scene/api';
+import { buildSceneInitialVersionData, getHomeComponentLabel, normalizeVersioningConfig } from './scene/api';
 import { buildSceneResourceArchiveMeta, isSceneResourceArchived } from './shared/sceneGrowthRecords';
 import { getTopicAdminConfig } from './studyClub/adminTopicMapping';
 import { capabilityModelApi } from './capabilityModel/api';
@@ -653,12 +653,19 @@ function TopicDetail({
   const isCourseStudioTopic = isCourseCreationCenterTopic(sceneConfig, topicTitle);
   const tagConfig = topicAdminConfig?.tagConfig || null;
   const sceneTheme = sceneConfig?.theme || null;
+  const topicModeTabs = Array.isArray(sceneConfig?.topicPage?.modeTabs)
+    ? sceneConfig.topicPage.modeTabs
+    : [];
   const currentModeConfig = useMemo(() => {
-    const configuredModes = Array.isArray(sceneConfig?.topicPage?.modeTabs)
-      ? sceneConfig.topicPage.modeTabs
-      : [];
-    return configuredModes.find((item) => item?.key === activeTab) || null;
-  }, [activeTab, sceneConfig]);
+    return topicModeTabs.find((item) => item?.key === activeTab) || null;
+  }, [activeTab, topicModeTabs]);
+  const homeModeConfig = useMemo(
+    () => topicModeTabs.find((item) => item?.key === 'home') || null,
+    [topicModeTabs],
+  );
+  const selectedHomeComponentLabel = getHomeComponentLabel(homeModeConfig?.homeComponent)
+    || sceneConfig?.homepage?.templateName
+    || '标准主页模板';
   const resourcePanelTitle = currentModeConfig?.resourcePanelTitle || sceneConfig?.topicPage?.resourcePanelTitle || '资料';
   const addResourceLabel = currentModeConfig?.addResourceLabel || sceneConfig?.topicPage?.addResourceLabel || '添加资料';
   const appLabel = currentModeConfig?.appLabel || sceneConfig?.topicPage?.appLabel || '应用';
@@ -4190,7 +4197,7 @@ function TopicDetail({
             })}
           >
             <div className="topic-home-cover-top">
-              <span className="topic-home-cover-badge">{sceneConfig.homepage?.templateName || '标准主页模板'}</span>
+              <span className="topic-home-cover-badge">{selectedHomeComponentLabel}</span>
               <span className="topic-home-cover-glow" />
             </div>
             <div className="topic-home-cover-bottom">
@@ -4203,7 +4210,7 @@ function TopicDetail({
             <div className="topic-home-intro-copy">
               <div className="topic-home-intro-title">{homeIntroText}</div>
               <div className="topic-home-intro-subtitle">
-                当前首页模板为「{sceneConfig.homepage?.templateName || '标准主页模板'}」，支持 {homeIntroModeLabel}。
+                当前首页组件为「{selectedHomeComponentLabel}」，支持 {homeIntroModeLabel}。
               </div>
             </div>
             <span className="topic-home-intro-edit">
