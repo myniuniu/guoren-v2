@@ -369,13 +369,15 @@ function App() {
     const baseItems = [
       {
         key: 'new-scene',
-        label: '+ 新建场景',
+        icon: <PlusOutlined />,
+        label: '新建场景',
         className: 'new-scene-item',
       },
       {
         key: 'home',
         icon: <HomeOutlined />,
         label: '首页',
+        className: 'scene-home-item',
       },
       ...sceneMenuGroups.map((group) => ({
         key: group.key,
@@ -560,7 +562,7 @@ function App() {
 
   const updateSiderMenuIndicator = useCallback(() => {
     const container = siderMenuShellRef.current;
-    const target = container?.querySelector('.ant-menu-item-selected:not(.new-scene-item)') || null;
+    const target = container?.querySelector('.ant-menu-item-selected:not(.new-scene-item):not(.scene-home-item)') || null;
     updateIndicatorPosition(container, target, setSiderMenuIndicatorStyle);
   }, [updateIndicatorPosition]);
 
