@@ -4494,8 +4494,8 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                             <div className="finder-preview-folder-hint">文件夹包含 {previewFolderCount} 个项目</div>
                             <Button
                               type="primary"
+                              className="finder-preview-folder-add-btn"
                               icon={<PlusOutlined />}
-                              style={{ marginTop: 16 }}
                               onClick={() => {
                                 setAddDialogParentKey(previewItem.key);
                                 setAddDialogOpen(true);
