@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button, Checkbox, Dropdown, Empty, Input, Select } from 'antd';
 import {
@@ -246,6 +246,14 @@ export function SpaceResourceImportBrowser({
   const lastClickedIndexRef = useRef(null);
   const detailColResizeRef = useRef(null);
   const shellRef = useRef(null);
+  const listBodyRef = useRef(null);
+  const rowNodeMapRef = useRef(new Map());
+  const [selectionIndicator, setSelectionIndicator] = useState({
+    visible: false,
+    top: 0,
+    height: 0,
+    key: null,
+  });
 
   const organizations = useMemo(() => getOrganizations(data), [data]);
   const libraryId = scope === 'personal' ? 'personal' : organizationId;
@@ -570,6 +578,45 @@ export function SpaceResourceImportBrowser({
   const selectedFileCount = selectedItems.length - selectedFolderCount;
   const canNavigateBack = navIndex > 0;
   const canNavigateForward = navIndex < navHistory.length - 1;
+
+  useLayoutEffect(() => {
+    if (!active) {
+      setSelectionIndicator((prev) => (prev.visible ? { visible: false, top: 0, height: 0, key: null } : prev));
+      return;
+    }
+    if (selectedKeys.length !== 1) {
+      setSelectionIndicator((prev) => (prev.visible ? { ...prev, visible: false, key: null } : prev));
+      return;
+    }
+    const selectedKey = selectedKeys[0];
+    if (!displayItems.some((item) => item.key === selectedKey)) {
+      setSelectionIndicator((prev) => (prev.visible ? { ...prev, visible: false, key: null } : prev));
+      return;
+    }
+    const listBodyNode = listBodyRef.current;
+    const rowNode = rowNodeMapRef.current.get(selectedKey);
+    if (!listBodyNode || !rowNode) return;
+    const listBodyRect = listBodyNode.getBoundingClientRect();
+    const rowRect = rowNode.getBoundingClientRect();
+    const nextTop = Math.max(0, rowRect.top - listBodyRect.top);
+    const nextHeight = rowRect.height;
+    setSelectionIndicator((prev) => {
+      if (
+        prev.visible
+        && prev.key === selectedKey
+        && Math.abs(prev.top - nextTop) < 0.5
+        && Math.abs(prev.height - nextHeight) < 0.5
+      ) {
+        return prev;
+      }
+      return {
+        visible: true,
+        top: nextTop,
+        height: nextHeight,
+        key: selectedKey,
+      };
+    });
+  }, [active, displayItems, detailGridTemplateColumns, selectedKeys]);
 
   const handleBack = () => {
     if (!canNavigateBack) return;
@@ -1031,7 +1078,18 @@ export function SpaceResourceImportBrowser({
               </div>
             )}
 
-            <div className="space-resource-import-list-body">
+            <div
+              ref={listBodyRef}
+              className={`space-resource-import-list-body ${selectionIndicator.visible && selectedKeys.length === 1 ? 'has-single-selection' : ''}`}
+            >
+              <div
+                className={`space-resource-import-selection-indicator ${selectionIndicator.visible ? 'is-visible' : ''}`}
+                style={{
+                  transform: `translateY(${selectionIndicator.top}px)`,
+                  height: `${selectionIndicator.height}px`,
+                }}
+                aria-hidden="true"
+              />
               {displayItems.length ? displayItems.map((item, index) => {
                 const isSelected = selectedKeys.includes(item.key);
                 const isExpanded = expandedFolderKeys.has(item.key);
@@ -1039,6 +1097,10 @@ export function SpaceResourceImportBrowser({
                 return (
                   <div
                     key={item.key}
+                    ref={(node) => {
+                      if (node) rowNodeMapRef.current.set(item.key, node);
+                      else rowNodeMapRef.current.delete(item.key);
+                    }}
                     className={`space-resource-import-row ${isSelected ? 'is-selected' : ''} ${isRowDraggable ? 'is-draggable' : ''}`}
                     style={{ gridTemplateColumns: detailGridTemplateColumns }}
                     onClick={(event) => handleSelectRow(item, index, event)}
