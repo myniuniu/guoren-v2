@@ -401,7 +401,7 @@ function buildResourceLibrarySourceSnapshot(baseSnapshot, resourceLibData) {
   if (!baseSnapshot) return null;
 
   const allItems = getAllItemsAcrossLibraries(resourceLibData)
-    .filter((item) => !item.isFolder)
+    .filter((item) => !item.isFolder && !['knowledgeGraph', 'capabilityModel'].includes(item.fileType))
     .sort((left, right) => String(right.lastOpenedAt || right.lastEdit || '').localeCompare(String(left.lastOpenedAt || left.lastEdit || '')));
 
   const recordsBySource = {
@@ -980,7 +980,7 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
       const nextTeacherProfile = nextEvaluationTeachers.find((item) => item.name === (profileSnapshot?.profile?.name || PROFILE_BASE.name))
         || buildFallbackTeacherProfile(profileSnapshot?.profile);
       const importCandidates = getAllItemsAcrossLibraries(resourceLibData)
-        .filter((item) => !item.isFolder)
+        .filter((item) => !item.isFolder && !['knowledgeGraph', 'capabilityModel'].includes(item.fileType))
         .map((item) => {
           const fallbackRows = (profileSnapshot?.mappingRows || []).slice(0, 2);
           const context = resolveResourceCapabilityContext(item, profileSnapshot, fallbackRows);

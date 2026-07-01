@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Empty, Modal, Tag, Tooltip, message } from 'antd';
 import {
   ApartmentOutlined,
@@ -53,6 +53,8 @@ const MIN_RESOURCE_PANEL_FRAME = Object.freeze({
   width: 380,
   height: 360,
 });
+const EMPTY_OBJECT = Object.freeze({});
+const EMPTY_ARRAY = Object.freeze([]);
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -171,6 +173,14 @@ function buildPreviewPlacements(pointPlacements, preview) {
 
 function isSamePosition(left, right) {
   return Number(left?.x || 0) === Number(right?.x || 0) && Number(left?.y || 0) === Number(right?.y || 0);
+}
+
+function isSameFrame(left, right) {
+  return Number(left?.width || 0) === Number(right?.width || 0) && Number(left?.height || 0) === Number(right?.height || 0);
+}
+
+function isSamePanelPosition(left, right) {
+  return Number(left?.left || 0) === Number(right?.left || 0) && Number(left?.top || 0) === Number(right?.top || 0);
 }
 
 function isSameStyle(left, right) {
@@ -557,6 +567,7 @@ function StructuredKnowledgeGraphView({
   interactiveReadOnly = false,
   onPreviewBinding = null,
 }) {
+  const passiveReadOnly = readOnly && !interactiveReadOnly;
   const [resourcePanelOpen, setResourcePanelOpen] = useState(false);
   const [resourcePanelFrame, setResourcePanelFrame] = useState(DEFAULT_RESOURCE_PANEL_FRAME);
   const [resourcePanelPosition, setResourcePanelPosition] = useState(DEFAULT_RESOURCE_PANEL_POSITION);
@@ -599,21 +610,22 @@ function StructuredKnowledgeGraphView({
   }, [resourcePanelPosition]);
 
   useEffect(() => {
-    if (!resourcePanelOpen) return;
+    if (readOnly || !resourcePanelOpen) return;
     const hostNode = resourcePanelHostRef.current;
     const nextFrame = clampResourcePanelFrame(resourcePanelFrameRef.current, hostNode);
     const nextPosition = getDefaultResourcePanelPosition(hostNode, nextFrame);
-    setResourcePanelFrame(nextFrame);
-    setResourcePanelPosition(nextPosition);
-  }, [resourcePanelOpen]);
+    setResourcePanelFrame((current) => (isSameFrame(current, nextFrame) ? current : nextFrame));
+    setResourcePanelPosition((current) => (isSamePanelPosition(current, nextPosition) ? current : nextPosition));
+  }, [readOnly, resourcePanelOpen]);
 
   useEffect(() => {
+    if (readOnly) return undefined;
     const handleViewportResize = () => {
       const hostNode = resourcePanelHostRef.current;
       const nextFrame = clampResourcePanelFrame(resourcePanelFrameRef.current, hostNode);
       const nextPosition = clampResourcePanelPosition(resourcePanelPositionRef.current, nextFrame, hostNode);
-      setResourcePanelFrame(nextFrame);
-      setResourcePanelPosition(nextPosition);
+      setResourcePanelFrame((current) => (isSameFrame(current, nextFrame) ? current : nextFrame));
+      setResourcePanelPosition((current) => (isSamePanelPosition(current, nextPosition) ? current : nextPosition));
     };
     handleViewportResize();
     const hostNode = resourcePanelHostRef.current;
@@ -624,7 +636,7 @@ function StructuredKnowledgeGraphView({
     const observer = new ResizeObserver(() => handleViewportResize());
     observer.observe(hostNode);
     return () => observer.disconnect();
-  }, []);
+  }, [readOnly]);
 
   useEffect(() => () => {
     const resizeState = resourceResizeStateRef.current;
@@ -649,17 +661,18 @@ function StructuredKnowledgeGraphView({
     [points],
   );
 
+  const stageSource = structuredView?.stages || EMPTY_ARRAY;
   const stages = useMemo(
-    () => [...(structuredView?.stages || [])].sort((left, right) => (left.sortNo || 0) - (right.sortNo || 0)),
-    [structuredView?.stages],
+    () => [...stageSource].sort((left, right) => (left.sortNo || 0) - (right.sortNo || 0)),
+    [stageSource],
   );
 
-  const pointPlacements = structuredView?.pointPlacements || {};
+  const pointPlacements = structuredView?.pointPlacements || EMPTY_OBJECT;
   const effectivePointPlacements = useMemo(
     () => buildPreviewPlacements(pointPlacements, dragPreview),
     [dragPreview, pointPlacements],
   );
-  const stagePositions = structuredView?.stagePositions || {};
+  const stagePositions = structuredView?.stagePositions || EMPTY_OBJECT;
   const effectiveStagePositions = useMemo(() => {
     if (!stageDragPreview?.stageId) return stagePositions;
     return {
@@ -667,7 +680,7 @@ function StructuredKnowledgeGraphView({
       [stageDragPreview.stageId]: stageDragPreview.position,
     };
   }, [stageDragPreview, stagePositions]);
-  const stageEdges = structuredView?.stageEdges || [];
+  const stageEdges = structuredView?.stageEdges || EMPTY_ARRAY;
 
   const stagePointEntries = useMemo(() => {
     const grouped = {};
@@ -709,7 +722,7 @@ function StructuredKnowledgeGraphView({
   const stageIdSet = useMemo(() => new Set(stages.map((stage) => stage.id)), [stages]);
   const pointIdSet = useMemo(() => new Set(points.map((point) => point.id)), [points]);
 
-  const handleMovePointByStep = (pointId, direction) => {
+  const handleMovePointByStep = useCallback((pointId, direction) => {
     const placement = pointPlacements[pointId];
     if (!placement?.stageId) return;
     const stageEntries = stagePointEntries[placement.stageId] || [];
@@ -718,7 +731,7 @@ function StructuredKnowledgeGraphView({
     const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
     if (targetIndex < 0 || targetIndex >= stageEntries.length) return;
     onMovePoint?.(pointId, placement.stageId, targetIndex);
-  };
+  }, [onMovePoint, pointPlacements, stagePointEntries]);
 
   const resolvePointDropPreview = (node) => {
     if (!node || !pointIdSet.has(node.id)) return null;
@@ -905,7 +918,9 @@ function StructuredKnowledgeGraphView({
     onCreatePoint,
     onDeletePoint,
     onDeleteStage,
-    onMovePoint,
+    handleMovePointByStep,
+    interactiveReadOnly,
+    onPreviewBinding,
     readOnly,
     dragPreview,
     effectivePointPlacements,
@@ -965,12 +980,29 @@ function StructuredKnowledgeGraphView({
   }, [hoveredStageEdgeId, selection, stageEdges]);
 
   useEffect(() => {
-    setRenderNodes((current) => reconcileFlowNodes(current, nodes));
-  }, [nodes]);
+    if (passiveReadOnly) return undefined;
+    const frameId = window.requestAnimationFrame(() => {
+      setRenderNodes((current) => {
+        const next = reconcileFlowNodes(current, nodes);
+        return isSameArray(current, next) ? current : next;
+      });
+    });
+    return () => window.cancelAnimationFrame(frameId);
+  }, [nodes, passiveReadOnly]);
 
   useEffect(() => {
-    setRenderEdges((current) => reconcileFlowEdges(current, edges));
-  }, [edges]);
+    if (passiveReadOnly) return undefined;
+    const frameId = window.requestAnimationFrame(() => {
+      setRenderEdges((current) => {
+        const next = reconcileFlowEdges(current, edges);
+        return isSameArray(current, next) ? current : next;
+      });
+    });
+    return () => window.cancelAnimationFrame(frameId);
+  }, [edges, passiveReadOnly]);
+
+  const flowNodes = passiveReadOnly ? nodes : renderNodes;
+  const flowEdges = passiveReadOnly ? edges : renderEdges;
 
   const handleNodesChange = (changes) => {
     setRenderNodes((current) => applyNodeChanges(changes, current));
@@ -1157,7 +1189,7 @@ function StructuredKnowledgeGraphView({
                 onClose={() => setResourcePanelOpen(false)}
                 onToolbarMouseDown={handleResourcePanelToolbarMouseDown}
                 onResizeMouseDown={handleResourcePanelResizeStart}
-                excludeFileTypes={['knowledgeGraph']}
+                excludeFileTypes={['knowledgeGraph', 'capabilityModel']}
                 shellStyle={{ height: '100%' }}
                 defaultVisibleColumnKeys={NAME_ONLY_COLUMN_KEYS}
                 allowColumnVisibilityMenu={false}
@@ -1203,8 +1235,8 @@ function StructuredKnowledgeGraphView({
             </div>
           ) : (
             <ReactFlow
-              nodes={renderNodes}
-              edges={renderEdges}
+              nodes={flowNodes}
+              edges={flowEdges}
               fitView
               nodesDraggable={!readOnly}
               nodesConnectable={!readOnly}
@@ -1217,8 +1249,8 @@ function StructuredKnowledgeGraphView({
               connectionDragThreshold={6}
               onlyRenderVisibleElements
               elevateNodesOnSelect={false}
-              onNodesChange={handleNodesChange}
-              onEdgesChange={handleEdgesChange}
+              onNodesChange={passiveReadOnly ? undefined : handleNodesChange}
+              onEdgesChange={passiveReadOnly ? undefined : handleEdgesChange}
               onNodeClick={readOnly && !interactiveReadOnly ? undefined : (_, node) => {
                 onSelectionChange?.({
                   type: stageIdSet.has(node.id) ? 'stage' : 'point',

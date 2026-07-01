@@ -43,6 +43,30 @@ import {
   removeGraph as removeKnowledgeGraph,
   updateGraph as updateKnowledgeGraph,
 } from '../knowledgeGraph/store';
+import {
+  capabilityModelApi,
+  createCapabilityModelDraft,
+  createDefaultLevelScheme,
+  createEmptyCapabilityDimension,
+  createEmptyCapabilityItem,
+  getCapabilityModelStoreEventName,
+} from '../capabilityModel/api';
+import {
+  CapabilityModelEditorPanel,
+  CapabilityModelPreview,
+} from '../capabilityModel/CapabilityModelShared';
+import {
+  buildCapabilityModelResourceMeta,
+  cloneCapabilityModelDraft,
+  createCapabilityModelStarterDraft,
+  getActiveCapabilityFrameworkSelection,
+  moveCapabilityModelListItem,
+  syncDimensionsToLevelScheme,
+} from '../capabilityModel/shared';
+import {
+  getRoleLevel,
+  getSequenceForRole,
+} from '../shared/profileEvidence';
 import KnowledgeGraphModule from '../knowledgeGraph/KnowledgeGraphModule';
 import StructuredKnowledgeGraphView from '../knowledgeGraph/StructuredKnowledgeGraphView';
 import ResourceLibraryOverlays from './ResourceLibraryOverlays.jsx';
@@ -76,6 +100,7 @@ const KNOWLEDGE_GRAPH_POINT_TYPE_LABEL_MAP = Object.fromEntries(
 const KNOWLEDGE_GRAPH_RELATION_TYPE_LABEL_MAP = Object.fromEntries(
   RELATION_TYPE_OPTIONS.map((item) => [item.value, item.label]),
 );
+const getActionErrorMessage = (error, fallback) => error?.message || fallback;
 
 const isEditableTarget = (target) => (
   target instanceof HTMLElement
@@ -147,8 +172,18 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
   const [navIndex, setNavIndex] = useState(0);
   const [viewMode, setViewMode] = useState('detail'); // detail | column
   const [knowledgeGraphPreviewMode, setKnowledgeGraphPreviewMode] = useState('preview');
+  const [capabilityModelPreviewMode, setCapabilityModelPreviewMode] = useState('preview');
   const [editingKnowledgeGraphTitleKey, setEditingKnowledgeGraphTitleKey] = useState(null);
   const [editingKnowledgeGraphTitleValue, setEditingKnowledgeGraphTitleValue] = useState('');
+  const [capabilityModelCatalog, setCapabilityModelCatalog] = useState({
+    industries: [],
+    roles: [],
+    sequences: [],
+    models: [],
+  });
+  const [capabilityModelEditorDraft, setCapabilityModelEditorDraft] = useState(null);
+  const [capabilityModelActiveDimensionId, setCapabilityModelActiveDimensionId] = useState(undefined);
+  const [capabilityModelActiveItemId, setCapabilityModelActiveItemId] = useState(undefined);
   const [expandedFolders, setExpandedFolders] = useState(new Set()); // 详情视图中展开的文件夹 key
   const [sortBy, setSortBy] = useState('name'); // name | kind | date | size | tag
   const [sortOrder, setSortOrder] = useState('asc'); // asc | desc
@@ -166,6 +201,10 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
   const detailColResizeRef = useRef(null);
   const knowledgeGraphEditorRef = useRef(null);
   const knowledgeGraphTitleInputRef = useRef(null);
+  const [capabilityModelForm] = Form.useForm();
+  const watchedCapabilityRoleId = Form.useWatch('roleId', capabilityModelForm);
+  const watchedCapabilityIndustryId = Form.useWatch('industryId', capabilityModelForm);
+  const watchedCreateCapabilityRoleId = Form.useWatch('roleId', addForm);
   const handleDetailColResizeStart = (field, e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -250,6 +289,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
   // 分栏视图状态：各层打开的文件夹 key 路径
   const [columnPath, setColumnPath] = useState([null]); // [null, folderKey1, folderKey2, ...]
   const [columnSelectedItem, setColumnSelectedItem] = useState(null); // 分栏视图中选中的文件
+  const pendingCapabilityModelEditKeyRef = useRef(null);
   // 侧栏宽度拖拽
   const [sidebarWidth, setSidebarWidth] = useState(200);
   const sidebarDragRef = useRef(null);
@@ -650,6 +690,83 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     };
   }, [resolveKnowledgeGraphTarget]);
 
+  const loadCapabilityModelCatalog = useCallback(async () => {
+    await capabilityModelApi.seed();
+    const [industries, roles, sequences, models] = await Promise.all([
+      capabilityModelApi.listIndustries(),
+      capabilityModelApi.listRoles(),
+      capabilityModelApi.listSequences(),
+      capabilityModelApi.listModels(),
+    ]);
+    const nextCatalog = { industries, roles, sequences, models };
+    setCapabilityModelCatalog(nextCatalog);
+    return nextCatalog;
+  }, []);
+
+  const syncCapabilityModelResourceItems = useCallback((currentData, catalog = capabilityModelCatalog) => {
+    const modelMap = new Map((catalog.models || []).map((model) => [model.id, model]));
+    const roleMap = new Map((catalog.roles || []).map((role) => [role.id, role]));
+    const sequenceMap = new Map((catalog.sequences || []).map((sequence) => [sequence.id, sequence]));
+    let changed = false;
+
+    const syncList = (items = []) => {
+      let listChanged = false;
+      const nextItems = items.map((item) => {
+        if (item?.fileType !== 'capabilityModel' || !item?.capabilityModelId) return item;
+        const model = modelMap.get(item.capabilityModelId);
+        if (!model) return item;
+        const role = roleMap.get(model.roleId) || null;
+        const sequence = role ? sequenceMap.get(role.sequenceId) || null : null;
+        const roleLevel = sequence?.levels?.find((level) => level.id === model.roleLevelId) || null;
+        const meta = buildCapabilityModelResourceMeta(model, role, roleLevel);
+        const nextName = model.name || item.name;
+        const nextDescription = model.description || '';
+        const nextLastEdit = model.updatedAt || model.createdAt || item.lastEdit;
+        const nextContentText = meta.summary;
+        if (
+          item.name === nextName
+          && item.comment === (nextDescription || undefined)
+          && item.contentText === nextContentText
+          && item.lastEdit === nextLastEdit
+          && JSON.stringify(item.meta || null) === JSON.stringify(meta)
+        ) {
+          return item;
+        }
+        changed = true;
+        listChanged = true;
+        return {
+          ...item,
+          name: nextName,
+          comment: nextDescription || undefined,
+          contentText: nextContentText,
+          meta,
+          lastEdit: nextLastEdit,
+        };
+      });
+      return listChanged ? nextItems : items;
+    };
+
+    const nextPersonal = syncList(currentData.personal || []);
+    const organizationEntries = Object.entries(currentData.organizations || {});
+    let organizationsChanged = false;
+    const nextOrganizations = organizationEntries.reduce((acc, [orgId, items]) => {
+      const nextItems = syncList(items || []);
+      if (nextItems !== items) organizationsChanged = true;
+      acc[orgId] = nextItems;
+      return acc;
+    }, {});
+
+    if (!changed && !organizationsChanged) return currentData;
+
+    const nextData = {
+      ...currentData,
+      personal: nextPersonal,
+      organizations: organizationsChanged ? nextOrganizations : currentData.organizations,
+    };
+    saveResourceLib(nextData);
+    return nextData;
+  }, [buildCapabilityModelResourceMeta, capabilityModelCatalog]);
+
   const syncKnowledgeGraphResourceItems = useCallback((currentData) => {
     const graphSnapshot = loadKnowledgeGraphStore();
     const graphMap = new Map((graphSnapshot.graphs || []).map((graph) => [graph.id, graph]));
@@ -707,17 +824,40 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     return nextData;
   }, []);
 
-  const renameLibraryEntry = useCallback((item, nextName) => {
+  const renameLibraryEntry = useCallback(async (item, nextName) => {
     const trimmed = String(nextName || '').trim();
     if (!item?.key || !trimmed || trimmed === item.name) return false;
 
     if (item.fileType === 'knowledgeGraph' && item.knowledgeGraphId) {
       updateKnowledgeGraph(item.knowledgeGraphId, { name: trimmed });
+      setData((currentData) => syncKnowledgeGraphResourceItems(renameItem(currentData, scope, item.key, trimmed)));
+      return true;
     }
 
-    setData((currentData) => syncKnowledgeGraphResourceItems(renameItem(currentData, scope, item.key, trimmed)));
+    if (item.fileType === 'capabilityModel' && item.capabilityModelId) {
+      const model = await capabilityModelApi.detailModel(item.capabilityModelId);
+      if (model?.id) {
+        await capabilityModelApi.saveModel({
+          ...model,
+          name: trimmed,
+        });
+      }
+      const nextCatalog = await loadCapabilityModelCatalog();
+      setData((currentData) => syncCapabilityModelResourceItems(
+        renameItem(currentData, scope, item.key, trimmed),
+        nextCatalog,
+      ));
+      return true;
+    }
+
+    setData((currentData) => renameItem(currentData, scope, item.key, trimmed));
     return true;
-  }, [scope, syncKnowledgeGraphResourceItems]);
+  }, [
+    loadCapabilityModelCatalog,
+    scope,
+    syncCapabilityModelResourceItems,
+    syncKnowledgeGraphResourceItems,
+  ]);
 
   const openKnowledgeGraphInNewTab = useCallback((graph, mode = 'graph') => {
     if (!graph?.id || typeof window === 'undefined') return;
@@ -755,12 +895,17 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     const targetItem = list.find((item) => item.key === itemKey);
     const trimmed = editingKnowledgeGraphTitleValue.trim();
 
-    if (targetItem && trimmed && trimmed !== targetItem.name) {
-      renameLibraryEntry(targetItem, trimmed);
-      message.success('图谱名称已更新');
-    }
-
     cancelKnowledgeGraphTitleEdit();
+    if (!targetItem || !trimmed || trimmed === targetItem.name) return;
+
+    void (async () => {
+      try {
+        await renameLibraryEntry(targetItem, trimmed);
+        message.success('图谱名称已更新');
+      } catch (error) {
+        message.error(getActionErrorMessage(error, '图谱名称更新失败'));
+      }
+    })();
   }, [cancelKnowledgeGraphTitleEdit, editingKnowledgeGraphTitleKey, editingKnowledgeGraphTitleValue, list, renameLibraryEntry]);
 
   const renderKnowledgeGraphPreviewTitle = useCallback((graph, itemKey) => {
@@ -814,6 +959,27 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     return () => window.removeEventListener(eventName, handleKnowledgeGraphChange);
   }, [syncKnowledgeGraphResourceItems]);
 
+  useEffect(() => {
+    let disposed = false;
+
+    const refreshCapabilityModels = async () => {
+      const nextCatalog = await loadCapabilityModelCatalog();
+      if (disposed) return;
+      setData((currentData) => syncCapabilityModelResourceItems(currentData, nextCatalog));
+    };
+
+    void refreshCapabilityModels();
+    const eventName = getCapabilityModelStoreEventName();
+    const handleCapabilityModelChange = () => {
+      void refreshCapabilityModels();
+    };
+    window.addEventListener(eventName, handleCapabilityModelChange);
+    return () => {
+      disposed = true;
+      window.removeEventListener(eventName, handleCapabilityModelChange);
+    };
+  }, [loadCapabilityModelCatalog, syncCapabilityModelResourceItems]);
+
   // 当前文件夹信息
   const currentFolder = useMemo(
     () => (selectedFolderKey ? list.find((r) => r.key === selectedFolderKey) : null),
@@ -824,6 +990,77 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     () => (pendingCreateParentKey ? list.find((item) => item.key === pendingCreateParentKey) || null : null),
     [list, pendingCreateParentKey],
   );
+  const capabilityRoleMap = useMemo(
+    () => new Map((capabilityModelCatalog.roles || []).map((item) => [item.id, item])),
+    [capabilityModelCatalog.roles],
+  );
+  const capabilitySequenceMap = useMemo(
+    () => new Map((capabilityModelCatalog.sequences || []).map((item) => [item.id, item])),
+    [capabilityModelCatalog.sequences],
+  );
+  const capabilityModelIndustryOptions = useMemo(() => (
+    (capabilityModelCatalog.industries || []).map((item) => ({
+      value: item.id,
+      label: item.name,
+      status: item.status,
+    }))
+  ), [capabilityModelCatalog.industries]);
+  const activeCapabilityModelIndustryOptions = useMemo(() => (
+    capabilityModelIndustryOptions.filter((item) => item.status === 'ACTIVE')
+  ), [capabilityModelIndustryOptions]);
+  const capabilityModelRoleOptions = useMemo(() => (
+    (capabilityModelCatalog.roles || []).map((item) => {
+      const sequence = capabilitySequenceMap.get(item.sequenceId) || null;
+      return {
+        value: item.id,
+        label: item.name,
+        industryId: item.industryId,
+        status: item.status,
+        sequenceId: item.sequenceId,
+        hasLevels: Boolean(sequence?.levels?.length),
+      };
+    })
+  ), [capabilityModelCatalog.roles, capabilitySequenceMap]);
+  const activeCapabilityModelRoleOptions = useMemo(() => (
+    capabilityModelRoleOptions.filter((item) => (
+      item.status === 'ACTIVE'
+      && (!watchedCapabilityIndustryId || item.industryId === watchedCapabilityIndustryId)
+    ))
+  ), [capabilityModelRoleOptions, watchedCapabilityIndustryId]);
+  const activeCapabilityModelRoleLevelOptions = useMemo(() => {
+    const role = capabilityRoleMap.get(watchedCapabilityRoleId) || null;
+    const sequence = getSequenceForRole(role, capabilityModelCatalog.sequences || []);
+    return (sequence?.levels || []).map((level) => ({
+      value: level.id,
+      label: level.name,
+    }));
+  }, [capabilityModelCatalog.sequences, capabilityRoleMap, watchedCapabilityRoleId]);
+  const createCapabilityModelRoleOptions = useMemo(() => (
+    capabilityModelRoleOptions.filter((item) => item.status === 'ACTIVE' && item.hasLevels)
+  ), [capabilityModelRoleOptions]);
+  const createCapabilityModelRoleLevelOptions = useMemo(() => {
+    const role = capabilityRoleMap.get(watchedCreateCapabilityRoleId) || null;
+    const sequence = getSequenceForRole(role, capabilityModelCatalog.sequences || []);
+    return (sequence?.levels || []).map((level) => ({
+      value: level.id,
+      label: level.name,
+    }));
+  }, [capabilityModelCatalog.sequences, capabilityRoleMap, watchedCreateCapabilityRoleId]);
+
+  useEffect(() => {
+    if (!addOpen || addType !== 'capabilityModel') return;
+    const currentLevelId = addForm.getFieldValue('roleLevelId');
+    const availableLevels = createCapabilityModelRoleLevelOptions;
+
+    if (!availableLevels.length) {
+      if (currentLevelId) addForm.setFieldValue('roleLevelId', undefined);
+      return;
+    }
+
+    if (!currentLevelId || !availableLevels.some((item) => item.value === currentLevelId)) {
+      addForm.setFieldValue('roleLevelId', availableLevels[0].value);
+    }
+  }, [addForm, addOpen, addType, createCapabilityModelRoleLevelOptions]);
 
   const detailContextItems = useMemo(() => {
     if (hasActiveSearch) return searchResults;
@@ -1298,14 +1535,46 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
       okText: '删除',
       okButtonProps: { danger: true },
       cancelText: '取消',
-      onOk: () => {
+      onOk: async () => {
+        const deletingItems = Array.from(deletingKeys)
+          .map((key) => folderContextItemMap.get(key))
+          .filter(Boolean);
         const deletingGraphIds = Array.from(new Set(
-          Array.from(deletingKeys)
-            .map((key) => folderContextItemMap.get(key))
+          deletingItems
             .filter((item) => item?.fileType === 'knowledgeGraph' && item?.knowledgeGraphId)
             .map((item) => item.knowledgeGraphId),
         ));
-        setData((d) => deleteItems(d, scope, targetKeys));
+        const deletingCapabilityModelIds = Array.from(new Set(
+          deletingItems
+            .filter((item) => item?.fileType === 'capabilityModel' && item?.capabilityModelId)
+            .map((item) => item.capabilityModelId),
+        ));
+
+        try {
+          if (deletingCapabilityModelIds.length > 0) {
+            const nextCatalog = await loadCapabilityModelCatalog();
+            const publishedModels = deletingCapabilityModelIds
+              .map((modelId) => nextCatalog.models.find((item) => item.id === modelId))
+              .filter((item) => item?.status === 'PUBLISHED');
+
+            if (publishedModels.length > 0) {
+              throw new Error(
+                publishedModels.length === 1
+                  ? `能力模型「${publishedModels[0].name}」已发布，请先停用后再删除`
+                  : '所选内容中包含已发布的能力模型，请先停用后再删除',
+              );
+            }
+
+            for (const modelId of deletingCapabilityModelIds) {
+              await capabilityModelApi.removeModel(modelId);
+            }
+          }
+        } catch (error) {
+          message.error(getActionErrorMessage(error, '删除能力模型失败'));
+          return Promise.reject(error);
+        }
+
+        setData((currentData) => deleteItems(currentData, scope, targetKeys));
         deletingGraphIds.forEach((graphId) => {
           removeKnowledgeGraph(graphId);
         });
@@ -1319,7 +1588,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
         message.success(targetItems.length === 1 ? '已删除' : `已删除 ${targetItems.length} 项`);
       },
     });
-  }, [collectDeleteCascadeKeys, folderContextItemMap, navigateTo, scope, selectedFolderKey]);
+  }, [collectDeleteCascadeKeys, folderContextItemMap, loadCapabilityModelCatalog, navigateTo, scope, selectedFolderKey]);
 
   const handleRename = (item) => {
     startInlineRename(item);
@@ -1436,11 +1705,16 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
       title: '重命名文件夹',
       icon: null,
       content: <Input defaultValue={folder.name} onChange={(e) => { newName = e.target.value; }} placeholder="请输入新名称" />,
-      onOk: () => {
+      onOk: async () => {
         const trimmed = (newName || '').trim();
         if (!trimmed) { message.warning('名称不能为空'); return Promise.reject(); }
-        renameLibraryEntry(folder, trimmed);
-        message.success('已重命名');
+        try {
+          await renameLibraryEntry(folder, trimmed);
+          message.success('已重命名');
+        } catch (error) {
+          message.error(getActionErrorMessage(error, '重命名失败'));
+          return Promise.reject(error);
+        }
       },
     });
   }, [renameLibraryEntry]);
@@ -1451,6 +1725,27 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     localStorage.setItem('guoren_rl_hidden_sidebar', JSON.stringify(newHidden));
     message.success('已从边栏移除');
   };
+
+  const buildCapabilityModelLibraryResource = useCallback((model, parentKey = null, catalog = capabilityModelCatalog, itemKey = null) => {
+    const role = (catalog.roles || []).find((item) => item.id === model.roleId) || null;
+    const sequence = getSequenceForRole(role, catalog.sequences || []);
+    const roleLevel = getRoleLevel(role, model.roleLevelId, catalog.sequences || []) || null;
+    const meta = buildCapabilityModelResourceMeta(model, role, roleLevel);
+    return {
+      key: itemKey || `${scope[0]}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      name: model.name,
+      isFolder: false,
+      parentKey,
+      fileType: 'capabilityModel',
+      resourceKind: 'capabilityModel',
+      capabilityModelId: model.id,
+      parseStatus: 'parsed',
+      contentText: meta.summary,
+      comment: model.description || undefined,
+      meta,
+      lastEdit: model.updatedAt || model.createdAt,
+    };
+  }, [capabilityModelCatalog, scope]);
 
   const createKnowledgeGraphAsset = useCallback((values, parentKey = null) => {
     let knowledgeGraphState = loadKnowledgeGraphStore();
@@ -1503,6 +1798,43 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     return graph;
   }, [onOpenKnowledgeGraph, scope]);
 
+  const createCapabilityModelAsset = useCallback(async (values, parentKey = null) => {
+    const catalog = capabilityModelCatalog.roles.length
+      ? capabilityModelCatalog
+      : await loadCapabilityModelCatalog();
+    const role = (catalog.roles || []).find((item) => item.id === values.roleId) || null;
+    const sequence = getSequenceForRole(role, catalog.sequences || []);
+    const roleLevel = sequence?.levels?.find((item) => item.id === values.roleLevelId) || null;
+
+    if (!role?.id || !roleLevel?.id) {
+      throw new Error('请选择有效的岗位和序列等级');
+    }
+
+    const modelDraft = createCapabilityModelStarterDraft({
+      name: values.name.trim(),
+      description: String(values.description || '').trim(),
+      role,
+      roleLevel,
+    });
+    const savedModel = await capabilityModelApi.saveModel(modelDraft);
+    const nextCatalog = await loadCapabilityModelCatalog();
+    const nextResource = buildCapabilityModelLibraryResource(savedModel, parentKey, nextCatalog);
+    setData((currentData) => syncCapabilityModelResourceItems(
+      addItem(currentData, scope, nextResource),
+      nextCatalog,
+    ));
+    return {
+      model: savedModel,
+      resource: nextResource,
+    };
+  }, [
+    buildCapabilityModelLibraryResource,
+    capabilityModelCatalog,
+    loadCapabilityModelCatalog,
+    scope,
+    syncCapabilityModelResourceItems,
+  ]);
+
   const handleAddSubmit = async () => {
     try {
       const v = await addForm.validateFields();
@@ -1513,6 +1845,20 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
         setAddDialogParentKey(null);
         addForm.resetFields();
         message.success('知识图谱已创建');
+        return;
+      }
+      if (addType === 'capabilityModel') {
+        const { resource } = await createCapabilityModelAsset(v, parentKey);
+        setAddOpen(false);
+        setAddDialogParentKey(null);
+        addForm.resetFields();
+        if ((selectedFolderKey ?? null) !== (parentKey ?? null)) {
+          navigateTo(parentKey ?? null);
+        }
+        setSelectedItemKeys([resource.key]);
+        setColumnSelectedItem(resource);
+        pendingCapabilityModelEditKeyRef.current = resource.key;
+        message.success(`能力模型「${resource.name}」已创建`);
         return;
       }
       const isFolder = addType === 'folder';
@@ -1528,10 +1874,11 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
       setAddDialogParentKey(null);
       addForm.resetFields();
       message.success(`${isFolder ? '文件夹' : '资料'}已创建`);
-    } catch { /* ignore */ }
+    } catch (error) {
+      if (error?.errorFields) return;
+      message.error(getActionErrorMessage(error, '创建失败'));
+    }
   };
-
-  const openAdd = (type) => { setAddType(type); addForm.resetFields(); setAddOpen(true); };
 
   const handleTagFilter = (tagId) => {
     const nextTagFilter = activeTagFilter === tagId ? null : tagId;
@@ -2117,13 +2464,19 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     if (!inlineRenameItemKey) return;
     const targetItem = list.find((item) => item.key === inlineRenameItemKey);
     const trimmed = inlineRenameName.trim();
+    const targetKey = inlineRenameItemKey;
 
-    if (targetItem && trimmed && trimmed !== targetItem.name) {
-      renameLibraryEntry(targetItem, trimmed);
-      message.success('已重命名');
-    }
+    cancelInlineRename(targetKey);
+    if (!targetItem || !trimmed || trimmed === targetItem.name) return;
 
-    cancelInlineRename(inlineRenameItemKey);
+    void (async () => {
+      try {
+        await renameLibraryEntry(targetItem, trimmed);
+        message.success('已重命名');
+      } catch (error) {
+        message.error(getActionErrorMessage(error, '重命名失败'));
+      }
+    })();
   }, [cancelInlineRename, inlineRenameItemKey, inlineRenameName, list, renameLibraryEntry]);
 
   const startInlineRename = useCallback((item) => {
@@ -2190,6 +2543,20 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     () => (previewItem?.fileType === 'knowledgeGraph' ? buildKnowledgeGraphPreviewData(previewItem) : null),
     [buildKnowledgeGraphPreviewData, previewItem],
   );
+  const previewCapabilityModelData = useMemo(() => {
+    if (previewItem?.fileType !== 'capabilityModel' || !previewItem?.capabilityModelId) return null;
+    const model = (capabilityModelCatalog.models || []).find((item) => item.id === previewItem.capabilityModelId) || null;
+    if (!model) return null;
+    const role = capabilityRoleMap.get(model.roleId) || null;
+    const sequence = role ? capabilitySequenceMap.get(role.sequenceId) || null : null;
+    const roleLevel = sequence?.levels?.find((item) => item.id === model.roleLevelId) || null;
+    return {
+      model,
+      role,
+      sequence,
+      roleLevel,
+    };
+  }, [capabilityModelCatalog.models, capabilityRoleMap, capabilitySequenceMap, previewItem]);
   const toolbarMenuTargetItem = previewItem;
   const visibleSelectionItems = useMemo(
     () => (viewMode === 'column' ? columnContextItems : displayChildren),
@@ -2216,21 +2583,49 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     if (!previewItem?.isFolder) return 0;
     return list.filter((r) => r.parentKey === previewItem.key).length;
   }, [previewItem, list]);
+  const resolvedColumnSelectedItem = useMemo(() => (
+    columnSelectedItem?.key
+      ? list.find((item) => item.key === columnSelectedItem.key) || columnSelectedItem
+      : null
+  ), [columnSelectedItem, list]);
   const columnSelectedItemAssociationRule = useMemo(
-    () => (columnSelectedItem && !columnSelectedItem.isFolder ? findResourceAssociationRule(columnSelectedItem) : null),
-    [columnSelectedItem],
+    () => (resolvedColumnSelectedItem && !resolvedColumnSelectedItem.isFolder
+      ? findResourceAssociationRule(resolvedColumnSelectedItem)
+      : null),
+    [resolvedColumnSelectedItem],
   );
   const columnSelectedKnowledgeGraphData = useMemo(
-    () => (columnSelectedItem?.fileType === 'knowledgeGraph' ? buildKnowledgeGraphPreviewData(columnSelectedItem) : null),
-    [buildKnowledgeGraphPreviewData, columnSelectedItem],
+    () => (resolvedColumnSelectedItem?.fileType === 'knowledgeGraph'
+      ? buildKnowledgeGraphPreviewData(resolvedColumnSelectedItem)
+      : null),
+    [buildKnowledgeGraphPreviewData, resolvedColumnSelectedItem],
   );
+  const columnSelectedCapabilityModelData = useMemo(() => {
+    if (resolvedColumnSelectedItem?.fileType !== 'capabilityModel' || !resolvedColumnSelectedItem?.capabilityModelId) return null;
+    const model = (capabilityModelCatalog.models || []).find((item) => item.id === resolvedColumnSelectedItem.capabilityModelId) || null;
+    if (!model) return null;
+    const role = capabilityRoleMap.get(model.roleId) || null;
+    const sequence = role ? capabilitySequenceMap.get(role.sequenceId) || null : null;
+    const roleLevel = sequence?.levels?.find((item) => item.id === model.roleLevelId) || null;
+    return {
+      model,
+      role,
+      sequence,
+      roleLevel,
+    };
+  }, [capabilityModelCatalog.models, capabilityRoleMap, capabilitySequenceMap, resolvedColumnSelectedItem]);
   const activeKnowledgeGraphPreviewKey = useMemo(() => {
     if (viewMode === 'column') {
-      return columnSelectedItem?.fileType === 'knowledgeGraph' ? columnSelectedItem.key : null;
+      return resolvedColumnSelectedItem?.fileType === 'knowledgeGraph' ? resolvedColumnSelectedItem.key : null;
     }
     return previewItem?.fileType === 'knowledgeGraph' ? previewItem.key : null;
-  }, [columnSelectedItem, previewItem, viewMode]);
-
+  }, [previewItem, resolvedColumnSelectedItem, viewMode]);
+  const activeCapabilityModelPreviewKey = useMemo(() => {
+    if (viewMode === 'column') {
+      return resolvedColumnSelectedItem?.fileType === 'capabilityModel' ? resolvedColumnSelectedItem.key : null;
+    }
+    return previewItem?.fileType === 'capabilityModel' ? previewItem.key : null;
+  }, [previewItem, resolvedColumnSelectedItem, viewMode]);
   useEffect(() => {
     setKnowledgeGraphPreviewMode('preview');
     setEditingKnowledgeGraphTitleKey(null);
@@ -2245,6 +2640,409 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     }, 0);
     return () => window.clearTimeout(timer);
   }, [editingKnowledgeGraphTitleKey]);
+
+  const capabilityModelActiveFrameworkSelection = useMemo(() => (
+    getActiveCapabilityFrameworkSelection(
+      capabilityModelEditorDraft,
+      capabilityModelActiveDimensionId,
+      capabilityModelActiveItemId,
+    )
+  ), [
+    capabilityModelActiveDimensionId,
+    capabilityModelActiveItemId,
+    capabilityModelEditorDraft,
+  ]);
+  const capabilityModelActiveDimension = capabilityModelActiveFrameworkSelection.dimension;
+  const capabilityModelActiveDimensionIndex = capabilityModelActiveFrameworkSelection.dimensionIndex;
+  const capabilityModelActiveItem = capabilityModelActiveFrameworkSelection.item;
+  const capabilityModelActiveItemIndex = capabilityModelActiveFrameworkSelection.itemIndex;
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => {
+    const previewData = viewMode === 'column' ? columnSelectedCapabilityModelData : previewCapabilityModelData;
+    const shouldEnterEdit = activeCapabilityModelPreviewKey
+      && pendingCapabilityModelEditKeyRef.current === activeCapabilityModelPreviewKey
+      && previewData?.model;
+
+    if (shouldEnterEdit) {
+      setCapabilityModelEditorDraft(createCapabilityModelDraft(cloneCapabilityModelDraft(previewData.model)));
+      setCapabilityModelPreviewMode('edit');
+      pendingCapabilityModelEditKeyRef.current = null;
+    } else {
+      setCapabilityModelPreviewMode('preview');
+      setCapabilityModelEditorDraft(null);
+    }
+    setCapabilityModelActiveDimensionId(undefined);
+    setCapabilityModelActiveItemId(undefined);
+    capabilityModelForm.resetFields();
+  }, [
+    activeCapabilityModelPreviewKey,
+    capabilityModelForm,
+    columnSelectedCapabilityModelData,
+    previewCapabilityModelData,
+    viewMode,
+  ]);
+
+  const openCapabilityModelPreviewEditor = useCallback((model) => {
+    if (!model) return;
+    setCapabilityModelEditorDraft(createCapabilityModelDraft(cloneCapabilityModelDraft(model)));
+    setCapabilityModelActiveDimensionId(undefined);
+    setCapabilityModelActiveItemId(undefined);
+    setCapabilityModelPreviewMode('edit');
+  }, []);
+
+  useEffect(() => {
+    if (capabilityModelPreviewMode !== 'edit' || !capabilityModelEditorDraft) return;
+    capabilityModelForm.setFieldsValue({
+      modelCode: capabilityModelEditorDraft.modelCode,
+      name: capabilityModelEditorDraft.name,
+      industryId: capabilityModelEditorDraft.industryId || undefined,
+      roleId: capabilityModelEditorDraft.roleId || undefined,
+      roleLevelId: capabilityModelEditorDraft.roleLevelId || undefined,
+      description: capabilityModelEditorDraft.description,
+      tags: capabilityModelEditorDraft.tags || [],
+    });
+  }, [capabilityModelEditorDraft, capabilityModelForm, capabilityModelPreviewMode]);
+
+  useEffect(() => {
+    if (capabilityModelPreviewMode !== 'edit') return;
+    const currentRoleId = capabilityModelForm.getFieldValue('roleId');
+    if (currentRoleId && !activeCapabilityModelRoleOptions.some((item) => item.value === currentRoleId)) {
+      capabilityModelForm.setFieldValue('roleId', undefined);
+      capabilityModelForm.setFieldValue('roleLevelId', undefined);
+    }
+  }, [activeCapabilityModelRoleOptions, capabilityModelForm, capabilityModelPreviewMode]);
+
+  useEffect(() => {
+    if (capabilityModelPreviewMode !== 'edit') return;
+    const currentLevelId = capabilityModelForm.getFieldValue('roleLevelId');
+    if (currentLevelId && !activeCapabilityModelRoleLevelOptions.some((item) => item.value === currentLevelId)) {
+      capabilityModelForm.setFieldValue('roleLevelId', undefined);
+    }
+  }, [activeCapabilityModelRoleLevelOptions, capabilityModelForm, capabilityModelPreviewMode]);
+
+  const updateCapabilityModelEditorDraftState = useCallback((updater) => {
+    setCapabilityModelEditorDraft((previousDraft) => {
+      if (!previousDraft) return previousDraft;
+      return updater(cloneCapabilityModelDraft(previousDraft));
+    });
+  }, []);
+
+  const selectCapabilityModelDimension = useCallback((dimensionId) => {
+    const dimension = capabilityModelEditorDraft?.dimensions?.find((item) => item.id === dimensionId);
+    setCapabilityModelActiveDimensionId(dimensionId);
+    if (!dimension) return;
+    const matchedItem = dimension.items?.find((item) => item.id === capabilityModelActiveItemId);
+    setCapabilityModelActiveItemId(matchedItem?.id || dimension.items?.[0]?.id);
+  }, [capabilityModelActiveItemId, capabilityModelEditorDraft]);
+
+  const selectCapabilityModelItem = useCallback((dimensionId, itemId) => {
+    setCapabilityModelActiveDimensionId(dimensionId);
+    setCapabilityModelActiveItemId(itemId);
+  }, []);
+
+  const handleCapabilityModelLevelCountChange = useCallback((nextCount) => {
+    updateCapabilityModelEditorDraftState((draft) => {
+      const fallback = createDefaultLevelScheme(nextCount);
+      const nextLevelScheme = {
+        count: fallback.count,
+        levels: fallback.levels.map((level, index) => ({
+          ...level,
+          label: draft.levelScheme?.levels?.[index]?.label || level.label,
+        })),
+      };
+      draft.levelScheme = nextLevelScheme;
+      draft.dimensions = syncDimensionsToLevelScheme(draft.dimensions, nextLevelScheme);
+      return draft;
+    });
+  }, [updateCapabilityModelEditorDraftState]);
+
+  const handleCapabilityModelLevelLabelChange = useCallback((index, label) => {
+    updateCapabilityModelEditorDraftState((draft) => {
+      const nextLevels = draft.levelScheme.levels.map((level, levelIndex) => (
+        levelIndex === index ? { ...level, label } : level
+      ));
+      const nextLevelScheme = {
+        count: nextLevels.length,
+        levels: nextLevels,
+      };
+      draft.levelScheme = nextLevelScheme;
+      draft.dimensions = syncDimensionsToLevelScheme(draft.dimensions, nextLevelScheme);
+      return draft;
+    });
+  }, [updateCapabilityModelEditorDraftState]);
+
+  const handleCapabilityModelAddDimension = useCallback(() => {
+    if (!capabilityModelEditorDraft) return;
+    const nextDimension = createEmptyCapabilityDimension(capabilityModelEditorDraft.levelScheme, {
+      sortNo: capabilityModelEditorDraft.dimensions.length + 1,
+    });
+    updateCapabilityModelEditorDraftState((draft) => {
+      draft.dimensions = [...draft.dimensions, nextDimension];
+      return draft;
+    });
+    setCapabilityModelActiveDimensionId(nextDimension.id);
+    setCapabilityModelActiveItemId(nextDimension.items?.[0]?.id);
+  }, [capabilityModelEditorDraft, updateCapabilityModelEditorDraftState]);
+
+  const handleCapabilityModelRemoveDimension = useCallback((index) => {
+    updateCapabilityModelEditorDraftState((draft) => {
+      draft.dimensions = draft.dimensions
+        .filter((_, currentIndex) => currentIndex !== index)
+        .map((dimension, currentIndex) => ({ ...dimension, sortNo: currentIndex + 1 }));
+      return draft;
+    });
+  }, [updateCapabilityModelEditorDraftState]);
+
+  const handleCapabilityModelMoveDimension = useCallback((index, delta) => {
+    updateCapabilityModelEditorDraftState((draft) => {
+      draft.dimensions = moveCapabilityModelListItem(draft.dimensions, index, delta);
+      return draft;
+    });
+  }, [updateCapabilityModelEditorDraftState]);
+
+  const handleCapabilityModelUpdateDimensionField = useCallback((index, field, value) => {
+    updateCapabilityModelEditorDraftState((draft) => {
+      draft.dimensions[index] = {
+        ...draft.dimensions[index],
+        [field]: value,
+      };
+      return draft;
+    });
+  }, [updateCapabilityModelEditorDraftState]);
+
+  const handleCapabilityModelAddItem = useCallback((dimensionIndex) => {
+    if (!capabilityModelEditorDraft) return;
+    const nextItem = createEmptyCapabilityItem(capabilityModelEditorDraft.levelScheme, {
+      sortNo: (capabilityModelEditorDraft.dimensions[dimensionIndex]?.items?.length || 0) + 1,
+    });
+    const dimensionId = capabilityModelEditorDraft.dimensions[dimensionIndex]?.id;
+    updateCapabilityModelEditorDraftState((draft) => {
+      const dimension = draft.dimensions[dimensionIndex];
+      dimension.items = [...(dimension.items || []), nextItem];
+      return draft;
+    });
+    setCapabilityModelActiveDimensionId(dimensionId);
+    setCapabilityModelActiveItemId(nextItem.id);
+  }, [capabilityModelEditorDraft, updateCapabilityModelEditorDraftState]);
+
+  const handleCapabilityModelRemoveItem = useCallback((dimensionIndex, itemIndex) => {
+    updateCapabilityModelEditorDraftState((draft) => {
+      const dimension = draft.dimensions[dimensionIndex];
+      dimension.items = dimension.items
+        .filter((_, currentIndex) => currentIndex !== itemIndex)
+        .map((item, currentIndex) => ({ ...item, sortNo: currentIndex + 1 }));
+      return draft;
+    });
+  }, [updateCapabilityModelEditorDraftState]);
+
+  const handleCapabilityModelMoveItem = useCallback((dimensionIndex, itemIndex, delta) => {
+    updateCapabilityModelEditorDraftState((draft) => {
+      const dimension = draft.dimensions[dimensionIndex];
+      dimension.items = moveCapabilityModelListItem(dimension.items, itemIndex, delta);
+      return draft;
+    });
+  }, [updateCapabilityModelEditorDraftState]);
+
+  const handleCapabilityModelUpdateItemField = useCallback((dimensionIndex, itemIndex, field, value) => {
+    updateCapabilityModelEditorDraftState((draft) => {
+      const dimension = draft.dimensions[dimensionIndex];
+      dimension.items[itemIndex] = {
+        ...dimension.items[itemIndex],
+        [field]: value,
+      };
+      return draft;
+    });
+  }, [updateCapabilityModelEditorDraftState]);
+
+  const handleCapabilityModelUpdateItemStringListField = useCallback((dimensionIndex, itemIndex, field, values) => {
+    updateCapabilityModelEditorDraftState((draft) => {
+      const dimension = draft.dimensions[dimensionIndex];
+      dimension.items[itemIndex] = {
+        ...dimension.items[itemIndex],
+        [field]: Array.isArray(values) ? values : [],
+      };
+      return draft;
+    });
+  }, [updateCapabilityModelEditorDraftState]);
+
+  const handleCapabilityModelUpdateItemEvidence = useCallback((dimensionIndex, itemIndex, value) => {
+    updateCapabilityModelEditorDraftState((draft) => {
+      const lines = String(value || '')
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean);
+      const dimension = draft.dimensions[dimensionIndex];
+      dimension.items[itemIndex] = {
+        ...dimension.items[itemIndex],
+        evidenceExamples: lines,
+      };
+      return draft;
+    });
+  }, [updateCapabilityModelEditorDraftState]);
+
+  const handleCapabilityModelUpdateItemDescriptor = useCallback((dimensionIndex, itemIndex, levelIndex, text) => {
+    updateCapabilityModelEditorDraftState((draft) => {
+      const dimension = draft.dimensions[dimensionIndex];
+      const item = dimension.items[itemIndex];
+      item.levelDescriptors = item.levelDescriptors.map((descriptor, descriptorIndex) => (
+        descriptorIndex === levelIndex ? { ...descriptor, text } : descriptor
+      ));
+      return draft;
+    });
+  }, [updateCapabilityModelEditorDraftState]);
+
+  const handleSaveCapabilityModelPreview = useCallback(async () => {
+    if (!capabilityModelEditorDraft) {
+      message.warning('当前没有可保存的能力模型内容');
+      return;
+    }
+
+    try {
+      const values = await capabilityModelForm.validateFields();
+      const savedModel = await capabilityModelApi.saveModel({
+        ...capabilityModelEditorDraft,
+        ...values,
+      });
+      const nextCatalog = await loadCapabilityModelCatalog();
+      setCapabilityModelEditorDraft(createCapabilityModelDraft(savedModel));
+      setData((currentData) => syncCapabilityModelResourceItems(currentData, nextCatalog));
+      setCapabilityModelPreviewMode('preview');
+      message.success('能力模型已保存');
+    } catch (error) {
+      if (error?.errorFields) return;
+      message.error(getActionErrorMessage(error, '保存能力模型失败'));
+    }
+  }, [
+    capabilityModelEditorDraft,
+    capabilityModelForm,
+    loadCapabilityModelCatalog,
+    syncCapabilityModelResourceItems,
+  ]);
+
+  const renderCapabilityModelPreviewBlock = useCallback((previewData, fallbackName) => {
+    if (!previewData?.model) {
+      return (
+        <div className="finder-preview-placeholder">
+          {renderFileIcon('capabilityModel', { fontSize: 80 })}
+          <div>{fallbackName || '能力模型'}</div>
+          <div style={{ color: '#8e8e93', fontSize: 13 }}>关联模型不存在，当前仅保留资料库记录。</div>
+        </div>
+      );
+    }
+
+    if (capabilityModelPreviewMode === 'edit') {
+      return (
+        <div className="finder-kg-preview-embed finder-cap-model-preview-embed finder-cap-model-preview-embed-edit">
+          <div className="finder-kg-preview-head">
+            <div className="finder-kg-preview-head-copy">
+              <div className="finder-kg-preview-head-title-row">
+                <div className="finder-kg-preview-head-title">{previewData.model.name}</div>
+              </div>
+            </div>
+            <div className="finder-kg-preview-head-actions">
+              <Button onClick={() => setCapabilityModelPreviewMode('preview')}>取消编辑</Button>
+              <Button type="primary" onClick={handleSaveCapabilityModelPreview}>
+                保存
+              </Button>
+            </div>
+          </div>
+          {capabilityModelEditorDraft ? (
+            <CapabilityModelEditorPanel
+              modelDraft={capabilityModelEditorDraft}
+              modelBaseForm={capabilityModelForm}
+              industryOptions={activeCapabilityModelIndustryOptions}
+              roleOptions={activeCapabilityModelRoleOptions}
+              roleLevelOptions={activeCapabilityModelRoleLevelOptions}
+              watchedRoleId={watchedCapabilityRoleId}
+              activeDimension={capabilityModelActiveDimension}
+              activeDimensionIndex={capabilityModelActiveDimensionIndex}
+              activeItem={capabilityModelActiveItem}
+              activeItemIndex={capabilityModelActiveItemIndex}
+              onLevelCountChange={handleCapabilityModelLevelCountChange}
+              onLevelLabelChange={handleCapabilityModelLevelLabelChange}
+              onAddDimension={handleCapabilityModelAddDimension}
+              onSelectDimension={selectCapabilityModelDimension}
+              onAddItem={handleCapabilityModelAddItem}
+              onSelectItem={selectCapabilityModelItem}
+              onMoveDimension={handleCapabilityModelMoveDimension}
+              onRemoveDimension={handleCapabilityModelRemoveDimension}
+              onUpdateDimensionField={handleCapabilityModelUpdateDimensionField}
+              onMoveItem={handleCapabilityModelMoveItem}
+              onRemoveItem={handleCapabilityModelRemoveItem}
+              onUpdateItemField={handleCapabilityModelUpdateItemField}
+              onUpdateItemStringListField={handleCapabilityModelUpdateItemStringListField}
+              onUpdateItemEvidence={handleCapabilityModelUpdateItemEvidence}
+              onUpdateItemDescriptor={handleCapabilityModelUpdateItemDescriptor}
+              embedded
+            />
+          ) : (
+            <div className="finder-preview-placeholder">
+              {renderFileIcon('capabilityModel', { fontSize: 72 })}
+              <div>正在加载能力模型编辑内容</div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div className="finder-kg-preview-embed finder-cap-model-preview-embed">
+        <div className="finder-kg-preview-head">
+          <div className="finder-kg-preview-head-copy">
+            <div className="finder-kg-preview-head-title-row">
+              <div className="finder-kg-preview-head-title">{previewData.model.name}</div>
+            </div>
+          </div>
+          <div className="finder-kg-preview-head-actions">
+            <Button type="primary" icon={<EditOutlined />} onClick={() => openCapabilityModelPreviewEditor(previewData.model)}>
+              编辑
+            </Button>
+          </div>
+        </div>
+        <CapabilityModelPreview
+          model={previewData.model}
+          industries={capabilityModelCatalog.industries}
+          roles={capabilityModelCatalog.roles}
+          sequences={capabilityModelCatalog.sequences}
+          embedded
+          allowCopyMarkdown={false}
+        />
+      </div>
+    );
+  }, [
+    activeCapabilityModelIndustryOptions,
+    activeCapabilityModelRoleLevelOptions,
+    activeCapabilityModelRoleOptions,
+    capabilityModelActiveDimension,
+    capabilityModelActiveDimensionIndex,
+    capabilityModelActiveItem,
+    capabilityModelActiveItemIndex,
+    capabilityModelCatalog.industries,
+    capabilityModelCatalog.roles,
+    capabilityModelCatalog.sequences,
+    capabilityModelEditorDraft,
+    capabilityModelForm,
+    capabilityModelPreviewMode,
+    handleCapabilityModelAddDimension,
+    handleCapabilityModelAddItem,
+    handleCapabilityModelLevelCountChange,
+    handleCapabilityModelLevelLabelChange,
+    handleCapabilityModelMoveDimension,
+    handleCapabilityModelMoveItem,
+    handleCapabilityModelRemoveDimension,
+    handleCapabilityModelRemoveItem,
+    handleCapabilityModelUpdateDimensionField,
+    handleCapabilityModelUpdateItemDescriptor,
+    handleCapabilityModelUpdateItemEvidence,
+    handleCapabilityModelUpdateItemField,
+    handleCapabilityModelUpdateItemStringListField,
+    handleSaveCapabilityModelPreview,
+    openCapabilityModelPreviewEditor,
+    selectCapabilityModelDimension,
+    selectCapabilityModelItem,
+    watchedCapabilityRoleId,
+  ]);
   const [bgMenuPos, setBgMenuPos] = useState(null); // {x, y} 右键菜单位置
   const currentBlankAreaParentKey = viewMode === 'column'
     ? (columnPath[columnPath.length - 1] ?? null)
@@ -3399,31 +4197,33 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
 
                 {/* 分栏视图预览（紧跟最后一列，填满剩余空间） */}
                 <div className="finder-column-preview">
-                  {columnSelectedItem ? (
+                  {resolvedColumnSelectedItem ? (
                     <div className="finder-preview-content">
-                      <div className={`finder-preview-body${columnSelectedItem.fileType === 'knowledgeGraph' ? ' has-knowledge-graph' : ''}`}>
-                        {columnSelectedItem.fileType === 'knowledgeGraph' ? (
-                          renderKnowledgeGraphPreviewBlock(columnSelectedKnowledgeGraphData, columnSelectedItem.name, columnSelectedItem.key)
-                        ) : columnSelectedItem.fileType === 'image' && columnSelectedItem.url
-                          ? <img src={columnSelectedItem.url} alt={columnSelectedItem.name} className="finder-preview-image" />
-                          : columnSelectedItem.fileType === 'pdf' && columnSelectedItem.url
-                          ? <iframe src={columnSelectedItem.url} className="finder-preview-iframe" title="PDF 预览" />
-                          : columnSelectedItem.fileType === 'video' && columnSelectedItem.url
-                          ? <video src={columnSelectedItem.url} controls className="finder-preview-video" />
+                      <div className={`finder-preview-body${resolvedColumnSelectedItem.fileType === 'knowledgeGraph' ? ' has-knowledge-graph' : ''}${resolvedColumnSelectedItem.fileType === 'capabilityModel' ? ' has-capability-model' : ''}`}>
+                        {resolvedColumnSelectedItem.fileType === 'knowledgeGraph' ? (
+                          renderKnowledgeGraphPreviewBlock(columnSelectedKnowledgeGraphData, resolvedColumnSelectedItem.name, resolvedColumnSelectedItem.key)
+                        ) : resolvedColumnSelectedItem.fileType === 'capabilityModel' ? (
+                          renderCapabilityModelPreviewBlock(columnSelectedCapabilityModelData, resolvedColumnSelectedItem.name)
+                        ) : resolvedColumnSelectedItem.fileType === 'image' && resolvedColumnSelectedItem.url
+                          ? <img src={resolvedColumnSelectedItem.url} alt={resolvedColumnSelectedItem.name} className="finder-preview-image" />
+                          : resolvedColumnSelectedItem.fileType === 'pdf' && resolvedColumnSelectedItem.url
+                          ? <iframe src={resolvedColumnSelectedItem.url} className="finder-preview-iframe" title="PDF 预览" />
+                          : resolvedColumnSelectedItem.fileType === 'video' && resolvedColumnSelectedItem.url
+                          ? <video src={resolvedColumnSelectedItem.url} controls className="finder-preview-video" />
                           : <div className="finder-preview-placeholder">
-                              {renderFileIcon(columnSelectedItem.fileType, { fontSize: 80 })}
-                              <div>{columnSelectedItem.name}</div>
+                              {renderFileIcon(resolvedColumnSelectedItem.fileType, { fontSize: 80 })}
+                              <div>{resolvedColumnSelectedItem.name}</div>
                             </div>
                         }
                       </div>
                       <div className="finder-preview-footer">
-                        <div className="finder-preview-name">{columnSelectedItem.name}</div>
+                        <div className="finder-preview-name">{resolvedColumnSelectedItem.name}</div>
                         <div className="finder-preview-meta-row">
-                          <span>{getFileTypeLabel(columnSelectedItem.fileType)}</span>
-                          {columnSelectedItem.size && <span>{(columnSelectedItem.size / 1024).toFixed(1)} KB</span>}
-                          {columnSelectedItem.lastEdit && <span>{columnSelectedItem.lastEdit}</span>}
+                          <span>{getFileTypeLabel(resolvedColumnSelectedItem.fileType)}</span>
+                          {resolvedColumnSelectedItem.size && <span>{(resolvedColumnSelectedItem.size / 1024).toFixed(1)} KB</span>}
+                          {resolvedColumnSelectedItem.lastEdit && <span>{resolvedColumnSelectedItem.lastEdit}</span>}
                         </div>
-                        {renderResourceAssociationBlock(columnSelectedItem, columnSelectedItemAssociationRule)}
+                        {renderResourceAssociationBlock(resolvedColumnSelectedItem, columnSelectedItemAssociationRule)}
                       </div>
                     </div>
                   ) : (
@@ -3673,7 +4473,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                   {previewItem ? (
                     <div className="finder-preview-content">
                       {/* 内容预览区 */}
-                      <div className={`finder-preview-body${previewItem.fileType === 'knowledgeGraph' ? ' has-knowledge-graph' : ''}`}>
+                      <div className={`finder-preview-body${previewItem.fileType === 'knowledgeGraph' ? ' has-knowledge-graph' : ''}${previewItem.fileType === 'capabilityModel' ? ' has-capability-model' : ''}`}>
                         {previewItem.isFolder ? (
                           <div className="finder-preview-folder-grid">
                             <FolderFilled style={{ fontSize: 80, color: '#4facfe' }} />
@@ -3692,6 +4492,8 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                           </div>
                         ) : previewItem.fileType === 'knowledgeGraph' ? (
                           renderKnowledgeGraphPreviewBlock(previewKnowledgeGraphData, previewItem.name, previewItem.key)
+                        ) : previewItem.fileType === 'capabilityModel' ? (
+                          renderCapabilityModelPreviewBlock(previewCapabilityModelData, previewItem.name)
                         ) : previewItem.fileType === 'image' ? (
                           previewItem.url
                             ? <img src={previewItem.url} alt={previewItem.name} className="finder-preview-image" />
@@ -3909,7 +4711,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
           open: addOpen,
           onClose: () => {
             setAddOpen(false);
-            if (addType === 'knowledgeGraph') {
+            if (addType === 'knowledgeGraph' || addType === 'capabilityModel') {
               setAddDialogParentKey(null);
             }
           },
@@ -3917,6 +4719,10 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
           type: addType,
           form: addForm,
           currentFolderName: pendingCreateFolder ? pendingCreateFolder.name : '根目录',
+          capabilityModel: {
+            roleOptions: createCapabilityModelRoleOptions,
+            roleLevelOptions: createCapabilityModelRoleLevelOptions,
+          },
         }}
         resourceImport={{
           open: addDialogOpen,
@@ -3936,7 +4742,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
               );
             }
           },
-          onPickEntry: (entry) => {
+          onPickEntry: async (entry) => {
             if (entry?.key === 'knowledge-graph') {
               setAddDialogOpen(false);
               setAddType('knowledgeGraph');
@@ -3947,6 +4753,41 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
               });
               setAddOpen(true);
               return;
+            }
+
+            if (entry?.key === 'capability-model') {
+              try {
+                const catalog = await loadCapabilityModelCatalog();
+                const defaultRole = (catalog.roles || []).find((role) => {
+                  if (role.status !== 'ACTIVE') return false;
+                  const sequence = getSequenceForRole(role, catalog.sequences || []);
+                  return Boolean(sequence?.levels?.length);
+                }) || null;
+                const defaultSequence = defaultRole
+                  ? getSequenceForRole(defaultRole, catalog.sequences || [])
+                  : null;
+                const defaultLevel = defaultSequence?.levels?.[0] || null;
+
+                if (!defaultRole?.id || !defaultLevel?.id) {
+                  message.warning('当前没有可用的岗位/序列等级，无法新建能力模型');
+                  return;
+                }
+
+                setAddDialogOpen(false);
+                setAddType('capabilityModel');
+                addForm.resetFields();
+                addForm.setFieldsValue({
+                  name: '新建能力模型',
+                  roleId: defaultRole.id,
+                  roleLevelId: defaultLevel.id,
+                  description: '',
+                });
+                setAddOpen(true);
+                return;
+              } catch (error) {
+                message.error(getActionErrorMessage(error, '加载能力模型配置失败'));
+                return;
+              }
             }
 
             message.info(`「${entry?.label || '该入口'}」功能开发中`);

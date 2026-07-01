@@ -1556,6 +1556,12 @@
   padding: 0;
 }
 
+.finder-preview-body.has-capability-model {
+  align-items: stretch;
+  justify-content: stretch;
+  padding: 0;
+}
+
 .finder-preview-image {
   max-width: 100%;
   max-height: 100%;
@@ -1672,6 +1678,19 @@
 .finder-kg-preview-embed-edit .kg-content,
 .finder-kg-preview-embed-edit .kg-canvas-shell {
   min-height: 0;
+}
+
+.finder-cap-model-preview-embed .cap-model-preview,
+.finder-cap-model-preview-embed .cap-model-editor {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 18px 20px 20px;
+  background: #f7f9fd;
+}
+
+.finder-cap-model-preview-embed-edit {
+  overflow: hidden;
 }
 
 .finder-preview-folder-grid {

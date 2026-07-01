@@ -5,6 +5,7 @@ import {
   ScissorOutlined,
   CopyOutlined,
   PictureOutlined,
+  AppstoreOutlined,
   EditOutlined,
   UploadOutlined,
   InboxOutlined,
@@ -30,6 +31,7 @@ const thirdPartyItems = [
 const taskItems = [
   { key: 'training', icon: <ExperimentOutlined style={{ color: '#34c759' }} />, label: '实训任务' },
   { key: 'knowledge-graph', icon: <NodeIndexOutlined style={{ color: '#1677ff' }} />, label: '新建知识图谱' },
+  { key: 'capability-model', icon: <AppstoreOutlined style={{ color: '#0f766e' }} />, label: '新建能力模型' },
 ];
 
 const otherItems = [

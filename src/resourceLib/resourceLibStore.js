@@ -21,7 +21,7 @@ const PRESET_TAGS = [
 ];
 
 // 解析状态：parsed=已解析 / parsing=解析中 / failed=解析失败 / pending=待解析
-// fileType：folder | pdf | pptx | docx | xlsx | image | video | audio | whiteboard | note | test | knowledgeGraph | other
+// fileType：folder | pdf | pptx | docx | xlsx | image | video | audio | whiteboard | note | test | knowledgeGraph | capabilityModel | other
 
 const now = () => new Date().toLocaleString('zh-CN', { hour12: false });
 

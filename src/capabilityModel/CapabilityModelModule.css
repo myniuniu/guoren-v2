@@ -81,6 +81,16 @@
   gap: 16px;
 }
 
+.cap-model-editor-embedded {
+  min-height: 0;
+  gap: 12px;
+}
+
+.cap-model-editor-embedded .cap-model-editor-section {
+  padding: 12px;
+  border-radius: 14px;
+}
+
 .cap-model-editor-section {
   padding: 16px;
   border: 1px solid #e8edf3;
@@ -124,6 +134,15 @@
   grid-column: span 2;
 }
 
+.cap-model-editor-embedded .cap-model-form-grid-2,
+.cap-model-editor-embedded .cap-model-descriptor-grid {
+  grid-template-columns: 1fr;
+}
+
+.cap-model-editor-embedded .cap-model-form-span-2 {
+  grid-column: span 1;
+}
+
 .cap-model-level-toolbar {
   display: flex;
   align-items: center;
@@ -136,6 +155,10 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
+}
+
+.cap-model-editor-embedded .cap-model-level-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .cap-model-level-card {
@@ -201,6 +224,11 @@
   min-height: 620px;
 }
 
+.cap-model-editor-embedded .cap-model-framework-shell {
+  min-height: 0;
+  gap: 12px;
+}
+
 .cap-model-framework-rail {
   padding: 16px;
   border: 1px solid #dfe6f1;
@@ -222,6 +250,10 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px;
+}
+
+.cap-model-editor-embedded .cap-model-framework-rail-list {
+  grid-template-columns: 1fr;
 }
 
 .cap-model-framework-rail-chip {
@@ -249,6 +281,11 @@
   grid-template-columns: 280px minmax(0, 1fr);
   gap: 16px;
   min-height: 0;
+}
+
+.cap-model-editor-embedded .cap-model-framework-board {
+  grid-template-columns: 1fr;
+  gap: 12px;
 }
 
 .cap-model-framework-side {
@@ -394,11 +431,21 @@
   gap: 20px;
 }
 
+.cap-model-preview-embedded {
+  min-height: 0;
+  gap: 14px;
+}
+
 .cap-model-preview-hero {
   padding: 24px;
   border-radius: 20px;
   background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%);
   color: #fff;
+}
+
+.cap-model-preview-embedded .cap-model-preview-hero {
+  padding: 18px;
+  border-radius: 16px;
 }
 
 .cap-model-preview-kicker {
@@ -412,6 +459,10 @@
   margin-top: 8px;
   font-size: 26px;
   font-weight: 700;
+}
+
+.cap-model-preview-embedded .cap-model-preview-title {
+  font-size: 22px;
 }
 
 .cap-model-preview-desc {
@@ -444,6 +495,11 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.cap-model-preview-embedded .cap-model-preview-toolbar {
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .cap-model-preview-tags .ant-tag {

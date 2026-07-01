@@ -82,6 +82,8 @@ export default function ResourceLibraryOverlays({
             ? '新建文件夹'
             : createEntry.type === 'knowledgeGraph'
               ? '新建知识图谱'
+              : createEntry.type === 'capabilityModel'
+                ? '新建能力模型'
               : '新建资料'
         }
         open={createEntry.open}
@@ -99,6 +101,8 @@ export default function ResourceLibraryOverlays({
                   ? '请输入文件夹名称'
                   : createEntry.type === 'knowledgeGraph'
                     ? '请输入知识图谱名称'
+                    : createEntry.type === 'capabilityModel'
+                      ? '请输入能力模型名称'
                     : '请输入资料名称'
               }
             />
@@ -107,6 +111,36 @@ export default function ResourceLibraryOverlays({
             <Form.Item label="图谱描述" name="description">
               <Input.TextArea rows={4} placeholder="可选，用于补充图谱用途或说明" />
             </Form.Item>
+          )}
+          {createEntry.type === 'capabilityModel' && (
+            <>
+              <Form.Item
+                label="岗位"
+                name="roleId"
+                rules={[{ required: true, message: '请选择岗位' }]}
+              >
+                <Select
+                  placeholder="请选择岗位"
+                  options={createEntry.capabilityModel?.roleOptions || []}
+                />
+              </Form.Item>
+              <Form.Item
+                label="序列等级"
+                name="roleLevelId"
+                rules={[{ required: true, message: '请选择序列等级' }]}
+              >
+                <Select
+                  placeholder="请选择序列等级"
+                  options={createEntry.capabilityModel?.roleLevelOptions || []}
+                />
+              </Form.Item>
+              <Form.Item label="模型说明" name="description">
+                <Input.TextArea rows={4} placeholder="可选，用于补充该能力模型的适用场景或说明" />
+              </Form.Item>
+              {createEntry.capabilityModel?.roleOptions?.length === 0 ? (
+                <div className="rl-add-tip">当前没有可用的岗位/序列等级，暂时无法创建能力模型。</div>
+              ) : null}
+            </>
           )}
           {createEntry.type === 'file' && (
             <>

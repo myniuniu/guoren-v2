@@ -203,7 +203,7 @@ export function SpaceResourceImportBrowser({
   active = true,
   onClose,
   onConfirm,
-  excludeFileTypes = ['knowledgeGraph'],
+  excludeFileTypes = ['knowledgeGraph', 'capabilityModel'],
   frameWidth = null,
   shellStyle,
   dragging = false,
@@ -1178,7 +1178,7 @@ export default function SpaceResourceImportModal({
   open,
   onClose,
   onConfirm,
-  excludeFileTypes = ['knowledgeGraph'],
+  excludeFileTypes = ['knowledgeGraph', 'capabilityModel'],
 }) {
   const [modalFrame, setModalFrame] = useState(() => getInitialModalFrame());
   const [dragInteractionType, setDragInteractionType] = useState(null);

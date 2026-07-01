@@ -89,7 +89,7 @@ export function buildTopicResourcesFromLibrarySelection(selectedItems = [], opti
     libraryData,
     libraryId = 'personal',
     existingResources = [],
-    excludedFileTypes = ['knowledgeGraph'],
+    excludedFileTypes = ['knowledgeGraph', 'capabilityModel'],
   } = options;
 
   const allItems = getLibraryItemsById(libraryData, libraryId);

@@ -2472,7 +2472,7 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
         open={resourceModalOpen}
         onClose={() => setResourceModalOpen(false)}
         onConfirm={handleBindResources}
-        excludeFileTypes={['knowledgeGraph']}
+        excludeFileTypes={['knowledgeGraph', 'capabilityModel']}
       />
 
       <AIGenerateModal

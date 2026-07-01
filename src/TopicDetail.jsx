@@ -90,10 +90,12 @@ import {
 import { buildSceneInitialVersionData, normalizeVersioningConfig } from './scene/api';
 import { buildSceneResourceArchiveMeta, isSceneResourceArchived } from './shared/sceneGrowthRecords';
 import { getTopicAdminConfig } from './studyClub/adminTopicMapping';
+import { capabilityModelApi } from './capabilityModel/api';
 import {
-  capabilityModelApi,
-  createCapabilityModelDraft,
-} from './capabilityModel/api';
+  buildCapabilityModelResourceMeta,
+  createCapabilityModelStarterDraft,
+  getTotalCapabilityItems,
+} from './capabilityModel/shared';
 import {
   createCollection as createKnowledgeGraphCollection,
   createGraph as createKnowledgeGraph,
@@ -292,59 +294,6 @@ function buildPreviewParagraphs(name) {
     '内容会随着后台主题版本同步更新，方便在知识模式内持续维护和查看。',
     '如需进一步补充，可继续在当前版本中更新资料名称、标签或内容结构。',
   ];
-}
-
-function getCapabilityModelItemCount(model) {
-  return (model?.dimensions || []).reduce((sum, dimension) => sum + (dimension.items?.length || 0), 0);
-}
-
-function buildCapabilityModelResourceMeta(model, role = null, roleLevel = null) {
-  const dimensionNames = (model?.dimensions || []).map((dimension) => dimension.name).filter(Boolean);
-  const itemCount = getCapabilityModelItemCount(model);
-  const roleText = [role?.name, roleLevel?.name].filter(Boolean).join(' / ');
-  const summary = [
-    roleText || '能力模型',
-    `${model?.dimensions?.length || 0} 个能力类`,
-    `${itemCount} 个能力项`,
-  ].join(' · ');
-
-  return {
-    summary,
-    detail: {
-      toc: dimensionNames,
-      body: [
-        {
-          type: 'paragraph',
-          text: model?.description || `${model?.name || '当前能力模型'}用于沉淀岗位能力结构、能力分级与证据要求。`,
-        },
-        {
-          type: 'highlight',
-          text: summary,
-        },
-        {
-          type: 'heading',
-          text: '能力结构',
-        },
-        {
-          type: 'list',
-          items: (model?.dimensions || []).map((dimension) => {
-            const itemNames = (dimension.items || []).map((item) => item.name).filter(Boolean);
-            return `${dimension.name || '未命名能力类'}：${itemNames.join('、') || '待补充能力项'}`;
-          }),
-        },
-      ],
-    },
-  };
-}
-
-function createCapabilityModelCode(name) {
-  const normalized = String(name || '')
-    .trim()
-    .replace(/[^A-Za-z0-9\u4e00-\u9fa5]+/g, '_')
-    .replace(/^_+|_+$/g, '')
-    .toUpperCase();
-  const prefix = normalized || 'CAPABILITY_MODEL';
-  return `${prefix}_${Date.now().toString(36).toUpperCase()}`;
 }
 
 function hexToRgba(hex, alpha) {
@@ -2647,27 +2596,11 @@ function TopicDetail({
     }
 
     try {
-      const modelDraft = createCapabilityModelDraft({
-        modelCode: createCapabilityModelCode(name),
+      const modelDraft = createCapabilityModelStarterDraft({
         name,
         description: capabilityModelCreateDraft.description.trim(),
-        industryId: role.industryId,
-        roleId: role.id,
-        roleLevelId: roleLevel.id,
-        status: 'DRAFT',
-        tags: [role.name, roleLevel.name].filter(Boolean),
-        dimensions: [
-          {
-            name: '能力结构',
-            description: '用于沉淀该主题下的能力类与能力项。',
-            items: [
-              {
-                name: '核心能力项',
-                description: '请继续补充该能力项的分级描述、证据要求与示例。',
-              },
-            ],
-          },
-        ],
+        role,
+        roleLevel,
       });
       const savedModel = await capabilityModelApi.saveModel(modelDraft);
       const nextCatalog = {
@@ -2700,7 +2633,7 @@ function TopicDetail({
       libraryData: latestResourceLibraryData,
       libraryId,
       existingResources: sourceResources,
-      excludedFileTypes: ['knowledgeGraph'],
+      excludedFileTypes: ['knowledgeGraph', 'capabilityModel'],
     });
     if (!importedResources.length) {
       message.warning('所选内容中没有可导入的资料');
@@ -5378,7 +5311,7 @@ function TopicDetail({
               const role = capabilityRoleMap.get(item.roleId) || null;
               const sequence = role ? capabilitySequenceMap.get(role.sequenceId) : null;
               const roleLevel = sequence?.levels?.find((level) => level.id === item.roleLevelId) || null;
-              const itemCount = getCapabilityModelItemCount(item);
+              const itemCount = getTotalCapabilityItems(item);
               return (
                 <button
                   key={item.id}
