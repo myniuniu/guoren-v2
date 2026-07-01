@@ -3638,7 +3638,8 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
       <div className="finder-sidebar" style={{ width: sidebarWidth, minWidth: sidebarWidth }}>
         {/* 库类型切换 Bar */}
         <div className="finder-library-switcher">
-          <div className="finder-library-tabs">
+          <div className={`finder-library-tabs ${scope === 'organization' ? 'finder-library-tabs-organization' : 'finder-library-tabs-personal'}`}>
+            <span className="finder-library-tabs-indicator" aria-hidden="true" />
             <span
               className={`finder-library-tab ${scope === 'personal' ? 'finder-library-tab-active' : ''}`}
               onClick={() => handleScopeChange('personal')}
@@ -3654,12 +3655,12 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
           </div>
           {scope === 'organization' && (
             <Select
-              size="small"
               className="finder-library-org-select"
+              popupClassName="finder-library-org-dropdown"
               value={currentOrgId}
               onChange={handleOrgChange}
               options={organizations.map((o) => ({ label: o.name, value: o.id }))}
-              suffixIcon={<CaretDownOutlined style={{ fontSize: 10 }} />}
+              suffixIcon={<CaretDownOutlined style={{ fontSize: 11, color: '#959daa' }} />}
             />
           )}
         </div>
