@@ -872,6 +872,17 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     window.open(targetUrl, '_blank', 'noopener,noreferrer');
   }, []);
 
+  const openCapabilityModelInNewTab = useCallback((model, mode = 'preview') => {
+    if (!model?.id || typeof window === 'undefined') return;
+    const params = new URLSearchParams({
+      modelId: model.id,
+      mode,
+      requestId: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    });
+    const targetUrl = `${window.location.pathname}${window.location.search}#capability-model-full?${params.toString()}`;
+    window.open(targetUrl, '_blank', 'noopener,noreferrer');
+  }, []);
+
   const handleSaveKnowledgeGraphPreview = useCallback(async () => {
     const saved = await knowledgeGraphEditorRef.current?.saveCurrentSelection?.();
     if (!saved) {
@@ -2626,6 +2637,10 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     }
     return previewItem?.fileType === 'capabilityModel' ? previewItem.key : null;
   }, [previewItem, resolvedColumnSelectedItem, viewMode]);
+  const activeCapabilityModelPreviewData = useMemo(
+    () => (viewMode === 'column' ? columnSelectedCapabilityModelData : previewCapabilityModelData),
+    [columnSelectedCapabilityModelData, previewCapabilityModelData, viewMode],
+  );
   useEffect(() => {
     setKnowledgeGraphPreviewMode('preview');
     setEditingKnowledgeGraphTitleKey(null);
@@ -2657,34 +2672,31 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
   const capabilityModelActiveItem = capabilityModelActiveFrameworkSelection.item;
   const capabilityModelActiveItemIndex = capabilityModelActiveFrameworkSelection.itemIndex;
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
-    const previewData = viewMode === 'column' ? columnSelectedCapabilityModelData : previewCapabilityModelData;
-    const shouldEnterEdit = activeCapabilityModelPreviewKey
-      && pendingCapabilityModelEditKeyRef.current === activeCapabilityModelPreviewKey
-      && previewData?.model;
-
-    if (shouldEnterEdit) {
-      setCapabilityModelEditorDraft(createCapabilityModelDraft(cloneCapabilityModelDraft(previewData.model)));
-      setCapabilityModelPreviewMode('edit');
-      pendingCapabilityModelEditKeyRef.current = null;
-    } else {
+    const frameId = window.requestAnimationFrame(() => {
       setCapabilityModelPreviewMode('preview');
       setCapabilityModelEditorDraft(null);
-    }
-    setCapabilityModelActiveDimensionId(undefined);
-    setCapabilityModelActiveItemId(undefined);
-    capabilityModelForm.resetFields();
-  }, [
-    activeCapabilityModelPreviewKey,
-    capabilityModelForm,
-    columnSelectedCapabilityModelData,
-    previewCapabilityModelData,
-    viewMode,
-  ]);
+      setCapabilityModelActiveDimensionId(undefined);
+      setCapabilityModelActiveItemId(undefined);
+      capabilityModelForm.resetFields();
+    });
+    return () => window.cancelAnimationFrame(frameId);
+  }, [activeCapabilityModelPreviewKey, capabilityModelForm]);
+
+  useEffect(() => {
+    if (!activeCapabilityModelPreviewKey || pendingCapabilityModelEditKeyRef.current !== activeCapabilityModelPreviewKey) return;
+    if (!activeCapabilityModelPreviewData?.model) return;
+    const frameId = window.requestAnimationFrame(() => {
+      setCapabilityModelEditorDraft(createCapabilityModelDraft(cloneCapabilityModelDraft(activeCapabilityModelPreviewData.model)));
+      setCapabilityModelPreviewMode('edit');
+      pendingCapabilityModelEditKeyRef.current = null;
+    });
+    return () => window.cancelAnimationFrame(frameId);
+  }, [activeCapabilityModelPreviewData, activeCapabilityModelPreviewKey]);
 
   const openCapabilityModelPreviewEditor = useCallback((model) => {
     if (!model) return;
+    pendingCapabilityModelEditKeyRef.current = null;
     setCapabilityModelEditorDraft(createCapabilityModelDraft(cloneCapabilityModelDraft(model)));
     setCapabilityModelActiveDimensionId(undefined);
     setCapabilityModelActiveItemId(undefined);
@@ -2945,6 +2957,9 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
               <Button type="primary" onClick={handleSaveCapabilityModelPreview}>
                 保存
               </Button>
+              <Button icon={<FullscreenOutlined />} onClick={() => openCapabilityModelInNewTab(previewData.model, 'edit')}>
+                全屏
+              </Button>
             </div>
           </div>
           {capabilityModelEditorDraft ? (
@@ -2998,6 +3013,9 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
             <Button type="primary" icon={<EditOutlined />} onClick={() => openCapabilityModelPreviewEditor(previewData.model)}>
               编辑
             </Button>
+            <Button icon={<FullscreenOutlined />} onClick={() => openCapabilityModelInNewTab(previewData.model, 'preview')}>
+              全屏
+            </Button>
           </div>
         </div>
         <CapabilityModelPreview
@@ -3038,6 +3056,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     handleCapabilityModelUpdateItemField,
     handleCapabilityModelUpdateItemStringListField,
     handleSaveCapabilityModelPreview,
+    openCapabilityModelInNewTab,
     openCapabilityModelPreviewEditor,
     selectCapabilityModelDimension,
     selectCapabilityModelItem,

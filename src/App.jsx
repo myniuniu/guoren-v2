@@ -176,6 +176,9 @@ function getInitialActiveIconKey() {
   if (route.page === 'knowledge-graph-full') {
     return 'knowledge-graph';
   }
+  if (route.page === 'capability-model-full') {
+    return 'capability-model';
+  }
   return route.page || 'my-space';
 }
 
@@ -295,6 +298,15 @@ function App() {
       collectionId: route.params.collectionId || null,
       mode: route.params.mode || 'curriculum',
       requestId: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    };
+  });
+  const [capabilityModelEntry] = useState(() => {
+    const route = getInitialHashRoute();
+    if ((route.page !== 'capability-model' && route.page !== 'capability-model-full') || !route.params.modelId) return null;
+    return {
+      modelId: route.params.modelId,
+      mode: route.params.mode || 'preview',
+      requestId: route.params.requestId || `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     };
   });
   const [selectedScene, setSelectedScene] = useState(null);
@@ -1027,6 +1039,16 @@ function App() {
         entryMode={knowledgeGraphEntry?.mode || 'curriculum'}
         entryRequestId={knowledgeGraphEntry?.requestId || null}
         showBackButton={false}
+      />
+    );
+  }
+
+  if (currentPage === 'capability-model-full') {
+    return (
+      <CapabilityModelModule
+        entryModelId={capabilityModelEntry?.modelId || null}
+        entryMode={capabilityModelEntry?.mode || 'preview'}
+        entryRequestId={capabilityModelEntry?.requestId || null}
       />
     );
   }

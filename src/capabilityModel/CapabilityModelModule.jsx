@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Button,
@@ -493,7 +493,11 @@ function parseImportedCapabilityFile(text, fileName, industries, roles, sequence
   return parseCapabilityModelMarkdown(text, industries, roles, sequences, fileName);
 }
 
-export default function CapabilityModelModule() {
+export default function CapabilityModelModule({
+  entryModelId = null,
+  entryMode = 'preview',
+  entryRequestId = null,
+}) {
   const [activeTab, setActiveTab] = useState('models');
   const [loading, setLoading] = useState(true);
   const [industries, setIndustries] = useState([]);
@@ -540,6 +544,7 @@ export default function CapabilityModelModule() {
   const watchedIndustryId = Form.useWatch('industryId', modelBaseForm);
   const watchedRoleId = Form.useWatch('roleId', modelBaseForm);
   const watchedRoleIndustryId = Form.useWatch('industryId', roleForm);
+  const handledEntryRequestRef = useRef(null);
 
   useEffect(() => {
     loadAllData();
@@ -771,6 +776,24 @@ export default function CapabilityModelModule() {
   const activeDimensionIndex = activeFrameworkSelection.dimensionIndex;
   const activeItem = activeFrameworkSelection.item;
   const activeItemIndex = activeFrameworkSelection.itemIndex;
+
+  useEffect(() => {
+    if (!entryModelId || !entryRequestId) return;
+    if (handledEntryRequestRef.current === entryRequestId) return;
+    const matchedModel = models.find((item) => item.id === entryModelId) || null;
+    if (!matchedModel) return;
+
+    const frameId = window.requestAnimationFrame(() => {
+      handledEntryRequestRef.current = entryRequestId;
+      setActiveTab('models');
+      setActiveDimensionId(undefined);
+      setActiveItemId(undefined);
+      setModelDraft(createCapabilityModelDraft(cloneDraft(matchedModel)));
+      setModelDrawerMode(entryMode === 'edit' && matchedModel.status === 'DRAFT' ? 'edit' : 'preview');
+      setModelDrawerOpen(true);
+    });
+    return () => window.cancelAnimationFrame(frameId);
+  }, [entryMode, entryModelId, entryRequestId, models]);
 
   function openCreateModel() {
     setModelDrawerMode('create');
