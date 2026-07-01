@@ -26,6 +26,7 @@ import {
   DesktopOutlined,
   EditOutlined,
   EyeOutlined,
+  ExperimentOutlined,
   FileTextOutlined,
   FileAddOutlined,
   FullscreenOutlined,
@@ -167,7 +168,7 @@ function getDefaultTopicTabKey(sceneConfig) {
 }
 
 function isInteractiveResource(resource) {
-  return ['activity', 'survey', 'vote', 'exam', 'register'].includes(resource?.type);
+  return ['activity', 'survey', 'vote', 'exam', 'register', 'training'].includes(resource?.type);
 }
 
 function isLiveLikeResource(resource) {
@@ -222,6 +223,8 @@ function getResourceIcon(resource) {
       return <PlayCircleOutlined style={{ color: '#7d8797' }} />;
     case 'activity':
       return <AppstoreOutlined style={{ color: '#f59e0b' }} />;
+    case 'training':
+      return <ExperimentOutlined style={{ color: '#34c759' }} />;
     case 'survey':
     case 'vote':
     case 'exam':
@@ -242,6 +245,7 @@ function getTopicResourceFileType(resource) {
   switch (resource.type) {
     case 'activity':
       return 'pptx';
+    case 'training':
     case 'survey':
     case 'vote':
     case 'exam':
@@ -262,6 +266,8 @@ function getResourceTypeLabel(resource, fileType) {
       return '视频课件';
     case 'activity':
       return '活动资料';
+    case 'training':
+      return '实训任务';
     case 'survey':
       return '调查';
     case 'vote':

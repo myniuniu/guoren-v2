@@ -6,6 +6,7 @@ import {
   DatabaseOutlined,
   DesktopOutlined,
   EditOutlined,
+  ExperimentOutlined,
   FileTextOutlined,
   NodeIndexOutlined,
   RightOutlined,
@@ -90,6 +91,16 @@ const activityEntries = [
     description: '收集参与名单',
     iconColor: '#13c2c2',
     iconBackground: '#e6fffb',
+  },
+  {
+    key: 'training',
+    icon: <ExperimentOutlined />,
+    label: '实训任务',
+    type: 'training',
+    defaultName: '新建实训任务',
+    description: '布置实操练习与过程产出',
+    iconColor: '#34c759',
+    iconBackground: '#ebfff1',
   },
 ];
 
@@ -238,7 +249,7 @@ function AddResourceModal({
       <div className="add-resource-modal-shell">
         <div className="add-resource-modal-heading">
           <div className="add-resource-modal-title">添加资料</div>
-          <div className="add-resource-modal-subtitle">从资料库导入内容，或直接新建协作资料与知识图谱。</div>
+          <div className="add-resource-modal-subtitle">从资料库导入内容，或直接新建协作资料与知识体系。</div>
         </div>
 
         {libraryEnabled ? (

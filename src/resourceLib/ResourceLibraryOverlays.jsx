@@ -149,6 +149,14 @@ export default function ResourceLibraryOverlays({
                   allowClear
                   placeholder="自动识别"
                   options={[
+                    { value: 'activity', label: '研讨会' },
+                    { value: 'survey', label: '调查' },
+                    { value: 'vote', label: '投票' },
+                    { value: 'exam', label: '考试' },
+                    { value: 'register', label: '报名' },
+                    { value: 'training', label: '实训任务' },
+                    { value: 'whiteboard', label: '白板' },
+                    { value: 'note', label: '笔记' },
                     { value: 'pdf', label: 'PDF' },
                     { value: 'pptx', label: 'PPT' },
                     { value: 'docx', label: 'Word' },

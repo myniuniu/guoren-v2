@@ -1874,12 +1874,16 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
       }
       const isFolder = addType === 'folder';
       const fileType = isFolder ? 'folder' : (v.fileType || inferFileType(v.name));
+      const parseStatus = isFolder ? 'parsed' : (v.url ? 'parsing' : 'parsed');
       setData((d) => addItem(d, scope, {
-        name: v.name, isFolder, parentKey: selectedFolderKey, fileType,
+        name: v.name,
+        isFolder,
+        parentKey: parentKey ?? null,
+        fileType,
         url: isFolder ? undefined : (v.url || undefined),
         size: isFolder ? undefined : (v.size || undefined),
         mime: isFolder ? undefined : (v.mime || undefined),
-        parseStatus: isFolder ? 'parsed' : 'parsing',
+        parseStatus,
       }));
       setAddOpen(false);
       setAddDialogParentKey(null);
@@ -4720,9 +4724,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
           open: addOpen,
           onClose: () => {
             setAddOpen(false);
-            if (addType === 'knowledgeGraph' || addType === 'capabilityModel') {
-              setAddDialogParentKey(null);
-            }
+            setAddDialogParentKey(null);
           },
           onConfirm: handleAddSubmit,
           type: addType,
@@ -4752,6 +4754,17 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
             }
           },
           onPickEntry: async (entry) => {
+            const quickCreateMap = {
+              activity: { name: '新建研讨会', fileType: 'activity' },
+              survey: { name: '新建调查', fileType: 'survey' },
+              vote: { name: '新建投票', fileType: 'vote' },
+              exam: { name: '新建考试', fileType: 'exam' },
+              register: { name: '新建报名', fileType: 'register' },
+              training: { name: '新建实训任务', fileType: 'training' },
+              note: { name: '新建笔记', fileType: 'note' },
+              whiteboard: { name: '新建白板', fileType: 'whiteboard' },
+            };
+
             if (entry?.key === 'knowledge-graph') {
               setAddDialogOpen(false);
               setAddType('knowledgeGraph');
@@ -4797,6 +4810,19 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                 message.error(getActionErrorMessage(error, '加载能力模型配置失败'));
                 return;
               }
+            }
+
+            if (quickCreateMap[entry?.key]) {
+              const config = quickCreateMap[entry.key];
+              setAddDialogOpen(false);
+              setAddType('file');
+              addForm.resetFields();
+              addForm.setFieldsValue({
+                name: config.name,
+                fileType: config.fileType,
+              });
+              setAddOpen(true);
+              return;
             }
 
             message.info(`「${entry?.label || '该入口'}」功能开发中`);
