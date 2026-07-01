@@ -494,6 +494,7 @@ function parseImportedCapabilityFile(text, fileName, industries, roles, sequence
 }
 
 export default function CapabilityModelModule({
+  standalone = false,
   entryModelId = null,
   entryMode = 'preview',
   entryRequestId = null,
@@ -596,21 +597,24 @@ export default function CapabilityModelModule({
   useEffect(() => {
     if (!modelDrawerOpen || modelDrawerMode === 'preview') return;
     const dimensions = modelDraft?.dimensions || [];
-    if (!dimensions.length) {
-      if (activeDimensionId) setActiveDimensionId(undefined);
-      if (activeItemId) setActiveItemId(undefined);
-      return;
-    }
+    const frameId = window.requestAnimationFrame(() => {
+      if (!dimensions.length) {
+        if (activeDimensionId) setActiveDimensionId(undefined);
+        if (activeItemId) setActiveItemId(undefined);
+        return;
+      }
 
-    const matchedDimension = dimensions.find((item) => item.id === activeDimensionId) || dimensions[0];
-    const matchedItem = matchedDimension.items?.find((item) => item.id === activeItemId) || matchedDimension.items?.[0];
+      const matchedDimension = dimensions.find((item) => item.id === activeDimensionId) || dimensions[0];
+      const matchedItem = matchedDimension.items?.find((item) => item.id === activeItemId) || matchedDimension.items?.[0];
 
-    if (matchedDimension.id !== activeDimensionId) {
-      setActiveDimensionId(matchedDimension.id);
-    }
-    if ((matchedItem?.id || undefined) !== activeItemId) {
-      setActiveItemId(matchedItem?.id);
-    }
+      if (matchedDimension.id !== activeDimensionId) {
+        setActiveDimensionId(matchedDimension.id);
+      }
+      if ((matchedItem?.id || undefined) !== activeItemId) {
+        setActiveItemId(matchedItem?.id);
+      }
+    });
+    return () => window.cancelAnimationFrame(frameId);
   }, [activeDimensionId, activeItemId, modelDraft, modelDrawerMode, modelDrawerOpen]);
 
   async function loadAllData(withLoading = true) {
@@ -776,6 +780,11 @@ export default function CapabilityModelModule({
   const activeDimensionIndex = activeFrameworkSelection.dimensionIndex;
   const activeItem = activeFrameworkSelection.item;
   const activeItemIndex = activeFrameworkSelection.itemIndex;
+  const isStandaloneEntry = standalone && Boolean(entryModelId);
+  const standaloneSourceModel = useMemo(
+    () => (entryModelId ? models.find((item) => item.id === entryModelId) || null : null),
+    [entryModelId, models],
+  );
 
   useEffect(() => {
     if (!entryModelId || !entryRequestId) return;
@@ -836,7 +845,12 @@ export default function CapabilityModelModule({
         ...values,
       });
       setModelDraft(createCapabilityModelDraft(saved));
-      setModelDrawerOpen(false);
+      if (isStandaloneEntry) {
+        setModelDrawerMode('preview');
+        setModelDrawerOpen(true);
+      } else {
+        setModelDrawerOpen(false);
+      }
       await loadAllData(false);
       message.success(modelDrawerMode === 'create' ? '模型已创建' : '模型已更新');
     } catch (error) {
@@ -920,6 +934,130 @@ export default function CapabilityModelModule({
     } catch (error) {
       message.error(getErrorMessage(error, '进入编辑失败'));
     }
+  }
+
+  function handleOpenStandalonePreview() {
+    const sourceModel = standaloneSourceModel || (modelDraft?.id === entryModelId ? modelDraft : null);
+    if (sourceModel) {
+      setModelDraft(createCapabilityModelDraft(cloneDraft(sourceModel)));
+    }
+    setActiveDimensionId(undefined);
+    setActiveItemId(undefined);
+    setModelDrawerMode('preview');
+    setModelDrawerOpen(true);
+  }
+
+  function handleOpenStandaloneEdit() {
+    const sourceModel = standaloneSourceModel || (modelDraft?.id === entryModelId ? modelDraft : null);
+    if (!sourceModel) return;
+    if ((sourceModel.status || 'DRAFT') === 'DRAFT') {
+      setModelDrawerMode('edit');
+      setModelDraft(createCapabilityModelDraft(cloneDraft(sourceModel)));
+      setActiveDimensionId(undefined);
+      setActiveItemId(undefined);
+      setModelDrawerOpen(true);
+      return;
+    }
+    void handleStartEditModel(sourceModel);
+  }
+
+  if (isStandaloneEntry) {
+    const standaloneLocalModel = modelDraft?.id === entryModelId ? modelDraft : null;
+    const standaloneViewMode = modelDrawerMode === 'edit' ? 'edit' : 'preview';
+    const standaloneModel = standaloneViewMode === 'edit'
+      ? standaloneLocalModel
+      : (standaloneLocalModel || standaloneSourceModel);
+    const standaloneRole = roles.find((item) => item.id === standaloneModel?.roleId) || null;
+    const standaloneSequence = getSequenceForRole(standaloneRole, sequences);
+    const standaloneRoleLevel = getRoleLevel(standaloneRole, standaloneModel?.roleLevelId, sequences) || null;
+    const standaloneStatusLabel = CAPABILITY_MODEL_STATUS_OPTIONS.find((item) => item.value === standaloneModel?.status)?.label || standaloneModel?.status || '草稿';
+    const standaloneReady = standaloneViewMode === 'edit' ? Boolean(standaloneLocalModel) : Boolean(standaloneModel);
+    const standaloneEditLabel = (standaloneModel?.status || 'DRAFT') === 'DRAFT' ? '编辑' : '编辑副本';
+
+    return (
+      <div className="sys-module capability-model-module cap-model-standalone-shell">
+        <div className="cap-model-standalone-frame">
+          <div className="cap-model-standalone-header">
+            <div className="cap-model-standalone-copy">
+              <div className="cap-model-standalone-kicker">
+                {standaloneViewMode === 'edit' ? '能力模型编辑' : '能力模型预览'}
+              </div>
+              <div className="cap-model-standalone-title-row">
+                <div className="cap-model-standalone-title">{standaloneModel?.name || '能力模型'}</div>
+                {standaloneModel?.status ? renderStatusTag(standaloneModel.status) : null}
+              </div>
+              <div className="cap-model-standalone-subtitle">
+                {standaloneModel
+                  ? `${standaloneRole?.name || '-'} / ${standaloneRoleLevel?.name || '-'} / ${standaloneSequence?.name || '-'} · ${standaloneStatusLabel}`
+                  : '正在加载当前能力模型'}
+              </div>
+            </div>
+            <Space wrap>
+              {standaloneViewMode === 'edit' ? (
+                <>
+                  <Button onClick={handleOpenStandalonePreview}>取消编辑</Button>
+                  <Button type="primary" icon={<SaveOutlined />} onClick={handleSaveModel}>
+                    保存
+                  </Button>
+                </>
+              ) : (
+                <Button type="primary" icon={<EditOutlined />} onClick={handleOpenStandaloneEdit} disabled={!standaloneModel}>
+                  {standaloneEditLabel}
+                </Button>
+              )}
+            </Space>
+          </div>
+
+          <div className="cap-model-standalone-body">
+            {!standaloneReady ? (
+              <div className="cap-model-standalone-placeholder">
+                {!loading && !standaloneSourceModel && !standaloneLocalModel ? (
+                  <Empty description="未找到该能力模型" />
+                ) : (
+                  <div className="cap-model-standalone-loading">正在加载能力模型...</div>
+                )}
+              </div>
+            ) : standaloneViewMode === 'edit' ? (
+              <CapabilityModelEditorPanel
+                modelDraft={standaloneLocalModel}
+                modelBaseForm={modelBaseForm}
+                industryOptions={activeIndustryOptions}
+                roleOptions={activeRoleOptions}
+                roleLevelOptions={activeRoleLevelOptions}
+                watchedRoleId={watchedRoleId}
+                activeDimension={activeDimension}
+                activeDimensionIndex={activeDimensionIndex}
+                activeItem={activeItem}
+                activeItemIndex={activeItemIndex}
+                onLevelCountChange={handleLevelCountChange}
+                onLevelLabelChange={handleLevelLabelChange}
+                onAddDimension={addDimension}
+                onSelectDimension={selectDimension}
+                onAddItem={addItem}
+                onSelectItem={selectItem}
+                onMoveDimension={moveDimension}
+                onRemoveDimension={removeDimension}
+                onUpdateDimensionField={updateDimensionField}
+                onMoveItem={moveItem}
+                onRemoveItem={removeItem}
+                onUpdateItemField={updateItemField}
+                onUpdateItemStringListField={updateItemStringListField}
+                onUpdateItemEvidence={updateItemEvidence}
+                onUpdateItemDescriptor={updateItemDescriptor}
+              />
+            ) : (
+              <CapabilityModelPreview
+                model={standaloneModel}
+                industries={industries}
+                roles={roles}
+                sequences={sequences}
+                showHero={false}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   async function handlePublishModel(record) {

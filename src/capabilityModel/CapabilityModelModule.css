@@ -16,6 +16,98 @@
   min-height: 0;
 }
 
+.cap-model-standalone-shell {
+  min-height: 100vh;
+  padding: 28px;
+  box-sizing: border-box;
+}
+
+.cap-model-standalone-frame {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.cap-model-standalone-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 28px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%);
+  color: #fff;
+  box-shadow: 0 24px 54px rgba(15, 23, 42, 0.14);
+}
+
+.cap-model-standalone-copy {
+  min-width: 0;
+}
+
+.cap-model-standalone-kicker {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.cap-model-standalone-title-row {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cap-model-standalone-title {
+  font-size: 30px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: #fff;
+}
+
+.cap-model-standalone-title-row .ant-tag {
+  margin-inline-end: 0;
+}
+
+.cap-model-standalone-subtitle {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.84);
+}
+
+.cap-model-standalone-header .ant-btn:not(.ant-btn-primary) {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.cap-model-standalone-body {
+  width: 100%;
+  min-height: 0;
+}
+
+.cap-model-standalone-placeholder {
+  min-height: calc(100vh - 220px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  border: 1px solid #e8edf3;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.cap-model-standalone-loading {
+  font-size: 14px;
+  color: #5f6b7c;
+}
+
 .cap-model-summary-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -778,7 +870,12 @@
     grid-template-columns: 1fr;
   }
 
+  .cap-model-standalone-shell {
+    padding: 20px;
+  }
+
   .cap-model-section-head,
+  .cap-model-standalone-header,
   .cap-model-framework-rail-head,
   .cap-model-framework-side-head,
   .cap-model-preview-toolbar,

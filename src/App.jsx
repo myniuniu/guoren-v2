@@ -1046,6 +1046,7 @@ function App() {
   if (currentPage === 'capability-model-full') {
     return (
       <CapabilityModelModule
+        standalone
         entryModelId={capabilityModelEntry?.modelId || null}
         entryMode={capabilityModelEntry?.mode || 'preview'}
         entryRequestId={capabilityModelEntry?.requestId || null}

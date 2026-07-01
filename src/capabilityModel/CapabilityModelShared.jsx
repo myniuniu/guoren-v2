@@ -52,6 +52,7 @@ function CapabilityModelPreviewContent({
   sequences,
   embedded = false,
   allowCopyMarkdown = true,
+  showHero = true,
 }) {
   const [previewMode, setPreviewMode] = useState('structured');
 
@@ -76,38 +77,40 @@ function CapabilityModelPreviewContent({
 
   return (
     <div className={`cap-model-preview${embedded ? ' cap-model-preview-embedded' : ''}`}>
-      <div className="cap-model-preview-hero">
-        <div className="cap-model-preview-kicker">{industryName}</div>
-        <div className="cap-model-preview-title">{model.name}</div>
-        <div className="cap-model-preview-desc">{model.description || '未填写模型说明'}</div>
-        <div className="cap-model-preview-meta">
-          <span>岗位：{role?.name || '-'}</span>
-          <span>能力序列：{sequence?.name || '-'}</span>
-          <span>序列等级：{roleLevelName}</span>
-          <span>等级：{model.levelScheme?.levels?.length || 0} 级</span>
-          <span>能力类：{model.dimensions?.length || 0}</span>
-          <span>能力项：{getTotalCapabilityItems(model)}</span>
-          <span>状态：{CAPABILITY_MODEL_STATUS_OPTIONS.find((item) => item.value === model.status)?.label || model.status}</span>
-        </div>
-        {model.tags?.length ? (
-          <div className="cap-model-preview-tags">
-            {model.tags.map((tag) => <Tag key={tag}>{tag}</Tag>)}
+      {showHero ? (
+        <div className="cap-model-preview-hero">
+          <div className="cap-model-preview-kicker">{industryName}</div>
+          <div className="cap-model-preview-title">{model.name}</div>
+          <div className="cap-model-preview-desc">{model.description || '未填写模型说明'}</div>
+          <div className="cap-model-preview-meta">
+            <span>岗位：{role?.name || '-'}</span>
+            <span>能力序列：{sequence?.name || '-'}</span>
+            <span>序列等级：{roleLevelName}</span>
+            <span>等级：{model.levelScheme?.levels?.length || 0} 级</span>
+            <span>能力类：{model.dimensions?.length || 0}</span>
+            <span>能力项：{getTotalCapabilityItems(model)}</span>
+            <span>状态：{CAPABILITY_MODEL_STATUS_OPTIONS.find((item) => item.value === model.status)?.label || model.status}</span>
           </div>
-        ) : null}
-        <div className="cap-model-preview-toolbar">
-          <Segmented
-            value={previewMode}
-            onChange={setPreviewMode}
-            options={[
-              { label: '结构预览', value: 'structured' },
-              { label: 'Markdown', value: 'markdown' },
-            ]}
-          />
-          {allowCopyMarkdown && previewMode === 'markdown' ? (
-            <Button icon={<CopyOutlined />} onClick={handleCopyMarkdown}>复制 Markdown</Button>
+          {model.tags?.length ? (
+            <div className="cap-model-preview-tags">
+              {model.tags.map((tag) => <Tag key={tag}>{tag}</Tag>)}
+            </div>
           ) : null}
+          <div className="cap-model-preview-toolbar">
+            <Segmented
+              value={previewMode}
+              onChange={setPreviewMode}
+              options={[
+                { label: '结构预览', value: 'structured' },
+                { label: 'Markdown', value: 'markdown' },
+              ]}
+            />
+            {allowCopyMarkdown && previewMode === 'markdown' ? (
+              <Button icon={<CopyOutlined />} onClick={handleCopyMarkdown}>复制 Markdown</Button>
+            ) : null}
+          </div>
         </div>
-      </div>
+      ) : null}
       {previewMode === 'structured' ? (
         <>
           {(model.dimensions || []).map((dimension) => (

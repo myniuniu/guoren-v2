@@ -2694,15 +2694,6 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     return () => window.cancelAnimationFrame(frameId);
   }, [activeCapabilityModelPreviewData, activeCapabilityModelPreviewKey]);
 
-  const openCapabilityModelPreviewEditor = useCallback((model) => {
-    if (!model) return;
-    pendingCapabilityModelEditKeyRef.current = null;
-    setCapabilityModelEditorDraft(createCapabilityModelDraft(cloneCapabilityModelDraft(model)));
-    setCapabilityModelActiveDimensionId(undefined);
-    setCapabilityModelActiveItemId(undefined);
-    setCapabilityModelPreviewMode('edit');
-  }, []);
-
   useEffect(() => {
     if (capabilityModelPreviewMode !== 'edit' || !capabilityModelEditorDraft) return;
     capabilityModelForm.setFieldsValue({
@@ -2957,7 +2948,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
               <Button type="primary" onClick={handleSaveCapabilityModelPreview}>
                 保存
               </Button>
-              <Button icon={<FullscreenOutlined />} onClick={() => openCapabilityModelInNewTab(previewData.model, 'edit')}>
+              <Button icon={<FullscreenOutlined />} onClick={() => openCapabilityModelInNewTab(previewData.model, 'preview')}>
                 全屏
               </Button>
             </div>
@@ -3010,7 +3001,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
             </div>
           </div>
           <div className="finder-kg-preview-head-actions">
-            <Button type="primary" icon={<EditOutlined />} onClick={() => openCapabilityModelPreviewEditor(previewData.model)}>
+            <Button type="primary" icon={<EditOutlined />} onClick={() => openCapabilityModelInNewTab(previewData.model, 'edit')}>
               编辑
             </Button>
             <Button icon={<FullscreenOutlined />} onClick={() => openCapabilityModelInNewTab(previewData.model, 'preview')}>
@@ -3057,7 +3048,6 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     handleCapabilityModelUpdateItemStringListField,
     handleSaveCapabilityModelPreview,
     openCapabilityModelInNewTab,
-    openCapabilityModelPreviewEditor,
     selectCapabilityModelDimension,
     selectCapabilityModelItem,
     watchedCapabilityRoleId,
