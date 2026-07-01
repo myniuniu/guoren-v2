@@ -247,7 +247,7 @@
 }
 
 .icon-bar-item-active .icon-bar-icon {
-  color: #111827;
+  color: var(--icon-bar-accent, #4f7cff);
   transform: translateY(-1px) scale(1.03);
 }
 

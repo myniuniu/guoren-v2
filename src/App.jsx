@@ -268,6 +268,61 @@ const sceneMenuIconMap = Object.freeze({
   'org-training': <DatabaseOutlined />,
 });
 
+const sceneMenuAccentColorMap = Object.freeze({
+  'my-learning-space': '#4f7cff',
+  workshop: '#f97316',
+  'study-club-channel': '#ef4444',
+  'my-classroom': '#0ea5e9',
+  'workshop-cloud': '#6366f1',
+  'teaching-research': '#eab308',
+  'course-creation-center': '#10b981',
+  'org-training': '#14b8a6',
+});
+
+const iconBarAccentColorMap = Object.freeze({
+  'my-space': '#4f7cff',
+  'cloud-disk': '#0ea5e9',
+  'resource-lib': '#f59e0b',
+  'resource-parse': '#8b5cf6',
+  'knowledge-space': '#22c55e',
+  'knowledge-graph': '#2563eb',
+  'course-studio': '#f97316',
+  messages: '#ec4899',
+  'org-management': '#06b6d4',
+  workflow: '#7c3aed',
+  'process-management': '#8b5cf6',
+  leave: '#fb7185',
+  dept: '#14b8a6',
+  user: '#3b82f6',
+  role: '#10b981',
+  position: '#f59e0b',
+  certificate: '#a855f7',
+  'certificate-issue': '#ef4444',
+  archive: '#f97316',
+  'study-club': '#dc2626',
+  lucky: '#eab308',
+  lab: '#8b5cf6',
+  tasks: '#2563eb',
+  'lucky-backend': '#64748b',
+  'learning-analytics': '#0f766e',
+  'agent-quota': '#2563eb',
+  'online-dev': '#0f766e',
+  'quick-build': '#f97316',
+  'page-designer': '#8b5cf6',
+  'tag-management': '#06b6d4',
+  'app-center': '#4f46e5',
+  'scene-template': '#22c55e',
+  'my-profile': '#ec4899',
+  'teacher-portrait': '#3b82f6',
+  'teacher-development': '#14b8a6',
+  'teacher-evaluation-schemes': '#8b5cf6',
+  'teacher-evaluation': '#ef4444',
+  'capability-model': '#0f766e',
+  'solution-management': '#4f46e5',
+  dms: '#0891b2',
+  integration: '#f97316',
+});
+
 function getSceneShortcutMenuKey(sceneId) {
   return `${SCENE_SHORTCUT_KEY_PREFIX}${sceneId}`;
 }
@@ -278,6 +333,17 @@ function getSceneSystemMenuShortcutKey(menuKey) {
 
 function getSceneMenuIcon(menuKey) {
   return sceneMenuIconMap[menuKey] || <AppstoreOutlined />;
+}
+
+function getSceneMenuAccentColor(menuKey) {
+  return sceneMenuAccentColorMap[menuKey] || '#4f7cff';
+}
+
+function getIconBarAccentColor(iconKey) {
+  if (iconKey.startsWith(SCENE_SYSTEM_MENU_SHORTCUT_KEY_PREFIX)) {
+    return getSceneMenuAccentColor(iconKey.slice(SCENE_SYSTEM_MENU_SHORTCUT_KEY_PREFIX.length));
+  }
+  return iconBarAccentColorMap[iconKey] || '#4f7cff';
 }
 
 // Left icon bar items
@@ -1123,6 +1189,7 @@ function App() {
               key={item.key}
               ref={(node) => setIconBarItemRef(item.key, node)}
               className={`icon-bar-item ${activeIconKey === item.key ? 'icon-bar-item-active' : ''}`}
+              style={{ '--icon-bar-accent': getIconBarAccentColor(item.key) }}
               onClick={() => handleIconBarClick(item.key)}
             >
               <span className="icon-bar-icon">{item.icon}</span>
