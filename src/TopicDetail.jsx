@@ -115,6 +115,14 @@ import StructuredKnowledgeGraphView from './knowledgeGraph/StructuredKnowledgeGr
 import './TopicDetail.css';
 
 const EMPTY_TAB_INDICATOR = { x: 0, y: 0, width: 0, height: 0, opacity: 0 };
+const EMPTY_PROJECT_SELECTION_INDICATOR = {
+  visible: false,
+  top: 0,
+  left: 0,
+  width: 0,
+  height: 0,
+  key: null,
+};
 const TOPIC_DROPDOWN_OVERLAY_CLASS = 'finder-liquid-glass-menu';
 const KNOWLEDGE_GRAPH_POINT_TYPE_LABEL_MAP = Object.fromEntries(
   KNOWLEDGE_POINT_TYPE_OPTIONS.map((item) => [item.value, item.label]),
@@ -558,6 +566,7 @@ function TopicDetail({
   const [knowledgeGraphDrawerOpen, setKnowledgeGraphDrawerOpen] = useState(false);
   const [aiKnowledgeGraphPreviewOpen, setAiKnowledgeGraphPreviewOpen] = useState(false);
   const [tabIndicatorStyle, setTabIndicatorStyle] = useState(EMPTY_TAB_INDICATOR);
+  const [projectSelectionIndicator, setProjectSelectionIndicator] = useState(EMPTY_PROJECT_SELECTION_INDICATOR);
   const [aiActivePanel, setAiActivePanel] = useState('course');
   const [aiSelectedSkill, setAiSelectedSkill] = useState(null);
   const [aiSelectedStructure, setAiSelectedStructure] = useState('ubd');
@@ -573,6 +582,8 @@ function TopicDetail({
   const detailBodyRef = useRef(null);
   const detailTabsRef = useRef(null);
   const detailTabRefs = useRef(new Map());
+  const projectListRef = useRef(null);
+  const projectItemNodeMapRef = useRef(new Map());
   const knowledgeGraphBindingItemRefs = useRef(new Map());
   const inlineRenameInputRef = useRef(null);
   const pendingRenameTimerRef = useRef(null);
@@ -1885,6 +1896,53 @@ function TopicDetail({
     detailTabRefs.current.delete(key);
   }, []);
 
+  const setProjectItemNode = useCallback((key, node) => {
+    if (node) {
+      projectItemNodeMapRef.current.set(key, node);
+      return;
+    }
+    projectItemNodeMapRef.current.delete(key);
+  }, []);
+
+  const updateProjectSelectionIndicator = useCallback(() => {
+    if (resourcePanelView !== 'resources' || !selectedItemKey) {
+      setProjectSelectionIndicator((prev) => (prev.visible ? EMPTY_PROJECT_SELECTION_INDICATOR : prev));
+      return;
+    }
+
+    const listNode = projectListRef.current;
+    const rowNode = projectItemNodeMapRef.current.get(selectedItemKey);
+    if (!listNode || !rowNode) {
+      setProjectSelectionIndicator((prev) => (prev.visible ? EMPTY_PROJECT_SELECTION_INDICATOR : prev));
+      return;
+    }
+
+    const listRect = listNode.getBoundingClientRect();
+    const rowRect = rowNode.getBoundingClientRect();
+    const nextIndicator = {
+      visible: true,
+      top: Math.max(0, rowRect.top - listRect.top),
+      left: Math.max(0, rowRect.left - listRect.left),
+      width: rowRect.width,
+      height: rowRect.height,
+      key: selectedItemKey,
+    };
+
+    setProjectSelectionIndicator((prev) => {
+      if (
+        prev.visible
+        && prev.key === selectedItemKey
+        && Math.abs(prev.top - nextIndicator.top) < 0.5
+        && Math.abs(prev.left - nextIndicator.left) < 0.5
+        && Math.abs(prev.width - nextIndicator.width) < 0.5
+        && Math.abs(prev.height - nextIndicator.height) < 0.5
+      ) {
+        return prev;
+      }
+      return nextIndicator;
+    });
+  }, [resourcePanelView, selectedItemKey]);
+
   const updateTabIndicator = useCallback(() => {
     const container = detailTabsRef.current;
     const target = detailTabRefs.current.get(activeTab) || null;
@@ -1920,6 +1978,23 @@ function TopicDetail({
   }, [activeTab, updateTabIndicator]);
 
   useLayoutEffect(() => {
+    const frameId = window.requestAnimationFrame(() => {
+      updateProjectSelectionIndicator();
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [
+    activeTab,
+    expandedFolders,
+    inlineRenameItemKey,
+    leftPanelWidth,
+    resourcePanelView,
+    resources,
+    selectedItemKey,
+    updateProjectSelectionIndicator,
+  ]);
+
+  useLayoutEffect(() => {
     if (!hasAiFloatingPanel) return undefined;
     const frameId = window.requestAnimationFrame(() => {
       updateAiFloatingPanelPosition();
@@ -1949,6 +2024,36 @@ function TopicDetail({
       observer?.disconnect();
     };
   }, [activeTab, updateTabIndicator]);
+
+  useEffect(() => {
+    let frameId = 0;
+
+    const scheduleIndicatorUpdate = () => {
+      if (frameId) window.cancelAnimationFrame(frameId);
+      frameId = window.requestAnimationFrame(() => {
+        frameId = 0;
+        updateProjectSelectionIndicator();
+      });
+    };
+
+    window.addEventListener('resize', scheduleIndicatorUpdate);
+
+    const observer = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(scheduleIndicatorUpdate)
+      : null;
+
+    if (observer) {
+      if (projectListRef.current) observer.observe(projectListRef.current);
+      const selectedNode = selectedItemKey ? projectItemNodeMapRef.current.get(selectedItemKey) : null;
+      if (selectedNode) observer.observe(selectedNode);
+    }
+
+    return () => {
+      if (frameId) window.cancelAnimationFrame(frameId);
+      window.removeEventListener('resize', scheduleIndicatorUpdate);
+      observer?.disconnect();
+    };
+  }, [selectedItemKey, updateProjectSelectionIndicator]);
 
   useEffect(() => {
     if (!hasAiFloatingPanel) return undefined;
@@ -3260,6 +3365,7 @@ function TopicDetail({
             onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
           >
             <div
+              ref={(node) => setProjectItemNode(item.key, node)}
               className={`project-item project-item-folder ${isSelected ? 'project-item-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''} ${isDragOverFolder ? 'project-item-dragover' : ''} ${isDragging ? 'project-item-dragging' : ''} ${treeDropPosition === 'before' ? 'project-item-drop-before' : ''} ${treeDropPosition === 'after' ? 'project-item-drop-after' : ''}`}
               draggable={!isInlineRenaming && canEditDisplayedResources}
               onDragStart={(event) => startResourceDrag(event, item)}
@@ -3355,6 +3461,7 @@ function TopicDetail({
         onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
       >
         <div
+          ref={(node) => setProjectItemNode(item.key, node)}
           className={`project-item project-item-child ${isSelected ? 'project-item-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''} ${isDragging ? 'project-item-dragging' : ''} ${treeDropPosition === 'before' ? 'project-item-drop-before' : ''} ${treeDropPosition === 'after' ? 'project-item-drop-after' : ''}`}
           draggable={!isInlineRenaming && canEditDisplayedResources}
           onDragStart={(event) => startResourceDrag(event, item)}
@@ -4671,7 +4778,19 @@ function TopicDetail({
                         </Dropdown>
                       </div>
 
-                      <div className="project-list">
+                      <div
+                        ref={projectListRef}
+                        className={`project-list ${projectSelectionIndicator.visible ? 'project-list-has-single-selection' : ''}`}
+                      >
+                        <div
+                          className={`project-list-selection-indicator ${projectSelectionIndicator.visible ? 'is-visible' : ''}`}
+                          style={{
+                            transform: `translate3d(${projectSelectionIndicator.left}px, ${projectSelectionIndicator.top}px, 0)`,
+                            width: `${projectSelectionIndicator.width}px`,
+                            height: `${projectSelectionIndicator.height}px`,
+                          }}
+                          aria-hidden="true"
+                        />
                         {rootItems.length === 0 ? (
                           <div className="project-empty">暂无{resourcePanelTitle}</div>
                         ) : (
