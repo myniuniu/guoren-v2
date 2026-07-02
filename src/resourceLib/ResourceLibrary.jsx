@@ -2249,30 +2249,6 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     }
   };
 
-  const clearListSelection = () => {
-    clearCurrentSelection();
-  };
-
-  const handleListBlankClick = (e) => {
-    if (
-      e.target.closest('.finder-file-row')
-      || e.target.closest('.finder-detail-header')
-      || e.target.closest('.finder-inline-input')
-      || e.target.closest('.ant-dropdown')
-    ) return;
-    clearListSelection();
-  };
-
-  const handleColumnBlankClick = (e, colIdx) => {
-    if (
-      e.target.closest('.finder-column-item')
-      || e.target.closest('.finder-column-resize-handle')
-      || e.target.closest('.ant-dropdown')
-    ) return;
-    clearCurrentSelection();
-    setColumnPath((prev) => prev.slice(0, Math.min(prev.length, colIdx + 1)));
-  };
-
   // ====== 分栏视图 - 点击文件夹时扩展列 ======
   const handleColumnFolderClick = (folderKey, colIndex) => {
     clearPendingRenameTrigger();
@@ -4294,7 +4270,6 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                     className={`finder-column ${columnSelectionIndicator.visible && columnSelectionIndicator.colIdx === colIdx ? 'finder-column-has-single-selection' : ''}`}
                     key={colIdx}
                     style={colWidth ? { width: colWidth, minWidth: colWidth, maxWidth: colWidth } : undefined}
-                    onClick={(e) => handleColumnBlankClick(e, colIdx)}
                   >
                     <div
                       className={`finder-column-selection-indicator ${columnSelectionIndicator.visible && columnSelectionIndicator.colIdx === colIdx ? 'is-visible' : ''}`}
@@ -4517,7 +4492,6 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                   onContextMenu={handleBgContextMenu}
                   onDragOver={handleListDragOver}
                   onDrop={handleListDrop}
-                  onClick={handleListBlankClick}
                 >
               <div
                 className={`finder-file-selection-indicator ${detailSelectionIndicator.visible ? 'is-visible' : ''}`}
