@@ -80,7 +80,13 @@ import TeacherPortraitModule from './teacherPortrait/TeacherPortraitModule';
 import LuckyModule from './lucky/LuckyModule';
 import TasksModule from './tasks/TasksModule';
 import SceneCreateModal from './scene/SceneCreateModal';
-import { getSceneStoreChangeEventName, getSceneTypeLabel, getSceneVisibilityLabel, sceneApi } from './scene/api';
+import {
+  getSceneStoreChangeEventName,
+  getSceneTypeLabel,
+  getSceneVisibilityLabel,
+  normalizeTopicCardConfig,
+  sceneApi,
+} from './scene/api';
 import { getSceneThemeCoverStyle } from './scene/themeCovers';
 import { getLuckyConversationId } from './messages/luckyPushStore';
 import { setAnalyticsContext, trackEvent, trackPageView } from './shared/analytics';
@@ -1390,79 +1396,112 @@ function App() {
                       <div className="card-grid">
                         {group.spaces.map((scene) => {
                           const theme = getSceneTheme(scene);
+                          const topicCardConfig = normalizeTopicCardConfig(scene.templateSnapshot?.topicCard);
                           const roleList = (scene.templateSnapshot?.roles || []).slice(0, 3);
+                          const memberCount = Number.isFinite(Number(scene.memberCount)) && Number(scene.memberCount) > 0
+                            ? Number(scene.memberCount)
+                            : ((scene.templateSnapshot?.roles || []).length || 0);
+                          const sceneCardClassName = [
+                            'scene-card',
+                            `scene-card-size-${String(topicCardConfig.size || 'MEDIUM').toLowerCase()}`,
+                            topicCardConfig.showCover ? '' : 'scene-card-no-cover',
+                          ].filter(Boolean).join(' ');
+                          const cardMenu = {
+                            items: [
+                              {
+                                key: 'toggle-shortcut',
+                                label: scene.menuShortcutEnabled ? '从菜单移除快捷方式' : '添加到菜单快捷方式',
+                              },
+                              { key: 'edit', label: '编辑空间' },
+                              { key: 'delete', label: '删除空间', danger: true },
+                            ],
+                            onClick: ({ key, domEvent }) => {
+                              domEvent.stopPropagation();
+                              if (key === 'toggle-shortcut') {
+                                handleToggleSceneMenuShortcut(scene, !scene.menuShortcutEnabled);
+                              } else if (key === 'edit') {
+                                openEditSceneModal(scene);
+                              } else if (key === 'delete') {
+                                handleDeleteScene(scene);
+                              }
+                            },
+                          };
                           return (
                             <Card
                               key={scene.id}
-                              className="scene-card"
+                              className={sceneCardClassName}
                               hoverable
                               variant="borderless"
                               styles={{ body: { padding: 0 } }}
                               onClick={() => handleCardClick(scene)}
                             >
-                              <div className="card-cover">
-                                <div
-                                  className="wave-bg"
-                                  style={getSceneThemeCoverStyle(theme, {
-                                    overlayStart: 'rgba(15, 23, 42, 0.18)',
-                                    overlayEnd: 'rgba(15, 23, 42, 0.04)',
-                                  })}
-                                >
-                                  <div className="card-cover-copy">
-                                    <span className="card-cover-badge">{theme.badgeText || getSceneTypeLabel(scene.sceneType)}</span>
-                                    <div className="card-cover-title">{theme.heroTitle || scene.templateName}</div>
-                                    <div className="card-cover-hint">{theme.surfaceHint || scene.templateName}</div>
+                              {topicCardConfig.showCover ? (
+                                <div className="card-cover">
+                                  <div
+                                    className="wave-bg"
+                                    style={getSceneThemeCoverStyle(theme, {
+                                      overlayStart: 'rgba(15, 23, 42, 0.18)',
+                                      overlayEnd: 'rgba(15, 23, 42, 0.04)',
+                                    })}
+                                  >
+                                    {topicCardConfig.showTitle ? (
+                                      <div className="card-cover-copy">
+                                        <div className="card-cover-title">{theme.heroTitle || scene.templateName}</div>
+                                        <div className="card-cover-hint">{theme.surfaceHint || scene.templateName}</div>
+                                      </div>
+                                    ) : null}
+                                    <svg className="wave-svg" viewBox="0 0 400 120" preserveAspectRatio="none">
+                                      <path d="M0,60 C100,20 150,100 250,50 C300,30 350,80 400,40 L400,120 L0,120 Z" fill="rgba(255,255,255,0.18)" />
+                                      <path d="M0,80 C80,50 160,100 240,70 C320,40 360,90 400,60 L400,120 L0,120 Z" fill="rgba(255,255,255,0.12)" />
+                                      <path d="M0,95 C60,75 120,110 200,88 C280,66 340,98 400,82 L400,120 L0,120 Z" fill="rgba(255,255,255,0.08)" />
+                                    </svg>
                                   </div>
-                                  <svg className="wave-svg" viewBox="0 0 400 120" preserveAspectRatio="none">
-                                    <path d="M0,60 C100,20 150,100 250,50 C300,30 350,80 400,40 L400,120 L0,120 Z" fill="rgba(255,255,255,0.18)" />
-                                    <path d="M0,80 C80,50 160,100 240,70 C320,40 360,90 400,60 L400,120 L0,120 Z" fill="rgba(255,255,255,0.12)" />
-                                    <path d="M0,95 C60,75 120,110 200,88 C280,66 340,98 400,82 L400,120 L0,120 Z" fill="rgba(255,255,255,0.08)" />
-                                  </svg>
+                                  <Dropdown menu={cardMenu} placement="bottomRight">
+                                    <Button
+                                      type="text"
+                                      className="card-more-btn"
+                                      icon={<EllipsisOutlined />}
+                                      onClick={(e) => e.stopPropagation()}
+                                    />
+                                  </Dropdown>
                                 </div>
-                                <Dropdown
-                                  menu={{
-                                    items: [
-                                      {
-                                        key: 'toggle-shortcut',
-                                        label: scene.menuShortcutEnabled ? '从菜单移除快捷方式' : '添加到菜单快捷方式',
-                                      },
-                                      { key: 'edit', label: '编辑空间' },
-                                      { key: 'delete', label: '删除空间', danger: true },
-                                    ],
-                                    onClick: ({ key, domEvent }) => {
-                                      domEvent.stopPropagation();
-                                      if (key === 'toggle-shortcut') {
-                                        handleToggleSceneMenuShortcut(scene, !scene.menuShortcutEnabled);
-                                      } else if (key === 'edit') {
-                                        openEditSceneModal(scene);
-                                      } else if (key === 'delete') {
-                                        handleDeleteScene(scene);
-                                      }
-                                    },
-                                  }}
-                                  placement="bottomRight"
-                                >
-                                  <Button
-                                    type="text"
-                                    className="card-more-btn"
-                                    icon={<EllipsisOutlined />}
-                                    onClick={(e) => e.stopPropagation()}
-                                  />
-                                </Dropdown>
-                              </div>
+                              ) : (
+                                <div className="scene-card-inline-actions">
+                                  <Dropdown menu={cardMenu} placement="bottomRight">
+                                    <Button
+                                      type="text"
+                                      className="card-more-btn"
+                                      icon={<EllipsisOutlined />}
+                                      onClick={(e) => e.stopPropagation()}
+                                    />
+                                  </Dropdown>
+                                </div>
+                              )}
                               <div className="card-body">
-                                <div className="card-title" title={scene.name}>{scene.name}</div>
+                                {topicCardConfig.showTitle ? (
+                                  <div className="card-title" title={scene.name}>{scene.name}</div>
+                                ) : null}
                                 <div className="card-subtitle">{scene.description || theme.heroSubtitle || '未填写空间描述'}</div>
                                 <div className="scene-card-meta-line">
                                   <span>{scene.templateName}</span>
-                                  <span>{getSceneTypeLabel(scene.sceneType)}</span>
+                                  {topicCardConfig.showSceneType ? (
+                                    <span>{getSceneTypeLabel(scene.sceneType)}</span>
+                                  ) : null}
+                                  {topicCardConfig.showMemberCount ? (
+                                    <span>{`${memberCount} 名成员`}</span>
+                                  ) : null}
                                 </div>
-                                <div className="scene-role-list">
-                                  {roleList.map((role) => (
-                                    <span key={role.id} className="scene-role-pill">{role.name}</span>
-                                  ))}
-                                </div>
+                                {roleList.length > 0 ? (
+                                  <div className="scene-role-list">
+                                    {roleList.map((role) => (
+                                      <span key={role.id} className="scene-role-pill">{role.name}</span>
+                                    ))}
+                                  </div>
+                                ) : null}
                                 <div className="card-footer">
+                                  {topicCardConfig.showTags && theme.badgeText ? (
+                                    <Tag className="scene-theme-tag">{theme.badgeText}</Tag>
+                                  ) : null}
                                   <Tag className="visibility-tag">{getSceneVisibilityLabel(scene.visibility)}</Tag>
                                   {scene.menuShortcutEnabled ? (
                                     <Tag className="scene-shortcut-tag">菜单快捷方式</Tag>

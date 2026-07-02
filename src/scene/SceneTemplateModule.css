@@ -996,6 +996,175 @@
   background: transparent;
 }
 
+.scene-template-role-reference-note {
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  background: #eff6ff;
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #1d4ed8;
+}
+
+.scene-template-role-library-preview {
+  margin-top: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #f8fafc;
+  padding: 14px 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.scene-template-role-library-preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.scene-template-role-library-preview-meta {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #64748b;
+}
+
+.scene-template-role-library-hint {
+  margin-top: 12px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #475569;
+}
+
+.scene-template-topic-card-preview {
+  width: min(100%, 360px);
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+}
+
+.scene-template-topic-card-preview-cover {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  min-height: 112px;
+  padding: 16px;
+}
+
+.scene-template-topic-card-preview-copy {
+  display: grid;
+  gap: 6px;
+  color: #fff;
+}
+
+.scene-template-topic-card-preview-title {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.scene-template-topic-card-preview-hint {
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.84);
+}
+
+.scene-template-topic-card-preview-body {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+}
+
+.scene-template-topic-card-preview-body-title {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: #111827;
+}
+
+.scene-template-topic-card-preview-body-subtitle {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #64748b;
+}
+
+.scene-template-topic-card-preview-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.scene-template-topic-card-preview-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.scene-template-topic-card-preview-tags .ant-tag {
+  margin-inline-end: 0;
+}
+
+.scene-template-topic-card-preview-large .scene-template-topic-card-preview-cover {
+  min-height: 152px;
+  padding: 18px;
+}
+
+.scene-template-topic-card-preview-large {
+  width: min(100%, 520px);
+}
+
+.scene-template-topic-card-preview-large .scene-template-topic-card-preview-body {
+  padding: 18px;
+}
+
+.scene-template-topic-card-preview-large .scene-template-topic-card-preview-title,
+.scene-template-topic-card-preview-large .scene-template-topic-card-preview-body-title {
+  font-size: 17px;
+}
+
+.scene-template-topic-card-preview-medium {
+  width: min(100%, 360px);
+}
+
+.scene-template-topic-card-preview-small .scene-template-topic-card-preview-cover {
+  min-height: 84px;
+  padding: 12px 14px;
+}
+
+.scene-template-topic-card-preview-small {
+  width: min(100%, 280px);
+}
+
+.scene-template-topic-card-preview-small .scene-template-topic-card-preview-body {
+  gap: 8px;
+  padding: 12px 14px 14px;
+}
+
+.scene-template-topic-card-preview-small .scene-template-topic-card-preview-title,
+.scene-template-topic-card-preview-small .scene-template-topic-card-preview-body-title {
+  font-size: 14px;
+}
+
+.scene-template-topic-card-preview-small .scene-template-topic-card-preview-hint,
+.scene-template-topic-card-preview-small .scene-template-topic-card-preview-body-subtitle,
+.scene-template-topic-card-preview-small .scene-template-topic-card-preview-meta {
+  font-size: 11px;
+}
+
+.scene-template-topic-card-preview.is-cover-hidden .scene-template-topic-card-preview-body {
+  padding-top: 18px;
+}
+
 .scene-template-metadata-form-designer {
   flex: 1;
   min-height: 420px;

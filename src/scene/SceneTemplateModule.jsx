@@ -8,6 +8,7 @@ import {
   InputNumber,
   Modal,
   Popconfirm,
+  Radio,
   Select,
   Space,
   Switch,
@@ -46,6 +47,7 @@ import {
   STATUS_RULE_CONTROL_OPTIONS,
   STATUS_RULE_STAGE_OPTIONS,
   TEMPLATE_STATUS_OPTIONS,
+  TOPIC_CARD_SIZE_OPTIONS,
   TOOL_OPTIONS,
   TOOL_PLACEMENT_OPTIONS,
   VERSION_CREATE_MODE_OPTIONS,
@@ -62,6 +64,8 @@ import {
   getStatusRuleControlLabel,
   getStatusRuleStageDescription,
   getStatusRuleStageLabel,
+  getTopicCardSizeLabel,
+  normalizeTopicCardConfig,
   normalizeVersioningConfig,
   sceneApi,
 } from './api';
@@ -78,6 +82,63 @@ const { TextArea } = Input;
 const TOPIC_THEME_MODE_OPTIONS = [
   { value: 'DEFAULT', label: '默认浅灰白' },
   { value: 'SCENE', label: '跟随场景色' },
+];
+const ROLE_LIBRARY_IMPORT_MODE_OPTIONS = [
+  { value: 'COPY', label: '复制角色定义' },
+  { value: 'REFERENCE', label: '引用角色定义' },
+];
+const MOCK_ROLE_LIBRARY = [
+  {
+    id: 'role_center_teacher',
+    key: 'teacher',
+    name: '教师',
+    description: '负责授课组织、资料维护、课堂工具配置与学习反馈。',
+    agentName: 'AI助教',
+    functionalPermissionMode: 'INCLUDE',
+    functionalPermissions: ['TOPIC_EDIT', 'RESOURCE_CREATE', 'RESOURCE_EDIT', 'TOOL_USE', 'LIVE_ACTIVITY_MANAGE', 'ASSESSMENT_CONFIG', 'RESULT_REVIEW'],
+    permissionSummary: '可管理主题、资料、课堂工具和作业反馈。',
+    dataAccessScope: 'ALL',
+    assignedAccessRuleType: 'ALL',
+    dataAccessAreas: [],
+    authorizedFolderKeys: [],
+    assignedAttributeRules: [],
+    authorizedResourceRefs: [],
+    scopeSummary: '拥有全部资料和教学过程数据的查看与管理权限。',
+  },
+  {
+    id: 'role_center_student',
+    key: 'student',
+    name: '学员',
+    description: '参与学习互动、资料查看与成果提交。',
+    agentName: '',
+    functionalPermissionMode: 'INCLUDE',
+    functionalPermissions: ['TOOL_USE', 'RESULT_SUBMIT', 'COMMENT_INTERACT'],
+    permissionSummary: '可参与互动、使用工具并提交成果。',
+    dataAccessScope: 'PUBLIC',
+    assignedAccessRuleType: 'ALL',
+    dataAccessAreas: [],
+    authorizedFolderKeys: [],
+    assignedAttributeRules: [],
+    authorizedResourceRefs: [],
+    scopeSummary: '默认查看公开资料，并参与互动与成果提交流程。',
+  },
+  {
+    id: 'role_center_reviewer',
+    key: 'reviewer',
+    name: '评阅老师',
+    description: '负责查看成果、完成评阅和反馈说明。',
+    agentName: '',
+    functionalPermissionMode: 'INCLUDE',
+    functionalPermissions: ['TOOL_USE', 'ASSESSMENT_CONFIG', 'RESULT_REVIEW', 'COMMENT_INTERACT'],
+    permissionSummary: '可查看成果并完成评阅与反馈。',
+    dataAccessScope: 'ASSIGNED',
+    assignedAccessRuleType: 'RESOURCE_TYPE',
+    dataAccessAreas: ['EXAM', 'NOTE'],
+    authorizedFolderKeys: [],
+    assignedAttributeRules: [],
+    authorizedResourceRefs: [],
+    scopeSummary: '仅查看指定资料类型与评阅相关内容。',
+  },
 ];
 
 function getErrorMessage(error, fallback = '操作失败') {
@@ -231,6 +292,67 @@ function SceneTemplateStaticField({
   );
 }
 
+function getDisplayToggleLabel(enabled) {
+  return enabled ? '显示' : '隐藏';
+}
+
+function SceneTemplateTopicCardPreview({ template, config }) {
+  const resolvedConfig = normalizeTopicCardConfig(config);
+  const sizeClassName = String(resolvedConfig.size || 'MEDIUM').toLowerCase();
+  const sampleMemberCount = Math.max((template?.roles?.length || 0) * 12, 24);
+  const bodyTitle = template?.name || '未命名主题';
+  const coverTitle = template?.theme?.heroTitle || bodyTitle;
+  const coverHint = template?.theme?.surfaceHint || template?.description || '主题卡片预览';
+  const bodySummary = template?.description || template?.theme?.heroSubtitle || '主题摘要将在这里展示。';
+  const themeTag = template?.theme?.badgeText || '主题标签';
+
+  return (
+    <div
+      className={`scene-template-topic-card-preview scene-template-topic-card-preview-${sizeClassName}${resolvedConfig.showCover ? '' : ' is-cover-hidden'}`}
+    >
+      {resolvedConfig.showCover ? (
+        <div
+          className="scene-template-topic-card-preview-cover"
+          style={getSceneThemeCoverStyle(template?.theme || {}, {
+            overlayStart: 'rgba(15, 23, 42, 0.2)',
+            overlayEnd: 'rgba(15, 23, 42, 0.06)',
+          })}
+        >
+          {resolvedConfig.showTitle ? (
+            <div className="scene-template-topic-card-preview-copy">
+              <div className="scene-template-topic-card-preview-title">{coverTitle}</div>
+              <div className="scene-template-topic-card-preview-hint">{coverHint}</div>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+      <div className="scene-template-topic-card-preview-body">
+        {resolvedConfig.showTitle ? (
+          <div className="scene-template-topic-card-preview-body-title" title={bodyTitle}>
+            {bodyTitle}
+          </div>
+        ) : null}
+        <div className="scene-template-topic-card-preview-body-subtitle">{bodySummary}</div>
+        {resolvedConfig.showSceneType || resolvedConfig.showMemberCount ? (
+          <div className="scene-template-topic-card-preview-meta">
+            {resolvedConfig.showSceneType ? (
+              <span>{getSceneTypeLabel(template?.sceneType)}</span>
+            ) : null}
+            {resolvedConfig.showMemberCount ? (
+              <span>{`${sampleMemberCount} 名成员`}</span>
+            ) : null}
+          </div>
+        ) : null}
+        {resolvedConfig.showTags ? (
+          <div className="scene-template-topic-card-preview-tags">
+            <Tag color="blue">{themeTag}</Tag>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function SceneTemplatePreview({ template, sceneCount }) {
   if (!template) {
     return (
@@ -247,6 +369,7 @@ function SceneTemplatePreview({ template, sceneCount }) {
   const statusPreset = getSceneTypeStatusPreset(statusPresetSceneType);
   const statusGuidance = getSceneTypeStatusGuidance(statusPresetSceneType, template.statusRules);
   const modeTabs = Array.isArray(template.topicPage?.modeTabs) ? template.topicPage.modeTabs : [];
+  const topicCardConfig = normalizeTopicCardConfig(template.topicCard);
   const enabledModeCount = modeTabs.filter((mode) => mode.enabled !== false).length;
   const enabledToolCount = countEnabledTools(template);
   const previewSummaryItems = [
@@ -447,6 +570,28 @@ function SceneTemplatePreview({ template, sceneCount }) {
             ),
           },
           {
+            key: 'topicCard',
+            label: '主题卡片',
+            children: (
+              <div className="scene-template-drawer-section">
+                <div className="scene-template-list-card">
+                  <div className="scene-template-form-grid">
+                    <SceneTemplateStaticField label="卡片大小" value={getTopicCardSizeLabel(topicCardConfig.size)} />
+                    <SceneTemplateStaticField label="显示场景类型" value={getDisplayToggleLabel(topicCardConfig.showSceneType)} />
+                    <SceneTemplateStaticField label="显示成员数量" value={getDisplayToggleLabel(topicCardConfig.showMemberCount)} />
+                    <SceneTemplateStaticField label="显示主题标题" value={getDisplayToggleLabel(topicCardConfig.showTitle)} />
+                    <SceneTemplateStaticField label="显示主题标签" value={getDisplayToggleLabel(topicCardConfig.showTags)} />
+                    <SceneTemplateStaticField label="显示主题图片" value={getDisplayToggleLabel(topicCardConfig.showCover)} />
+                  </div>
+                </div>
+                <div className="scene-template-subsection-title">
+                  <span>卡片预览</span>
+                </div>
+                <SceneTemplateTopicCardPreview template={template} config={topicCardConfig} />
+              </div>
+            ),
+          },
+          {
             key: 'roles',
             label: '角色限定',
             children: (
@@ -457,15 +602,27 @@ function SceneTemplatePreview({ template, sceneCount }) {
                     defaultActiveKey={String(template.roles[0]?.id || 0)}
                     items={template.roles.map((role, index) => ({
                       key: String(role?.id || index),
-                      label: role?.name || `角色${index + 1}`,
+                      label: role?.bindingMode === 'REFERENCE'
+                        ? `${role?.name || `角色${index + 1}`}（引用）`
+                        : (role?.name || `角色${index + 1}`),
                       children: (
                         <div className="scene-template-role-tab-panel">
                           <div className="scene-template-role-stack">
+                            {role?.bindingMode === 'REFERENCE' ? (
+                              <div className="scene-template-role-reference-note">
+                                {`当前角色引用自已有角色「${role?.sourceRoleName || role?.name || '未命名角色'}」，这里只展示角色定义内容。`}
+                              </div>
+                            ) : null}
                             <div className="scene-template-role-editor-block scene-template-role-editor-block-basic">
                               <div className="scene-template-role-editor-title">基本信息</div>
                               <div className="scene-template-form-grid">
                                 <SceneTemplateStaticField label="角色标识" value={role.key} />
                                 <SceneTemplateStaticField label="角色名称" value={role.name} />
+                                <SceneTemplateStaticField
+                                  label="引入方式"
+                                  value={role?.bindingMode === 'REFERENCE' ? '引用已有角色' : '复制 / 自定义角色'}
+                                />
+                                <SceneTemplateStaticField label="来源角色" value={role?.sourceRoleName || '-'} />
                                 <SceneTemplateStaticField span={2} label="角色说明" value={role.description} />
                               </div>
                             </div>
@@ -700,8 +857,10 @@ export default function SceneTemplateModule() {
   const [saving, setSaving] = useState(false);
   const [activeRoleTabKey, setActiveRoleTabKey] = useState(null);
   const [themeCoverModalOpen, setThemeCoverModalOpen] = useState(false);
+  const [roleLibraryModalOpen, setRoleLibraryModalOpen] = useState(false);
 
   const [templateForm] = Form.useForm();
+  const [roleLibraryForm] = Form.useForm();
   const watchedRolesValue = Form.useWatch('roles', { form: templateForm, preserve: true });
   const watchedMetadataFieldsValue = Form.useWatch('metadataFields', { form: templateForm, preserve: true });
   const watchedToolConfigsValue = Form.useWatch('toolConfigs', { form: templateForm, preserve: true });
@@ -710,7 +869,10 @@ export default function SceneTemplateModule() {
   const watchedStatusPresetSceneTypeValue = Form.useWatch('statusPresetSceneType', { form: templateForm, preserve: true });
   const watchedThemeValue = Form.useWatch('theme', { form: templateForm, preserve: true });
   const watchedModeTabsValue = Form.useWatch(['topicPage', 'modeTabs'], { form: templateForm, preserve: true });
+  const watchedTopicCardValue = Form.useWatch('topicCard', { form: templateForm, preserve: true });
   const watchedVersioningValue = Form.useWatch('versioning', { form: templateForm, preserve: true });
+  const selectedRoleLibraryId = Form.useWatch('roleId', roleLibraryForm);
+  const selectedRoleImportMode = Form.useWatch('importMode', roleLibraryForm);
   const watchedRoles = useMemo(() => watchedRolesValue || [], [watchedRolesValue]);
   const watchedMetadataFields = useMemo(() => watchedMetadataFieldsValue || [], [watchedMetadataFieldsValue]);
   const watchedToolConfigs = useMemo(() => watchedToolConfigsValue || [], [watchedToolConfigsValue]);
@@ -726,6 +888,21 @@ export default function SceneTemplateModule() {
       ? watchedModeTabsValue
       : (editingTemplate?.topicPage?.modeTabs || [])),
     [editingTemplate?.topicPage?.modeTabs, watchedModeTabsValue],
+  );
+  const watchedTopicCard = useMemo(
+    () => normalizeTopicCardConfig(watchedTopicCardValue || editingTemplate?.topicCard || {}),
+    [editingTemplate?.topicCard, watchedTopicCardValue],
+  );
+  const roleLibraryOptions = useMemo(
+    () => MOCK_ROLE_LIBRARY.map((role) => ({
+      value: role.id,
+      label: `${role.name}（${role.key}）`,
+    })),
+    [],
+  );
+  const selectedRoleLibraryDefinition = useMemo(
+    () => MOCK_ROLE_LIBRARY.find((role) => role.id === selectedRoleLibraryId) || null,
+    [selectedRoleLibraryId],
   );
   const watchedVersioningEnabled = useMemo(
     () => normalizeVersioningConfig(
@@ -877,6 +1054,59 @@ export default function SceneTemplateModule() {
     const nextRole = createRoleDraft(currentRoles.length + 1);
     templateForm.setFieldValue('roles', [...currentRoles, nextRole]);
     setActiveRoleTabKey(String(nextRole.id));
+  }
+
+  function openRoleLibraryPicker() {
+    roleLibraryForm.resetFields();
+    roleLibraryForm.setFieldsValue({
+      importMode: 'COPY',
+    });
+    setRoleLibraryModalOpen(true);
+  }
+
+  function buildRoleFromLibrary(roleDefinition, importMode, seed) {
+    const draft = createRoleDraft(seed);
+    return {
+      ...draft,
+      key: roleDefinition.key,
+      name: roleDefinition.name,
+      description: roleDefinition.description,
+      agentName: roleDefinition.agentName || '',
+      bindingMode: importMode === 'REFERENCE' ? 'REFERENCE' : 'CUSTOM',
+      sourceRoleId: importMode === 'REFERENCE' ? roleDefinition.id : '',
+      sourceRoleName: importMode === 'REFERENCE' ? roleDefinition.name : '',
+      functionalPermissionMode: roleDefinition.functionalPermissionMode || 'INCLUDE',
+      functionalPermissions: [...(roleDefinition.functionalPermissions || [])],
+      permissionSummary: roleDefinition.permissionSummary || '',
+      dataAccessScope: roleDefinition.dataAccessScope || 'ASSIGNED',
+      assignedAccessRuleType: roleDefinition.assignedAccessRuleType || 'ALL',
+      dataAccessAreas: [...(roleDefinition.dataAccessAreas || [])],
+      authorizedFolderKeys: [...(roleDefinition.authorizedFolderKeys || [])],
+      assignedAttributeRules: [...(roleDefinition.assignedAttributeRules || [])],
+      authorizedResourceRefs: [...(roleDefinition.authorizedResourceRefs || [])],
+      scopeSummary: roleDefinition.scopeSummary || '',
+    };
+  }
+
+  async function handleImportRoleFromLibrary() {
+    try {
+      const values = await roleLibraryForm.validateFields();
+      const roleDefinition = MOCK_ROLE_LIBRARY.find((role) => role.id === values.roleId);
+      if (!roleDefinition) {
+        message.error('请选择已有角色');
+        return;
+      }
+      const currentRoles = templateForm.getFieldValue('roles') || [];
+      const nextRole = buildRoleFromLibrary(roleDefinition, values.importMode || 'COPY', currentRoles.length + 1);
+      templateForm.setFieldValue('roles', [...currentRoles, nextRole]);
+      setActiveRoleTabKey(String(nextRole.id));
+      setRoleLibraryModalOpen(false);
+      roleLibraryForm.resetFields();
+      message.success(values.importMode === 'REFERENCE' ? '已引用角色定义' : '已复制角色定义');
+    } catch (error) {
+      if (error?.errorFields) return;
+      message.error(getErrorMessage(error, '引入角色失败'));
+    }
   }
 
   function removeRole(index) {
@@ -1391,6 +1621,44 @@ export default function SceneTemplateModule() {
                 ),
               },
               {
+                key: 'topicCard',
+                label: '主题卡片',
+                children: (
+                  <div className="scene-template-drawer-section">
+                    <div className="scene-template-list-card">
+                      <div className="scene-template-form-grid">
+                        <Form.Item
+                          label="卡片大小"
+                          name={['topicCard', 'size']}
+                          rules={[{ required: true, message: '请选择卡片大小' }]}
+                        >
+                          <Select options={TOPIC_CARD_SIZE_OPTIONS} />
+                        </Form.Item>
+                        <Form.Item label="显示场景类型" name={['topicCard', 'showSceneType']} valuePropName="checked">
+                          <Switch />
+                        </Form.Item>
+                        <Form.Item label="显示成员数量" name={['topicCard', 'showMemberCount']} valuePropName="checked">
+                          <Switch />
+                        </Form.Item>
+                        <Form.Item label="显示主题标题" name={['topicCard', 'showTitle']} valuePropName="checked">
+                          <Switch />
+                        </Form.Item>
+                        <Form.Item label="显示主题标签" name={['topicCard', 'showTags']} valuePropName="checked">
+                          <Switch />
+                        </Form.Item>
+                        <Form.Item label="显示主题图片" name={['topicCard', 'showCover']} valuePropName="checked">
+                          <Switch />
+                        </Form.Item>
+                      </div>
+                    </div>
+                    <div className="scene-template-subsection-title">
+                      <span>卡片预览</span>
+                    </div>
+                    <SceneTemplateTopicCardPreview template={templateForm.getFieldsValue(true)} config={watchedTopicCard} />
+                  </div>
+                ),
+              },
+              {
                 key: 'modeTabs',
                 label: '主题模式',
                 children: (
@@ -1494,26 +1762,36 @@ export default function SceneTemplateModule() {
                   <div className="scene-template-drawer-section">
                     <div className="scene-template-subsection-title with-action">
                       <span>角色限定</span>
-                      {watchedRoles.length > 0 ? (
-                        <Button size="small" icon={<PlusOutlined />} onClick={appendRole}>
-                          添加角色
+                      <Space size={8} wrap>
+                        <Button size="small" onClick={openRoleLibraryPicker}>
+                          选择已有角色
                         </Button>
-                      ) : null}
+                        {watchedRoles.length > 0 ? (
+                          <Button size="small" icon={<PlusOutlined />} onClick={appendRole}>
+                            添加角色
+                          </Button>
+                        ) : null}
+                      </Space>
                     </div>
 
                     {watchedRoles.length === 0 ? (
                       <div className="scene-template-role-empty-panel">
                         <div className="scene-template-role-empty-copy">
                           <strong>先创建角色，再配置功能权限和资料权限</strong>
-                          <span>每个角色都可以单独设置功能授权，以及资料归属范围和授权对象。</span>
+                          <span>既可以新建角色，也可以从角色后台选择已有角色，按复制或引用方式引入。</span>
                         </div>
-                        <Button
-                          type="primary"
-                          icon={<PlusOutlined />}
-                          onClick={() => templateForm.setFieldValue('roles', [createRoleDraft(1)])}
-                        >
-                          创建首个角色
-                        </Button>
+                        <Space wrap>
+                          <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={() => templateForm.setFieldValue('roles', [createRoleDraft(1)])}
+                          >
+                            创建首个角色
+                          </Button>
+                          <Button onClick={openRoleLibraryPicker}>
+                            选择已有角色
+                          </Button>
+                        </Space>
                       </div>
                     ) : null}
 
@@ -1540,122 +1818,148 @@ export default function SceneTemplateModule() {
                           }
                         }}
                         className="scene-template-role-tabs"
-                        items={watchedRoles.map((role, index) => ({
-                          key: String(role?.id || index),
-                          label: role?.name || `角色${index + 1}`,
-                          closable: watchedRoles.length > 1,
-                          children: (
-                            <div className="scene-template-role-tab-panel">
-                              <div className="scene-template-role-stack">
-                                <div className="scene-template-role-editor-block scene-template-role-editor-block-basic">
-                                  <div className="scene-template-role-editor-title">基本信息</div>
-                                  <div className="scene-template-form-grid">
-                                    <Form.Item label="角色标识" name={['roles', index, 'key']}>
-                                      <Input placeholder="例如：teacher" />
-                                    </Form.Item>
-                                    <Form.Item label="角色名称" name={['roles', index, 'name']}>
-                                      <Input placeholder="例如：教师" />
-                                    </Form.Item>
-                                    <Form.Item className="scene-template-form-span-2" label="角色说明" name={['roles', index, 'description']}>
-                                      <TextArea rows={2} placeholder="说明该角色在场景中的职责" />
-                                    </Form.Item>
-                                  </div>
-                                </div>
-                                <div className="scene-template-role-editor-sections">
-                                  <div className="scene-template-role-editor-block scene-template-role-editor-block-function">
-                                    <div className="scene-template-role-editor-title">功能授权</div>
-                                    <div className="scene-template-role-editor-stack-grid">
-                                      <Form.Item label="授权方式" name={['roles', index, 'functionalPermissionMode']}>
-                                        <Select options={ROLE_FUNCTION_PERMISSION_MODE_OPTIONS} />
+                        items={watchedRoles.map((role, index) => {
+                          const roleReadonly = role?.bindingMode === 'REFERENCE';
+                          return {
+                            key: String(role?.id || index),
+                            label: roleReadonly
+                              ? `${role?.name || `角色${index + 1}`}（引用）`
+                              : (role?.name || `角色${index + 1}`),
+                            closable: watchedRoles.length > 1,
+                            children: (
+                              <div className="scene-template-role-tab-panel">
+                                <div className="scene-template-role-stack">
+                                  {roleReadonly ? (
+                                    <div className="scene-template-role-reference-note">
+                                      {`当前角色引用自已有角色「${role?.sourceRoleName || role?.name || '未命名角色'}」，角色定义内容仅可查看，不能修改。如需调整，请改用“复制角色定义”方式引入。`}
+                                    </div>
+                                  ) : null}
+                                  <div className="scene-template-role-editor-block scene-template-role-editor-block-basic">
+                                    <div className="scene-template-role-editor-title">基本信息</div>
+                                    <div className="scene-template-form-grid">
+                                      <Form.Item label="角色标识" name={['roles', index, 'key']}>
+                                        <Input placeholder="例如：teacher" disabled={roleReadonly} />
                                       </Form.Item>
-                                      <div className="scene-template-mode-hint">
-                                        支持正选和反选。选择“不包括以下功能”时，树中勾选的是排除项。
-                                      </div>
-                                      <Form.Item label="功能树授权" name={['roles', index, 'functionalPermissions']}>
-                                        <TreeSelect
-                                          treeData={ROLE_FUNCTION_PERMISSION_TREE}
-                                          treeCheckable
-                                          showCheckedStrategy={TreeSelect.SHOW_CHILD}
-                                          placeholder="从功能树中选择授权项"
-                                          allowClear
-                                        />
+                                      <Form.Item label="角色名称" name={['roles', index, 'name']}>
+                                        <Input placeholder="例如：教师" disabled={roleReadonly} />
                                       </Form.Item>
-                                      <Form.Item label="功能说明" name={['roles', index, 'permissionSummary']}>
-                                        <Input placeholder="例如：可管理主题、资料和作业" />
+                                      <Form.Item className="scene-template-form-span-2" label="角色说明" name={['roles', index, 'description']}>
+                                        <TextArea rows={2} placeholder="说明该角色在场景中的职责" disabled={roleReadonly} />
                                       </Form.Item>
                                     </div>
                                   </div>
-                                  <div className="scene-template-role-editor-block scene-template-role-editor-block-data">
-                                    <div className="scene-template-role-editor-title">资料授权</div>
-                                    <div className="scene-template-role-editor-stack-grid">
-                                      <Form.Item label="资料归属范围" name={['roles', index, 'dataAccessScope']}>
-                                        <Select options={ROLE_DATA_SCOPE_OPTIONS} />
-                                      </Form.Item>
-                                      {role?.dataAccessScope === 'ASSIGNED' ? (
-                                        <>
-                                          <Form.Item label="授权方式" name={['roles', index, 'assignedAccessRuleType']}>
-                                            <Select options={ASSIGNED_ACCESS_RULE_OPTIONS} />
-                                          </Form.Item>
-                                          <div className="scene-template-mode-hint">
-                                            仅在“指定授权资料”下配置授权方式。默认“全部授权对象”，也可以按资料类型、目录类型、资料属性或具体资料逐项授权；目录类型已并入授权对象列表。
-                                          </div>
-                                          {role?.assignedAccessRuleType === 'RESOURCE_TYPE' ? (
-                                            <Form.Item
-                                              label="授权对象"
-                                              name={['roles', index, 'dataAccessAreas']}
-                                              rules={[{ required: true, message: '请选择授权对象' }]}
-                                            >
-                                              <Select
-                                                mode="multiple"
-                                                options={assignedResourceTypeOptions}
-                                                placeholder="选择资料类型或目录类型"
-                                                notFoundContent="请先在下方资料目录类型中配置目录"
-                                              />
-                                            </Form.Item>
-                                          ) : null}
-                                          {role?.assignedAccessRuleType === 'RESOURCE_ATTR' ? (
-                                            <Form.Item
-                                              label="授权对象"
-                                              name={['roles', index, 'assignedAttributeRules']}
-                                              rules={[{ required: true, message: '请输入资料属性条件' }]}
-                                            >
-                                              <Select
-                                                mode="tags"
-                                                placeholder="输入资料属性条件后回车，例如：学科=数学、阶段=结营、标签=重点"
-                                              />
-                                            </Form.Item>
-                                          ) : null}
-                                          {role?.assignedAccessRuleType === 'RESOURCE_ITEM' ? (
-                                            <Form.Item
-                                              label="授权对象"
-                                              name={['roles', index, 'authorizedResourceRefs']}
-                                              rules={[{ required: true, message: '请输入具体资料标识' }]}
-                                            >
-                                              <Select
-                                                mode="tags"
-                                                placeholder="输入具体资料名称、编码或唯一标识后回车"
-                                              />
-                                            </Form.Item>
-                                          ) : null}
-                                        </>
-                                      ) : (
+                                  <div className="scene-template-role-editor-sections">
+                                    <div className="scene-template-role-editor-block scene-template-role-editor-block-function">
+                                      <div className="scene-template-role-editor-title">功能授权</div>
+                                      <div className="scene-template-role-editor-stack-grid">
+                                        <Form.Item label="授权方式" name={['roles', index, 'functionalPermissionMode']}>
+                                          <Select options={ROLE_FUNCTION_PERMISSION_MODE_OPTIONS} disabled={roleReadonly} />
+                                        </Form.Item>
                                         <div className="scene-template-mode-hint">
-                                          当前范围下无需逐项配置授权对象，系统会按“资料归属范围”自动生效。
+                                          支持正选和反选。选择“不包括以下功能”时，树中勾选的是排除项。
                                         </div>
-                                      )}
-                                      <Form.Item label="资料权限说明" name={['roles', index, 'scopeSummary']}>
-                                        <Input placeholder="例如：仅可查看公开的调查与投票数据" />
-                                      </Form.Item>
+                                        <Form.Item label="功能树授权" name={['roles', index, 'functionalPermissions']}>
+                                          <TreeSelect
+                                            treeData={ROLE_FUNCTION_PERMISSION_TREE}
+                                            treeCheckable
+                                            showCheckedStrategy={TreeSelect.SHOW_CHILD}
+                                            placeholder="从功能树中选择授权项"
+                                            allowClear
+                                            disabled={roleReadonly}
+                                          />
+                                        </Form.Item>
+                                        <Form.Item label="功能说明" name={['roles', index, 'permissionSummary']}>
+                                          <Input placeholder="例如：可管理主题、资料和作业" disabled={roleReadonly} />
+                                        </Form.Item>
+                                      </div>
+                                    </div>
+                                    <div className="scene-template-role-editor-block scene-template-role-editor-block-data">
+                                      <div className="scene-template-role-editor-title">资料授权</div>
+                                      <div className="scene-template-role-editor-stack-grid">
+                                        <Form.Item label="资料归属范围" name={['roles', index, 'dataAccessScope']}>
+                                          <Select options={ROLE_DATA_SCOPE_OPTIONS} disabled={roleReadonly} />
+                                        </Form.Item>
+                                        {role?.dataAccessScope === 'ASSIGNED' ? (
+                                          <>
+                                            <Form.Item label="授权方式" name={['roles', index, 'assignedAccessRuleType']}>
+                                              <Select options={ASSIGNED_ACCESS_RULE_OPTIONS} disabled={roleReadonly} />
+                                            </Form.Item>
+                                            <div className="scene-template-mode-hint">
+                                              仅在“指定授权资料”下配置授权方式。默认“全部授权对象”，也可以按资料类型、目录类型、资料属性或具体资料逐项授权；目录类型已并入授权对象列表。
+                                            </div>
+                                            {role?.assignedAccessRuleType === 'RESOURCE_TYPE' ? (
+                                              <Form.Item
+                                                label="授权对象"
+                                                name={['roles', index, 'dataAccessAreas']}
+                                                rules={[{ required: true, message: '请选择授权对象' }]}
+                                              >
+                                                <Select
+                                                  mode="multiple"
+                                                  options={assignedResourceTypeOptions}
+                                                  placeholder="选择资料类型或目录类型"
+                                                  notFoundContent="请先在下方资料目录类型中配置目录"
+                                                  disabled={roleReadonly}
+                                                />
+                                              </Form.Item>
+                                            ) : null}
+                                            {role?.assignedAccessRuleType === 'RESOURCE_ATTR' ? (
+                                              <Form.Item
+                                                label="授权对象"
+                                                name={['roles', index, 'assignedAttributeRules']}
+                                                rules={[{ required: true, message: '请输入资料属性条件' }]}
+                                              >
+                                                <Select
+                                                  mode="tags"
+                                                  placeholder="输入资料属性条件后回车，例如：学科=数学、阶段=结营、标签=重点"
+                                                  disabled={roleReadonly}
+                                                />
+                                              </Form.Item>
+                                            ) : null}
+                                            {role?.assignedAccessRuleType === 'RESOURCE_ITEM' ? (
+                                              <Form.Item
+                                                label="授权对象"
+                                                name={['roles', index, 'authorizedResourceRefs']}
+                                                rules={[{ required: true, message: '请输入具体资料标识' }]}
+                                              >
+                                                <Select
+                                                  mode="tags"
+                                                  placeholder="输入具体资料名称、编码或唯一标识后回车"
+                                                  disabled={roleReadonly}
+                                                />
+                                              </Form.Item>
+                                            ) : null}
+                                          </>
+                                        ) : (
+                                          <div className="scene-template-mode-hint">
+                                            当前范围下无需逐项配置授权对象，系统会按“资料归属范围”自动生效。
+                                          </div>
+                                        )}
+                                        <Form.Item label="资料权限说明" name={['roles', index, 'scopeSummary']}>
+                                          <Input placeholder="例如：仅可查看公开的调查与投票数据" disabled={roleReadonly} />
+                                        </Form.Item>
+                                      </div>
                                     </div>
                                   </div>
+                                  <Form.Item name={['roles', index, 'id']} hidden>
+                                    <Input />
+                                  </Form.Item>
+                                  <Form.Item name={['roles', index, 'agentName']} hidden>
+                                    <Input />
+                                  </Form.Item>
+                                  <Form.Item name={['roles', index, 'bindingMode']} hidden>
+                                    <Input />
+                                  </Form.Item>
+                                  <Form.Item name={['roles', index, 'sourceRoleId']} hidden>
+                                    <Input />
+                                  </Form.Item>
+                                  <Form.Item name={['roles', index, 'sourceRoleName']} hidden>
+                                    <Input />
+                                  </Form.Item>
                                 </div>
-                                <Form.Item name={['roles', index, 'id']} hidden>
-                                  <Input />
-                                </Form.Item>
                               </div>
-                            </div>
-                          ),
-                        }))}
+                            ),
+                          };
+                        })}
                       />
                     ) : null}
                   </div>
@@ -1992,6 +2296,74 @@ export default function SceneTemplateModule() {
             ]}
           />
         </Form>
+        <Modal
+          title="选择已有角色"
+          open={roleLibraryModalOpen}
+          onCancel={() => {
+            setRoleLibraryModalOpen(false);
+            roleLibraryForm.resetFields();
+          }}
+          onOk={handleImportRoleFromLibrary}
+          okText="引入角色"
+          cancelText="取消"
+          width={720}
+          destroyOnClose
+        >
+          <Form form={roleLibraryForm} layout="vertical">
+            <div className="scene-template-form-grid">
+              <Form.Item
+                className="scene-template-form-span-2"
+                label="已有角色"
+                name="roleId"
+                rules={[{ required: true, message: '请选择已有角色' }]}
+              >
+                <Select
+                  placeholder="从管理后台选择已有角色"
+                  options={roleLibraryOptions}
+                  optionFilterProp="label"
+                  showSearch
+                />
+              </Form.Item>
+              <Form.Item
+                className="scene-template-form-span-2"
+                label="引入方式"
+                name="importMode"
+                rules={[{ required: true, message: '请选择引入方式' }]}
+              >
+                <Radio.Group
+                  options={ROLE_LIBRARY_IMPORT_MODE_OPTIONS}
+                  optionType="button"
+                  buttonStyle="solid"
+                />
+              </Form.Item>
+            </div>
+
+            {selectedRoleLibraryDefinition ? (
+              <div className="scene-template-role-library-preview">
+                <div className="scene-template-role-library-preview-head">
+                  <strong>{selectedRoleLibraryDefinition.name}</strong>
+                  <Tag>{selectedRoleLibraryDefinition.key}</Tag>
+                </div>
+                <div className="scene-template-role-library-preview-meta">
+                  <span>{selectedRoleLibraryDefinition.description || '未填写角色说明'}</span>
+                  <span>{selectedRoleLibraryDefinition.permissionSummary || '未填写功能说明'}</span>
+                  <span>{selectedRoleLibraryDefinition.scopeSummary || '未填写资料权限说明'}</span>
+                </div>
+              </div>
+            ) : null}
+
+            {selectedRoleImportMode === 'REFERENCE' ? (
+              <div className="scene-template-role-library-hint">
+                引用后角色定义仅可查看，不能在模板内修改；后续如需调整，请重新按“复制角色定义”方式引入。
+              </div>
+            ) : null}
+            {selectedRoleImportMode === 'COPY' ? (
+              <div className="scene-template-role-library-hint">
+                复制后会生成当前模板自己的角色副本，后续字段、权限和资料范围都可以继续编辑。
+              </div>
+            ) : null}
+          </Form>
+        </Modal>
         <Modal
           title="选择默认主题封面"
           open={themeCoverModalOpen}

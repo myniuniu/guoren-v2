@@ -889,12 +889,17 @@
 
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(20, minmax(0, 1fr));
   gap: 18px;
+  grid-auto-flow: dense;
+  align-items: start;
 }
 
 /* ====== Scene Card ====== */
 .scene-card {
+  position: relative;
+  min-width: 0;
+  grid-column: span 4;
   border-radius: 10px;
   overflow: hidden;
   border: 1px solid #e8e8e8 !important;
@@ -1014,6 +1019,21 @@
   font-size: 14px;
 }
 
+.scene-card-inline-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+}
+
+.scene-card-no-cover .card-more-btn {
+  opacity: 1;
+  color: #64748b !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+}
+
 /* Card Body */
 .card-body {
   padding: 14px 16px 16px;
@@ -1043,6 +1063,7 @@
 .card-footer {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -1096,25 +1117,135 @@
   margin: 0;
 }
 
+.scene-theme-tag {
+  margin: 0;
+  border-radius: 999px;
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
 .card-count {
   font-size: 12px;
   color: #bbb;
 }
 
+.scene-card-size-large .card-cover {
+  height: 148px;
+}
+
+.scene-card-size-large {
+  grid-column: span 10;
+}
+
+.scene-card-size-large .card-body {
+  padding: 16px 16px 18px;
+}
+
+.scene-card-size-large .card-title {
+  font-size: 15px;
+}
+
+.scene-card-size-large .card-cover-title,
+.scene-card-size-large .card-cover-hint {
+  font-size: 16px;
+  max-width: 420px;
+}
+
+.scene-card-size-medium {
+  grid-column: span 4;
+}
+
+.scene-card-size-small .card-cover {
+  height: 88px;
+}
+
+.scene-card-size-small {
+  grid-column: span 3;
+}
+
+.scene-card-size-small .card-body {
+  padding: 12px 14px 14px;
+}
+
+.scene-card-size-small .card-title {
+  font-size: 13px;
+}
+
+.scene-card-size-small .card-subtitle,
+.scene-card-size-small .scene-card-meta-line,
+.scene-card-size-small .card-count {
+  font-size: 11px;
+}
+
+.scene-card-size-small .scene-role-list {
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.scene-card-size-small .scene-role-pill {
+  padding: 3px 8px;
+  font-size: 10px;
+}
+
+.scene-card-size-small .card-cover-title,
+.scene-card-size-small .card-cover-hint {
+  max-width: 180px;
+}
+
+.scene-card-no-cover .card-body {
+  padding-top: 18px;
+}
+
 /* ====== Responsive ====== */
 @media (max-width: 1400px) {
   .card-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(16, minmax(0, 1fr));
+  }
+
+  .scene-card-size-large {
+    grid-column: span 8;
+  }
+
+  .scene-card-size-medium {
+    grid-column: span 4;
+  }
+
+  .scene-card-size-small {
+    grid-column: span 3;
   }
 }
 
 @media (max-width: 1100px) {
   .card-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .scene-card-size-large {
+    grid-column: span 6;
+  }
+
+  .scene-card-size-medium {
+    grid-column: span 4;
+  }
+
+  .scene-card-size-small {
+    grid-column: span 3;
   }
 }
 
 @media (max-width: 720px) {
+  .card-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .scene-card,
+  .scene-card-size-large,
+  .scene-card-size-medium,
+  .scene-card-size-small {
+    grid-column: span 1;
+  }
+
   .scene-group-header {
     flex-direction: column;
     align-items: flex-start;

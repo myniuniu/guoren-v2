@@ -229,6 +229,12 @@ export const HOME_COMPONENT_OPTIONS = [
   { value: 'TRAINING_HOME_1', label: '培训首页1' },
 ];
 
+export const TOPIC_CARD_SIZE_OPTIONS = [
+  { value: 'LARGE', label: '大卡片' },
+  { value: 'MEDIUM', label: '中卡片' },
+  { value: 'SMALL', label: '小卡片' },
+];
+
 export const VERSION_CREATE_MODE_OPTIONS = [
   { value: 'COPY_ACTIVE', label: '继承当前版本内容' },
   { value: 'EMPTY', label: '创建空白版本' },
@@ -276,6 +282,15 @@ const DEFAULT_VERSIONING_CONFIG = Object.freeze({
   allowRollback: true,
   allowDeletePublished: true,
   description: '',
+});
+
+const DEFAULT_TOPIC_CARD_CONFIG = Object.freeze({
+  size: 'MEDIUM',
+  showSceneType: true,
+  showMemberCount: true,
+  showTitle: true,
+  showTags: true,
+  showCover: true,
 });
 
 function isSceneVersioningSupported(sceneType = 'CUSTOM') {
@@ -673,6 +688,10 @@ export function getHomeComponentLabel(value) {
   return optionLabel(HOME_COMPONENT_OPTIONS, value, '');
 }
 
+export function getTopicCardSizeLabel(value) {
+  return optionLabel(TOPIC_CARD_SIZE_OPTIONS, value, DEFAULT_TOPIC_CARD_CONFIG.size);
+}
+
 function normalizeStatusPresetSceneType(sceneType) {
   return Object.prototype.hasOwnProperty.call(SCENE_TYPE_STATUS_PRESETS, sceneType)
     ? sceneType
@@ -832,6 +851,19 @@ export function normalizeVersioningConfig(input = {}, sceneType = null) {
   };
 }
 
+export function normalizeTopicCardConfig(input = {}) {
+  return {
+    size: TOPIC_CARD_SIZE_OPTIONS.some((item) => item.value === input?.size)
+      ? input.size
+      : DEFAULT_TOPIC_CARD_CONFIG.size,
+    showSceneType: input?.showSceneType !== false,
+    showMemberCount: input?.showMemberCount !== false,
+    showTitle: input?.showTitle !== false,
+    showTags: input?.showTags !== false,
+    showCover: input?.showCover !== false,
+  };
+}
+
 export function formatVersionName(namePattern, index) {
   const pattern = trimToNull(namePattern) || DEFAULT_VERSIONING_CONFIG.namePattern;
   const versionIndex = Number.isFinite(Number(index)) ? Number(index) : 1;
@@ -894,6 +926,7 @@ function inferAssignedAccessRuleType(role = {}) {
 function normalizeRole(role, index, sceneType, builtIn) {
   const roleKey = trimToNull(role?.key) || `role_${index + 1}`;
   const defaultAuthorization = builtIn ? getDefaultRoleAuthorization(sceneType, roleKey) : null;
+  const bindingMode = role?.bindingMode === 'REFERENCE' ? 'REFERENCE' : 'CUSTOM';
   const dataAccessScope = Object.prototype.hasOwnProperty.call(role || {}, 'dataAccessScope')
     ? (trimToNull(role?.dataAccessScope) || 'ASSIGNED')
     : (defaultAuthorization?.dataAccessScope || 'ASSIGNED');
@@ -920,6 +953,9 @@ function normalizeRole(role, index, sceneType, builtIn) {
     name: trimToNull(role?.name) || `角色${index + 1}`,
     description: trimToNull(role?.description) || '',
     agentName: trimToNull(role?.agentName) || '',
+    bindingMode,
+    sourceRoleId: bindingMode === 'REFERENCE' ? (trimToNull(role?.sourceRoleId) || '') : '',
+    sourceRoleName: bindingMode === 'REFERENCE' ? (trimToNull(role?.sourceRoleName) || '') : '',
     functionalPermissionMode,
     functionalPermissions: Array.isArray(role?.functionalPermissions)
       ? normalizeRoleFunctionalPermissions(role.functionalPermissions)
@@ -948,6 +984,9 @@ export function createRoleDraft(seed = 1) {
     name: `角色${seed}`,
     description: '',
     agentName: '',
+    bindingMode: 'CUSTOM',
+    sourceRoleId: '',
+    sourceRoleName: '',
     functionalPermissionMode: 'INCLUDE',
     functionalPermissions: ['TOOL_USE'],
     permissionSummary: '',
@@ -1197,6 +1236,7 @@ function normalizeTemplate(input = {}) {
       emptyStateText: trimToNull(input.topicPage?.emptyStateText) || '暂无资料，右键新建文件夹或添加资料',
       modeTabs: ensureModeTabs(input.topicPage?.modeTabs, sceneType, input.homepage?.templateName),
     },
+    topicCard: normalizeTopicCardConfig(input.topicCard),
     roles,
     metadataFields: (Array.isArray(input.metadataFields) ? input.metadataFields : []).map(normalizeMetadataField),
     statusRules: (Array.isArray(input.statusRules) ? input.statusRules : []).map((rule, index) => (
@@ -1253,6 +1293,7 @@ function normalizeScene(input = {}, templates = []) {
     status: trimToNull(input.status) || 'ACTIVE',
     menuKey: trimToNull(input.menuKey) || template.defaultMenuKey,
     topicCount: Number.isFinite(Number(input.topicCount)) ? Number(input.topicCount) : 0,
+    memberCount: Number.isFinite(Number(input.memberCount)) ? Number(input.memberCount) : 0,
     templateId: template.id,
     templateName: template.name,
     templateCode: template.templateCode,
@@ -1861,6 +1902,7 @@ function buildPresetScenes(templates) {
       visibility: 'PUBLIC',
       menuKey: 'my-classroom',
       topicCount: 12,
+      memberCount: 46,
       templateId: byCode.get('TPL-TEACHING')?.id,
     },
     {
@@ -1873,6 +1915,7 @@ function buildPresetScenes(templates) {
       visibility: 'INTERNAL',
       menuKey: 'my-learning-space',
       topicCount: 6,
+      memberCount: 28,
       templateId: byCode.get('TPL-TEACHING')?.id,
     },
     {
@@ -1885,6 +1928,7 @@ function buildPresetScenes(templates) {
       visibility: 'INTERNAL',
       menuKey: 'teaching-research',
       topicCount: 8,
+      memberCount: 18,
       templateId: byCode.get('TPL-RESEARCH')?.id,
     },
     {
@@ -1897,6 +1941,7 @@ function buildPresetScenes(templates) {
       visibility: 'PUBLIC',
       menuKey: 'workshop',
       topicCount: 5,
+      memberCount: 24,
       templateId: byCode.get('TPL-RESEARCH')?.id,
     },
     {
@@ -1909,6 +1954,7 @@ function buildPresetScenes(templates) {
       visibility: 'INTERNAL',
       menuKey: 'org-training',
       topicCount: 10,
+      memberCount: 132,
       templateId: byCode.get('TPL-TRAINING')?.id,
     },
     {
@@ -1921,6 +1967,7 @@ function buildPresetScenes(templates) {
       visibility: 'PRIVATE',
       menuKey: 'workshop-cloud',
       topicCount: 7,
+      memberCount: 64,
       templateId: byCode.get('TPL-TRAINING')?.id,
     },
     {
@@ -1933,6 +1980,7 @@ function buildPresetScenes(templates) {
       visibility: 'INTERNAL',
       menuKey: 'course-creation-center',
       topicCount: 11,
+      memberCount: 16,
       templateId: byCode.get('TPL-COURSE-STUDIO')?.id,
     },
     {
@@ -1945,6 +1993,7 @@ function buildPresetScenes(templates) {
       visibility: 'PUBLIC',
       menuKey: 'study-club-channel',
       topicCount: 9,
+      memberCount: 88,
       templateId: byCode.get('TPL-COMMUNITY')?.id,
     },
   ];
