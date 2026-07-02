@@ -80,6 +80,7 @@ const DETAIL_PREVIEW_MIN_LIST_WIDTH = 260;
 const DETAIL_PREVIEW_DEFAULT_RATIO = 0.5;
 const FOLDER_HOVER_TIP_DELAY = 1;
 const SWIPE_SELECT_ACTIVATION_DISTANCE = 6;
+const RESOURCE_RENAME_CLICK_WINDOW_MS = 800;
 const RESOURCE_LIB_HELP_TIPS = [
   '在文件夹上双击可进入文件夹。',
   '支持 Cmd/Ctrl + Click、Shift + Click、Cmd/Ctrl + A 多选，Delete 批量删除。',
@@ -292,6 +293,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
   const newFolderInputRef = useRef(null);
   const inlineRenameInputRef = useRef(null);
   const pendingRenameTriggerRef = useRef(null);
+  const singleSelectionActivationRef = useRef({ key: null, view: 'detail', colIdx: null, at: 0 });
   const columnScrollRef = useRef(null);
   // 分栏视图状态：各层打开的文件夹 key 路径
   const [columnPath, setColumnPath] = useState([null]); // [null, folderKey1, folderKey2, ...]
@@ -1986,11 +1988,38 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     }
   }, []);
 
+  const clearSingleSelectionActivation = useCallback(() => {
+    singleSelectionActivationRef.current = {
+      key: null,
+      view: 'detail',
+      colIdx: null,
+      at: 0,
+    };
+  }, []);
+
+  const markSingleSelectionActivation = useCallback((itemKey, { view = 'detail', colIdx = null } = {}) => {
+    singleSelectionActivationRef.current = {
+      key: itemKey || null,
+      view,
+      colIdx,
+      at: itemKey ? Date.now() : 0,
+    };
+  }, []);
+
+  const isRenameActivationWithinWindow = useCallback((itemKey, { view = 'detail', colIdx = null } = {}) => {
+    const lastActivation = singleSelectionActivationRef.current;
+    return lastActivation.key === itemKey
+      && lastActivation.view === view
+      && lastActivation.colIdx === colIdx
+      && Date.now() - lastActivation.at <= RESOURCE_RENAME_CLICK_WINDOW_MS;
+  }, []);
+
   const clearCurrentSelection = useCallback(() => {
     clearPendingRenameTrigger();
+    clearSingleSelectionActivation();
     setSelectedItemKeys([]);
     setColumnSelectedItem(null);
-  }, [clearPendingRenameTrigger]);
+  }, [clearPendingRenameTrigger, clearSingleSelectionActivation]);
 
   const queueInlineRename = (item, delay = 220) => {
     if (!item?.key) return;
@@ -2351,10 +2380,11 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     if (!items[nextIndex]) return;
     const start = Math.min(gesture.anchorIndex, nextIndex);
     const end = Math.max(gesture.anchorIndex, nextIndex);
+    clearSingleSelectionActivation();
     setSelectedItemKeys(items.slice(start, end + 1).map((entry) => entry.key));
     setColumnSelectedItem(null);
     lastClickedRef.current = { view: gesture.view, colIdx: gesture.colIdx, idx: nextIndex };
-  }, [columnLevels, displayChildren]);
+  }, [clearSingleSelectionActivation, columnLevels, displayChildren]);
 
   const startSwipeSelection = useCallback((event, idx, { view = 'detail', colIdx = null } = {}) => {
     if (
@@ -2456,6 +2486,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     ) return false;
 
     clearPendingRenameTrigger();
+    clearSingleSelectionActivation();
     markSuppressContextMenu(event);
     suppressNextItemClickRef.current = true;
     event.preventDefault();
@@ -2465,7 +2496,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     ));
     lastClickedRef.current = { view, colIdx, idx };
     return true;
-  }, [clearPendingRenameTrigger, markSuppressContextMenu]);
+  }, [clearPendingRenameTrigger, clearSingleSelectionActivation, markSuppressContextMenu]);
 
   // 多选点击处理（Cmd+Click 切换选中，Shift+Click 范围选，普通点击单选）
   const handleItemClick = (item, idx, e) => {
@@ -2476,6 +2507,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     if (suppressClickSelectionRef.current) return;
     if (e.metaKey || e.ctrlKey) {
       clearPendingRenameTrigger();
+      clearSingleSelectionActivation();
       // Cmd/Ctrl + Click: toggle
       setSelectedItemKeys((prev) =>
         prev.includes(item.key) ? prev.filter((k) => k !== item.key) : [...prev, item.key]
@@ -2483,6 +2515,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
       lastClickedRef.current = { view: 'detail', colIdx: null, idx };
     } else if (e.shiftKey && lastClickedRef.current.view === 'detail' && lastClickedRef.current.idx !== null) {
       clearPendingRenameTrigger();
+      clearSingleSelectionActivation();
       // Shift + Click: range select
       const start = Math.min(lastClickedRef.current.idx, idx);
       const end = Math.max(lastClickedRef.current.idx, idx);
@@ -2493,11 +2526,17 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
       && selectedItemKeys[0] === item.key
       && inlineRenameItemKey !== item.key
     ) {
-      queueInlineRename(item);
+      if (isRenameActivationWithinWindow(item.key, { view: 'detail' })) {
+        queueInlineRename(item);
+      } else {
+        clearCurrentSelection();
+      }
     } else {
       clearPendingRenameTrigger();
       // 普通点击：单选
       setSelectedItemKeys([item.key]);
+      setColumnSelectedItem(null);
+      markSingleSelectionActivation(item.key, { view: 'detail' });
       lastClickedRef.current = { view: 'detail', colIdx: null, idx };
       recordItemOpened(item);
     }
@@ -3765,6 +3804,16 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     setColumnSelectedItem((prev) => (prev && visibleKeys.has(prev.key) ? prev : null));
   }, [columnLevels, displayChildren, viewMode]);
 
+  useEffect(() => {
+    if (selectedItemKeys.length !== 1) {
+      clearSingleSelectionActivation();
+      return;
+    }
+    if (singleSelectionActivationRef.current.key !== selectedItemKeys[0]) {
+      clearSingleSelectionActivation();
+    }
+  }, [clearSingleSelectionActivation, selectedItemKeys]);
+
   const handleSearchChange = (e) => {
     const nextKeyword = e.target.value;
     setKeyword(nextKeyword);
@@ -4284,6 +4333,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                               
                               if (e.metaKey || e.ctrlKey) {
                                 clearPendingRenameTrigger();
+                                clearSingleSelectionActivation();
                                 // Cmd/Ctrl+Click: 切换选中
                                 setSelectedItemKeys((prev) =>
                                   prev.includes(item.key) ? prev.filter((k) => k !== item.key) : [...prev, item.key]
@@ -4291,6 +4341,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                                 lastClickedRef.current = { view: 'column', colIdx, idx: itemIdx };
                               } else if (e.shiftKey) {
                                 clearPendingRenameTrigger();
+                                clearSingleSelectionActivation();
                                 // Shift+Click: 范围选
                                 const colItems = columnLevels[colIdx] || [];
                                 const anchorIdx = lastClickedRef.current.view === 'column' && lastClickedRef.current.colIdx === colIdx
@@ -4309,13 +4360,19 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                                 && selectedItemKeys[0] === item.key
                                 && inlineRenameItemKey !== item.key
                               ) {
-                                queueInlineRename(item);
+                                if (isRenameActivationWithinWindow(item.key, { view: 'column', colIdx })) {
+                                  queueInlineRename(item);
+                                } else {
+                                  clearCurrentSelection();
+                                }
                               } else {
                                 clearPendingRenameTrigger();
                                 // 普通点击
                                 setSelectedItemKeys([item.key]);
+                                markSingleSelectionActivation(item.key, { view: 'column', colIdx });
                                 lastClickedRef.current = { view: 'column', colIdx, idx: itemIdx };
                                 if (item.isFolder) {
+                                  setColumnSelectedItem(null);
                                   handleColumnFolderClick(item.key, colIdx);
                                 } else {
                                   handleColumnFileClick(item, colIdx);
