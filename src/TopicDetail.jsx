@@ -694,7 +694,10 @@ function TopicDetail({
     && useSceneTopicTheme
     ? {
         '--td-accent': sceneTheme.accentColor || '#56a8f5',
+        '--td-accent-start': sceneThemePalette.coverStart || sceneTheme.accentColor || '#56a8f5',
+        '--td-accent-end': sceneThemePalette.coverEnd || sceneTheme.accentColor || '#56a8f5',
         '--td-accent-soft': hexToRgba(sceneTheme.accentColor || '#56a8f5', 0.14),
+        '--td-accent-mid': hexToRgba(sceneTheme.accentColor || '#56a8f5', 0.18),
         '--td-accent-strong': hexToRgba(sceneTheme.accentColor || '#56a8f5', 0.24),
         '--td-accent-glow': hexToRgba(sceneTheme.accentColor || '#56a8f5', 0.36),
         '--td-panel-bg': `linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.92) 58%, rgba(250, 251, 252, 0.9) 100%), linear-gradient(135deg, ${hexToRgba(sceneThemePalette.coverStart, 0.18)} 0%, ${hexToRgba(sceneThemePalette.coverEnd, 0.14)} 100%)`,
