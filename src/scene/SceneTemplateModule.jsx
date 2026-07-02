@@ -1164,6 +1164,8 @@ export default function SceneTemplateModule() {
   const [activeRoleTabKey, setActiveRoleTabKey] = useState(null);
   const [themeCoverModalOpen, setThemeCoverModalOpen] = useState(false);
   const [roleLibraryModalOpen, setRoleLibraryModalOpen] = useState(false);
+  const [toolConfigPickerOpen, setToolConfigPickerOpen] = useState(false);
+  const [selectedToolConfigKey, setSelectedToolConfigKey] = useState(null);
 
   const [templateForm] = Form.useForm();
   const [roleLibraryForm] = Form.useForm();
@@ -1186,6 +1188,18 @@ export default function SceneTemplateModule() {
   const watchedToolIconLookup = useMemo(
     () => buildToolIconLookup(watchedToolConfigs),
     [watchedToolConfigs],
+  );
+  const configuredToolKeySet = useMemo(
+    () => new Set(
+      watchedToolConfigs
+        .map((tool) => String(tool?.key || '').trim())
+        .filter(Boolean),
+    ),
+    [watchedToolConfigs],
+  );
+  const availableToolConfigOptions = useMemo(
+    () => TOOL_OPTIONS.filter((item) => !configuredToolKeySet.has(item.value)),
+    [configuredToolKeySet],
   );
   const watchedStatusRules = useMemo(() => watchedStatusRulesValue || [], [watchedStatusRulesValue]);
   const watchedStatusPresetSceneType = useMemo(
@@ -1374,6 +1388,15 @@ export default function SceneTemplateModule() {
     }
   }, [activeRoleTabKey, watchedRoles]);
 
+  useEffect(() => {
+    if (!toolConfigPickerOpen) return;
+    setSelectedToolConfigKey((prev) => (
+      availableToolConfigOptions.some((item) => item.value === prev)
+        ? prev
+        : (availableToolConfigOptions[0]?.value || null)
+    ));
+  }, [availableToolConfigOptions, toolConfigPickerOpen]);
+
   function appendRole() {
     const currentRoles = templateForm.getFieldValue('roles') || [];
     const nextRole = createRoleDraft(currentRoles.length + 1);
@@ -1387,6 +1410,55 @@ export default function SceneTemplateModule() {
       importMode: 'COPY',
     });
     setRoleLibraryModalOpen(true);
+  }
+
+  function inferNewToolConfigPlacement(toolKey) {
+    const toolAreas = templateForm.getFieldValue('toolAreas') || {};
+    const inResourceArea = Array.isArray(toolAreas.resourceAreaTools) && toolAreas.resourceAreaTools.includes(toolKey);
+    const inResultArea = Array.isArray(toolAreas.resultAreaTools) && toolAreas.resultAreaTools.includes(toolKey);
+    if (inResourceArea && inResultArea) return 'BOTH';
+    if (inResultArea) return 'RESULT_AREA';
+    return 'RESOURCE_AREA';
+  }
+
+  function openToolConfigPicker() {
+    if (availableToolConfigOptions.length === 0) {
+      message.info('可配置工具已全部添加');
+      return;
+    }
+    setSelectedToolConfigKey(availableToolConfigOptions[0]?.value || null);
+    setToolConfigPickerOpen(true);
+  }
+
+  function handleAddToolConfig() {
+    if (!selectedToolConfigKey) {
+      message.warning('请选择要配置的工具');
+      return;
+    }
+    if (configuredToolKeySet.has(selectedToolConfigKey)) {
+      message.warning('该工具已存在配置项');
+      return;
+    }
+    const toolLabel = getToolLabel(selectedToolConfigKey);
+    const nextTool = {
+      id: `tool_${Date.now()}`,
+      key: selectedToolConfigKey,
+      name: toolLabel,
+      iconSource: 'PRESET',
+      iconKey: resolveSceneToolIconKey({
+        key: selectedToolConfigKey,
+        name: toolLabel,
+      }),
+      iconImage: '',
+      placement: inferNewToolConfigPlacement(selectedToolConfigKey),
+      enabled: true,
+      description: '',
+    };
+    templateForm.setFieldsValue({
+      toolConfigs: [...watchedToolConfigs, nextTool],
+    });
+    setToolConfigPickerOpen(false);
+    setSelectedToolConfigKey(null);
   }
 
   function buildRoleFromLibrary(roleDefinition, importMode, seed) {
@@ -2401,41 +2473,36 @@ export default function SceneTemplateModule() {
                       <Button
                         size="small"
                         icon={<PlusOutlined />}
-                        onClick={() => {
-                          const nextTools = [...watchedToolConfigs, {
-                            id: `tool_${Date.now()}`,
-                            key: '',
-                            name: '',
-                            iconSource: 'PRESET',
-                            iconKey: 'DOCUMENT',
-                            iconImage: '',
-                            placement: 'RESOURCE_AREA',
-                            enabled: true,
-                            description: '',
-                          }];
-                          templateForm.setFieldsValue({ toolConfigs: nextTools });
-                        }}
+                        onClick={openToolConfigPicker}
                       >
                         添加工具配置
                       </Button>
                     </div>
 
                     {watchedToolConfigs.map((tool, index) => (
-                      <div key={tool?.id || index} className="scene-template-list-card">
-                        <div className="scene-template-list-card-head">
+                      <div key={tool?.id || index} className="scene-template-list-card scene-template-tool-config-card">
+                        <div className="scene-template-list-card-head scene-template-tool-config-head">
                           <strong>{getToolCardTitle(tool)}</strong>
-                          <Button
-                            type="link"
-                            danger
-                            icon={<DeleteOutlined />}
-                            onClick={() => {
-                              const nextTools = [...watchedToolConfigs];
-                              nextTools.splice(index, 1);
-                              templateForm.setFieldsValue({ toolConfigs: nextTools });
-                            }}
-                          >
-                            删除
-                          </Button>
+                          <div className="scene-template-tool-config-head-actions">
+                            <div className="scene-template-tool-config-switch">
+                              <span>启用</span>
+                              <Form.Item name={['toolConfigs', index, 'enabled']} valuePropName="checked" noStyle>
+                                <Switch />
+                              </Form.Item>
+                            </div>
+                            <Button
+                              type="link"
+                              danger
+                              icon={<DeleteOutlined />}
+                              onClick={() => {
+                                const nextTools = [...watchedToolConfigs];
+                                nextTools.splice(index, 1);
+                                templateForm.setFieldsValue({ toolConfigs: nextTools });
+                              }}
+                            >
+                              删除
+                            </Button>
+                          </div>
                         </div>
                         <div className="scene-template-form-grid">
                           <Form.Item
@@ -2473,9 +2540,6 @@ export default function SceneTemplateModule() {
                           </Form.Item>
                           <Form.Item label="出现位置" name={['toolConfigs', index, 'placement']}>
                             <Select options={TOOL_PLACEMENT_OPTIONS} />
-                          </Form.Item>
-                          <Form.Item label="启用" name={['toolConfigs', index, 'enabled']} valuePropName="checked">
-                            <Switch />
                           </Form.Item>
                           <Form.Item className="scene-template-form-span-2" label="配置说明" name={['toolConfigs', index, 'description']}>
                             <TextArea rows={2} placeholder="说明这个工具的功能范围和使用约束" />
@@ -2803,6 +2867,41 @@ export default function SceneTemplateModule() {
             ]}
           />
         </Form>
+        <Modal
+          title="选择要配置的工具"
+          open={toolConfigPickerOpen}
+          onCancel={() => {
+            setToolConfigPickerOpen(false);
+            setSelectedToolConfigKey(null);
+          }}
+          onOk={handleAddToolConfig}
+          okText="添加配置"
+          cancelText="取消"
+          okButtonProps={{ disabled: !selectedToolConfigKey }}
+          width={720}
+          destroyOnClose
+        >
+          {availableToolConfigOptions.length ? (
+            <div className="scene-template-tool-picker-grid">
+              {availableToolConfigOptions.map((item) => (
+                <button
+                  key={item.value}
+                  type="button"
+                  className={`scene-template-tool-picker-tile ${selectedToolConfigKey === item.value ? 'is-active' : ''}`}
+                  onClick={() => setSelectedToolConfigKey(item.value)}
+                >
+                  <SceneTemplateIconLabel
+                    config={resolveToolConfigByToolKey(item.value, watchedToolIconLookup)}
+                    iconKey={resolveToolIconKeyByToolKey(item.value, watchedToolIconLookup)}
+                    label={item.label}
+                  />
+                </button>
+              ))}
+            </div>
+          ) : (
+            <Empty description="可配置工具已全部添加" />
+          )}
+        </Modal>
         <Modal
           title="选择已有角色"
           open={roleLibraryModalOpen}
