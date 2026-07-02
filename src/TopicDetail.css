@@ -2028,7 +2028,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 38px;
+  min-height: 42px;
   padding: 0 12px;
   padding-right: 78px;
   border: 1px solid transparent;
@@ -2132,9 +2132,9 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 12px;
+  width: 14px;
   color: #98a2b3;
-  font-size: 8px;
+  font-size: 9px;
 }
 
 .project-item-icon {
@@ -2143,7 +2143,7 @@
   justify-content: center;
   flex-shrink: 0;
   color: var(--td-accent);
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .project-item-selected .project-item-icon,
@@ -2175,7 +2175,8 @@
   color: #303846;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1.45;
 }
 
 .project-item-tags {
