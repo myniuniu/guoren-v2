@@ -43,10 +43,10 @@
     radial-gradient(circle at 82% 84%, rgba(212, 222, 236, 0.34) 0%, rgba(255, 255, 255, 0) 42%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.04) 100%);
   box-shadow:
-    inset -1px 0 0 rgba(255, 255, 255, 0.5),
+    inset -1px 0 0 rgba(255, 255, 255, 0.34),
     inset 0 1px 0 rgba(255, 255, 255, 0.34),
-    10px 0 28px rgba(148, 163, 184, 0.08),
-    2px 0 10px rgba(255, 255, 255, 0.2);
+    6px 0 18px rgba(148, 163, 184, 0.045),
+    1px 0 6px rgba(255, 255, 255, 0.14);
   border-right: none;
   display: flex;
   flex-direction: column;
@@ -78,8 +78,8 @@
   bottom: 0;
   width: 16px;
   background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.3) 54%, rgba(255, 255, 255, 0) 100%);
-  opacity: 0.52;
+    linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.16) 52%, rgba(255, 255, 255, 0) 100%);
+  opacity: 0.34;
   pointer-events: none;
 }
 
@@ -101,10 +101,10 @@
   top: 0;
   bottom: 0;
   left: 50%;
-  width: 14px;
+  width: 10px;
   transform: translateX(-50%);
   background: linear-gradient(90deg, rgba(148, 163, 184, 0) 0%, var(--finder-pane-shadow) 50%, rgba(148, 163, 184, 0) 100%);
-  opacity: 0.24;
+  opacity: 0.14;
   pointer-events: none;
   transition: opacity 0.18s ease;
 }
@@ -116,7 +116,7 @@
 
 .finder-sidebar-resize-handle:hover::before,
 .finder-sidebar-resize-handle:active::before {
-  opacity: 0.38;
+  opacity: 0.26;
 }
 
 .finder-sidebar-section {
