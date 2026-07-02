@@ -69,6 +69,34 @@ export const TOOL_OPTIONS = [
   { value: 'ONLINE_VIDEO', label: '在线视频' },
 ];
 
+const TOOL_LABEL_MAP = Object.freeze(
+  Object.fromEntries(TOOL_OPTIONS.map((item) => [item.value, item.label])),
+);
+
+const LEGACY_TOOL_KEY_MAP = Object.freeze({
+  doc: 'ONLINE_DOC',
+  document: 'ONLINE_DOC',
+  online_doc: 'ONLINE_DOC',
+  whiteboard: 'WHITEBOARD',
+  im: 'IM',
+  forum: 'FORUM',
+  live: 'LIVE',
+  vote: 'VOTE',
+  register: 'REGISTER',
+  assessment: 'ASSESSMENT',
+  survey: 'SURVEY',
+  exam: 'EXAM',
+  chain: 'CHAIN',
+  review_360: 'REVIEW_360',
+  competition: 'COMPETITION',
+  resource_library: 'RESOURCE_LIBRARY',
+  office_upload: 'OFFICE_UPLOAD',
+  url: 'URL',
+  knowledge_graph: 'KNOWLEDGE_GRAPH',
+  capability_model: 'CAPABILITY_MODEL',
+  online_video: 'ONLINE_VIDEO',
+});
+
 export const TOOL_PLACEMENT_OPTIONS = [
   { value: 'RESOURCE_AREA', label: '资料区' },
   { value: 'RESULT_AREA', label: '创作结果区' },
@@ -615,6 +643,42 @@ function optionLabel(options, value, fallback = '-') {
   return options.find((item) => item.value === value)?.label || fallback;
 }
 
+function normalizeIconSource(source, image) {
+  const normalizedSource = trimToNull(source);
+  if (normalizedSource === 'UPLOAD') return 'UPLOAD';
+  if (!normalizedSource && trimToNull(image)) return 'UPLOAD';
+  return 'PRESET';
+}
+
+function getToolOptionLabel(value) {
+  return TOOL_LABEL_MAP[value] || '';
+}
+
+function normalizeToolKey(value) {
+  const normalized = String(trimToNull(value) || '').trim();
+  if (!normalized) return '';
+  if (TOOL_LABEL_MAP[normalized]) return normalized;
+  const upperValue = normalized.toUpperCase();
+  if (TOOL_LABEL_MAP[upperValue]) return upperValue;
+  const legacyValue = LEGACY_TOOL_KEY_MAP[normalized.toLowerCase()];
+  if (legacyValue) return legacyValue;
+  const matchedOption = TOOL_OPTIONS.find((item) => item.label === normalized);
+  return matchedOption?.value || upperValue;
+}
+
+function normalizeToolKeyList(values, options = {}) {
+  const normalizedValues = (Array.isArray(values) ? values : [])
+    .map((item) => {
+      if (options.allowUnlimited && item === '__ALL__') return '__ALL__';
+      return normalizeToolKey(item);
+    })
+    .filter(Boolean);
+  if (options.allowUnlimited && normalizedValues.includes('__ALL__')) {
+    return ['__ALL__'];
+  }
+  return Array.from(new Set(normalizedValues));
+}
+
 export function getSceneTypeLabel(value) {
   return optionLabel(SCENE_TYPE_OPTIONS, value, value || '-');
 }
@@ -1142,10 +1206,15 @@ export function getSceneTypeStatusGuidance(sceneType = 'CUSTOM', statusRules = [
 }
 
 function normalizeToolConfig(tool, index) {
+  const toolKey = normalizeToolKey(tool?.key || tool?.toolKey || tool?.builtinToolKey || tool?.name);
+  const iconSource = normalizeIconSource(tool?.iconSource, tool?.iconImage);
   return {
     id: tool?.id || createId(`tool_${index}`),
-    key: trimToNull(tool?.key) || trimToNull(tool?.name) || `tool_${index + 1}`,
-    name: trimToNull(tool?.name) || `工具${index + 1}`,
+    key: toolKey || `tool_${index + 1}`,
+    name: trimToNull(tool?.name) || getToolOptionLabel(toolKey) || '',
+    iconSource,
+    iconKey: trimToNull(tool?.iconKey) || '',
+    iconImage: iconSource === 'UPLOAD' ? (trimToNull(tool?.iconImage) || '') : '',
     placement: trimToNull(tool?.placement) || 'RESOURCE_AREA',
     enabled: tool?.enabled !== false,
     description: trimToNull(tool?.description) || '',
@@ -1153,13 +1222,17 @@ function normalizeToolConfig(tool, index) {
 }
 
 function normalizeFolderType(folder, index) {
+  const iconSource = normalizeIconSource(folder?.iconSource, folder?.iconImage);
   return {
     id: folder?.id || createId(`folder_${index}`),
     key: trimToNull(folder?.key) || `folder_${index + 1}`,
     name: trimToNull(folder?.name) || `文件夹类型${index + 1}`,
+    iconSource,
+    iconKey: trimToNull(folder?.iconKey) || '',
+    iconImage: iconSource === 'UPLOAD' ? (trimToNull(folder?.iconImage) || '') : '',
     description: trimToNull(folder?.description) || '',
     roleIds: Array.isArray(folder?.roleIds) ? folder.roleIds.filter(Boolean) : [],
-    allowedTools: Array.isArray(folder?.allowedTools) ? folder.allowedTools.filter(Boolean) : [],
+    allowedTools: normalizeToolKeyList(folder?.allowedTools, { allowUnlimited: true }),
     required: Boolean(folder?.required),
   };
 }
@@ -1234,6 +1307,7 @@ function normalizeTemplate(input = {}) {
       addResourceLabel: trimToNull(input.topicPage?.addResourceLabel) || '添加资料',
       appLabel: trimToNull(input.topicPage?.appLabel) || '应用',
       emptyStateText: trimToNull(input.topicPage?.emptyStateText) || '暂无资料，右键新建文件夹或添加资料',
+      allowRootResources: Boolean(input.topicPage?.allowRootResources),
       modeTabs: ensureModeTabs(input.topicPage?.modeTabs, sceneType, input.homepage?.templateName),
     },
     topicCard: normalizeTopicCardConfig(input.topicCard),
@@ -1243,12 +1317,8 @@ function normalizeTemplate(input = {}) {
       normalizeStatusRule(rule, index, normalizeRoleIds)
     )),
     toolAreas: {
-      resourceAreaTools: Array.isArray(input.toolAreas?.resourceAreaTools)
-        ? input.toolAreas.resourceAreaTools.filter(Boolean)
-        : [],
-      resultAreaTools: Array.isArray(input.toolAreas?.resultAreaTools)
-        ? input.toolAreas.resultAreaTools.filter(Boolean)
-        : [],
+      resourceAreaTools: normalizeToolKeyList(input.toolAreas?.resourceAreaTools),
+      resultAreaTools: normalizeToolKeyList(input.toolAreas?.resultAreaTools),
     },
     toolConfigs: (Array.isArray(input.toolConfigs) ? input.toolConfigs : []).map(normalizeToolConfig),
     folderTypes: (Array.isArray(input.folderTypes) ? input.folderTypes : []).map((folder, index) => (
@@ -2421,7 +2491,9 @@ export function buildSceneInitialVersionData(sceneOrTemplate) {
   const template = normalizeTemplate(sceneOrTemplate?.templateSnapshot || sceneOrTemplate);
   const rootFolders = template.folderTypes.length > 0
     ? template.folderTypes
-    : [{ name: template.topicPage.resourcePanelTitle || '资料区', description: template.theme.heroSubtitle || '' }];
+    : (template.topicPage?.allowRootResources
+      ? []
+      : [{ name: template.topicPage.resourcePanelTitle || '资料区', description: template.theme.heroSubtitle || '' }]);
   const resources = [];
 
   rootFolders.forEach((folder, index) => {
@@ -2430,6 +2502,8 @@ export function buildSceneInitialVersionData(sceneOrTemplate) {
       key: folderKey,
       name: folder.name,
       isFolder: true,
+      folderTypeKey: folder.key || '',
+      iconKey: trimToNull(folder?.iconKey) || '',
       parentKey: null,
       owner: template.roles[0]?.name || '系统',
       lastEdit: nowText(),

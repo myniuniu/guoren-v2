@@ -3953,6 +3953,12 @@
   height: 100%;
 }
 
+.topic-kg-preview-canvas-area .kg-structured-canvas,
+.topic-kg-preview-stage .kg-structured-canvas,
+.finder-kg-preview-embed.finder-kg-preview-embed-edit .kg-module-embedded {
+  background: #fff;
+}
+
 .topic-knowledge-drawer {
   position: absolute;
   top: 16px;

@@ -75,6 +75,16 @@ import {
   getSceneThemeCoverPreset,
   getSceneThemeCoverStyle,
 } from './themeCovers';
+import {
+  SCENE_FOLDER_ICON_OPTIONS,
+  SCENE_TOOL_ICON_OPTIONS,
+  getSceneIconLabel,
+  getSceneIconMeta,
+  hasUploadedSceneIcon,
+  renderSceneConfigIcon,
+  resolveSceneFolderIconKey,
+  resolveSceneToolIconKey,
+} from './iconCatalog.jsx';
 import '../system/SystemModule.css';
 import './SceneTemplateModule.css';
 
@@ -140,6 +150,7 @@ const MOCK_ROLE_LIBRARY = [
     scopeSummary: '仅查看指定资料类型与评阅相关内容。',
   },
 ];
+const UNLIMITED_TOOL_VALUE = '__ALL__';
 
 function getErrorMessage(error, fallback = '操作失败') {
   return error?.message || fallback;
@@ -176,6 +187,261 @@ function renderStatusTag(value) {
 function getToolLabel(toolKey) {
   return TOOL_OPTIONS.find((item) => item.value === toolKey)?.label || toolKey;
 }
+
+function getToolCardTitle(tool = {}) {
+  return getToolLabel(tool?.key) || '未选择工具';
+}
+
+function buildToolIconLookup(toolConfigs = []) {
+  return new Map(
+    (Array.isArray(toolConfigs) ? toolConfigs : [])
+      .filter((tool) => tool?.key)
+      .map((tool) => [String(tool.key).trim().toUpperCase(), tool]),
+  );
+}
+
+function resolveToolConfigByToolKey(toolKey, toolIconLookup) {
+  const config = toolIconLookup?.get(String(toolKey || '').trim().toUpperCase()) || null;
+  if (config) return config;
+  const toolLabel = getToolLabel(toolKey);
+  return {
+    key: toolKey,
+    name: toolLabel,
+    iconSource: 'PRESET',
+    iconKey: resolveSceneToolIconKey({
+      key: toolKey,
+      name: toolLabel,
+    }),
+    iconImage: '',
+  };
+}
+
+function resolveToolIconKeyByToolKey(toolKey, toolIconLookup) {
+  return resolveSceneToolIconKey(resolveToolConfigByToolKey(toolKey, toolIconLookup));
+}
+
+function sanitizeAllowedToolsSelection(values = []) {
+  const normalizedValues = Array.isArray(values) ? values.filter(Boolean) : [];
+  if (normalizedValues.includes(UNLIMITED_TOOL_VALUE)) {
+    return [UNLIMITED_TOOL_VALUE];
+  }
+  return Array.from(new Set(normalizedValues));
+}
+
+function getAllowedToolDisplayList(values = []) {
+  const normalizedValues = sanitizeAllowedToolsSelection(values);
+  if (normalizedValues.includes(UNLIMITED_TOOL_VALUE)) {
+    return [{ key: UNLIMITED_TOOL_VALUE, label: '不限' }];
+  }
+  return normalizedValues.map((toolKey) => ({
+    key: toolKey,
+    label: getToolLabel(toolKey),
+  }));
+}
+
+function SceneTemplateIconLabel({ iconKey, label, colorMode = 'preset', config = null }) {
+  const resolvedIconKey = iconKey
+    || config?.iconKey
+    || 'DOCUMENT';
+  const meta = getSceneIconMeta(resolvedIconKey);
+  const useUploadedIcon = hasUploadedSceneIcon(config || {});
+  const iconColor = colorMode === 'inherit' ? 'inherit' : meta.color;
+  const badgeClassName = [
+    'scene-template-icon-badge',
+    colorMode === 'inherit' && !useUploadedIcon ? 'is-plain' : '',
+    useUploadedIcon ? 'is-upload' : '',
+  ].filter(Boolean).join(' ');
+  return (
+    <span className="scene-template-icon-label">
+      <span
+        className={badgeClassName}
+        style={colorMode === 'inherit' && !useUploadedIcon
+          ? undefined
+          : {
+              color: meta.color,
+              background: meta.background,
+            }}
+      >
+        {renderSceneConfigIcon(useUploadedIcon ? config : resolvedIconKey, {
+          size: useUploadedIcon ? 24 : 14,
+          color: iconColor,
+          defaultIconKey: resolvedIconKey,
+          className: useUploadedIcon ? 'scene-template-icon-thumb' : undefined,
+          radius: useUploadedIcon ? 8 : undefined,
+        })}
+      </span>
+      <span>{label || getSceneIconLabel(resolvedIconKey)}</span>
+    </span>
+  );
+}
+
+function SceneTemplateIconConfigurator({
+  value = {},
+  defaultIconKey,
+  iconOptions,
+  title,
+  onPresetChange,
+  onUpload,
+}) {
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('gallery');
+  const resolvedIconKey = value?.iconKey || defaultIconKey;
+  const previewConfig = {
+    ...value,
+    iconKey: resolvedIconKey,
+  };
+  const uploaded = hasUploadedSceneIcon(previewConfig);
+  const meta = getSceneIconMeta(resolvedIconKey);
+
+  useEffect(() => {
+    if (!pickerOpen) return;
+    setActiveTab(uploaded ? 'upload' : 'gallery');
+  }, [pickerOpen, uploaded]);
+
+  function handleOpenPicker() {
+    setActiveTab(uploaded ? 'upload' : 'gallery');
+    setPickerOpen(true);
+  }
+
+  function handleSelectPreset(nextIconKey) {
+    onPresetChange?.(nextIconKey);
+    setPickerOpen(false);
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        className="scene-template-icon-trigger"
+        onClick={handleOpenPicker}
+        aria-label={`${title}，当前图标为${uploaded ? '自定义图标' : getSceneIconLabel(resolvedIconKey)}`}
+      >
+        <span className="scene-template-icon-trigger-stage">
+          <span
+            className={`scene-template-icon-trigger-symbol${uploaded ? ' is-upload' : ''}`}
+            style={uploaded
+              ? undefined
+              : {
+                  color: meta.color,
+                  background: meta.background,
+                }}
+          >
+            {renderSceneConfigIcon(uploaded ? previewConfig : resolvedIconKey, {
+              size: uploaded ? 46 : 24,
+              defaultIconKey: resolvedIconKey,
+              className: uploaded ? 'scene-template-icon-thumb' : undefined,
+              radius: uploaded ? 14 : undefined,
+            })}
+          </span>
+          <span className="scene-template-icon-trigger-edit" aria-hidden="true">
+            <EditOutlined />
+          </span>
+        </span>
+      </button>
+      <Modal
+        title={title}
+        open={pickerOpen}
+        onCancel={() => setPickerOpen(false)}
+        footer={[
+          <Button key="done" type="primary" onClick={() => setPickerOpen(false)}>
+            完成
+          </Button>,
+        ]}
+        width={760}
+        className="scene-template-icon-modal"
+      >
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          items={[
+            {
+              key: 'gallery',
+              label: '图库',
+              children: (
+                <div className="scene-template-icon-panel">
+                  <div className="scene-template-icon-gallery-grid">
+                    {iconOptions.map((item) => {
+                      const isActive = !uploaded && resolvedIconKey === item.value;
+                      return (
+                        <button
+                          key={item.value}
+                          type="button"
+                          className={`scene-template-icon-gallery-tile ${isActive ? 'is-active' : ''}`}
+                          onClick={() => handleSelectPreset(item.value)}
+                        >
+                          <span
+                            className="scene-template-icon-gallery-symbol"
+                            style={{
+                              color: item.color,
+                              background: item.background,
+                            }}
+                          >
+                            {renderSceneConfigIcon(item.value, {
+                              size: 22,
+                            })}
+                          </span>
+                          <span className="scene-template-icon-gallery-label">{item.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ),
+            },
+            {
+              key: 'upload',
+              label: '本地上传',
+              children: (
+                <div className="scene-template-icon-upload-panel">
+                  <div className="scene-template-icon-upload-preview">
+                    <span
+                      className={`scene-template-icon-upload-preview-symbol${uploaded ? ' is-upload' : ''}`}
+                      style={uploaded
+                        ? undefined
+                        : {
+                            color: meta.color,
+                            background: meta.background,
+                          }}
+                    >
+                      {renderSceneConfigIcon(uploaded ? previewConfig : resolvedIconKey, {
+                        size: uploaded ? 84 : 36,
+                        defaultIconKey: resolvedIconKey,
+                        className: uploaded ? 'scene-template-icon-thumb' : undefined,
+                        radius: uploaded ? 20 : undefined,
+                      })}
+                    </span>
+                    <div className="scene-template-icon-upload-copy">
+                      <strong>{uploaded ? '当前已上传自定义图标' : `当前图标：${getSceneIconLabel(resolvedIconKey)}`}</strong>
+                      <span>{uploaded ? '重新上传后会直接替换当前自定义图标。' : '上传后会替换当前预设图标。'}</span>
+                    </div>
+                  </div>
+                  <div className="scene-template-icon-upload-actions">
+                    <Upload
+                      accept="image/*"
+                      showUploadList={false}
+                      beforeUpload={onUpload}
+                    >
+                      <Button icon={<UploadOutlined />}>{uploaded ? '重新上传' : '本地上传'}</Button>
+                    </Upload>
+                  </div>
+                </div>
+              ),
+            },
+          ]}
+        />
+      </Modal>
+    </>
+  );
+}
+
+const TOOL_ICON_PICKER_OPTIONS = SCENE_TOOL_ICON_OPTIONS;
+
+const FOLDER_ICON_PICKER_OPTIONS = SCENE_FOLDER_ICON_OPTIONS;
+
+const ALLOWED_TOOL_SELECT_OPTIONS = [
+  { value: UNLIMITED_TOOL_VALUE, label: '不限' },
+  ...TOOL_OPTIONS,
+];
 
 function getEntryMethodLabel(method) {
   return ENTRY_METHOD_OPTIONS.find((item) => item.value === method)?.label || method;
@@ -364,6 +630,7 @@ function SceneTemplatePreview({ template, sceneCount }) {
 
   const roleNameMap = new Map((template.roles || []).map((role) => [role.id, role.name]));
   const folderNameMap = new Map((template.folderTypes || []).map((folder) => [folder.key, folder.name]));
+  const toolIconLookup = buildToolIconLookup(template.toolConfigs || []);
   const currentThemeCoverPreset = getSceneThemeCoverPreset(template.theme?.coverPresetId);
   const statusPresetSceneType = template.statusPresetSceneType || template.sceneType || 'CUSTOM';
   const statusPreset = getSceneTypeStatusPreset(statusPresetSceneType);
@@ -682,7 +949,14 @@ function SceneTemplatePreview({ template, sceneCount }) {
                     <div className="scene-template-tag-wrap">
                       {template.toolAreas?.resourceAreaTools?.length
                         ? template.toolAreas.resourceAreaTools.map((toolKey) => (
-                            <Tag key={toolKey}>{getToolLabel(toolKey)}</Tag>
+                            <Tag key={toolKey}>
+                              <SceneTemplateIconLabel
+                                config={resolveToolConfigByToolKey(toolKey, toolIconLookup)}
+                                iconKey={resolveToolIconKeyByToolKey(toolKey, toolIconLookup)}
+                                label={getToolLabel(toolKey)}
+                                colorMode="inherit"
+                              />
+                            </Tag>
                           ))
                         : <span className="scene-template-static-field-empty">未配置</span>}
                     </div>
@@ -691,11 +965,19 @@ function SceneTemplatePreview({ template, sceneCount }) {
                     <div className="scene-template-tag-wrap">
                       {template.toolAreas?.resultAreaTools?.length
                         ? template.toolAreas.resultAreaTools.map((toolKey) => (
-                            <Tag key={toolKey}>{getToolLabel(toolKey)}</Tag>
+                            <Tag key={toolKey}>
+                              <SceneTemplateIconLabel
+                                config={resolveToolConfigByToolKey(toolKey, toolIconLookup)}
+                                iconKey={resolveToolIconKeyByToolKey(toolKey, toolIconLookup)}
+                                label={getToolLabel(toolKey)}
+                                colorMode="inherit"
+                              />
+                            </Tag>
                           ))
                         : <span className="scene-template-static-field-empty">未配置</span>}
                     </div>
                   </SceneTemplateStaticField>
+                  <SceneTemplateStaticField label="允许根目录直接放资料" value={template.topicPage?.allowRootResources ? '是' : '否'} />
                 </div>
 
                 <div className="scene-template-subsection-title">
@@ -704,11 +986,20 @@ function SceneTemplatePreview({ template, sceneCount }) {
                 {template.toolConfigs?.length ? template.toolConfigs.map((tool, index) => (
                   <div key={tool?.id || index} className="scene-template-list-card">
                     <div className="scene-template-list-card-head">
-                      <strong>工具配置 {index + 1}</strong>
+                      <strong>{getToolCardTitle(tool)}</strong>
                     </div>
                     <div className="scene-template-form-grid">
-                      <SceneTemplateStaticField label="工具标识" value={tool.key} />
-                      <SceneTemplateStaticField label="工具名称" value={tool.name} />
+                      <SceneTemplateStaticField label="工具名称" value={getToolLabel(tool.key) || '-'} />
+                      <SceneTemplateStaticField label="工具别名" value={tool.name || '-'} />
+                      <SceneTemplateStaticField label="工具图标">
+                        <SceneTemplateIconLabel
+                          config={tool}
+                          iconKey={tool.iconKey || resolveSceneToolIconKey(tool)}
+                          label={hasUploadedSceneIcon(tool)
+                            ? '已上传自定义图标'
+                            : getSceneIconLabel(tool.iconKey || resolveSceneToolIconKey(tool))}
+                        />
+                      </SceneTemplateStaticField>
                       <SceneTemplateStaticField label="出现位置" value={TOOL_PLACEMENT_OPTIONS.find((item) => item.value === tool.placement)?.label || tool.placement} />
                       <SceneTemplateStaticField label="启用" value={tool.enabled !== false ? '是' : '否'} />
                       <SceneTemplateStaticField span={2} label="配置说明" value={tool.description} />
@@ -727,6 +1018,15 @@ function SceneTemplatePreview({ template, sceneCount }) {
                     <div className="scene-template-form-grid">
                       <SceneTemplateStaticField label="目录标识" value={folder.key} />
                       <SceneTemplateStaticField label="目录名称" value={folder.name} />
+                      <SceneTemplateStaticField label="目录图标">
+                        <SceneTemplateIconLabel
+                          config={folder}
+                          iconKey={folder.iconKey || resolveSceneFolderIconKey(folder)}
+                          label={hasUploadedSceneIcon(folder)
+                            ? '已上传自定义图标'
+                            : getSceneIconLabel(folder.iconKey || resolveSceneFolderIconKey(folder))}
+                        />
+                      </SceneTemplateStaticField>
                       <SceneTemplateStaticField label="角色限制">
                         <div className="scene-template-tag-wrap">
                           {folder.roleIds?.length
@@ -738,9 +1038,20 @@ function SceneTemplatePreview({ template, sceneCount }) {
                       </SceneTemplateStaticField>
                       <SceneTemplateStaticField label="允许工具">
                         <div className="scene-template-tag-wrap">
-                          {folder.allowedTools?.length
-                            ? folder.allowedTools.map((toolKey) => (
-                                <Tag key={`${folder.id}_${toolKey}`}>{getToolLabel(toolKey)}</Tag>
+                          {getAllowedToolDisplayList(folder.allowedTools).length
+                            ? getAllowedToolDisplayList(folder.allowedTools).map((toolItem) => (
+                                <Tag key={`${folder.id}_${toolItem.key}`}>
+                                  <SceneTemplateIconLabel
+                                    config={toolItem.key === UNLIMITED_TOOL_VALUE
+                                      ? null
+                                      : resolveToolConfigByToolKey(toolItem.key, toolIconLookup)}
+                                    iconKey={toolItem.key === UNLIMITED_TOOL_VALUE
+                                      ? 'GRID'
+                                      : resolveToolIconKeyByToolKey(toolItem.key, toolIconLookup)}
+                                    label={toolItem.label}
+                                    colorMode="inherit"
+                                  />
+                                </Tag>
                               ))
                             : <span className="scene-template-static-field-empty">未配置</span>}
                         </div>
@@ -872,6 +1183,10 @@ export default function SceneTemplateModule() {
   const watchedMetadataFields = useMemo(() => watchedMetadataFieldsValue || [], [watchedMetadataFieldsValue]);
   const watchedToolConfigs = useMemo(() => watchedToolConfigsValue || [], [watchedToolConfigsValue]);
   const watchedFolderTypes = useMemo(() => watchedFolderTypesValue || [], [watchedFolderTypesValue]);
+  const watchedToolIconLookup = useMemo(
+    () => buildToolIconLookup(watchedToolConfigs),
+    [watchedToolConfigs],
+  );
   const watchedStatusRules = useMemo(() => watchedStatusRulesValue || [], [watchedStatusRulesValue]);
   const watchedStatusPresetSceneType = useMemo(
     () => watchedStatusPresetSceneTypeValue || editingTemplate?.statusPresetSceneType || editingTemplate?.sceneType || 'CUSTOM',
@@ -1027,7 +1342,22 @@ export default function SceneTemplateModule() {
 
   useEffect(() => {
     if (!drawerOpen || !editingTemplate) return;
-    templateForm.setFieldsValue(editingTemplate);
+    templateForm.setFieldsValue({
+      ...editingTemplate,
+      toolConfigs: (editingTemplate.toolConfigs || []).map((tool) => ({
+        ...tool,
+        iconSource: tool?.iconSource === 'UPLOAD' || tool?.iconImage ? 'UPLOAD' : 'PRESET',
+        iconKey: tool?.iconKey || resolveSceneToolIconKey(tool),
+        iconImage: tool?.iconImage || '',
+      })),
+      folderTypes: (editingTemplate.folderTypes || []).map((folder) => ({
+        ...folder,
+        iconSource: folder?.iconSource === 'UPLOAD' || folder?.iconImage ? 'UPLOAD' : 'PRESET',
+        iconKey: folder?.iconKey || resolveSceneFolderIconKey(folder),
+        iconImage: folder?.iconImage || '',
+        allowedTools: sanitizeAllowedToolsSelection(folder?.allowedTools),
+      })),
+    });
     if ((!editingTemplate.roles || editingTemplate.roles.length === 0) && !isExistingEditing) {
       templateForm.setFieldValue('roles', [createRoleDraft(1)]);
     }
@@ -1161,6 +1491,86 @@ export default function SceneTemplateModule() {
     return Upload.LIST_IGNORE;
   }
 
+  function updateFormListItem(listName, index, patch) {
+    const currentList = [...(templateForm.getFieldValue(listName) || [])];
+    currentList[index] = {
+      ...(currentList[index] || {}),
+      ...patch,
+    };
+    templateForm.setFieldsValue({
+      [listName]: currentList,
+    });
+  }
+
+  function handleToolConfigChange(index, patch) {
+    updateFormListItem('toolConfigs', index, patch);
+  }
+
+  function handleFolderTypeChange(index, patch) {
+    updateFormListItem('folderTypes', index, patch);
+  }
+
+  function handleBuiltinToolChange(index, nextToolKey) {
+    const currentTool = templateForm.getFieldValue(['toolConfigs', index]) || {};
+    const inferredCurrentIconKey = resolveSceneToolIconKey(currentTool);
+    const nextPatch = {
+      key: nextToolKey,
+    };
+    if (
+      currentTool.iconSource !== 'UPLOAD'
+      && (!currentTool.iconKey || currentTool.iconKey === inferredCurrentIconKey)
+    ) {
+      nextPatch.iconKey = resolveSceneToolIconKey({
+        ...currentTool,
+        key: nextToolKey,
+        name: currentTool.name || getToolLabel(nextToolKey),
+      });
+    }
+    handleToolConfigChange(index, nextPatch);
+  }
+
+  async function handleToolIconUpload(index, file) {
+    if (!file.type?.startsWith('image/')) {
+      message.error('请上传图片格式的工具图标');
+      return Upload.LIST_IGNORE;
+    }
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      handleToolConfigChange(index, {
+        iconSource: 'UPLOAD',
+        iconImage: dataUrl,
+      });
+      message.success('工具图标已更新');
+    } catch (error) {
+      message.error(getErrorMessage(error, '工具图标上传失败'));
+    }
+    return Upload.LIST_IGNORE;
+  }
+
+  async function handleFolderIconUpload(index, file) {
+    if (!file.type?.startsWith('image/')) {
+      message.error('请上传图片格式的目录图标');
+      return Upload.LIST_IGNORE;
+    }
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      handleFolderTypeChange(index, {
+        iconSource: 'UPLOAD',
+        iconImage: dataUrl,
+      });
+      message.success('目录图标已更新');
+    } catch (error) {
+      message.error(getErrorMessage(error, '目录图标上传失败'));
+    }
+    return Upload.LIST_IGNORE;
+  }
+
+  function handleFolderAllowedToolsChange(index, values) {
+    handleFolderTypeChange(index, {
+      allowedTools: sanitizeAllowedToolsSelection(values),
+    });
+  }
+
   function handleRestoreStatusRules() {
     templateForm.setFieldValue(
       'statusRules',
@@ -1190,11 +1600,20 @@ export default function SceneTemplateModule() {
   async function handleSaveTemplate() {
     setSaving(true);
     try {
-      const values = await templateForm.validateFields();
+      await templateForm.validateFields();
+      const values = templateForm.getFieldsValue(true);
       const modeTabs = Array.isArray(values.topicPage?.modeTabs) ? values.topicPage.modeTabs : [];
       const statusRules = Array.isArray(values.statusRules) ? values.statusRules : [];
+      const toolConfigs = Array.isArray(values.toolConfigs) ? values.toolConfigs : [];
       if (modeTabs.filter((item) => item?.enabled !== false).length === 0) {
         message.error('至少启用一个主题模式');
+        return;
+      }
+      const normalizedToolKeys = toolConfigs
+        .map((tool) => String(tool?.key || '').trim())
+        .filter(Boolean);
+      if (new Set(normalizedToolKeys).size !== normalizedToolKeys.length) {
+        message.error('同一个内置工具只能配置一次');
         return;
       }
       const normalizedStatusKeys = statusRules
@@ -1967,6 +2386,14 @@ export default function SceneTemplateModule() {
                       <Form.Item className="scene-template-form-span-2" label="创作结果区工具" name={['toolAreas', 'resultAreaTools']}>
                         <Select mode="multiple" options={TOOL_OPTIONS} placeholder="选择在创作结果区出现的工具" />
                       </Form.Item>
+                      <Form.Item
+                        label="允许根目录直接放资料"
+                        name={['topicPage', 'allowRootResources']}
+                        valuePropName="checked"
+                        extra="开启后可不创建资料目录，直接把资料放在根目录。"
+                      >
+                        <Switch />
+                      </Form.Item>
                     </div>
 
                     <div className="scene-template-subsection-title with-action">
@@ -1979,6 +2406,9 @@ export default function SceneTemplateModule() {
                             id: `tool_${Date.now()}`,
                             key: '',
                             name: '',
+                            iconSource: 'PRESET',
+                            iconKey: 'DOCUMENT',
+                            iconImage: '',
                             placement: 'RESOURCE_AREA',
                             enabled: true,
                             description: '',
@@ -1993,7 +2423,7 @@ export default function SceneTemplateModule() {
                     {watchedToolConfigs.map((tool, index) => (
                       <div key={tool?.id || index} className="scene-template-list-card">
                         <div className="scene-template-list-card-head">
-                          <strong>工具配置 {index + 1}</strong>
+                          <strong>{getToolCardTitle(tool)}</strong>
                           <Button
                             type="link"
                             danger
@@ -2008,11 +2438,38 @@ export default function SceneTemplateModule() {
                           </Button>
                         </div>
                         <div className="scene-template-form-grid">
-                          <Form.Item label="工具标识" name={['toolConfigs', index, 'key']}>
-                            <Input placeholder="例如：exam" />
+                          <Form.Item
+                            label="工具名称"
+                            name={['toolConfigs', index, 'key']}
+                            rules={[{ required: true, message: '请选择工具名称' }]}
+                          >
+                            <Select
+                              options={TOOL_OPTIONS}
+                              placeholder="请选择内置工具"
+                              optionFilterProp="label"
+                              showSearch
+                              onChange={(value) => handleBuiltinToolChange(index, value)}
+                            />
                           </Form.Item>
-                          <Form.Item label="工具名称" name={['toolConfigs', index, 'name']}>
-                            <Input placeholder="例如：考试" />
+                          <Form.Item label="工具别名" name={['toolConfigs', index, 'name']}>
+                            <Input placeholder="留空则默认使用内置工具名称" />
+                          </Form.Item>
+                          <Form.Item label="工具图标">
+                            <SceneTemplateIconConfigurator
+                              value={tool}
+                              defaultIconKey={tool.iconKey || resolveSceneToolIconKey({
+                                ...tool,
+                                name: tool.name || getToolLabel(tool.key),
+                              })}
+                              iconOptions={TOOL_ICON_PICKER_OPTIONS}
+                              title="选择工具图标"
+                              onPresetChange={(nextIconKey) => handleToolConfigChange(index, {
+                                iconSource: 'PRESET',
+                                iconKey: nextIconKey,
+                                iconImage: '',
+                              })}
+                              onUpload={(file) => handleToolIconUpload(index, file)}
+                            />
                           </Form.Item>
                           <Form.Item label="出现位置" name={['toolConfigs', index, 'placement']}>
                             <Select options={TOOL_PLACEMENT_OPTIONS} />
@@ -2022,6 +2479,15 @@ export default function SceneTemplateModule() {
                           </Form.Item>
                           <Form.Item className="scene-template-form-span-2" label="配置说明" name={['toolConfigs', index, 'description']}>
                             <TextArea rows={2} placeholder="说明这个工具的功能范围和使用约束" />
+                          </Form.Item>
+                          <Form.Item name={['toolConfigs', index, 'iconSource']} hidden>
+                            <Input />
+                          </Form.Item>
+                          <Form.Item name={['toolConfigs', index, 'iconKey']} hidden>
+                            <Input />
+                          </Form.Item>
+                          <Form.Item name={['toolConfigs', index, 'iconImage']} hidden>
+                            <Input />
                           </Form.Item>
                           <Form.Item name={['toolConfigs', index, 'id']} hidden>
                             <Input />
@@ -2040,6 +2506,9 @@ export default function SceneTemplateModule() {
                             id: `folder_${Date.now()}`,
                             key: '',
                             name: '',
+                            iconSource: 'PRESET',
+                            iconKey: 'FOLDER',
+                            iconImage: '',
                             description: '',
                             roleIds: [],
                             allowedTools: [],
@@ -2076,11 +2545,30 @@ export default function SceneTemplateModule() {
                           <Form.Item label="目录名称" name={['folderTypes', index, 'name']}>
                             <Input placeholder="例如：课程课件" />
                           </Form.Item>
+                          <Form.Item label="目录图标">
+                            <SceneTemplateIconConfigurator
+                              value={folder}
+                              defaultIconKey={folder.iconKey || resolveSceneFolderIconKey(folder)}
+                              iconOptions={FOLDER_ICON_PICKER_OPTIONS}
+                              title="选择目录图标"
+                              onPresetChange={(nextIconKey) => handleFolderTypeChange(index, {
+                                iconSource: 'PRESET',
+                                iconKey: nextIconKey,
+                                iconImage: '',
+                              })}
+                              onUpload={(file) => handleFolderIconUpload(index, file)}
+                            />
+                          </Form.Item>
                           <Form.Item label="角色限制" name={['folderTypes', index, 'roleIds']}>
                             <Select mode="multiple" options={roleOptions} placeholder="限定可管理此目录的角色" />
                           </Form.Item>
                           <Form.Item label="允许工具" name={['folderTypes', index, 'allowedTools']}>
-                            <Select mode="multiple" options={TOOL_OPTIONS} placeholder="该目录允许的工具类型" />
+                            <Select
+                              mode="multiple"
+                              options={ALLOWED_TOOL_SELECT_OPTIONS}
+                              placeholder="该目录允许的工具类型"
+                              onChange={(values) => handleFolderAllowedToolsChange(index, values)}
+                            />
                           </Form.Item>
                           <Form.Item label="必选目录" name={['folderTypes', index, 'required']} valuePropName="checked">
                             <Switch />
@@ -2089,9 +2577,38 @@ export default function SceneTemplateModule() {
                           <Form.Item className="scene-template-form-span-2" label="目录说明" name={['folderTypes', index, 'description']}>
                             <TextArea rows={2} placeholder="说明这个目录承载的内容类型和依赖关系" />
                           </Form.Item>
+                          <Form.Item name={['folderTypes', index, 'iconSource']} hidden>
+                            <Input />
+                          </Form.Item>
+                          <Form.Item name={['folderTypes', index, 'iconKey']} hidden>
+                            <Input />
+                          </Form.Item>
+                          <Form.Item name={['folderTypes', index, 'iconImage']} hidden>
+                            <Input />
+                          </Form.Item>
                           <Form.Item name={['folderTypes', index, 'id']} hidden>
                             <Input />
                           </Form.Item>
+                        </div>
+                        <div className="scene-template-mode-hint">
+                          当前目录允许工具：
+                          {' '}
+                          {getAllowedToolDisplayList(folder.allowedTools).length
+                            ? getAllowedToolDisplayList(folder.allowedTools).map((toolItem) => (
+                                <Tag key={`${folder?.id || index}_${toolItem.key}`}>
+                                  <SceneTemplateIconLabel
+                                    config={toolItem.key === UNLIMITED_TOOL_VALUE
+                                      ? null
+                                      : resolveToolConfigByToolKey(toolItem.key, watchedToolIconLookup)}
+                                    iconKey={toolItem.key === UNLIMITED_TOOL_VALUE
+                                      ? 'GRID'
+                                      : resolveToolIconKeyByToolKey(toolItem.key, watchedToolIconLookup)}
+                                    label={toolItem.label}
+                                    colorMode="inherit"
+                                  />
+                                </Tag>
+                              ))
+                            : '未配置'}
                         </div>
                       </div>
                     ))}

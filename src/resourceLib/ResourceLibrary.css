@@ -2293,6 +2293,11 @@
 
 .finder-kg-preview-embed .kg-structured-canvas {
   min-height: 100%;
+  background: #fff;
+}
+
+.finder-kg-preview-embed.finder-kg-preview-embed-edit .kg-module-embedded {
+  background: #fff;
 }
 
 .finder-kg-preview-embed-edit {

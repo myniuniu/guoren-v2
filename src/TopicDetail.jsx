@@ -31,9 +31,7 @@ import {
   FileAddOutlined,
   FullscreenOutlined,
   AppstoreOutlined,
-  FolderFilled,
   FolderAddOutlined,
-  FolderOpenFilled,
   FolderOutlined,
   GlobalOutlined,
   HomeOutlined,
@@ -68,6 +66,11 @@ import {
 import { buildTopicResourcesFromLibrarySelection } from './resourceLib/topicResourceImport.js';
 import { renderFileIcon } from './resourceLib/resourceIcons.jsx';
 import { getSceneThemeCoverPalette, getSceneThemeCoverStyle } from './scene/themeCovers';
+import {
+  getSceneIconMeta,
+  renderSceneConfigIcon,
+  resolveSceneFolderIconKey,
+} from './scene/iconCatalog.jsx';
 import {
   addResource,
   addResources,
@@ -171,6 +174,11 @@ const SCENE_HOME_TASK_TITLE_MAP = Object.freeze({
   COMMUNITY: '频道任务',
   CUSTOM: '任务进度',
 });
+
+function isLiveToolConfig(tool = {}) {
+  const haystack = `${tool?.key || ''} ${tool?.name || ''} ${tool?.description || ''}`.toLowerCase();
+  return tool?.enabled !== false && /live|直播|授课|会议/.test(haystack);
+}
 
 function getDefaultTopicTabKey(sceneConfig) {
   return sceneConfig ? 'home' : 'knowledge';
@@ -682,6 +690,7 @@ function TopicDetail({
   const addResourceLabel = currentModeConfig?.addResourceLabel || sceneConfig?.topicPage?.addResourceLabel || '添加资料';
   const appLabel = currentModeConfig?.appLabel || sceneConfig?.topicPage?.appLabel || '应用';
   const emptyStateText = currentModeConfig?.emptyStateText || sceneConfig?.topicPage?.emptyStateText || '暂无资料，右键新建文件夹或添加资料';
+  const allowRootResources = sceneConfig?.topicPage?.allowRootResources === true;
   const enabledAddResourceEntries = Array.isArray(sceneConfig?.toolAreas?.resourceAreaTools) && sceneConfig.toolAreas.resourceAreaTools.length
     ? sceneConfig.toolAreas.resourceAreaTools
     : undefined;
@@ -876,6 +885,20 @@ function TopicDetail({
   const fileCount = resources.filter((r) => !r.isFolder).length;
   const currentListItems = selectedFolder ? folderChildren : rootItems;
   const currentListParentKey = selectedFolderKey || null;
+  const canAddResourceAtParent = useCallback((parentKey) => {
+    if (!canEditDisplayedResources) return false;
+    return allowRootResources || (parentKey ?? null) !== null;
+  }, [allowRootResources, canEditDisplayedResources]);
+  const ensureResourceParentAllowed = useCallback((parentKey, actionLabel = '添加资料') => {
+    if (allowRootResources || (parentKey ?? null) !== null) return true;
+    message.warning(`当前模板要求先进入资料目录后再${actionLabel}`);
+    return false;
+  }, [allowRootResources]);
+  const canAddResourceAtCurrentLocation = canAddResourceAtParent(currentListParentKey);
+  const canAddResourceAtRoot = canAddResourceAtParent(null);
+  const rootEmptyStateText = allowRootResources
+    ? emptyStateText
+    : '暂无资料，请先新建文件夹后再添加资料';
   const previewParentFolder = previewItem?.parentKey
     ? resources.find((resource) => resource.key === previewItem.parentKey && resource.isFolder) || null
     : null;
@@ -1731,6 +1754,7 @@ function TopicDetail({
   const homeFileItems = sourceResources.filter((resource) => !resource.isFolder);
   const homeChildrenMap = buildResourceChildrenMap(sourceResources);
   const homeFolderTypeMap = new Map((sceneConfig?.folderTypes || []).map((folder) => [folder.key, folder]));
+  const homeFolderTypeNameMap = new Map((sceneConfig?.folderTypes || []).map((folder) => [folder.name, folder]));
   const homeMetadataFieldMap = new Map((sceneConfig?.metadataFields || []).map((field) => [field.key, field]));
   const homeTeachingSupportAgents = Array.from(
     new Set(
@@ -1758,10 +1782,7 @@ function TopicDetail({
   const homePracticeCount = homeFileItems.filter(isInteractiveResource).length;
   const homeLiveCount = Math.max(
     homeFileItems.filter(isLiveLikeResource).length,
-    (sceneConfig?.toolConfigs || []).some((tool) => (
-      tool?.enabled !== false
-      && ((tool?.key || '').includes('live') || /直播|授课|会议/.test(tool?.name || ''))
-    )) ? 1 : 0,
+    (sceneConfig?.toolConfigs || []).some(isLiveToolConfig) ? 1 : 0,
   );
   const homeResourceStats = [
     { key: 'video', label: '视频', value: homeVideoCount, icon: <PlayCircleOutlined /> },
@@ -1807,6 +1828,30 @@ function TopicDetail({
     ? teachingRoleCards
     : homeRoleCards;
   const homeDisplayedMemberTotal = homeDisplayedRoleCards.reduce((sum, item) => sum + item.value, 0);
+
+  const resolveFolderTypeConfig = useCallback((resource) => {
+    if (!resource?.isFolder) return null;
+    const folderTypeKey = resource.folderTypeKey || resource.meta?.folderTypeKey || '';
+    if (folderTypeKey && homeFolderTypeMap.has(folderTypeKey)) {
+      return homeFolderTypeMap.get(folderTypeKey);
+    }
+    if (resource.name && homeFolderTypeNameMap.has(resource.name)) {
+      return homeFolderTypeNameMap.get(resource.name);
+    }
+    return resource;
+  }, [homeFolderTypeMap, homeFolderTypeNameMap]);
+
+  const renderFolderTypeIcon = useCallback((resource, options = {}) => {
+    const folderConfig = resolveFolderTypeConfig(resource);
+    const iconKey = resolveSceneFolderIconKey(folderConfig || resource || {});
+    const iconMeta = getSceneIconMeta(iconKey);
+    return renderSceneConfigIcon(folderConfig || resource || { iconKey }, {
+      size: options.size || 16,
+      expanded: options.expanded,
+      color: options.color || iconMeta.color,
+      defaultIconKey: iconKey,
+    });
+  }, [resolveFolderTypeConfig]);
   const teachingCourseInfoFields = isTeachingScene
     ? [
         {
@@ -1848,10 +1893,7 @@ function TopicDetail({
   const homeCoursewareCount = countResourceBranchItems(homeChildrenMap, homeCoursewareFolder?.key);
   const homePracticeFolderCount = countResourceBranchItems(homeChildrenMap, homePracticeFolder?.key);
   const homeHomeworkCount = countResourceBranchItems(homeChildrenMap, homeHomeworkFolder?.key);
-  const homeLiveEnabled = (sceneConfig?.toolConfigs || []).some((tool) => (
-    tool?.enabled !== false
-    && ((tool?.key || '').includes('live') || /直播|授课|会议/.test(tool?.name || ''))
-  )) || homeLiveCount > 0;
+  const homeLiveEnabled = (sceneConfig?.toolConfigs || []).some(isLiveToolConfig) || homeLiveCount > 0;
   const teachingProgressItems = isTeachingScene
     ? [
         {
@@ -2436,8 +2478,12 @@ function TopicDetail({
       message.warning(versioningEnabled ? '当前版本已发布，请新建版本后再添加资料' : '当前内容不可编辑');
       return;
     }
+    const targetParentKey = parentKey ?? null;
+    if (!ensureResourceParentAllowed(targetParentKey, '添加资料')) {
+      return;
+    }
     clearPendingRenameTrigger();
-    setAddResourceParentKey(parentKey ?? null);
+    setAddResourceParentKey(targetParentKey);
     setModalOpen(true);
   };
 
@@ -2446,8 +2492,12 @@ function TopicDetail({
       message.warning(versioningEnabled ? '当前版本已发布，请新建版本后再添加资料' : '当前内容不可编辑');
       return;
     }
+    const targetParentKey = parentKey ?? null;
+    if (!ensureResourceParentAllowed(targetParentKey, '导入资料')) {
+      return;
+    }
     setResourceLibraryData(loadResourceLib());
-    setResourceImportParentKey(parentKey ?? null);
+    setResourceImportParentKey(targetParentKey);
     setResourceImportOpen(true);
   };
 
@@ -2469,6 +2519,9 @@ function TopicDetail({
     const parentKey = typeof addResourceParentKey === 'undefined'
       ? currentListParentKey
       : addResourceParentKey;
+    if (!ensureResourceParentAllowed(parentKey ?? null, '添加资料')) {
+      return;
+    }
     try {
       const catalog = await loadCapabilityModelCatalog();
       setCapabilityModelTargetParentKey(parentKey ?? null);
@@ -2504,6 +2557,9 @@ function TopicDetail({
   const openCapabilityModelCreateModal = async (initialName = '新建能力模型', parentKey = null) => {
     if (!canEditDisplayedResources) {
       message.warning(versioningEnabled ? '当前版本已发布，请新建版本后再添加资料' : '当前内容不可编辑');
+      return;
+    }
+    if (!ensureResourceParentAllowed(parentKey ?? null, '添加资料')) {
       return;
     }
     try {
@@ -2671,6 +2727,9 @@ function TopicDetail({
     const parentKey = typeof addResourceParentKey === 'undefined'
       ? currentListParentKey
       : addResourceParentKey;
+    if (!ensureResourceParentAllowed(parentKey ?? null, '添加资料')) {
+      return;
+    }
     const newData = addResource(versionData, currentVersion.id, {
       ...resource,
       parentKey: parentKey ?? null,
@@ -2750,6 +2809,9 @@ function TopicDetail({
   const handleImportResourcesFromLibrary = ({ selectedItems = [], includeDirectories = true, libraryId = 'personal' }) => {
     if (!canEditDisplayedResources) {
       message.warning(versioningEnabled ? '当前版本已发布，请新建版本后再添加资料' : '当前内容不可编辑');
+      return;
+    }
+    if (!ensureResourceParentAllowed(resourceImportParentKey ?? null, '导入资料')) {
       return;
     }
     const latestResourceLibraryData = loadResourceLib();
@@ -2945,6 +3007,15 @@ function TopicDetail({
       return false;
     }
     if (!draggedItem?.key) return false;
+    if (
+      !draggedItem.isFolder
+      && (targetParentKey ?? null) === null
+      && (draggedItem.parentKey ?? null) !== null
+      && !allowRootResources
+    ) {
+      message.warning('当前模板要求先进入资料目录后再放置资料');
+      return false;
+    }
     const nextData = moveResource(
       versionData,
       currentVersion.id,
@@ -3342,7 +3413,12 @@ function TopicDetail({
   const bgContextMenu = {
     items: [
       { key: 'newFolder', icon: <FolderAddOutlined />, label: '新建文件夹', disabled: !canEditDisplayedResources },
-      { key: 'addResource', icon: <FileAddOutlined />, label: addResourceLabel, disabled: !canEditDisplayedResources },
+      {
+        key: 'addResource',
+        icon: <FileAddOutlined />,
+        label: addResourceLabel,
+        disabled: !canAddResourceAtParent(bgMenuSurface === 'tree' ? null : currentListParentKey),
+      },
     ],
     onClick: ({ key }) => {
       if (key === 'newFolder') handleCreateFolderAtCurrentLocation(bgMenuSurface);
@@ -3397,9 +3473,11 @@ function TopicDetail({
                 {isExpanded ? <CaretDownOutlined /> : <CaretRightOutlined />}
               </span>
               <span className="project-item-icon">
-                {isExpanded
-                  ? <FolderOpenFilled style={{ color: '#56a8f5' }} />
-                  : <FolderFilled style={{ color: '#56a8f5' }} />}
+                {renderFolderTypeIcon(item, {
+                  size: 16,
+                  expanded: isExpanded,
+                  color: 'inherit',
+                })}
               </span>
               {isInlineRenaming ? (
                 <Input
@@ -3566,7 +3644,10 @@ function TopicDetail({
           <div className="topic-file-col topic-file-col-name">
             <span className="topic-file-icon">
               {item.isFolder
-                ? <FolderFilled style={{ color: '#56a8f5' }} />
+                ? renderFolderTypeIcon(item, {
+                    size: 16,
+                    color: 'inherit',
+                  })
                 : getResourceIcon(item)}
             </span>
             {isInlineRenaming ? (
@@ -4738,8 +4819,8 @@ function TopicDetail({
                   <>
                     <div className={`panel-actions ${isAiMode ? 'panel-actions-single' : ''}`}>
                       <div
-                        className={`panel-action-btn ${!canEditDisplayedResources ? 'panel-action-btn-disabled' : ''}`}
-                        onClick={() => canEditDisplayedResources && openAddResourceModal(currentListParentKey)}
+                        className={`panel-action-btn ${!canAddResourceAtCurrentLocation ? 'panel-action-btn-disabled' : ''}`}
+                        onClick={() => canAddResourceAtCurrentLocation && openAddResourceModal(currentListParentKey)}
                       >
                         <PlusOutlined style={{ fontSize: 12 }} />
                         <span>{addResourceLabel}</span>
@@ -4770,7 +4851,7 @@ function TopicDetail({
                                 icon: <FileAddOutlined />,
                                 label: addResourceLabel,
                                 onClick: () => openAddResourceModal(null),
-                                disabled: !canEditDisplayedResources,
+                                disabled: !canAddResourceAtRoot,
                               },
                               {
                                 key: 'new-folder',
@@ -4879,7 +4960,7 @@ function TopicDetail({
                               <Button
                                 type="primary"
                                 icon={<PlusOutlined />}
-                                disabled={!canEditDisplayedResources}
+                                disabled={!canAddResourceAtCurrentLocation}
                                 onClick={() => openAddResourceModal(currentListParentKey)}
                               >
                                 {addResourceLabel}
@@ -5293,7 +5374,7 @@ function TopicDetail({
                     <>
                       <div className="folder-info">
                         <div className="folder-info-left">
-                          <div className="folder-big-icon"><FolderFilled /></div>
+                          <div className="folder-big-icon">{renderFolderTypeIcon(selectedFolder, { size: 30 })}</div>
                           <div className="folder-meta">
                             <div className="folder-name">{selectedFolder.name}</div>
                             <div className="folder-desc">
@@ -5315,7 +5396,7 @@ function TopicDetail({
                           </div>
                         </div>
                         <div className="folder-info-right">
-                          <Button icon={<PlusOutlined />} disabled={!canEditDisplayedResources} onClick={() => openAddResourceModal(currentListParentKey)}>{addResourceLabel}</Button>
+                          <Button icon={<PlusOutlined />} disabled={!canAddResourceAtCurrentLocation} onClick={() => openAddResourceModal(currentListParentKey)}>{addResourceLabel}</Button>
                         </div>
                       </div>
                     </>
@@ -5323,13 +5404,13 @@ function TopicDetail({
                     <>
                       <div className="folder-info">
                         <div className="folder-info-left">
-                          <div className="folder-big-icon"><FolderFilled /></div>
+                          <div className="folder-big-icon">{renderFolderTypeIcon({ isFolder: true, iconKey: 'FOLDER' }, { size: 30 })}</div>
                           <div className="folder-meta">
                             <div className="folder-name">{currentVersion?.name || resourcePanelTitle}</div>
                             <div className="folder-desc">{fileCount} 个文件 {folderCount} 个文件夹</div>
                           </div>
                         </div>
-                        <Button className="add-resource-btn" icon={<PlusOutlined />} disabled={!canEditDisplayedResources} onClick={() => openAddResourceModal(null)}>
+                        <Button className="add-resource-btn" icon={<PlusOutlined />} disabled={!canAddResourceAtRoot} onClick={() => openAddResourceModal(null)}>
                           {addResourceLabel}
                         </Button>
                       </div>
@@ -5355,7 +5436,7 @@ function TopicDetail({
                           <div className="topic-file-empty">
                             <Empty
                               image={Empty.PRESENTED_IMAGE_SIMPLE}
-                              description={selectedFolder ? `此${resourcePanelTitle}目录为空，可继续添加内容` : emptyStateText}
+                              description={selectedFolder ? `此${resourcePanelTitle}目录为空，可继续添加内容` : rootEmptyStateText}
                             />
                           </div>
                         ) : (
