@@ -3767,14 +3767,13 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
           )}
         </div>
 
-        {/* 个人收藏 */}
+        {/* 侧栏快捷入口 */}
         <div
           className={`finder-sidebar-section ${favDragOver ? 'finder-sidebar-fav-dragover' : ''}`}
           onDragOver={handleFavSectionDragOver}
           onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) { setFavDragOver(false); setFavDropIdx(null); } }}
           onDrop={handleFavDrop}
         >
-          <div className="finder-sidebar-title">{scope === 'personal' ? '个人收藏' : '组织收藏'}</div>
           <div
             className={`finder-sidebar-item ${specialView === 'all' && !selectedFolderKey && !activeTagFilter && !hasActiveSearch ? 'finder-sidebar-item-active' : ''}`}
             onClick={() => { navigateTo(null); }}
