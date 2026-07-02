@@ -687,6 +687,9 @@ function TopicDetail({
     || sceneConfig?.homepage?.templateName
     || '标准主页模板';
   const resourcePanelTitle = currentModeConfig?.resourcePanelTitle || sceneConfig?.topicPage?.resourcePanelTitle || '资料';
+  const resourceRootTitle = versioningEnabled
+    ? (currentVersion?.name || resourcePanelTitle)
+    : resourcePanelTitle;
   const addResourceLabel = currentModeConfig?.addResourceLabel || sceneConfig?.topicPage?.addResourceLabel || '添加资料';
   const appLabel = currentModeConfig?.appLabel || sceneConfig?.topicPage?.appLabel || '应用';
   const emptyStateText = currentModeConfig?.emptyStateText || sceneConfig?.topicPage?.emptyStateText || '暂无资料，右键新建文件夹或添加资料';
@@ -4949,7 +4952,7 @@ function TopicDetail({
                             <div className="topic-ai-resource-stage-head">
                               <div className="topic-ai-resource-stage-copy">
                                 <div className="topic-ai-resource-stage-title">
-                                  {selectedFolder ? selectedFolder.name : currentVersion?.name || resourcePanelTitle}
+                                  {selectedFolder ? selectedFolder.name : resourceRootTitle}
                                 </div>
                                 <div className="topic-ai-resource-stage-meta">
                                   {selectedFolder
@@ -5325,9 +5328,9 @@ function TopicDetail({
                         <span className="topic-preview-main-icon">
                           {renderFileIcon(getTopicResourceFileType(previewItem), { fontSize: 18 })}
                         </span>
-                        <div className="topic-preview-main-copy">
+                          <div className="topic-preview-main-copy">
                           <div className="topic-preview-main-breadcrumb">
-                            {previewParentFolder ? previewParentFolder.name : currentVersion?.name || resourcePanelTitle}
+                            {previewParentFolder ? previewParentFolder.name : resourceRootTitle}
                           </div>
                           <div className="topic-preview-main-title">{previewItem.name}</div>
                         <div className="topic-preview-main-meta">
@@ -5406,7 +5409,7 @@ function TopicDetail({
                         <div className="folder-info-left">
                           <div className="folder-big-icon">{renderFolderTypeIcon({ isFolder: true, iconKey: 'FOLDER' }, { size: 30 })}</div>
                           <div className="folder-meta">
-                            <div className="folder-name">{currentVersion?.name || resourcePanelTitle}</div>
+                            <div className="folder-name">{resourceRootTitle}</div>
                             <div className="folder-desc">{fileCount} 个文件 {folderCount} 个文件夹</div>
                           </div>
                         </div>
