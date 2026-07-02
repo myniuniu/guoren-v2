@@ -2101,13 +2101,11 @@
   opacity: 0.36;
 }
 
-.finder-preview-panel {
+.finder-preview-panel,
+.finder-column-preview {
   position: relative;
   isolation: isolate;
-  max-width: min(1120px, calc(100% - 260px));
-  min-width: 320px;
   min-height: 0;
-  flex-shrink: 0;
   overflow-y: auto;
   background:
     linear-gradient(180deg, rgba(252, 253, 255, 0.98) 0%, rgba(248, 250, 254, 0.95) 52%, rgba(244, 247, 252, 0.94) 100%),
@@ -2119,7 +2117,14 @@
   box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.38);
 }
 
-.finder-preview-panel::before {
+.finder-preview-panel {
+  max-width: min(1120px, calc(100% - 260px));
+  min-width: 320px;
+  flex-shrink: 0;
+}
+
+.finder-preview-panel::before,
+.finder-column-preview::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -2888,12 +2893,6 @@
 .finder-column-preview {
   flex: 1;
   min-width: 280px;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  background: #fafafa;
-  border-left: none;
-  overflow-y: auto;
 }
 
 @keyframes finderContentSlideInFromLeft {
