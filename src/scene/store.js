@@ -6,7 +6,7 @@ const TEMPLATE_STORAGE_KEY = 'gr.scene.templates.v1';
 const SCENE_STORAGE_KEY = 'gr.scenes.v1';
 const SCENE_SYSTEM_MENU_SHORTCUT_STORAGE_KEY = 'gr.scene.system-menu-shortcuts.v1';
 const SEED_KEY = 'gr.scene.seeded.v1';
-const BUILT_IN_SYNC_KEY = 'gr.scene.builtin-sync.v9';
+const BUILT_IN_SYNC_KEY = 'gr.scene.builtin-sync.v10';
 const STORE_CHANGE_EVENT = 'gr:scene-store-change';
 const VERSION_STORAGE_KEY = 'guoren_version_data';
 const DEFAULT_SCENE_GROUP_NAME = '人工智能通识体系';
@@ -1307,7 +1307,7 @@ function normalizeTemplate(input = {}) {
       addResourceLabel: trimToNull(input.topicPage?.addResourceLabel) || '添加资料',
       appLabel: trimToNull(input.topicPage?.appLabel) || '应用',
       emptyStateText: trimToNull(input.topicPage?.emptyStateText) || '暂无资料，右键新建文件夹或添加资料',
-      allowRootResources: Boolean(input.topicPage?.allowRootResources),
+      allowRootResources: input.topicPage?.allowRootResources !== false,
       modeTabs: ensureModeTabs(input.topicPage?.modeTabs, sceneType, input.homepage?.templateName),
     },
     topicCard: normalizeTopicCardConfig(input.topicCard),
@@ -1463,6 +1463,7 @@ function buildPresetTemplates() {
         addResourceLabel: '添加课件',
         appLabel: '教学工具',
         emptyStateText: '暂无课件，可先创建课程目录或上传资料',
+        allowRootResources: true,
         modeTabs: createModeTabs({
           knowledge: '课程资料',
           ai: 'AI助教',
@@ -1557,6 +1558,7 @@ function buildPresetTemplates() {
         addResourceLabel: '添加资料',
         appLabel: '教研工具',
         emptyStateText: '暂无教研资料，可先创建议题目录或上传共创材料',
+        allowRootResources: true,
         modeTabs: createModeTabs({
           knowledge: '议题资料',
           ai: 'AI共创',
@@ -1662,6 +1664,7 @@ function buildPresetTemplates() {
         addResourceLabel: '添加培训内容',
         appLabel: '培训工具',
         emptyStateText: '暂无培训内容，可先创建课程模块或上传资料',
+        allowRootResources: true,
         modeTabs: createModeTabs({
           knowledge: '学习内容',
           ai: 'AI辅学',
@@ -1768,6 +1771,7 @@ function buildPresetTemplates() {
         addResourceLabel: '添加课程素材',
         appLabel: '创作工具',
         emptyStateText: '暂无课程素材，可先创建课程蓝图、知识图谱映射或课时设计目录',
+        allowRootResources: true,
         modeTabs: createModeTabs({
           ai: 'AI创作',
         }, {
@@ -1880,6 +1884,7 @@ function buildPresetTemplates() {
         addResourceLabel: '添加内容',
         appLabel: '社区工具',
         emptyStateText: '暂无内容，可先发布议题、活动或上传共创资料',
+        allowRootResources: true,
         modeTabs: createModeTabs({
           knowledge: '内容资料',
           ai: 'AI灵感',
@@ -2193,6 +2198,67 @@ function migrateBuiltInCourseStudioEntries(existingTemplates, existingScenes) {
   };
 }
 
+function migrateBuiltInRootUploadPolicy(existingTemplates, existingScenes) {
+  let templateChanged = false;
+  let sceneChanged = false;
+  const presetTemplates = buildPresetTemplates();
+  const presetTemplateMap = new Map(
+    presetTemplates
+      .filter((template) => template?.builtIn)
+      .flatMap((template) => (
+        [
+          template?.id ? [template.id, template] : null,
+          template?.templateCode ? [template.templateCode, template] : null,
+        ].filter(Boolean)
+      )),
+  );
+
+  const nextTemplates = existingTemplates.map((template) => {
+    if (!template?.builtIn) return template;
+    const presetTemplate = presetTemplateMap.get(template.id) || presetTemplateMap.get(template.templateCode);
+    if (!presetTemplate) return template;
+    const nextAllowRootResources = presetTemplate.topicPage?.allowRootResources !== false;
+    if (template.topicPage?.allowRootResources === nextAllowRootResources) return template;
+    templateChanged = true;
+    return {
+      ...template,
+      topicPage: {
+        ...template.topicPage,
+        allowRootResources: nextAllowRootResources,
+      },
+      updatedAt: nowIso(),
+    };
+  });
+
+  const nextScenes = existingScenes.map((scene) => {
+    const templateSnapshot = scene?.templateSnapshot;
+    if (!templateSnapshot?.builtIn) return scene;
+    const presetTemplate = presetTemplateMap.get(templateSnapshot.id) || presetTemplateMap.get(templateSnapshot.templateCode);
+    if (!presetTemplate) return scene;
+    const nextAllowRootResources = presetTemplate.topicPage?.allowRootResources !== false;
+    if (templateSnapshot.topicPage?.allowRootResources === nextAllowRootResources) return scene;
+    sceneChanged = true;
+    return {
+      ...scene,
+      templateSnapshot: {
+        ...templateSnapshot,
+        topicPage: {
+          ...templateSnapshot.topicPage,
+          allowRootResources: nextAllowRootResources,
+        },
+      },
+      updatedAt: nowIso(),
+    };
+  });
+
+  return {
+    nextTemplates,
+    nextScenes,
+    templateChanged,
+    sceneChanged,
+  };
+}
+
 function migrateTemplateVersioningPolicy(existingTemplates) {
   let changed = false;
   const nextTemplates = existingTemplates.map((template) => {
@@ -2245,22 +2311,41 @@ export function seedSceneData() {
     const mergedTemplates = templatesToAppend.length > 0
       ? [...existingTemplates, ...templatesToAppend]
       : existingTemplates;
-    const { nextTemplates: migratedMenuTemplates, nextScenes, templateChanged, sceneChanged } = migrateBuiltInCourseStudioEntries(
+    const {
+      nextTemplates: migratedMenuTemplates,
+      nextScenes: migratedMenuScenes,
+      templateChanged,
+      sceneChanged,
+    } = migrateBuiltInCourseStudioEntries(
       mergedTemplates,
       existingScenes,
     );
-    const { nextTemplates, changed: versioningChanged } = migrateTemplateVersioningPolicy(migratedMenuTemplates);
-    const scenesToAppend = mergeMissingBuiltInScenes(nextScenes, nextTemplates);
+    const {
+      nextTemplates: migratedRootUploadTemplates,
+      nextScenes: migratedRootUploadScenes,
+      templateChanged: rootUploadTemplateChanged,
+      sceneChanged: rootUploadSceneChanged,
+    } = migrateBuiltInRootUploadPolicy(migratedMenuTemplates, migratedMenuScenes);
+    const { nextTemplates, changed: versioningChanged } = migrateTemplateVersioningPolicy(migratedRootUploadTemplates);
+    const scenesToAppend = mergeMissingBuiltInScenes(migratedRootUploadScenes, nextTemplates);
 
-    if (templatesToAppend.length > 0 || templateChanged || versioningChanged) {
+    if (templatesToAppend.length > 0 || templateChanged || rootUploadTemplateChanged || versioningChanged) {
       writeList(TEMPLATE_STORAGE_KEY, nextTemplates);
     }
-    if (scenesToAppend.length > 0 || sceneChanged) {
-      writeList(SCENE_STORAGE_KEY, [...nextScenes, ...scenesToAppend]);
+    if (scenesToAppend.length > 0 || sceneChanged || rootUploadSceneChanged) {
+      writeList(SCENE_STORAGE_KEY, [...migratedRootUploadScenes, ...scenesToAppend]);
     }
 
     localStorage.setItem(BUILT_IN_SYNC_KEY, '1');
-    if (templatesToAppend.length > 0 || scenesToAppend.length > 0 || templateChanged || sceneChanged || versioningChanged) {
+    if (
+      templatesToAppend.length > 0
+      || scenesToAppend.length > 0
+      || templateChanged
+      || sceneChanged
+      || rootUploadTemplateChanged
+      || rootUploadSceneChanged
+      || versioningChanged
+    ) {
       emitChange();
     }
   } catch (error) {
@@ -2288,6 +2373,7 @@ export function createTemplateDraft(sceneType = 'CUSTOM') {
     roles,
     statusRules: buildSceneTypeStatusRules(sceneType, roles),
     topicPage: {
+      allowRootResources: true,
       modeTabs: createModeTabs({}, {}, sceneType),
     },
   });

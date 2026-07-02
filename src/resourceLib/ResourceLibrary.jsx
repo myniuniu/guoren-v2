@@ -2712,6 +2712,10 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
       ? list.find((item) => item.key === columnSelectedItem.key) || columnSelectedItem
       : null
   ), [columnSelectedItem, list]);
+  const columnSelectedFolderCount = useMemo(() => {
+    if (!resolvedColumnSelectedItem?.isFolder) return 0;
+    return list.filter((item) => item.parentKey === resolvedColumnSelectedItem.key).length;
+  }, [list, resolvedColumnSelectedItem]);
   const columnSelectedItemAssociationRule = useMemo(
     () => (resolvedColumnSelectedItem && !resolvedColumnSelectedItem.isFolder
       ? findResourceAssociationRule(resolvedColumnSelectedItem)
@@ -3169,6 +3173,11 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
   const currentBlankAreaParentKey = viewMode === 'column'
     ? (columnPath[columnPath.length - 1] ?? null)
     : selectedFolderKey;
+  const currentDirectoryPreviewItemCount = useMemo(() => {
+    if (hasActiveSearch || isRecentView || activeTagFilter) return 0;
+    const parentKey = currentBlankAreaParentKey ?? null;
+    return list.filter((item) => item.parentKey === parentKey).length;
+  }, [activeTagFilter, currentBlankAreaParentKey, hasActiveSearch, isRecentView, list]);
   const { uploadFilesToLibrary } = useResourceLibraryFileImport({
     activeTagFilter,
     addDialogOpen,
@@ -3475,6 +3484,49 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     setAddDialogParentKey(currentBlankAreaParentKey ?? ROOT_PARENT_KEY);
     setAddDialogOpen(true);
   };
+
+  const renderDirectoryPreviewBlock = (itemCount, onAdd, summaryText = `文件夹包含 ${itemCount} 个项目`) => (
+    <div className="finder-preview-folder-grid">
+      <FolderFilled className="finder-preview-folder-icon" />
+      <div className="finder-preview-folder-hint">{summaryText}</div>
+      <Button
+        className="finder-preview-folder-add-btn"
+        icon={<PlusOutlined />}
+        onClick={onAdd}
+      >
+        添加资料
+      </Button>
+    </div>
+  );
+
+  const renderFolderPreviewBlock = (item, itemCount) => renderDirectoryPreviewBlock(
+    itemCount,
+    () => {
+      setAddDialogParentKey(item.key);
+      setAddDialogOpen(true);
+    },
+    `文件夹包含 ${itemCount} 个项目`,
+  );
+
+  const renderPreviewEmptyState = () => (
+    <div className="finder-preview-empty">
+      {!hasActiveSearch && !isRecentView && !activeTagFilter ? (
+        renderDirectoryPreviewBlock(
+          currentDirectoryPreviewItemCount,
+          handleAddResourceAtCurrentLocation,
+          `当前目录包含 ${currentDirectoryPreviewItemCount} 个项目`,
+        )
+      ) : (
+        <Button
+          className="finder-preview-empty-add-btn"
+          icon={<PlusOutlined />}
+          onClick={handleAddResourceAtCurrentLocation}
+        >
+          添加资料
+        </Button>
+      )}
+    </div>
+  );
 
   const handleToolbarMenuAction = ({ key, domEvent }) => {
     domEvent?.stopPropagation();
@@ -4342,7 +4394,9 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                   {resolvedColumnSelectedItem ? (
                     <div className="finder-preview-content">
                       <div className={`finder-preview-body${resolvedColumnSelectedItem.fileType === 'knowledgeGraph' ? ' has-knowledge-graph' : ''}${resolvedColumnSelectedItem.fileType === 'capabilityModel' ? ' has-capability-model' : ''}`}>
-                        {resolvedColumnSelectedItem.fileType === 'knowledgeGraph' ? (
+                        {resolvedColumnSelectedItem.isFolder ? (
+                          renderFolderPreviewBlock(resolvedColumnSelectedItem, columnSelectedFolderCount)
+                        ) : resolvedColumnSelectedItem.fileType === 'knowledgeGraph' ? (
                           renderKnowledgeGraphPreviewBlock(columnSelectedKnowledgeGraphData, resolvedColumnSelectedItem.name, resolvedColumnSelectedItem.key)
                         ) : resolvedColumnSelectedItem.fileType === 'capabilityModel' ? (
                           renderCapabilityModelPreviewBlock(columnSelectedCapabilityModelData, resolvedColumnSelectedItem.name)
@@ -4358,21 +4412,20 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                             </div>
                         }
                       </div>
-                      <div className="finder-preview-footer">
-                        <div className="finder-preview-name">{resolvedColumnSelectedItem.name}</div>
-                        <div className="finder-preview-meta-row">
-                          <span>{getFileTypeLabel(resolvedColumnSelectedItem.fileType)}</span>
-                          {resolvedColumnSelectedItem.size && <span>{(resolvedColumnSelectedItem.size / 1024).toFixed(1)} KB</span>}
-                          {resolvedColumnSelectedItem.lastEdit && <span>{resolvedColumnSelectedItem.lastEdit}</span>}
+                      {!resolvedColumnSelectedItem.isFolder ? (
+                        <div className="finder-preview-footer">
+                          <div className="finder-preview-name">{resolvedColumnSelectedItem.name}</div>
+                          <div className="finder-preview-meta-row">
+                            <span>{getFileTypeLabel(resolvedColumnSelectedItem.fileType)}</span>
+                            {resolvedColumnSelectedItem.size && <span>{(resolvedColumnSelectedItem.size / 1024).toFixed(1)} KB</span>}
+                            {resolvedColumnSelectedItem.lastEdit && <span>{resolvedColumnSelectedItem.lastEdit}</span>}
+                          </div>
+                          {renderResourceAssociationBlock(resolvedColumnSelectedItem, columnSelectedItemAssociationRule)}
                         </div>
-                        {renderResourceAssociationBlock(resolvedColumnSelectedItem, columnSelectedItemAssociationRule)}
-                      </div>
+                      ) : null}
                     </div>
                   ) : (
-                    <div className="finder-preview-empty">
-                      <FileTextOutlined style={{ fontSize: 48, color: '#d1d1d6' }} />
-                      <div>选择一个文件预览</div>
-                    </div>
+                    renderPreviewEmptyState()
                   )}
                 </div>
               </div>
@@ -4629,21 +4682,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                       {/* 内容预览区 */}
                       <div className={`finder-preview-body${previewItem.fileType === 'knowledgeGraph' ? ' has-knowledge-graph' : ''}${previewItem.fileType === 'capabilityModel' ? ' has-capability-model' : ''}`}>
                         {previewItem.isFolder ? (
-                          <div className="finder-preview-folder-grid">
-                            <FolderFilled style={{ fontSize: 80, color: '#4facfe' }} />
-                            <div className="finder-preview-folder-hint">文件夹包含 {previewFolderCount} 个项目</div>
-                            <Button
-                              type="primary"
-                              className="finder-preview-folder-add-btn"
-                              icon={<PlusOutlined />}
-                              onClick={() => {
-                                setAddDialogParentKey(previewItem.key);
-                                setAddDialogOpen(true);
-                              }}
-                            >
-                              添加资料
-                            </Button>
-                          </div>
+                          renderFolderPreviewBlock(previewItem, previewFolderCount)
                         ) : previewItem.fileType === 'knowledgeGraph' ? (
                           renderKnowledgeGraphPreviewBlock(previewKnowledgeGraphData, previewItem.name, previewItem.key)
                         ) : previewItem.fileType === 'capabilityModel' ? (
@@ -4676,21 +4715,20 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                           <div className="finder-preview-placeholder"><FileTextOutlined style={{ fontSize: 80, color: '#8e8e93' }} /><div>文件预览</div></div>
                         )}
                       </div>
-                      <div className="finder-preview-footer">
-                        <div className="finder-preview-name">{previewItem.name}</div>
-                        <div className="finder-preview-meta-row">
-                          <span>{getFileTypeLabel(previewItem.fileType)}</span>
-                          {previewItem.size && <span>{(previewItem.size / 1024).toFixed(1)} KB</span>}
-                          {previewItem.lastEdit && <span>{previewItem.lastEdit}</span>}
+                      {!previewItem.isFolder ? (
+                        <div className="finder-preview-footer">
+                          <div className="finder-preview-name">{previewItem.name}</div>
+                          <div className="finder-preview-meta-row">
+                            <span>{getFileTypeLabel(previewItem.fileType)}</span>
+                            {previewItem.size && <span>{(previewItem.size / 1024).toFixed(1)} KB</span>}
+                            {previewItem.lastEdit && <span>{previewItem.lastEdit}</span>}
+                          </div>
+                          {renderResourceAssociationBlock(previewItem, previewItemAssociationRule)}
                         </div>
-                        {renderResourceAssociationBlock(previewItem, previewItemAssociationRule)}
-                      </div>
+                      ) : null}
                     </div>
                   ) : (
-                    <div className="finder-preview-empty">
-                      <FileTextOutlined style={{ fontSize: 48, color: '#d1d1d6' }} />
-                      <div>选择一个文件预览</div>
-                    </div>
+                    renderPreviewEmptyState()
                   )}
                 </div>
               </>
