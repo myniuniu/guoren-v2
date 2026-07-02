@@ -32,7 +32,6 @@ import {
   FullscreenOutlined,
   AppstoreOutlined,
   FolderAddOutlined,
-  FolderOutlined,
   GlobalOutlined,
   HomeOutlined,
   MessageOutlined,
@@ -630,6 +629,12 @@ function TopicDetail({
   const clearSelectedResourceItem = () => {
     setSelectedItemKey(null);
     markSelectedItemActivation(null);
+  };
+
+  const restoreInitialResourceView = () => {
+    clearSelectedResourceItem();
+    setSelectedFolderKey(null);
+    setPreviewItem(null);
   };
 
   const isRenameActivationWithinWindow = (itemKey) => {
@@ -3009,7 +3014,7 @@ function TopicDetail({
         queueInlineRename(item, surface);
       } else {
         clearPendingRenameTrigger();
-        clearSelectedResourceItem();
+        restoreInitialResourceView();
       }
       return;
     }
