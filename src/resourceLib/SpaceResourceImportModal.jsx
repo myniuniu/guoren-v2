@@ -375,7 +375,17 @@ export function SpaceResourceImportBrowser({
   const isCompactLayout = !disableCompactLayout && effectiveWidth < 920;
   const isNarrowLayout = !disableCompactLayout && !isCompactLayout && effectiveWidth < 1120;
   const relaxedToolbarLayout = showScopeSwitcherInToolbar && !showToolbarTitle;
-  const sidebarWidth = showSidebar ? (isCompactLayout ? 0 : (isNarrowLayout ? 200 : 220)) : 0;
+  const sidebarWidth = showSidebar
+    ? (
+      isCompactLayout
+        ? 0
+        : (
+          scope === 'organization'
+            ? (isNarrowLayout ? 236 : 256)
+            : (isNarrowLayout ? 200 : 220)
+        )
+    )
+    : 0;
   const toolbarSearchWidth = isCompactLayout ? null : (isNarrowLayout ? 164 : 184);
   const visibleDetailColumns = useMemo(
     () => DETAIL_COLUMN_DEFS.filter((column) => visibleColumnKeys.includes(column.key)),
@@ -774,22 +784,21 @@ export function SpaceResourceImportBrowser({
             ) : null}
 
             <div className="space-resource-import-sidebar-section">
-              <div className="space-resource-import-sidebar-title">{scope === 'personal' ? '个人收藏' : '组织收藏'}</div>
               <button
                 type="button"
                 className={`space-resource-import-sidebar-item ${specialView === 'all' && !selectedFolderKey && !activeTagFilter ? 'is-active' : ''}`}
                 onClick={() => applyNavigationState(ROOT_STATE)}
               >
-                <span className="space-resource-import-sidebar-icon"><DesktopOutlined /></span>
-                <span>全部资料</span>
+                <span className="space-resource-import-sidebar-icon" style={{ color: '#007aff' }}><DesktopOutlined /></span>
+                <span className="space-resource-import-sidebar-text">全部资料</span>
               </button>
               <button
                 type="button"
                 className={`space-resource-import-sidebar-item ${specialView === 'recent' ? 'is-active' : ''}`}
                 onClick={() => applyNavigationState({ selectedFolderKey: null, specialView: 'recent', activeTagFilter: null })}
               >
-                <span className="space-resource-import-sidebar-icon"><ClockCircleOutlined /></span>
-                <span>最近使用</span>
+                <span className="space-resource-import-sidebar-icon" style={{ color: '#8e8e93' }}><ClockCircleOutlined /></span>
+                <span className="space-resource-import-sidebar-text">最近使用</span>
               </button>
               {favorites.map((item) => (
                 <button

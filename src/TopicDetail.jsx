@@ -61,6 +61,7 @@ import ResourceLibraryTagPicker from './resourceLib/ResourceLibraryTagPicker.jsx
 import {
   addItemToLibraryId,
   getAllItemsAcrossLibraries,
+  getLibraryItemPath,
   inferFileType,
   loadResourceLib,
 } from './resourceLib/resourceLibStore';
@@ -812,14 +813,19 @@ function TopicDetail({
   );
   const knowledgeGraphPickerItems = useMemo(() => {
     const keyword = knowledgeGraphPickerKeyword.trim().toLowerCase();
-    return allLibraryItems.filter((item) => {
-      if (item.fileType !== 'knowledgeGraph' || !item.knowledgeGraphId) return false;
-      if (knowledgeGraphPickerScope !== 'all' && item.libraryScope !== knowledgeGraphPickerScope) return false;
-      if (!keyword) return true;
-      const haystack = `${item.name} ${item.libraryName} ${item.knowledgeGraphId}`.toLowerCase();
-      return haystack.includes(keyword);
-    });
-  }, [allLibraryItems, knowledgeGraphPickerKeyword, knowledgeGraphPickerScope]);
+    return allLibraryItems
+      .filter((item) => {
+        if (item.fileType !== 'knowledgeGraph' || !item.knowledgeGraphId) return false;
+        if (knowledgeGraphPickerScope !== 'all' && item.libraryScope !== knowledgeGraphPickerScope) return false;
+        if (!keyword) return true;
+        const haystack = `${item.name} ${item.libraryName} ${item.knowledgeGraphId}`.toLowerCase();
+        return haystack.includes(keyword);
+      })
+      .map((item) => ({
+        ...item,
+        displayPath: getLibraryItemPath(resourceLibraryData, item.libraryId, item),
+      }));
+  }, [allLibraryItems, knowledgeGraphPickerKeyword, knowledgeGraphPickerScope, resourceLibraryData]);
   const capabilityRoleMap = useMemo(
     () => new Map((capabilityModelCatalog.roles || []).map((item) => [item.id, item])),
     [capabilityModelCatalog.roles],
@@ -5371,12 +5377,14 @@ function TopicDetail({
         cancelText="取消"
         okButtonProps={{ disabled: !selectedKnowledgeGraphResourceKey }}
         width={720}
+        className="topic-knowledge-picker-modal"
         destroyOnClose
       >
         <div className="topic-knowledge-picker">
           <div className="topic-knowledge-picker-toolbar">
             <Segmented
               size="small"
+              className="topic-knowledge-picker-scope"
               value={knowledgeGraphPickerScope}
               onChange={setKnowledgeGraphPickerScope}
               options={[
@@ -5387,29 +5395,41 @@ function TopicDetail({
             />
             <Input
               allowClear
+              className="topic-knowledge-picker-search"
               placeholder="搜索知识图谱名称"
               value={knowledgeGraphPickerKeyword}
               onChange={(event) => setKnowledgeGraphPickerKeyword(event.target.value)}
             />
           </div>
           <div className="topic-knowledge-picker-list">
-            {knowledgeGraphPickerItems.length ? knowledgeGraphPickerItems.map((item) => (
-              <button
-                key={`${item.libraryId}:${item.key}`}
-                type="button"
-                className={`topic-knowledge-picker-item ${selectedKnowledgeGraphResourceKey === `${item.libraryId}:${item.key}` ? 'is-active' : ''}`}
-                onClick={() => setSelectedKnowledgeGraphResourceKey(`${item.libraryId}:${item.key}`)}
-              >
-                <span className="topic-knowledge-picker-item-icon">
-                  {renderFileIcon('knowledgeGraph', { fontSize: 18 })}
-                </span>
-                <span className="topic-knowledge-picker-item-copy">
-                  <strong>{item.name}</strong>
-                  <span>{item.libraryName} · {item.knowledgeGraphId}</span>
-                  {item.contentText ? <span>{item.contentText}</span> : null}
-                </span>
-              </button>
-            )) : (
+            {knowledgeGraphPickerItems.length ? knowledgeGraphPickerItems.map((item) => {
+              const itemKey = `${item.libraryId}:${item.key}`;
+              const isSelected = selectedKnowledgeGraphResourceKey === itemKey;
+              return (
+                <button
+                  key={itemKey}
+                  type="button"
+                  className={`topic-knowledge-picker-item ${isSelected ? 'is-active' : ''}`}
+                  onClick={() => setSelectedKnowledgeGraphResourceKey(itemKey)}
+                >
+                  <span className="topic-knowledge-picker-item-icon">
+                    {renderFileIcon('knowledgeGraph', { fontSize: 18 })}
+                  </span>
+                  <span className="topic-knowledge-picker-item-copy">
+                    <span className="topic-knowledge-picker-item-head">
+                      <strong>{item.name}</strong>
+                    </span>
+                    <span className="topic-knowledge-picker-item-path">{item.displayPath}</span>
+                    {item.contentText ? (
+                      <span className="topic-knowledge-picker-item-desc">{item.contentText}</span>
+                    ) : null}
+                  </span>
+                  <span className="topic-knowledge-picker-item-indicator" aria-hidden="true">
+                    <CheckCircleOutlined />
+                  </span>
+                </button>
+              );
+            }) : (
               <div className="topic-knowledge-picker-empty">
                 <Empty description="当前资料库里没有可绑定的知识图谱" image={Empty.PRESENTED_IMAGE_SIMPLE} />
               </div>
@@ -5427,12 +5447,14 @@ function TopicDetail({
         cancelText="取消"
         okButtonProps={{ disabled: !selectedCapabilityModelId }}
         width={720}
+        className="topic-knowledge-picker-modal"
         destroyOnClose
       >
         <div className="topic-knowledge-picker">
           <div className="topic-knowledge-picker-toolbar">
             <Input
               allowClear
+              className="topic-knowledge-picker-search"
               placeholder="搜索能力模型名称"
               value={capabilityModelPickerKeyword}
               onChange={(event) => setCapabilityModelPickerKeyword(event.target.value)}
