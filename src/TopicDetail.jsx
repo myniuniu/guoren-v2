@@ -128,6 +128,7 @@ const EMPTY_PROJECT_SELECTION_INDICATOR = {
   key: null,
 };
 const TOPIC_DROPDOWN_OVERLAY_CLASS = 'finder-liquid-glass-menu';
+const RESOURCE_RENAME_CLICK_WINDOW_MS = 800;
 const KNOWLEDGE_GRAPH_POINT_TYPE_LABEL_MAP = Object.fromEntries(
   KNOWLEDGE_POINT_TYPE_OPTIONS.map((item) => [item.value, item.label]),
 );
@@ -596,6 +597,7 @@ function TopicDetail({
   const knowledgeGraphBindingItemRefs = useRef(new Map());
   const inlineRenameInputRef = useRef(null);
   const pendingRenameTimerRef = useRef(null);
+  const selectedItemActivationRef = useRef({ key: null, at: 0 });
   const tagPickerScrollTimerRef = useRef(null);
   const isDraggingRef = useRef(false);
   const dragPayloadRef = useRef(null);
@@ -613,6 +615,29 @@ function TopicDetail({
   const knowledgeGraphEditorRef = useRef(null);
   const knowledgeGraphDrawerRef = useRef(null);
 
+  const markSelectedItemActivation = (itemKey) => {
+    selectedItemActivationRef.current = {
+      key: itemKey || null,
+      at: itemKey ? Date.now() : 0,
+    };
+  };
+
+  const selectResourceItem = (itemKey) => {
+    setSelectedItemKey(itemKey);
+    markSelectedItemActivation(itemKey);
+  };
+
+  const clearSelectedResourceItem = () => {
+    setSelectedItemKey(null);
+    markSelectedItemActivation(null);
+  };
+
+  const isRenameActivationWithinWindow = (itemKey) => {
+    const lastActivation = selectedItemActivationRef.current;
+    return lastActivation.key === itemKey
+      && Date.now() - lastActivation.at <= RESOURCE_RENAME_CLICK_WINDOW_MS;
+  };
+
   useEffect(() => {
     setVersionData(loadTopicVersionData(topicAdminConfig, sceneConfig, topicStorageScopeKey));
     setActiveTab(getDefaultTopicTabKey(sceneConfig));
@@ -623,6 +648,7 @@ function TopicDetail({
     setExpandedFolders(new Set());
     setSelectedFolderKey(null);
     setSelectedItemKey(null);
+    markSelectedItemActivation(null);
     setAddResourceParentKey(undefined);
     setResourceImportOpen(false);
     setResourceImportParentKey(null);
@@ -1128,7 +1154,7 @@ function TopicDetail({
     clearPendingRenameTrigger();
     setContextMenuItemKey(null);
     setBgMenuPos(null);
-    setSelectedItemKey(item.key);
+    selectResourceItem(item.key);
     setDraggingItemKey(item.key);
     isDraggingRef.current = true;
     const dragPayload = {
@@ -1239,6 +1265,7 @@ function TopicDetail({
     }
     if (selectedItemKey && !resources.some((resource) => resource.key === selectedItemKey)) {
       setSelectedItemKey(null);
+      markSelectedItemActivation(null);
     }
     if (contextMenuItemKey && !resources.some((resource) => resource.key === contextMenuItemKey)) {
       setContextMenuItemKey(null);
@@ -2359,7 +2386,7 @@ function TopicDetail({
       setKnowledgeGraphSelection({ type: 'point', id: location.pointId });
     }
     setSelectedKnowledgeGraphBindingId(binding.bindingId);
-    setSelectedItemKey(matchedResource.key);
+    selectResourceItem(matchedResource.key);
     setSelectedFolderKey(matchedResource.parentKey || null);
     setPreviewItem(matchedResource);
     setKnowledgeGraphDrawerOpen(true);
@@ -2756,7 +2783,7 @@ function TopicDetail({
     const nextData = addResource(versionData, currentVersion.id, nextResource, versioningConfig);
     setVersionData(nextData);
     setPreviewItem(nextResource);
-    setSelectedItemKey(nextResource.key);
+    selectResourceItem(nextResource.key);
     closeCapabilityModelPickerModal();
     message.success(`已导入能力模型「${selectedModel.name}」`);
   };
@@ -2801,7 +2828,7 @@ function TopicDetail({
       const nextData = addResource(versionData, currentVersion.id, nextResource, versioningConfig);
       setVersionData(nextData);
       setPreviewItem(nextResource);
-      setSelectedItemKey(nextResource.key);
+      selectResourceItem(nextResource.key);
       closeCapabilityModelCreateModal();
       message.success(`已新建能力模型「${savedModel.name}」`);
     } catch (error) {
@@ -2872,7 +2899,7 @@ function TopicDetail({
     if (resourceKey === selectedFolderKey) setSelectedFolderKey(null);
     if (resourceKey === previewItem?.key) setPreviewItem(null);
     if (resourceKey === tagPickerTarget) setTagPickerTarget(null);
-    if (resourceKey === selectedItemKey) setSelectedItemKey(null);
+    if (resourceKey === selectedItemKey) clearSelectedResourceItem();
     if (resourceKey === inlineRenameItemKey) {
       setInlineRenameItemKey(null);
       setInlineRenameName('');
@@ -2927,7 +2954,7 @@ function TopicDetail({
     clearPendingRenameTrigger();
     setBgMenuPos(null);
     setContextMenuItemKey(null);
-    setSelectedItemKey(item.key);
+    selectResourceItem(item.key);
     setInlineRenameItemKey(item.key);
     setInlineRenameName(item.name || '');
     setInlineRenameSurface(surface);
@@ -2956,7 +2983,7 @@ function TopicDetail({
     setContextMenuItemKey(null);
     setBgMenuPos(null);
     setPreviewItem(null);
-    setSelectedItemKey(folderKey);
+    selectResourceItem(folderKey);
     setSelectedFolderKey(folderKey);
     setExpandedFolders((prev) => {
       const next = new Set(prev);
@@ -2970,7 +2997,7 @@ function TopicDetail({
     clearPendingRenameTrigger();
     setContextMenuItemKey(null);
     setBgMenuPos(null);
-    setSelectedItemKey(resource.key);
+    selectResourceItem(resource.key);
     setSelectedFolderKey(resource.parentKey || null);
     setPreviewItem(resource);
   };
@@ -2978,11 +3005,16 @@ function TopicDetail({
   const handleActivateItem = (item, surface = 'list') => {
     if (!item) return;
     if (selectedItemKey === item.key && inlineRenameItemKey !== item.key) {
-      queueInlineRename(item, surface);
+      if (isRenameActivationWithinWindow(item.key)) {
+        queueInlineRename(item, surface);
+      } else {
+        clearPendingRenameTrigger();
+        clearSelectedResourceItem();
+      }
       return;
     }
     clearPendingRenameTrigger();
-    setSelectedItemKey(item.key);
+    selectResourceItem(item.key);
     if (surface === 'list') {
       if (item.isFolder) {
         setPreviewItem(null);
