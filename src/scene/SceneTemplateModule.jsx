@@ -529,6 +529,23 @@ function SceneTemplatePreview({ template, sceneCount }) {
                     </div>
                   </div>
                 </div>
+                <div className="scene-template-subsection-title">
+                  <span>主题卡片</span>
+                </div>
+                <div className="scene-template-list-card">
+                  <div className="scene-template-form-grid">
+                    <SceneTemplateStaticField label="卡片大小" value={getTopicCardSizeLabel(topicCardConfig.size)} />
+                    <SceneTemplateStaticField label="显示场景类型" value={getDisplayToggleLabel(topicCardConfig.showSceneType)} />
+                    <SceneTemplateStaticField label="显示成员数量" value={getDisplayToggleLabel(topicCardConfig.showMemberCount)} />
+                    <SceneTemplateStaticField label="显示主题标题" value={getDisplayToggleLabel(topicCardConfig.showTitle)} />
+                    <SceneTemplateStaticField label="显示主题标签" value={getDisplayToggleLabel(topicCardConfig.showTags)} />
+                    <SceneTemplateStaticField label="显示主题图片" value={getDisplayToggleLabel(topicCardConfig.showCover)} />
+                  </div>
+                </div>
+                <div className="scene-template-subsection-title">
+                  <span>卡片预览</span>
+                </div>
+                <SceneTemplateTopicCardPreview template={template} config={topicCardConfig} />
               </div>
             ),
           },
@@ -566,28 +583,6 @@ function SceneTemplatePreview({ template, sceneCount }) {
                     </div>
                   ))}
                 </div>
-              </div>
-            ),
-          },
-          {
-            key: 'topicCard',
-            label: '主题卡片',
-            children: (
-              <div className="scene-template-drawer-section">
-                <div className="scene-template-list-card">
-                  <div className="scene-template-form-grid">
-                    <SceneTemplateStaticField label="卡片大小" value={getTopicCardSizeLabel(topicCardConfig.size)} />
-                    <SceneTemplateStaticField label="显示场景类型" value={getDisplayToggleLabel(topicCardConfig.showSceneType)} />
-                    <SceneTemplateStaticField label="显示成员数量" value={getDisplayToggleLabel(topicCardConfig.showMemberCount)} />
-                    <SceneTemplateStaticField label="显示主题标题" value={getDisplayToggleLabel(topicCardConfig.showTitle)} />
-                    <SceneTemplateStaticField label="显示主题标签" value={getDisplayToggleLabel(topicCardConfig.showTags)} />
-                    <SceneTemplateStaticField label="显示主题图片" value={getDisplayToggleLabel(topicCardConfig.showCover)} />
-                  </div>
-                </div>
-                <div className="scene-template-subsection-title">
-                  <span>卡片预览</span>
-                </div>
-                <SceneTemplateTopicCardPreview template={template} config={topicCardConfig} />
               </div>
             ),
           },
@@ -1617,14 +1612,9 @@ export default function SceneTemplateModule() {
                         <Button onClick={() => setThemeCoverModalOpen(true)}>选择封面</Button>
                       </div>
                     </Form.Item>
-                  </div>
-                ),
-              },
-              {
-                key: 'topicCard',
-                label: '主题卡片',
-                children: (
-                  <div className="scene-template-drawer-section">
+                    <div className="scene-template-subsection-title">
+                      <span>主题卡片</span>
+                    </div>
                     <div className="scene-template-list-card">
                       <div className="scene-template-form-grid">
                         <Form.Item
