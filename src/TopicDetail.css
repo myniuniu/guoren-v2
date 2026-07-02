@@ -1527,7 +1527,7 @@
   color: #566579;
 }
 
-.panel-action-btn:hover {
+.panel-action-btn:not(.panel-action-btn-disabled):hover {
   transform: translateY(-1px);
   border-color: rgba(191, 204, 223, 0.98);
   background:
@@ -1540,7 +1540,7 @@
   color: var(--td-text-strong);
 }
 
-.panel-actions .panel-action-btn:first-child:hover {
+.panel-actions .panel-action-btn:first-child:not(.panel-action-btn-disabled):hover {
   border-color: transparent;
   background:
     linear-gradient(135deg, var(--td-accent-start) 0%, var(--td-accent) 64%, var(--td-accent-end) 100%);
@@ -1552,15 +1552,51 @@
 }
 
 .panel-action-btn-disabled {
-  opacity: 0.62;
   cursor: not-allowed;
-  box-shadow: none !important;
+  opacity: 1;
 }
 
-.panel-action-btn-disabled:hover {
+.panel-action-btn.panel-action-btn-disabled,
+.panel-action-btn.panel-action-btn-disabled:hover {
   transform: none;
-  border-color: rgba(210, 219, 231, 0.96);
-  color: var(--td-text);
+  border-color: rgba(194, 205, 220, 0.98);
+  background:
+    linear-gradient(180deg, rgba(245, 248, 252, 0.98) 0%, rgba(235, 239, 246, 0.94) 100%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.24) 0%, rgba(223, 229, 238, 0.74) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    0 8px 16px rgba(15, 23, 42, 0.04);
+  color: #58677b;
+}
+
+.panel-action-btn.panel-action-btn-disabled > .anticon,
+.panel-action-btn.panel-action-btn-disabled:hover > .anticon {
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    0 4px 10px rgba(15, 23, 42, 0.04);
+  color: #6b7b90;
+}
+
+.panel-actions .panel-action-btn:first-child.panel-action-btn-disabled,
+.panel-actions .panel-action-btn:first-child.panel-action-btn-disabled:hover {
+  border-color: rgba(186, 198, 216, 0.98);
+  background:
+    linear-gradient(180deg, rgba(241, 245, 250, 0.98) 0%, rgba(231, 237, 245, 0.94) 100%),
+    linear-gradient(135deg, rgba(116, 136, 164, 0.16) 0%, rgba(255, 255, 255, 0.22) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    0 8px 16px rgba(15, 23, 42, 0.05);
+  color: #536274;
+}
+
+.panel-actions .panel-action-btn:first-child.panel-action-btn-disabled > .anticon,
+.panel-actions .panel-action-btn:first-child.panel-action-btn-disabled:hover > .anticon {
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.98),
+    0 4px 10px rgba(15, 23, 42, 0.04);
+  color: #65768b;
 }
 
 .action-cell {
@@ -3411,8 +3447,8 @@
 }
 
 .topic-ai-resource-stage-head .ant-btn:hover:not(:disabled),
-.folder-info-right .ant-btn:hover,
-.add-resource-btn:hover {
+.folder-info-right .ant-btn:hover:not(:disabled),
+.add-resource-btn:hover:not(:disabled) {
   transform: translateY(-1px);
   border-color: transparent !important;
   background: linear-gradient(135deg, var(--td-accent-start) 0%, var(--td-accent) 64%, var(--td-accent-end) 100%) !important;
@@ -3426,21 +3462,25 @@
 .topic-ai-resource-stage-head .ant-btn:disabled,
 .folder-info-right .ant-btn:disabled,
 .add-resource-btn:disabled {
-  border-color: rgba(209, 217, 228, 0.84) !important;
+  border-color: rgba(191, 202, 218, 0.98) !important;
   background:
-    linear-gradient(180deg, rgba(248, 249, 252, 0.94) 0%, rgba(238, 242, 247, 0.88) 100%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(226, 231, 239, 0.54) 100%) !important;
-  box-shadow: none !important;
-  color: #5f6c80 !important;
-  opacity: 0.62;
+    linear-gradient(180deg, rgba(246, 248, 252, 0.98) 0%, rgba(236, 240, 246, 0.94) 100%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.28) 0%, rgba(224, 230, 239, 0.72) 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    0 8px 16px rgba(15, 23, 42, 0.04) !important;
+  color: #566579 !important;
+  opacity: 1;
 }
 
 .topic-ai-resource-stage-head .ant-btn:disabled .ant-btn-icon,
 .folder-info-right .ant-btn:disabled .ant-btn-icon,
 .add-resource-btn:disabled .ant-btn-icon {
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow: none;
-  color: #64748b !important;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    0 4px 10px rgba(15, 23, 42, 0.04);
+  color: #6a7a8f !important;
 }
 
 .topic-right-content {
