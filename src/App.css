@@ -333,15 +333,22 @@
   position: relative;
   isolation: isolate;
   background:
-    linear-gradient(180deg, rgba(250, 250, 251, 0.92) 0%, rgba(244, 245, 247, 0.86) 50%, rgba(239, 240, 243, 0.82) 100%) !important;
+    linear-gradient(180deg, rgba(252, 253, 255, 0.72) 0%, rgba(246, 248, 251, 0.56) 46%, rgba(238, 241, 246, 0.44) 100%),
+    radial-gradient(circle at 18% 8%, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0) 36%),
+    radial-gradient(circle at 82% 84%, rgba(212, 222, 236, 0.34) 0%, rgba(255, 255, 255, 0) 42%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.04) 100%) !important;
   display: flex;
   flex-direction: column;
   padding: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  box-shadow: 10px 0 24px rgba(15, 23, 42, 0.035);
-  backdrop-filter: blur(24px) saturate(150%) brightness(1.03);
-  -webkit-backdrop-filter: blur(24px) saturate(150%) brightness(1.03);
+  box-shadow:
+    inset -1px 0 0 rgba(255, 255, 255, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    10px 0 28px rgba(148, 163, 184, 0.12),
+    2px 0 10px rgba(255, 255, 255, 0.24);
+  backdrop-filter: blur(30px) saturate(180%) brightness(1.04);
+  -webkit-backdrop-filter: blur(30px) saturate(180%) brightness(1.04);
 }
 
 .app-sider::before {
@@ -349,8 +356,8 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.68) 0%, rgba(255, 255, 255, 0) 36%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 28%);
+    radial-gradient(circle at 16% 4%, rgba(255, 255, 255, 0.84) 0%, rgba(255, 255, 255, 0) 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.26) 0%, rgba(255, 255, 255, 0.06) 34%, rgba(255, 255, 255, 0) 100%);
   pointer-events: none;
   z-index: 0;
 }
@@ -359,8 +366,8 @@
   content: '';
   position: absolute;
   inset: 1px 0 1px 1px;
-  border-radius: 0 20px 20px 0;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 0 22px 22px 0;
+  border: 1px solid rgba(255, 255, 255, 0.28);
   border-right: none;
   pointer-events: none;
   z-index: 0;
