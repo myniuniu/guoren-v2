@@ -355,12 +355,8 @@ function getIconBarAccentColor(iconKey) {
 // Left icon bar items
 const baseIconBarItems = [
   { key: 'my-space', icon: <AppstoreOutlined />, label: '空间', active: true },
-  { key: 'cloud-disk', icon: <CloudOutlined />, label: '云盘' },
   { key: 'resource-lib', icon: <BookOutlined />, label: '资料库' },
-  { key: 'resource-parse', icon: <ScanOutlined />, label: '资料解析' },
   { key: 'knowledge-space', icon: <BulbOutlined />, label: '知识空间' },
-  { key: 'knowledge-graph', icon: <NodeIndexOutlined />, label: '知识图谱' },
-  { key: 'course-studio', icon: <ReadOutlined />, label: '课程创作中心' },
   { key: 'messages', icon: <MessageOutlined />, label: '消息' },
   { key: 'org-management', icon: <TeamOutlined />, label: '组织管理' },
   { key: 'workflow', icon: <ApartmentOutlined />, label: '工作流' },
