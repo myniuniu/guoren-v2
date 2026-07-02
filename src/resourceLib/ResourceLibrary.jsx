@@ -151,6 +151,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
   const [showAllSidebarTags, setShowAllSidebarTags] = useState(false);
   const [folderHoverTip, setFolderHoverTip] = useState(null);
   const [contextMenuItemKey, setContextMenuItemKey] = useState(null);
+  const [actionMenuItemKey, setActionMenuItemKey] = useState(null);
   const [pendingNewFolder, setPendingNewFolder] = useState(null);
   const [favorites, setFavorites] = useState(() => {
     try {
@@ -665,6 +666,12 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
       setContextMenuItemKey(null);
     }
   }, [contextMenuItemKey, list]);
+
+  useEffect(() => {
+    if (actionMenuItemKey && !list.some((item) => item.key === actionMenuItemKey)) {
+      setActionMenuItemKey(null);
+    }
+  }, [actionMenuItemKey, list]);
 
   // 切换个人/组织库
   const handleScopeChange = (nextScope) => {
@@ -3435,6 +3442,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
   const handleItemContextMenuOpenChange = useCallback((itemKey, open) => {
     if (open) {
       clearPendingRenameTrigger();
+      setActionMenuItemKey(null);
       if (suppressNextContextMenuRef.current) {
         clearSuppressContextMenu();
         return;
@@ -3445,6 +3453,17 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
       return prev === itemKey ? null : prev;
     });
   }, [clearPendingRenameTrigger, clearSuppressContextMenu]);
+
+  const handleActionMenuOpenChange = useCallback((itemKey, open) => {
+    if (open) {
+      clearPendingRenameTrigger();
+      setContextMenuItemKey(null);
+    }
+    setActionMenuItemKey((prev) => {
+      if (open) return itemKey;
+      return prev === itemKey ? null : prev;
+    });
+  }, [clearPendingRenameTrigger]);
 
   const handleCreateFolderAtCurrentLocation = () => {
     createFolderAndStartRename(currentBlankAreaParentKey, {
@@ -3970,7 +3989,6 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
               type="button"
               className="finder-toolbar-action-btn finder-toolbar-icon-btn"
               aria-label="操作"
-              title="操作"
             >
               <span className="finder-toolbar-action-combo" aria-hidden="true">
                 <span className="finder-toolbar-action-combo-circle">
@@ -4168,7 +4186,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                     ) : items.map((item, itemIdx) => {
                       const isActive = columnPath[colIdx + 1] === item.key || (columnSelectedItem?.key === item.key);
                       const isSingleSelected = selectedItemKeys.length === 1 && selectedItemKeys[0] === item.key;
-                      const isContextMenuTarget = contextMenuItemKey === item.key;
+                      const isContextMenuTarget = contextMenuItemKey === item.key || actionMenuItemKey === item.key;
                       const isInlineRenaming = inlineRenameItemKey === item.key;
                       const itemMoreMenu = getItemMoreMenu(item, {
                         columnPathToOpen: [...columnPath.slice(0, colIdx + 1), item.key],
@@ -4295,14 +4313,13 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                                 <Dropdown
                                   menu={itemMoreMenu}
                                   trigger={['click']}
-                                  onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
+                                  onOpenChange={(open) => handleActionMenuOpenChange(item.key, open)}
                                   overlayClassName={buildMenuOverlayClassName()}
                                 >
                                   <button
                                     type="button"
                                     className="finder-column-action-btn"
                                     aria-label="更多操作"
-                                    title="更多操作"
                                     onClick={(e) => e.stopPropagation()}
                                   >
                                     <MoreOutlined style={{ fontSize: 14 }} />
@@ -4434,7 +4451,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                   ) : (
                     displayChildren.map((item, idx) => {
                   const isSelected = selectedItemKeys.includes(item.key);
-                  const isContextMenuTarget = contextMenuItemKey === item.key;
+                  const isContextMenuTarget = contextMenuItemKey === item.key || actionMenuItemKey === item.key;
                   const isInlineRenaming = inlineRenameItemKey === item.key;
                   const depth = item._depth || 0;
                   const isExpanded = expandedFolders.has(item.key);
@@ -4551,14 +4568,13 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                           <Dropdown
                             menu={rowMoreMenu}
                             trigger={['click']}
-                            onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
+                            onOpenChange={(open) => handleActionMenuOpenChange(item.key, open)}
                             overlayClassName={buildMenuOverlayClassName()}
                           >
                             <button
                               type="button"
                               className="finder-column-action-btn"
                               aria-label="更多操作"
-                              title="更多操作"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <MoreOutlined style={{ fontSize: 14 }} />
