@@ -103,6 +103,40 @@ const KNOWLEDGE_GRAPH_RELATION_TYPE_LABEL_MAP = Object.fromEntries(
 );
 const getActionErrorMessage = (error, fallback) => error?.message || fallback;
 
+function resolveCapabilityModelResourceEntry(item, catalog = {}) {
+  if (item?.fileType !== 'capabilityModel') {
+    return { model: null, role: null, sequence: null, roleLevel: null };
+  }
+
+  const models = catalog.models || [];
+  const model = (
+    item.capabilityModelId
+      ? models.find((entry) => entry.id === item.capabilityModelId) || null
+      : null
+  ) || (
+    item.capabilityModelCode
+      ? models.find((entry) => entry.modelCode === item.capabilityModelCode) || null
+      : null
+  ) || null;
+
+  if (!model) {
+    return { model: null, role: null, sequence: null, roleLevel: null };
+  }
+
+  const roles = catalog.roles || [];
+  const sequences = catalog.sequences || [];
+  const role = roles.find((entry) => entry.id === model.roleId) || null;
+  const sequence = getSequenceForRole(role, sequences);
+  const roleLevel = getRoleLevel(role, model.roleLevelId, sequences) || null;
+
+  return {
+    model,
+    role,
+    sequence,
+    roleLevel,
+  };
+}
+
 const isEditableTarget = (target) => (
   target instanceof HTMLElement
   && !!target.closest('input, textarea, [contenteditable="true"], .ant-input, .ant-select, .ant-modal, .finder-inline-input')
@@ -740,30 +774,28 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
   }, []);
 
   const syncCapabilityModelResourceItems = useCallback((currentData, catalog = capabilityModelCatalogRef.current) => {
-    const modelMap = new Map((catalog.models || []).map((model) => [model.id, model]));
-    const roleMap = new Map((catalog.roles || []).map((role) => [role.id, role]));
-    const sequenceMap = new Map((catalog.sequences || []).map((sequence) => [sequence.id, sequence]));
     let changed = false;
 
     const syncList = (items = []) => {
       let listChanged = false;
       const nextItems = items.map((item) => {
-        if (item?.fileType !== 'capabilityModel' || !item?.capabilityModelId) return item;
-        const model = modelMap.get(item.capabilityModelId);
+        if (item?.fileType !== 'capabilityModel') return item;
+        const { model, role, roleLevel } = resolveCapabilityModelResourceEntry(item, catalog);
         if (!model) return item;
-        const role = roleMap.get(model.roleId) || null;
-        const sequence = role ? sequenceMap.get(role.sequenceId) || null : null;
-        const roleLevel = sequence?.levels?.find((level) => level.id === model.roleLevelId) || null;
         const meta = buildCapabilityModelResourceMeta(model, role, roleLevel);
         const nextName = model.name || item.name;
         const nextDescription = model.description || '';
         const nextLastEdit = model.updatedAt || model.createdAt || item.lastEdit;
         const nextContentText = meta.summary;
+        const nextCapabilityModelId = model.id;
+        const nextCapabilityModelCode = model.modelCode || item.capabilityModelCode;
         if (
           item.name === nextName
           && item.comment === (nextDescription || undefined)
           && item.contentText === nextContentText
           && item.lastEdit === nextLastEdit
+          && item.capabilityModelId === nextCapabilityModelId
+          && item.capabilityModelCode === nextCapabilityModelCode
           && JSON.stringify(item.meta || null) === JSON.stringify(meta)
         ) {
           return item;
@@ -775,6 +807,8 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
           name: nextName,
           comment: nextDescription || undefined,
           contentText: nextContentText,
+          capabilityModelId: nextCapabilityModelId,
+          capabilityModelCode: nextCapabilityModelCode || undefined,
           meta,
           lastEdit: nextLastEdit,
         };
@@ -870,19 +904,26 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
       return true;
     }
 
-    if (item.fileType === 'capabilityModel' && item.capabilityModelId) {
-      const model = await capabilityModelApi.detailModel(item.capabilityModelId);
+    if (item.fileType === 'capabilityModel') {
+      const catalog = capabilityModelCatalogRef.current.models.length
+        ? capabilityModelCatalogRef.current
+        : await loadCapabilityModelCatalog();
+      const { model } = resolveCapabilityModelResourceEntry(item, catalog);
+
       if (model?.id) {
         await capabilityModelApi.saveModel({
           ...model,
           name: trimmed,
         });
+        const nextCatalog = await loadCapabilityModelCatalog();
+        setData((currentData) => syncCapabilityModelResourceItems(
+          renameItem(currentData, scope, item.key, trimmed),
+          nextCatalog,
+        ));
+        return true;
       }
-      const nextCatalog = await loadCapabilityModelCatalog();
-      setData((currentData) => syncCapabilityModelResourceItems(
-        renameItem(currentData, scope, item.key, trimmed),
-        nextCatalog,
-      ));
+
+      setData((currentData) => renameItem(currentData, scope, item.key, trimmed));
       return true;
     }
 
@@ -1591,17 +1632,17 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
             .filter((item) => item?.fileType === 'knowledgeGraph' && item?.knowledgeGraphId)
             .map((item) => item.knowledgeGraphId),
         ));
-        const deletingCapabilityModelIds = Array.from(new Set(
-          deletingItems
-            .filter((item) => item?.fileType === 'capabilityModel' && item?.capabilityModelId)
-            .map((item) => item.capabilityModelId),
-        ));
-
         try {
-          if (deletingCapabilityModelIds.length > 0) {
+          if (deletingItems.some((item) => item?.fileType === 'capabilityModel')) {
             const nextCatalog = await loadCapabilityModelCatalog();
-            const publishedModels = deletingCapabilityModelIds
-              .map((modelId) => nextCatalog.models.find((item) => item.id === modelId))
+            const deletingCapabilityModels = Array.from(new Map(
+              deletingItems
+                .filter((item) => item?.fileType === 'capabilityModel')
+                .map((item) => resolveCapabilityModelResourceEntry(item, nextCatalog).model)
+                .filter((model) => model?.id)
+                .map((model) => [model.id, model]),
+            ).values());
+            const publishedModels = deletingCapabilityModels
               .filter((item) => item?.status === 'PUBLISHED');
 
             if (publishedModels.length > 0) {
@@ -1612,8 +1653,8 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
               );
             }
 
-            for (const modelId of deletingCapabilityModelIds) {
-              await capabilityModelApi.removeModel(modelId);
+            for (const model of deletingCapabilityModels) {
+              await capabilityModelApi.removeModel(model.id);
             }
           }
         } catch (error) {
@@ -1786,6 +1827,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
       fileType: 'capabilityModel',
       resourceKind: 'capabilityModel',
       capabilityModelId: model.id,
+      capabilityModelCode: model.modelCode || undefined,
       parseStatus: 'parsed',
       contentText: meta.summary,
       comment: model.description || undefined,
@@ -2707,19 +2749,9 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     [buildKnowledgeGraphPreviewData, previewItem],
   );
   const previewCapabilityModelData = useMemo(() => {
-    if (previewItem?.fileType !== 'capabilityModel' || !previewItem?.capabilityModelId) return null;
-    const model = (capabilityModelCatalog.models || []).find((item) => item.id === previewItem.capabilityModelId) || null;
-    if (!model) return null;
-    const role = capabilityRoleMap.get(model.roleId) || null;
-    const sequence = role ? capabilitySequenceMap.get(role.sequenceId) || null : null;
-    const roleLevel = sequence?.levels?.find((item) => item.id === model.roleLevelId) || null;
-    return {
-      model,
-      role,
-      sequence,
-      roleLevel,
-    };
-  }, [capabilityModelCatalog.models, capabilityRoleMap, capabilitySequenceMap, previewItem]);
+    if (previewItem?.fileType !== 'capabilityModel') return null;
+    return resolveCapabilityModelResourceEntry(previewItem, capabilityModelCatalog);
+  }, [capabilityModelCatalog, previewItem]);
   const toolbarMenuTargetItem = previewItem;
   const visibleSelectionItems = useMemo(
     () => (viewMode === 'column' ? columnContextItems : displayChildren),
@@ -2768,19 +2800,9 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     [buildKnowledgeGraphPreviewData, resolvedColumnSelectedItem],
   );
   const columnSelectedCapabilityModelData = useMemo(() => {
-    if (resolvedColumnSelectedItem?.fileType !== 'capabilityModel' || !resolvedColumnSelectedItem?.capabilityModelId) return null;
-    const model = (capabilityModelCatalog.models || []).find((item) => item.id === resolvedColumnSelectedItem.capabilityModelId) || null;
-    if (!model) return null;
-    const role = capabilityRoleMap.get(model.roleId) || null;
-    const sequence = role ? capabilitySequenceMap.get(role.sequenceId) || null : null;
-    const roleLevel = sequence?.levels?.find((item) => item.id === model.roleLevelId) || null;
-    return {
-      model,
-      role,
-      sequence,
-      roleLevel,
-    };
-  }, [capabilityModelCatalog.models, capabilityRoleMap, capabilitySequenceMap, resolvedColumnSelectedItem]);
+    if (resolvedColumnSelectedItem?.fileType !== 'capabilityModel') return null;
+    return resolveCapabilityModelResourceEntry(resolvedColumnSelectedItem, capabilityModelCatalog);
+  }, [capabilityModelCatalog, resolvedColumnSelectedItem]);
   const activeKnowledgeGraphPreviewKey = useMemo(() => {
     if (viewMode === 'column') {
       return resolvedColumnSelectedItem?.fileType === 'knowledgeGraph' ? resolvedColumnSelectedItem.key : null;

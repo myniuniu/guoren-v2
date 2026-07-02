@@ -1,13 +1,15 @@
 import {
   createCollection as createKnowledgeGraphCollection,
   createGraph as createKnowledgeGraph,
+  duplicateGraph as duplicateKnowledgeGraph,
   getCollections as getKnowledgeGraphCollections,
   loadKnowledgeGraphStore,
+  updateGraph as updateKnowledgeGraph,
 } from '../knowledgeGraph/store';
 
 // 资料库本地存储（独立于 versionStore，避免耦合）
 const STORAGE_KEY = 'guoren_resource_lib';
-const DATA_VERSION = 15;
+const DATA_VERSION = 18;
 
 // macOS 访达风格预设标签（7色 + 自定义）
 const PRESET_TAGS = [
@@ -67,6 +69,7 @@ const DEFAULT_ORGS = [
   { id: 'org_default', name: '果仁集团' },
   { id: 'org_rd',      name: '研发部' },
   { id: 'org_market',  name: '市场部' },
+  { id: 'org_knowledge_graph', name: '知识图谱' },
 ];
 
 const RESET_PERSONAL_TEACHING_DEMO_VERSION = 7;
@@ -195,6 +198,298 @@ function createDemoTimestamp(daysAgo = 0, hour = 9, minute = 0) {
   base.setDate(base.getDate() - daysAgo);
   base.setHours(hour, minute, 0, 0);
   return `${base.getFullYear()}-${padNumber(base.getMonth() + 1)}-${padNumber(base.getDate())} ${padNumber(base.getHours())}:${padNumber(base.getMinutes())}:${padNumber(base.getSeconds())}`;
+}
+
+const ORGANIZATION_CAPABILITY_MODEL_FOLDER_NAME = '能力模型';
+const ORGANIZATION_CAPABILITY_MODEL_FOLDER_KEY = 'o_f_capability_models';
+const ORGANIZATION_KNOWLEDGE_GRAPH_ORG_ID = 'org_knowledge_graph';
+const ORGANIZATION_KNOWLEDGE_GRAPH_FOLDER_NAME = '知识图谱';
+const ORGANIZATION_KNOWLEDGE_GRAPH_FOLDER_KEY = 'okg_f_knowledge_graph';
+const ORGANIZATION_KNOWLEDGE_GRAPH_DEMO_RESOURCE_KEY = 'okg_r_demo_graph';
+const ORGANIZATION_KNOWLEDGE_GRAPH_DEMO_NAME = '组织示例知识图谱';
+const ORGANIZATION_KNOWLEDGE_GRAPH_DEMO_DESCRIPTION = '演示图谱：用于展示组织资料库中的知识图谱资产。';
+const ORGANIZATION_CAPABILITY_MODEL_RESOURCE_TEMPLATES = [
+  {
+    key: 'o_cm_basic_teacher_l1',
+    capabilityModelCode: 'BASIC_EDU_TEACHER_NEW',
+    name: '基础教育新教师能力模型',
+    description: '适用于基础教育新教师阶段，强调教学设计基本功、课堂执行和形成性反馈。',
+    summary: '基础教育教师 / 新教师 · 4 个能力类 · 8 个能力项',
+    lastEdit: createDemoTimestamp(2, 10, 20),
+  },
+  {
+    key: 'o_cm_basic_teacher_l2',
+    capabilityModelCode: 'BASIC_EDU_TEACHER_YOUNG',
+    name: '基础教育青年教师能力模型',
+    description: '适用于基础教育青年教师阶段，强调课堂优化、学情分析和教研协同。',
+    summary: '基础教育教师 / 青年教师 · 4 个能力类 · 8 个能力项',
+    lastEdit: createDemoTimestamp(2, 10, 35),
+  },
+  {
+    key: 'o_cm_basic_teacher_l3',
+    capabilityModelCode: 'BASIC_EDU_TEACHER_BACKBONE',
+    name: '基础教育骨干教师能力模型',
+    description: '适用于基础教育骨干教师阶段，强调示范引领、数据驱动改进和团队共建。',
+    summary: '基础教育教师 / 骨干教师 · 4 个能力类 · 8 个能力项',
+    lastEdit: createDemoTimestamp(2, 10, 50),
+  },
+  {
+    key: 'o_cm_basic_teacher_l4',
+    capabilityModelCode: 'BASIC_EDU_TEACHER_LEAD',
+    name: '基础教育学科带头人能力模型',
+    description: '适用于基础教育学科带头人阶段，强调学科建设、跨校教研和体系化引领。',
+    summary: '基础教育教师 / 学科带头人 · 4 个能力类 · 8 个能力项',
+    lastEdit: createDemoTimestamp(2, 11, 5),
+  },
+];
+
+function buildOrganizationCapabilityModelDemoEntries(parentKey = ORGANIZATION_CAPABILITY_MODEL_FOLDER_KEY) {
+  return [
+    {
+      key: parentKey,
+      name: ORGANIZATION_CAPABILITY_MODEL_FOLDER_NAME,
+      isFolder: true,
+      parentKey: null,
+      fileType: 'folder',
+      owner: 'admin',
+      parseStatus: 'parsed',
+      lastEdit: createDemoTimestamp(2, 10, 0),
+      tags: ['tag_green'],
+    },
+    ...ORGANIZATION_CAPABILITY_MODEL_RESOURCE_TEMPLATES.map((item) => ({
+      key: item.key,
+      name: item.name,
+      isFolder: false,
+      parentKey,
+      fileType: 'capabilityModel',
+      resourceKind: 'capabilityModel',
+      capabilityModelCode: item.capabilityModelCode,
+      owner: 'admin',
+      parseStatus: 'parsed',
+      contentText: item.summary,
+      comment: item.description,
+      lastEdit: item.lastEdit,
+      tags: ['tag_green'],
+    })),
+  ];
+}
+
+function createOrganizationKnowledgeGraphFolder(parentKey = null, key = ORGANIZATION_KNOWLEDGE_GRAPH_FOLDER_KEY) {
+  return {
+    key,
+    name: ORGANIZATION_KNOWLEDGE_GRAPH_FOLDER_NAME,
+    isFolder: true,
+    parentKey,
+    fileType: 'folder',
+    owner: 'admin',
+    parseStatus: 'parsed',
+    lastEdit: createDemoTimestamp(2, 11, 20),
+    tags: ['tag_blue'],
+  };
+}
+
+function ensureOrganizationKnowledgeGraphDemoGraph() {
+  if (typeof window === 'undefined') return null;
+
+  let snapshot = loadKnowledgeGraphStore();
+  let graph = (snapshot.graphs || []).find((item) => item.name === ORGANIZATION_KNOWLEDGE_GRAPH_DEMO_NAME) || null;
+  if (graph) return graph;
+
+  const sourceGraph = (snapshot.graphs || []).find((item) => item.name === 'AI 通识知识图谱') || ensureAiGeneralKnowledgeGraph();
+  if (!sourceGraph?.id) return null;
+
+  snapshot = loadKnowledgeGraphStore();
+  const previousGraphIds = new Set((snapshot.graphs || []).map((item) => item.id));
+  const duplicatedState = duplicateKnowledgeGraph(sourceGraph.id);
+  const duplicatedGraph = (duplicatedState.graphs || []).find((item) => !previousGraphIds.has(item.id)) || null;
+  if (!duplicatedGraph?.id) return null;
+
+  const renamedState = updateKnowledgeGraph(duplicatedGraph.id, {
+    name: ORGANIZATION_KNOWLEDGE_GRAPH_DEMO_NAME,
+    description: ORGANIZATION_KNOWLEDGE_GRAPH_DEMO_DESCRIPTION,
+  });
+  return (renamedState.graphs || []).find((item) => item.id === duplicatedGraph.id) || null;
+}
+
+function buildOrganizationKnowledgeGraphDemoEntry(parentKey = ORGANIZATION_KNOWLEDGE_GRAPH_FOLDER_KEY) {
+  const graph = ensureOrganizationKnowledgeGraphDemoGraph();
+  if (!graph?.id) return null;
+
+  return createKnowledgeGraphResourceRecord({
+    key: ORGANIZATION_KNOWLEDGE_GRAPH_DEMO_RESOURCE_KEY,
+    name: graph.name || ORGANIZATION_KNOWLEDGE_GRAPH_DEMO_NAME,
+    graphId: graph.id,
+    description: graph.description || ORGANIZATION_KNOWLEDGE_GRAPH_DEMO_DESCRIPTION,
+    parentKey,
+    owner: 'admin',
+    lastEdit: graph.updatedAt || graph.createdAt || now(),
+    tags: ['tag_blue'],
+  });
+}
+
+function ensureOrganizationKnowledgeGraphDemoEntries(items = [], parentKey = ORGANIZATION_KNOWLEDGE_GRAPH_FOLDER_KEY) {
+  const demoEntry = buildOrganizationKnowledgeGraphDemoEntry(parentKey);
+  const nextItems = [...items];
+
+  if (!demoEntry) {
+    return nextItems.map((item) => (
+      !item?.isFolder
+      && item.fileType === 'knowledgeGraph'
+      && (item.parentKey ?? null) === null
+        ? { ...item, parentKey }
+        : item
+    ));
+  }
+
+  const normalizedItems = nextItems.map((item) => (
+    !item?.isFolder
+    && item.fileType === 'knowledgeGraph'
+    && (item.parentKey ?? null) === null
+      ? { ...item, parentKey }
+      : item
+  ));
+
+  const existingIndex = normalizedItems.findIndex((item) => (
+    !item?.isFolder
+    && item.fileType === 'knowledgeGraph'
+    && (
+      item.key === demoEntry.key
+      || item.knowledgeGraphId === demoEntry.knowledgeGraphId
+      || item.name === demoEntry.name
+    )
+  ));
+
+  if (existingIndex < 0) {
+    normalizedItems.unshift(demoEntry);
+    return normalizedItems;
+  }
+
+  normalizedItems[existingIndex] = {
+    ...normalizedItems[existingIndex],
+    ...demoEntry,
+    parentKey,
+  };
+  return normalizedItems;
+}
+
+function collectSubtreeKeys(items = [], rootKey) {
+  const collected = new Set();
+  const visit = (parentKey) => {
+    if (!parentKey || collected.has(parentKey)) return;
+    collected.add(parentKey);
+    items.forEach((item) => {
+      if (item.parentKey === parentKey) visit(item.key);
+    });
+  };
+  visit(rootKey);
+  return collected;
+}
+
+function ensureOrganizationKnowledgeGraphLibrary(organizations = {}) {
+  const nextOrganizations = { ...(organizations || {}) };
+  const targetList = [...(nextOrganizations[ORGANIZATION_KNOWLEDGE_GRAPH_ORG_ID] || [])];
+  const hasKnowledgeGraphFolder = targetList.some((item) => (
+    item?.isFolder
+    && (item.parentKey ?? null) === null
+    && item.name === ORGANIZATION_KNOWLEDGE_GRAPH_FOLDER_NAME
+  ));
+
+  if (!hasKnowledgeGraphFolder) {
+    const sourceEntry = Object.entries(nextOrganizations).find(([orgId, items]) => (
+      orgId !== ORGANIZATION_KNOWLEDGE_GRAPH_ORG_ID
+      && (items || []).some((item) => (
+        item?.isFolder
+        && (item.parentKey ?? null) === null
+        && item.name === ORGANIZATION_KNOWLEDGE_GRAPH_FOLDER_NAME
+      ))
+    ));
+
+    if (sourceEntry) {
+      const [sourceOrgId, sourceItems = []] = sourceEntry;
+      const sourceFolder = sourceItems.find((item) => (
+        item?.isFolder
+        && (item.parentKey ?? null) === null
+        && item.name === ORGANIZATION_KNOWLEDGE_GRAPH_FOLDER_NAME
+      ));
+      const subtreeKeys = collectSubtreeKeys(sourceItems, sourceFolder?.key);
+      const movedItems = sourceItems.filter((item) => subtreeKeys.has(item.key));
+      nextOrganizations[sourceOrgId] = sourceItems.filter((item) => !subtreeKeys.has(item.key));
+      targetList.push(...movedItems.map((item) => (
+        item.key === sourceFolder?.key
+          ? { ...item, parentKey: null }
+          : item
+      )));
+    }
+  }
+
+  if (!targetList.some((item) => (
+    item?.isFolder
+    && (item.parentKey ?? null) === null
+    && item.name === ORGANIZATION_KNOWLEDGE_GRAPH_FOLDER_NAME
+  ))) {
+    targetList.unshift(createOrganizationKnowledgeGraphFolder());
+  }
+
+  const folder = targetList.find((item) => (
+    item?.isFolder
+    && (item.parentKey ?? null) === null
+    && item.name === ORGANIZATION_KNOWLEDGE_GRAPH_FOLDER_NAME
+  )) || null;
+  const folderKey = folder?.key || ORGANIZATION_KNOWLEDGE_GRAPH_FOLDER_KEY;
+
+  nextOrganizations[ORGANIZATION_KNOWLEDGE_GRAPH_ORG_ID] = ensureOrganizationKnowledgeGraphDemoEntries(targetList, folderKey);
+  return nextOrganizations;
+}
+
+function mergeOrganizationMeta(defaults = [], existing = []) {
+  const merged = [];
+  const seen = new Set();
+  [...(defaults || []), ...(existing || [])].forEach((item) => {
+    if (!item?.id || seen.has(item.id)) return;
+    seen.add(item.id);
+    const preferred = (existing || []).find((entry) => entry?.id === item.id) || item;
+    merged.push({
+      id: item.id,
+      name: preferred?.name || item.name || item.id,
+    });
+  });
+  return merged;
+}
+
+function ensureOrganizationCapabilityModelDemoEntries(items = []) {
+  const list = Array.isArray(items) ? [...items] : [];
+  const existingFolder = list.find((item) => (
+    item?.isFolder
+    && (item.parentKey ?? null) === null
+    && item.name === ORGANIZATION_CAPABILITY_MODEL_FOLDER_NAME
+  )) || null;
+  const folderKey = existingFolder?.key || ORGANIZATION_CAPABILITY_MODEL_FOLDER_KEY;
+
+  if (!existingFolder) {
+    list.push(buildOrganizationCapabilityModelDemoEntries(folderKey)[0]);
+  }
+
+  const existingCodes = new Set(
+    list
+      .filter((item) => item?.fileType === 'capabilityModel')
+      .map((item) => item.capabilityModelCode)
+      .filter(Boolean),
+  );
+  const existingNames = new Set(
+    list
+      .filter((item) => item?.fileType === 'capabilityModel')
+      .map((item) => item.name)
+      .filter(Boolean),
+  );
+
+  buildOrganizationCapabilityModelDemoEntries(folderKey)
+    .slice(1)
+    .forEach((item) => {
+      if (existingCodes.has(item.capabilityModelCode) || existingNames.has(item.name)) return;
+      list.push(item);
+    });
+
+  return list;
 }
 
 function dedupeTags(tags = []) {
@@ -821,13 +1116,13 @@ const defaultData = {
   personal: ensureProfileAssociationDemoEntries(ensurePersonalKnowledgeGraphDemoEntry(buildPersonalTeachingDemo())),
   // 组织资料库（按 orgId 分组）
   organizations: {
-    org_default: [
+    org_default: ensureOrganizationCapabilityModelDemoEntries([
       { key: 'o_f1', name: '产品规范文档', isFolder: true, parentKey: null, fileType: 'folder', owner: 'admin', parseStatus: 'parsed', lastEdit: '2026-05-24 10:00:00', tags: ['tag_blue'] },
       { key: 'o_f2', name: '组织培训素材', isFolder: true, parentKey: null, fileType: 'folder', owner: 'admin', parseStatus: 'parsed', lastEdit: '2026-05-23 16:00:00', tags: ['tag_green'] },
       { key: 'o_r1', name: '员工手册.pdf', isFolder: false, parentKey: null, fileType: 'pdf', owner: 'admin', parseStatus: 'parsed', lastEdit: '2026-05-22 11:00:00', tags: ['tag_red'] },
       { key: 'o_r2', name: '产品发布会PPT.pptx', isFolder: false, parentKey: null, fileType: 'pptx', owner: 'admin', parseStatus: 'parsed', lastEdit: '2026-05-21 15:30:00', tags: ['tag_orange'] },
       { key: 'o_bg1', name: '通用背景 - 绿色结业.svg', isFolder: false, parentKey: null, fileType: 'image', dataUrl: DEMO_BG_GREEN, owner: 'admin', parseStatus: 'parsed', lastEdit: '2026-05-24 09:00:00', tags: ['tag_green'] },
-    ],
+    ]),
     org_rd: [
       { key: 'rd_f1', name: '需求文档', isFolder: true, parentKey: null, fileType: 'folder', owner: 'rd_admin', parseStatus: 'parsed', lastEdit: '2026-05-24 14:00:00', tags: [] },
       { key: 'rd_f2', name: '设计稿', isFolder: true, parentKey: null, fileType: 'folder', owner: 'rd_admin', parseStatus: 'parsed', lastEdit: '2026-05-23 10:00:00', tags: [] },
@@ -837,6 +1132,9 @@ const defaultData = {
       { key: 'mk_f1', name: '推广物料', isFolder: true, parentKey: null, fileType: 'folder', owner: 'mk_admin', parseStatus: 'parsed', lastEdit: '2026-05-24 11:00:00', tags: [] },
       { key: 'mk_r1', name: '市场分析报告Q2.pptx', isFolder: false, parentKey: null, fileType: 'pptx', owner: 'mk_admin', parseStatus: 'parsed', lastEdit: '2026-05-23 09:30:00', tags: ['tag_blue'] },
     ],
+    [ORGANIZATION_KNOWLEDGE_GRAPH_ORG_ID]: ensureOrganizationKnowledgeGraphDemoEntries([
+      createOrganizationKnowledgeGraphFolder(),
+    ]),
   },
   // 组织元信息（仅展示用，新增/删除在其他模块维护）
   organizationsMeta: DEFAULT_ORGS,
@@ -849,6 +1147,7 @@ const defaultData = {
     org_default: null,
     org_rd: null,
     org_market: null,
+    [ORGANIZATION_KNOWLEDGE_GRAPH_ORG_ID]: null,
   },
   // 标签定义：
   //   personal: 个人资料库使用的标签与快捷标签配置
@@ -912,6 +1211,15 @@ export function loadResourceLib() {
 function migrate(old) {
   const next = JSON.parse(JSON.stringify(defaultData));
   const shouldResetPersonalDemo = (old?._dataVersion || 0) < RESET_PERSONAL_TEACHING_DEMO_VERSION;
+  if (Array.isArray(old.organizationsMeta) && old.organizationsMeta.length) {
+    next.organizationsMeta = mergeOrganizationMeta(DEFAULT_ORGS, old.organizationsMeta);
+  }
+  if (old.currentScope === 'personal' || old.currentScope === 'organization') {
+    next.currentScope = old.currentScope;
+  }
+  if (typeof old.currentOrgId === 'string' && old.currentOrgId) {
+    next.currentOrgId = old.currentOrgId;
+  }
   // 保留个人数据
   if (!shouldResetPersonalDemo && Array.isArray(old.personal)) next.personal = old.personal;
   // 旧版本：data.organization[] → 默认组织
@@ -920,6 +1228,8 @@ function migrate(old) {
   } else if (old.organizations && typeof old.organizations === 'object') {
     next.organizations = { ...next.organizations, ...old.organizations };
   }
+  next.organizations.org_default = ensureOrganizationCapabilityModelDemoEntries(next.organizations.org_default);
+  next.organizations = ensureOrganizationKnowledgeGraphLibrary(next.organizations);
   // 标签定义迁移：拆分为个人标签、组织标签与组织标签组
   next.tagDefinitions = getScopedTagDefinitionState({ ...next, tagDefinitions: old.tagDefinitions });
   next.personal = stripInheritedTagsFromPersonalDemoFolders(next.personal);
