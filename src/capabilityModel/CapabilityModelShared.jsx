@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Button,
+  Drawer,
+  Dropdown,
   Empty,
   Form,
   Input,
@@ -15,6 +17,9 @@ import {
 } from 'antd';
 import {
   CopyOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  MoreOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
 import {
@@ -220,10 +225,15 @@ export function CapabilityModelEditorPanel({
 }) {
   const isLayeredEditor = !embedded;
   const [activeSection, setActiveSection] = useState('base');
-  const [activeItemView, setActiveItemView] = useState('overview');
+  const [activeItemSubsection, setActiveItemSubsection] = useState('overview');
+  const [dimensionDrawerOpen, setDimensionDrawerOpen] = useState(false);
+  const lastSelectedItemByDimensionRef = useRef({});
   const watchedModelName = Form.useWatch('name', modelBaseForm);
   const currentModelName = watchedModelName || modelDraft.name || '未命名能力模型';
   const totalCapabilityItems = getTotalCapabilityItems(modelDraft);
+  const totalDimensions = modelDraft.dimensions.length;
+  const activeDimensionItemCount = activeDimension?.items?.length || 0;
+  const activeDimensionItems = activeDimension?.items || [];
   const editorSections = [
     { key: 'base', label: '基础信息' },
     { key: 'levels', label: '等级体系' },
@@ -235,15 +245,111 @@ export function CapabilityModelEditorPanel({
   const showBaseSection = embedded || activeSection === 'base';
   const showLevelSection = embedded || activeSection === 'levels';
   const showFrameworkSection = embedded || activeSection === 'framework';
-  const itemViewHint = activeItemView === 'descriptors'
-    ? '只保留等级行为描述，逐级补齐。'
-    : activeItemView === 'rules'
-      ? '聚焦证据、评价和 AI 规则。'
-      : '先把能力项的名称和说明写清楚。';
+  const activeDimensionOrderText = activeDimension
+    ? `能力类 ${activeDimensionIndex + 1} / ${totalDimensions}`
+    : '未选择能力类';
+  const activeItemOrderText = activeItem
+    ? `能力项 ${activeItemIndex + 1} / ${activeDimensionItemCount}`
+    : '未选择能力项';
 
   useEffect(() => {
-    setActiveItemView('overview');
+    setActiveItemSubsection('overview');
   }, [activeItem?.id]);
+
+  useEffect(() => {
+    if (!activeDimension?.id || !activeItem?.id) return;
+    lastSelectedItemByDimensionRef.current[activeDimension.id] = activeItem.id;
+  }, [activeDimension?.id, activeItem?.id]);
+
+  useEffect(() => {
+    if (activeDimension?.id) return;
+    setDimensionDrawerOpen(false);
+  }, [activeDimension?.id]);
+
+  const getPreferredItemId = (dimension) => {
+    if (!dimension?.id) return null;
+    const rememberedItemId = lastSelectedItemByDimensionRef.current[dimension.id];
+    if (rememberedItemId && dimension.items?.some((item) => item.id === rememberedItemId)) {
+      return rememberedItemId;
+    }
+    return dimension.items?.[0]?.id || null;
+  };
+
+  const handleSelectDimensionWithMemory = (dimension) => {
+    if (!dimension?.id) return;
+    const preferredItemId = getPreferredItemId(dimension);
+    if (preferredItemId) {
+      onSelectItem(dimension.id, preferredItemId);
+      return;
+    }
+    onSelectDimension(dimension.id);
+  };
+
+  const handleSelectActiveItem = (itemId) => {
+    if (!activeDimension?.id || !itemId) return;
+    onSelectItem(activeDimension.id, itemId);
+  };
+
+  const handleAddDimensionAndReturn = () => {
+    onAddDimension();
+  };
+
+  const handleAddItemAndReturn = () => {
+    if (activeDimensionIndex == null || activeDimensionIndex < 0) return;
+    onAddItem(activeDimensionIndex);
+    setActiveItemSubsection('overview');
+  };
+
+  const handleOpenDimensionDrawerFor = (dimension) => {
+    if (!dimension?.id) return;
+    handleSelectDimensionWithMemory(dimension);
+    setDimensionDrawerOpen(true);
+  };
+
+  const handleEditItemFromMenu = (itemId) => {
+    if (!itemId) return;
+    setActiveItemSubsection('overview');
+    handleSelectActiveItem(itemId);
+  };
+
+  const handleRemoveDimensionWithFallback = (dimensionIndex) => {
+    const dimensions = modelDraft.dimensions || [];
+    const targetDimension = dimensions[dimensionIndex];
+    const isRemovingActiveDimension = targetDimension?.id && targetDimension.id === activeDimension?.id;
+    const fallbackDimension = isRemovingActiveDimension
+      ? (dimensions[dimensionIndex + 1] || dimensions[dimensionIndex - 1] || null)
+      : null;
+
+    onRemoveDimension(dimensionIndex);
+
+    if (!isRemovingActiveDimension || !fallbackDimension) return;
+
+    const fallbackItemId = getPreferredItemId(fallbackDimension);
+    if (fallbackItemId) {
+      onSelectItem(fallbackDimension.id, fallbackItemId);
+      return;
+    }
+    onSelectDimension(fallbackDimension.id);
+  };
+
+  const handleRemoveItemWithFallback = (dimensionIndex, itemIndex) => {
+    const items = modelDraft.dimensions[dimensionIndex]?.items || [];
+    const targetItem = items[itemIndex];
+    const isRemovingActiveItem = targetItem?.id && targetItem.id === activeItem?.id;
+    const fallbackItem = isRemovingActiveItem
+      ? (items[itemIndex + 1] || items[itemIndex - 1] || null)
+      : null;
+
+    onRemoveItem(dimensionIndex, itemIndex);
+
+    if (!isRemovingActiveItem || !activeDimension?.id) return;
+
+    if (fallbackItem?.id) {
+      onSelectItem(activeDimension.id, fallbackItem.id);
+      return;
+    }
+    onSelectDimension(activeDimension.id);
+  };
 
   const renderStepActions = () => {
     if (!isLayeredEditor) return null;
@@ -370,130 +476,171 @@ export function CapabilityModelEditorPanel({
 
       {showFrameworkSection ? (
         <div className="cap-model-editor-section">
-          <div className="cap-model-section-head">
-            <div>
-              <div className="cap-model-section-title">能力框架</div>
-              <div className="cap-model-section-desc">左侧维护能力结构，右侧只编辑当前选中的能力类与能力项，减少同屏嵌套。</div>
-            </div>
-            <Button type="dashed" icon={<PlusOutlined />} onClick={onAddDimension}>新增能力类</Button>
-          </div>
-
-          {modelDraft.dimensions.length === 0 ? (
-            <Empty description="暂无能力类，请先新增" />
-          ) : (
-            <div className="cap-model-framework-shell">
-              <div className="cap-model-framework-rail">
-                <div className="cap-model-framework-rail-head">
-                  <div>
-                    <div className="cap-model-section-title">能力类</div>
-                    <div className="cap-model-section-desc">先聚焦一个能力类，再维护该类下的能力项。</div>
-                  </div>
-                  <Tag color="blue">{modelDraft.dimensions.length} 个能力类</Tag>
-                </div>
-                <div className="cap-model-framework-rail-list">
-                  {modelDraft.dimensions.map((dimension, dimensionIndex) => (
-                    <button
-                      key={dimension.id}
-                      type="button"
-                      className={`cap-model-framework-rail-chip ${dimension.id === activeDimension?.id ? 'is-active' : ''}`}
-                      onClick={() => onSelectDimension(dimension.id)}
-                    >
-                      <span className="cap-model-framework-node-kicker">能力类 {dimensionIndex + 1}</span>
-                      <span className="cap-model-framework-node-title">{dimension.name || '未命名能力类'}</span>
-                      <span className="cap-model-framework-node-meta">{dimension.items?.length || 0} 个能力项</span>
-                    </button>
-                  ))}
-                </div>
+          <div className="cap-model-framework-workspace">
+            {totalDimensions === 0 ? (
+              <div className="cap-model-empty-panel cap-model-framework-empty">
+                <Empty description="暂无能力类，请先新增" />
+                <Button type="primary" icon={<PlusOutlined />} onClick={handleAddDimensionAndReturn}>
+                  新增能力类
+                </Button>
               </div>
-
-              <div className="cap-model-framework-board">
-                {activeDimension ? (
-                  <>
-                    <div className="cap-model-framework-side">
-                      <div className="cap-model-framework-side-head">
-                        <div>
-                          <div className="cap-model-dimension-title">能力项清单</div>
-                          <div className="cap-model-name-sub">当前能力类下共 {activeDimension.items?.length || 0} 项</div>
-                        </div>
-                        <Button size="small" type="dashed" icon={<PlusOutlined />} onClick={() => onAddItem(activeDimensionIndex)}>新增能力项</Button>
-                      </div>
-                      <div className="cap-model-framework-item-list">
-                        {(activeDimension.items || []).map((item, itemIndex) => (
+            ) : (
+              <>
+                <div className="cap-model-framework-dimension-band">
+                  <div className="cap-model-framework-dimension-band-head">
+                    <div className="cap-model-dimension-title">能力类</div>
+                    <Space size={8} wrap>
+                      {activeDimension ? <Tag>{activeDimensionOrderText}</Tag> : null}
+                      <Button type="primary" icon={<PlusOutlined />} onClick={handleAddDimensionAndReturn}>
+                        新增能力类
+                      </Button>
+                    </Space>
+                  </div>
+                  <div className="cap-model-framework-dimension-strip">
+                    {modelDraft.dimensions.map((dimension, dimensionIndex) => {
+                      const isActive = dimension.id === activeDimension?.id;
+                      const dimensionMenuItems = [
+                        {
+                          key: 'edit',
+                          icon: <EditOutlined />,
+                          label: '编辑能力类',
+                          onClick: () => handleOpenDimensionDrawerFor(dimension),
+                        },
+                        {
+                          key: 'delete',
+                          icon: <DeleteOutlined />,
+                          label: '删除能力类',
+                          danger: true,
+                          disabled: totalDimensions === 1,
+                          onClick: () => handleRemoveDimensionWithFallback(dimensionIndex),
+                        },
+                      ];
+                      return (
+                        <div
+                          key={dimension.id}
+                          className={`cap-model-framework-dimension-node ${isActive ? 'is-active' : ''}`}
+                        >
                           <button
-                            key={item.id}
                             type="button"
-                            className={`cap-model-framework-item-row ${item.id === activeItem?.id ? 'is-active' : ''}`}
-                            onClick={() => onSelectItem(activeDimension.id, item.id)}
+                            className="cap-model-framework-dimension-card"
+                            onClick={() => handleSelectDimensionWithMemory(dimension)}
                           >
-                            <span className="cap-model-framework-item-index">能力项 {itemIndex + 1}</span>
-                            <strong>{item.name || '未命名能力项'}</strong>
-                            <span>{item.description || '未填写能力项说明'}</span>
+                            <span className="cap-model-framework-node-kicker">能力类 {dimensionIndex + 1}</span>
+                            <span className="cap-model-framework-node-title">{dimension.name || '未命名能力类'}</span>
+                            <span className="cap-model-framework-node-meta">{dimension.items?.length || 0} 个能力项</span>
                           </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="cap-model-framework-main">
-                      <div className="cap-model-dimension-card">
-                        <div className="cap-model-dimension-head">
-                          <div>
-                            <div className="cap-model-dimension-title">当前能力类</div>
-                            <div className="cap-model-name-sub">
-                              能力类 {activeDimensionIndex + 1} / {activeDimension.items?.length || 0} 个能力项
-                            </div>
+                          <div className="cap-model-framework-node-actions">
+                            <Dropdown
+                              trigger={['click']}
+                              placement="bottomRight"
+                              menu={{ items: dimensionMenuItems }}
+                            >
+                              <Button
+                                size="small"
+                                type="text"
+                                className="cap-model-framework-menu-trigger"
+                                icon={<MoreOutlined />}
+                                onClick={(event) => event.stopPropagation()}
+                              />
+                            </Dropdown>
                           </div>
-                          <Space size={4} wrap>
-                            <Button size="small" onClick={() => onMoveDimension(activeDimensionIndex, -1)} disabled={activeDimensionIndex === 0}>上移</Button>
-                            <Button size="small" onClick={() => onMoveDimension(activeDimensionIndex, 1)} disabled={activeDimensionIndex === modelDraft.dimensions.length - 1}>下移</Button>
-                            <Button size="small" danger onClick={() => onRemoveDimension(activeDimensionIndex)} disabled={modelDraft.dimensions.length === 1}>删除</Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {activeDimension ? (
+                  <div className="cap-model-framework-studio">
+                    <div className="cap-model-framework-sidebar">
+                      <div className="cap-model-framework-sidebar-card">
+                        <div className="cap-model-framework-sidebar-head">
+                          <div className="cap-model-dimension-title">能力项</div>
+                          <Space size={8} wrap>
+                            <Tag color="blue">{activeDimensionItemCount} 项</Tag>
+                            <Button size="small" type="primary" icon={<PlusOutlined />} onClick={handleAddItemAndReturn}>
+                              新增
+                            </Button>
                           </Space>
                         </div>
 
-                        <div className="cap-model-form-grid cap-model-form-grid-2">
-                          <div>
-                            <div className="cap-model-field-label">能力类名称</div>
-                            <Input
-                              value={activeDimension.name}
-                              onChange={(event) => onUpdateDimensionField(activeDimensionIndex, 'name', event.target.value)}
-                              placeholder="例如：教学设计"
-                            />
+                        {activeDimensionItemCount > 0 ? (
+                          <div className="cap-model-framework-item-list">
+                            {activeDimensionItems.map((item, itemIndex) => {
+                              const isActive = item.id === activeItem?.id;
+                              const itemMenuItems = [
+                                {
+                                  key: 'edit',
+                                  icon: <EditOutlined />,
+                                  label: '编辑能力项',
+                                  onClick: () => handleEditItemFromMenu(item.id),
+                                },
+                                {
+                                  key: 'delete',
+                                  icon: <DeleteOutlined />,
+                                  label: '删除能力项',
+                                  danger: true,
+                                  disabled: activeDimensionItemCount === 1,
+                                  onClick: () => handleRemoveItemWithFallback(activeDimensionIndex, itemIndex),
+                                },
+                              ];
+                              return (
+                                <div
+                                  key={item.id}
+                                  className={`cap-model-framework-item-row ${isActive ? 'is-active' : ''}`}
+                                >
+                                  <button
+                                    type="button"
+                                    className="cap-model-framework-item-row-main"
+                                    onClick={() => handleSelectActiveItem(item.id)}
+                                  >
+                                    <span className="cap-model-framework-item-index">能力项 {itemIndex + 1}</span>
+                                    <strong>{item.name || '未命名能力项'}</strong>
+                                    <span>{item.description || '未填写能力项说明'}</span>
+                                  </button>
+                                  <div className="cap-model-framework-item-actions">
+                                    <Dropdown
+                                      trigger={['click']}
+                                      placement="bottomRight"
+                                      menu={{ items: itemMenuItems }}
+                                    >
+                                      <Button
+                                        size="small"
+                                        type="text"
+                                        className="cap-model-framework-menu-trigger"
+                                        icon={<MoreOutlined />}
+                                        onClick={(event) => event.stopPropagation()}
+                                      />
+                                    </Dropdown>
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
-                          <div>
-                            <div className="cap-model-field-label">能力类说明</div>
-                            <Input
-                              value={activeDimension.description}
-                              onChange={(event) => onUpdateDimensionField(activeDimensionIndex, 'description', event.target.value)}
-                              placeholder="说明该能力类聚焦的核心能力范围"
-                            />
+                        ) : (
+                          <div className="cap-model-empty-panel cap-model-framework-empty">
+                            <Empty description="当前能力类下暂无能力项" />
+                            <Button type="primary" icon={<PlusOutlined />} onClick={handleAddItemAndReturn}>
+                              新增能力项
+                            </Button>
                           </div>
-                        </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="cap-model-framework-stage">
+                      <div className="cap-model-framework-stage-head">
+                        <div className="cap-model-framework-stage-title">{activeItem?.name || '请选择一个能力项'}</div>
+                        {activeItem ? <Tag color="blue">{activeItemOrderText}</Tag> : <Tag>{activeDimensionOrderText}</Tag>}
                       </div>
 
                       {activeItem ? (
                         <div className="cap-model-item-card">
-                          <div className="cap-model-item-head">
-                            <div>
-                              <div className="cap-model-item-title">当前能力项</div>
-                              <div className="cap-model-name-sub">
-                                能力项 {activeItemIndex + 1} / 行为描述按等级逐项填写
-                              </div>
-                            </div>
-                            <Space size={4} wrap>
-                              <Button size="small" onClick={() => onMoveItem(activeDimensionIndex, activeItemIndex, -1)} disabled={activeItemIndex === 0}>上移</Button>
-                              <Button size="small" onClick={() => onMoveItem(activeDimensionIndex, activeItemIndex, 1)} disabled={activeItemIndex === activeDimension.items.length - 1}>下移</Button>
-                              <Button size="small" danger onClick={() => onRemoveItem(activeDimensionIndex, activeItemIndex)} disabled={activeDimension.items.length === 1}>删除</Button>
-                            </Space>
-                          </div>
-
                           <div className="cap-model-item-mode-bar">
-                            <div className="cap-model-item-mode-copy">
-                              <div className="cap-model-field-label">当前编辑区</div>
-                              <div className="cap-model-name-sub">{itemViewHint}</div>
-                            </div>
                             <Segmented
                               size="small"
-                              value={activeItemView}
-                              onChange={setActiveItemView}
+                              value={activeItemSubsection}
+                              onChange={setActiveItemSubsection}
                               options={[
                                 { label: '基础', value: 'overview' },
                                 { label: '规则', value: 'rules' },
@@ -502,7 +649,7 @@ export function CapabilityModelEditorPanel({
                             />
                           </div>
 
-                          {activeItemView === 'overview' ? (
+                          {activeItemSubsection === 'overview' ? (
                             <div className="cap-model-form-grid cap-model-form-grid-2">
                               <div>
                                 <div className="cap-model-field-label">能力项名称</div>
@@ -523,7 +670,7 @@ export function CapabilityModelEditorPanel({
                             </div>
                           ) : null}
 
-                          {activeItemView === 'rules' ? (
+                          {activeItemSubsection === 'rules' ? (
                             <>
                               <div className="cap-model-form-grid cap-model-form-grid-2">
                                 <div>
@@ -592,7 +739,7 @@ export function CapabilityModelEditorPanel({
                             </>
                           ) : null}
 
-                          {activeItemView === 'descriptors' ? (
+                          {activeItemSubsection === 'descriptors' ? (
                             <div className="cap-model-descriptor-panel">
                               <div className="cap-model-subsection-head">
                                 <span>等级行为描述</span>
@@ -620,23 +767,64 @@ export function CapabilityModelEditorPanel({
                           ) : null}
                         </div>
                       ) : (
-                        <div className="cap-model-empty-panel">
-                          <Empty description="当前能力类下暂无能力项，请先新增能力项" />
+                        <div className="cap-model-empty-panel cap-model-framework-empty">
+                          <Empty description="请选择一个能力项开始编辑" />
+                          <Button type="primary" icon={<PlusOutlined />} onClick={handleAddItemAndReturn}>
+                            新增能力项
+                          </Button>
                         </div>
                       )}
                     </div>
-                  </>
+                  </div>
                 ) : (
                   <div className="cap-model-empty-panel">
                     <Empty description="请选择一个能力类开始编辑" />
                   </div>
                 )}
-              </div>
-            </div>
-          )}
+              </>
+            )}
+          </div>
           {renderStepActions()}
         </div>
       ) : null}
+
+      <Drawer
+        open={dimensionDrawerOpen}
+        onClose={() => setDimensionDrawerOpen(false)}
+        title="编辑能力类"
+        width={embedded ? 420 : 500}
+        className="cap-model-dimension-drawer"
+        extra={(
+          <Button type="primary" onClick={() => setDimensionDrawerOpen(false)}>
+            完成
+          </Button>
+        )}
+      >
+        {activeDimension ? (
+          <div className="cap-model-dimension-drawer-body">
+            <div className="cap-model-dimension-drawer-meta">
+              能力类 {activeDimensionIndex + 1} / {modelDraft.dimensions.length} · {activeDimensionItemCount} 个能力项
+            </div>
+            <div className="cap-model-field-stack">
+              <div className="cap-model-field-label">能力类名称</div>
+              <Input
+                value={activeDimension.name}
+                onChange={(event) => onUpdateDimensionField(activeDimensionIndex, 'name', event.target.value)}
+                placeholder="例如：教学设计"
+              />
+            </div>
+            <div className="cap-model-field-stack">
+              <div className="cap-model-field-label">能力类说明</div>
+              <TextArea
+                rows={4}
+                value={activeDimension.description}
+                onChange={(event) => onUpdateDimensionField(activeDimensionIndex, 'description', event.target.value)}
+                placeholder="说明该能力类聚焦的核心能力范围"
+              />
+            </div>
+          </div>
+        ) : null}
+      </Drawer>
     </div>
   );
 }

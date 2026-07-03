@@ -2911,11 +2911,6 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     () => (viewMode === 'column' ? columnSelectedCapabilityModelData : previewCapabilityModelData),
     [columnSelectedCapabilityModelData, previewCapabilityModelData, viewMode],
   );
-  const handleRestoreCapabilityModelPreview = useCallback(() => {
-    setActiveCapabilityRequestId(null);
-    setCapabilityPreviewCompactMode(false);
-  }, []);
-
   const handleRefreshCapabilityModelPreview = useCallback(async () => {
     if (!activeCapabilityRequestId || !activeCapabilityModelPreviewItem) {
       message.warning('未检测到可同步的新内容');
@@ -2925,14 +2920,13 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     try {
       const session = readCapabilityModelEditSession(activeCapabilityRequestId);
       if (!session?.currentModelId) {
-        setHasPendingSavedChange(false);
         message.warning('未检测到可同步的新内容');
         return;
       }
 
       if (session.revision && session.revision === lastAppliedRevision && previewOverrideModelId === session.currentModelId) {
-        setHasPendingSavedChange(false);
         message.info('当前预览已是最新内容');
+        setCapabilityPreviewCompactMode(false);
         return;
       }
 
@@ -2947,7 +2941,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
 
       setPreviewOverrideModelId(session.currentModelId);
       setLastAppliedRevision(session.revision || null);
-      setHasPendingSavedChange(false);
+      setCapabilityPreviewCompactMode(false);
       message.success('预览已同步到最新保存内容');
     } catch (error) {
       message.error(getActionErrorMessage(error, '刷新能力模型预览失败'));
@@ -2966,23 +2960,16 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
       setActiveCapabilityRequestId(null);
       setPreviewOverrideModelId(null);
       setCapabilityPreviewCompactMode(false);
-      setCapabilityEditorState(null);
       setLastAppliedRevision(null);
-      setHasPendingSavedChange(false);
       return;
     }
 
     const session = readCapabilityModelPreviewSession(activeCapabilityModelSourceKey);
-    const linkedEditSession = session?.requestId
-      ? readCapabilityModelEditSession(session.requestId)
-      : null;
     setActiveCapabilityPreviewSourceKey(activeCapabilityModelSourceKey);
     setActiveCapabilityRequestId(session?.requestId || null);
     setPreviewOverrideModelId(session?.appliedModelId || null);
     setCapabilityPreviewCompactMode(Boolean(session?.compactMode));
-    setCapabilityEditorState(linkedEditSession?.editorState || (session?.requestId ? 'editing' : null));
     setLastAppliedRevision(session?.lastAppliedRevision || null);
-    setHasPendingSavedChange(false);
   }, [activeCapabilityModelSourceKey]);
 
   useEffect(() => {
@@ -3005,40 +2992,6 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     lastAppliedRevision,
     previewOverrideModelId,
   ]);
-
-  useEffect(() => {
-    if (!activeCapabilityRequestId) return undefined;
-    const frameId = window.requestAnimationFrame(() => {
-      syncActiveCapabilityPreviewSession();
-    });
-    return () => window.cancelAnimationFrame(frameId);
-  }, [activeCapabilityRequestId, syncActiveCapabilityPreviewSession]);
-
-  useEffect(() => {
-    if (!activeCapabilityRequestId) return undefined;
-
-    const storageKey = getCapabilityModelEditSessionStorageKey();
-    const handleStorage = (event) => {
-      if (event.storageArea !== window.localStorage || event.key !== storageKey) return;
-      syncActiveCapabilityPreviewSession();
-    };
-    const handleVisibilityChange = () => {
-      if (document.visibilityState !== 'visible') return;
-      syncActiveCapabilityPreviewSession();
-    };
-    const handleFocus = () => {
-      syncActiveCapabilityPreviewSession();
-    };
-
-    window.addEventListener('storage', handleStorage);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
-    return () => {
-      window.removeEventListener('storage', handleStorage);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, [activeCapabilityRequestId, syncActiveCapabilityPreviewSession]);
 
   useEffect(() => {
     setKnowledgeGraphPreviewMode('preview');
@@ -3328,11 +3281,6 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     const versionText = model
       ? `${getCapabilityModelVersionLabel(model)} · ${getCapabilityModelStatusMeta(model).label}`
       : null;
-    const sessionTipText = capabilityEditorState === 'ended'
-      ? '编辑已结束。'
-      : (hasPendingSavedChange
-        ? '有新内容可刷新。'
-        : '已在新页签编辑。');
 
     if (!model && !isCompactSession) {
       return (
@@ -3410,20 +3358,14 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
             <div className="cap-model-preview-compact-card">
               <div className="cap-model-preview-compact-kicker">编辑中</div>
               <div className="cap-model-preview-compact-title">{model?.name || fallbackName || '能力模型'}</div>
-              {versionText ? <div className="cap-model-preview-compact-meta">{versionText}</div> : null}
-              <div className={`cap-model-preview-session-tip${hasPendingSavedChange ? ' is-pending' : ''}`}>
-                <span>{sessionTipText}</span>
+              <div className="cap-model-preview-compact-note">
+                已在新页签打开编辑，需要查看最新内容时再手动刷新。
+              </div>
+              <div className="cap-model-preview-compact-toolbar">
                 <Button size="small" icon={<ReloadOutlined />} onClick={handleRefreshCapabilityModelPreview}>
                   刷新预览
                 </Button>
               </div>
-              {capabilityEditorState === 'ended' ? (
-                <div className="cap-model-preview-compact-actions">
-                  <Button size="small" onClick={handleRestoreCapabilityModelPreview}>
-                    恢复预览
-                  </Button>
-                </div>
-              ) : null}
             </div>
           </div>
         </div>
@@ -3473,7 +3415,6 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     activeCapabilityModelRoleOptions,
     activeCapabilityModelSourceKey,
     activeCapabilityRequestId,
-    capabilityEditorState,
     capabilityModelActiveDimension,
     capabilityModelActiveDimensionIndex,
     capabilityModelActiveItem,
@@ -3500,8 +3441,6 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     handleCapabilityModelUpdateItemField,
     handleCapabilityModelUpdateItemStringListField,
     handleSaveCapabilityModelPreview,
-    handleRestoreCapabilityModelPreview,
-    hasPendingSavedChange,
     openCapabilityModelInNewTab,
     selectCapabilityModelDimension,
     selectCapabilityModelItem,

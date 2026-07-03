@@ -99,7 +99,6 @@ import { getTopicAdminConfig } from './studyClub/adminTopicMapping';
 import {
   capabilityModelApi,
   createCapabilityModelRequestId,
-  getCapabilityModelEditSessionStorageKey,
   getCapabilityModelStoreEventName,
   readCapabilityModelEditSession,
   readCapabilityModelPreviewSession,
@@ -595,8 +594,6 @@ function TopicDetail({
   const [activeCapabilityPreviewSourceKey, setActiveCapabilityPreviewSourceKey] = useState(null);
   const [previewOverrideModelId, setPreviewOverrideModelId] = useState(null);
   const [capabilityPreviewCompactMode, setCapabilityPreviewCompactMode] = useState(false);
-  const [capabilityEditorState, setCapabilityEditorState] = useState(null);
-  const [hasPendingSavedChange, setHasPendingSavedChange] = useState(false);
   const [lastAppliedRevision, setLastAppliedRevision] = useState(null);
   const [knowledgeGraphSelection, setKnowledgeGraphSelection] = useState({ type: 'graph', id: null });
   const [knowledgeGraphExpandedStageIds, setKnowledgeGraphExpandedStageIds] = useState(new Set());
@@ -2381,9 +2378,7 @@ function TopicDetail({
       setActiveCapabilityPreviewSourceKey(sourceKey);
       setActiveCapabilityRequestId(nextRequestId);
       setCapabilityPreviewCompactMode(true);
-      setCapabilityEditorState('editing');
       setPreviewOverrideModelId(model.id);
-      setHasPendingSavedChange(false);
       writeCapabilityModelPreviewSession({
         sourceKey,
         requestId: nextRequestId,
@@ -2396,47 +2391,6 @@ function TopicDetail({
     window.open(targetUrl, '_blank', 'noopener,noreferrer');
   }, [lastAppliedRevision]);
 
-  const syncActiveCapabilityPreviewSession = useCallback(() => {
-    if (!activeCapabilityRequestId) {
-      setCapabilityEditorState(null);
-      setHasPendingSavedChange(false);
-      return null;
-    }
-    const session = readCapabilityModelEditSession(activeCapabilityRequestId);
-    const nextEditorState = session?.editorState || 'editing';
-    const baselineModelId = previewOverrideModelId
-      || previewCapabilityModelData?.model?.id
-      || previewItem?.capabilityModelId
-      || null;
-    const hasRevisionChange = Boolean(
-      session?.revision
-      && lastAppliedRevision
-      && session.revision !== lastAppliedRevision,
-    );
-    const hasModelSwitch = Boolean(
-      session?.currentModelId
-      && baselineModelId
-      && session.currentModelId !== baselineModelId,
-    );
-    const nextHasPending = nextEditorState === 'editing' && (hasRevisionChange || hasModelSwitch);
-    setCapabilityEditorState(nextEditorState);
-    setHasPendingSavedChange(nextHasPending);
-    return session;
-  }, [
-    activeCapabilityRequestId,
-    lastAppliedRevision,
-    previewCapabilityModelData?.model?.id,
-    previewItem?.capabilityModelId,
-    previewOverrideModelId,
-  ]);
-
-  const handleRestoreCapabilityModelPreview = useCallback(() => {
-    setActiveCapabilityRequestId(null);
-    setCapabilityPreviewCompactMode(false);
-    setCapabilityEditorState(null);
-    setHasPendingSavedChange(false);
-  }, []);
-
   const handleRefreshCapabilityModelPreview = useCallback(async () => {
     if (!activeCapabilityRequestId || !previewItem || previewItem.fileType !== 'capabilityModel') {
       message.warning('未检测到可同步的新内容');
@@ -2446,14 +2400,13 @@ function TopicDetail({
     try {
       const session = readCapabilityModelEditSession(activeCapabilityRequestId);
       if (!session?.currentModelId) {
-        setHasPendingSavedChange(false);
         message.warning('未检测到可同步的新内容');
         return;
       }
 
       if (session.revision && session.revision === lastAppliedRevision && previewOverrideModelId === session.currentModelId) {
-        setHasPendingSavedChange(false);
         message.info('当前预览已是最新内容');
+        setCapabilityPreviewCompactMode(false);
         return;
       }
 
@@ -2468,7 +2421,7 @@ function TopicDetail({
 
       setPreviewOverrideModelId(session.currentModelId);
       setLastAppliedRevision(session.revision || null);
-      setHasPendingSavedChange(false);
+      setCapabilityPreviewCompactMode(false);
       message.success('预览已同步到最新保存内容');
     } catch (error) {
       message.error(error?.message || '刷新能力模型预览失败');
@@ -2688,7 +2641,6 @@ function TopicDetail({
       });
       if (!resolved?.model) {
         setPreviewOverrideModelId(null);
-        setHasPendingSavedChange(false);
       }
     };
 
@@ -2715,23 +2667,16 @@ function TopicDetail({
       setActiveCapabilityRequestId(null);
       setPreviewOverrideModelId(null);
       setCapabilityPreviewCompactMode(false);
-      setCapabilityEditorState(null);
       setLastAppliedRevision(null);
-      setHasPendingSavedChange(false);
       return;
     }
 
     const session = readCapabilityModelPreviewSession(activeCapabilityModelSourceKeyValue);
-    const linkedEditSession = session?.requestId
-      ? readCapabilityModelEditSession(session.requestId)
-      : null;
     setActiveCapabilityPreviewSourceKey(activeCapabilityModelSourceKeyValue);
     setActiveCapabilityRequestId(session?.requestId || null);
     setPreviewOverrideModelId(session?.appliedModelId || null);
     setCapabilityPreviewCompactMode(Boolean(session?.compactMode));
-    setCapabilityEditorState(linkedEditSession?.editorState || (session?.requestId ? 'editing' : null));
     setLastAppliedRevision(session?.lastAppliedRevision || null);
-    setHasPendingSavedChange(false);
   }, [activeCapabilityModelSourceKeyValue]);
 
   useEffect(() => {
@@ -2754,40 +2699,6 @@ function TopicDetail({
     lastAppliedRevision,
     previewOverrideModelId,
   ]);
-
-  useEffect(() => {
-    if (!activeCapabilityRequestId) return undefined;
-    const frameId = window.requestAnimationFrame(() => {
-      syncActiveCapabilityPreviewSession();
-    });
-    return () => window.cancelAnimationFrame(frameId);
-  }, [activeCapabilityRequestId, syncActiveCapabilityPreviewSession]);
-
-  useEffect(() => {
-    if (!activeCapabilityRequestId) return undefined;
-
-    const storageKey = getCapabilityModelEditSessionStorageKey();
-    const handleStorage = (event) => {
-      if (event.storageArea !== window.localStorage || event.key !== storageKey) return;
-      syncActiveCapabilityPreviewSession();
-    };
-    const handleVisibilityChange = () => {
-      if (document.visibilityState !== 'visible') return;
-      syncActiveCapabilityPreviewSession();
-    };
-    const handleFocus = () => {
-      syncActiveCapabilityPreviewSession();
-    };
-
-    window.addEventListener('storage', handleStorage);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
-    return () => {
-      window.removeEventListener('storage', handleStorage);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, [activeCapabilityRequestId, syncActiveCapabilityPreviewSession]);
 
   const openAddResourceModal = (parentKey = currentListParentKey) => {
     if (!canEditDisplayedResources) {
@@ -4137,34 +4048,23 @@ function TopicDetail({
     const versionText = model
       ? `${getCapabilityModelVersionLabel(model)} · ${getCapabilityModelStatusMeta(model).label}`
       : null;
-    const sessionTipText = capabilityEditorState === 'ended'
-      ? '编辑已结束。'
-      : (hasPendingSavedChange
-        ? '有新内容可刷新。'
-        : '已在新页签编辑。');
 
     if (isCompactSession) {
       return (
         <div className="topic-preview-main topic-preview-main-compact">
-            <div className="topic-preview-main-content">
-              <div className="cap-model-preview-compact-shell">
-                <div className="cap-model-preview-compact-card">
-                  <div className="cap-model-preview-compact-kicker">编辑中</div>
-                  <div className="cap-model-preview-compact-title">{model?.name || previewItem.name || '能力模型'}</div>
-                {versionText ? <div className="cap-model-preview-compact-meta">{versionText}</div> : null}
-                <div className={`cap-model-preview-session-tip${hasPendingSavedChange ? ' is-pending' : ''}`}>
-                  <span>{sessionTipText}</span>
+          <div className="topic-preview-main-content">
+            <div className="cap-model-preview-compact-shell">
+              <div className="cap-model-preview-compact-card">
+                <div className="cap-model-preview-compact-kicker">编辑中</div>
+                <div className="cap-model-preview-compact-title">{model?.name || previewItem.name || '能力模型'}</div>
+                <div className="cap-model-preview-compact-note">
+                  已在新页签打开编辑，需要查看最新内容时再手动刷新。
+                </div>
+                <div className="cap-model-preview-compact-toolbar">
                   <Button size="small" icon={<ReloadOutlined />} onClick={handleRefreshCapabilityModelPreview}>
                     刷新预览
                   </Button>
                 </div>
-                {capabilityEditorState === 'ended' ? (
-                  <div className="cap-model-preview-compact-actions">
-                    <Button size="small" onClick={handleRestoreCapabilityModelPreview}>
-                      恢复预览
-                    </Button>
-                  </div>
-                ) : null}
               </div>
             </div>
           </div>
