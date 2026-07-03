@@ -2632,6 +2632,12 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     setNewFolderParentKey(null);
   };
 
+  const cancelNewFolderInline = useCallback(() => {
+    setNewFolderInline(false);
+    setNewFolderName('');
+    setNewFolderParentKey(null);
+  }, []);
+
   const cancelInlineRename = useCallback((itemKey = inlineRenameItemKey) => {
     clearPendingRenameTrigger();
     if (itemKey) {
@@ -2678,6 +2684,49 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
       inlineRenameInputRef.current?.select?.();
     }, 50);
   }, [clearPendingRenameTrigger, hideFolderHoverTip, viewMode]);
+
+  const renderInlineNameEditor = ({
+    inputRef,
+    value,
+    onChange,
+    onConfirm,
+    onCancel,
+    containerClassName,
+    shellClassName = '',
+    inputClassName = '',
+    style,
+  }) => (
+    <span
+      className={`${containerClassName} finder-inline-input-cell`}
+      style={style}
+      onClick={(event) => event.stopPropagation()}
+      onDoubleClick={(event) => event.stopPropagation()}
+    >
+      <span className={`finder-inline-input-shell ${shellClassName}`.trim()}>
+        <span className={`finder-inline-input-measure ${shellClassName}`.trim()} aria-hidden="true">
+          {value || ' '}
+          {'\u00A0'}
+        </span>
+        <Input
+          ref={inputRef}
+          className={`finder-inline-input ${inputClassName}`.trim()}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          onPressEnter={onConfirm}
+          onBlur={onConfirm}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') {
+              event.preventDefault();
+              onCancel?.();
+            }
+          }}
+          onClick={(event) => event.stopPropagation()}
+          onDoubleClick={(event) => event.stopPropagation()}
+          autoComplete="off"
+        />
+      </span>
+    </span>
+  );
 
   useEffect(() => () => {
     clearPendingRenameTrigger();
@@ -4403,20 +4452,16 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                           >
                             <span className="finder-column-item-icon">{renderFileIcon(item.fileType, { fontSize: 16 })}</span>
                             {isInlineRenaming ? (
-                              <Input
-                                ref={inlineRenameInputRef}
-                                className="finder-inline-input finder-column-item-name"
-                                value={inlineRenameName}
-                                onChange={(e) => setInlineRenameName(e.target.value)}
-                                onPressEnter={confirmInlineRename}
-                                onBlur={confirmInlineRename}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Escape') cancelInlineRename();
-                                }}
-                                onClick={(e) => e.stopPropagation()}
-                                onDoubleClick={(e) => e.stopPropagation()}
-                                size="small"
-                              />
+                              renderInlineNameEditor({
+                                inputRef: inlineRenameInputRef,
+                                value: inlineRenameName,
+                                onChange: setInlineRenameName,
+                                onConfirm: confirmInlineRename,
+                                onCancel: cancelInlineRename,
+                                containerClassName: 'finder-column-item-name',
+                                shellClassName: 'finder-column-inline-input-shell',
+                                inputClassName: 'finder-column-inline-input',
+                              })
                             ) : (
                               <span className="finder-column-item-name">{item.name}</span>
                             )}
@@ -4561,16 +4606,17 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                   {newFolderInline && (
                     <div className="finder-file-row finder-file-row-selected">
                       <span className="finder-file-icon"><FolderFilled style={{ fontSize: 18, color: '#4facfe' }} /></span>
-                      <Input
-                        ref={newFolderInputRef}
-                        className="finder-inline-input"
-                        value={newFolderName}
-                        onChange={(e) => setNewFolderName(e.target.value)}
-                        onPressEnter={confirmNewFolder}
-                        onBlur={confirmNewFolder}
-                        size="small"
-                        style={{ flex: 1 }}
-                      />
+                      {renderInlineNameEditor({
+                        inputRef: newFolderInputRef,
+                        value: newFolderName,
+                        onChange: setNewFolderName,
+                        onConfirm: confirmNewFolder,
+                        onCancel: cancelNewFolderInline,
+                        containerClassName: 'finder-file-name',
+                        shellClassName: 'finder-detail-inline-input-shell',
+                        inputClassName: 'finder-detail-inline-input',
+                        style: { flex: 1, minWidth: 0 },
+                      })}
                     </div>
                   )}
                   {currentChildren.length === 0 && !newFolderInline ? (
@@ -4583,6 +4629,11 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                   const depth = item._depth || 0;
                   const isExpanded = expandedFolders.has(item.key);
                   const rowMoreMenu = getItemMoreMenu(item, { includeFavorite: true });
+                  const detailNameCellStyle = viewMode === 'detail'
+                    ? (nameColResized
+                        ? { width: detailColWidths.name - 28 - 16 - depth * 16, flex: 'none' }
+                        : { flex: 1, minWidth: 0, marginRight: 0 })
+                    : undefined;
                   const rowContent = (
                     <div
                       ref={(node) => {
@@ -4651,23 +4702,21 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                       )}
                       <span className="finder-file-icon">{renderFileIcon(item.fileType, { fontSize: 18 })}</span>
                       {isInlineRenaming ? (
-                        <Input
-                          ref={inlineRenameInputRef}
-                          className="finder-inline-input finder-file-name"
-                          value={inlineRenameName}
-                          onChange={(e) => setInlineRenameName(e.target.value)}
-                          onPressEnter={confirmInlineRename}
-                          onBlur={confirmInlineRename}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Escape') cancelInlineRename();
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                          onDoubleClick={(e) => e.stopPropagation()}
-                          size="small"
-                          style={viewMode === 'detail' ? (nameColResized ? { width: detailColWidths.name - 28 - 16 - depth * 16, flex: 'none' } : { flex: 1, minWidth: 0, marginRight: 0 }) : { flex: 1 }}
-                        />
+                        renderInlineNameEditor({
+                          inputRef: inlineRenameInputRef,
+                          value: inlineRenameName,
+                          onChange: setInlineRenameName,
+                          onConfirm: confirmInlineRename,
+                          onCancel: cancelInlineRename,
+                          containerClassName: 'finder-file-name',
+                          shellClassName: 'finder-detail-inline-input-shell',
+                          inputClassName: 'finder-detail-inline-input',
+                          style: viewMode === 'detail'
+                            ? detailNameCellStyle
+                            : { flex: 1, minWidth: 0 },
+                        })
                       ) : (
-                        <span className="finder-file-name" style={viewMode === 'detail' ? (nameColResized ? { width: detailColWidths.name - 28 - 16 - depth * 16, flex: 'none' } : { flex: 1, minWidth: 0, marginRight: 0 }) : undefined}>{item.name}</span>
+                        <span className="finder-file-name" style={detailNameCellStyle}>{item.name}</span>
                       )}
                       {/* hover 显示的操作区：+ 和三个点 */}
                       {!isInlineRenaming && (

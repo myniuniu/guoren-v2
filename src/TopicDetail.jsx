@@ -184,6 +184,16 @@ function getDefaultTopicTabKey(sceneConfig) {
   return sceneConfig ? 'home' : 'knowledge';
 }
 
+function resolveDetailTabIcon(tab = {}) {
+  const haystack = `${tab?.key || ''} ${tab?.label || ''}`.toLowerCase();
+  if (/home|首页/.test(haystack)) return HomeOutlined;
+  if (/assessment|考核|评价/.test(haystack)) return CheckCircleOutlined;
+  if (/practice|练习|实训|实验/.test(haystack)) return AppstoreOutlined;
+  if (/ai|助教|智能/.test(haystack)) return ThunderboltOutlined;
+  if (/knowledge|resource|资料|课程|课件|知识|文档/.test(haystack)) return FileTextOutlined;
+  return null;
+}
+
 function isInteractiveResource(resource) {
   return ['activity', 'survey', 'vote', 'exam', 'register', 'training'].includes(resource?.type);
 }
@@ -1714,13 +1724,14 @@ function TopicDetail({
       return normalizedTabs.map((item, index) => ({
         key: item.key,
         label: item.label || item.key || `模式 ${index + 1}`,
+        icon: resolveDetailTabIcon(item),
       }));
     }
     return [
-      { key: 'knowledge', label: '知识模式' },
-      { key: 'ai', label: 'AI模式' },
-      { key: 'practice', label: '实训模式' },
-      { key: 'assessment', label: '考核配置模式' },
+      { key: 'knowledge', label: '知识模式', icon: resolveDetailTabIcon({ key: 'knowledge', label: '知识模式' }) },
+      { key: 'ai', label: 'AI模式', icon: resolveDetailTabIcon({ key: 'ai', label: 'AI模式' }) },
+      { key: 'practice', label: '实训模式', icon: resolveDetailTabIcon({ key: 'practice', label: '实训模式' }) },
+      { key: 'assessment', label: '考核配置模式', icon: resolveDetailTabIcon({ key: 'assessment', label: '考核配置模式' }) },
     ];
   }, [sceneConfig]);
   const hasHomeTab = tabs.some((tab) => tab.key === 'home');
@@ -2966,6 +2977,41 @@ function TopicDetail({
     setInlineRenameSurface(surface);
   };
 
+  const renderInlineRenameInput = (surface = 'list') => {
+    const isTreeSurface = surface === 'tree';
+    return (
+      <span
+        className={`topic-inline-input-shell ${isTreeSurface ? 'topic-tree-inline-input-shell' : 'topic-file-inline-input-shell'}`}
+        onClick={(event) => event.stopPropagation()}
+        onDoubleClick={(event) => event.stopPropagation()}
+      >
+        <span
+          className={`topic-inline-input-measure ${isTreeSurface ? 'topic-tree-inline-input-measure' : 'topic-file-inline-input-measure'}`}
+          aria-hidden="true"
+        >
+          {inlineRenameName || ' '}
+        </span>
+        <Input
+          ref={inlineRenameInputRef}
+          className={`topic-inline-input ${isTreeSurface ? 'topic-tree-inline-input' : 'topic-file-inline-input'}`}
+          value={inlineRenameName}
+          onChange={(event) => setInlineRenameName(event.target.value)}
+          onPressEnter={confirmInlineRename}
+          onBlur={confirmInlineRename}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') {
+              event.preventDefault();
+              cancelInlineRename();
+            }
+          }}
+          onClick={(event) => event.stopPropagation()}
+          onDoubleClick={(event) => event.stopPropagation()}
+          autoComplete="off"
+        />
+      </span>
+    );
+  };
+
   const queueInlineRename = (item, surface = 'list', delay = 220) => {
     if (!item?.key || !canEditDisplayedResources) return;
     clearPendingRenameTrigger();
@@ -3492,7 +3538,7 @@ function TopicDetail({
           >
             <div
               ref={(node) => setProjectItemNode(item.key, node)}
-              className={`project-item project-item-folder ${isSelected ? 'project-item-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''} ${isDragOverFolder ? 'project-item-dragover' : ''} ${isDragging ? 'project-item-dragging' : ''} ${treeDropPosition === 'before' ? 'project-item-drop-before' : ''} ${treeDropPosition === 'after' ? 'project-item-drop-after' : ''}`}
+              className={`project-item project-item-folder ${isInlineRenaming ? 'project-item-inline-renaming' : ''} ${isSelected ? 'project-item-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''} ${isDragOverFolder ? 'project-item-dragover' : ''} ${isDragging ? 'project-item-dragging' : ''} ${treeDropPosition === 'before' ? 'project-item-drop-before' : ''} ${treeDropPosition === 'after' ? 'project-item-drop-after' : ''}`}
               draggable={!isInlineRenaming && canEditDisplayedResources}
               onDragStart={(event) => startResourceDrag(event, item)}
               onDragEnd={finishResourceDrag}
@@ -3520,22 +3566,7 @@ function TopicDetail({
                   color: 'inherit',
                 })}
               </span>
-              {isInlineRenaming ? (
-                <Input
-                  ref={inlineRenameInputRef}
-                  className="topic-inline-input topic-tree-inline-input"
-                  value={inlineRenameName}
-                  onChange={(event) => setInlineRenameName(event.target.value)}
-                  onPressEnter={confirmInlineRename}
-                  onBlur={confirmInlineRename}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Escape') cancelInlineRename();
-                  }}
-                  onClick={(event) => event.stopPropagation()}
-                  onDoubleClick={(event) => event.stopPropagation()}
-                  size="small"
-                />
-              ) : (
+              {isInlineRenaming ? renderInlineRenameInput('tree') : (
                 <span className="project-item-title">{item.name}</span>
               )}
               {!isInlineRenaming ? renderResourceTagDots(item) : null}
@@ -3590,7 +3621,7 @@ function TopicDetail({
       >
         <div
           ref={(node) => setProjectItemNode(item.key, node)}
-          className={`project-item project-item-child ${isSelected ? 'project-item-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''} ${isDragging ? 'project-item-dragging' : ''} ${treeDropPosition === 'before' ? 'project-item-drop-before' : ''} ${treeDropPosition === 'after' ? 'project-item-drop-after' : ''}`}
+          className={`project-item project-item-child ${isInlineRenaming ? 'project-item-inline-renaming' : ''} ${isSelected ? 'project-item-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''} ${isDragging ? 'project-item-dragging' : ''} ${treeDropPosition === 'before' ? 'project-item-drop-before' : ''} ${treeDropPosition === 'after' ? 'project-item-drop-after' : ''}`}
           draggable={!isInlineRenaming && canEditDisplayedResources}
           onDragStart={(event) => startResourceDrag(event, item)}
           onDragEnd={finishResourceDrag}
@@ -3603,22 +3634,7 @@ function TopicDetail({
           }}
         >
           <span className="project-item-icon">{getResourceIcon(item)}</span>
-          {isInlineRenaming ? (
-            <Input
-              ref={inlineRenameInputRef}
-              className="topic-inline-input topic-tree-inline-input"
-              value={inlineRenameName}
-              onChange={(event) => setInlineRenameName(event.target.value)}
-              onPressEnter={confirmInlineRename}
-              onBlur={confirmInlineRename}
-              onKeyDown={(event) => {
-                if (event.key === 'Escape') cancelInlineRename();
-              }}
-              onClick={(event) => event.stopPropagation()}
-              onDoubleClick={(event) => event.stopPropagation()}
-              size="small"
-            />
-          ) : (
+          {isInlineRenaming ? renderInlineRenameInput('tree') : (
             <span className="project-item-title">{item.name}</span>
           )}
           {!isInlineRenaming ? renderResourceTagDots(item) : null}
@@ -3682,7 +3698,7 @@ function TopicDetail({
             handleListItemDoubleClick(item);
           }}
         >
-          <div className="topic-file-col topic-file-col-name">
+          <div className={`topic-file-col topic-file-col-name ${isInlineRenaming ? 'topic-file-col-name-inline-renaming' : ''}`}>
             <span className="topic-file-icon">
               {item.isFolder
                 ? renderFolderTypeIcon(item, {
@@ -3691,22 +3707,7 @@ function TopicDetail({
                   })
                 : getResourceIcon(item)}
             </span>
-            {isInlineRenaming ? (
-              <Input
-                ref={inlineRenameInputRef}
-                className="topic-inline-input topic-file-inline-input"
-                value={inlineRenameName}
-                onChange={(event) => setInlineRenameName(event.target.value)}
-                onPressEnter={confirmInlineRename}
-                onBlur={confirmInlineRename}
-                onKeyDown={(event) => {
-                  if (event.key === 'Escape') cancelInlineRename();
-                }}
-                onClick={(event) => event.stopPropagation()}
-                onDoubleClick={(event) => event.stopPropagation()}
-                size="small"
-              />
-            ) : (
+            {isInlineRenaming ? renderInlineRenameInput('list') : (
               <span className={`topic-file-name ${item.isFolder ? 'topic-file-name-folder' : ''}`}>{item.name}</span>
             )}
             {!isInlineRenaming ? (
@@ -4687,16 +4688,24 @@ function TopicDetail({
                 }}
               />
             ) : null}
-            {tabs.map((tab) => (
-              <div
-                key={tab.key}
-                ref={(node) => setDetailTabRef(tab.key, node)}
-                className={`detail-tab ${activeTab === tab.key ? 'detail-tab-active' : ''} ${tabs.length === 1 ? 'detail-tab-single' : ''}`}
-                onClick={() => handleSelectTab(tab.key)}
-              >
-                {tab.label}
-              </div>
-            ))}
+            {tabs.map((tab) => {
+              const TabIcon = tab.icon;
+              return (
+                <div
+                  key={tab.key}
+                  ref={(node) => setDetailTabRef(tab.key, node)}
+                  className={`detail-tab ${activeTab === tab.key ? 'detail-tab-active' : ''} ${tabs.length === 1 ? 'detail-tab-single' : ''}`}
+                  onClick={() => handleSelectTab(tab.key)}
+                >
+                  {TabIcon ? (
+                    <span className="detail-tab-icon" aria-hidden="true">
+                      <TabIcon />
+                    </span>
+                  ) : null}
+                  <span className="detail-tab-label">{tab.label}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
         <div className="detail-header-right">

@@ -3233,35 +3233,94 @@
 }
 
 /* ====== Inline New Folder ====== */
+.finder-inline-input-cell {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.finder-inline-input-shell {
+  --finder-inline-height: 36px;
+  --finder-inline-padding-x: 13px;
+  --finder-inline-font-size: 13px;
+  position: relative;
+  display: inline-grid;
+  align-items: center;
+  flex: 0 1 auto;
+  min-width: 52px;
+  max-width: 100%;
+  min-height: var(--finder-inline-height);
+  overflow: hidden;
+  vertical-align: middle;
+}
+
+.finder-inline-input-shell > * {
+  grid-area: 1 / 1;
+}
+
+.finder-inline-input-measure {
+  min-width: 0;
+  max-width: 100%;
+  height: var(--finder-inline-height);
+  padding: 0 var(--finder-inline-padding-x);
+  border: 1px solid transparent;
+  box-sizing: border-box;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+  white-space: pre;
+  font-size: var(--finder-inline-font-size);
+  font-weight: 500;
+  line-height: calc(var(--finder-inline-height) - 2px);
+}
+
+.finder-column-inline-input-shell,
+.finder-column-inline-input {
+  --finder-inline-height: 32px;
+}
+
 .finder-inline-input {
-  border-radius: 4px !important;
-  font-size: 12px !important;
+  width: 100% !important;
+  min-width: 0;
+  max-width: 100%;
+  height: var(--finder-inline-height) !important;
+  min-height: var(--finder-inline-height) !important;
+  padding: 0 var(--finder-inline-padding-x) !important;
+  border-radius: 11px !important;
+  border-color: rgba(206, 215, 228, 0.86) !important;
+  font-size: var(--finder-inline-font-size) !important;
+  font-weight: 500 !important;
   color: #1d1d1f !important;
-  background: #fff !important;
+  background: rgba(255, 255, 255, 0.98) !important;
   caret-color: #1d1d1f;
-  height: 24px !important;
-  min-height: 24px !important;
-  line-height: 22px !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  padding-left: 8px !important;
-  padding-right: 8px !important;
+  line-height: calc(var(--finder-inline-height) - 2px) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 2px rgba(15, 23, 42, 0.05);
   box-sizing: border-box;
 }
 
 .finder-inline-input.ant-input,
 .finder-inline-input .ant-input {
-  font-size: 12px;
+  font-size: var(--finder-inline-font-size);
+  font-weight: 500;
   color: #1d1d1f !important;
-  background: #fff !important;
-  height: 24px !important;
-  min-height: 24px !important;
-  line-height: 22px !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  padding-left: 8px !important;
-  padding-right: 8px !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  height: var(--finder-inline-height) !important;
+  min-height: var(--finder-inline-height) !important;
+  line-height: calc(var(--finder-inline-height) - 2px) !important;
+  padding: 0 var(--finder-inline-padding-x) !important;
   box-sizing: border-box;
+}
+
+.finder-inline-input:hover,
+.finder-inline-input:focus,
+.finder-inline-input.ant-input:focus {
+  border-color: rgba(56, 132, 255, 0.82) !important;
+  box-shadow:
+    0 0 0 3px rgba(56, 132, 255, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.94) !important;
 }
 
 .finder-inline-input::placeholder,
