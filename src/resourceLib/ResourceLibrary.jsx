@@ -334,7 +334,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
   const [columnSelectedItem, setColumnSelectedItem] = useState(null); // 分栏视图中选中的文件
   const pendingCapabilityModelEditKeyRef = useRef(null);
   // 侧栏宽度拖拽
-  const [sidebarWidth, setSidebarWidth] = useState(200);
+  const [sidebarWidth, setSidebarWidth] = useState(216);
   const sidebarDragRef = useRef(null);
   // 预览面板宽度拖拽
   const [previewWidth, setPreviewWidth] = useState(560);
@@ -373,7 +373,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     const onMouseMove = (ev) => {
       if (!sidebarDragRef.current) return;
       const delta = ev.clientX - sidebarDragRef.current.startX;
-      const newWidth = Math.max(140, Math.min(400, sidebarDragRef.current.startWidth + delta));
+      const newWidth = Math.max(180, Math.min(400, sidebarDragRef.current.startWidth + delta));
       setSidebarWidth(newWidth);
     };
     const onMouseUp = () => {
@@ -3893,7 +3893,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
           onDrop={handleFavDrop}
         >
           <div
-            className={`finder-sidebar-item ${specialView === 'all' && !selectedFolderKey && !activeTagFilter && !hasActiveSearch ? 'finder-sidebar-item-active' : ''}`}
+            className={`finder-sidebar-item finder-sidebar-item-with-actions ${specialView === 'all' && !selectedFolderKey && !activeTagFilter && !hasActiveSearch ? 'finder-sidebar-item-active' : ''}`}
             onClick={() => { navigateTo(null); }}
           >
             <span className="finder-sidebar-item-icon" style={{ color: '#007aff' }}><DesktopOutlined /></span>
