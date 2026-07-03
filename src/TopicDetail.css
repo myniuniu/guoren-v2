@@ -1219,13 +1219,13 @@
 }
 
 .topic-sidebar-resize-handle {
-  width: 8px;
+  width: 10px;
   cursor: col-resize;
   flex-shrink: 0;
   position: relative;
   z-index: 2;
-  margin-left: -4px;
-  margin-right: -4px;
+  margin-left: -5px;
+  margin-right: -5px;
   border-radius: 999px;
   transition: background 0.18s ease;
 }
@@ -1236,23 +1236,22 @@
   top: 0;
   bottom: 0;
   left: 50%;
-  width: 10px;
+  width: 14px;
   transform: translateX(-50%);
-  border-radius: 999px;
-  background: linear-gradient(90deg, rgba(148, 163, 184, 0) 0%, rgba(148, 163, 184, 0.08) 50%, rgba(148, 163, 184, 0) 100%);
-  opacity: 0.28;
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0) 0%, rgba(100, 116, 139, 0.1) 50%, rgba(148, 163, 184, 0) 100%);
+  opacity: 0.22;
   pointer-events: none;
   transition: opacity 0.18s ease;
 }
 
 .topic-sidebar-resize-handle:hover,
 .topic-sidebar-resize-handle:active {
-  background: rgba(148, 163, 184, 0.05);
+  background: rgba(148, 163, 184, 0.08);
 }
 
 .topic-sidebar-resize-handle:hover::before,
 .topic-sidebar-resize-handle:active::before {
-  opacity: 0.42;
+  opacity: 0.36;
 }
 
 /* ====== Left Panel ====== */
@@ -2385,7 +2384,9 @@
   border: none;
   border-radius: 0;
   background: var(--td-panel-bg);
-  box-shadow: none;
+  box-shadow:
+    inset 1px 0 0 rgba(228, 230, 233, 0.64),
+    -14px 0 24px rgba(15, 23, 42, 0.03);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }

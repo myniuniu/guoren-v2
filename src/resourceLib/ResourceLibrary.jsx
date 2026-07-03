@@ -3522,10 +3522,15 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     setAddDialogOpen(true);
   };
 
-  const renderDirectoryPreviewBlock = (itemCount, onAdd, summaryText = `文件夹包含 ${itemCount} 个项目`) => (
-    <div className="finder-preview-folder-grid">
-      <FolderFilled className="finder-preview-folder-icon" />
-      <div className="finder-preview-folder-hint">{summaryText}</div>
+  const renderPreviewActionButtons = (onCreateFolder, onAdd) => (
+    <div className="finder-preview-folder-actions">
+      <Button
+        className="finder-preview-folder-create-btn"
+        icon={<FolderAddOutlined />}
+        onClick={onCreateFolder}
+      >
+        新建文件夹
+      </Button>
       <Button
         className="finder-preview-folder-add-btn"
         icon={<PlusOutlined />}
@@ -3536,6 +3541,19 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     </div>
   );
 
+  const renderDirectoryPreviewBlock = (
+    itemCount,
+    onAdd,
+    summaryText = `文件夹包含 ${itemCount} 个项目`,
+    onCreateFolder = handleCreateFolderAtCurrentLocation,
+  ) => (
+    <div className="finder-preview-folder-grid">
+      <FolderFilled className="finder-preview-folder-icon" />
+      <div className="finder-preview-folder-hint">{summaryText}</div>
+      {renderPreviewActionButtons(onCreateFolder, onAdd)}
+    </div>
+  );
+
   const renderFolderPreviewBlock = (item, itemCount) => renderDirectoryPreviewBlock(
     itemCount,
     () => {
@@ -3543,6 +3561,12 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
       setAddDialogOpen(true);
     },
     `文件夹包含 ${itemCount} 个项目`,
+    () => {
+      createFolderAndStartRename(item.key, {
+        revealParentKey: viewMode === 'detail' ? item.key : null,
+        columnPathToOpen: viewMode === 'column' ? [...columnPath, item.key] : null,
+      });
+    },
   );
 
   const renderPreviewEmptyState = () => (
@@ -3551,16 +3575,13 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
         renderDirectoryPreviewBlock(
           currentDirectoryPreviewItemCount,
           handleAddResourceAtCurrentLocation,
-          `当前目录包含 ${currentDirectoryPreviewItemCount} 个项目`,
+          currentDirectoryPreviewItemCount === 0
+            ? '当前目录为空'
+            : `当前目录包含 ${currentDirectoryPreviewItemCount} 个项目`,
+          handleCreateFolderAtCurrentLocation,
         )
       ) : (
-        <Button
-          className="finder-preview-empty-add-btn"
-          icon={<PlusOutlined />}
-          onClick={handleAddResourceAtCurrentLocation}
-        >
-          添加资料
-        </Button>
+        renderPreviewActionButtons(handleCreateFolderAtCurrentLocation, handleAddResourceAtCurrentLocation)
       )}
     </div>
   );
