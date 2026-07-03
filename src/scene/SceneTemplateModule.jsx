@@ -77,12 +77,14 @@ import {
 } from './themeCovers';
 import {
   SCENE_FOLDER_ICON_OPTIONS,
+  SCENE_MODE_ICON_OPTIONS,
   SCENE_TOOL_ICON_OPTIONS,
   getSceneIconLabel,
   getSceneIconMeta,
   hasUploadedSceneIcon,
   renderSceneConfigIcon,
   resolveSceneFolderIconKey,
+  resolveSceneModeTabIconKey,
   resolveSceneToolIconKey,
 } from './iconCatalog.jsx';
 import '../system/SystemModule.css';
@@ -438,6 +440,8 @@ const TOOL_ICON_PICKER_OPTIONS = SCENE_TOOL_ICON_OPTIONS;
 
 const FOLDER_ICON_PICKER_OPTIONS = SCENE_FOLDER_ICON_OPTIONS;
 
+const MODE_ICON_PICKER_OPTIONS = SCENE_MODE_ICON_OPTIONS;
+
 const ALLOWED_TOOL_SELECT_OPTIONS = [
   { value: UNLIMITED_TOOL_VALUE, label: '不限' },
   ...TOOL_OPTIONS,
@@ -709,7 +713,11 @@ function SceneTemplatePreview({ template, sceneCount }) {
               <span className="scene-template-preview-order-index">{index + 1}</span>
               <div className="scene-template-preview-order-copy">
                 <div className="scene-template-preview-order-head">
-                  <strong>{mode.label || mode.key || `模式 ${index + 1}`}</strong>
+                  <SceneTemplateIconLabel
+                    iconKey={mode.iconKey || resolveSceneModeTabIconKey(mode)}
+                    label={mode.label || mode.key || `模式 ${index + 1}`}
+                    config={mode}
+                  />
                   <Tag color={mode.enabled !== false ? 'blue' : 'default'}>
                     {mode.enabled !== false ? '已启用' : '未启用'}
                   </Tag>
@@ -825,7 +833,11 @@ function SceneTemplatePreview({ template, sceneCount }) {
                   {(template.topicPage?.modeTabs || []).map((mode) => (
                     <div key={mode.id || mode.key} className="scene-template-mode-card">
                       <div className="scene-template-list-card-head">
-                        <strong>{mode.label || mode.key}</strong>
+                        <SceneTemplateIconLabel
+                          iconKey={mode.iconKey || resolveSceneModeTabIconKey(mode)}
+                          label={mode.label || mode.key}
+                          config={mode}
+                        />
                         <Tag color={mode.enabled !== false ? 'blue' : 'default'}>
                           {mode.enabled !== false ? '已启用' : '未启用'}
                         </Tag>
@@ -833,6 +845,15 @@ function SceneTemplatePreview({ template, sceneCount }) {
                       <div className="scene-template-form-grid">
                         <SceneTemplateStaticField label="模式标识" value={mode.key} />
                         <SceneTemplateStaticField label="页签名称" value={mode.label} />
+                        <SceneTemplateStaticField label="模式图标">
+                          <SceneTemplateIconLabel
+                            iconKey={mode.iconKey || resolveSceneModeTabIconKey(mode)}
+                            label={mode.iconSource === 'UPLOAD' || mode.iconImage
+                              ? '已上传自定义图标'
+                              : getSceneIconLabel(mode.iconKey || resolveSceneModeTabIconKey(mode))}
+                            config={mode}
+                          />
+                        </SceneTemplateStaticField>
                         {mode.key === 'home' ? (
                           <SceneTemplateStaticField
                             label="首页组件"
@@ -1358,6 +1379,15 @@ export default function SceneTemplateModule() {
     if (!drawerOpen || !editingTemplate) return;
     templateForm.setFieldsValue({
       ...editingTemplate,
+      topicPage: {
+        ...(editingTemplate.topicPage || {}),
+        modeTabs: (editingTemplate.topicPage?.modeTabs || []).map((mode) => ({
+          ...mode,
+          iconSource: mode?.iconSource === 'UPLOAD' || mode?.iconImage ? 'UPLOAD' : 'PRESET',
+          iconKey: mode?.iconKey || resolveSceneModeTabIconKey(mode),
+          iconImage: mode?.iconImage || '',
+        })),
+      },
       toolConfigs: (editingTemplate.toolConfigs || []).map((tool) => ({
         ...tool,
         iconSource: tool?.iconSource === 'UPLOAD' || tool?.iconImage ? 'UPLOAD' : 'PRESET',
@@ -1534,6 +1564,15 @@ export default function SceneTemplateModule() {
     templateForm.setFieldValue(['topicPage', 'modeTabs'], currentModeTabs);
   }
 
+  function handleModeTabChange(index, patch) {
+    const currentModeTabs = [...(templateForm.getFieldValue(['topicPage', 'modeTabs']) || [])];
+    currentModeTabs[index] = {
+      ...(currentModeTabs[index] || {}),
+      ...patch,
+    };
+    templateForm.setFieldValue(['topicPage', 'modeTabs'], currentModeTabs);
+  }
+
   function handleSelectThemeCoverPreset(presetId) {
     const preset = getSceneThemeCoverPreset(presetId);
     if (!preset) return;
@@ -1633,6 +1672,24 @@ export default function SceneTemplateModule() {
       message.success('目录图标已更新');
     } catch (error) {
       message.error(getErrorMessage(error, '目录图标上传失败'));
+    }
+    return Upload.LIST_IGNORE;
+  }
+
+  async function handleModeTabIconUpload(index, file) {
+    if (!file.type?.startsWith('image/')) {
+      message.error('请上传图片格式的模式图标');
+      return Upload.LIST_IGNORE;
+    }
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      handleModeTabChange(index, {
+        iconSource: 'UPLOAD',
+        iconImage: dataUrl,
+      });
+      message.success('模式图标已更新');
+    } catch (error) {
+      message.error(getErrorMessage(error, '模式图标上传失败'));
     }
     return Upload.LIST_IGNORE;
   }
@@ -2157,7 +2214,11 @@ export default function SceneTemplateModule() {
                             <Input />
                           </Form.Item>
                           <div className="scene-template-list-card-head">
-                            <strong>{modeLabel}</strong>
+                            <SceneTemplateIconLabel
+                              iconKey={mode.iconKey || resolveSceneModeTabIconKey(mode)}
+                              label={modeLabel}
+                              config={mode}
+                            />
                             <div className="scene-template-mode-head-actions">
                               <div className="scene-template-mode-sort-actions">
                                 <Button
@@ -2195,6 +2256,20 @@ export default function SceneTemplateModule() {
                             >
                               <Input placeholder={modeLabel} />
                             </Form.Item>
+                            <Form.Item label="模式图标">
+                              <SceneTemplateIconConfigurator
+                                value={mode}
+                                defaultIconKey={mode.iconKey || resolveSceneModeTabIconKey(mode)}
+                                iconOptions={MODE_ICON_PICKER_OPTIONS}
+                                title="选择模式图标"
+                                onPresetChange={(nextIconKey) => handleModeTabChange(index, {
+                                  iconSource: 'PRESET',
+                                  iconKey: nextIconKey,
+                                  iconImage: '',
+                                })}
+                                onUpload={(file) => handleModeTabIconUpload(index, file)}
+                              />
+                            </Form.Item>
                             {mode.key === 'home' ? (
                               <Form.Item
                                 label="首页组件"
@@ -2228,6 +2303,15 @@ export default function SceneTemplateModule() {
                                 </Form.Item>
                               </>
                             )}
+                            <Form.Item name={['topicPage', 'modeTabs', index, 'iconSource']} hidden>
+                              <Input />
+                            </Form.Item>
+                            <Form.Item name={['topicPage', 'modeTabs', index, 'iconKey']} hidden>
+                              <Input />
+                            </Form.Item>
+                            <Form.Item name={['topicPage', 'modeTabs', index, 'iconImage']} hidden>
+                              <Input />
+                            </Form.Item>
                           </div>
                         </div>
                         );

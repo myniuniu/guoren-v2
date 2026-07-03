@@ -821,11 +821,15 @@ function normalizeHomeComponentValue(value, sceneType = 'CUSTOM', homepageTempla
 }
 
 function normalizeModeTab(modeTab, preset, index, sceneType = 'CUSTOM', homepageTemplateName = '') {
+  const iconSource = normalizeIconSource(modeTab?.iconSource, modeTab?.iconImage);
   return {
     id: modeTab?.id || `mode_${preset.value}_${index + 1}`,
     key: preset.value,
     label: trimToNull(modeTab?.label) || getModeTabDefaultLabel(preset.value) || preset.label || `模式${index + 1}`,
     enabled: modeTab?.enabled !== false,
+    iconSource,
+    iconKey: trimToNull(modeTab?.iconKey) || '',
+    iconImage: iconSource === 'UPLOAD' ? (trimToNull(modeTab?.iconImage) || '') : '',
     resourcePanelTitle: trimToNull(modeTab?.resourcePanelTitle) || '',
     addResourceLabel: trimToNull(modeTab?.addResourceLabel) || '',
     appLabel: trimToNull(modeTab?.appLabel) || '',

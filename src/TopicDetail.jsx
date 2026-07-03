@@ -69,6 +69,7 @@ import {
   getSceneIconMeta,
   renderSceneConfigIcon,
   resolveSceneFolderIconKey,
+  resolveSceneModeTabIconKey,
 } from './scene/iconCatalog.jsx';
 import {
   addResource,
@@ -185,13 +186,11 @@ function getDefaultTopicTabKey(sceneConfig) {
 }
 
 function resolveDetailTabIcon(tab = {}) {
-  const haystack = `${tab?.key || ''} ${tab?.label || ''}`.toLowerCase();
-  if (/home|首页/.test(haystack)) return HomeOutlined;
-  if (/assessment|考核|评价/.test(haystack)) return CheckCircleOutlined;
-  if (/practice|练习|实训|实验/.test(haystack)) return AppstoreOutlined;
-  if (/ai|助教|智能/.test(haystack)) return ThunderboltOutlined;
-  if (/knowledge|resource|资料|课程|课件|知识|文档/.test(haystack)) return FileTextOutlined;
-  return null;
+  return renderSceneConfigIcon(tab, {
+    size: 16,
+    radius: 6,
+    defaultIconKey: resolveSceneModeTabIconKey(tab),
+  });
 }
 
 function isInteractiveResource(resource) {
@@ -4689,7 +4688,6 @@ function TopicDetail({
               />
             ) : null}
             {tabs.map((tab) => {
-              const TabIcon = tab.icon;
               return (
                 <div
                   key={tab.key}
@@ -4697,9 +4695,9 @@ function TopicDetail({
                   className={`detail-tab ${activeTab === tab.key ? 'detail-tab-active' : ''} ${tabs.length === 1 ? 'detail-tab-single' : ''}`}
                   onClick={() => handleSelectTab(tab.key)}
                 >
-                  {TabIcon ? (
+                  {tab.icon ? (
                     <span className="detail-tab-icon" aria-hidden="true">
-                      <TabIcon />
+                      {tab.icon}
                     </span>
                   ) : null}
                   <span className="detail-tab-label">{tab.label}</span>

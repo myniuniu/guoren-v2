@@ -11,10 +11,12 @@ import {
   FolderFilled,
   FolderOpenFilled,
   GlobalOutlined,
+  HomeOutlined,
   NodeIndexOutlined,
   PlayCircleOutlined,
   RocketOutlined,
   TagsOutlined,
+  ThunderboltOutlined,
   UserOutlined,
 } from '@ant-design/icons';
 
@@ -28,11 +30,25 @@ const SCENE_ICON_META_LIST = [
     background: '#eaf4ff',
   },
   {
+    value: 'HOME',
+    label: '首页',
+    Icon: HomeOutlined,
+    color: '#2563eb',
+    background: '#ebf3ff',
+  },
+  {
     value: 'DOCUMENT',
     label: '文档',
     Icon: FileTextOutlined,
     color: '#1677ff',
     background: '#eaf3ff',
+  },
+  {
+    value: 'AI',
+    label: 'AI',
+    Icon: ThunderboltOutlined,
+    color: '#7c3aed',
+    background: '#f2ebff',
   },
   {
     value: 'WHITEBOARD',
@@ -171,6 +187,24 @@ export const SCENE_FOLDER_ICON_OPTIONS = [
   'GRID',
 ].map((value) => SCENE_ICON_META_MAP.get(value));
 
+export const SCENE_MODE_ICON_OPTIONS = [
+  'HOME',
+  'DOCUMENT',
+  'GRAPH',
+  'AI',
+  'EXAM',
+  'TASK',
+  'CHAT',
+  'LIVE',
+  'USER',
+  'LIBRARY',
+  'VIDEO',
+  'ROCKET',
+  'LINK',
+  'TAG',
+  'GRID',
+].map((value) => SCENE_ICON_META_MAP.get(value));
+
 function normalizeText(value) {
   return String(value || '').trim().toLowerCase();
 }
@@ -226,6 +260,21 @@ export function inferSceneFolderIconKey(folder = {}) {
   return 'FOLDER';
 }
 
+export function inferSceneModeTabIconKey(modeTab = {}) {
+  const text = `${modeTab?.key || ''} ${modeTab?.label || ''} ${modeTab?.resourcePanelTitle || ''}`.toLowerCase();
+  if (/home|首页/.test(text)) return 'HOME';
+  if (/ai|智能|助教/.test(text)) return 'AI';
+  if (/assessment|考核|评价|评阅/.test(text)) return 'EXAM';
+  if (/practice|train|task|实训|任务|练习|实验|作业/.test(text)) return 'TASK';
+  if (/knowledge|graph|resource|资料|课程|课件|知识|图谱|文档/.test(text)) {
+    return /graph|图谱/.test(text) ? 'GRAPH' : 'DOCUMENT';
+  }
+  if (/app|应用/.test(text)) return 'GRID';
+  if (/member|user|role|成员|学员/.test(text)) return 'USER';
+  if (/live|meeting|直播|会议/.test(text)) return 'LIVE';
+  return 'DOCUMENT';
+}
+
 export function resolveSceneToolIconKey(tool = {}) {
   const normalized = normalizeText(tool?.iconKey);
   if (normalized && SCENE_ICON_META_MAP.has(tool.iconKey)) {
@@ -240,6 +289,14 @@ export function resolveSceneFolderIconKey(folder = {}) {
     return folder.iconKey;
   }
   return inferSceneFolderIconKey(folder);
+}
+
+export function resolveSceneModeTabIconKey(modeTab = {}) {
+  const normalized = normalizeText(modeTab?.iconKey);
+  if (normalized && SCENE_ICON_META_MAP.has(modeTab.iconKey)) {
+    return modeTab.iconKey;
+  }
+  return inferSceneModeTabIconKey(modeTab);
 }
 
 export function renderSceneConfigIcon(iconKey, options = {}) {
