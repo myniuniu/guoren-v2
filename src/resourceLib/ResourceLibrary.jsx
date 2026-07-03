@@ -4631,7 +4631,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                   const rowMoreMenu = getItemMoreMenu(item, { includeFavorite: true });
                   const detailNameCellStyle = viewMode === 'detail'
                     ? (nameColResized
-                        ? { width: detailColWidths.name - 28 - 16 - depth * 16, flex: 'none' }
+                        ? { width: Math.max(72, detailColWidths.name - 28 - 16 - depth * 16), flex: 'none' }
                         : { flex: 1, minWidth: 0, marginRight: 0 })
                     : undefined;
                   const rowContent = (
