@@ -5507,17 +5507,27 @@ function TopicDetail({
       >
         <div className="topic-knowledge-picker">
           <div className="topic-knowledge-picker-toolbar">
-            <Segmented
-              size="small"
-              className="topic-knowledge-picker-scope"
-              value={knowledgeGraphPickerScope}
-              onChange={setKnowledgeGraphPickerScope}
-              options={[
+            <div className="topic-knowledge-picker-scope" role="tablist" aria-label="知识图谱范围">
+              {[
                 { label: '全部', value: 'all' },
                 { label: '个人库', value: 'personal' },
                 { label: '组织库', value: 'organization' },
-              ]}
-            />
+              ].map((option) => {
+                const isActive = knowledgeGraphPickerScope === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    className={`topic-knowledge-picker-scope-btn ${isActive ? 'is-active' : ''}`}
+                    onClick={() => setKnowledgeGraphPickerScope(option.value)}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
             <Input
               allowClear
               className="topic-knowledge-picker-search"
@@ -5545,9 +5555,6 @@ function TopicDetail({
                       <strong>{item.name}</strong>
                     </span>
                     <span className="topic-knowledge-picker-item-path">{item.displayPath}</span>
-                    {item.contentText ? (
-                      <span className="topic-knowledge-picker-item-desc">{item.contentText}</span>
-                    ) : null}
                   </span>
                   <span className="topic-knowledge-picker-item-indicator" aria-hidden="true">
                     <CheckCircleOutlined />

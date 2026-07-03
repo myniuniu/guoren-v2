@@ -1318,6 +1318,10 @@ function migrate(old) {
   }
   next.organizations = ensureOrganizationCapabilityModelLibrary(next.organizations);
   next.organizations = ensureOrganizationKnowledgeGraphLibrary(next.organizations);
+  const visibleOrganizations = getVisibleOrganizationsFromList(next.organizationsMeta || DEFAULT_ORGS);
+  if (!visibleOrganizations.some((item) => item.id === next.currentOrgId)) {
+    next.currentOrgId = getPreferredOrganizationId(visibleOrganizations);
+  }
   // 标签定义迁移：拆分为个人标签、组织标签与组织标签组
   next.tagDefinitions = getScopedTagDefinitionState({ ...next, tagDefinitions: old.tagDefinitions });
   next.personal = stripInheritedTagsFromPersonalDemoFolders(next.personal);
