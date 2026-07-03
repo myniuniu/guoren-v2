@@ -225,12 +225,10 @@ export function CapabilityModelEditorPanel({
 }) {
   const isLayeredEditor = !embedded;
   const [activeSection, setActiveSection] = useState('base');
-  const [activeItemSubsection, setActiveItemSubsection] = useState('overview');
   const [dimensionDrawerOpen, setDimensionDrawerOpen] = useState(false);
+  const [visibleScrollAreas, setVisibleScrollAreas] = useState({});
   const lastSelectedItemByDimensionRef = useRef({});
-  const watchedModelName = Form.useWatch('name', modelBaseForm);
-  const currentModelName = watchedModelName || modelDraft.name || '未命名能力模型';
-  const totalCapabilityItems = getTotalCapabilityItems(modelDraft);
+  const scrollHideTimersRef = useRef({});
   const totalDimensions = modelDraft.dimensions.length;
   const activeDimensionItemCount = activeDimension?.items?.length || 0;
   const activeDimensionItems = activeDimension?.items || [];
@@ -239,19 +237,12 @@ export function CapabilityModelEditorPanel({
     { key: 'levels', label: '等级体系' },
     { key: 'framework', label: '能力框架' },
   ];
-  const activeSectionIndex = editorSections.findIndex((section) => section.key === activeSection);
-  const previousSection = activeSectionIndex > 0 ? editorSections[activeSectionIndex - 1] : null;
-  const nextSection = activeSectionIndex < editorSections.length - 1 ? editorSections[activeSectionIndex + 1] : null;
   const showBaseSection = embedded || activeSection === 'base';
   const showLevelSection = embedded || activeSection === 'levels';
   const showFrameworkSection = embedded || activeSection === 'framework';
   const activeDimensionOrderText = activeDimension
     ? `能力类 ${activeDimensionIndex + 1} / ${totalDimensions}`
     : '未选择能力类';
-
-  useEffect(() => {
-    setActiveItemSubsection('overview');
-  }, [activeItem?.id]);
 
   useEffect(() => {
     if (!activeDimension?.id || !activeItem?.id) return;
@@ -262,6 +253,10 @@ export function CapabilityModelEditorPanel({
     if (activeDimension?.id) return;
     setDimensionDrawerOpen(false);
   }, [activeDimension?.id]);
+
+  useEffect(() => () => {
+    Object.values(scrollHideTimersRef.current).forEach((timerId) => window.clearTimeout(timerId));
+  }, []);
 
   const getPreferredItemId = (dimension) => {
     if (!dimension?.id) return null;
@@ -294,19 +289,12 @@ export function CapabilityModelEditorPanel({
   const handleAddItemAndReturn = () => {
     if (activeDimensionIndex == null || activeDimensionIndex < 0) return;
     onAddItem(activeDimensionIndex);
-    setActiveItemSubsection('overview');
   };
 
   const handleOpenDimensionDrawerFor = (dimension) => {
     if (!dimension?.id) return;
     handleSelectDimensionWithMemory(dimension);
     setDimensionDrawerOpen(true);
-  };
-
-  const handleEditItemFromMenu = (itemId) => {
-    if (!itemId) return;
-    setActiveItemSubsection('overview');
-    handleSelectActiveItem(itemId);
   };
 
   const handleRemoveDimensionWithFallback = (dimensionIndex) => {
@@ -348,53 +336,26 @@ export function CapabilityModelEditorPanel({
     onSelectDimension(activeDimension.id);
   };
 
-  const renderStepActions = () => {
-    if (!isLayeredEditor) return null;
-    return (
-      <div className="cap-model-editor-step-actions">
-        <div className="cap-model-editor-step-actions-left">
-          {previousSection ? (
-            <Button onClick={() => setActiveSection(previousSection.key)}>
-              上一步：{previousSection.label}
-            </Button>
-          ) : null}
-        </div>
-        {nextSection ? (
-          <div className="cap-model-editor-step-actions-right">
-            <Button type="primary" onClick={() => setActiveSection(nextSection.key)}>
-              继续：{nextSection.label}
-            </Button>
-          </div>
-        ) : null}
-      </div>
-    );
+  const handleScrollAreaActivity = (areaKey) => {
+    setVisibleScrollAreas((current) => (
+      current[areaKey] ? current : { ...current, [areaKey]: true }
+    ));
+
+    if (scrollHideTimersRef.current[areaKey]) {
+      window.clearTimeout(scrollHideTimersRef.current[areaKey]);
+    }
+    scrollHideTimersRef.current[areaKey] = window.setTimeout(() => {
+      setVisibleScrollAreas((current) => {
+        if (!current[areaKey]) return current;
+        return { ...current, [areaKey]: false };
+      });
+    }, 800);
   };
 
   return (
     <div className={`cap-model-editor${embedded ? ' cap-model-editor-embedded' : ' cap-model-editor-layered'}`}>
       {isLayeredEditor ? (
         <div className="cap-model-editor-stage-shell">
-          <div className="cap-model-editor-stage-head">
-            <div className="cap-model-editor-stage-copy">
-              <div className="cap-model-editor-stage-kicker">分步编辑</div>
-              <div className="cap-model-editor-stage-title">{currentModelName}</div>
-              <div className="cap-model-editor-stage-desc">每次只聚焦一个区块，先补基础信息，再维护等级和能力框架。</div>
-            </div>
-            <div className="cap-model-editor-stage-stats">
-              <div className="cap-model-editor-stage-stat">
-                <span>等级</span>
-                <strong>{modelDraft.levelScheme.levels.length}</strong>
-              </div>
-              <div className="cap-model-editor-stage-stat">
-                <span>能力类</span>
-                <strong>{modelDraft.dimensions.length}</strong>
-              </div>
-              <div className="cap-model-editor-stage-stat">
-                <span>能力项</span>
-                <strong>{totalCapabilityItems}</strong>
-              </div>
-            </div>
-          </div>
           <Segmented
             block
             value={activeSection}
@@ -410,7 +371,7 @@ export function CapabilityModelEditorPanel({
 
       {showBaseSection ? (
         <Form form={modelBaseForm} layout="vertical">
-          <div className="cap-model-editor-section">
+          <div className={`cap-model-editor-section${isLayeredEditor ? ' is-linked' : ''}`}>
             <div className="cap-model-section-head">
               <div>
                 <div className="cap-model-section-title">基础信息</div>
@@ -440,13 +401,12 @@ export function CapabilityModelEditorPanel({
                 <TextArea rows={3} placeholder="说明该模型适用的行业场景、岗位阶段与使用方式" />
               </Form.Item>
             </div>
-            {renderStepActions()}
           </div>
         </Form>
       ) : null}
 
       {showLevelSection ? (
-        <div className="cap-model-editor-section">
+        <div className={`cap-model-editor-section${isLayeredEditor ? ' is-linked' : ''}`}>
           <div className="cap-model-section-head">
             <div>
               <div className="cap-model-section-title">等级体系</div>
@@ -465,12 +425,11 @@ export function CapabilityModelEditorPanel({
               </div>
             ))}
           </div>
-          {renderStepActions()}
         </div>
       ) : null}
 
       {showFrameworkSection ? (
-        <div className="cap-model-editor-section">
+        <div className={`cap-model-editor-section${isLayeredEditor ? ' is-linked' : ''}`}>
           <div className="cap-model-framework-workspace">
             {totalDimensions === 0 ? (
               <div className="cap-model-empty-panel cap-model-framework-empty">
@@ -520,8 +479,8 @@ export function CapabilityModelEditorPanel({
                             className="cap-model-framework-dimension-card"
                             onClick={() => handleSelectDimensionWithMemory(dimension)}
                           >
-                            <span className="cap-model-framework-node-kicker">能力类 {dimensionIndex + 1}</span>
                             <span className="cap-model-framework-node-title">{dimension.name || '未命名能力类'}</span>
+                            <span className="cap-model-framework-node-desc">{dimension.description || '未填写能力类说明'}</span>
                             <span className="cap-model-framework-node-meta">{dimension.items?.length || 0} 个能力项</span>
                           </button>
                           <div className="cap-model-framework-node-actions">
@@ -560,25 +519,12 @@ export function CapabilityModelEditorPanel({
                         </div>
 
                         {activeDimensionItemCount > 0 ? (
-                          <div className="cap-model-framework-item-list">
+                          <div
+                            className={`cap-model-framework-item-list${visibleScrollAreas.items ? ' is-scrolling' : ''}`}
+                            onScroll={() => handleScrollAreaActivity('items')}
+                          >
                             {activeDimensionItems.map((item, itemIndex) => {
                               const isActive = item.id === activeItem?.id;
-                              const itemMenuItems = [
-                                {
-                                  key: 'edit',
-                                  icon: <EditOutlined />,
-                                  label: '编辑能力项',
-                                  onClick: () => handleEditItemFromMenu(item.id),
-                                },
-                                {
-                                  key: 'delete',
-                                  icon: <DeleteOutlined />,
-                                  label: '删除能力项',
-                                  danger: true,
-                                  disabled: activeDimensionItemCount === 1,
-                                  onClick: () => handleRemoveItemWithFallback(activeDimensionIndex, itemIndex),
-                                },
-                              ];
                               return (
                                 <div
                                   key={item.id}
@@ -593,21 +539,6 @@ export function CapabilityModelEditorPanel({
                                     <strong>{item.name || '未命名能力项'}</strong>
                                     <span>{item.description || '未填写能力项说明'}</span>
                                   </button>
-                                  <div className="cap-model-framework-item-actions">
-                                    <Dropdown
-                                      trigger={['click']}
-                                      placement="bottomRight"
-                                      menu={{ items: itemMenuItems }}
-                                    >
-                                      <Button
-                                        size="small"
-                                        type="text"
-                                        className="cap-model-framework-menu-trigger"
-                                        icon={<MoreOutlined />}
-                                        onClick={(event) => event.stopPropagation()}
-                                      />
-                                    </Dropdown>
-                                  </div>
                                 </div>
                               );
                             })}
@@ -623,141 +554,143 @@ export function CapabilityModelEditorPanel({
                       </div>
                     </div>
 
-                    <div className="cap-model-framework-stage">
+                    <div
+                      className={`cap-model-framework-stage${visibleScrollAreas.stage ? ' is-scrolling' : ''}`}
+                      onScroll={() => handleScrollAreaActivity('stage')}
+                    >
                       {activeItem ? (
-                        <>
-                          <div className="cap-model-framework-stage-head is-centered">
-                            <Segmented
+                        <div className="cap-model-item-card">
+                          <div className="cap-model-item-card-actions">
+                            <Button
                               size="small"
-                              value={activeItemSubsection}
-                              onChange={setActiveItemSubsection}
-                              options={[
-                                { label: '基础', value: 'overview' },
-                                { label: '规则', value: 'rules' },
-                                { label: '等级描述', value: 'descriptors' },
-                              ]}
-                            />
+                              danger
+                              icon={<DeleteOutlined />}
+                              className="cap-model-item-delete-button"
+                              disabled={activeDimensionItemCount === 1 || activeItemIndex < 0}
+                              onClick={() => handleRemoveItemWithFallback(activeDimensionIndex, activeItemIndex)}
+                            >
+                              删除能力项
+                            </Button>
                           </div>
-
-                          <div className="cap-model-item-card">
-                            {activeItemSubsection === 'overview' ? (
-                              <div className="cap-model-form-grid cap-model-form-grid-2">
-                                <div>
-                                  <div className="cap-model-field-label">能力项名称</div>
-                                  <Input
-                                    value={activeItem.name}
-                                    onChange={(event) => onUpdateItemField(activeDimensionIndex, activeItemIndex, 'name', event.target.value)}
-                                    placeholder="例如：目标与学情对齐"
-                                  />
-                                </div>
-                                <div>
-                                  <div className="cap-model-field-label">能力项说明</div>
-                                  <Input
-                                    value={activeItem.description}
-                                    onChange={(event) => onUpdateItemField(activeDimensionIndex, activeItemIndex, 'description', event.target.value)}
-                                    placeholder="说明该能力项关注的行为表现"
-                                  />
-                                </div>
-                              </div>
-                            ) : null}
-
-                            {activeItemSubsection === 'rules' ? (
-                              <>
-                                <div className="cap-model-form-grid cap-model-form-grid-2">
-                                  <div>
-                                    <div className="cap-model-field-label">证据类型</div>
-                                    <Select
-                                      mode="multiple"
-                                      value={activeItem.evidenceTypes || []}
-                                      onChange={(values) => onUpdateItemStringListField(activeDimensionIndex, activeItemIndex, 'evidenceTypes', values)}
-                                      options={CAPABILITY_ITEM_EVIDENCE_TYPE_OPTIONS}
-                                      placeholder="选择该能力项允许使用的证据类型"
-                                    />
-                                  </div>
-                                  <div>
-                                    <div className="cap-model-field-label">评价主体</div>
-                                    <Select
-                                      mode="multiple"
-                                      value={activeItem.requiredReviewRoles || []}
-                                      onChange={(values) => onUpdateItemStringListField(activeDimensionIndex, activeItemIndex, 'requiredReviewRoles', values)}
-                                      options={CAPABILITY_ITEM_REVIEW_ROLE_OPTIONS}
-                                      placeholder="选择该能力项的复核主体"
-                                    />
-                                  </div>
-                                </div>
-
-                                <div className="cap-model-form-grid cap-model-form-grid-2">
-                                  <div>
-                                    <div className="cap-model-field-label">最低证据数</div>
-                                    <InputNumber
-                                      min={1}
-                                      max={10}
-                                      value={activeItem.requiredEvidenceCount || 1}
-                                      onChange={(value) => onUpdateItemField(activeDimensionIndex, activeItemIndex, 'requiredEvidenceCount', value || 1)}
-                                    />
-                                  </div>
-                                  <div>
-                                    <div className="cap-model-field-label">AI辅助策略</div>
-                                    <Select
-                                      value={activeItem.aiAssistMode || 'SUGGEST_ONLY'}
-                                      onChange={(value) => onUpdateItemField(activeDimensionIndex, activeItemIndex, 'aiAssistMode', value)}
-                                      options={CAPABILITY_ITEM_AI_ASSIST_MODE_OPTIONS}
-                                    />
-                                  </div>
-                                </div>
-
-                                <div className="cap-model-form-grid cap-model-form-grid-2">
-                                  <div>
-                                    <div className="cap-model-field-label">成长档案专用</div>
-                                    <Switch
-                                      checked={Boolean(activeItem.isGrowthOnly)}
-                                      checkedChildren="是"
-                                      unCheckedChildren="否"
-                                      onChange={(checked) => onUpdateItemField(activeDimensionIndex, activeItemIndex, 'isGrowthOnly', checked)}
-                                    />
-                                  </div>
-                                </div>
-
-                                <div className="cap-model-field-stack">
-                                  <div className="cap-model-field-label">成长记录示例</div>
-                                  <TextArea
-                                    rows={3}
-                                    value={(activeItem.evidenceExamples || []).join('\n')}
-                                    onChange={(event) => onUpdateItemEvidence(activeDimensionIndex, activeItemIndex, event.target.value)}
-                                    placeholder="每行一条，例如：课堂观察记录"
-                                  />
-                                </div>
-                              </>
-                            ) : null}
-
-                            {activeItemSubsection === 'descriptors' ? (
-                              <div className="cap-model-descriptor-panel">
-                                <div className="cap-model-subsection-head">
-                                  <span>等级行为描述</span>
-                                  <Tag>{modelDraft.levelScheme.levels.length} 个等级</Tag>
-                                </div>
-                                <Tabs
-                                  size="small"
-                                  items={modelDraft.levelScheme.levels.map((level, levelIndex) => ({
-                                    key: level.key,
-                                    label: level.label,
-                                    children: (
-                                      <div className="cap-model-descriptor-tab">
-                                        <div className="cap-model-field-label">{level.label}</div>
-                                        <TextArea
-                                          rows={6}
-                                          value={activeItem.levelDescriptors?.[levelIndex]?.text || ''}
-                                          onChange={(event) => onUpdateItemDescriptor(activeDimensionIndex, activeItemIndex, levelIndex, event.target.value)}
-                                          placeholder={`填写 ${level.label} 的行为描述`}
-                                        />
-                                      </div>
-                                    ),
-                                  }))}
+                          <div className="cap-model-item-section">
+                            <div className="cap-model-subsection-head">
+                              <div className="cap-model-item-title">基础</div>
+                            </div>
+                            <div className="cap-model-form-grid cap-model-form-grid-2">
+                              <div>
+                                <div className="cap-model-field-label">能力项名称</div>
+                                <Input
+                                  value={activeItem.name}
+                                  onChange={(event) => onUpdateItemField(activeDimensionIndex, activeItemIndex, 'name', event.target.value)}
+                                  placeholder="例如：目标与学情对齐"
                                 />
                               </div>
-                            ) : null}
+                              <div>
+                                <div className="cap-model-field-label">能力项说明</div>
+                                <Input
+                                  value={activeItem.description}
+                                  onChange={(event) => onUpdateItemField(activeDimensionIndex, activeItemIndex, 'description', event.target.value)}
+                                  placeholder="说明该能力项关注的行为表现"
+                                />
+                              </div>
+                            </div>
                           </div>
-                        </>
+
+                          <div className="cap-model-item-section">
+                            <div className="cap-model-subsection-head">
+                              <div className="cap-model-item-title">规则</div>
+                            </div>
+                            <div className="cap-model-form-grid cap-model-form-grid-2">
+                              <div>
+                                <div className="cap-model-field-label">证据类型</div>
+                                <Select
+                                  mode="multiple"
+                                  value={activeItem.evidenceTypes || []}
+                                  onChange={(values) => onUpdateItemStringListField(activeDimensionIndex, activeItemIndex, 'evidenceTypes', values)}
+                                  options={CAPABILITY_ITEM_EVIDENCE_TYPE_OPTIONS}
+                                  placeholder="选择该能力项允许使用的证据类型"
+                                />
+                              </div>
+                              <div>
+                                <div className="cap-model-field-label">评价主体</div>
+                                <Select
+                                  mode="multiple"
+                                  value={activeItem.requiredReviewRoles || []}
+                                  onChange={(values) => onUpdateItemStringListField(activeDimensionIndex, activeItemIndex, 'requiredReviewRoles', values)}
+                                  options={CAPABILITY_ITEM_REVIEW_ROLE_OPTIONS}
+                                  placeholder="选择该能力项的复核主体"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="cap-model-form-grid cap-model-form-grid-2">
+                              <div>
+                                <div className="cap-model-field-label">最低证据数</div>
+                                <InputNumber
+                                  min={1}
+                                  max={10}
+                                  value={activeItem.requiredEvidenceCount || 1}
+                                  onChange={(value) => onUpdateItemField(activeDimensionIndex, activeItemIndex, 'requiredEvidenceCount', value || 1)}
+                                />
+                              </div>
+                              <div>
+                                <div className="cap-model-field-label">AI辅助策略</div>
+                                <Select
+                                  value={activeItem.aiAssistMode || 'SUGGEST_ONLY'}
+                                  onChange={(value) => onUpdateItemField(activeDimensionIndex, activeItemIndex, 'aiAssistMode', value)}
+                                  options={CAPABILITY_ITEM_AI_ASSIST_MODE_OPTIONS}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="cap-model-form-grid cap-model-form-grid-2">
+                              <div>
+                                <div className="cap-model-field-label">成长档案专用</div>
+                                <Switch
+                                  checked={Boolean(activeItem.isGrowthOnly)}
+                                  checkedChildren="是"
+                                  unCheckedChildren="否"
+                                  onChange={(checked) => onUpdateItemField(activeDimensionIndex, activeItemIndex, 'isGrowthOnly', checked)}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="cap-model-field-stack">
+                              <div className="cap-model-field-label">成长记录示例</div>
+                              <TextArea
+                                rows={3}
+                                value={(activeItem.evidenceExamples || []).join('\n')}
+                                onChange={(event) => onUpdateItemEvidence(activeDimensionIndex, activeItemIndex, event.target.value)}
+                                placeholder="每行一条，例如：课堂观察记录"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="cap-model-item-section cap-model-descriptor-panel">
+                            <div className="cap-model-subsection-head">
+                              <div className="cap-model-item-title">等级描述</div>
+                              <Tag>{modelDraft.levelScheme.levels.length} 个等级</Tag>
+                            </div>
+                            <Tabs
+                              size="small"
+                              items={modelDraft.levelScheme.levels.map((level, levelIndex) => ({
+                                key: level.key,
+                                label: level.label,
+                                children: (
+                                  <div className="cap-model-descriptor-tab">
+                                    <div className="cap-model-field-label">{level.label}</div>
+                                    <TextArea
+                                      rows={6}
+                                      value={activeItem.levelDescriptors?.[levelIndex]?.text || ''}
+                                      onChange={(event) => onUpdateItemDescriptor(activeDimensionIndex, activeItemIndex, levelIndex, event.target.value)}
+                                      placeholder={`填写 ${level.label} 的行为描述`}
+                                    />
+                                  </div>
+                                ),
+                              }))}
+                            />
+                          </div>
+                        </div>
                       ) : (
                         <div className="cap-model-empty-panel cap-model-framework-empty">
                           <Empty description="请选择一个能力项开始编辑" />
@@ -776,7 +709,6 @@ export function CapabilityModelEditorPanel({
               </>
             )}
           </div>
-          {renderStepActions()}
         </div>
       ) : null}
 
