@@ -109,7 +109,7 @@ function resolveCapabilityModelResourceEntry(item, catalog = {}) {
   }
 
   const models = catalog.models || [];
-  const model = (
+  const matchedModel = (
     item.capabilityModelId
       ? models.find((entry) => entry.id === item.capabilityModelId) || null
       : null
@@ -118,6 +118,18 @@ function resolveCapabilityModelResourceEntry(item, catalog = {}) {
       ? models.find((entry) => entry.modelCode === item.capabilityModelCode) || null
       : null
   ) || null;
+  const versionSeriesId = item.capabilityModelSeriesId
+    || matchedModel?.versionSeriesId
+    || matchedModel?.id
+    || null;
+  const activeSeriesModel = versionSeriesId
+    ? models.find((entry) => (
+      (entry.versionSeriesId || entry.id) === versionSeriesId
+      && entry.status === 'PUBLISHED'
+      && entry.isCurrentVersion
+    )) || null
+    : null;
+  const model = activeSeriesModel || matchedModel;
 
   if (!model) {
     return { model: null, role: null, sequence: null, roleLevel: null };
@@ -790,6 +802,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
         const nextLastEdit = model.updatedAt || model.createdAt || item.lastEdit;
         const nextContentText = meta.summary;
         const nextCapabilityModelId = model.id;
+        const nextCapabilityModelSeriesId = model.versionSeriesId || model.id;
         const nextCapabilityModelCode = model.modelCode || item.capabilityModelCode;
         if (
           item.name === nextName
@@ -797,6 +810,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
           && item.contentText === nextContentText
           && item.lastEdit === nextLastEdit
           && item.capabilityModelId === nextCapabilityModelId
+          && item.capabilityModelSeriesId === nextCapabilityModelSeriesId
           && item.capabilityModelCode === nextCapabilityModelCode
           && JSON.stringify(item.meta || null) === JSON.stringify(meta)
         ) {
@@ -810,6 +824,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
           comment: nextDescription || undefined,
           contentText: nextContentText,
           capabilityModelId: nextCapabilityModelId,
+          capabilityModelSeriesId: nextCapabilityModelSeriesId,
           capabilityModelCode: nextCapabilityModelCode || undefined,
           meta,
           lastEdit: nextLastEdit,
@@ -1829,6 +1844,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
       fileType: 'capabilityModel',
       resourceKind: 'capabilityModel',
       capabilityModelId: model.id,
+      capabilityModelSeriesId: model.versionSeriesId || model.id,
       capabilityModelCode: model.modelCode || undefined,
       parseStatus: 'parsed',
       contentText: meta.summary,

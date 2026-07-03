@@ -2591,6 +2591,7 @@ function TopicDetail({
       fileType: 'capabilityModel',
       resourceKind: 'capabilityModel',
       capabilityModelId: model.id,
+      capabilityModelSeriesId: model.versionSeriesId || model.id,
       capabilityModelCode: model.modelCode || undefined,
       parseStatus: 'parsed',
       contentText: meta.summary,

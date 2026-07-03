@@ -17,9 +17,25 @@
 }
 
 .cap-model-standalone-shell {
-  min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 28px;
   box-sizing: border-box;
+  overscroll-behavior: contain;
+}
+
+.cap-model-standalone-shell::-webkit-scrollbar {
+  width: 10px;
+}
+
+.cap-model-standalone-shell::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cap-model-standalone-shell::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(143, 163, 196, 0.56);
 }
 
 .cap-model-standalone-frame {
@@ -79,6 +95,69 @@
   font-size: 13px;
   line-height: 1.7;
   color: rgba(255, 255, 255, 0.84);
+}
+
+.cap-model-standalone-actions {
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.cap-model-standalone-header .cap-model-version-btn {
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid rgba(222, 231, 243, 0.24) !important;
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.08) 100%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(96, 165, 250, 0.22) 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 10px 24px rgba(15, 23, 42, 0.18);
+  color: #fff !important;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cap-model-standalone-header .cap-model-version-btn:hover {
+  border-color: rgba(255, 255, 255, 0.34) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.12) 100%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, rgba(125, 211, 252, 0.28) 100%) !important;
+}
+
+.cap-model-version-tag {
+  margin: 0 0 0 4px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  line-height: 18px;
+}
+
+.cap-model-version-current {
+  display: flex;
+  align-items: center;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.cap-model-version-current-tag {
+  margin-left: 8px;
+  font-size: 10px;
+}
+
+.cap-model-version-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
+.cap-model-version-option-tag {
+  margin: 0;
+  font-size: 10px;
 }
 
 .cap-model-standalone-header .ant-btn:not(.ant-btn-primary) {

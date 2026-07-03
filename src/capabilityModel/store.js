@@ -134,7 +134,7 @@ function readAll() {
     industries: readList(INDUSTRY_STORAGE_KEY),
     sequences: readList(SEQUENCE_STORAGE_KEY),
     roles: readList(ROLE_STORAGE_KEY),
-    models: readList(MODEL_STORAGE_KEY),
+    models: readList(MODEL_STORAGE_KEY).map((item) => normalizeModel(item)),
   };
 }
 
@@ -160,6 +160,26 @@ function createDuplicateModelCode(models, sourceCode) {
   let index = 2;
   while (models.some((item) => item.modelCode === candidate)) {
     candidate = `${sourceCode}_COPY${index}`;
+    index += 1;
+  }
+  return candidate;
+}
+
+function getModelVersionSeriesId(model) {
+  return trimText(model?.versionSeriesId) || trimText(model?.id);
+}
+
+function getModelVersionNumber(model) {
+  const value = Number.parseInt(model?.versionNumber, 10);
+  return Number.isFinite(value) && value > 0 ? value : 1;
+}
+
+function createVersionModelCode(models, source, versionNumber) {
+  const codeRoot = trimText(source?.versionCodeRoot) || trimText(source?.modelCode) || 'CAPABILITY_MODEL';
+  let candidate = `${codeRoot}_V${versionNumber}`;
+  let index = 2;
+  while (models.some((item) => item.modelCode === candidate)) {
+    candidate = `${codeRoot}_V${versionNumber}_${index}`;
     index += 1;
   }
   return candidate;
@@ -229,10 +249,12 @@ export function createCapabilityModelDraft(overrides = {}) {
   const dimensions = Array.isArray(overrides.dimensions) && overrides.dimensions.length
     ? overrides.dimensions.map((dimension, index) => createEmptyCapabilityDimension(levelScheme, { ...dimension, sortNo: index + 1 }))
     : [createEmptyCapabilityDimension(levelScheme)];
+  const modelId = overrides.id;
+  const modelCode = overrides.modelCode || '';
 
   return {
-    id: overrides.id,
-    modelCode: overrides.modelCode || '',
+    id: modelId,
+    modelCode,
     name: overrides.name || '',
     industryId: overrides.industryId || undefined,
     roleId: overrides.roleId || undefined,
@@ -240,6 +262,11 @@ export function createCapabilityModelDraft(overrides = {}) {
     description: overrides.description || '',
     tags: Array.isArray(overrides.tags) ? [...overrides.tags] : [],
     status: overrides.status || 'DRAFT',
+    versionSeriesId: overrides.versionSeriesId || modelId || '',
+    versionNumber: getModelVersionNumber(overrides),
+    versionCodeRoot: overrides.versionCodeRoot || modelCode,
+    isCurrentVersion: Boolean(overrides.isCurrentVersion),
+    publishedAt: overrides.publishedAt || null,
     levelScheme,
     dimensions,
     updatedAt: overrides.updatedAt || nowText(),
@@ -288,17 +315,25 @@ function normalizeModel(model) {
   const dimensions = (Array.isArray(model?.dimensions) ? model.dimensions : [])
     .map((dimension, index) => normalizeDimension(dimension, levelScheme, index))
     .filter((dimension) => dimension.name);
+  const id = model?.id || createId('cap_model');
+  const modelCode = trimText(model?.modelCode);
+  const status = model?.status || 'DRAFT';
 
   return {
-    id: model?.id || createId('cap_model'),
-    modelCode: trimText(model?.modelCode),
+    id,
+    modelCode,
     name: trimText(model?.name),
     industryId: model?.industryId || '',
     roleId: model?.roleId || '',
     roleLevelId: model?.roleLevelId || '',
     description: trimText(model?.description),
     tags: Array.isArray(model?.tags) ? model.tags.map((item) => trimText(item)).filter(Boolean) : [],
-    status: model?.status || 'DRAFT',
+    status,
+    versionSeriesId: trimText(model?.versionSeriesId) || id,
+    versionNumber: getModelVersionNumber(model),
+    versionCodeRoot: trimText(model?.versionCodeRoot) || modelCode,
+    isCurrentVersion: typeof model?.isCurrentVersion === 'boolean' ? model.isCurrentVersion : status === 'PUBLISHED',
+    publishedAt: trimText(model?.publishedAt) || null,
     levelScheme,
     dimensions,
     updatedAt: model?.updatedAt || nowText(),
@@ -1377,12 +1412,12 @@ export async function listRoles() {
 }
 
 export async function listCapabilityModels() {
-  return readList(MODEL_STORAGE_KEY)
+  return readAll().models
     .sort((left, right) => String(right.updatedAt || '').localeCompare(String(left.updatedAt || '')));
 }
 
 export async function getCapabilityModel(id) {
-  return clone(readList(MODEL_STORAGE_KEY).find((item) => item.id === id) || null);
+  return clone(readAll().models.find((item) => item.id === id) || null);
 }
 
 export async function saveIndustry(industry) {
@@ -1573,6 +1608,13 @@ export async function saveCapabilityModel(model) {
 
   const payload = {
     ...normalized,
+    versionSeriesId: normalized.versionSeriesId || normalized.id,
+    versionNumber: getModelVersionNumber(normalized),
+    versionCodeRoot: trimText(normalized.versionCodeRoot) || trimText(normalized.modelCode),
+    isCurrentVersion: normalized.status === 'PUBLISHED' ? Boolean(normalized.isCurrentVersion) : false,
+    publishedAt: normalized.status === 'PUBLISHED'
+      ? (normalized.publishedAt || nowText())
+      : null,
     updatedAt: nowText(),
     createdAt: normalized.createdAt || nowText(),
   };
@@ -1594,12 +1636,50 @@ export async function duplicateCapabilityModel(id) {
   if (!source) {
     throw new Error('模型不存在');
   }
+  const nextId = createId('cap_model');
+  const nextCode = createDuplicateModelCode(models, source.modelCode);
+  const duplicated = normalizeModel({
+    ...clone(source),
+    id: nextId,
+    modelCode: nextCode,
+    name: `${source.name}（副本）`,
+    status: 'DRAFT',
+    versionSeriesId: nextId,
+    versionNumber: 1,
+    versionCodeRoot: nextCode,
+    isCurrentVersion: false,
+    publishedAt: null,
+    createdAt: nowText(),
+    updatedAt: nowText(),
+  });
+  writeAll({
+    industries,
+    sequences,
+    roles,
+    models: [duplicated, ...models],
+  });
+  return clone(duplicated);
+}
+
+export async function createCapabilityModelVersion(id) {
+  const { industries, sequences, roles, models } = readAll();
+  const source = models.find((item) => item.id === id);
+  if (!source) {
+    throw new Error('模型不存在');
+  }
+  const versionSeriesId = getModelVersionSeriesId(source) || source.id;
+  const familyModels = models.filter((item) => getModelVersionSeriesId(item) === versionSeriesId);
+  const nextVersionNumber = familyModels.reduce((max, item) => Math.max(max, getModelVersionNumber(item)), 0) + 1;
   const duplicated = normalizeModel({
     ...clone(source),
     id: createId('cap_model'),
-    modelCode: createDuplicateModelCode(models, source.modelCode),
-    name: `${source.name}（副本）`,
+    modelCode: createVersionModelCode(models, source, nextVersionNumber),
     status: 'DRAFT',
+    versionSeriesId,
+    versionNumber: nextVersionNumber,
+    versionCodeRoot: trimText(source.versionCodeRoot) || trimText(source.modelCode),
+    isCurrentVersion: false,
+    publishedAt: null,
     createdAt: nowText(),
     updatedAt: nowText(),
   });
@@ -1621,14 +1701,34 @@ export async function publishCapabilityModel(id) {
   if (source.status !== 'DRAFT') {
     throw new Error('仅草稿模型可发布');
   }
+  const now = nowText();
+  const versionSeriesId = getModelVersionSeriesId(source);
+  const nextModels = models.map((item) => {
+    if (item.id === id) {
+      return {
+        ...item,
+        status: 'PUBLISHED',
+        isCurrentVersion: true,
+        publishedAt: now,
+        updatedAt: now,
+      };
+    }
+    if (versionSeriesId && getModelVersionSeriesId(item) === versionSeriesId && item.status === 'PUBLISHED' && item.isCurrentVersion) {
+      return {
+        ...item,
+        isCurrentVersion: false,
+        updatedAt: now,
+      };
+    }
+    return item;
+  });
   writeAll({
     industries,
     sequences,
     roles,
-    models: models.map((item) => (
-      item.id === id ? { ...item, status: 'PUBLISHED', updatedAt: nowText() } : item
-    )),
+    models: nextModels,
   });
+  return clone(nextModels.find((item) => item.id === id) || null);
 }
 
 export async function disableCapabilityModel(id) {
@@ -1645,7 +1745,7 @@ export async function disableCapabilityModel(id) {
     sequences,
     roles,
     models: models.map((item) => (
-      item.id === id ? { ...item, status: 'DISABLED', updatedAt: nowText() } : item
+      item.id === id ? { ...item, status: 'DISABLED', isCurrentVersion: false, updatedAt: nowText() } : item
     )),
   });
 }
@@ -1654,8 +1754,8 @@ export async function removeCapabilityModel(id) {
   const { industries, sequences, roles, models } = readAll();
   const source = models.find((item) => item.id === id);
   if (!source) return;
-  if (source.status === 'PUBLISHED') {
-    throw new Error('已发布模型不可直接删除，请先停用');
+  if (source.status === 'PUBLISHED' && source.isCurrentVersion) {
+    throw new Error('当前生效版本不可直接删除，请先新建版本或停用');
   }
   writeAll({
     industries,

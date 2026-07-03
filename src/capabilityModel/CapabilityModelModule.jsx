@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Button,
   Card,
   Drawer,
+  Dropdown,
   Empty,
   Form,
   Input,
@@ -22,6 +23,8 @@ import {
 import {
   AppstoreOutlined,
   BankOutlined,
+  BranchesOutlined,
+  CheckCircleOutlined,
   CopyOutlined,
   DeleteOutlined,
   EditOutlined,
@@ -31,6 +34,7 @@ import {
   PlusOutlined,
   ReloadOutlined,
   SaveOutlined,
+  SendOutlined,
   TeamOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
@@ -87,6 +91,45 @@ function renderStatusTag(value) {
     ...Object.fromEntries(INDUSTRY_STATUS_OPTIONS.map((item) => [item.value, item.label])),
   };
   return <Tag color={colorMap[value] || 'default'}>{labelMap[value] || value || '-'}</Tag>;
+}
+
+function getCapabilityModelStatusMeta(model) {
+  if (!model) {
+    return { color: 'default', label: '-' };
+  }
+  if (model.status === 'DRAFT') {
+    return { color: 'processing', label: '草稿' };
+  }
+  if (model.status === 'DISABLED') {
+    return { color: 'default', label: '已停用' };
+  }
+  if (model.status === 'PUBLISHED' && model.isCurrentVersion) {
+    return { color: 'success', label: '生效中' };
+  }
+  if (model.status === 'PUBLISHED') {
+    return { color: 'default', label: '已失效' };
+  }
+  return { color: 'default', label: model.status || '-' };
+}
+
+function renderCapabilityModelStatusTag(model, className = '') {
+  const statusMeta = getCapabilityModelStatusMeta(model);
+  return <Tag color={statusMeta.color} className={className}>{statusMeta.label}</Tag>;
+}
+
+function getCapabilityModelVersionLabel(model) {
+  const versionNumber = Math.max(1, Number(model?.versionNumber || 1));
+  return `版本 ${versionNumber}`;
+}
+
+function getCapabilityModelVersionSeriesId(model) {
+  return model?.versionSeriesId || model?.id || '';
+}
+
+function compareCapabilityModelVersions(left, right) {
+  const versionGap = Number(right?.versionNumber || 1) - Number(left?.versionNumber || 1);
+  if (versionGap !== 0) return versionGap;
+  return String(right?.updatedAt || '').localeCompare(String(left?.updatedAt || ''));
 }
 
 function createIndustryDraft() {
@@ -523,6 +566,7 @@ export default function CapabilityModelModule({
   const [modelDraft, setModelDraft] = useState(() => createCapabilityModelDraft());
   const [activeDimensionId, setActiveDimensionId] = useState(undefined);
   const [activeItemId, setActiveItemId] = useState(undefined);
+  const [standaloneModelId, setStandaloneModelId] = useState(() => (standalone ? entryModelId : null));
 
   const [industryModalOpen, setIndustryModalOpen] = useState(false);
   const [industryEditing, setIndustryEditing] = useState(null);
@@ -547,9 +591,20 @@ export default function CapabilityModelModule({
   const watchedRoleIndustryId = Form.useWatch('industryId', roleForm);
   const handledEntryRequestRef = useRef(null);
 
-  useEffect(() => {
-    loadAllData();
-  }, []);
+  const replaceStandaloneHash = useCallback((modelId, mode = 'preview') => {
+    if (!standalone || !modelId || typeof window === 'undefined') return;
+    const params = new URLSearchParams({
+      modelId,
+      mode,
+    });
+    if (entryRequestId) {
+      params.set('requestId', entryRequestId);
+    }
+    const nextUrl = `${window.location.pathname}${window.location.search}#capability-model-full?${params.toString()}`;
+    const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (currentUrl === nextUrl) return;
+    window.history.replaceState(window.history.state, '', nextUrl);
+  }, [entryRequestId, standalone]);
 
   useEffect(() => {
     if (!modelDrawerOpen || !modelDraft) return;
@@ -617,7 +672,7 @@ export default function CapabilityModelModule({
     return () => window.cancelAnimationFrame(frameId);
   }, [activeDimensionId, activeItemId, modelDraft, modelDrawerMode, modelDrawerOpen]);
 
-  async function loadAllData(withLoading = true) {
+  const loadAllData = useCallback(async (withLoading = true) => {
     if (withLoading) setLoading(true);
     try {
       await capabilityModelApi.seed();
@@ -636,7 +691,14 @@ export default function CapabilityModelModule({
     } finally {
       if (withLoading) setLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    const frameId = window.requestAnimationFrame(() => {
+      void loadAllData();
+    });
+    return () => window.cancelAnimationFrame(frameId);
+  }, [loadAllData]);
 
   const modelSummary = useMemo(() => ({
     industryCount: industries.length,
@@ -780,29 +842,22 @@ export default function CapabilityModelModule({
   const activeDimensionIndex = activeFrameworkSelection.dimensionIndex;
   const activeItem = activeFrameworkSelection.item;
   const activeItemIndex = activeFrameworkSelection.itemIndex;
-  const isStandaloneEntry = standalone && Boolean(entryModelId);
+  const isStandaloneEntry = standalone && Boolean(standaloneModelId);
   const standaloneSourceModel = useMemo(
-    () => (entryModelId ? models.find((item) => item.id === entryModelId) || null : null),
-    [entryModelId, models],
+    () => (standaloneModelId ? models.find((item) => item.id === standaloneModelId) || null : null),
+    [models, standaloneModelId],
   );
-
-  useEffect(() => {
-    if (!entryModelId || !entryRequestId) return;
-    if (handledEntryRequestRef.current === entryRequestId) return;
-    const matchedModel = models.find((item) => item.id === entryModelId) || null;
-    if (!matchedModel) return;
-
-    const frameId = window.requestAnimationFrame(() => {
-      handledEntryRequestRef.current = entryRequestId;
-      setActiveTab('models');
-      setActiveDimensionId(undefined);
-      setActiveItemId(undefined);
-      setModelDraft(createCapabilityModelDraft(cloneDraft(matchedModel)));
-      setModelDrawerMode(entryMode === 'edit' && matchedModel.status === 'DRAFT' ? 'edit' : 'preview');
-      setModelDrawerOpen(true);
-    });
-    return () => window.cancelAnimationFrame(frameId);
-  }, [entryMode, entryModelId, entryRequestId, models]);
+  const standaloneVersionAnchor = useMemo(
+    () => (standaloneSourceModel || (modelDraft?.id ? modelDraft : null)),
+    [modelDraft, standaloneSourceModel],
+  );
+  const standaloneVersionOptions = useMemo(() => {
+    const versionSeriesId = getCapabilityModelVersionSeriesId(standaloneVersionAnchor);
+    if (!versionSeriesId) return [];
+    return models
+      .filter((item) => getCapabilityModelVersionSeriesId(item) === versionSeriesId)
+      .sort(compareCapabilityModelVersions);
+  }, [models, standaloneVersionAnchor]);
 
   function openCreateModel() {
     setModelDrawerMode('create');
@@ -821,21 +876,29 @@ export default function CapabilityModelModule({
     setUploadedImportName('');
   }
 
-  function openEditModel(record) {
+  const openEditModel = useCallback((record) => {
+    if (standalone) {
+      setStandaloneModelId(record.id);
+      replaceStandaloneHash(record.id, 'edit');
+    }
     setModelDrawerMode('edit');
     setModelDraft(createCapabilityModelDraft(cloneDraft(record)));
     setActiveDimensionId(undefined);
     setActiveItemId(undefined);
     setModelDrawerOpen(true);
-  }
+  }, [replaceStandaloneHash, standalone]);
 
-  function openPreviewModel(record) {
+  const openPreviewModel = useCallback((record) => {
+    if (standalone) {
+      setStandaloneModelId(record.id);
+      replaceStandaloneHash(record.id, 'preview');
+    }
     setModelDrawerMode('preview');
     setModelDraft(createCapabilityModelDraft(cloneDraft(record)));
     setActiveDimensionId(undefined);
     setActiveItemId(undefined);
     setModelDrawerOpen(true);
-  }
+  }, [replaceStandaloneHash, standalone]);
 
   async function handleSaveModel() {
     try {
@@ -846,6 +909,8 @@ export default function CapabilityModelModule({
       });
       setModelDraft(createCapabilityModelDraft(saved));
       if (isStandaloneEntry) {
+        setStandaloneModelId(saved.id);
+        replaceStandaloneHash(saved.id, 'preview');
         setModelDrawerMode('preview');
         setModelDrawerOpen(true);
       } else {
@@ -918,51 +983,109 @@ export default function CapabilityModelModule({
     message.success('文件内容已载入编辑器，请确认后保存');
   }
 
-  async function handleStartEditModel(record) {
+  const runStandaloneVersionAction = useCallback((action, options = {}) => {
+    if (!standalone || modelDrawerMode !== 'edit') {
+      void action();
+      return;
+    }
+    Modal.confirm({
+      title: options.title || '离开当前编辑？',
+      content: options.content || '未保存的修改将丢失，确定继续吗？',
+      okText: '继续',
+      cancelText: '取消',
+      onOk: action,
+    });
+  }, [modelDrawerMode, standalone]);
+
+  const handleCreateVersionFromModel = useCallback(async (record) => {
+    if (!record?.id) return;
+    try {
+      const draft = await capabilityModelApi.createVersion(record.id);
+      openEditModel(draft);
+      await loadAllData(false);
+      message.success(`已基于${getCapabilityModelVersionLabel(record)}创建新版本草稿`);
+    } catch (error) {
+      message.error(getErrorMessage(error, '新建版本失败'));
+    }
+  }, [loadAllData, openEditModel]);
+
+  const handleStartEditModel = useCallback(async (record) => {
     if (record.status === 'DRAFT') {
       openEditModel(record);
       return;
     }
 
     try {
-      const draft = await capabilityModelApi.duplicateModel(record.id);
-      setModelDrawerMode('edit');
-      setModelDraft(createCapabilityModelDraft(draft));
-      setModelDrawerOpen(true);
+      const draft = await capabilityModelApi.createVersion(record.id);
+      openEditModel(draft);
       await loadAllData(false);
-      message.success('已基于当前模型生成草稿，可直接编辑');
+      message.success('已基于当前版本创建新版本草稿，可直接编辑');
     } catch (error) {
       message.error(getErrorMessage(error, '进入编辑失败'));
     }
-  }
+  }, [loadAllData, openEditModel]);
+
+  const handleSwitchStandaloneVersion = useCallback((record) => {
+    if (!record) return;
+    runStandaloneVersionAction(
+      async () => openPreviewModel(record),
+      {
+        title: '切换版本？',
+        content: '未保存的修改将丢失，确定切换到所选版本吗？',
+      },
+    );
+  }, [openPreviewModel, runStandaloneVersionAction]);
+
+  const handleCreateStandaloneVersion = useCallback((record) => {
+    if (!record) return;
+    runStandaloneVersionAction(
+      async () => handleCreateVersionFromModel(record),
+      {
+        title: '新建版本？',
+        content: '未保存的修改将丢失，确定基于当前版本创建新版本吗？',
+      },
+    );
+  }, [handleCreateVersionFromModel, runStandaloneVersionAction]);
+
+  useEffect(() => {
+    if (!entryModelId || !entryRequestId) return;
+    if (handledEntryRequestRef.current === entryRequestId) return;
+    const matchedModel = models.find((item) => item.id === entryModelId) || null;
+    if (!matchedModel) return;
+
+    const frameId = window.requestAnimationFrame(() => {
+      handledEntryRequestRef.current = entryRequestId;
+      setStandaloneModelId(entryModelId);
+      setActiveTab('models');
+      if (entryMode === 'edit') {
+        void handleStartEditModel(matchedModel);
+        return;
+      }
+      openPreviewModel(matchedModel);
+    });
+    return () => window.cancelAnimationFrame(frameId);
+  }, [entryMode, entryModelId, entryRequestId, handleStartEditModel, models, openPreviewModel]);
 
   function handleOpenStandalonePreview() {
-    const sourceModel = standaloneSourceModel || (modelDraft?.id === entryModelId ? modelDraft : null);
-    if (sourceModel) {
-      setModelDraft(createCapabilityModelDraft(cloneDraft(sourceModel)));
-    }
-    setActiveDimensionId(undefined);
-    setActiveItemId(undefined);
-    setModelDrawerMode('preview');
-    setModelDrawerOpen(true);
+    const sourceModel = standaloneSourceModel || modelDraft;
+    if (!sourceModel) return;
+    openPreviewModel(sourceModel);
   }
 
   function handleOpenStandaloneEdit() {
-    const sourceModel = standaloneSourceModel || (modelDraft?.id === entryModelId ? modelDraft : null);
+    const sourceModel = standaloneSourceModel || modelDraft;
     if (!sourceModel) return;
     if ((sourceModel.status || 'DRAFT') === 'DRAFT') {
-      setModelDrawerMode('edit');
-      setModelDraft(createCapabilityModelDraft(cloneDraft(sourceModel)));
-      setActiveDimensionId(undefined);
-      setActiveItemId(undefined);
-      setModelDrawerOpen(true);
+      openEditModel(sourceModel);
       return;
     }
     void handleStartEditModel(sourceModel);
   }
 
   if (isStandaloneEntry) {
-    const standaloneLocalModel = modelDraft?.id === entryModelId ? modelDraft : null;
+    const standaloneLocalModel = modelDrawerMode === 'edit'
+      ? modelDraft
+      : (modelDraft?.id === standaloneModelId ? modelDraft : null);
     const standaloneViewMode = modelDrawerMode === 'edit' ? 'edit' : 'preview';
     const standaloneModel = standaloneViewMode === 'edit'
       ? standaloneLocalModel
@@ -970,9 +1093,49 @@ export default function CapabilityModelModule({
     const standaloneRole = roles.find((item) => item.id === standaloneModel?.roleId) || null;
     const standaloneSequence = getSequenceForRole(standaloneRole, sequences);
     const standaloneRoleLevel = getRoleLevel(standaloneRole, standaloneModel?.roleLevelId, sequences) || null;
-    const standaloneStatusLabel = CAPABILITY_MODEL_STATUS_OPTIONS.find((item) => item.value === standaloneModel?.status)?.label || standaloneModel?.status || '草稿';
+    const standaloneStatusLabel = getCapabilityModelStatusMeta(standaloneModel).label;
     const standaloneReady = standaloneViewMode === 'edit' ? Boolean(standaloneLocalModel) : Boolean(standaloneModel);
-    const standaloneEditLabel = (standaloneModel?.status || 'DRAFT') === 'DRAFT' ? '编辑' : '编辑副本';
+    const standaloneEditLabel = (standaloneModel?.status || 'DRAFT') === 'DRAFT' ? '编辑' : '新建版本';
+    const standaloneCurrentVersion = standaloneModel || standaloneSourceModel || standaloneLocalModel || standaloneVersionAnchor;
+    const standaloneVersionMenuItems = [
+      {
+        key: 'current',
+        label: (
+          <span className="cap-model-version-current">
+            当前：{getCapabilityModelVersionLabel(standaloneCurrentVersion)}
+            {renderCapabilityModelStatusTag(standaloneCurrentVersion, 'cap-model-version-current-tag')}
+          </span>
+        ),
+        disabled: true,
+      },
+      ...(standaloneVersionOptions.length ? [{ type: 'divider' }] : []),
+      ...standaloneVersionOptions.map((version) => ({
+        key: `switch-${version.id}`,
+        icon: version.id === standaloneCurrentVersion?.id ? <CheckCircleOutlined /> : <BranchesOutlined />,
+        label: (
+          <span className="cap-model-version-option">
+            <span>{getCapabilityModelVersionLabel(version)}</span>
+            {renderCapabilityModelStatusTag(version, 'cap-model-version-option-tag')}
+          </span>
+        ),
+        onClick: () => handleSwitchStandaloneVersion(version),
+      })),
+      { type: 'divider' },
+      {
+        key: 'new-version',
+        icon: <PlusOutlined />,
+        label: '新建版本',
+        onClick: () => handleCreateStandaloneVersion(standaloneCurrentVersion),
+      },
+      ...(standaloneCurrentVersion?.status === 'DRAFT'
+        ? [{
+            key: 'publish',
+            icon: <SendOutlined />,
+            label: '发布当前版本',
+            onClick: () => handlePublishModel(standaloneCurrentVersion),
+          }]
+        : []),
+    ];
 
     return (
       <div className="sys-module capability-model-module cap-model-standalone-shell">
@@ -984,15 +1147,27 @@ export default function CapabilityModelModule({
               </div>
               <div className="cap-model-standalone-title-row">
                 <div className="cap-model-standalone-title">{standaloneModel?.name || '能力模型'}</div>
-                {standaloneModel?.status ? renderStatusTag(standaloneModel.status) : null}
+                {standaloneModel ? renderCapabilityModelStatusTag(standaloneModel) : null}
               </div>
               <div className="cap-model-standalone-subtitle">
                 {standaloneModel
-                  ? `${standaloneRole?.name || '-'} / ${standaloneRoleLevel?.name || '-'} / ${standaloneSequence?.name || '-'} · ${standaloneStatusLabel}`
+                  ? `${getCapabilityModelVersionLabel(standaloneModel)} · ${standaloneRole?.name || '-'} / ${standaloneRoleLevel?.name || '-'} / ${standaloneSequence?.name || '-'} · ${standaloneStatusLabel}`
                   : '正在加载当前能力模型'}
               </div>
             </div>
-            <Space wrap>
+            <Space wrap className="cap-model-standalone-actions">
+              {standaloneCurrentVersion ? (
+                <Dropdown
+                  menu={{ items: standaloneVersionMenuItems }}
+                  trigger={['click']}
+                  placement="bottomRight"
+                >
+                  <Button className="cap-model-version-btn" icon={<BranchesOutlined />}>
+                    {getCapabilityModelVersionLabel(standaloneCurrentVersion)}
+                    {renderCapabilityModelStatusTag(standaloneCurrentVersion, 'cap-model-version-tag')}
+                  </Button>
+                </Dropdown>
+              ) : null}
               {standaloneViewMode === 'edit' ? (
                 <>
                   <Button onClick={handleOpenStandalonePreview}>取消编辑</Button>
@@ -1062,10 +1237,24 @@ export default function CapabilityModelModule({
 
   async function handlePublishModel(record) {
     try {
-      await capabilityModelApi.publishModel(record.id);
+      let targetRecord = record;
+      if (standalone && modelDrawerMode === 'edit' && modelDraft?.id === record?.id) {
+        const values = await modelBaseForm.validateFields();
+        const saved = await capabilityModelApi.saveModel({
+          ...modelDraft,
+          ...values,
+        });
+        setModelDraft(createCapabilityModelDraft(saved));
+        targetRecord = saved;
+      }
+      const published = await capabilityModelApi.publishModel(targetRecord.id);
       await loadAllData(false);
+      if (standalone && published?.id) {
+        openPreviewModel(published);
+      }
       message.success('模型已发布');
     } catch (error) {
+      if (error?.errorFields) return;
       message.error(getErrorMessage(error, '发布模型失败'));
     }
   }
@@ -1424,7 +1613,7 @@ export default function CapabilityModelModule({
         <Space size={4} wrap>
           <Button size="small" type="text" icon={<EyeOutlined />} onClick={() => openPreviewModel(record)}>查看</Button>
           <Button size="small" type="text" icon={<EditOutlined />} onClick={() => handleStartEditModel(record)}>
-            {record.status === 'DRAFT' ? '编辑' : '编辑副本'}
+            {record.status === 'DRAFT' ? '编辑' : '新建版本'}
           </Button>
           <Button size="small" type="text" icon={<CopyOutlined />} onClick={() => handleDuplicateModel(record)}>复制</Button>
           {record.status === 'DRAFT' ? (
