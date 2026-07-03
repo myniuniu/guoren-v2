@@ -198,12 +198,21 @@ function getDefaultTopicTabKey(sceneConfig) {
   return sceneConfig ? 'home' : 'knowledge';
 }
 
+function resolveDetailTabIconKey(tab = {}) {
+  return resolveSceneModeTabIconKey(tab);
+}
+
 function resolveDetailTabIcon(tab = {}) {
   return renderSceneConfigIcon(tab, {
     size: 16,
     radius: 6,
-    defaultIconKey: resolveSceneModeTabIconKey(tab),
+    color: 'inherit',
+    defaultIconKey: resolveDetailTabIconKey(tab),
   });
+}
+
+function resolveDetailTabIconColor(tab = {}) {
+  return getSceneIconMeta(resolveDetailTabIconKey(tab))?.color || '#3f79dd';
 }
 
 function isInteractiveResource(resource) {
@@ -1753,13 +1762,34 @@ function TopicDetail({
         key: item.key,
         label: item.label || item.key || `模式 ${index + 1}`,
         icon: resolveDetailTabIcon(item),
+        iconColor: resolveDetailTabIconColor(item),
       }));
     }
     return [
-      { key: 'knowledge', label: '知识模式', icon: resolveDetailTabIcon({ key: 'knowledge', label: '知识模式' }) },
-      { key: 'ai', label: 'AI模式', icon: resolveDetailTabIcon({ key: 'ai', label: 'AI模式' }) },
-      { key: 'practice', label: '实训模式', icon: resolveDetailTabIcon({ key: 'practice', label: '实训模式' }) },
-      { key: 'assessment', label: '考核配置模式', icon: resolveDetailTabIcon({ key: 'assessment', label: '考核配置模式' }) },
+      {
+        key: 'knowledge',
+        label: '知识模式',
+        icon: resolveDetailTabIcon({ key: 'knowledge', label: '知识模式' }),
+        iconColor: resolveDetailTabIconColor({ key: 'knowledge', label: '知识模式' }),
+      },
+      {
+        key: 'ai',
+        label: 'AI模式',
+        icon: resolveDetailTabIcon({ key: 'ai', label: 'AI模式' }),
+        iconColor: resolveDetailTabIconColor({ key: 'ai', label: 'AI模式' }),
+      },
+      {
+        key: 'practice',
+        label: '实训模式',
+        icon: resolveDetailTabIcon({ key: 'practice', label: '实训模式' }),
+        iconColor: resolveDetailTabIconColor({ key: 'practice', label: '实训模式' }),
+      },
+      {
+        key: 'assessment',
+        label: '考核配置模式',
+        icon: resolveDetailTabIcon({ key: 'assessment', label: '考核配置模式' }),
+        iconColor: resolveDetailTabIconColor({ key: 'assessment', label: '考核配置模式' }),
+      },
     ];
   }, [sceneConfig]);
   const hasHomeTab = tabs.some((tab) => tab.key === 'home');
@@ -4993,6 +5023,10 @@ function TopicDetail({
                   key={tab.key}
                   ref={(node) => setDetailTabRef(tab.key, node)}
                   className={`detail-tab ${activeTab === tab.key ? 'detail-tab-active' : ''} ${tabs.length === 1 ? 'detail-tab-single' : ''}`}
+                  style={{
+                    '--detail-tab-icon-active': tab.iconColor || '#3f79dd',
+                    '--detail-tab-icon-shadow': hexToRgba(tab.iconColor || '#3f79dd', 0.16),
+                  }}
                   onClick={() => handleSelectTab(tab.key)}
                 >
                   {tab.icon ? (
