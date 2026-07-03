@@ -29,6 +29,15 @@ import {
   seedCapabilityModelData,
   disableCapabilityModel,
 } from './store';
+import {
+  createCapabilityModelRequestId,
+  getCapabilityModelEditSessionStorageKey,
+  readCapabilityModelEditSession,
+  readCapabilityModelPreviewSession,
+  removeCapabilityModelPreviewSession,
+  writeCapabilityModelEditSession,
+  writeCapabilityModelPreviewSession,
+} from './editSession';
 
 export {
   CAPABILITY_MODEL_STATUS_OPTIONS,
@@ -42,7 +51,14 @@ export {
   createDefaultLevelScheme,
   createEmptyCapabilityDimension,
   createEmptyCapabilityItem,
+  createCapabilityModelRequestId,
+  getCapabilityModelEditSessionStorageKey,
   getCapabilityModelStoreEventName,
+  readCapabilityModelEditSession,
+  readCapabilityModelPreviewSession,
+  removeCapabilityModelPreviewSession,
+  writeCapabilityModelEditSession,
+  writeCapabilityModelPreviewSession,
 };
 
 export const capabilityModelApi = {
@@ -64,4 +80,6 @@ export const capabilityModelApi = {
   publishModel: async (id) => publishCapabilityModel(id),
   disableModel: async (id) => disableCapabilityModel(id),
   removeModel: async (id) => removeCapabilityModel(id),
+  readCapabilityModelEditSession: async (requestId) => readCapabilityModelEditSession(requestId),
+  writeCapabilityModelEditSession: async (payload) => writeCapabilityModelEditSession(payload),
 };

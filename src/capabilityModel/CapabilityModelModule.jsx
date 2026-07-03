@@ -50,6 +50,7 @@ import {
   createDefaultLevelScheme,
   createEmptyCapabilityDimension,
   createEmptyCapabilityItem,
+  writeCapabilityModelEditSession,
 } from './api';
 import {
   getRoleLevel,
@@ -606,6 +607,18 @@ export default function CapabilityModelModule({
     window.history.replaceState(window.history.state, '', nextUrl);
   }, [entryRequestId, standalone]);
 
+  const syncStandaloneEditSession = useCallback((record, editorState, options = {}) => {
+    if (!standalone || !entryRequestId || !record?.id) return null;
+    return writeCapabilityModelEditSession({
+      requestId: entryRequestId,
+      currentModelId: record.id,
+      versionSeriesId: record.versionSeriesId || record.id,
+      updatedAt: record.updatedAt || record.createdAt || new Date().toISOString(),
+      editorState,
+      bumpRevision: options.bumpRevision === true,
+    });
+  }, [entryRequestId, standalone]);
+
   useEffect(() => {
     if (!modelDrawerOpen || !modelDraft) return;
     modelBaseForm.setFieldsValue({
@@ -880,25 +893,27 @@ export default function CapabilityModelModule({
     if (standalone) {
       setStandaloneModelId(record.id);
       replaceStandaloneHash(record.id, 'edit');
+      syncStandaloneEditSession(record, 'editing');
     }
     setModelDrawerMode('edit');
     setModelDraft(createCapabilityModelDraft(cloneDraft(record)));
     setActiveDimensionId(undefined);
     setActiveItemId(undefined);
     setModelDrawerOpen(true);
-  }, [replaceStandaloneHash, standalone]);
+  }, [replaceStandaloneHash, standalone, syncStandaloneEditSession]);
 
   const openPreviewModel = useCallback((record) => {
     if (standalone) {
       setStandaloneModelId(record.id);
       replaceStandaloneHash(record.id, 'preview');
+      syncStandaloneEditSession(record, 'ended');
     }
     setModelDrawerMode('preview');
     setModelDraft(createCapabilityModelDraft(cloneDraft(record)));
     setActiveDimensionId(undefined);
     setActiveItemId(undefined);
     setModelDrawerOpen(true);
-  }, [replaceStandaloneHash, standalone]);
+  }, [replaceStandaloneHash, standalone, syncStandaloneEditSession]);
 
   async function handleSaveModel() {
     try {
@@ -907,6 +922,7 @@ export default function CapabilityModelModule({
         ...modelDraft,
         ...values,
       });
+      syncStandaloneEditSession(saved, 'editing', { bumpRevision: true });
       setModelDraft(createCapabilityModelDraft(saved));
       if (isStandaloneEntry) {
         setStandaloneModelId(saved.id);
@@ -1248,6 +1264,7 @@ export default function CapabilityModelModule({
         targetRecord = saved;
       }
       const published = await capabilityModelApi.publishModel(targetRecord.id);
+      syncStandaloneEditSession(published, 'editing', { bumpRevision: true });
       await loadAllData(false);
       if (standalone && published?.id) {
         openPreviewModel(published);
@@ -1258,6 +1275,28 @@ export default function CapabilityModelModule({
       message.error(getErrorMessage(error, '发布模型失败'));
     }
   }
+
+  useEffect(() => {
+    if (!standalone || !entryRequestId || typeof window === 'undefined') return undefined;
+
+    const handlePageHide = () => {
+      const targetRecord = standaloneSourceModel || modelDraft || (standaloneModelId ? {
+        id: standaloneModelId,
+        versionSeriesId: standaloneModelId,
+      } : null);
+      syncStandaloneEditSession(targetRecord, 'ended');
+    };
+
+    window.addEventListener('pagehide', handlePageHide);
+    return () => window.removeEventListener('pagehide', handlePageHide);
+  }, [
+    entryRequestId,
+    modelDraft,
+    standalone,
+    standaloneModelId,
+    standaloneSourceModel,
+    syncStandaloneEditSession,
+  ]);
 
   async function handleDisableModel(record) {
     try {

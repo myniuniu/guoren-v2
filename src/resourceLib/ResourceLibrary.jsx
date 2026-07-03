@@ -9,6 +9,7 @@ import {
   FolderAddOutlined, FileAddOutlined,
   EditOutlined, DeleteOutlined,
   FullscreenOutlined,
+  ReloadOutlined,
   FolderFilled, DesktopOutlined,
   DownloadOutlined, ClockCircleOutlined,
   CloudOutlined, ShareAltOutlined, GlobalOutlined,
@@ -45,11 +46,16 @@ import {
 } from '../knowledgeGraph/store';
 import {
   capabilityModelApi,
+  createCapabilityModelRequestId,
   createCapabilityModelDraft,
   createDefaultLevelScheme,
   createEmptyCapabilityDimension,
   createEmptyCapabilityItem,
   getCapabilityModelStoreEventName,
+  readCapabilityModelEditSession,
+  readCapabilityModelPreviewSession,
+  removeCapabilityModelPreviewSession,
+  writeCapabilityModelPreviewSession,
 } from '../capabilityModel/api';
 import {
   CapabilityModelEditorPanel,
@@ -60,7 +66,10 @@ import {
   cloneCapabilityModelDraft,
   createCapabilityModelStarterDraft,
   getActiveCapabilityFrameworkSelection,
+  getCapabilityModelStatusMeta,
+  getCapabilityModelVersionLabel,
   moveCapabilityModelListItem,
+  resolveCapabilityModelResourceEntry,
   syncDimensionsToLevelScheme,
 } from '../capabilityModel/shared';
 import {
@@ -102,52 +111,6 @@ const KNOWLEDGE_GRAPH_RELATION_TYPE_LABEL_MAP = Object.fromEntries(
   RELATION_TYPE_OPTIONS.map((item) => [item.value, item.label]),
 );
 const getActionErrorMessage = (error, fallback) => error?.message || fallback;
-
-function resolveCapabilityModelResourceEntry(item, catalog = {}) {
-  if (item?.fileType !== 'capabilityModel') {
-    return { model: null, role: null, sequence: null, roleLevel: null };
-  }
-
-  const models = catalog.models || [];
-  const matchedModel = (
-    item.capabilityModelId
-      ? models.find((entry) => entry.id === item.capabilityModelId) || null
-      : null
-  ) || (
-    item.capabilityModelCode
-      ? models.find((entry) => entry.modelCode === item.capabilityModelCode) || null
-      : null
-  ) || null;
-  const versionSeriesId = item.capabilityModelSeriesId
-    || matchedModel?.versionSeriesId
-    || matchedModel?.id
-    || null;
-  const activeSeriesModel = versionSeriesId
-    ? models.find((entry) => (
-      (entry.versionSeriesId || entry.id) === versionSeriesId
-      && entry.status === 'PUBLISHED'
-      && entry.isCurrentVersion
-    )) || null
-    : null;
-  const model = activeSeriesModel || matchedModel;
-
-  if (!model) {
-    return { model: null, role: null, sequence: null, roleLevel: null };
-  }
-
-  const roles = catalog.roles || [];
-  const sequences = catalog.sequences || [];
-  const role = roles.find((entry) => entry.id === model.roleId) || null;
-  const sequence = getSequenceForRole(role, sequences);
-  const roleLevel = getRoleLevel(role, model.roleLevelId, sequences) || null;
-
-  return {
-    model,
-    role,
-    sequence,
-    roleLevel,
-  };
-}
 
 const isEditableTarget = (target) => (
   target instanceof HTMLElement
@@ -235,6 +198,11 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     sequences: [],
     models: [],
   });
+  const [activeCapabilityRequestId, setActiveCapabilityRequestId] = useState(null);
+  const [activeCapabilityPreviewSourceKey, setActiveCapabilityPreviewSourceKey] = useState(null);
+  const [previewOverrideModelId, setPreviewOverrideModelId] = useState(null);
+  const [capabilityPreviewCompactMode, setCapabilityPreviewCompactMode] = useState(false);
+  const [lastAppliedRevision, setLastAppliedRevision] = useState(null);
   const [capabilityModelEditorDraft, setCapabilityModelEditorDraft] = useState(null);
   const [capabilityModelActiveDimensionId, setCapabilityModelActiveDimensionId] = useState(undefined);
   const [capabilityModelActiveItemId, setCapabilityModelActiveItemId] = useState(undefined);
@@ -966,16 +934,34 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     window.open(targetUrl, '_blank', 'noopener,noreferrer');
   }, []);
 
-  const openCapabilityModelInNewTab = useCallback((model, mode = 'preview') => {
+  const openCapabilityModelInNewTab = useCallback((model, mode = 'preview', requestId = null, sourceKey = null) => {
     if (!model?.id || typeof window === 'undefined') return;
     const params = new URLSearchParams({
       modelId: model.id,
       mode,
-      requestId: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     });
+    const nextRequestId = mode === 'edit'
+      ? (requestId || createCapabilityModelRequestId())
+      : requestId;
+    if (nextRequestId) {
+      params.set('requestId', nextRequestId);
+    }
     const targetUrl = `${window.location.pathname}${window.location.search}#capability-model-full?${params.toString()}`;
+    if (mode === 'edit' && sourceKey) {
+      setActiveCapabilityPreviewSourceKey(sourceKey);
+      setActiveCapabilityRequestId(nextRequestId);
+      setCapabilityPreviewCompactMode(true);
+      setPreviewOverrideModelId(model.id);
+      writeCapabilityModelPreviewSession({
+        sourceKey,
+        requestId: nextRequestId,
+        appliedModelId: model.id,
+        lastAppliedRevision,
+        compactMode: true,
+      });
+    }
     window.open(targetUrl, '_blank', 'noopener,noreferrer');
-  }, []);
+  }, [lastAppliedRevision]);
 
   const handleSaveKnowledgeGraphPreview = useCallback(async () => {
     const saved = await knowledgeGraphEditorRef.current?.saveCurrentSelection?.();
@@ -2834,10 +2820,19 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     () => (previewItem?.fileType === 'knowledgeGraph' ? buildKnowledgeGraphPreviewData(previewItem) : null),
     [buildKnowledgeGraphPreviewData, previewItem],
   );
+  const buildCapabilityModelPreviewSourceKey = useCallback((item) => {
+    if (!item?.key) return null;
+    if (scope === 'organization') {
+      return `resourceLib:organization:${currentOrgId}:${item.key}`;
+    }
+    return `resourceLib:personal:${item.key}`;
+  }, [currentOrgId, scope]);
   const previewCapabilityModelData = useMemo(() => {
     if (previewItem?.fileType !== 'capabilityModel') return null;
-    return resolveCapabilityModelResourceEntry(previewItem, capabilityModelCatalog);
-  }, [capabilityModelCatalog, previewItem]);
+    return resolveCapabilityModelResourceEntry(previewItem, capabilityModelCatalog, {
+      overrideModelId: viewMode === 'column' ? null : previewOverrideModelId,
+    });
+  }, [capabilityModelCatalog, previewItem, previewOverrideModelId, viewMode]);
   const toolbarMenuTargetItem = previewItem;
   const visibleSelectionItems = useMemo(
     () => (viewMode === 'column' ? columnContextItems : displayChildren),
@@ -2887,8 +2882,15 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
   );
   const columnSelectedCapabilityModelData = useMemo(() => {
     if (resolvedColumnSelectedItem?.fileType !== 'capabilityModel') return null;
-    return resolveCapabilityModelResourceEntry(resolvedColumnSelectedItem, capabilityModelCatalog);
-  }, [capabilityModelCatalog, resolvedColumnSelectedItem]);
+    return resolveCapabilityModelResourceEntry(resolvedColumnSelectedItem, capabilityModelCatalog, {
+      overrideModelId: viewMode === 'column' ? previewOverrideModelId : null,
+    });
+  }, [capabilityModelCatalog, previewOverrideModelId, resolvedColumnSelectedItem, viewMode]);
+  const activeCapabilityModelPreviewItem = useMemo(() => (
+    viewMode === 'column'
+      ? (resolvedColumnSelectedItem?.fileType === 'capabilityModel' ? resolvedColumnSelectedItem : null)
+      : (previewItem?.fileType === 'capabilityModel' ? previewItem : null)
+  ), [previewItem, resolvedColumnSelectedItem, viewMode]);
   const activeKnowledgeGraphPreviewKey = useMemo(() => {
     if (viewMode === 'column') {
       return resolvedColumnSelectedItem?.fileType === 'knowledgeGraph' ? resolvedColumnSelectedItem.key : null;
@@ -2901,10 +2903,143 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     }
     return previewItem?.fileType === 'capabilityModel' ? previewItem.key : null;
   }, [previewItem, resolvedColumnSelectedItem, viewMode]);
+  const activeCapabilityModelSourceKey = useMemo(
+    () => buildCapabilityModelPreviewSourceKey(activeCapabilityModelPreviewItem),
+    [activeCapabilityModelPreviewItem, buildCapabilityModelPreviewSourceKey],
+  );
   const activeCapabilityModelPreviewData = useMemo(
     () => (viewMode === 'column' ? columnSelectedCapabilityModelData : previewCapabilityModelData),
     [columnSelectedCapabilityModelData, previewCapabilityModelData, viewMode],
   );
+  const handleRestoreCapabilityModelPreview = useCallback(() => {
+    setActiveCapabilityRequestId(null);
+    setCapabilityPreviewCompactMode(false);
+  }, []);
+
+  const handleRefreshCapabilityModelPreview = useCallback(async () => {
+    if (!activeCapabilityRequestId || !activeCapabilityModelPreviewItem) {
+      message.warning('未检测到可同步的新内容');
+      return;
+    }
+
+    try {
+      const session = readCapabilityModelEditSession(activeCapabilityRequestId);
+      if (!session?.currentModelId) {
+        setHasPendingSavedChange(false);
+        message.warning('未检测到可同步的新内容');
+        return;
+      }
+
+      if (session.revision && session.revision === lastAppliedRevision && previewOverrideModelId === session.currentModelId) {
+        setHasPendingSavedChange(false);
+        message.info('当前预览已是最新内容');
+        return;
+      }
+
+      const nextCatalog = await loadCapabilityModelCatalog();
+      const resolved = resolveCapabilityModelResourceEntry(activeCapabilityModelPreviewItem, nextCatalog, {
+        overrideModelId: session.currentModelId,
+      });
+      if (!resolved?.model) {
+        message.warning('未检测到可同步的新内容');
+        return;
+      }
+
+      setPreviewOverrideModelId(session.currentModelId);
+      setLastAppliedRevision(session.revision || null);
+      setHasPendingSavedChange(false);
+      message.success('预览已同步到最新保存内容');
+    } catch (error) {
+      message.error(getActionErrorMessage(error, '刷新能力模型预览失败'));
+    }
+  }, [
+    activeCapabilityModelPreviewItem,
+    activeCapabilityRequestId,
+    lastAppliedRevision,
+    loadCapabilityModelCatalog,
+    previewOverrideModelId,
+  ]);
+
+  useEffect(() => {
+    if (!activeCapabilityModelSourceKey) {
+      setActiveCapabilityPreviewSourceKey(null);
+      setActiveCapabilityRequestId(null);
+      setPreviewOverrideModelId(null);
+      setCapabilityPreviewCompactMode(false);
+      setCapabilityEditorState(null);
+      setLastAppliedRevision(null);
+      setHasPendingSavedChange(false);
+      return;
+    }
+
+    const session = readCapabilityModelPreviewSession(activeCapabilityModelSourceKey);
+    const linkedEditSession = session?.requestId
+      ? readCapabilityModelEditSession(session.requestId)
+      : null;
+    setActiveCapabilityPreviewSourceKey(activeCapabilityModelSourceKey);
+    setActiveCapabilityRequestId(session?.requestId || null);
+    setPreviewOverrideModelId(session?.appliedModelId || null);
+    setCapabilityPreviewCompactMode(Boolean(session?.compactMode));
+    setCapabilityEditorState(linkedEditSession?.editorState || (session?.requestId ? 'editing' : null));
+    setLastAppliedRevision(session?.lastAppliedRevision || null);
+    setHasPendingSavedChange(false);
+  }, [activeCapabilityModelSourceKey]);
+
+  useEffect(() => {
+    if (!activeCapabilityPreviewSourceKey) return;
+    if (!activeCapabilityRequestId && !previewOverrideModelId && !lastAppliedRevision && !capabilityPreviewCompactMode) {
+      removeCapabilityModelPreviewSession(activeCapabilityPreviewSourceKey);
+      return;
+    }
+    writeCapabilityModelPreviewSession({
+      sourceKey: activeCapabilityPreviewSourceKey,
+      requestId: activeCapabilityRequestId,
+      appliedModelId: previewOverrideModelId,
+      lastAppliedRevision,
+      compactMode: capabilityPreviewCompactMode,
+    });
+  }, [
+    activeCapabilityPreviewSourceKey,
+    activeCapabilityRequestId,
+    capabilityPreviewCompactMode,
+    lastAppliedRevision,
+    previewOverrideModelId,
+  ]);
+
+  useEffect(() => {
+    if (!activeCapabilityRequestId) return undefined;
+    const frameId = window.requestAnimationFrame(() => {
+      syncActiveCapabilityPreviewSession();
+    });
+    return () => window.cancelAnimationFrame(frameId);
+  }, [activeCapabilityRequestId, syncActiveCapabilityPreviewSession]);
+
+  useEffect(() => {
+    if (!activeCapabilityRequestId) return undefined;
+
+    const storageKey = getCapabilityModelEditSessionStorageKey();
+    const handleStorage = (event) => {
+      if (event.storageArea !== window.localStorage || event.key !== storageKey) return;
+      syncActiveCapabilityPreviewSession();
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return;
+      syncActiveCapabilityPreviewSession();
+    };
+    const handleFocus = () => {
+      syncActiveCapabilityPreviewSession();
+    };
+
+    window.addEventListener('storage', handleStorage);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [activeCapabilityRequestId, syncActiveCapabilityPreviewSession]);
+
   useEffect(() => {
     setKnowledgeGraphPreviewMode('preview');
     setEditingKnowledgeGraphTitleKey(null);
@@ -3188,7 +3323,18 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
   ]);
 
   const renderCapabilityModelPreviewBlock = useCallback((previewData, fallbackName) => {
-    if (!previewData?.model) {
+    const model = previewData?.model || null;
+    const isCompactSession = capabilityPreviewCompactMode && Boolean(activeCapabilityRequestId);
+    const versionText = model
+      ? `${getCapabilityModelVersionLabel(model)} · ${getCapabilityModelStatusMeta(model).label}`
+      : null;
+    const sessionTipText = capabilityEditorState === 'ended'
+      ? '编辑已结束。'
+      : (hasPendingSavedChange
+        ? '有新内容可刷新。'
+        : '已在新页签编辑。');
+
+    if (!model && !isCompactSession) {
       return (
         <div className="finder-preview-placeholder">
           {renderFileIcon('capabilityModel', { fontSize: 80 })}
@@ -3204,15 +3350,16 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
           <div className="finder-kg-preview-head">
             <div className="finder-kg-preview-head-copy">
               <div className="finder-kg-preview-head-title-row">
-                <div className="finder-kg-preview-head-title">{previewData.model.name}</div>
+                <div className="finder-kg-preview-head-title">{model.name}</div>
               </div>
+              <div className="finder-kg-preview-head-meta">{versionText}</div>
             </div>
             <div className="finder-kg-preview-head-actions">
               <Button onClick={() => setCapabilityModelPreviewMode('preview')}>取消编辑</Button>
               <Button type="primary" onClick={handleSaveCapabilityModelPreview}>
                 保存
               </Button>
-              <Button icon={<FullscreenOutlined />} onClick={() => openCapabilityModelInNewTab(previewData.model, 'preview')}>
+              <Button icon={<FullscreenOutlined />} onClick={() => openCapabilityModelInNewTab(model, 'preview')}>
                 全屏
               </Button>
             </div>
@@ -3256,25 +3403,62 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
       );
     }
 
+    if (isCompactSession) {
+      return (
+        <div className="finder-kg-preview-embed finder-cap-model-preview-embed">
+          <div className="cap-model-preview-compact-shell">
+            <div className="cap-model-preview-compact-card">
+              <div className="cap-model-preview-compact-kicker">编辑中</div>
+              <div className="cap-model-preview-compact-title">{model?.name || fallbackName || '能力模型'}</div>
+              {versionText ? <div className="cap-model-preview-compact-meta">{versionText}</div> : null}
+              <div className={`cap-model-preview-session-tip${hasPendingSavedChange ? ' is-pending' : ''}`}>
+                <span>{sessionTipText}</span>
+                <Button size="small" icon={<ReloadOutlined />} onClick={handleRefreshCapabilityModelPreview}>
+                  刷新预览
+                </Button>
+              </div>
+              {capabilityEditorState === 'ended' ? (
+                <div className="cap-model-preview-compact-actions">
+                  <Button size="small" onClick={handleRestoreCapabilityModelPreview}>
+                    恢复预览
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="finder-kg-preview-embed finder-cap-model-preview-embed">
         <div className="finder-kg-preview-head">
           <div className="finder-kg-preview-head-copy">
             <div className="finder-kg-preview-head-title-row">
-              <div className="finder-kg-preview-head-title">{previewData.model.name}</div>
+              <div className="finder-kg-preview-head-title">{model.name}</div>
             </div>
+            <div className="finder-kg-preview-head-meta">{versionText}</div>
           </div>
           <div className="finder-kg-preview-head-actions">
-            <Button type="primary" icon={<EditOutlined />} onClick={() => openCapabilityModelInNewTab(previewData.model, 'edit')}>
+            <Button
+              type="primary"
+              icon={<EditOutlined />}
+              onClick={() => openCapabilityModelInNewTab(
+                model,
+                'edit',
+                activeCapabilityRequestId,
+                activeCapabilityModelSourceKey,
+              )}
+            >
               编辑
             </Button>
-            <Button icon={<FullscreenOutlined />} onClick={() => openCapabilityModelInNewTab(previewData.model, 'preview')}>
+            <Button icon={<FullscreenOutlined />} onClick={() => openCapabilityModelInNewTab(model, 'preview')}>
               全屏
             </Button>
           </div>
         </div>
         <CapabilityModelPreview
-          model={previewData.model}
+          model={model}
           industries={capabilityModelCatalog.industries}
           roles={capabilityModelCatalog.roles}
           sequences={capabilityModelCatalog.sequences}
@@ -3287,6 +3471,9 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     activeCapabilityModelIndustryOptions,
     activeCapabilityModelRoleLevelOptions,
     activeCapabilityModelRoleOptions,
+    activeCapabilityModelSourceKey,
+    activeCapabilityRequestId,
+    capabilityEditorState,
     capabilityModelActiveDimension,
     capabilityModelActiveDimensionIndex,
     capabilityModelActiveItem,
@@ -3297,6 +3484,8 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     capabilityModelEditorDraft,
     capabilityModelForm,
     capabilityModelPreviewMode,
+    capabilityPreviewCompactMode,
+    handleRefreshCapabilityModelPreview,
     handleCapabilityModelAddDimension,
     handleCapabilityModelAddItem,
     handleCapabilityModelLevelCountChange,
@@ -3311,6 +3500,8 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     handleCapabilityModelUpdateItemField,
     handleCapabilityModelUpdateItemStringListField,
     handleSaveCapabilityModelPreview,
+    handleRestoreCapabilityModelPreview,
+    hasPendingSavedChange,
     openCapabilityModelInNewTab,
     selectCapabilityModelDimension,
     selectCapabilityModelItem,

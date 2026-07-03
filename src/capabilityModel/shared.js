@@ -24,6 +24,30 @@ const STATUS_LABEL_MAP = Object.fromEntries(
   CAPABILITY_MODEL_STATUS_OPTIONS.map((item) => [item.value, item.label]),
 );
 
+export function getCapabilityModelStatusMeta(model) {
+  if (!model) {
+    return { color: 'default', label: '-' };
+  }
+  if (model.status === 'DRAFT') {
+    return { color: 'processing', label: '草稿' };
+  }
+  if (model.status === 'DISABLED') {
+    return { color: 'default', label: '已停用' };
+  }
+  if (model.status === 'PUBLISHED' && model.isCurrentVersion) {
+    return { color: 'success', label: '生效中' };
+  }
+  if (model.status === 'PUBLISHED') {
+    return { color: 'default', label: '已失效' };
+  }
+  return { color: 'default', label: model.status || '-' };
+}
+
+export function getCapabilityModelVersionLabel(model) {
+  const versionNumber = Math.max(1, Number(model?.versionNumber || 1));
+  return `版本 ${versionNumber}`;
+}
+
 export function cloneCapabilityModelDraft(data) {
   return JSON.parse(JSON.stringify(data || null));
 }
@@ -183,6 +207,60 @@ export function buildCapabilityModelResourceMeta(model, role = null, roleLevel =
         },
       ],
     },
+  };
+}
+
+export function resolveCapabilityModelResourceEntry(item, catalog = {}, options = {}) {
+  if (item?.fileType !== 'capabilityModel') {
+    return { model: null, role: null, sequence: null, roleLevel: null };
+  }
+
+  const overrideModelId = typeof options === 'string'
+    ? options
+    : (options.overrideModelId || options.modelId || null);
+  const models = catalog.models || [];
+  const explicitModel = overrideModelId
+    ? models.find((entry) => entry.id === overrideModelId) || null
+    : null;
+  const matchedModel = explicitModel || (
+    item.capabilityModelId
+      ? models.find((entry) => entry.id === item.capabilityModelId) || null
+      : null
+  ) || (
+    item.capabilityModelCode
+      ? models.find((entry) => entry.modelCode === item.capabilityModelCode) || null
+      : null
+  ) || null;
+  const versionSeriesId = item.capabilityModelSeriesId
+    || explicitModel?.versionSeriesId
+    || explicitModel?.id
+    || matchedModel?.versionSeriesId
+    || matchedModel?.id
+    || null;
+  const activeSeriesModel = !explicitModel && versionSeriesId
+    ? models.find((entry) => (
+      (entry.versionSeriesId || entry.id) === versionSeriesId
+      && entry.status === 'PUBLISHED'
+      && entry.isCurrentVersion
+    )) || null
+    : null;
+  const model = explicitModel || activeSeriesModel || matchedModel;
+
+  if (!model) {
+    return { model: null, role: null, sequence: null, roleLevel: null };
+  }
+
+  const roles = catalog.roles || [];
+  const sequences = catalog.sequences || [];
+  const role = roles.find((entry) => entry.id === model.roleId) || null;
+  const sequence = getSequenceForRole(role, sequences);
+  const roleLevel = getRoleLevel(role, model.roleLevelId, sequences) || null;
+
+  return {
+    model,
+    role,
+    sequence,
+    roleLevel,
   };
 }
 
