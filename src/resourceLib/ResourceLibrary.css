@@ -21,7 +21,10 @@
   --finder-pane-divider-hover: rgba(74, 132, 214, 0.12);
   --finder-pane-shadow: rgba(100, 116, 139, 0.1);
   --finder-list-surface-bg:
-    linear-gradient(180deg, rgba(253, 253, 253, 0.992) 0%, rgba(249, 249, 249, 0.978) 48%, rgba(245, 245, 245, 0.966) 100%);
+    linear-gradient(180deg, rgba(247, 249, 252, 0.994) 0%, rgba(241, 245, 249, 0.986) 48%, rgba(234, 239, 245, 0.976) 100%),
+    radial-gradient(circle at 14% 8%, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0) 32%),
+    radial-gradient(circle at 84% 82%, rgba(192, 204, 222, 0.14) 0%, rgba(255, 255, 255, 0) 40%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 100%);
   --finder-preview-surface-bg:
     linear-gradient(180deg, rgba(253, 253, 253, 0.992) 0%, rgba(249, 249, 249, 0.979) 52%, rgba(246, 246, 246, 0.968) 100%),
     radial-gradient(circle at 16% 10%, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0) 30%),
@@ -906,7 +909,10 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(180deg, #f7f9fc 0%, #f4f7fb 100%);
+  background:
+    linear-gradient(180deg, rgba(245, 247, 250, 0.98) 0%, rgba(238, 242, 247, 0.96) 100%),
+    radial-gradient(circle at 18% 4%, rgba(255, 255, 255, 0.54) 0%, rgba(255, 255, 255, 0) 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
   overflow: hidden;
 }
 
@@ -1559,8 +1565,9 @@
   border-radius: 0 0 24px 0;
   background: var(--finder-list-surface-bg);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.86),
-    0 16px 28px rgba(15, 23, 42, 0.04);
+    inset 0 1px 0 rgba(255, 255, 255, 0.84),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+    0 12px 24px rgba(15, 23, 42, 0.03);
 }
 
 .finder-file-selection-indicator {
@@ -1927,7 +1934,8 @@
   border-top: none;
   border-bottom: 1px solid rgba(214, 222, 232, 0.58);
   background:
-    linear-gradient(180deg, rgba(249, 250, 252, 0.96) 0%, rgba(241, 245, 249, 0.92) 100%);
+    linear-gradient(180deg, rgba(248, 250, 252, 0.96) 0%, rgba(238, 243, 248, 0.93) 100%),
+    radial-gradient(circle at 12% 0%, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 30%);
   box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.46);
   font-size: 12px;
   color: #6f7d90;
