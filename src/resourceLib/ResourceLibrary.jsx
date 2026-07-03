@@ -353,6 +353,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     top: 0,
     height: 0,
     key: null,
+    durationMs: 260,
   });
   const [columnSelectionIndicator, setColumnSelectionIndicator] = useState({
     visible: false,
@@ -360,6 +361,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     height: 0,
     key: null,
     colIdx: null,
+    durationMs: 260,
   });
   useEffect(() => {
     capabilityModelCatalogRef.current = capabilityModelCatalog;
@@ -2302,12 +2304,24 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
 
   useLayoutEffect(() => {
     if (viewMode !== 'detail' || selectedItemKeys.length !== 1) {
-      setDetailSelectionIndicator((prev) => (prev.visible ? { visible: false, top: 0, height: 0, key: null } : prev));
+      setDetailSelectionIndicator((prev) => (prev.visible ? {
+        visible: false,
+        top: 0,
+        height: 0,
+        key: null,
+        durationMs: prev.durationMs,
+      } : prev));
       return;
     }
     const selectedKey = selectedItemKeys[0];
     if (!displayChildren.some((item) => item.key === selectedKey)) {
-      setDetailSelectionIndicator((prev) => (prev.visible ? { visible: false, top: 0, height: 0, key: null } : prev));
+      setDetailSelectionIndicator((prev) => (prev.visible ? {
+        visible: false,
+        top: 0,
+        height: 0,
+        key: null,
+        durationMs: prev.durationMs,
+      } : prev));
       return;
     }
     const listNode = detailListRef.current;
@@ -2315,8 +2329,8 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     if (!listNode || !rowNode) return;
     const listRect = listNode.getBoundingClientRect();
     const rowRect = rowNode.getBoundingClientRect();
-    const nextTop = Math.max(0, rowRect.top - listRect.top);
-    const nextHeight = rowRect.height;
+    const nextTop = Math.max(0, Math.round(rowRect.top - listRect.top));
+    const nextHeight = Math.round(rowRect.height);
     setDetailSelectionIndicator((prev) => {
       if (
         prev.visible
@@ -2326,18 +2340,30 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
       ) {
         return prev;
       }
+      const travel = prev.visible
+        ? Math.abs(prev.top - nextTop) + Math.abs(prev.height - nextHeight) * 0.4
+        : nextHeight;
+      const durationMs = Math.max(190, Math.min(380, Math.round(185 + travel * 1.2)));
       return {
         visible: true,
         top: nextTop,
         height: nextHeight,
         key: selectedKey,
+        durationMs,
       };
     });
   }, [displayChildren, selectedItemKeys, viewMode]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (viewMode !== 'column' || selectedItemKeys.length !== 1) {
-      setColumnSelectionIndicator((prev) => (prev.visible ? { visible: false, top: 0, height: 0, key: null, colIdx: null } : prev));
+      setColumnSelectionIndicator((prev) => (prev.visible ? {
+        visible: false,
+        top: 0,
+        height: 0,
+        key: null,
+        colIdx: null,
+        durationMs: prev.durationMs,
+      } : prev));
       return;
     }
     const selectedKey = selectedItemKeys[0];
@@ -2345,12 +2371,26 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     if (!rowNode) return;
     const nextColIdx = Number(rowNode.dataset.columnIndex ?? -1);
     if (Number.isNaN(nextColIdx) || nextColIdx < 0) {
-      setColumnSelectionIndicator((prev) => (prev.visible ? { visible: false, top: 0, height: 0, key: null, colIdx: null } : prev));
+      setColumnSelectionIndicator((prev) => (prev.visible ? {
+        visible: false,
+        top: 0,
+        height: 0,
+        key: null,
+        colIdx: null,
+        durationMs: prev.durationMs,
+      } : prev));
       return;
     }
     const columnItems = columnLevels[nextColIdx] || [];
     if (!columnItems.some((item) => item.key === selectedKey)) {
-      setColumnSelectionIndicator((prev) => (prev.visible ? { visible: false, top: 0, height: 0, key: null, colIdx: null } : prev));
+      setColumnSelectionIndicator((prev) => (prev.visible ? {
+        visible: false,
+        top: 0,
+        height: 0,
+        key: null,
+        colIdx: null,
+        durationMs: prev.durationMs,
+      } : prev));
       return;
     }
     const nextTop = rowNode.offsetTop;
@@ -2365,12 +2405,17 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
       ) {
         return prev;
       }
+      const travel = prev.visible
+        ? Math.abs(prev.top - nextTop) + Math.abs(prev.height - nextHeight) * 0.4
+        : nextHeight;
+      const durationMs = Math.max(190, Math.min(380, Math.round(185 + travel * 1.2)));
       return {
         visible: true,
         top: nextTop,
         height: nextHeight,
         key: selectedKey,
         colIdx: nextColIdx,
+        durationMs,
       };
     });
   }, [columnLevels, selectedItemKeys, viewMode]);
@@ -4344,8 +4389,9 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                     <div
                       className={`finder-column-selection-indicator ${columnSelectionIndicator.visible && columnSelectionIndicator.colIdx === colIdx ? 'is-visible' : ''}`}
                       style={{
-                        transform: `translateY(${columnSelectionIndicator.colIdx === colIdx ? columnSelectionIndicator.top : 0}px)`,
+                        transform: `translate3d(0, ${columnSelectionIndicator.colIdx === colIdx ? columnSelectionIndicator.top : 0}px, 0)`,
                         height: `${columnSelectionIndicator.colIdx === colIdx ? columnSelectionIndicator.height : 0}px`,
+                        '--finder-selection-motion-duration': `${columnSelectionIndicator.colIdx === colIdx ? columnSelectionIndicator.durationMs : 260}ms`,
                       }}
                       aria-hidden="true"
                     />
@@ -4562,8 +4608,9 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
               <div
                 className={`finder-file-selection-indicator ${detailSelectionIndicator.visible ? 'is-visible' : ''}`}
                 style={{
-                  transform: `translateY(${detailSelectionIndicator.top}px)`,
+                  transform: `translate3d(0, ${detailSelectionIndicator.top}px, 0)`,
                   height: `${detailSelectionIndicator.height}px`,
+                  '--finder-selection-motion-duration': `${detailSelectionIndicator.durationMs}ms`,
                 }}
                 aria-hidden="true"
               />

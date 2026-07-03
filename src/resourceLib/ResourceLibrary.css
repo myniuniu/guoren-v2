@@ -1625,10 +1625,13 @@
     0 2px 8px rgba(69, 91, 128, 0.06);
   backdrop-filter: blur(14px) saturate(1.1);
   -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  transform: translate3d(0, 0, 0);
+  transform-origin: 50% 0;
+  backface-visibility: hidden;
   will-change: transform, height, opacity;
   transition:
-    transform 360ms cubic-bezier(0.22, 1, 0.36, 1),
-    height 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform var(--finder-selection-motion-duration, 280ms) cubic-bezier(0.2, 0.86, 0.24, 1),
+    height var(--finder-selection-motion-duration, 280ms) cubic-bezier(0.2, 0.86, 0.24, 1),
     opacity 180ms ease;
 }
 
@@ -1824,6 +1827,11 @@
   margin-right: 8px;
   flex-shrink: 0;
   font-size: 16px;
+  transition: color 220ms ease, transform 220ms ease, filter 220ms ease, opacity 220ms ease;
+}
+
+.finder-file-icon .anticon {
+  transition: color 220ms ease, transform 220ms ease, filter 220ms ease, opacity 220ms ease;
 }
 
 .finder-file-row-selected .finder-file-icon,
@@ -1843,6 +1851,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: color 220ms ease, text-shadow 220ms ease, opacity 220ms ease;
 }
 
 /* 详情视图行 hover 操作区（贴在名称列右侧边界） */
@@ -1919,7 +1928,7 @@
   cursor: pointer;
   border-radius: 3px;
   margin-right: 2px;
-  transition: background 0.1s;
+  transition: background 0.16s ease, color 220ms ease, opacity 220ms ease;
 }
 .finder-detail-expand-icon:hover {
   background: rgba(15, 23, 42, 0.06);
@@ -1951,12 +1960,14 @@
   white-space: nowrap;
   margin-right: 12px;
   min-width: 100px;
+  transition: color 220ms ease, opacity 220ms ease;
 }
 
 .finder-file-chevron {
   color: #aab4c0;
   font-size: 11px;
   flex-shrink: 0;
+  transition: color 220ms ease, opacity 220ms ease, transform 220ms ease;
 }
 
 /* ====== Detail mode header ====== */
@@ -2825,10 +2836,13 @@
     0 2px 8px rgba(80, 108, 160, 0.06);
   backdrop-filter: blur(16px) saturate(1.22);
   -webkit-backdrop-filter: blur(16px) saturate(1.22);
+  transform: translate3d(0, 0, 0);
+  transform-origin: 50% 0;
+  backface-visibility: hidden;
   will-change: transform, height, opacity;
   transition:
-    transform 360ms cubic-bezier(0.22, 1, 0.36, 1),
-    height 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform var(--finder-selection-motion-duration, 280ms) cubic-bezier(0.2, 0.86, 0.24, 1),
+    height var(--finder-selection-motion-duration, 280ms) cubic-bezier(0.2, 0.86, 0.24, 1),
     opacity 180ms ease;
 }
 
@@ -2975,6 +2989,11 @@
   flex-shrink: 0;
   display: flex;
   align-items: center;
+  transition: color 220ms ease, transform 220ms ease, filter 220ms ease, opacity 220ms ease;
+}
+
+.finder-column-item-icon .anticon {
+  transition: color 220ms ease, transform 220ms ease, filter 220ms ease, opacity 220ms ease;
 }
 
 .finder-column-item-active .finder-column-item-icon {
@@ -2998,6 +3017,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: color 220ms ease, text-shadow 220ms ease, opacity 220ms ease;
 }
 
 .finder-column-item-active .finder-column-item-name,
@@ -3009,6 +3029,7 @@
   font-size: 9px;
   opacity: 0.5;
   flex-shrink: 0;
+  transition: color 220ms ease, opacity 220ms ease, transform 220ms ease;
 }
 
 .finder-column-item-active .finder-column-item-arrow {
