@@ -588,10 +588,21 @@
   gap: 12px;
 }
 
+.cap-model-framework-stage-head.is-centered {
+  justify-content: center;
+  padding: 4px 0 18px;
+  border-bottom: 1px solid #e6edf5;
+}
+
+.cap-model-framework-stage-head.is-centered .ant-segmented {
+  margin: 0 auto;
+}
+
 .cap-model-framework-dimension-strip {
   display: flex;
   gap: 12px;
   overflow-x: auto;
+  padding-top: 2px;
   padding-bottom: 4px;
   scrollbar-width: thin;
 }
@@ -1430,6 +1441,10 @@
     padding-top: 16px;
     border-left: 0;
     border-top: 1px solid #e6edf5;
+  }
+
+  .cap-model-framework-stage-head.is-centered {
+    align-items: center;
   }
 
   .cap-model-framework-dimension-strip {
