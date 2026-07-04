@@ -18,13 +18,23 @@ import {
   Table,
   Tabs,
   Tag,
+  Tooltip,
 } from 'antd';
 import {
+  AppstoreOutlined,
   BellOutlined,
+  CaretDownOutlined,
+  CaretRightOutlined,
+  FileTextOutlined,
+  InfoCircleOutlined,
   SendOutlined,
   UserOutlined,
 } from '@ant-design/icons';
 import { capabilityModelApi } from '../capabilityModel/api';
+import {
+  getCapabilityDimensionEntries,
+  getCapabilityFrameworkTreeEntries,
+} from '../capabilityModel/shared';
 import {
   getTeacherEvaluationStatusLabel,
   teacherEvaluationApi,
@@ -43,7 +53,13 @@ import {
   matchNamePattern,
 } from '../shared/resourceRecordAssociations';
 import { listArchivedSceneGrowthRecords } from '../shared/sceneGrowthRecords';
-import { getAllItemsAcrossLibraries, loadResourceLib } from '../resourceLib/resourceLibStore';
+import {
+  getAllItemsAcrossLibraries,
+  getAllLibraryEntriesAcrossLibraries,
+  getLibraryDescendantFiles,
+  getLibraryItemPath,
+  loadResourceLib,
+} from '../resourceLib/resourceLibStore';
 import { sceneApi } from '../scene/api';
 import { archiveVersionApi } from './archiveVersionApi';
 import '../system/SystemModule.css';
@@ -224,6 +240,55 @@ function buildGrowthRecordMaterialEntries(growthRecord) {
   }, []);
 }
 
+function isGrowthRecordMappedToItem(record, itemId, itemName) {
+  if (!record || !itemName) return false;
+  if ((record.mappingRows || []).some((row) => (
+    row.itemId === itemId
+      || matchNamePattern(row.itemName, itemName)
+      || matchNamePattern(itemName, row.itemName)
+  ))) {
+    return true;
+  }
+  return (record.relatedItemNames || []).some((name) => (
+    matchNamePattern(name, itemName) || matchNamePattern(itemName, name)
+  ));
+}
+
+function buildMountedEvidenceEntries(snapshot, item, dimensionName = '') {
+  if (!snapshot || !item?.id || !item?.name) return [];
+  const seenKeys = new Set();
+  return Object.values(snapshot.recordsBySource || {})
+    .flat()
+    .filter((record) => isGrowthRecordMappedToItem(record, item.id, item.name))
+    .flatMap((record) => {
+      const growthRecord = resolveGrowthRecordFromSnapshot(snapshot, record.id, {
+        focusItemId: item.id,
+        focusItemName: item.name,
+        focusDimensionName: dimensionName,
+        focusCoverage: item.coverage,
+      });
+      if (!growthRecord) return [];
+      return buildGrowthRecordMaterialEntries(growthRecord).map((entry) => ({
+        ...entry,
+        growthRecordId: growthRecord.id,
+        matchNote: growthRecord.matchNote,
+      }));
+    })
+    .filter((entry) => {
+      const dedupeKey = entry.resourcePath && entry.resourcePath !== '-'
+        ? `path:${entry.resourcePath}`
+        : `entry:${entry.growthRecordId}:${entry.id}`;
+      if (seenKeys.has(dedupeKey)) return false;
+      seenKeys.add(dedupeKey);
+      return true;
+    })
+    .sort((left, right) => (
+      Number(Boolean(right.isCurrent)) - Number(Boolean(left.isCurrent))
+      || String(right.date || '').localeCompare(String(left.date || ''))
+      || (right.coverage || 0) - (left.coverage || 0)
+    ));
+}
+
 function matchRubricNamesForGrowthRecord(growthRecord, scheme) {
   const relatedItemNames = Array.from(new Set([
     growthRecord?.focusItemName,
@@ -317,20 +382,81 @@ function formatReviewRoles(reviewRoles = []) {
 }
 
 function buildResourcePath(item, resourceLibData) {
-  const libraryItems = item.libraryId === 'personal'
-    ? (resourceLibData.personal || [])
-    : (resourceLibData.organizations?.[item.libraryId] || []);
-  const itemMap = new Map(libraryItems.map((entry) => [entry.key, entry]));
-  const pathParts = [item.libraryName];
-  let cursor = itemMap.get(item.parentKey);
+  return getLibraryItemPath(resourceLibData, item.libraryId, item);
+}
 
-  while (cursor) {
-    pathParts.push(cursor.name);
-    cursor = itemMap.get(cursor.parentKey);
-  }
+function buildResourceImportCandidates(resourceLibData, baseSnapshot) {
+  return getAllItemsAcrossLibraries(resourceLibData)
+    .filter((item) => !item.isFolder && !['knowledgeGraph', 'capabilityModel'].includes(item.fileType))
+    .map((item) => {
+      const fallbackRows = (baseSnapshot?.mappingRows || []).slice(0, 2);
+      const context = resolveResourceCapabilityContext(item, baseSnapshot || {}, fallbackRows);
+      return {
+        ...item,
+        importKey: `${item.libraryId}:${item.key}`,
+        resourcePath: buildResourcePath(item, resourceLibData),
+        sourceKey: context.sourceKey,
+        sourceLabel: SOURCE_META[context.sourceKey].label,
+        sourceType: SOURCE_META[context.sourceKey].sourceType,
+        coverage: context.coverage,
+      };
+    })
+    .sort((left, right) => String(right.lastOpenedAt || right.lastEdit || '').localeCompare(String(left.lastOpenedAt || left.lastEdit || '')));
+}
 
-  pathParts.push(item.name);
-  return pathParts.join(' / ');
+function buildResourceDirectoryCandidates(resourceLibData) {
+  return getAllLibraryEntriesAcrossLibraries(resourceLibData)
+    .filter((item) => item.isFolder)
+    .map((item) => {
+      const descendantFiles = getLibraryDescendantFiles(resourceLibData, item.libraryId, item.key)
+        .filter((file) => !['knowledgeGraph', 'capabilityModel'].includes(file.fileType));
+      const latestEdit = descendantFiles
+        .map((file) => file.lastOpenedAt || file.lastEdit || '')
+        .sort((left, right) => String(right).localeCompare(String(left)))[0] || item.lastEdit || '';
+      return {
+        ...item,
+        directoryKey: `${item.libraryId}:${item.key}`,
+        folderKey: item.key,
+        folderName: item.name,
+        folderPath: getLibraryItemPath(resourceLibData, item.libraryId, item),
+        fileCount: descendantFiles.length,
+        parsedFileCount: descendantFiles.filter((file) => file.parseStatus === 'parsed').length,
+        latestEdit,
+      };
+    })
+    .filter((item) => item.fileCount > 0)
+    .sort((left, right) => String(left.folderPath || '').localeCompare(String(right.folderPath || '')));
+}
+
+function collectDirectoryScanItems(resourceLibData, directoryBindings, importCandidates) {
+  const candidateMap = new Map(importCandidates.map((item) => [`${item.libraryId}:${item.key}`, item]));
+  const sortedBindings = [...(directoryBindings || [])].sort((left, right) => (
+    String(right.folderPath || '').length - String(left.folderPath || '').length
+  ));
+  const selectedItems = new Map();
+
+  sortedBindings.forEach((directory) => {
+    const files = getLibraryDescendantFiles(resourceLibData, directory.libraryId, directory.folderKey)
+      .filter((file) => !['knowledgeGraph', 'capabilityModel'].includes(file.fileType));
+    files.forEach((file) => {
+      const itemKey = `${directory.libraryId}:${file.key}`;
+      if (selectedItems.has(itemKey)) return;
+      const candidate = candidateMap.get(itemKey);
+      if (!candidate) return;
+      selectedItems.set(itemKey, {
+        ...candidate,
+        directoryRef: {
+          libraryId: directory.libraryId,
+          libraryName: directory.libraryName,
+          folderKey: directory.folderKey,
+          folderName: directory.folderName,
+          folderPath: directory.folderPath,
+        },
+      });
+    });
+  });
+
+  return Array.from(selectedItems.values());
 }
 
 function resolveResourceCapabilityContext(item, baseSnapshot, fallbackRows) {
@@ -907,7 +1033,8 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
   const [analysisSearch, setAnalysisSearch] = useState('');
   const [selectedAnalysisItemId, setSelectedAnalysisItemId] = useState('');
   const [mappingView, setMappingView] = useState('matrix');
-  const [activeMatrixAnchor, setActiveMatrixAnchor] = useState(undefined);
+  const [activeMatrixNodeKey, setActiveMatrixNodeKey] = useState(undefined);
+  const [collapsedMatrixNodeKeys, setCollapsedMatrixNodeKeys] = useState(() => new Set());
   const [growthRecordDrawerOpen, setGrowthRecordDrawerOpen] = useState(false);
   const [selectedGrowthRecord, setSelectedGrowthRecord] = useState(null);
   const [directSubmitOpen, setDirectSubmitOpen] = useState(false);
@@ -916,9 +1043,15 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
   const [resourceImportOpen, setResourceImportOpen] = useState(false);
   const [resourceImportLoading, setResourceImportLoading] = useState(false);
   const [resourceImportSelection, setResourceImportSelection] = useState([]);
+  const [resourceDirectoryOpen, setResourceDirectoryOpen] = useState(false);
+  const [resourceDirectoryLoading, setResourceDirectoryLoading] = useState(false);
+  const [resourceDirectoryScanning, setResourceDirectoryScanning] = useState(false);
+  const [resourceDirectorySelection, setResourceDirectorySelection] = useState([]);
+  const [resourceDirectoryItems, setResourceDirectoryItems] = useState([]);
   const [mappingSuggestionLoading, setMappingSuggestionLoading] = useState(false);
   const [directSubmitForm] = Form.useForm();
   const matrixSectionRefs = useRef({});
+  const matrixItemRefs = useRef({});
 
   const openGrowthRecordDetail = useCallback((growthRecordId, nextSnapshot = snapshot, focus = {}) => {
     const resolvedSnapshot = nextSnapshot || snapshot;
@@ -935,6 +1068,15 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
     () => archiveVersions.find((item) => item.id === selectedArchiveVersionId) || archiveVersions[0] || null,
     [archiveVersions, selectedArchiveVersionId],
   );
+
+  const refreshResourceLibraryContext = useCallback((baseSnapshot = selectedArchiveVersion?.snapshot || snapshot) => {
+    const resourceLibData = loadResourceLib();
+    const importCandidates = buildResourceImportCandidates(resourceLibData, baseSnapshot);
+    const directoryCandidates = buildResourceDirectoryCandidates(resourceLibData);
+    setResourceLibraryItems(importCandidates);
+    setResourceDirectoryItems(directoryCandidates);
+    return { resourceLibData, importCandidates, directoryCandidates };
+  }, [selectedArchiveVersion?.snapshot, snapshot]);
 
   async function loadData(withLoading = true) {
     if (withLoading) setLoading(true);
@@ -979,23 +1121,10 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
       } : null;
       const nextTeacherProfile = nextEvaluationTeachers.find((item) => item.name === (profileSnapshot?.profile?.name || PROFILE_BASE.name))
         || buildFallbackTeacherProfile(profileSnapshot?.profile);
-      const importCandidates = getAllItemsAcrossLibraries(resourceLibData)
-        .filter((item) => !item.isFolder && !['knowledgeGraph', 'capabilityModel'].includes(item.fileType))
-        .map((item) => {
-          const fallbackRows = (profileSnapshot?.mappingRows || []).slice(0, 2);
-          const context = resolveResourceCapabilityContext(item, profileSnapshot, fallbackRows);
-          return {
-            ...item,
-            importKey: `${item.libraryId}:${item.key}`,
-            resourcePath: buildResourcePath(item, resourceLibData),
-            sourceKey: context.sourceKey,
-            sourceLabel: SOURCE_META[context.sourceKey].label,
-            sourceType: SOURCE_META[context.sourceKey].sourceType,
-            coverage: context.coverage,
-          };
-        })
-        .sort((left, right) => String(right.lastOpenedAt || right.lastEdit || '').localeCompare(String(left.lastOpenedAt || left.lastEdit || '')));
+      const importCandidates = buildResourceImportCandidates(resourceLibData, profileSnapshot);
+      const directoryCandidates = buildResourceDirectoryCandidates(resourceLibData);
       setResourceLibraryItems(importCandidates);
+      setResourceDirectoryItems(directoryCandidates);
       await archiveVersionApi.seed({
         teacherProfile: nextTeacherProfile,
         baseSnapshot: profileSnapshot,
@@ -1174,13 +1303,27 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
   ];
 
   const modelDefinition = snapshot?.modelDefinition;
+  const mappingRowMap = useMemo(
+    () => new Map((snapshot?.mappingRows || []).map((row) => [row.itemId, row])),
+    [snapshot?.mappingRows],
+  );
   const mappingMatrixSections = useMemo(() => (
-    (modelDefinition?.dimensions || []).map((dimension) => ({
-      key: dimension.id,
-      name: dimension.name,
-      description: dimension.description,
-      items: (dimension.items || []).map((item) => ({
+    getCapabilityDimensionEntries(modelDefinition?.dimensions || []).map((dimensionEntry) => ({
+      key: dimensionEntry.dimension.id,
+      nodeKey: `dimension:${dimensionEntry.dimension.id}`,
+      name: dimensionEntry.dimension.name,
+      description: dimensionEntry.dimension.description,
+      orderText: dimensionEntry.orderText,
+      level: dimensionEntry.level,
+      dimensionChildCount: dimensionEntry.childCount || 0,
+      items: (dimensionEntry.dimension.items || []).map((item) => ({
         ...item,
+        mappingRow: mappingRowMap.get(item.id) || null,
+        mountedEvidenceEntries: buildMountedEvidenceEntries(snapshot, {
+          id: item.id,
+          name: item.name,
+          coverage: mappingRowMap.get(item.id)?.coverage || 0,
+        }, dimensionEntry.dimension.name),
         cellMappings: (modelDefinition?.levelScheme?.levels || []).map((level) => ({
           level,
           descriptor: item.levelDescriptors?.find((entry) => entry.levelKey === level.key) || { levelKey: level.key, text: '' },
@@ -1188,7 +1331,33 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
         })),
       })),
     }))
-  ), [modelDefinition, snapshot]);
+  ), [mappingRowMap, modelDefinition, snapshot]);
+  const mappingTreeEntries = useMemo(() => {
+    const rowMap = new Map((snapshot?.mappingRows || []).map((row) => [row.itemId, row]));
+    return getCapabilityFrameworkTreeEntries(modelDefinition || []).map((node) => {
+      const matchedRow = node.item?.id ? rowMap.get(node.item.id) || null : null;
+      return {
+        ...node,
+        targetSectionKey: node.dimension?.id || null,
+        targetItemId: node.nodeType === 'item'
+          ? (node.item?.id || null)
+          : (!node.hasChildren && node.item?.id ? node.item.id : null),
+        coverage: typeof matchedRow?.coverage === 'number' ? matchedRow.coverage : null,
+        evidenceCount: matchedRow?.evidenceCount || 0,
+        statusLabel: matchedRow?.statusLabel || '',
+      };
+    });
+  }, [modelDefinition, snapshot?.mappingRows]);
+  const mappingTreeKeySignature = mappingTreeEntries.map((node) => node.key).join('|');
+  const visibleMappingTreeNodes = useMemo(() => (
+    mappingTreeEntries.filter((node) => node.ancestorKeys.every((key) => !collapsedMatrixNodeKeys.has(key)))
+  ), [collapsedMatrixNodeKeys, mappingTreeEntries]);
+  const activeMatrixNode = useMemo(() => (
+    mappingTreeEntries.find((node) => node.key === activeMatrixNodeKey)
+      || mappingTreeEntries.find((node) => node.nodeType === 'dimension')
+      || mappingTreeEntries[0]
+      || null
+  ), [activeMatrixNodeKey, mappingTreeEntries]);
   const evaluationSummaryRecords = useMemo(
     () => sortEvaluationRecords(archiveVersions),
     [archiveVersions],
@@ -1253,6 +1422,7 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
     [snapshot],
   );
   const selectedVersionSuggestions = selectedArchiveVersion?.mappingSuggestions || [];
+  const selectedVersionDirectories = selectedArchiveVersion?.resourceDirectories || [];
   const canEditSelectedVersion = isEditableArchiveVersion(selectedArchiveVersion);
   const selectedVersionStatus = selectedArchiveVersion?.versionStatus || selectedArchiveVersion?.status || 'DRAFT';
   const selectedVersionStatusLabel = getTeacherEvaluationStatusLabel(selectedVersionStatus);
@@ -1529,6 +1699,12 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
         targetLevel: currentTeacherProfile.targetLevel,
         baseVersionId: values.creationMode === 'BLANK' ? '' : (latestVersion?.id || ''),
         snapshot: nextSnapshot,
+        resourceDirectories: values.creationMode === 'BLANK'
+          ? []
+          : (latestVersion?.resourceDirectories || selectedArchiveVersion?.resourceDirectories || []),
+        lastDirectoryScanAt: values.creationMode === 'BLANK'
+          ? ''
+          : (latestVersion?.lastDirectoryScanAt || selectedArchiveVersion?.lastDirectoryScanAt || ''),
         creationMode: values.creationMode,
       });
       const nextVersions = await archiveVersionApi.list({
@@ -1550,6 +1726,8 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
     directSubmitForm,
     evaluationRecordList,
     evaluationSummaryRecords,
+    selectedArchiveVersion?.lastDirectoryScanAt,
+    selectedArchiveVersion?.resourceDirectories,
     selectedArchiveVersion?.snapshot,
     selectedDirectSubmitScheme,
     snapshot,
@@ -1647,12 +1825,26 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
 
   const handleOpenResourceImport = useCallback(() => {
     if (!selectedArchiveVersion || !canEditSelectedVersion) {
-      message.info('请先选择一个可编辑的草稿周期');
+      message.info(`当前是「${selectedVersionStatusLabel}」周期，请切换到草稿或补证周期后再导入资料`);
       return;
     }
+    refreshResourceLibraryContext(selectedArchiveVersion.snapshot || snapshot);
     setResourceImportSelection([]);
     setResourceImportOpen(true);
-  }, [canEditSelectedVersion, selectedArchiveVersion]);
+  }, [canEditSelectedVersion, refreshResourceLibraryContext, selectedArchiveVersion, selectedVersionStatusLabel, snapshot]);
+
+  const handleOpenResourceDirectory = useCallback(() => {
+    if (!selectedArchiveVersion || !canEditSelectedVersion) {
+      message.info(`当前是「${selectedVersionStatusLabel}」周期，请切换到草稿或补证周期后再设置目录`);
+      return;
+    }
+    const { directoryCandidates } = refreshResourceLibraryContext(selectedArchiveVersion.snapshot || snapshot);
+    setResourceDirectoryItems(directoryCandidates);
+    setResourceDirectorySelection(
+      (selectedArchiveVersion.resourceDirectories || []).map((item) => `${item.libraryId}:${item.folderKey}`),
+    );
+    setResourceDirectoryOpen(true);
+  }, [canEditSelectedVersion, refreshResourceLibraryContext, selectedArchiveVersion, selectedVersionStatusLabel, snapshot]);
 
   const handleImportVersionResources = useCallback(async () => {
     if (!selectedArchiveVersion) return;
@@ -1679,8 +1871,116 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
     }
   }, [currentTeacherProfile, evaluationRecordList, resourceImportSelection, resourceLibraryItems, selectedArchiveVersion]);
 
+  const handleSaveResourceDirectories = useCallback(async () => {
+    if (!selectedArchiveVersion) return;
+    const selectedDirectories = resourceDirectoryItems
+      .filter((item) => resourceDirectorySelection.includes(item.directoryKey))
+      .map((item) => ({
+        libraryId: item.libraryId,
+        libraryName: item.libraryName,
+        libraryScope: item.libraryScope,
+        folderKey: item.folderKey,
+        folderName: item.folderName,
+        folderPath: item.folderPath,
+        fileCount: item.fileCount,
+        parsedFileCount: item.parsedFileCount,
+      }));
+    setResourceDirectoryLoading(true);
+    try {
+      if (selectedDirectories.length) {
+        await archiveVersionApi.update(selectedArchiveVersion.id, {
+          resourceDirectories: selectedDirectories,
+        });
+      } else {
+        await archiveVersionApi.syncDirectoryMaterials(selectedArchiveVersion.id, [], {
+          resourceDirectories: [],
+        });
+      }
+      const nextVersions = await archiveVersionApi.list({
+        teacherProfile: currentTeacherProfile,
+        evaluationRecords: evaluationRecordList,
+      });
+      setArchiveVersions(nextVersions);
+      setResourceDirectoryOpen(false);
+      message.success(selectedDirectories.length ? '已保存当前周期的档案材料目录，请继续执行 AI 扫描目录' : '已清空当前周期的档案材料目录，并移除目录扫描材料');
+    } catch (error) {
+      message.error(error?.message || '保存档案材料目录失败');
+    } finally {
+      setResourceDirectoryLoading(false);
+    }
+  }, [
+    currentTeacherProfile,
+    evaluationRecordList,
+    resourceDirectoryItems,
+    resourceDirectorySelection,
+    selectedArchiveVersion,
+  ]);
+
+  const handleScanResourceDirectories = useCallback(async () => {
+    if (!selectedArchiveVersion || !canEditSelectedVersion) {
+      message.info(`当前是「${selectedVersionStatusLabel}」周期，请切换到草稿或补证周期后再扫描目录`);
+      return;
+    }
+    const currentDirectories = selectedArchiveVersion.resourceDirectories || [];
+    if (!currentDirectories.length) {
+      message.info('请先为当前周期设置档案材料目录');
+      return;
+    }
+    setResourceDirectoryScanning(true);
+    try {
+      const { resourceLibData, importCandidates, directoryCandidates } = refreshResourceLibraryContext(selectedArchiveVersion.snapshot || snapshot);
+      const directoryMap = new Map(directoryCandidates.map((item) => [item.directoryKey, item]));
+      const normalizedDirectories = currentDirectories.map((directory) => {
+        const liveDirectory = directoryMap.get(`${directory.libraryId}:${directory.folderKey}`);
+        return liveDirectory ? {
+          libraryId: liveDirectory.libraryId,
+          libraryName: liveDirectory.libraryName,
+          libraryScope: liveDirectory.libraryScope,
+          folderKey: liveDirectory.folderKey,
+          folderName: liveDirectory.folderName,
+          folderPath: liveDirectory.folderPath,
+          fileCount: liveDirectory.fileCount,
+          parsedFileCount: liveDirectory.parsedFileCount,
+          lastScannedAt: directory.lastScannedAt,
+        } : directory;
+      });
+      const scanItems = collectDirectoryScanItems(resourceLibData, normalizedDirectories, importCandidates);
+      await archiveVersionApi.syncDirectoryMaterials(selectedArchiveVersion.id, scanItems, {
+        resourceDirectories: normalizedDirectories,
+      });
+      const suggestions = await archiveVersionApi.generateMappingSuggestions(selectedArchiveVersion.id);
+      if (suggestions.length) {
+        await archiveVersionApi.applyMappingSuggestions(selectedArchiveVersion.id, suggestions.map((item) => item.id));
+      }
+      const nextVersions = await archiveVersionApi.list({
+        teacherProfile: currentTeacherProfile,
+        evaluationRecords: evaluationRecordList,
+      });
+      setArchiveVersions(nextVersions);
+      message.success(
+        `已扫描 ${normalizedDirectories.length} 个目录，纳入 ${scanItems.length} 条资料，自动写入 ${suggestions.length} 条证据映射`,
+      );
+    } catch (error) {
+      message.error(error?.message || '扫描档案材料目录失败');
+    } finally {
+      setResourceDirectoryScanning(false);
+    }
+  }, [
+    canEditSelectedVersion,
+    currentTeacherProfile,
+    evaluationRecordList,
+    refreshResourceLibraryContext,
+    selectedArchiveVersion,
+    selectedVersionStatusLabel,
+    snapshot,
+  ]);
+
   const handleGenerateVersionMappingSuggestions = useCallback(async () => {
     if (!selectedArchiveVersion) return;
+    if (!canEditSelectedVersion) {
+      message.info(`当前是「${selectedVersionStatusLabel}」周期，请切换到草稿或补证周期后再生成 AI 映射`);
+      return;
+    }
     setMappingSuggestionLoading(true);
     try {
       const suggestions = await archiveVersionApi.generateMappingSuggestions(selectedArchiveVersion.id);
@@ -1695,10 +1995,14 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
     } finally {
       setMappingSuggestionLoading(false);
     }
-  }, [currentTeacherProfile, evaluationRecordList, selectedArchiveVersion]);
+  }, [canEditSelectedVersion, currentTeacherProfile, evaluationRecordList, selectedArchiveVersion, selectedVersionStatusLabel]);
 
   const handleApplyMappingSuggestions = useCallback(async (suggestionIds) => {
     if (!selectedArchiveVersion || !suggestionIds?.length) return;
+    if (!canEditSelectedVersion) {
+      message.info(`当前是「${selectedVersionStatusLabel}」周期，请切换到草稿或补证周期后再写入映射`);
+      return;
+    }
     setMappingSuggestionLoading(true);
     try {
       await archiveVersionApi.applyMappingSuggestions(selectedArchiveVersion.id, suggestionIds);
@@ -1713,7 +2017,7 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
     } finally {
       setMappingSuggestionLoading(false);
     }
-  }, [currentTeacherProfile, evaluationRecordList, selectedArchiveVersion]);
+  }, [canEditSelectedVersion, currentTeacherProfile, evaluationRecordList, selectedArchiveVersion, selectedVersionStatusLabel]);
 
   const handleArchiveVersionAction = useCallback((record, actionKey) => {
     if (actionKey === 'SUBMIT') {
@@ -1840,19 +2144,95 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
     setGrowthRecordDrawerOpen(true);
   }
 
+  function getMatrixTreeNodeTitle(node) {
+    return node?.nodeType === 'item'
+      ? (node.item?.name || '未命名能力项')
+      : (node?.dimension?.name || '未命名能力类');
+  }
+
+  function getMatrixTreeNodeMeta(node) {
+    if (!node) return '';
+    if (node.targetItemId) {
+      const detailParts = [
+        node.orderText,
+        node.statusLabel || '待补证',
+        typeof node.coverage === 'number' ? `${node.coverage}% 覆盖` : '',
+        `${node.evidenceCount || 0} 条记录`,
+      ].filter(Boolean);
+      return detailParts.join(' · ');
+    }
+    const dimensionParts = [
+      node.orderText ? `${node.orderText} · 第 ${node.level} 层` : `第 ${node.level} 层`,
+      node.dimensionChildCount ? `${node.dimensionChildCount} 个下级分类` : '',
+      node.itemCount ? `${node.itemCount} 个能力项` : '',
+    ].filter(Boolean);
+    return dimensionParts.join(' · ');
+  }
+
+  function handleToggleMatrixNode(nodeKey) {
+    setCollapsedMatrixNodeKeys((current) => {
+      const next = new Set(current);
+      if (next.has(nodeKey)) next.delete(nodeKey);
+      else next.add(nodeKey);
+      return next;
+    });
+  }
+
+  function renderMatrixTreeNode(node) {
+    const isActive = node.key === activeMatrixNode?.key;
+    const isCollapsed = collapsedMatrixNodeKeys.has(node.key);
+
+    return (
+      <div
+        key={node.key}
+        className={`cap-model-framework-tree-node is-level-${node.level} is-${node.nodeType}${isActive ? ' is-active' : ''}`}
+        style={{ '--cap-tree-level': node.level - 1 }}
+      >
+        <button
+          type="button"
+          className="cap-model-framework-tree-row"
+          onClick={() => scrollToMatrixNode(node)}
+        >
+          <span
+            className={`cap-model-framework-tree-toggle${node.hasChildren ? '' : ' is-empty'}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (node.hasChildren) handleToggleMatrixNode(node.key);
+            }}
+          >
+            {node.hasChildren ? (isCollapsed ? <CaretRightOutlined /> : <CaretDownOutlined />) : null}
+          </span>
+          <span className="cap-model-framework-tree-icon">
+            {node.nodeType === 'item' ? <FileTextOutlined /> : <AppstoreOutlined />}
+          </span>
+          <span className="cap-model-framework-tree-copy">
+            <span className="cap-model-framework-tree-title">{getMatrixTreeNodeTitle(node)}</span>
+            <span className="cap-model-framework-tree-meta">{getMatrixTreeNodeMeta(node)}</span>
+          </span>
+        </button>
+      </div>
+    );
+  }
+
   useEffect(() => {
     if (mappingView !== 'matrix') return;
-    const firstSectionKey = mappingMatrixSections[0]?.key;
-    if (firstSectionKey) {
-      setActiveMatrixAnchor(firstSectionKey);
+    if (!mappingTreeEntries.length) {
+      if (activeMatrixNodeKey) setActiveMatrixNodeKey(undefined);
+      return;
     }
-  }, [mappingMatrixSections, mappingView]);
+    if (!activeMatrixNodeKey || !mappingTreeEntries.some((node) => node.key === activeMatrixNodeKey)) {
+      const fallbackKey = mappingTreeEntries.find((node) => node.nodeType === 'dimension')?.key || mappingTreeEntries[0]?.key;
+      if (fallbackKey) setActiveMatrixNodeKey(fallbackKey);
+    }
+  }, [activeMatrixNodeKey, mappingTreeEntries, mappingTreeKeySignature, mappingView]);
 
-  function scrollToMatrixSection(sectionKey) {
-    const sectionNode = matrixSectionRefs.current[sectionKey];
-    if (!sectionNode) return;
-    setActiveMatrixAnchor(sectionKey);
-    sectionNode.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  function scrollToMatrixNode(node) {
+    if (!node) return;
+    const targetNode = (node.targetItemId && matrixItemRefs.current[node.targetItemId])
+      || (node.targetSectionKey && matrixSectionRefs.current[node.targetSectionKey]);
+    if (!targetNode) return;
+    setActiveMatrixNodeKey(node.key);
+    targetNode.scrollIntoView({ behavior: 'smooth', block: node.targetItemId ? 'center' : 'start' });
   }
 
   if (loading) {
@@ -2017,134 +2397,245 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
           />
         ) : (
           <div className="profile-archive-matrix-view">
-            <div className="profile-archive-matrix-anchor-bar">
-              <span>能力目录</span>
-              <div className="profile-archive-matrix-anchor-list">
-                {mappingMatrixSections.map((dimension, index) => (
-                  <button
-                    key={dimension.key}
-                    type="button"
-                    className={`profile-archive-matrix-anchor-chip${activeMatrixAnchor === dimension.key ? ' is-active' : ''}`}
-                    onClick={() => scrollToMatrixSection(dimension.key)}
-                  >
-                    {index + 1}. {dimension.name}
-                  </button>
-                ))}
+            <div className="profile-archive-matrix-shell">
+              <aside className="profile-archive-matrix-tree-wrap">
+                <div className="cap-model-framework-tree-panel">
+                  <div className="cap-model-framework-tree-head">
+                    <div className="profile-archive-matrix-tree-head-copy">
+                      <strong>能力目录</strong>
+                      <span>按能力模型树状结构快速定位当前证据映射位置。</span>
+                    </div>
+                    <Tag color="blue">{mappingMatrixSections.length} 个能力类</Tag>
+                  </div>
+                  <div className="cap-model-framework-tree-list">
+                    {visibleMappingTreeNodes.length ? visibleMappingTreeNodes.map((node) => renderMatrixTreeNode(node)) : (
+                      <div className="profile-archive-matrix-tree-empty">
+                        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="当前模型暂无能力目录" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </aside>
+              <div className="profile-archive-matrix-content">
+                {mappingMatrixSections.map((dimension) => {
+                  const isSectionActive = activeMatrixNode?.targetSectionKey === dimension.key;
+                  return (
+                    <div
+                      key={dimension.key}
+                      ref={(node) => {
+                        matrixSectionRefs.current[dimension.key] = node;
+                      }}
+                      className={`profile-archive-matrix-section${isSectionActive ? ' is-active' : ''}`}
+                    >
+                      <div className="profile-archive-matrix-section-head">
+                        <div>
+                          <div className="profile-archive-matrix-section-kicker">能力类 {dimension.orderText} · 第 {dimension.level} 层</div>
+                          <div className="profile-archive-matrix-section-title">{dimension.name}</div>
+                          <div className="profile-archive-matrix-section-desc">{dimension.description || '未填写能力类说明'}</div>
+                        </div>
+                        <Space size={8} wrap>
+                          {dimension.dimensionChildCount ? <Tag>{dimension.dimensionChildCount} 个下级分类</Tag> : null}
+                          <Tag color="blue">{dimension.items.length} 个能力项</Tag>
+                        </Space>
+                      </div>
+                      <div className="profile-archive-matrix">
+                        <table>
+                          <colgroup>
+                            <col className="profile-archive-matrix-col-item" />
+                            {(modelDefinition?.levelScheme?.levels || []).map((level) => (
+                              <col key={level.key} className="profile-archive-matrix-col-level" />
+                            ))}
+                          </colgroup>
+                          <thead>
+                            <tr>
+                              <th>
+                                <div className="profile-archive-matrix-head-main">能力项</div>
+                                <div className="profile-archive-matrix-head-sub">要求与成长记录</div>
+                              </th>
+                              {(modelDefinition?.levelScheme?.levels || []).map((level) => (
+                                <th key={level.key}>
+                                  <div className="profile-archive-matrix-level-head">
+                                    <strong>{level.label}</strong>
+                                    <span>等级描述与证据</span>
+                                  </div>
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {dimension.items.map((item) => {
+                              const isItemActive = activeMatrixNode?.targetItemId === item.id;
+                              const mountedEvidenceEntries = item.mountedEvidenceEntries || [];
+                              const visibleMountedEvidenceEntries = mountedEvidenceEntries.slice(0, 3);
+                              const moreMountedEvidenceCount = Math.max(0, mountedEvidenceEntries.length - visibleMountedEvidenceEntries.length);
+                              const adviceActions = (item.mappingRow?.adviceActions || []).slice(0, 2);
+                              return (
+                                <tr
+                                  key={item.id}
+                                  ref={(node) => {
+                                    matrixItemRefs.current[item.id] = node;
+                                  }}
+                                  className={`profile-archive-matrix-row${isItemActive ? ' is-active' : ''}`}
+                                >
+                                  <td>
+                                    <div className="profile-archive-matrix-item-head">
+                                      <div className="profile-archive-matrix-item">{item.name}</div>
+                                      <Tooltip title={item.description || '未填写能力项说明'}>
+                                        <button
+                                          type="button"
+                                          className="profile-archive-matrix-item-info"
+                                          aria-label={`查看${item.name}的能力定义`}
+                                        >
+                                          <InfoCircleOutlined />
+                                        </button>
+                                      </Tooltip>
+                                    </div>
+                                    <div className="profile-archive-matrix-item-meta">
+                                      <span>至少 {item.requiredEvidenceCount || 1} 条证据</span>
+                                      {item.requiredReviewRoles?.length ? (
+                                        <span>{formatReviewRoles(item.requiredReviewRoles)}</span>
+                                      ) : null}
+                                      <span>{item.isGrowthOnly ? '仅成长档案' : '可进入正式评价'}</span>
+                                    </div>
+                                    <div className="profile-archive-matrix-item-focus">
+                                      <div className="profile-archive-matrix-item-focus-head">
+                                        <span>当前证据挂载</span>
+                                        <div className="profile-archive-matrix-item-focus-head-side">
+                                          {item.mappingRow?.statusLabel ? (
+                                            <Tag color={item.mappingRow.statusColor}>{item.mappingRow.statusLabel}</Tag>
+                                          ) : null}
+                                          {mountedEvidenceEntries.length ? <em>已挂载 {mountedEvidenceEntries.length} 条</em> : null}
+                                        </div>
+                                      </div>
+                                      {visibleMountedEvidenceEntries.length ? (
+                                        <>
+                                          <div className="profile-archive-matrix-mounted-list">
+                                            {visibleMountedEvidenceEntries.map((entry) => (
+                                              <button
+                                                key={`${item.id}_${entry.id}`}
+                                                type="button"
+                                                className="profile-archive-matrix-mounted-card"
+                                                onClick={() => openGrowthRecordDetail(entry.originGrowthRecordId || entry.growthRecordId, snapshot, {
+                                                  focusItemId: item.id,
+                                                  focusDimensionName: dimension.name,
+                                                  focusItemName: item.name,
+                                                  focusBundleItemId: entry.id,
+                                                  focusCoverage: entry.coverage,
+                                                })}
+                                              >
+                                                <div className="profile-archive-matrix-mounted-card-head">
+                                                  <strong>{entry.title}</strong>
+                                                  {entry.isCurrent ? <span className="profile-archive-matrix-mounted-badge">本周期</span> : null}
+                                                </div>
+                                                <div className="profile-archive-matrix-mounted-card-meta">
+                                                  {entry.sourceLabel ? (
+                                                    <Tag color={SOURCE_META[entry.sourceKey]?.color || 'default'}>{entry.sourceLabel}</Tag>
+                                                  ) : null}
+                                                  {entry.date && entry.date !== '-' ? <span>{entry.date}</span> : null}
+                                                  {typeof entry.coverage === 'number' ? <span>{entry.coverage}% 覆盖</span> : null}
+                                                </div>
+                                                <div className="profile-archive-matrix-mounted-card-copy">
+                                                  {entry.resourcePath && entry.resourcePath !== '-'
+                                                    ? entry.resourcePath
+                                                    : entry.summary || entry.matchNote || '点击查看该条挂载证据'}
+                                                </div>
+                                              </button>
+                                            ))}
+                                          </div>
+                                          <div className="profile-archive-matrix-item-focus-stats">
+                                            <span>当前覆盖 {item.mappingRow?.coverage || 0}%</span>
+                                            {item.mappingRow?.levelFocusLabel ? <span>当前关注 {item.mappingRow.levelFocusLabel}</span> : null}
+                                          </div>
+                                          {moreMountedEvidenceCount ? (
+                                            <div className="profile-archive-matrix-mounted-more">
+                                              另有 {moreMountedEvidenceCount} 条已挂载证据，可点开任一记录查看完整材料包。
+                                            </div>
+                                          ) : null}
+                                        </>
+                                      ) : (
+                                        <div className="profile-archive-matrix-item-focus-empty">
+                                          暂无直接挂载证据，可先补充最能支撑该能力项的过程或结果材料。
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="profile-archive-matrix-item-focus is-advice">
+                                      <div className="profile-archive-matrix-item-focus-head">
+                                        <span>改进建议</span>
+                                        {item.mappingRow?.levelFocusLabel ? <em>优先关注 {item.mappingRow.levelFocusLabel}</em> : null}
+                                      </div>
+                                      <div className="profile-archive-matrix-item-focus-copy">
+                                        {item.mappingRow?.adviceSummary || '建议先补充直接证据，再逐步完善更高等级的支撑材料。'}
+                                      </div>
+                                      {adviceActions.length ? (
+                                        <ul className="profile-archive-matrix-item-focus-actions">
+                                          {adviceActions.map((action) => (
+                                            <li key={action}>{action}</li>
+                                          ))}
+                                        </ul>
+                                      ) : null}
+                                    </div>
+                                    {item.evidenceExamples?.length ? (
+                                      <div className="profile-archive-matrix-item-hint">
+                                        参考示例：{item.evidenceExamples.join('、')}
+                                      </div>
+                                    ) : null}
+                                  </td>
+                                  {item.cellMappings.map(({ level, descriptor, growthRecord }) => (
+                                    <td key={`${item.id}_${level.key}`}>
+                                      <div className="profile-archive-matrix-cell">
+                                        {growthRecord ? (
+                                          <div className="profile-archive-matrix-status">
+                                            <Tag color={growthRecord.statusColor}>{growthRecord.statusLabel}</Tag>
+                                            <span>
+                                              {growthRecord.hasRecord && typeof growthRecord.coverage === 'number'
+                                                ? `${growthRecord.coverage}% 覆盖`
+                                                : '建议补充直接记录'}
+                                            </span>
+                                          </div>
+                                        ) : null}
+                                        <div className="profile-archive-matrix-cell-block">
+                                          <div className="profile-archive-matrix-cell-label">等级描述</div>
+                                          <div className="profile-archive-matrix-cell-text">{descriptor.text || '-'}</div>
+                                        </div>
+                                        <div className="profile-archive-matrix-cell-label">当前记录</div>
+                                        {growthRecord?.hasRecord ? (
+                                          <button
+                                            type="button"
+                                            className="profile-archive-matrix-record-card"
+                                            onClick={() => openCellGrowthRecord(item, level, growthRecord)}
+                                          >
+                                            <div className="profile-archive-matrix-record-head">
+                                              <Tag color={SOURCE_META[growthRecord.sourceKey].color}>{growthRecord.sourceLabel}</Tag>
+                                              <span>{growthRecord.coverage}% 覆盖</span>
+                                            </div>
+                                            <strong>{growthRecord.evidenceTitle}</strong>
+                                            <span>{growthRecord.evidenceDate} · {growthRecord.evidenceTag}</span>
+                                          </button>
+                                        ) : (
+                                          <div className="profile-archive-matrix-record-empty">
+                                            {growthRecord?.statusLabel || '暂无映射记录'}
+                                          </div>
+                                        )}
+                                        {growthRecord?.growthAdvice?.summary ? (
+                                          <div className="profile-archive-matrix-advice">
+                                            <div className="profile-archive-matrix-cell-label">改进建议</div>
+                                            <div>{growthRecord.growthAdvice.summary}</div>
+                                          </div>
+                                        ) : null}
+                                      </div>
+                                    </td>
+                                  ))}
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-            {mappingMatrixSections.map((dimension) => (
-              <div
-                key={dimension.key}
-                ref={(node) => {
-                  matrixSectionRefs.current[dimension.key] = node;
-                }}
-                className="profile-archive-matrix-section"
-              >
-                <div className="profile-archive-matrix-section-head">
-                  <div>
-                    <div className="profile-archive-matrix-section-title">{dimension.name}</div>
-                    <div className="profile-archive-matrix-section-desc">{dimension.description || '未填写能力类说明'}</div>
-                  </div>
-                  <Tag color="blue">{dimension.items.length} 个能力项</Tag>
-                </div>
-                <div className="profile-archive-matrix">
-                  <table>
-                    <colgroup>
-                      <col className="profile-archive-matrix-col-item" />
-                      {(modelDefinition?.levelScheme?.levels || []).map((level) => (
-                        <col key={level.key} className="profile-archive-matrix-col-level" />
-                      ))}
-                    </colgroup>
-                    <thead>
-                      <tr>
-                        <th>
-                          <div className="profile-archive-matrix-head-main">能力项</div>
-                          <div className="profile-archive-matrix-head-sub">要求与成长记录</div>
-                        </th>
-                        {(modelDefinition?.levelScheme?.levels || []).map((level) => (
-                          <th key={level.key}>
-                            <div className="profile-archive-matrix-level-head">
-                              <strong>{level.label}</strong>
-                              <span>等级描述与证据</span>
-                            </div>
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {dimension.items.map((item) => (
-                        <tr key={item.id}>
-                          <td>
-                            <div className="profile-archive-matrix-item">{item.name}</div>
-                            <div className="profile-archive-matrix-desc">{item.description || '未填写能力项说明'}</div>
-                            <div className="profile-archive-matrix-item-meta">
-                              <span>至少 {item.requiredEvidenceCount || 1} 条证据</span>
-                              {item.requiredReviewRoles?.length ? (
-                                <span>{formatReviewRoles(item.requiredReviewRoles)}</span>
-                              ) : null}
-                              <span>{item.isGrowthOnly ? '仅成长档案' : '可进入正式评价'}</span>
-                            </div>
-                            <div className="profile-archive-matrix-desc">
-                              证据要求：围绕真实教学任务、可复核过程记录与结果材料组织证据。
-                            </div>
-                            {item.evidenceExamples?.length ? (
-                              <div className="profile-archive-matrix-record">
-                                成长记录示例：{item.evidenceExamples.join('、')}
-                              </div>
-                            ) : null}
-                          </td>
-                          {item.cellMappings.map(({ level, descriptor, growthRecord }) => (
-                            <td key={`${item.id}_${level.key}`}>
-                              <div className="profile-archive-matrix-cell">
-                                {growthRecord ? (
-                                  <div className="profile-archive-matrix-status">
-                                    <Tag color={growthRecord.statusColor}>{growthRecord.statusLabel}</Tag>
-                                    <span>
-                                      {growthRecord.hasRecord && typeof growthRecord.coverage === 'number'
-                                        ? `${growthRecord.coverage}% 覆盖`
-                                        : '建议补充直接记录'}
-                                    </span>
-                                  </div>
-                                ) : null}
-                                <div className="profile-archive-matrix-cell-block">
-                                  <div className="profile-archive-matrix-cell-label">等级描述</div>
-                                  <div className="profile-archive-matrix-cell-text">{descriptor.text || '-'}</div>
-                                </div>
-                                <div className="profile-archive-matrix-cell-label">当前记录</div>
-                                {growthRecord?.hasRecord ? (
-                                  <button
-                                    type="button"
-                                    className="profile-archive-matrix-record-card"
-                                    onClick={() => openCellGrowthRecord(item, level, growthRecord)}
-                                  >
-                                    <div className="profile-archive-matrix-record-head">
-                                      <Tag color={SOURCE_META[growthRecord.sourceKey].color}>{growthRecord.sourceLabel}</Tag>
-                                      <span>{growthRecord.coverage}% 覆盖</span>
-                                    </div>
-                                    <strong>{growthRecord.evidenceTitle}</strong>
-                                    <span>{growthRecord.evidenceDate} · {growthRecord.evidenceTag}</span>
-                                  </button>
-                                ) : (
-                                  <div className="profile-archive-matrix-record-empty">
-                                    {growthRecord?.statusLabel || '暂无映射记录'}
-                                  </div>
-                                )}
-                                {growthRecord?.growthAdvice?.summary ? (
-                                  <div className="profile-archive-matrix-advice">
-                                    <div className="profile-archive-matrix-cell-label">改进建议</div>
-                                    <div>{growthRecord.growthAdvice.summary}</div>
-                                  </div>
-                                ) : null}
-                              </div>
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            ))}
           </div>
         )}
       </Card>
@@ -2159,14 +2650,10 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
             <span>当前周期数据来源</span>
             <Space wrap>
               <Tag color="blue">{selectedArchiveVersion?.periodLabel || '-'}</Tag>
-              {canEditSelectedVersion ? (
-                <>
-                  <Button size="small" onClick={handleOpenResourceImport}>从资料库导入</Button>
-                  <Button size="small" type="primary" loading={mappingSuggestionLoading} onClick={handleGenerateVersionMappingSuggestions}>
-                    AI 自动映射
-                  </Button>
-                </>
-              ) : null}
+              <Button size="small" onClick={handleOpenResourceImport}>从资料库导入</Button>
+              <Button size="small" type="primary" loading={mappingSuggestionLoading} onClick={handleGenerateVersionMappingSuggestions}>
+                AI 自动映射
+              </Button>
             </Space>
           </div>
           <div className="profile-archive-evaluation-summary-card">
@@ -2177,6 +2664,11 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
                 已确认映射 {selectedVersionMaterials.filter((item) => item.mappingStatus === 'CONFIRMED').length} 条，
                 待确认 {selectedVersionSuggestions.length} 条 AI 建议。
               </p>
+              {!canEditSelectedVersion ? (
+                <p className="profile-archive-action-hint">
+                  当前周期为「{selectedVersionStatusLabel}」，入口仍会显示；如需调整目录或重跑 AI，请切换到草稿/补证周期。
+                </p>
+              ) : null}
             </div>
             {selectedVersionSuggestions.length ? (
               <div className="profile-archive-version-suggestion-list">
@@ -2205,6 +2697,48 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
             )}
           </div>
         </Card>
+        <Card variant="borderless" className="profile-archive-panel">
+          <div className="profile-archive-panel-head">
+            <span>档案材料目录</span>
+            <Space wrap>
+              <Tag color="blue">{selectedVersionDirectories.length} 个目录</Tag>
+              <Button size="small" onClick={handleOpenResourceDirectory}>设置目录</Button>
+              <Button size="small" type="primary" loading={resourceDirectoryScanning} onClick={handleScanResourceDirectories}>
+                AI 扫描目录
+              </Button>
+            </Space>
+          </div>
+          <div className="profile-archive-directory-panel">
+            <div className="profile-archive-directory-summary">
+              <strong>{selectedVersionDirectories.length ? '按目录自动补齐当前周期证据' : '当前周期还没有设置档案材料目录'}</strong>
+              <p>
+                为每个周期指定资料库目录后，AI 会扫描目录下的材料，自动纳入当前周期并尝试写入证据映射。
+              </p>
+            </div>
+            {selectedVersionDirectories.length ? (
+              <div className="profile-archive-directory-list">
+                {selectedVersionDirectories.map((directory) => (
+                  <div key={`${directory.libraryId}:${directory.folderKey}`} className="profile-archive-directory-item">
+                    <div className="profile-archive-directory-item-top">
+                      <strong>{directory.folderName}</strong>
+                      <Tag color="geekblue">{directory.fileCount || 0} 个文件</Tag>
+                    </div>
+                    <span>{directory.folderPath}</span>
+                    <div className="profile-archive-record-tags">
+                      <Tag>{directory.libraryName}</Tag>
+                      <Tag color="green">{directory.parsedFileCount || 0} 个已解析</Tag>
+                      <Tag color={directory.lastScannedAt ? 'processing' : 'default'}>
+                        {directory.lastScannedAt ? `上次扫描 ${formatDateTimeText(directory.lastScannedAt)}` : '尚未扫描'}
+                      </Tag>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="设置目录后，当前周期就能按目录自动扫描档案材料" />
+            )}
+          </div>
+        </Card>
       </div>
       <div className="profile-archive-grid profile-archive-grid-sources-detail">
         {Object.entries(snapshot.recordsBySource).map(([key, records]) => (
@@ -2226,12 +2760,17 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
                   <div className="profile-archive-record-tags">
                     <Tag>{record.tag}</Tag>
                     <Tag color={record.statusColor}>{record.linkedItemCount} 个能力项</Tag>
-                    {record.originType === 'RESOURCE_LIBRARY' ? <Tag color="blue">资料库导入</Tag> : <Tag>跨周期带入材料</Tag>}
+                    {record.importMode === 'DIRECTORY_SCAN'
+                      ? <Tag color="gold">目录扫描</Tag>
+                      : (record.originType === 'RESOURCE_LIBRARY' ? <Tag color="blue">资料库导入</Tag> : <Tag>跨周期带入材料</Tag>)}
                     {record.mappingStatus === 'CONFIRMED' ? <Tag color="success">已确认映射</Tag> : <Tag color="default">待确认映射</Tag>}
                   </div>
                   <p>{record.summary}</p>
                   <div className="profile-archive-record-foot">
-                    <span>来源路径：{record.resourcePath || record.matchNote}</span>
+                    <span>
+                      来源路径：{record.resourcePath || record.matchNote}
+                      {record.directoryRef?.folderPath ? ` · 扫描目录：${record.directoryRef.folderPath}` : ''}
+                    </span>
                     <Button type="link" size="small" onClick={() => openGrowthRecordDetail(record.id)}>查看详情</Button>
                   </div>
                 </div>
@@ -2894,7 +3433,7 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
             <div className="profile-archive-direct-submit-section">
               <div className="profile-archive-direct-submit-section-head">
                 <strong>周期初始化说明</strong>
-                <span>草稿建成后，可在“数据来源”中导入资料库材料，再由 AI 生成映射建议。</span>
+                <span>草稿建成后，可在“数据来源”中设置档案材料目录，让 AI 扫描目录并自动补齐当前周期证据。</span>
               </div>
               <div className="profile-archive-direct-submit-note">
                 <span>带入上个周期：继承上一个周期的证据映射与数据来源，适合新周期延续整理。</span>
@@ -2904,7 +3443,7 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
             <div className="profile-archive-direct-submit-note">
               <strong>{currentTeacherProfile.name}</strong>
               <span>{currentTeacherProfile.departmentName} · {currentTeacherProfile.targetLevel}</span>
-              <span>{selectedDirectSubmitScheme ? `将按「${selectedDirectSubmitScheme.name}」先创建草稿周期，后续可在数据来源中导入资料，并用 AI 建议辅助证据映射。` : '请选择评价方案后继续。'}</span>
+              <span>{selectedDirectSubmitScheme ? `将按「${selectedDirectSubmitScheme.name}」先创建草稿周期，后续可在数据来源中设置目录或导入资料，并用 AI 自动补齐证据映射。` : '请选择评价方案后继续。'}</span>
               {selectedSchemeOpenPeriods.length ? (
                 <span>当前方案下仍在推进的周期：{selectedSchemeOpenPeriods.join('、')}</span>
               ) : (
@@ -2915,6 +3454,48 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
         ) : (
           <Empty description="当前没有可直接发起的评价方案" />
         )}
+      </Modal>
+
+      <Modal
+        title="设置当前周期的档案材料目录"
+        open={resourceDirectoryOpen}
+        onCancel={() => {
+          setResourceDirectoryOpen(false);
+          setResourceDirectorySelection([]);
+        }}
+        onOk={handleSaveResourceDirectories}
+        okText="保存目录"
+        cancelText="取消"
+        confirmLoading={resourceDirectoryLoading}
+        width={920}
+      >
+        <Table
+          rowKey="directoryKey"
+          size="small"
+          pagination={{ pageSize: 6, showSizeChanger: false }}
+          rowSelection={{
+            selectedRowKeys: resourceDirectorySelection,
+            onChange: (keys) => setResourceDirectorySelection(keys),
+          }}
+          columns={[
+            {
+              title: '目录',
+              dataIndex: 'folderName',
+              key: 'folderName',
+              render: (_, record) => (
+                <div className="profile-archive-resource-import-name">
+                  <strong>{record.folderName}</strong>
+                  <span>{record.folderPath}</span>
+                </div>
+              ),
+            },
+            { title: '资料库', dataIndex: 'libraryName', key: 'libraryName', width: 120 },
+            { title: '文件数', dataIndex: 'fileCount', key: 'fileCount', width: 100, render: (value) => <Tag color="geekblue">{value} 个</Tag> },
+            { title: '已解析', dataIndex: 'parsedFileCount', key: 'parsedFileCount', width: 100, render: (value) => <Tag color="green">{value} 个</Tag> },
+            { title: '最近更新', dataIndex: 'latestEdit', key: 'latestEdit', width: 160, render: (value) => value || '-' },
+          ]}
+          dataSource={resourceDirectoryItems}
+        />
       </Modal>
 
       <Modal

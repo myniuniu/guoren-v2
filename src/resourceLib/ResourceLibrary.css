@@ -26,12 +26,13 @@
     radial-gradient(circle at 84% 82%, rgba(212, 216, 223, 0.1) 0%, rgba(255, 255, 255, 0) 40%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 100%);
   --finder-preview-surface-bg:
-    linear-gradient(180deg, rgba(253, 253, 253, 0.992) 0%, rgba(250, 250, 250, 0.979) 52%, rgba(247, 247, 247, 0.968) 100%),
-    radial-gradient(circle at 16% 10%, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0) 30%),
-    radial-gradient(circle at 84% 84%, rgba(226, 226, 226, 0.06) 0%, rgba(255, 255, 255, 0) 34%);
+    linear-gradient(180deg, rgba(249, 250, 251, 0.992) 0%, rgba(245, 246, 247, 0.982) 52%, rgba(240, 242, 244, 0.972) 100%),
+    radial-gradient(circle at 16% 10%, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0) 30%),
+    radial-gradient(circle at 84% 84%, rgba(212, 217, 223, 0.14) 0%, rgba(255, 255, 255, 0) 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(242, 244, 247, 0.08) 100%);
   --finder-preview-surface-overlay:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 26%),
-    linear-gradient(90deg, rgba(238, 238, 238, 0.06) 0%, rgba(255, 255, 255, 0.1) 12%, rgba(255, 255, 255, 0) 24%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 24%),
+    linear-gradient(90deg, rgba(226, 230, 235, 0.12) 0%, rgba(255, 255, 255, 0.08) 14%, rgba(255, 255, 255, 0) 28%);
   --finder-footer-border: rgba(211, 219, 228, 0.54);
   --finder-footer-bg:
     linear-gradient(180deg, rgba(248, 249, 250, 0.95) 0%, rgba(244, 246, 247, 0.92) 100%),
@@ -1599,7 +1600,8 @@
   border: 1px solid rgba(220, 223, 227, 0.76);
   border-top: none;
   border-left: none;
-  border-radius: 0 0 24px 0;
+  border-right-color: rgba(220, 223, 227, 0.42);
+  border-radius: 0;
   background: var(--finder-list-surface-bg);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.84),
@@ -2201,7 +2203,7 @@
   width: 14px;
   transform: translateX(-50%);
   background: linear-gradient(90deg, rgba(148, 163, 184, 0) 0%, var(--finder-pane-shadow) 50%, rgba(148, 163, 184, 0) 100%);
-  opacity: 0.22;
+  opacity: 0.12;
   pointer-events: none;
   transition: opacity 0.18s ease;
 }
@@ -2213,7 +2215,7 @@
 
 .finder-preview-resize-handle:hover::before,
 .finder-preview-resize-handle:active::before {
-  opacity: 0.36;
+  opacity: 0.22;
 }
 
 .finder-preview-panel,
@@ -2227,8 +2229,8 @@
   flex-direction: column;
   border-left: none;
   box-shadow:
-    inset 1px 0 0 rgba(228, 230, 233, 0.64),
-    -14px 0 24px rgba(15, 23, 42, 0.03);
+    inset 1px 0 0 rgba(228, 230, 233, 0.38),
+    -10px 0 18px rgba(15, 23, 42, 0.02);
 }
 
 .finder-preview-panel {
@@ -2511,13 +2513,41 @@
   min-height: 0;
 }
 
+.finder-cap-model-preview-embed .finder-kg-preview-head {
+  background:
+    linear-gradient(180deg, rgba(249, 250, 251, 0.9) 0%, rgba(245, 247, 249, 0.82) 100%);
+  border-bottom-color: rgba(15, 23, 42, 0.038);
+  backdrop-filter: blur(14px) saturate(1.04);
+  -webkit-backdrop-filter: blur(14px) saturate(1.04);
+}
+
 .finder-cap-model-preview-embed .cap-model-preview,
 .finder-cap-model-preview-embed .cap-model-editor {
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
   padding: 18px 20px 20px;
-  background: #f7f9fd;
+  background:
+    linear-gradient(180deg, rgba(246, 248, 250, 0.78) 0%, rgba(241, 244, 247, 0.62) 100%),
+    radial-gradient(circle at 18% 10%, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 34%),
+    radial-gradient(circle at 84% 86%, rgba(210, 216, 224, 0.14) 0%, rgba(255, 255, 255, 0) 40%);
+}
+
+.finder-cap-model-preview-embed .cap-model-preview-compact-shell {
+  background:
+    linear-gradient(180deg, rgba(246, 248, 250, 0.7) 0%, rgba(241, 244, 247, 0.54) 100%),
+    radial-gradient(circle at 18% 10%, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 34%),
+    radial-gradient(circle at 84% 86%, rgba(210, 216, 224, 0.14) 0%, rgba(255, 255, 255, 0) 40%);
+}
+
+.finder-cap-model-preview-embed .cap-model-preview-compact-card {
+  border-color: rgba(214, 221, 230, 0.88);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.97) 0%, rgba(247, 249, 252, 0.94) 100%),
+    linear-gradient(135deg, rgba(243, 247, 251, 0.72) 0%, rgba(255, 255, 255, 0.9) 100%);
+  box-shadow:
+    0 18px 42px rgba(15, 23, 42, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .finder-cap-model-preview-embed-edit {

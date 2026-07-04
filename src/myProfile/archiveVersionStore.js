@@ -20,6 +20,38 @@ function trimText(value) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+function normalizeResourceDirectory(entry = {}) {
+  const libraryId = trimText(entry.libraryId);
+  const folderKey = trimText(entry.folderKey || entry.key);
+  if (!libraryId || !folderKey) return null;
+  return {
+    id: trimText(entry.id) || `${libraryId}:${folderKey}`,
+    libraryId,
+    libraryName: trimText(entry.libraryName) || libraryId,
+    libraryScope: trimText(entry.libraryScope) || (libraryId === 'personal' ? 'personal' : 'organization'),
+    folderKey,
+    folderName: trimText(entry.folderName || entry.name) || folderKey,
+    folderPath: trimText(entry.folderPath || entry.resourcePath) || `${trimText(entry.libraryName) || libraryId} / ${trimText(entry.folderName || entry.name) || folderKey}`,
+    fileCount: Number.isFinite(entry.fileCount) ? Math.max(0, entry.fileCount) : 0,
+    parsedFileCount: Number.isFinite(entry.parsedFileCount) ? Math.max(0, entry.parsedFileCount) : 0,
+    updatedAt: trimText(entry.updatedAt) || nowText(),
+    lastScannedAt: trimText(entry.lastScannedAt),
+  };
+}
+
+function normalizeResourceDirectories(entries = []) {
+  const seen = new Set();
+  return (entries || []).reduce((list, entry) => {
+    const normalized = normalizeResourceDirectory(entry);
+    if (!normalized) return list;
+    const dedupeKey = `${normalized.libraryId}:${normalized.folderKey}`;
+    if (seen.has(dedupeKey)) return list;
+    seen.add(dedupeKey);
+    list.push(normalized);
+    return list;
+  }, []);
+}
+
 function readVersions() {
   if (typeof window === 'undefined') return [];
   try {
@@ -242,7 +274,17 @@ function createArchiveMaterialFromEvidence(evidence, record = {}) {
   };
 }
 
-function createArchiveMaterialFromResourceItem(item) {
+function createArchiveMaterialFromResourceItem(item, options = {}) {
+  const importMode = trimText(options.importMode) || 'MANUAL';
+  const directoryRef = options.directoryRef && typeof options.directoryRef === 'object'
+    ? {
+      libraryId: trimText(options.directoryRef.libraryId),
+      libraryName: trimText(options.directoryRef.libraryName),
+      folderKey: trimText(options.directoryRef.folderKey),
+      folderName: trimText(options.directoryRef.folderName),
+      folderPath: trimText(options.directoryRef.folderPath),
+    }
+    : null;
   return {
     id: createId('archive_material'),
     originType: 'RESOURCE_LIBRARY',
@@ -263,8 +305,12 @@ function createArchiveMaterialFromResourceItem(item) {
     links: [
       { title: '资料库定位', hint: item.resourcePath || `${item.libraryName} / ${item.name}` },
     ],
-    matchNote: '该材料从资料库导入到当前档案版本。',
-    nextAction: '可使用 AI 自动映射建议，或人工确认对应能力项。',
+    matchNote: importMode === 'DIRECTORY_SCAN'
+      ? '该材料由档案材料目录自动扫描并纳入当前档案版本。'
+      : '该材料从资料库导入到当前档案版本。',
+    nextAction: importMode === 'DIRECTORY_SCAN'
+      ? 'AI 会优先尝试写入证据映射，仍可继续人工复核。'
+      : '可使用 AI 自动映射建议，或人工确认对应能力项。',
     sourceKey: item.sourceKey || 'archive',
     sourceLabel: item.sourceLabel || SOURCE_META[item.sourceKey || 'archive'].label,
     sourceType: item.sourceType || SOURCE_META[item.sourceKey || 'archive'].sourceType,
@@ -281,15 +327,24 @@ function createArchiveMaterialFromResourceItem(item) {
     statusColor: 'default',
     importedAt: nowText(),
     mappingStatus: 'UNMAPPED',
+    importMode,
     resourceRef: {
       libraryId: item.libraryId,
       itemKey: item.key,
       libraryName: item.libraryName,
       libraryScope: item.libraryScope,
     },
+    directoryRef,
     aiSuggestion: null,
-    submissionSource: 'RESOURCE_LIBRARY_IMPORT',
+    submissionSource: importMode === 'DIRECTORY_SCAN'
+      ? 'RESOURCE_LIBRARY_DIRECTORY_SCAN'
+      : 'RESOURCE_LIBRARY_IMPORT',
   };
+}
+
+function isDirectoryScanMaterial(material = {}) {
+  return trimText(material.importMode) === 'DIRECTORY_SCAN'
+    || trimText(material.submissionSource) === 'RESOURCE_LIBRARY_DIRECTORY_SCAN';
 }
 
 function rebuildSnapshotFromMaterials(templateSnapshot, materials = []) {
@@ -564,6 +619,8 @@ function normalizeVersion(version, evaluationRecords = []) {
     createdAt: version.createdAt || nowText(),
     updatedAt: linkedRecord?.updatedAt || version.updatedAt || version.createdAt || nowText(),
     snapshot: hydrateArchiveSnapshot(version.snapshot),
+    resourceDirectories: normalizeResourceDirectories(version.resourceDirectories),
+    lastDirectoryScanAt: trimText(version.lastDirectoryScanAt),
     mappingSuggestions: Array.isArray(version.mappingSuggestions) ? clone(version.mappingSuggestions) : [],
     creationMode: trimText(version.creationMode) || 'MIGRATED',
   };
@@ -586,6 +643,8 @@ function buildVersionFromEvaluationRecord(record, baseSnapshot, previousVersionI
     versionStatus: record.status,
     approvalInfo: buildVersionApprovalInfo(record),
     snapshot: rebuildSnapshotFromMaterials(baseSnapshot, migratedMaterials),
+    resourceDirectories: [],
+    lastDirectoryScanAt: '',
     mappingSuggestions: [],
     creationMode: 'MIGRATED',
     createdAt: record.createdAt,
@@ -645,6 +704,8 @@ export async function ensureArchiveVersionSeedData({ teacherProfile, baseSnapsho
       versionStatus: 'DRAFT',
       approvalInfo: buildVersionApprovalInfo(null),
       snapshot: buildBlankSnapshot(baseSnapshot),
+      resourceDirectories: [],
+      lastDirectoryScanAt: '',
       mappingSuggestions: [],
       creationMode: 'BLANK',
       createdAt: nowText(),
@@ -684,6 +745,8 @@ export async function createArchiveVersion(payload) {
     versionStatus: 'DRAFT',
     approvalInfo: buildVersionApprovalInfo(null),
     snapshot: clone(payload.snapshot),
+    resourceDirectories: normalizeResourceDirectories(payload.resourceDirectories),
+    lastDirectoryScanAt: trimText(payload.lastDirectoryScanAt),
     mappingSuggestions: [],
     creationMode: trimText(payload.creationMode) || 'BLANK',
     createdAt: nowText(),
@@ -697,10 +760,18 @@ export async function updateArchiveVersion(versionId, payload = {}) {
   const currentVersions = readVersions();
   const index = currentVersions.findIndex((item) => item.id === versionId);
   if (index === -1) throw new Error('档案版本不存在');
+  const hasResourceDirectories = Object.prototype.hasOwnProperty.call(payload, 'resourceDirectories');
+  const hasLastDirectoryScanAt = Object.prototype.hasOwnProperty.call(payload, 'lastDirectoryScanAt');
   const nextVersion = {
     ...currentVersions[index],
     ...payload,
     snapshot: payload.snapshot ? clone(payload.snapshot) : currentVersions[index].snapshot,
+    resourceDirectories: hasResourceDirectories
+      ? normalizeResourceDirectories(payload.resourceDirectories)
+      : normalizeResourceDirectories(currentVersions[index].resourceDirectories),
+    lastDirectoryScanAt: hasLastDirectoryScanAt
+      ? trimText(payload.lastDirectoryScanAt)
+      : trimText(currentVersions[index].lastDirectoryScanAt),
     updatedAt: nowText(),
   };
   const nextVersions = [...currentVersions];
@@ -727,6 +798,52 @@ export async function importArchiveVersionMaterials(versionId, items = []) {
     snapshot: nextSnapshot,
     mappingSuggestions: [],
     updatedAt: nowText(),
+  };
+  const nextVersions = [...currentVersions];
+  nextVersions[index] = nextVersion;
+  writeVersions(nextVersions);
+  return clone(nextVersion);
+}
+
+export async function syncArchiveVersionDirectoryMaterials(versionId, items = [], payload = {}) {
+  const currentVersions = readVersions();
+  const index = currentVersions.findIndex((item) => item.id === versionId);
+  if (index === -1) throw new Error('档案版本不存在');
+  const version = currentVersions[index];
+  const existingMaterials = flattenSnapshotMaterials(version.snapshot);
+  const retainedMaterials = existingMaterials.filter((item) => !isDirectoryScanMaterial(item));
+  const retainedRefKeys = new Set(
+    retainedMaterials
+      .filter((item) => item.resourceRef?.libraryId && item.resourceRef?.itemKey)
+      .map((item) => `${item.resourceRef.libraryId}:${item.resourceRef.itemKey}`),
+  );
+  const nextDirectories = Object.prototype.hasOwnProperty.call(payload, 'resourceDirectories')
+    ? normalizeResourceDirectories(payload.resourceDirectories)
+    : normalizeResourceDirectories(version.resourceDirectories);
+  const directoryRefMap = new Map(
+    nextDirectories.map((entry) => [`${entry.libraryId}:${entry.folderKey}`, entry]),
+  );
+  const nextMaterials = items
+    .filter((item) => !retainedRefKeys.has(`${item.libraryId}:${item.key}`))
+    .map((item) => createArchiveMaterialFromResourceItem(item, {
+      importMode: 'DIRECTORY_SCAN',
+      directoryRef: item.directoryRef?.libraryId && item.directoryRef?.folderKey
+        ? (directoryRefMap.get(`${item.directoryRef.libraryId}:${item.directoryRef.folderKey}`) || item.directoryRef)
+        : null,
+    }));
+  const nextSnapshot = rebuildSnapshotFromMaterials(version.snapshot, [...retainedMaterials, ...nextMaterials]);
+  const scanTime = nowText();
+  const nextVersion = {
+    ...version,
+    snapshot: nextSnapshot,
+    resourceDirectories: nextDirectories.map((entry) => ({
+      ...entry,
+      lastScannedAt: scanTime,
+      updatedAt: scanTime,
+    })),
+    lastDirectoryScanAt: scanTime,
+    mappingSuggestions: [],
+    updatedAt: scanTime,
   };
   const nextVersions = [...currentVersions];
   nextVersions[index] = nextVersion;

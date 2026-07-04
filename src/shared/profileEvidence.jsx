@@ -986,9 +986,18 @@ function buildGrowthRecordBundle(snapshot, growthRecord) {
     tag: record.tag,
     sourceKey: record.sourceKey,
     sourceLabel: record.sourceLabel,
+    sourceType: record.sourceType || SOURCE_META[record.sourceKey]?.sourceType || '成长档案记录',
     coverage: record.coverage,
     statusLabel: record.statusLabel,
     statusColor: record.statusColor,
+    summary: record.summary || '',
+    evidenceExcerpt: record.evidenceExcerpt || '',
+    nextAction: record.nextAction || '',
+    attachments: Array.isArray(record.attachments) ? record.attachments : [],
+    links: Array.isArray(record.links) ? record.links : [],
+    ownerName: record.ownerName || '',
+    sceneName: record.sceneName || '',
+    activityLabel: record.activityLabel || '',
     isCurrent: record.id === growthRecord.id,
   }));
   const bundleSourceKeys = Array.from(new Set(bundleItems.map((item) => item.sourceKey).filter(Boolean)));
@@ -1056,22 +1065,54 @@ export function resolveItemLevelSummary(snapshot, itemId) {
 export function GrowthRecordDetailDrawer({ growthRecord, open, onClose }) {
   const [activeTab, setActiveTab] = useState('detail');
   const [bundleExpanded, setBundleExpanded] = useState(false);
+  const [previewBundleItemId, setPreviewBundleItemId] = useState('');
 
   useEffect(() => {
     setActiveTab('detail');
     setBundleExpanded(false);
-  }, [growthRecord?.id, open]);
+    setPreviewBundleItemId(growthRecord?.focusBundleItemId || growthRecord?.id || '');
+  }, [growthRecord?.id, growthRecord?.focusBundleItemId, open]);
 
   if (!growthRecord) {
     return null;
   }
 
   const currentLevelLabel = growthRecord.focusLevelLabel || growthRecord.relatedLevelLabels?.[0] || '-';
-  const currentCoverage = growthRecord.focusCoverage || growthRecord.coverage;
   const focusLevelInsight = growthRecord.focusLevelInsight;
   const focusItemLevelSummary = growthRecord.focusItemLevelSummary;
   const bundleItems = growthRecord.bundleItems || [];
   const bundleSourceKeys = growthRecord.bundleSourceKeys || [];
+  const currentBundleItem = bundleItems.find((item) => item.isCurrent) || bundleItems[0] || null;
+  const previewBundleItem = bundleItems.find((item) => item.id === previewBundleItemId) || currentBundleItem;
+  const previewRecord = previewBundleItem
+    ? {
+      sourceType: previewBundleItem.sourceType || growthRecord.sourceType,
+      sourceLabel: previewBundleItem.sourceLabel || growthRecord.sourceLabel,
+      sourceKey: previewBundleItem.sourceKey || growthRecord.sourceKey,
+      title: previewBundleItem.title || growthRecord.title,
+      tag: previewBundleItem.tag || growthRecord.tag,
+      date: previewBundleItem.date || growthRecord.date,
+      statusLabel: previewBundleItem.statusLabel || growthRecord.statusLabel,
+      statusColor: previewBundleItem.statusColor || growthRecord.statusColor,
+      coverage: typeof previewBundleItem.coverage === 'number' ? previewBundleItem.coverage : growthRecord.coverage,
+      summary: previewBundleItem.summary || growthRecord.summary,
+      evidenceExcerpt: previewBundleItem.evidenceExcerpt || growthRecord.evidenceExcerpt,
+      nextAction: previewBundleItem.nextAction || growthRecord.nextAction,
+      attachments: Array.isArray(previewBundleItem.attachments) ? previewBundleItem.attachments : growthRecord.attachments,
+      links: Array.isArray(previewBundleItem.links) ? previewBundleItem.links : growthRecord.links,
+      ownerName: previewBundleItem.ownerName || growthRecord.ownerName,
+      sceneName: previewBundleItem.sceneName || growthRecord.sceneName,
+      activityLabel: previewBundleItem.activityLabel || growthRecord.activityLabel,
+      resourcePath: previewBundleItem.resourcePath || growthRecord.resourcePath || growthRecord.links?.[0]?.hint || '-',
+    }
+    : growthRecord;
+  const isBundlePreview = Boolean(previewBundleItem && previewBundleItem.id !== growthRecord.id);
+  const previewSummary = previewRecord.summary || previewRecord.evidenceExcerpt || growthRecord.summary || '当前材料暂无补充说明。';
+  const currentCoverage = typeof previewBundleItem?.coverage === 'number'
+    ? previewBundleItem.coverage
+    : (growthRecord.focusCoverage ?? growthRecord.coverage);
+  const previewAttachments = Array.isArray(previewRecord.attachments) ? previewRecord.attachments : [];
+  const previewLinks = Array.isArray(previewRecord.links) ? previewRecord.links : [];
   const hiddenBundleCount = Math.max(0, bundleItems.length - BUNDLE_VISIBLE_LIMIT);
   const visibleBundleItems = bundleExpanded ? bundleItems : bundleItems.slice(0, BUNDLE_VISIBLE_LIMIT);
   const detailContent = (
@@ -1081,12 +1122,12 @@ export function GrowthRecordDetailDrawer({ growthRecord, open, onClose }) {
           <span>基础信息</span>
         </div>
         <div className="shared-record-drawer-kv">
-          <div><span>来源类型</span><strong>{growthRecord.sourceType}</strong></div>
-          <div><span>数据来源</span><strong>{growthRecord.sourceLabel}</strong></div>
-          {growthRecord.sceneName ? <div><span>来源空间</span><strong>{growthRecord.sceneName}</strong></div> : null}
-          {growthRecord.activityLabel ? <div><span>业务类型</span><strong>{growthRecord.activityLabel}</strong></div> : null}
-          <div><span>归属人</span><strong>{growthRecord.ownerName}</strong></div>
-          <div><span>记录时间</span><strong>{growthRecord.date}</strong></div>
+          <div><span>来源类型</span><strong>{previewRecord.sourceType}</strong></div>
+          <div><span>数据来源</span><strong>{previewRecord.sourceLabel}</strong></div>
+          {previewRecord.sceneName ? <div><span>来源空间</span><strong>{previewRecord.sceneName}</strong></div> : null}
+          {previewRecord.activityLabel ? <div><span>业务类型</span><strong>{previewRecord.activityLabel}</strong></div> : null}
+          <div><span>归属人</span><strong>{previewRecord.ownerName}</strong></div>
+          <div><span>记录时间</span><strong>{previewRecord.date}</strong></div>
           <div><span>当前关联能力项</span><strong>{growthRecord.focusItemName || growthRecord.relatedItemNames?.[0] || '-'}</strong></div>
           <div><span>当前关联等级</span><strong>{currentLevelLabel}</strong></div>
         </div>
@@ -1117,7 +1158,7 @@ export function GrowthRecordDetailDrawer({ growthRecord, open, onClose }) {
             <span>当前证据覆盖度</span>
             <strong>{currentCoverage}%</strong>
           </div>
-          <Progress percent={currentCoverage} size="small" strokeColor={SOURCE_META[growthRecord.sourceKey].color} />
+          <Progress percent={currentCoverage} size="small" strokeColor={SOURCE_META[previewRecord.sourceKey]?.color} />
         </div>
         <p className="shared-record-drawer-note">{growthRecord.matchNote}</p>
         {focusLevelInsight || focusItemLevelSummary ? (
@@ -1164,11 +1205,15 @@ export function GrowthRecordDetailDrawer({ growthRecord, open, onClose }) {
           ) : null}
           {bundleItems.length ? (
             <div className="shared-record-drawer-bundle-list">
-              {visibleBundleItems.map((item) => (
-                <div
-                  key={item.id}
-                  className={`shared-record-drawer-bundle-item${item.isCurrent ? ' is-current' : ''}`}
-                >
+              {visibleBundleItems.map((item) => {
+                const isPreview = item.id === previewBundleItem?.id;
+                return (
+                  <button
+                    type="button"
+                    key={item.id}
+                    className={`shared-record-drawer-bundle-item${item.isCurrent ? ' is-current' : ''}${isPreview ? ' is-preview' : ''}`}
+                    onClick={() => setPreviewBundleItemId(item.id)}
+                  >
                   <div className="shared-record-drawer-bundle-top">
                     <strong>{item.title}</strong>
                     <span>{item.date}</span>
@@ -1178,10 +1223,12 @@ export function GrowthRecordDetailDrawer({ growthRecord, open, onClose }) {
                     <Tag>{item.tag}</Tag>
                     <Tag color={item.statusColor}>{item.coverage}% · {item.statusLabel}</Tag>
                     {item.isCurrent ? <Tag color="blue">当前资料</Tag> : null}
+                    {isPreview ? <Tag color="gold">正在预览</Tag> : null}
                   </div>
                   <div className="shared-record-drawer-bundle-path">{item.resourcePath || '-'}</div>
-                </div>
-              ))}
+                  </button>
+                );
+              })}
               {hiddenBundleCount > 0 ? (
                 <button
                   type="button"
@@ -1231,11 +1278,11 @@ export function GrowthRecordDetailDrawer({ growthRecord, open, onClose }) {
         <div className="shared-record-drawer-section-head">
           <span>记录片段</span>
         </div>
-        <div className="shared-record-drawer-excerpt">{growthRecord.evidenceExcerpt}</div>
+        <div className="shared-record-drawer-excerpt">{previewRecord.evidenceExcerpt}</div>
         <div className="shared-record-drawer-section-head">
           <span>后续行动</span>
         </div>
-        <p className="shared-record-drawer-note">{growthRecord.nextAction}</p>
+        <p className="shared-record-drawer-note">{previewRecord.nextAction}</p>
       </Card>
 
       <Card bordered={false} className="shared-record-drawer-card">
@@ -1245,7 +1292,7 @@ export function GrowthRecordDetailDrawer({ growthRecord, open, onClose }) {
         <div className="shared-record-drawer-asset-block">
           <span className="shared-record-drawer-subtitle">附件</span>
           <div className="shared-record-drawer-asset-list">
-            {growthRecord.attachments.map((item) => (
+            {previewAttachments.map((item) => (
               <div key={item.name} className="shared-record-drawer-asset-item">
                 <strong>{item.name}</strong>
                 <span>{item.type} · {item.size}</span>
@@ -1256,7 +1303,7 @@ export function GrowthRecordDetailDrawer({ growthRecord, open, onClose }) {
         <div className="shared-record-drawer-asset-block">
           <span className="shared-record-drawer-subtitle">相关链接</span>
           <div className="shared-record-drawer-asset-list">
-            {growthRecord.links.map((item) => (
+            {previewLinks.map((item) => (
               <div key={item.title} className="shared-record-drawer-asset-item">
                 <strong>{item.title}</strong>
                 <span>{item.hint}</span>
@@ -1306,20 +1353,27 @@ export function GrowthRecordDetailDrawer({ growthRecord, open, onClose }) {
       onClose={onClose}
       width={560}
       placement="right"
-      title="摘要"
+      title={isBundlePreview ? '证据预览' : '摘要'}
       className="shared-record-drawer"
     >
       <div className="shared-record-drawer-body">
         <div className="shared-record-drawer-hero">
-          <div className="shared-record-drawer-kicker">摘要</div>
-          <h3>主成长记录：{growthRecord.title}</h3>
+          <div className="shared-record-drawer-kicker">{isBundlePreview ? '证据预览' : '摘要'}</div>
+          <h3>{previewRecord.title}</h3>
           <div className="shared-record-drawer-meta">
-            <Tag color={SOURCE_META[growthRecord.sourceKey].color}>{growthRecord.sourceLabel}</Tag>
-            <Tag>{growthRecord.tag}</Tag>
-            <Tag>{growthRecord.date}</Tag>
-            <Tag color={growthRecord.statusColor}>{growthRecord.statusLabel}</Tag>
+            <Tag color={SOURCE_META[previewRecord.sourceKey]?.color}>{previewRecord.sourceLabel}</Tag>
+            <Tag>{previewRecord.tag}</Tag>
+            <Tag>{previewRecord.date}</Tag>
+            <Tag color={previewRecord.statusColor}>{previewRecord.statusLabel}</Tag>
+            {isBundlePreview ? <Tag color="gold">当前预览材料</Tag> : null}
           </div>
-          <p>{growthRecord.summary}</p>
+          <p>{previewSummary}</p>
+          {previewRecord.resourcePath && previewRecord.resourcePath !== '-' ? (
+            <div className="shared-record-drawer-preview-path">来源路径：{previewRecord.resourcePath}</div>
+          ) : null}
+          {isBundlePreview ? (
+            <div className="shared-record-drawer-preview-hint">所属成长记录：{growthRecord.title}</div>
+          ) : null}
         </div>
         <Tabs
           activeKey={activeTab}

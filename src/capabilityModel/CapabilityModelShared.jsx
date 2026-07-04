@@ -67,6 +67,30 @@ function CapabilityModelPreviewContent({
   showHero = true,
 }) {
   const [previewMode, setPreviewMode] = useState('structured');
+  const [activePreviewNodeKey, setActivePreviewNodeKey] = useState(null);
+  const [collapsedPreviewNodeKeys, setCollapsedPreviewNodeKeys] = useState(() => new Set());
+  const dimensionEntries = model ? getCapabilityDimensionEntries(model.dimensions) : [];
+  const frameworkTreeEntries = model ? getCapabilityFrameworkTreeEntries(model) : [];
+  const frameworkTreeKeySignature = frameworkTreeEntries.map((node) => node.key).join('|');
+  const fallbackPreviewNode = frameworkTreeEntries.find((node) => isCapabilityFrameworkConfigNode(node))
+    || frameworkTreeEntries[0]
+    || null;
+  const previewSelection = model
+    ? getCapabilityFrameworkNodeSelection(model, activePreviewNodeKey || fallbackPreviewNode?.key)
+    : { node: null };
+  const selectedPreviewNode = previewSelection.node || fallbackPreviewNode;
+  const visiblePreviewNodes = frameworkTreeEntries.filter((node) => (
+    node.ancestorKeys.every((key) => !collapsedPreviewNodeKeys.has(key))
+  ));
+
+  useEffect(() => {
+    if (!frameworkTreeEntries.length) {
+      if (activePreviewNodeKey) setActivePreviewNodeKey(null);
+      return;
+    }
+    if (!activePreviewNodeKey || frameworkTreeEntries.some((node) => node.key === activePreviewNodeKey)) return;
+    setActivePreviewNodeKey(fallbackPreviewNode?.key || null);
+  }, [activePreviewNodeKey, fallbackPreviewNode?.key, frameworkTreeEntries.length, frameworkTreeKeySignature]);
 
   if (!model) {
     return <Empty description="暂无模型数据" />;
@@ -77,7 +101,173 @@ function CapabilityModelPreviewContent({
   const sequence = getSequenceForRole(role, sequences);
   const roleLevelName = getRoleLevel(role, model.roleLevelId, sequences)?.name || '-';
   const markdownText = buildCapabilityModelMarkdown(model, industries, roles, sequences);
-  const dimensionEntries = getCapabilityDimensionEntries(model.dimensions);
+  const totalCapabilityItems = getTotalCapabilityItems(model);
+
+  const handleTogglePreviewNode = (nodeKey) => {
+    setCollapsedPreviewNodeKeys((current) => {
+      const next = new Set(current);
+      if (next.has(nodeKey)) next.delete(nodeKey);
+      else next.add(nodeKey);
+      return next;
+    });
+  };
+
+  const getPreviewNodeTitle = (node) => (
+    node?.nodeType === 'item'
+      ? (node.item?.name || '未命名能力')
+      : (node?.dimension?.name || '未命名能力')
+  );
+
+  const getPreviewNodeDescription = (node) => (
+    node?.nodeType === 'item'
+      ? (node.item?.description || '未填写能力说明')
+      : (node?.dimension?.description || '未填写能力说明')
+  );
+
+  const getPreviewNodeMeta = (node) => {
+    if (!node) return '';
+    if (node.nodeType === 'item') return `能力配置 · ${node.orderText}`;
+    const childrenText = [
+      node.dimensionChildCount ? `${node.dimensionChildCount} 个下级分类` : '',
+      node.itemCount ? `${node.itemCount} 个能力配置` : '',
+    ].filter(Boolean).join(' · ');
+    return `第 ${node.level} 层${childrenText ? ` · ${childrenText}` : ''}`;
+  };
+
+  const formatLabelList = (values, labelMap) => (
+    values?.length ? values.map((entry) => labelMap[entry] || entry).join('、') : '未配置'
+  );
+
+  const renderReadonlyItem = (label, value) => (
+    <div className="cap-model-preview-readonly-item">
+      <span>{label}</span>
+      <strong>{value || '未配置'}</strong>
+    </div>
+  );
+
+  const renderPreviewTreeNode = (node) => {
+    const isActive = node.key === selectedPreviewNode?.key;
+    const isCollapsed = collapsedPreviewNodeKeys.has(node.key);
+
+    return (
+      <div
+        key={node.key}
+        className={`cap-model-framework-tree-node is-level-${node.level} is-${node.nodeType}${isActive ? ' is-active' : ''}`}
+        style={{ '--cap-tree-level': node.level - 1 }}
+      >
+        <button
+          type="button"
+          className="cap-model-framework-tree-row"
+          onClick={() => setActivePreviewNodeKey(node.key)}
+        >
+          <span
+            className={`cap-model-framework-tree-toggle${node.hasChildren ? '' : ' is-empty'}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (node.hasChildren) handleTogglePreviewNode(node.key);
+            }}
+          >
+            {node.hasChildren ? (isCollapsed ? <CaretRightOutlined /> : <CaretDownOutlined />) : null}
+          </span>
+          <span className="cap-model-framework-tree-icon">
+            {node.nodeType === 'item' ? <FileTextOutlined /> : <AppstoreOutlined />}
+          </span>
+          <span className="cap-model-framework-tree-copy">
+            <span className="cap-model-framework-tree-title">{getPreviewNodeTitle(node)}</span>
+            <span className="cap-model-framework-tree-meta">{getPreviewNodeMeta(node)}</span>
+          </span>
+        </button>
+      </div>
+    );
+  };
+
+  const renderPreviewDetail = () => {
+    if (!selectedPreviewNode) {
+      return (
+        <div className="cap-model-empty-panel cap-model-preview-empty">
+          <Empty description="暂无能力结构" />
+        </div>
+      );
+    }
+
+    const selectedItem = selectedPreviewNode.item || null;
+    const isConfigNode = isCapabilityFrameworkConfigNode(selectedPreviewNode);
+
+    return (
+      <div className="cap-model-preview-detail-card">
+        <div className="cap-model-preview-detail-head">
+          <div>
+            <div className="cap-model-framework-stage-kicker">
+              {isConfigNode ? '能力配置' : '能力分类'}
+            </div>
+            <div className="cap-model-framework-stage-title">{getPreviewNodeTitle(selectedPreviewNode)}</div>
+            <div className="cap-model-section-desc">{getPreviewNodeDescription(selectedPreviewNode)}</div>
+          </div>
+          <Space size={8} wrap>
+            <Tag color="blue">{selectedPreviewNode.orderText}</Tag>
+            <Tag>{isConfigNode ? '可配置' : `第 ${selectedPreviewNode.level} 层`}</Tag>
+          </Space>
+        </div>
+
+        <div className="cap-model-preview-detail-section">
+          <div className="cap-model-subsection-head">
+            <div className="cap-model-item-title">基础</div>
+          </div>
+          <div className="cap-model-preview-readonly-grid">
+            {renderReadonlyItem('能力名称', getPreviewNodeTitle(selectedPreviewNode))}
+            {renderReadonlyItem('能力说明', getPreviewNodeDescription(selectedPreviewNode))}
+          </div>
+        </div>
+
+        {isConfigNode && selectedItem ? (
+          <>
+            <div className="cap-model-preview-detail-section">
+              <div className="cap-model-subsection-head">
+                <div className="cap-model-item-title">规则</div>
+              </div>
+              <div className="cap-model-preview-readonly-grid">
+                {renderReadonlyItem('证据类型', formatLabelList(selectedItem.evidenceTypes, EVIDENCE_TYPE_LABEL_MAP))}
+                {renderReadonlyItem('评价主体', formatLabelList(selectedItem.requiredReviewRoles, REVIEW_ROLE_LABEL_MAP))}
+                {renderReadonlyItem('最低证据数', selectedItem.requiredEvidenceCount || 1)}
+                {renderReadonlyItem('AI辅助策略', AI_ASSIST_MODE_LABEL_MAP[selectedItem.aiAssistMode] || selectedItem.aiAssistMode || '未配置')}
+                {renderReadonlyItem('成长档案专用', selectedItem.isGrowthOnly ? '是' : '否')}
+                {renderReadonlyItem('成长记录示例', selectedItem.evidenceExamples?.length ? selectedItem.evidenceExamples.join('、') : '未配置')}
+              </div>
+            </div>
+
+            <div className="cap-model-preview-detail-section">
+              <div className="cap-model-subsection-head">
+                <div className="cap-model-item-title">等级描述</div>
+                <Tag>{model.levelScheme?.levels?.length || 0} 个等级</Tag>
+              </div>
+              <div className="cap-model-preview-level-list">
+                {(model.levelScheme?.levels || []).map((level) => (
+                  <div key={level.key} className="cap-model-preview-level-card">
+                    <div className="cap-model-preview-level-title">{level.label}</div>
+                    <div className="cap-model-preview-level-text">
+                      {selectedItem.levelDescriptors?.find((descriptor) => descriptor.levelKey === level.key)?.text || '未填写'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="cap-model-preview-detail-section">
+            <div className="cap-model-subsection-head">
+              <div className="cap-model-item-title">结构</div>
+            </div>
+            <div className="cap-model-preview-readonly-grid">
+              {renderReadonlyItem('层级', `第 ${selectedPreviewNode.level} 层`)}
+              {renderReadonlyItem('下级分类', `${selectedPreviewNode.dimensionChildCount || 0} 个`)}
+              {renderReadonlyItem('能力配置', `${selectedPreviewNode.itemCount || 0} 个`)}
+              {renderReadonlyItem('序号', selectedPreviewNode.orderText)}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   async function handleCopyMarkdown() {
     try {
@@ -101,7 +291,7 @@ function CapabilityModelPreviewContent({
             <span>序列等级：{roleLevelName}</span>
             <span>等级：{model.levelScheme?.levels?.length || 0} 级</span>
             <span>能力类：{dimensionEntries.length}</span>
-            <span>能力项：{getTotalCapabilityItems(model)}</span>
+            <span>能力项：{totalCapabilityItems}</span>
             <span>状态：{CAPABILITY_MODEL_STATUS_OPTIONS.find((item) => item.value === model.status)?.label || model.status}</span>
           </div>
           {model.tags?.length ? (
@@ -125,60 +315,24 @@ function CapabilityModelPreviewContent({
         </div>
       ) : null}
       {previewMode === 'structured' ? (
-        <>
-          {dimensionEntries.map(({ dimension, level, orderText }) => (
-            <div key={dimension.id} className={`cap-model-preview-section is-level-${level}`}>
-              <div className="cap-model-preview-section-head">
-                <div>
-                  <div className="cap-model-preview-section-title">{orderText}. {dimension.name}</div>
-                  <div className="cap-model-preview-section-desc">{dimension.description || '未填写能力类说明'}</div>
-                </div>
-                <Tag color="blue">第 {level} 层 · {dimension.items?.length || 0} 个能力项</Tag>
-              </div>
-              <div className="cap-model-matrix">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>能力项</th>
-                      {model.levelScheme?.levels?.map((level) => (
-                        <th key={level.key}>{level.label}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(dimension.items || []).map((item) => (
-                      <tr key={item.id}>
-                        <td>
-                          <div className="cap-model-matrix-item">{item.name}</div>
-                          <div className="cap-model-matrix-desc">{item.description || '未填写能力项说明'}</div>
-                          <div className="cap-model-matrix-desc">
-                            证据类型：{item.evidenceTypes?.length ? item.evidenceTypes.map((entry) => EVIDENCE_TYPE_LABEL_MAP[entry] || entry).join('、') : '未配置'}
-                          </div>
-                          <div className="cap-model-matrix-desc">
-                            最低证据数：{item.requiredEvidenceCount || 1} · 评价主体：{item.requiredReviewRoles?.length ? item.requiredReviewRoles.map((entry) => REVIEW_ROLE_LABEL_MAP[entry] || entry).join('、') : '未配置'}
-                          </div>
-                          <div className="cap-model-matrix-desc">
-                            适用范围：{item.isGrowthOnly ? '仅成长档案' : '可进入正式评价'} · AI：{AI_ASSIST_MODE_LABEL_MAP[item.aiAssistMode] || item.aiAssistMode || '未配置'}
-                          </div>
-                          {item.evidenceExamples?.length ? (
-                            <div className="cap-model-matrix-record">
-                              成长记录示例：{item.evidenceExamples.join('、')}
-                            </div>
-                          ) : null}
-                        </td>
-                        {(model.levelScheme?.levels || []).map((level) => (
-                          <td key={`${item.id}_${level.key}`}>
-                            {item.levelDescriptors?.find((descriptor) => descriptor.levelKey === level.key)?.text || '-'}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+        <div className="cap-model-preview-framework">
+          <aside className="cap-model-preview-tree-panel">
+            <div className="cap-model-framework-tree-head">
+              <div>
+                <div className="cap-model-dimension-title">能力结构</div>
+                <div className="cap-model-section-desc">{dimensionEntries.length} 个分类 · {totalCapabilityItems} 个配置</div>
               </div>
             </div>
-          ))}
-        </>
+            <div className="cap-model-preview-tree-list">
+              {visiblePreviewNodes.length ? visiblePreviewNodes.map((node) => renderPreviewTreeNode(node)) : (
+                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无能力结构" />
+              )}
+            </div>
+          </aside>
+          <section className="cap-model-preview-detail-panel">
+            {renderPreviewDetail()}
+          </section>
+        </div>
       ) : (
         <div className="cap-model-markdown-panel">
           <div className="cap-model-markdown-toolbar">
