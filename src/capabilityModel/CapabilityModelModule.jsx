@@ -61,6 +61,10 @@ import {
   CapabilityModelPreview,
 } from './CapabilityModelShared';
 import {
+  MAX_CAPABILITY_DIMENSION_LEVEL,
+  getCapabilityDimensionEntry,
+  getCapabilityDimensionInsertIndex,
+  removeCapabilityDimensionSubtree,
   getActiveCapabilityFrameworkSelection,
   getTotalCapabilityItems,
   moveCapabilityModelListItem,
@@ -1464,13 +1468,24 @@ export default function CapabilityModelModule({
     });
   }
 
-  function addDimension() {
-    const nextDimension = createEmptyCapabilityDimension(modelDraft.levelScheme, { sortNo: modelDraft.dimensions.length + 1 });
+  function addDimension(parentDimensionId = null) {
+    const parentEntry = getCapabilityDimensionEntry(modelDraft.dimensions, parentDimensionId);
+    if (parentDimensionId && (!parentEntry || parentEntry.level >= MAX_CAPABILITY_DIMENSION_LEVEL)) {
+      message.warning('能力类最多支持 3 个层级');
+      return;
+    }
+    const insertIndex = getCapabilityDimensionInsertIndex(modelDraft.dimensions, parentEntry?.dimension?.id || null);
+    const nextDimension = createEmptyCapabilityDimension(modelDraft.levelScheme, {
+      parentId: parentEntry?.dimension?.id || null,
+      level: parentEntry ? parentEntry.level + 1 : 1,
+      sortNo: insertIndex + 1,
+    });
     updateModelDraftState((draft) => {
       draft.dimensions = [
-        ...draft.dimensions,
+        ...draft.dimensions.slice(0, insertIndex),
         nextDimension,
-      ];
+        ...draft.dimensions.slice(insertIndex),
+      ].map((dimension, index) => ({ ...dimension, sortNo: index + 1 }));
       return draft;
     });
     setActiveDimensionId(nextDimension.id);
@@ -1478,9 +1493,9 @@ export default function CapabilityModelModule({
   }
 
   function removeDimension(index) {
+    const dimensionId = modelDraft.dimensions[index]?.id;
     updateModelDraftState((draft) => {
-      draft.dimensions = draft.dimensions.filter((_, currentIndex) => currentIndex !== index)
-        .map((dimension, currentIndex) => ({ ...dimension, sortNo: currentIndex + 1 }));
+      draft.dimensions = removeCapabilityDimensionSubtree(draft.dimensions, dimensionId);
       return draft;
     });
   }

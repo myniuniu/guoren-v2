@@ -24,6 +24,8 @@ const STATUS_LABEL_MAP = Object.fromEntries(
   CAPABILITY_MODEL_STATUS_OPTIONS.map((item) => [item.value, item.label]),
 );
 
+export const MAX_CAPABILITY_DIMENSION_LEVEL = 3;
+
 export function getCapabilityModelStatusMeta(model) {
   if (!model) {
     return { color: 'default', label: '-' };
@@ -50,6 +52,203 @@ export function getCapabilityModelVersionLabel(model) {
 
 export function cloneCapabilityModelDraft(data) {
   return JSON.parse(JSON.stringify(data || null));
+}
+
+function getDimensionParentId(dimension) {
+  return dimension?.parentId || null;
+}
+
+export function getCapabilityDimensionEntries(dimensions = []) {
+  const source = Array.isArray(dimensions) ? dimensions : [];
+  const indexById = new Map(source.map((dimension, index) => [dimension.id, index]));
+  const childrenByParent = new Map();
+
+  source.forEach((dimension, index) => {
+    const parentId = getDimensionParentId(dimension);
+    const safeParentId = parentId && indexById.has(parentId) ? parentId : null;
+    const list = childrenByParent.get(safeParentId) || [];
+    list.push({ dimension, index });
+    childrenByParent.set(safeParentId, list);
+  });
+
+  childrenByParent.forEach((list) => {
+    list.sort((left, right) => (
+      Number(left.dimension?.sortNo || left.index + 1) - Number(right.dimension?.sortNo || right.index + 1)
+    ));
+  });
+
+  const entries = [];
+  const visit = (parentId, level, prefix = '') => {
+    const children = childrenByParent.get(parentId) || [];
+    children.forEach((entry, siblingIndex) => {
+      const orderText = prefix ? `${prefix}.${siblingIndex + 1}` : `${siblingIndex + 1}`;
+      const normalizedLevel = Math.max(1, Math.min(MAX_CAPABILITY_DIMENSION_LEVEL, level));
+      entries.push({
+        ...entry,
+        level: normalizedLevel,
+        parentId,
+        orderText,
+        childCount: (childrenByParent.get(entry.dimension.id) || []).length,
+      });
+      if (normalizedLevel < MAX_CAPABILITY_DIMENSION_LEVEL) {
+        visit(entry.dimension.id, normalizedLevel + 1, orderText);
+      }
+    });
+  };
+
+  visit(null, 1);
+  return entries;
+}
+
+function createCapabilityDimensionNodeKey(dimensionId) {
+  return `dimension:${dimensionId}`;
+}
+
+function createCapabilityItemNodeKey(dimensionId, itemId) {
+  return `item:${dimensionId}:${itemId}`;
+}
+
+export function getCapabilityFrameworkTreeEntries(modelOrDimensions = []) {
+  const dimensions = Array.isArray(modelOrDimensions)
+    ? modelOrDimensions
+    : (modelOrDimensions?.dimensions || []);
+  const dimensionEntries = getCapabilityDimensionEntries(dimensions);
+  const entriesByParent = new Map();
+
+  dimensionEntries.forEach((entry) => {
+    const parentId = entry.parentId || null;
+    const list = entriesByParent.get(parentId) || [];
+    list.push(entry);
+    entriesByParent.set(parentId, list);
+  });
+
+  const result = [];
+  const visitDimension = (dimensionEntry, ancestorKeys = []) => {
+    const { dimension, index, level, orderText } = dimensionEntry;
+    const childDimensions = entriesByParent.get(dimension.id) || [];
+    const items = Array.isArray(dimension.items) ? dimension.items : [];
+    const isMaxLevel = level >= MAX_CAPABILITY_DIMENSION_LEVEL;
+    const absorbedItem = isMaxLevel ? (items[0] || null) : null;
+    const dimensionKey = createCapabilityDimensionNodeKey(dimension.id);
+    const childCount = childDimensions.length + (isMaxLevel ? 0 : items.length);
+    const node = {
+      key: dimensionKey,
+      nodeType: 'dimension',
+      dimension,
+      dimensionIndex: index,
+      item: absorbedItem,
+      itemIndex: absorbedItem ? 0 : -1,
+      level,
+      parentKey: dimension.parentId ? createCapabilityDimensionNodeKey(dimension.parentId) : null,
+      ancestorKeys,
+      orderText,
+      childCount,
+      dimensionChildCount: childDimensions.length,
+      itemCount: items.length,
+      hasChildren: childCount > 0,
+      canAddChildDimension: level < MAX_CAPABILITY_DIMENSION_LEVEL,
+      canAddItem: level < MAX_CAPABILITY_DIMENSION_LEVEL,
+      canEditRules: Boolean(absorbedItem),
+    };
+    result.push(node);
+
+    if (isMaxLevel) return;
+
+    const nextAncestors = [...ancestorKeys, dimensionKey];
+    childDimensions.forEach((childEntry) => visitDimension(childEntry, nextAncestors));
+    items.forEach((item, itemIndex) => {
+      result.push({
+        key: createCapabilityItemNodeKey(dimension.id, item.id),
+        nodeType: 'item',
+        dimension,
+        dimensionIndex: index,
+        item,
+        itemIndex,
+        level: Math.min(MAX_CAPABILITY_DIMENSION_LEVEL, level + 1),
+        parentKey: dimensionKey,
+        ancestorKeys: nextAncestors,
+        orderText: `${orderText}.${childDimensions.length + itemIndex + 1}`,
+        childCount: 0,
+        dimensionChildCount: 0,
+        itemCount: 0,
+        hasChildren: false,
+        canAddChildDimension: false,
+        canAddItem: false,
+        canEditRules: true,
+      });
+    });
+  };
+
+  (entriesByParent.get(null) || []).forEach((entry) => visitDimension(entry));
+  return result;
+}
+
+export function getCapabilityFrameworkNodeSelection(modelDraft, activeNodeKey) {
+  const entries = getCapabilityFrameworkTreeEntries(modelDraft);
+  const node = entries.find((entry) => entry.key === activeNodeKey) || entries[0] || null;
+  return {
+    node,
+    entries,
+    dimension: node?.dimension || null,
+    dimensionIndex: node?.dimensionIndex ?? -1,
+    item: node?.item || null,
+    itemIndex: node?.itemIndex ?? -1,
+  };
+}
+
+export function isCapabilityFrameworkConfigNode(node) {
+  return Boolean(node?.canEditRules && node?.item);
+}
+
+export function getCapabilityDimensionEntry(dimensions = [], dimensionId) {
+  if (!dimensionId) return null;
+  return getCapabilityDimensionEntries(dimensions).find((entry) => entry.dimension.id === dimensionId) || null;
+}
+
+export function getCapabilityDimensionDescendantIds(dimensions = [], dimensionId) {
+  if (!dimensionId) return new Set();
+  const childrenByParent = new Map();
+  (Array.isArray(dimensions) ? dimensions : []).forEach((dimension) => {
+    const parentId = getDimensionParentId(dimension);
+    if (!parentId) return;
+    const list = childrenByParent.get(parentId) || [];
+    list.push(dimension);
+    childrenByParent.set(parentId, list);
+  });
+
+  const result = new Set();
+  const visit = (parentId) => {
+    (childrenByParent.get(parentId) || []).forEach((child) => {
+      if (!child?.id || result.has(child.id)) return;
+      result.add(child.id);
+      visit(child.id);
+    });
+  };
+  visit(dimensionId);
+  return result;
+}
+
+export function getCapabilityDimensionInsertIndex(dimensions = [], parentDimensionId = null) {
+  const source = Array.isArray(dimensions) ? dimensions : [];
+  if (!parentDimensionId) return source.length;
+  const descendantIds = getCapabilityDimensionDescendantIds(source, parentDimensionId);
+  const parentIndex = source.findIndex((dimension) => dimension.id === parentDimensionId);
+  if (parentIndex < 0) return source.length;
+  const lastSubtreeIndex = source.reduce((lastIndex, dimension, index) => (
+    dimension.id === parentDimensionId || descendantIds.has(dimension.id)
+      ? Math.max(lastIndex, index)
+      : lastIndex
+  ), parentIndex);
+  return lastSubtreeIndex + 1;
+}
+
+export function removeCapabilityDimensionSubtree(dimensions = [], dimensionId) {
+  if (!dimensionId) return Array.isArray(dimensions) ? dimensions : [];
+  const removedIds = getCapabilityDimensionDescendantIds(dimensions, dimensionId);
+  removedIds.add(dimensionId);
+  return (Array.isArray(dimensions) ? dimensions : [])
+    .filter((dimension) => !removedIds.has(dimension.id))
+    .map((dimension, index) => ({ ...dimension, sortNo: index + 1 }));
 }
 
 export function getTotalCapabilityItems(model) {
@@ -88,9 +287,10 @@ export function syncDimensionsToLevelScheme(dimensions, nextLevelScheme) {
 
 export function getActiveCapabilityFrameworkSelection(modelDraft, activeDimensionId, activeItemId) {
   const dimensions = modelDraft?.dimensions || [];
-  const dimensionIndex = dimensions.findIndex((item) => item.id === activeDimensionId);
-  const safeDimensionIndex = dimensionIndex >= 0 ? dimensionIndex : (dimensions.length ? 0 : -1);
-  const dimension = safeDimensionIndex >= 0 ? dimensions[safeDimensionIndex] : null;
+  const entries = getCapabilityDimensionEntries(dimensions);
+  const matchedEntry = entries.find((entry) => entry.dimension.id === activeDimensionId) || entries[0] || null;
+  const safeDimensionIndex = matchedEntry?.index ?? -1;
+  const dimension = matchedEntry?.dimension || null;
   const items = dimension?.items || [];
   const itemIndex = items.findIndex((item) => item.id === activeItemId);
   const safeItemIndex = itemIndex >= 0 ? itemIndex : (items.length ? 0 : -1);
@@ -98,6 +298,7 @@ export function getActiveCapabilityFrameworkSelection(modelDraft, activeDimensio
   return {
     dimension,
     dimensionIndex: safeDimensionIndex,
+    dimensionEntry: matchedEntry,
     item,
     itemIndex: safeItemIndex,
   };
@@ -134,15 +335,16 @@ export function buildCapabilityModelMarkdown(model, industries, roles, sequences
     '',
   ];
 
-  (model.dimensions || []).forEach((dimension, dimensionIndex) => {
-    lines.push(`## ${dimensionIndex + 1}. ${dimension.name || '未命名能力类'}`);
+  getCapabilityDimensionEntries(model.dimensions).forEach(({ dimension, level, orderText }) => {
+    lines.push(`${'#'.repeat(Math.min(6, level + 1))} ${orderText}. ${dimension.name || '未命名能力类'}`);
     lines.push('');
     lines.push(`- 能力类说明：${dimension.description || '未填写能力类说明'}`);
+    lines.push(`- 能力类层级：${level}`);
     lines.push(`- 能力项数量：${dimension.items?.length || 0}`);
     lines.push('');
 
     (dimension.items || []).forEach((item, itemIndex) => {
-      lines.push(`### ${dimensionIndex + 1}.${itemIndex + 1} ${item.name || '未命名能力项'}`);
+      lines.push(`${'#'.repeat(Math.min(6, level + 2))} ${orderText}.${itemIndex + 1} ${item.name || '未命名能力项'}`);
       lines.push('');
       lines.push(`- 能力项说明：${item.description || '未填写能力项说明'}`);
       lines.push(`- 证据类型：${item.evidenceTypes?.length ? item.evidenceTypes.map((entry) => EVIDENCE_TYPE_LABEL_MAP[entry] || entry).join('、') : '-'}`);
@@ -172,7 +374,8 @@ export function buildCapabilityModelMarkdown(model, industries, roles, sequences
 }
 
 export function buildCapabilityModelResourceMeta(model, role = null, roleLevel = null) {
-  const dimensionNames = (model?.dimensions || []).map((dimension) => dimension.name).filter(Boolean);
+  const dimensionEntries = getCapabilityDimensionEntries(model?.dimensions || []);
+  const dimensionNames = dimensionEntries.map(({ dimension, orderText }) => `${orderText}. ${dimension.name}`).filter(Boolean);
   const itemCount = getTotalCapabilityItems(model);
   const roleText = [role?.name, roleLevel?.name].filter(Boolean).join(' / ');
   const summary = [
@@ -200,9 +403,9 @@ export function buildCapabilityModelResourceMeta(model, role = null, roleLevel =
         },
         {
           type: 'list',
-          items: (model?.dimensions || []).map((dimension) => {
+          items: dimensionEntries.map(({ dimension, orderText }) => {
             const itemNames = (dimension.items || []).map((item) => item.name).filter(Boolean);
-            return `${dimension.name || '未命名能力类'}：${itemNames.join('、') || '待补充能力项'}`;
+            return `${orderText}. ${dimension.name || '未命名能力类'}：${itemNames.join('、') || '待补充能力项'}`;
           }),
         },
       ],

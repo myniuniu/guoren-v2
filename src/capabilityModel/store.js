@@ -5,6 +5,7 @@ const MODEL_STORAGE_KEY = 'gr.capability-model.models.v3';
 const SEED_KEY = 'gr.capability-model.seeded.v5';
 const LEGACY_SEED_KEY = 'gr.capability-model.seeded.v3';
 const STORE_CHANGE_EVENT = 'gr:capability-model-change';
+const MAX_CAPABILITY_DIMENSION_LEVEL = 3;
 
 export const INDUSTRY_STATUS_OPTIONS = [
   { value: 'ACTIVE', label: '启用' },
@@ -235,8 +236,11 @@ export function createEmptyCapabilityDimension(levelScheme, overrides = {}) {
   const items = Array.isArray(overrides.items) && overrides.items.length
     ? overrides.items.map((item, index) => createEmptyCapabilityItem(scheme, { ...item, sortNo: index + 1 }))
     : [createEmptyCapabilityItem(scheme)];
+  const level = Math.max(1, Math.min(MAX_CAPABILITY_DIMENSION_LEVEL, Number(overrides.level || 1)));
   return {
     id: overrides.id || createId('cap_dim'),
+    parentId: overrides.parentId || null,
+    level,
     name: overrides.name || '',
     description: overrides.description || '',
     sortNo: overrides.sortNo ?? 1,
@@ -303,6 +307,8 @@ function normalizeDimension(dimension, levelScheme, index) {
     .filter((item) => item.name);
   return {
     id: dimension?.id || createId('cap_dim'),
+    parentId: dimension?.parentId || null,
+    level: Math.max(1, Math.min(MAX_CAPABILITY_DIMENSION_LEVEL, Number(dimension?.level || 1))),
     name: trimText(dimension?.name),
     description: trimText(dimension?.description),
     sortNo: index + 1,
@@ -312,9 +318,33 @@ function normalizeDimension(dimension, levelScheme, index) {
 
 function normalizeModel(model) {
   const levelScheme = normalizeLevelScheme(model?.levelScheme);
-  const dimensions = (Array.isArray(model?.dimensions) ? model.dimensions : [])
+  const initialDimensions = (Array.isArray(model?.dimensions) ? model.dimensions : [])
     .map((dimension, index) => normalizeDimension(dimension, levelScheme, index))
     .filter((dimension) => dimension.name);
+  const dimensionIds = new Set(initialDimensions.map((dimension) => dimension.id));
+  const dimensionMap = new Map(initialDimensions.map((dimension) => [dimension.id, dimension]));
+  const resolveLevel = (dimension, visiting = new Set()) => {
+    if (!dimension?.parentId || !dimensionIds.has(dimension.parentId) || visiting.has(dimension.id)) {
+      dimension.parentId = null;
+      dimension.level = 1;
+      return 1;
+    }
+    visiting.add(dimension.id);
+    const parent = dimensionMap.get(dimension.parentId);
+    const parentLevel = resolveLevel(parent, visiting);
+    if (parentLevel >= MAX_CAPABILITY_DIMENSION_LEVEL) {
+      dimension.parentId = null;
+      dimension.level = 1;
+      return 1;
+    }
+    dimension.level = Math.min(MAX_CAPABILITY_DIMENSION_LEVEL, parentLevel + 1);
+    return dimension.level;
+  };
+  initialDimensions.forEach((dimension) => resolveLevel(dimension));
+  const dimensions = initialDimensions.map((dimension, index) => ({
+    ...dimension,
+    sortNo: index + 1,
+  }));
   const id = model?.id || createId('cap_model');
   const modelCode = trimText(model?.modelCode);
   const status = model?.status || 'DRAFT';

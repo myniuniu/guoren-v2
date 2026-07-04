@@ -62,13 +62,17 @@ import {
   CapabilityModelPreview,
 } from '../capabilityModel/CapabilityModelShared';
 import {
+  MAX_CAPABILITY_DIMENSION_LEVEL,
   buildCapabilityModelResourceMeta,
   cloneCapabilityModelDraft,
   createCapabilityModelStarterDraft,
+  getCapabilityDimensionEntry,
+  getCapabilityDimensionInsertIndex,
   getActiveCapabilityFrameworkSelection,
   getCapabilityModelStatusMeta,
   getCapabilityModelVersionLabel,
   moveCapabilityModelListItem,
+  removeCapabilityDimensionSubtree,
   resolveCapabilityModelResourceEntry,
   syncDimensionsToLevelScheme,
 } from '../capabilityModel/shared';
@@ -3127,13 +3131,28 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     });
   }, [updateCapabilityModelEditorDraftState]);
 
-  const handleCapabilityModelAddDimension = useCallback(() => {
+  const handleCapabilityModelAddDimension = useCallback((parentDimensionId = null) => {
     if (!capabilityModelEditorDraft) return;
+    const parentEntry = getCapabilityDimensionEntry(capabilityModelEditorDraft.dimensions, parentDimensionId);
+    if (parentDimensionId && (!parentEntry || parentEntry.level >= MAX_CAPABILITY_DIMENSION_LEVEL)) {
+      message.warning('能力类最多支持 3 个层级');
+      return;
+    }
+    const insertIndex = getCapabilityDimensionInsertIndex(
+      capabilityModelEditorDraft.dimensions,
+      parentEntry?.dimension?.id || null,
+    );
     const nextDimension = createEmptyCapabilityDimension(capabilityModelEditorDraft.levelScheme, {
-      sortNo: capabilityModelEditorDraft.dimensions.length + 1,
+      parentId: parentEntry?.dimension?.id || null,
+      level: parentEntry ? parentEntry.level + 1 : 1,
+      sortNo: insertIndex + 1,
     });
     updateCapabilityModelEditorDraftState((draft) => {
-      draft.dimensions = [...draft.dimensions, nextDimension];
+      draft.dimensions = [
+        ...draft.dimensions.slice(0, insertIndex),
+        nextDimension,
+        ...draft.dimensions.slice(insertIndex),
+      ].map((dimension, index) => ({ ...dimension, sortNo: index + 1 }));
       return draft;
     });
     setCapabilityModelActiveDimensionId(nextDimension.id);
@@ -3141,13 +3160,12 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
   }, [capabilityModelEditorDraft, updateCapabilityModelEditorDraftState]);
 
   const handleCapabilityModelRemoveDimension = useCallback((index) => {
+    const dimensionId = capabilityModelEditorDraft?.dimensions?.[index]?.id;
     updateCapabilityModelEditorDraftState((draft) => {
-      draft.dimensions = draft.dimensions
-        .filter((_, currentIndex) => currentIndex !== index)
-        .map((dimension, currentIndex) => ({ ...dimension, sortNo: currentIndex + 1 }));
+      draft.dimensions = removeCapabilityDimensionSubtree(draft.dimensions, dimensionId);
       return draft;
     });
-  }, [updateCapabilityModelEditorDraftState]);
+  }, [capabilityModelEditorDraft, updateCapabilityModelEditorDraftState]);
 
   const handleCapabilityModelMoveDimension = useCallback((index, delta) => {
     updateCapabilityModelEditorDraftState((draft) => {
