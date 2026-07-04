@@ -3404,7 +3404,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
           industries={capabilityModelCatalog.industries}
           roles={capabilityModelCatalog.roles}
           sequences={capabilityModelCatalog.sequences}
-          embedded
+          showHero={false}
           allowCopyMarkdown={false}
         />
       </div>
@@ -4724,10 +4724,10 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                             </div>
                         }
                       </div>
-                      {!resolvedColumnSelectedItem.isFolder ? (
-                        <div className="finder-preview-footer">
-                          <div className="finder-preview-name">{resolvedColumnSelectedItem.name}</div>
-                          <div className="finder-preview-meta-row">
+                        {!resolvedColumnSelectedItem.isFolder && resolvedColumnSelectedItem.fileType !== 'capabilityModel' ? (
+                          <div className="finder-preview-footer">
+                            <div className="finder-preview-name">{resolvedColumnSelectedItem.name}</div>
+                            <div className="finder-preview-meta-row">
                             <span>{getFileTypeLabel(resolvedColumnSelectedItem.fileType)}</span>
                             {resolvedColumnSelectedItem.size && <span>{(resolvedColumnSelectedItem.size / 1024).toFixed(1)} KB</span>}
                             {resolvedColumnSelectedItem.lastEdit && <span>{resolvedColumnSelectedItem.lastEdit}</span>}
@@ -5031,7 +5031,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                           <div className="finder-preview-placeholder"><FileTextOutlined style={{ fontSize: 80, color: '#8e8e93' }} /><div>文件预览</div></div>
                         )}
                       </div>
-                      {!previewItem.isFolder ? (
+                      {!previewItem.isFolder && previewItem.fileType !== 'capabilityModel' ? (
                         <div className="finder-preview-footer">
                           <div className="finder-preview-name">{previewItem.name}</div>
                           <div className="finder-preview-meta-row">

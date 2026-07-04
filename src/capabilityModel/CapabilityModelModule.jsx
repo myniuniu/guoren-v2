@@ -1111,7 +1111,6 @@ export default function CapabilityModelModule({
     const standaloneRoleLevel = getRoleLevel(standaloneRole, standaloneModel?.roleLevelId, sequences) || null;
     const standaloneStatusLabel = getCapabilityModelStatusMeta(standaloneModel).label;
     const standaloneReady = standaloneViewMode === 'edit' ? Boolean(standaloneLocalModel) : Boolean(standaloneModel);
-    const standaloneEditLabel = (standaloneModel?.status || 'DRAFT') === 'DRAFT' ? '编辑' : '新建版本';
     const standaloneCurrentVersion = standaloneModel || standaloneSourceModel || standaloneLocalModel || standaloneVersionAnchor;
     const standaloneVersionMenuItems = [
       {
@@ -1193,13 +1192,13 @@ export default function CapabilityModelModule({
                 </>
               ) : (
                 <Button type="primary" icon={<EditOutlined />} onClick={handleOpenStandaloneEdit} disabled={!standaloneModel}>
-                  {standaloneEditLabel}
+                  编辑
                 </Button>
               )}
             </Space>
           </div>
 
-          <div className="cap-model-standalone-body">
+          <div className={`cap-model-standalone-body ${standaloneViewMode === 'edit' ? 'is-edit' : 'is-preview'}`}>
             {!standaloneReady ? (
               <div className="cap-model-standalone-placeholder">
                 {!loading && !standaloneSourceModel && !standaloneLocalModel ? (
