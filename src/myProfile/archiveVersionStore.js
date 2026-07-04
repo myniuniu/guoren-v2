@@ -1,5 +1,6 @@
 import { SOURCE_META } from '../shared/profileEvidence';
 import { matchNamePattern } from '../shared/resourceRecordAssociations';
+import { getPersonalStudyHourProofDirectoryBinding, loadResourceLib } from '../resourceLib/resourceLibStore';
 
 const STORAGE_KEY = 'guoren_archive_versions';
 const STORE_CHANGE_EVENT = 'guoren:archive-version-store-change';
@@ -50,6 +51,22 @@ function normalizeResourceDirectories(entries = []) {
     list.push(normalized);
     return list;
   }, []);
+}
+
+function isEditableArchiveVersionStatus(status) {
+  return ['DRAFT', 'SUPPLEMENT_REQUIRED'].includes(trimText(status));
+}
+
+function buildDefaultArchiveResourceDirectories() {
+  if (typeof window === 'undefined') return [];
+  const defaultDirectory = getPersonalStudyHourProofDirectoryBinding(loadResourceLib());
+  return defaultDirectory ? [defaultDirectory] : [];
+}
+
+function applyDefaultArchiveResourceDirectories(entries = [], fallbackDirectories = []) {
+  const normalized = normalizeResourceDirectories(entries);
+  if (normalized.length) return normalized;
+  return clone(fallbackDirectories);
 }
 
 function readVersions() {
@@ -315,18 +332,22 @@ function createArchiveMaterialFromResourceItem(item, options = {}) {
     sourceLabel: item.sourceLabel || SOURCE_META[item.sourceKey || 'archive'].label,
     sourceType: item.sourceType || SOURCE_META[item.sourceKey || 'archive'].sourceType,
     resourcePath: item.resourcePath || `${item.libraryName} / ${item.name}`,
-    relatedDimensionNames: [],
-    relatedItemNames: [],
-    relatedLevelLabels: [],
-    mappingRows: [],
-    cellMappings: [],
-    linkedItemCount: 0,
-    linkedLevelCount: 0,
+    relatedDimensionNames: Array.from(new Set((item.relatedDimensionNames || []).filter(Boolean))),
+    relatedItemNames: Array.from(new Set((item.relatedItemNames || []).filter(Boolean))),
+    relatedLevelLabels: Array.from(new Set((item.relatedLevelLabels || []).filter(Boolean))),
+    mappingRows: Array.isArray(item.mappingRows) ? clone(item.mappingRows) : [],
+    cellMappings: Array.isArray(item.cellMappings) ? clone(item.cellMappings) : [],
+    linkedItemCount: Array.from(new Set((item.relatedItemNames || []).filter(Boolean))).length,
+    linkedLevelCount: Array.from(new Set((item.relatedLevelLabels || []).filter(Boolean))).length,
     coverage: typeof item.coverage === 'number' ? item.coverage : 72,
-    statusLabel: '待确认映射',
-    statusColor: 'default',
+    statusLabel: Array.isArray(item.relatedItemNames) && item.relatedItemNames.length
+      ? buildCoverageStatus(typeof item.coverage === 'number' ? item.coverage : 72).label
+      : '待确认映射',
+    statusColor: Array.isArray(item.relatedItemNames) && item.relatedItemNames.length
+      ? buildCoverageStatus(typeof item.coverage === 'number' ? item.coverage : 72).color
+      : 'default',
     importedAt: nowText(),
-    mappingStatus: 'UNMAPPED',
+    mappingStatus: Array.isArray(item.relatedItemNames) && item.relatedItemNames.length ? 'CONFIRMED' : 'UNMAPPED',
     importMode,
     resourceRef: {
       libraryId: item.libraryId,
@@ -336,6 +357,8 @@ function createArchiveMaterialFromResourceItem(item, options = {}) {
     },
     directoryRef,
     aiSuggestion: null,
+    associationRuleId: trimText(item.associationRuleId),
+    bundleKey: trimText(item.bundleKey),
     submissionSource: importMode === 'DIRECTORY_SCAN'
       ? 'RESOURCE_LIBRARY_DIRECTORY_SCAN'
       : 'RESOURCE_LIBRARY_IMPORT',
@@ -664,6 +687,7 @@ export function getArchiveVersionStoreEventName() {
 export async function ensureArchiveVersionSeedData({ teacherProfile, baseSnapshot, evaluationRecords = [], evaluationSchemes = [] }) {
   if (typeof window === 'undefined' || !teacherProfile || !baseSnapshot) return [];
   let currentVersions = readVersions();
+  const defaultResourceDirectories = buildDefaultArchiveResourceDirectories();
   const teacherVersions = currentVersions.filter((item) => item.teacherId === teacherProfile.teacherId);
   const normalizedRecords = evaluationRecords
     .filter((item) => item.teacherId === teacherProfile.teacherId || item.teacherName === teacherProfile.name)
@@ -704,7 +728,7 @@ export async function ensureArchiveVersionSeedData({ teacherProfile, baseSnapsho
       versionStatus: 'DRAFT',
       approvalInfo: buildVersionApprovalInfo(null),
       snapshot: buildBlankSnapshot(baseSnapshot),
-      resourceDirectories: [],
+      resourceDirectories: clone(defaultResourceDirectories),
       lastDirectoryScanAt: '',
       mappingSuggestions: [],
       creationMode: 'BLANK',
@@ -714,8 +738,29 @@ export async function ensureArchiveVersionSeedData({ teacherProfile, baseSnapsho
     appendedVersions.push(starterVersion);
   }
 
+  let shouldPersist = false;
   if (appendedVersions.length) {
     currentVersions = [...currentVersions, ...appendedVersions];
+    shouldPersist = true;
+  }
+
+  if (defaultResourceDirectories.length) {
+    const nextVersions = currentVersions.map((version) => {
+      if (version.teacherId !== teacherProfile.teacherId) return version;
+      if (!isEditableArchiveVersionStatus(version.versionStatus || version.status)) return version;
+      const normalizedDirectories = normalizeResourceDirectories(version.resourceDirectories);
+      if (normalizedDirectories.length) return version;
+      shouldPersist = true;
+      return {
+        ...version,
+        resourceDirectories: clone(defaultResourceDirectories),
+        updatedAt: trimText(version.updatedAt) || nowText(),
+      };
+    });
+    currentVersions = nextVersions;
+  }
+
+  if (shouldPersist) {
     writeVersions(currentVersions);
   }
   return currentVersions;
@@ -730,6 +775,7 @@ export async function listArchiveVersions({ teacherProfile, evaluationRecords = 
 
 export async function createArchiveVersion(payload) {
   const currentVersions = readVersions();
+  const defaultResourceDirectories = buildDefaultArchiveResourceDirectories();
   const version = {
     id: createId('archive_version'),
     teacherId: payload.teacherId,
@@ -745,7 +791,7 @@ export async function createArchiveVersion(payload) {
     versionStatus: 'DRAFT',
     approvalInfo: buildVersionApprovalInfo(null),
     snapshot: clone(payload.snapshot),
-    resourceDirectories: normalizeResourceDirectories(payload.resourceDirectories),
+    resourceDirectories: applyDefaultArchiveResourceDirectories(payload.resourceDirectories, defaultResourceDirectories),
     lastDirectoryScanAt: trimText(payload.lastDirectoryScanAt),
     mappingSuggestions: [],
     creationMode: trimText(payload.creationMode) || 'BLANK',

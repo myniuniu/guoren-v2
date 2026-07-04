@@ -60,6 +60,7 @@ import {
   getLibraryItemPath,
   loadResourceLib,
 } from '../resourceLib/resourceLibStore';
+import SpaceResourceImportModal from '../resourceLib/SpaceResourceImportModal.jsx';
 import { sceneApi } from '../scene/api';
 import { archiveVersionApi } from './archiveVersionApi';
 import '../system/SystemModule.css';
@@ -97,6 +98,8 @@ const RESOURCE_PARSE_STATUS_LABELS = {
   failed: '解析失败',
 };
 
+const ARCHIVE_DIRECTORY_EXCLUDED_FILE_TYPES = ['knowledgeGraph', 'capabilityModel'];
+
 const REVIEW_ROLE_LABELS = {
   SELF: '本人',
   GROUP_LEADER: '教研组长',
@@ -104,6 +107,39 @@ const REVIEW_ROLE_LABELS = {
   ENTERPRISE_MENTOR: '企业导师',
   SCHOOL_REVIEW: '校级评审组',
 };
+
+const MAPPING_ACTION_GROUPS = [
+  {
+    key: 'TARGET',
+    title: '目标提升',
+    description: '因为当前证据覆盖低于稳定支撑线，或目标等级仍缺直接证据；系统建议本周期先补这类能力，补齐后最容易提升评价结果。',
+    tagColor: 'volcano',
+    emptyText: '当前没有需要优先提升的能力项',
+  },
+  {
+    key: 'REGRESSED',
+    title: '较上周期回落',
+    description: '因为本周期覆盖度、挂载证据数或等级支撑低于最近周期；通常说明材料漏挂、证据质量变弱，或新周期尚未同步关键材料。',
+    tagColor: 'error',
+    emptyText: '当前没有明显回落的能力项',
+  },
+  {
+    key: 'GAP',
+    title: '证据不足',
+    description: '因为直接挂载证据少于要求，或现有材料只能间接说明能力表现；建议先补课堂、任务、成果、反馈等可核验证据，再确认映射。',
+    tagColor: 'warning',
+    emptyText: '当前没有明显证据缺口',
+  },
+  {
+    key: 'STABLE',
+    title: '保持巩固',
+    description: '因为当前覆盖度和证据数量基本满足要求，且未出现明显回落；后续重点是补充更高质量材料，支撑更高等级或长期稳定表现。',
+    tagColor: 'success',
+    emptyText: '当前暂无保持巩固项',
+  },
+];
+
+const MAPPING_ACTION_GROUP_META = Object.fromEntries(MAPPING_ACTION_GROUPS.map((item) => [item.key, item]));
 
 const { TextArea } = Input;
 
@@ -289,6 +325,218 @@ function buildMountedEvidenceEntries(snapshot, item, dimensionName = '') {
     ));
 }
 
+function buildDefaultMappingActions(groupKey, itemName, levelFocusLabel) {
+  if (groupKey === 'REGRESSED') {
+    return [
+      '先核对本周期是否漏扫、漏导入或漏确认该能力项相关材料。',
+      `补充能直接支撑“${itemName}”的过程记录或成果证明。`,
+    ];
+  }
+  if (groupKey === 'TARGET') {
+    return [
+      `围绕“${levelFocusLabel || '目标等级'}”补充更直接的成长记录。`,
+      '优先选择可被教研组长或管理者复核的材料。',
+    ];
+  }
+  if (groupKey === 'GAP') {
+    return [
+      '先设置档案材料目录或从资料库导入已有材料。',
+      `补齐至少一条能证明“${itemName}”的直接证据。`,
+    ];
+  }
+  return [
+    '继续沉淀本周期高质量材料，保持证据连续性。',
+    '尝试补充更高等级或更强结果反馈的材料。',
+  ];
+}
+
+function buildMappingGapSummary({
+  groupKey,
+  latestCoverage,
+  delta,
+  evidenceGapCount,
+  mountedEvidenceCount,
+  requiredEvidenceCount,
+  levelFocusLabel,
+  hasHistory,
+}) {
+  if (groupKey === 'REGRESSED') {
+    return `较早期对比周期回落 ${Math.abs(delta)}%，建议优先检查本周期材料是否漏挂。`;
+  }
+  if (latestCoverage < 72) {
+    return `当前覆盖 ${latestCoverage}%，低于稳定支撑线，建议优先补齐 ${levelFocusLabel || '目标等级'} 的直接证据。`;
+  }
+  if (evidenceGapCount > 0) {
+    return `已挂载 ${mountedEvidenceCount} 条，低于要求 ${requiredEvidenceCount} 条，还需补充 ${evidenceGapCount} 条。`;
+  }
+  if (!hasHistory) {
+    return '当前是新周期，先补充本周期材料，后续可形成趋势对比。';
+  }
+  return '当前证据较稳定，可继续补充更高质量材料，巩固后续评价支撑。';
+}
+
+function getLevelCode(levelLabel = '') {
+  return String(levelLabel).match(/^L\d+/)?.[0] || levelLabel;
+}
+
+function formatCompactLevelLabels(levelEntries = []) {
+  const labels = Array.from(new Set(levelEntries.map((entry) => entry.levelLabel).filter(Boolean)));
+  if (!labels.length) return '';
+  if (labels.length <= 2) return labels.join('、');
+  const firstCode = getLevelCode(labels[0]);
+  const lastCode = getLevelCode(labels[labels.length - 1]);
+  return firstCode && lastCode ? `${firstCode}-${lastCode}` : `${labels[0]} 等 ${labels.length} 级`;
+}
+
+function resolveActionLevelStatusEntries(item, mappingRow) {
+  if (Array.isArray(mappingRow?.levelStatusSummary) && mappingRow.levelStatusSummary.length) {
+    return mappingRow.levelStatusSummary;
+  }
+  return (item.cellMappings || [])
+    .map((cell) => {
+      const growthRecord = cell.growthRecord || {};
+      const statusKey = growthRecord.statusKey || (growthRecord.hasRecord ? 'basic_match' : 'missing_record');
+      return {
+        levelKey: growthRecord.levelKey || cell.level?.key,
+        levelLabel: growthRecord.levelLabel || cell.level?.label,
+        statusKey,
+        statusLabel: growthRecord.statusLabel || (statusKey === 'missing_record' ? '证据缺失' : '证据初步具备'),
+        shortLabel: growthRecord.shortStatusLabel || (statusKey === 'missing_record' ? '缺证' : '初步具备'),
+        statusColor: growthRecord.statusColor || (statusKey === 'missing_record' ? 'default' : 'processing'),
+      };
+    })
+    .filter((entry) => entry.levelLabel);
+}
+
+function buildActionLevelGapMeta(levelStatusEntries = [], fallbackLabel = '') {
+  const missingLevels = levelStatusEntries.filter((entry) => entry.statusKey === 'missing_record');
+  const lowLevels = levelStatusEntries.filter((entry) => entry.statusKey === 'low_match');
+  const basicLevels = levelStatusEntries.filter((entry) => entry.statusKey === 'basic_match');
+
+  if (missingLevels.length) {
+    const levelText = formatCompactLevelLabels(missingLevels);
+    return {
+      label: `${levelText} 待补`,
+      focusLabel: levelText,
+      hint: missingLevels.length === levelStatusEntries.length
+        ? '各等级都还没有直接证据'
+        : `${missingLevels.length} 个等级缺少直接证据`,
+    };
+  }
+
+  if (lowLevels.length) {
+    const levelText = formatCompactLevelLabels(lowLevels);
+    return {
+      label: `${levelText} 偏弱`,
+      focusLabel: levelText,
+      hint: '已有材料，但支撑还不够直接',
+    };
+  }
+
+  if (basicLevels.length) {
+    const levelText = formatCompactLevelLabels(basicLevels.slice(-1));
+    return {
+      label: `${levelText} 可强化`,
+      focusLabel: levelText,
+      hint: '已具备初步支撑，可补强质量',
+    };
+  }
+
+  return {
+    label: fallbackLabel || '等级待确认',
+    focusLabel: fallbackLabel || '目标等级',
+    hint: '导入材料后会识别具体缺口',
+  };
+}
+
+function buildMappingActionInsight({ item, dimension, comparisonItem, hasHistory }) {
+  const mappingRow = item.mappingRow || null;
+  const mountedEvidenceEntries = item.mountedEvidenceEntries || [];
+  const requiredEvidenceCount = item.requiredEvidenceCount || mappingRow?.requiredEvidenceCount || 1;
+  const mountedEvidenceCount = mountedEvidenceEntries.length;
+  const evidenceGapCount = Math.max(0, requiredEvidenceCount - mountedEvidenceCount);
+  const latestCoverage = typeof mappingRow?.coverage === 'number'
+    ? mappingRow.coverage
+    : (comparisonItem?.latestCoverage || 0);
+  const delta = hasHistory && typeof comparisonItem?.delta === 'number' ? comparisonItem.delta : 0;
+  const trendTone = hasHistory
+    ? (comparisonItem?.trendTone || (delta >= 8 ? 'up' : delta <= -8 ? 'down' : 'steady'))
+    : 'new';
+  const levelStatusEntries = resolveActionLevelStatusEntries(item, mappingRow);
+  const levelGapMeta = buildActionLevelGapMeta(levelStatusEntries, mappingRow?.levelFocusLabel || '');
+  const levelFocusLabel = levelGapMeta.focusLabel || mappingRow?.levelFocusLabel || '目标等级';
+  const hasAdvice = Boolean(mappingRow?.adviceSummary || mappingRow?.adviceActions?.length);
+  const hasEvidenceGap = latestCoverage < 72 || evidenceGapCount > 0 || mountedEvidenceCount === 0;
+  const isRegressed = hasHistory && delta <= -8;
+  const groupKey = isRegressed
+    ? 'REGRESSED'
+    : latestCoverage < 72 || hasAdvice
+      ? 'TARGET'
+      : hasEvidenceGap
+        ? 'GAP'
+        : 'STABLE';
+  const statusMeta = buildCoverageStatus(latestCoverage);
+  const nextActions = mappingRow?.adviceActions?.length
+    ? mappingRow.adviceActions.slice(0, 3)
+    : buildDefaultMappingActions(groupKey, item.name, levelFocusLabel);
+  const priorityWeight = {
+    REGRESSED: 400,
+    TARGET: 300,
+    GAP: 200,
+    STABLE: 100,
+  }[groupKey];
+
+  return {
+    id: item.id,
+    name: item.name,
+    description: item.description,
+    dimensionKey: dimension.key,
+    dimensionName: dimension.name,
+    dimensionOrderText: dimension.orderText,
+    groupKey,
+    groupMeta: MAPPING_ACTION_GROUP_META[groupKey],
+    priorityScore: priorityWeight
+      + Math.max(0, 90 - latestCoverage)
+      + Math.abs(delta)
+      + evidenceGapCount * 8
+      + (hasAdvice ? 10 : 0),
+    latestCoverage,
+    coverageStatusLabel: mappingRow?.statusLabel || statusMeta.label,
+    coverageStatusColor: mappingRow?.statusColor || statusMeta.color,
+    delta,
+    trendTone,
+    trendLabel: hasHistory ? formatCoverageDelta(delta) : '新周期',
+    hasHistory,
+    isTargetAbility: groupKey === 'TARGET' || groupKey === 'REGRESSED' || latestCoverage < 72 || hasAdvice,
+    hasEvidenceGap,
+    evidenceGapCount,
+    requiredEvidenceCount,
+    mountedEvidenceCount,
+    mountedEvidenceEntries,
+    primaryEvidencePreview: mountedEvidenceEntries[0] || null,
+    targetLevelLabel: levelGapMeta.label,
+    targetLevelHint: levelGapMeta.hint,
+    levelStatusEntries,
+    gapSummary: buildMappingGapSummary({
+      groupKey,
+      latestCoverage,
+      delta,
+      evidenceGapCount,
+      mountedEvidenceCount,
+      requiredEvidenceCount,
+      levelFocusLabel,
+      hasHistory,
+    }),
+    adviceSummary: mappingRow?.adviceSummary || '',
+    nextActions,
+    mappingRow,
+    cells: comparisonItem?.cells || [],
+    evidenceExamples: item.evidenceExamples || [],
+    requiredReviewRoles: item.requiredReviewRoles || [],
+    isGrowthOnly: Boolean(item.isGrowthOnly),
+  };
+}
+
 function matchRubricNamesForGrowthRecord(growthRecord, scheme) {
   const relatedItemNames = Array.from(new Set([
     growthRecord?.focusItemName,
@@ -399,33 +647,66 @@ function buildResourceImportCandidates(resourceLibData, baseSnapshot) {
         sourceLabel: SOURCE_META[context.sourceKey].label,
         sourceType: SOURCE_META[context.sourceKey].sourceType,
         coverage: context.coverage,
+        relatedDimensionNames: context.relatedDimensionNames,
+        relatedItemNames: context.relatedItemNames,
+        relatedLevelLabels: context.relatedLevelLabels,
+        mappingRows: context.relatedRows,
+        cellMappings: context.cellMappings,
+        associationRuleId: context.associationRule?.id || null,
+        bundleKey: context.associationRule?.bundleKey || null,
       };
     })
     .sort((left, right) => String(right.lastOpenedAt || right.lastEdit || '').localeCompare(String(left.lastOpenedAt || left.lastEdit || '')));
 }
 
+function buildVersionImportedResourceKeySet(versionSnapshot) {
+  return new Set(
+    Object.values(versionSnapshot?.recordsBySource || {})
+      .flat()
+      .filter((item) => item?.resourceRef?.libraryId && item?.resourceRef?.itemKey)
+      .map((item) => `${item.resourceRef.libraryId}:${item.resourceRef.itemKey}`),
+  );
+}
+
+function pickAutoBindStudyHourProofItems(importCandidates, versionSnapshot) {
+  const importedKeys = buildVersionImportedResourceKeySet(versionSnapshot);
+  return (importCandidates || []).filter((item) => (
+    item?.associationRuleId === 'study_hour_certificate'
+      && Array.isArray(item.relatedItemNames)
+      && item.relatedItemNames.length > 0
+      && !importedKeys.has(item.importKey)
+  ));
+}
+
 function buildResourceDirectoryCandidates(resourceLibData) {
   return getAllLibraryEntriesAcrossLibraries(resourceLibData)
     .filter((item) => item.isFolder)
-    .map((item) => {
-      const descendantFiles = getLibraryDescendantFiles(resourceLibData, item.libraryId, item.key)
-        .filter((file) => !['knowledgeGraph', 'capabilityModel'].includes(file.fileType));
-      const latestEdit = descendantFiles
-        .map((file) => file.lastOpenedAt || file.lastEdit || '')
-        .sort((left, right) => String(right).localeCompare(String(left)))[0] || item.lastEdit || '';
-      return {
-        ...item,
-        directoryKey: `${item.libraryId}:${item.key}`,
-        folderKey: item.key,
-        folderName: item.name,
-        folderPath: getLibraryItemPath(resourceLibData, item.libraryId, item),
-        fileCount: descendantFiles.length,
-        parsedFileCount: descendantFiles.filter((file) => file.parseStatus === 'parsed').length,
-        latestEdit,
-      };
-    })
+    .map((item) => buildResourceDirectoryBinding(resourceLibData, item))
     .filter((item) => item.fileCount > 0)
     .sort((left, right) => String(left.folderPath || '').localeCompare(String(right.folderPath || '')));
+}
+
+function buildResourceDirectoryBinding(resourceLibData, folderItem) {
+  if (!folderItem?.isFolder) return null;
+  const libraryId = folderItem.libraryId || 'personal';
+  const descendantFiles = getLibraryDescendantFiles(resourceLibData, libraryId, folderItem.key)
+    .filter((file) => !ARCHIVE_DIRECTORY_EXCLUDED_FILE_TYPES.includes(file.fileType));
+  const latestEdit = descendantFiles
+    .map((file) => file.lastOpenedAt || file.lastEdit || '')
+    .sort((left, right) => String(right).localeCompare(String(left)))[0] || folderItem.lastEdit || '';
+  return {
+    ...folderItem,
+    directoryKey: `${libraryId}:${folderItem.key}`,
+    libraryId,
+    libraryName: folderItem.libraryName || (libraryId === 'personal' ? '个人库' : libraryId),
+    libraryScope: folderItem.libraryScope || (libraryId === 'personal' ? 'personal' : 'organization'),
+    folderKey: folderItem.key,
+    folderName: folderItem.name,
+    folderPath: folderItem.path || getLibraryItemPath(resourceLibData, libraryId, folderItem),
+    fileCount: descendantFiles.length,
+    parsedFileCount: descendantFiles.filter((file) => file.parseStatus === 'parsed').length,
+    latestEdit,
+  };
 }
 
 function collectDirectoryScanItems(resourceLibData, directoryBindings, importCandidates) {
@@ -437,7 +718,7 @@ function collectDirectoryScanItems(resourceLibData, directoryBindings, importCan
 
   sortedBindings.forEach((directory) => {
     const files = getLibraryDescendantFiles(resourceLibData, directory.libraryId, directory.folderKey)
-      .filter((file) => !['knowledgeGraph', 'capabilityModel'].includes(file.fileType));
+      .filter((file) => !ARCHIVE_DIRECTORY_EXCLUDED_FILE_TYPES.includes(file.fileType));
     files.forEach((file) => {
       const itemKey = `${directory.libraryId}:${file.key}`;
       if (selectedItems.has(itemKey)) return;
@@ -1032,7 +1313,9 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
   const [analysisSortMode, setAnalysisSortMode] = useState('DELTA');
   const [analysisSearch, setAnalysisSearch] = useState('');
   const [selectedAnalysisItemId, setSelectedAnalysisItemId] = useState('');
-  const [mappingView, setMappingView] = useState('matrix');
+  const [mappingView, setMappingView] = useState('action');
+  const [mappingActionDrawerOpen, setMappingActionDrawerOpen] = useState(false);
+  const [selectedMappingActionItemId, setSelectedMappingActionItemId] = useState('');
   const [activeMatrixNodeKey, setActiveMatrixNodeKey] = useState(undefined);
   const [collapsedMatrixNodeKeys, setCollapsedMatrixNodeKeys] = useState(() => new Set());
   const [growthRecordDrawerOpen, setGrowthRecordDrawerOpen] = useState(false);
@@ -1044,7 +1327,6 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
   const [resourceImportLoading, setResourceImportLoading] = useState(false);
   const [resourceImportSelection, setResourceImportSelection] = useState([]);
   const [resourceDirectoryOpen, setResourceDirectoryOpen] = useState(false);
-  const [resourceDirectoryLoading, setResourceDirectoryLoading] = useState(false);
   const [resourceDirectoryScanning, setResourceDirectoryScanning] = useState(false);
   const [resourceDirectorySelection, setResourceDirectorySelection] = useState([]);
   const [resourceDirectoryItems, setResourceDirectoryItems] = useState([]);
@@ -1052,6 +1334,8 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
   const [directSubmitForm] = Form.useForm();
   const matrixSectionRefs = useRef({});
   const matrixItemRefs = useRef({});
+  const mappingActionAnchorRefs = useRef({});
+  const mappingActionHighlightTimerRef = useRef(null);
 
   const openGrowthRecordDetail = useCallback((growthRecordId, nextSnapshot = snapshot, focus = {}) => {
     const resolvedSnapshot = nextSnapshot || snapshot;
@@ -1131,10 +1415,24 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
         evaluationRecords: evaluationRecordsWithNodeNames,
         evaluationSchemes: nextEvaluationSchemes,
       });
-      const nextVersions = await archiveVersionApi.list({
+      let nextVersions = await archiveVersionApi.list({
         teacherProfile: nextTeacherProfile,
         evaluationRecords: evaluationRecordsWithNodeNames,
       });
+      const currentSelectedVersion = nextVersions.find((item) => item.id === selectedArchiveVersionId) || null;
+      const autoBindTargetVersion = isEditableArchiveVersion(currentSelectedVersion)
+        ? currentSelectedVersion
+        : (nextVersions.find((item) => isEditableArchiveVersion(item)) || null);
+      const pendingStudyHourProofItems = autoBindTargetVersion
+        ? pickAutoBindStudyHourProofItems(importCandidates, autoBindTargetVersion.snapshot)
+        : [];
+      if (autoBindTargetVersion && pendingStudyHourProofItems.length) {
+        await archiveVersionApi.importMaterials(autoBindTargetVersion.id, pendingStudyHourProofItems);
+        nextVersions = await archiveVersionApi.list({
+          teacherProfile: nextTeacherProfile,
+          evaluationRecords: evaluationRecordsWithNodeNames,
+        });
+      }
       setArchiveVersions(nextVersions);
       setSelectedArchiveVersionId((current) => {
         if (current && nextVersions.some((item) => item.id === current)) {
@@ -1587,6 +1885,55 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
       visibleItemCount: allItems.length,
     };
   }, [compareVersions.length, visibleComparisonItems]);
+  const hasMappingComparisonHistory = compareVersions.length >= 2;
+  const mappingComparisonItemMap = useMemo(
+    () => new Map(versionComparisonSections.flatMap((section) => section.items.map((item) => [item.id, item]))),
+    [versionComparisonSections],
+  );
+  const mappingActionItems = useMemo(() => (
+    mappingMatrixSections
+      .flatMap((dimension) => dimension.items.map((item) => (
+        buildMappingActionInsight({
+          item,
+          dimension,
+          comparisonItem: mappingComparisonItemMap.get(item.id) || null,
+          hasHistory: hasMappingComparisonHistory,
+        })
+      )))
+      .sort((left, right) => (
+        right.priorityScore - left.priorityScore
+          || left.name.localeCompare(right.name, 'zh-CN')
+      ))
+  ), [hasMappingComparisonHistory, mappingComparisonItemMap, mappingMatrixSections]);
+  const mappingActionGroups = useMemo(() => {
+    const groups = Object.fromEntries(MAPPING_ACTION_GROUPS.map((item) => [item.key, []]));
+    mappingActionItems.forEach((item) => {
+      groups[item.groupKey].push(item);
+    });
+    return groups;
+  }, [mappingActionItems]);
+  const mappingActionSummary = useMemo(() => {
+    const targetItems = mappingActionItems.filter((item) => item.isTargetAbility);
+    const regressedItems = mappingActionItems.filter((item) => item.groupKey === 'REGRESSED');
+    const gapItems = mappingActionItems.filter((item) => item.hasEvidenceGap);
+    const topTarget = targetItems[0] || null;
+    const topRegressed = regressedItems[0] || null;
+    const topGap = gapItems[0] || null;
+    return {
+      targetItems,
+      targetCount: targetItems.length,
+      regressedCount: hasMappingComparisonHistory ? regressedItems.length : 0,
+      gapCount: gapItems.length,
+      suggestionCount: selectedVersionSuggestions.length,
+      topTarget,
+      topRegressed,
+      topGap,
+    };
+  }, [hasMappingComparisonHistory, mappingActionItems, selectedVersionSuggestions.length]);
+  const selectedMappingActionItem = useMemo(
+    () => mappingActionItems.find((item) => item.id === selectedMappingActionItemId) || null,
+    [mappingActionItems, selectedMappingActionItemId],
+  );
   const analysisDimensionOptions = useMemo(
     () => [
       { label: '全部能力类', value: 'ALL' },
@@ -1628,6 +1975,12 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
       setSelectedAnalysisItemId(visibleComparisonItems[0].id);
     }
   }, [selectedAnalysisItemId, visibleComparisonItems]);
+  useEffect(() => {
+    if (mappingActionDrawerOpen && selectedMappingActionItemId && !selectedMappingActionItem) {
+      setMappingActionDrawerOpen(false);
+      setSelectedMappingActionItemId('');
+    }
+  }, [mappingActionDrawerOpen, selectedMappingActionItem, selectedMappingActionItemId]);
   useEffect(() => {
     const maxCount = Math.min(4, Math.max(2, evaluationSummaryRecords.length || 2));
     if (analysisCompareCount > maxCount) {
@@ -1838,11 +2191,7 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
       message.info(`当前是「${selectedVersionStatusLabel}」周期，请切换到草稿或补证周期后再设置目录`);
       return;
     }
-    const { directoryCandidates } = refreshResourceLibraryContext(selectedArchiveVersion.snapshot || snapshot);
-    setResourceDirectoryItems(directoryCandidates);
-    setResourceDirectorySelection(
-      (selectedArchiveVersion.resourceDirectories || []).map((item) => `${item.libraryId}:${item.folderKey}`),
-    );
+    refreshResourceLibraryContext(selectedArchiveVersion.snapshot || snapshot);
     setResourceDirectoryOpen(true);
   }, [canEditSelectedVersion, refreshResourceLibraryContext, selectedArchiveVersion, selectedVersionStatusLabel, snapshot]);
 
@@ -1871,10 +2220,12 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
     }
   }, [currentTeacherProfile, evaluationRecordList, resourceImportSelection, resourceLibraryItems, selectedArchiveVersion]);
 
-  const handleSaveResourceDirectories = useCallback(async () => {
+  const handleSaveResourceDirectories = useCallback(async (directoryItemsOverride = null) => {
     if (!selectedArchiveVersion) return;
-    const selectedDirectories = resourceDirectoryItems
-      .filter((item) => resourceDirectorySelection.includes(item.directoryKey))
+    const sourceDirectoryItems = Array.isArray(directoryItemsOverride)
+      ? directoryItemsOverride
+      : resourceDirectoryItems.filter((item) => resourceDirectorySelection.includes(item.directoryKey));
+    const selectedDirectories = Array.from(new Map(sourceDirectoryItems
       .map((item) => ({
         libraryId: item.libraryId,
         libraryName: item.libraryName,
@@ -1884,8 +2235,8 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
         folderPath: item.folderPath,
         fileCount: item.fileCount,
         parsedFileCount: item.parsedFileCount,
-      }));
-    setResourceDirectoryLoading(true);
+      }))
+      .map((item) => [`${item.libraryId}:${item.folderKey}`, item])).values());
     try {
       if (selectedDirectories.length) {
         await archiveVersionApi.update(selectedArchiveVersion.id, {
@@ -1902,11 +2253,10 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
       });
       setArchiveVersions(nextVersions);
       setResourceDirectoryOpen(false);
+      setResourceDirectorySelection([]);
       message.success(selectedDirectories.length ? '已保存当前周期的档案材料目录，请继续执行 AI 扫描目录' : '已清空当前周期的档案材料目录，并移除目录扫描材料');
     } catch (error) {
       message.error(error?.message || '保存档案材料目录失败');
-    } finally {
-      setResourceDirectoryLoading(false);
     }
   }, [
     currentTeacherProfile,
@@ -1915,6 +2265,24 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
     resourceDirectorySelection,
     selectedArchiveVersion,
   ]);
+
+  const handleConfirmResourceDirectoryPicker = useCallback(async ({ selectedItems = [] } = {}) => {
+    if (!selectedArchiveVersion) return;
+    const selectedFolders = selectedItems.filter((item) => item.isFolder);
+    if (!selectedFolders.length) {
+      message.warning('请选择一个或多个资料库文件夹作为档案材料目录');
+      return;
+    }
+    const resourceLibData = loadResourceLib();
+    const selectedDirectories = selectedFolders
+      .map((item) => buildResourceDirectoryBinding(resourceLibData, item))
+      .filter(Boolean);
+    if (!selectedDirectories.length) {
+      message.warning('所选内容中没有可设置的资料库目录');
+      return;
+    }
+    await handleSaveResourceDirectories(selectedDirectories);
+  }, [handleSaveResourceDirectories, selectedArchiveVersion]);
 
   const handleScanResourceDirectories = useCallback(async () => {
     if (!selectedArchiveVersion || !canEditSelectedVersion) {
@@ -2144,6 +2512,32 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
     setGrowthRecordDrawerOpen(true);
   }
 
+  function openMappingActionDetail(itemId) {
+    setSelectedMappingActionItemId(itemId);
+    setMappingActionDrawerOpen(true);
+  }
+
+  function scrollToMappingActionAnchor(anchorKey) {
+    const targetNode = mappingActionAnchorRefs.current[anchorKey]
+      || (anchorKey === 'REGRESSED' ? mappingActionAnchorRefs.current.TARGET : null)
+      || mappingActionAnchorRefs.current.TARGET;
+    if (!targetNode) return;
+    if (mappingActionHighlightTimerRef.current) {
+      window.clearTimeout(mappingActionHighlightTimerRef.current);
+    }
+    targetNode.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    targetNode.classList.add('is-anchor-active');
+    mappingActionHighlightTimerRef.current = window.setTimeout(() => {
+      targetNode.classList.remove('is-anchor-active');
+    }, 1400);
+  }
+
+  function handleMappingActionCardKeyDown(event, itemId) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    openMappingActionDetail(itemId);
+  }
+
   function getMatrixTreeNodeTitle(node) {
     return node?.nodeType === 'item'
       ? (node.item?.name || '未命名能力项')
@@ -2364,6 +2758,277 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
     </div>
   );
 
+  const mappingActionOverviewCards = [
+    {
+      key: 'target',
+      anchorKey: 'TARGET',
+      label: '目标提升',
+      value: `${mappingActionSummary.targetCount} 项`,
+      hint: mappingActionSummary.topTarget
+        ? `优先看 ${mappingActionSummary.topTarget.name}`
+        : '当前暂无系统判定的重点提升项',
+      color: 'volcano',
+    },
+    {
+      key: 'regressed',
+      anchorKey: 'REGRESSED',
+      label: '较前回落',
+      value: hasMappingComparisonHistory ? `${mappingActionSummary.regressedCount} 项` : '待形成',
+      hint: hasMappingComparisonHistory
+        ? (mappingActionSummary.topRegressed ? `${mappingActionSummary.topRegressed.name} ${mappingActionSummary.topRegressed.trendLabel}` : '没有明显回落项')
+        : '至少两个周期后展示回落判断',
+      color: 'error',
+    },
+    {
+      key: 'gap',
+      anchorKey: 'GAP',
+      label: '证据不足',
+      value: `${mappingActionSummary.gapCount} 项`,
+      hint: mappingActionSummary.topGap
+        ? `${mappingActionSummary.topGap.name} 还需补证`
+        : '当前证据数量基本满足要求',
+      color: 'warning',
+    },
+    {
+      key: 'suggestion',
+      anchorKey: 'SUGGESTION',
+      label: 'AI 建议待处理',
+      value: `${mappingActionSummary.suggestionCount} 条`,
+      hint: mappingActionSummary.suggestionCount ? '建议先确认后写入映射' : '当前暂无待确认建议',
+      color: 'processing',
+    },
+  ];
+
+  const visibleMappingActionGroups = MAPPING_ACTION_GROUPS.filter((group) => (
+    hasMappingComparisonHistory || group.key !== 'REGRESSED'
+  ));
+
+  const mappingActionView = (
+    <div className="profile-archive-action-view">
+      <div className="profile-archive-action-hero">
+        <div className="profile-archive-action-hero-copy">
+          <div className="profile-archive-kicker">证据映射行动视图</div>
+          <strong>本周期先处理最影响评价结果的能力项</strong>
+          <p>
+            系统按当前覆盖度、挂载证据、AI 建议和周期变化自动排序，把需要补证、回落和目标提升的能力放到前面。
+          </p>
+        </div>
+        <div className="profile-archive-action-hero-meta">
+          <Tag color={selectedVersionStatusColor}>{selectedVersionStatusLabel}</Tag>
+          <Tag color="blue">{selectedArchiveVersion?.periodLabel || '-'}</Tag>
+          <Tag>{hasMappingComparisonHistory ? `已对比 ${compareVersions.length} 个周期` : '新周期待形成趋势'}</Tag>
+        </div>
+      </div>
+
+      <div className="profile-archive-action-overview">
+        {mappingActionOverviewCards.map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            className="profile-archive-action-overview-card"
+            onClick={() => scrollToMappingActionAnchor(item.anchorKey)}
+          >
+            <span>{item.label}</span>
+            <strong>{item.value}</strong>
+            <em>{item.hint}</em>
+            <Tag color={item.color}>{item.label}</Tag>
+          </button>
+        ))}
+      </div>
+
+      {!selectedVersionDirectories.length ? (
+        <div
+          className="profile-archive-action-directory-callout"
+          ref={(node) => {
+            mappingActionAnchorRefs.current.SUGGESTION = node;
+          }}
+        >
+          <div className="profile-archive-action-directory-copy">
+            <strong>当前周期还没有设置档案材料目录</strong>
+            <span>先绑定资料库目录后，AI 扫描结果会进入行动清单，目标能力和补证建议会更准确。</span>
+          </div>
+          <div className="profile-archive-action-directory-actions">
+            <Button size="small" type="primary" icon={<AppstoreOutlined />} onClick={handleOpenResourceDirectory}>
+              设置目录
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="profile-archive-action-group-list">
+        {visibleMappingActionGroups.map((group) => {
+          const groupItems = mappingActionGroups[group.key] || [];
+          const isStableGroup = group.key === 'STABLE';
+          return (
+            <details
+              key={group.key}
+              className={`profile-archive-action-group is-${group.key.toLowerCase()}`}
+              open={!isStableGroup}
+              ref={(node) => {
+                mappingActionAnchorRefs.current[group.key] = node;
+                if (group.key === 'TARGET' && selectedVersionDirectories.length) {
+                  mappingActionAnchorRefs.current.SUGGESTION = node;
+                }
+              }}
+            >
+              <summary>
+                <div className="profile-archive-action-group-title">
+                  <strong>{group.title}</strong>
+                  <span>{group.description}</span>
+                </div>
+                <div className="profile-archive-action-group-meta">
+                  <Space wrap>
+                    <Tag color={group.tagColor}>{groupItems.length} 项</Tag>
+                    {isStableGroup ? <Tag>默认收起</Tag> : null}
+                  </Space>
+                  <span className="profile-archive-action-group-toggle" aria-hidden="true">
+                    <span className="is-expanded"><CaretDownOutlined /> 收起</span>
+                    <span className="is-collapsed"><CaretRightOutlined /> 展开</span>
+                  </span>
+                </div>
+              </summary>
+
+              {groupItems.length ? (
+                <div className="profile-archive-action-card-list">
+                  {groupItems.map((item) => {
+                    const trendMeta = item.hasHistory ? getTrendMeta(item.trendTone) : { label: '新周期', color: undefined };
+                    const visibleEvidence = item.mountedEvidenceEntries.slice(0, 2);
+                    return (
+                      <div
+                        key={item.id}
+                        className="profile-archive-action-card"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => openMappingActionDetail(item.id)}
+                        onKeyDown={(event) => handleMappingActionCardKeyDown(event, item.id)}
+                      >
+                        <div className="profile-archive-action-card-main">
+                          <div className="profile-archive-action-card-head">
+                            <div>
+                              <div className="profile-archive-action-card-title">
+                                <strong>{item.name}</strong>
+                                <Tooltip title={item.description || '未填写能力项说明'}>
+                                  <button
+                                    type="button"
+                                    className="profile-archive-matrix-item-info"
+                                    aria-label={`查看${item.name}的能力定义`}
+                                    onClick={(event) => event.stopPropagation()}
+                                  >
+                                    <InfoCircleOutlined />
+                                  </button>
+                                </Tooltip>
+                              </div>
+                              {item.dimensionName ? <span>{item.dimensionName}</span> : null}
+                            </div>
+                            <Space wrap>
+                              <Tag color={item.groupMeta.tagColor}>{item.groupMeta.title}</Tag>
+                              <Tag color={item.coverageStatusColor}>{item.coverageStatusLabel}</Tag>
+                              <Tag color={trendMeta.color}>{trendMeta.label}</Tag>
+                            </Space>
+                          </div>
+
+                          <div className="profile-archive-action-card-metrics">
+                            <div>
+                              <span>当前覆盖</span>
+                              <strong>{item.latestCoverage}%</strong>
+                              <Progress percent={item.latestCoverage} size="small" strokeColor={getCoverageBarColor(item.latestCoverage)} showInfo={false} />
+                            </div>
+                            <div>
+                              <span>趋势变化</span>
+                              <strong>{item.trendLabel}</strong>
+                              <em>{item.hasHistory ? '按最近周期比较' : '暂无历史对比'}</em>
+                            </div>
+                            <div>
+                              <span>挂载证据</span>
+                              <strong>{item.mountedEvidenceCount} / {item.requiredEvidenceCount}</strong>
+                              <em>{item.evidenceGapCount ? `还需 ${item.evidenceGapCount} 条` : '数量满足要求'}</em>
+                            </div>
+                            <div>
+                              <span>缺口等级</span>
+                              <strong>{item.targetLevelLabel}</strong>
+                              <em>{item.targetLevelHint}</em>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="profile-archive-action-card-side">
+                          <div className="profile-archive-action-card-gap">
+                            <span>缺口原因</span>
+                            <p>{item.gapSummary}</p>
+                          </div>
+
+                          <div className="profile-archive-action-card-actions">
+                            <span>建议动作</span>
+                            <ul>
+                              {item.nextActions.slice(0, 2).map((action) => (
+                                <li key={action}>{action}</li>
+                              ))}
+                            </ul>
+                          </div>
+
+                          {visibleEvidence.length ? (
+                            <div className="profile-archive-action-evidence-strip">
+                              {visibleEvidence.map((entry) => (
+                                <button
+                                  key={`${item.id}_${entry.id}`}
+                                  type="button"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    openGrowthRecordDetail(entry.originGrowthRecordId || entry.growthRecordId, snapshot, {
+                                      focusItemId: item.id,
+                                      focusDimensionName: item.dimensionName,
+                                      focusItemName: item.name,
+                                      focusBundleItemId: entry.id,
+                                      focusCoverage: entry.coverage,
+                                    });
+                                  }}
+                                >
+                                  <FileTextOutlined />
+                                  <span>{entry.title}</span>
+                                </button>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="profile-archive-action-evidence-empty">暂无直接挂载证据</div>
+                          )}
+
+                          <div className="profile-archive-action-card-footer">
+                            <Button
+                              size="small"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                openMappingActionDetail(item.id);
+                              }}
+                            >
+                              查看详情
+                            </Button>
+                            <Button
+                              size="small"
+                              type="primary"
+                              icon={<AppstoreOutlined />}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handleOpenResourceDirectory();
+                              }}
+                            >
+                              补充材料
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={group.emptyText} />
+              )}
+            </details>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   const mappingTab = (
     <div className="profile-archive-tab">
       <Card variant="borderless" className="profile-archive-panel">
@@ -2382,12 +3047,13 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
             value={mappingView}
             onChange={setMappingView}
             options={[
-              { label: '表格视图', value: 'table' },
+              { label: '行动视图', value: 'action' },
               { label: '矩阵视图', value: 'matrix' },
+              { label: '表格视图', value: 'table' },
             ]}
           />
         </div>
-        {mappingView === 'table' ? (
+        {mappingView === 'action' ? mappingActionView : mappingView === 'table' ? (
           <Table
             rowKey="key"
             columns={mappingColumns}
@@ -3263,6 +3929,161 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
       />
 
       <Drawer
+        title="能力行动详情"
+        width={620}
+        open={mappingActionDrawerOpen}
+        onClose={() => setMappingActionDrawerOpen(false)}
+        className="profile-archive-action-drawer"
+        extra={selectedMappingActionItem ? (
+          <Space wrap>
+            <Button size="small" icon={<FileTextOutlined />} onClick={handleOpenResourceImport}>
+              导入资料
+            </Button>
+            <Button size="small" type="primary" icon={<AppstoreOutlined />} onClick={handleOpenResourceDirectory}>
+              设置目录
+            </Button>
+          </Space>
+        ) : null}
+      >
+        {selectedMappingActionItem ? (
+          <div className="profile-archive-action-drawer-body">
+            <div className="profile-archive-action-drawer-hero">
+              <div>
+                <div className="profile-archive-kicker">{selectedMappingActionItem.dimensionName}</div>
+                <strong>{selectedMappingActionItem.name}</strong>
+                <p>{selectedMappingActionItem.gapSummary}</p>
+              </div>
+              <Space wrap>
+                <Tag color={selectedMappingActionItem.groupMeta.tagColor}>{selectedMappingActionItem.groupMeta.title}</Tag>
+                <Tag color={selectedMappingActionItem.coverageStatusColor}>{selectedMappingActionItem.coverageStatusLabel}</Tag>
+                <Tag>{selectedMappingActionItem.trendLabel}</Tag>
+              </Space>
+            </div>
+
+            <div className="profile-archive-action-drawer-metrics">
+              <div>
+                <span>当前覆盖</span>
+                <strong>{selectedMappingActionItem.latestCoverage}%</strong>
+                <Progress percent={selectedMappingActionItem.latestCoverage} size="small" strokeColor={getCoverageBarColor(selectedMappingActionItem.latestCoverage)} showInfo={false} />
+              </div>
+              <div>
+                <span>挂载证据</span>
+                <strong>{selectedMappingActionItem.mountedEvidenceCount} / {selectedMappingActionItem.requiredEvidenceCount}</strong>
+                <em>{selectedMappingActionItem.evidenceGapCount ? `还需 ${selectedMappingActionItem.evidenceGapCount} 条` : '数量满足要求'}</em>
+              </div>
+              <div>
+                <span>缺口等级</span>
+                <strong>{selectedMappingActionItem.targetLevelLabel}</strong>
+                <em>{selectedMappingActionItem.targetLevelHint}</em>
+              </div>
+            </div>
+
+            {selectedMappingActionItem.cells.length >= 2 ? (
+              <div className="profile-archive-action-drawer-section">
+                <div className="profile-archive-action-drawer-section-head">
+                  <strong>周期趋势</strong>
+                  <Tag>{selectedMappingActionItem.cells.length} 个周期</Tag>
+                </div>
+                <div className="profile-archive-action-drawer-timeline">
+                  {selectedMappingActionItem.cells.map((cell) => (
+                    <div key={`${selectedMappingActionItem.id}_${cell.versionId}`} className="profile-archive-action-drawer-step">
+                      <div>
+                        <strong>{cell.periodLabel}</strong>
+                        <span>{cell.coverage}% 覆盖 · {cell.evidenceCount} 条材料</span>
+                      </div>
+                      <Progress percent={cell.coverage} size="small" strokeColor={getCoverageBarColor(cell.coverage)} showInfo={false} />
+                      <em>{cell.sourceLabel}{cell.latestEvidenceTitle ? ` · ${cell.latestEvidenceTitle}` : ''}</em>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="profile-archive-action-drawer-section">
+                <div className="profile-archive-action-drawer-section-head">
+                  <strong>周期趋势</strong>
+                  <Tag>新周期</Tag>
+                </div>
+                <p className="profile-archive-action-drawer-note">至少形成两个周期后，这里会展示能力项覆盖度的变化趋势。</p>
+              </div>
+            )}
+
+            <div className="profile-archive-action-drawer-section">
+              <div className="profile-archive-action-drawer-section-head">
+                <strong>已挂载证据</strong>
+                <Tag>{selectedMappingActionItem.mountedEvidenceCount} 条</Tag>
+              </div>
+              {selectedMappingActionItem.mountedEvidenceEntries.length ? (
+                <div className="profile-archive-action-drawer-evidence-list">
+                  {selectedMappingActionItem.mountedEvidenceEntries.map((entry) => (
+                    <button
+                      key={`${selectedMappingActionItem.id}_${entry.id}`}
+                      type="button"
+                      onClick={() => openGrowthRecordDetail(entry.originGrowthRecordId || entry.growthRecordId, snapshot, {
+                        focusItemId: selectedMappingActionItem.id,
+                        focusDimensionName: selectedMappingActionItem.dimensionName,
+                        focusItemName: selectedMappingActionItem.name,
+                        focusBundleItemId: entry.id,
+                        focusCoverage: entry.coverage,
+                      })}
+                    >
+                      <div>
+                        <strong>{entry.title}</strong>
+                        <span>{entry.resourcePath && entry.resourcePath !== '-' ? entry.resourcePath : entry.summary || '点击查看证据预览'}</span>
+                      </div>
+                      <Space wrap>
+                        {entry.sourceLabel ? <Tag color={SOURCE_META[entry.sourceKey]?.color || 'default'}>{entry.sourceLabel}</Tag> : null}
+                        {typeof entry.coverage === 'number' ? <Tag>{entry.coverage}% 覆盖</Tag> : null}
+                      </Space>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="当前能力项暂无直接挂载证据" />
+              )}
+            </div>
+
+            <div className="profile-archive-action-drawer-section">
+              <div className="profile-archive-action-drawer-section-head">
+                <strong>建议动作</strong>
+                <Tag color={selectedMappingActionItem.groupMeta.tagColor}>{selectedMappingActionItem.groupMeta.title}</Tag>
+              </div>
+              {selectedMappingActionItem.adviceSummary ? (
+                <p className="profile-archive-action-drawer-note">{selectedMappingActionItem.adviceSummary}</p>
+              ) : null}
+              <ul className="profile-archive-action-drawer-action-list">
+                {selectedMappingActionItem.nextActions.map((action) => (
+                  <li key={action}>{action}</li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="profile-archive-action-drawer-section">
+              <div className="profile-archive-action-drawer-section-head">
+                <strong>规则说明</strong>
+                <Tag>二级信息</Tag>
+              </div>
+              <div className="profile-archive-action-drawer-rule-grid">
+                <div>
+                  <span>能力定义</span>
+                  <p>{selectedMappingActionItem.description || '当前能力项尚未填写定义。'}</p>
+                </div>
+                <div>
+                  <span>证据要求</span>
+                  <p>至少 {selectedMappingActionItem.requiredEvidenceCount} 条证据；{selectedMappingActionItem.requiredReviewRoles.length ? `评价主体 ${formatReviewRoles(selectedMappingActionItem.requiredReviewRoles)}` : '暂无额外评价主体要求'}。</p>
+                </div>
+                <div>
+                  <span>参考示例</span>
+                  <p>{selectedMappingActionItem.evidenceExamples.length ? selectedMappingActionItem.evidenceExamples.join('、') : '暂无参考示例。'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="请先选择一个能力项" />
+        )}
+      </Drawer>
+
+      <Drawer
         title="周期与草稿"
         width={440}
         open={versionDrawerOpen}
@@ -3456,47 +4277,15 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
         )}
       </Modal>
 
-      <Modal
-        title="设置当前周期的档案材料目录"
+      <SpaceResourceImportModal
         open={resourceDirectoryOpen}
-        onCancel={() => {
+        onClose={() => {
           setResourceDirectoryOpen(false);
           setResourceDirectorySelection([]);
         }}
-        onOk={handleSaveResourceDirectories}
-        okText="保存目录"
-        cancelText="取消"
-        confirmLoading={resourceDirectoryLoading}
-        width={920}
-      >
-        <Table
-          rowKey="directoryKey"
-          size="small"
-          pagination={{ pageSize: 6, showSizeChanger: false }}
-          rowSelection={{
-            selectedRowKeys: resourceDirectorySelection,
-            onChange: (keys) => setResourceDirectorySelection(keys),
-          }}
-          columns={[
-            {
-              title: '目录',
-              dataIndex: 'folderName',
-              key: 'folderName',
-              render: (_, record) => (
-                <div className="profile-archive-resource-import-name">
-                  <strong>{record.folderName}</strong>
-                  <span>{record.folderPath}</span>
-                </div>
-              ),
-            },
-            { title: '资料库', dataIndex: 'libraryName', key: 'libraryName', width: 120 },
-            { title: '文件数', dataIndex: 'fileCount', key: 'fileCount', width: 100, render: (value) => <Tag color="geekblue">{value} 个</Tag> },
-            { title: '已解析', dataIndex: 'parsedFileCount', key: 'parsedFileCount', width: 100, render: (value) => <Tag color="green">{value} 个</Tag> },
-            { title: '最近更新', dataIndex: 'latestEdit', key: 'latestEdit', width: 160, render: (value) => value || '-' },
-          ]}
-          dataSource={resourceDirectoryItems}
-        />
-      </Modal>
+        onConfirm={handleConfirmResourceDirectoryPicker}
+        excludeFileTypes={ARCHIVE_DIRECTORY_EXCLUDED_FILE_TYPES}
+      />
 
       <Modal
         title="从资料库导入到当前周期"

@@ -26,6 +26,7 @@ import {
   SearchOutlined,
 } from '@ant-design/icons';
 import { issueApi, triggerDownload } from './api';
+import { removeCertificateIssueRecordsFromPersonalLibrary } from '../resourceLib/resourceLibStore';
 
 /**
  * 证书发放 - 批次详情（明细 CRUD）
@@ -140,6 +141,7 @@ const CertificateIssueBatchDetail = ({ batch, onBack }) => {
   const handleDelete = async (row) => {
     try {
       await issueApi.removeRecord(row.id);
+      removeCertificateIssueRecordsFromPersonalLibrary([row.id]);
       message.success('已删除');
       load();
     } catch (e) {

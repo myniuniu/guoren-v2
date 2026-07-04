@@ -43,6 +43,18 @@ export const RESOURCE_ASSOCIATION_RULES = [
     matchNote: '该资料属于 AI 课堂评价或课堂诊断报告，可直接支撑课堂反馈与评价数据应用判断。',
     nextAction: '建议把 AI 评价报告中的改进建议与后续课堂调整结果做前后对照，形成闭环记录。',
   },
+  {
+    id: 'study_hour_certificate',
+    bundleKey: 'study_hour_certificate',
+    sourceKey: 'study',
+    keywords: ['学时证明', '培训学时', '培训证书', '结业证书', '继续教育证书'],
+    fileTypes: ['pdf', 'image', 'docx', 'note'],
+    recordTag: '学时证明',
+    dimensionNames: ['专业发展'],
+    itemNames: ['培训研修', '成果认证'],
+    matchNote: '该资料属于培训学时证明或结业证书，优先作为培训研修来源材料进入个人档案。',
+    nextAction: '建议继续补充培训通知、签到记录、学习任务与考核结果，形成完整的研修证据链。',
+  },
 ];
 
 export function normalizeKeyword(value) {

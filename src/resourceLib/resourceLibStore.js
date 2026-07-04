@@ -9,7 +9,7 @@ import {
 
 // 资料库本地存储（独立于 versionStore，避免耦合）
 const STORAGE_KEY = 'guoren_resource_lib';
-const DATA_VERSION = 19;
+const DATA_VERSION = 20;
 
 // macOS 访达风格预设标签（7色 + 自定义）
 const PRESET_TAGS = [
@@ -191,6 +191,10 @@ const AI_GENERAL_COURSES = [
 ];
 
 const PERSONAL_DEMO_OWNER = 'teacher_li';
+const PERSONAL_STUDY_HOUR_PROOF_FOLDER_KEY = 'p_study_hour_proof_root';
+const PERSONAL_STUDY_HOUR_PROOF_FOLDER_NAME = '学时证明';
+const CERTIFICATE_ISSUE_RECORD_KEY_PREFIX = 'p_cert_issue_record_';
+const PERSONAL_STUDY_HOUR_PROOF_DEMO_OWNER = '张洪磊';
 
 const padNumber = (value) => String(value).padStart(2, '0');
 
@@ -861,6 +865,258 @@ function createTeachingFolder({
   };
 }
 
+function normalizeLibraryDateTime(value) {
+  if (!value) return now();
+  const normalized = String(value).trim();
+  if (!normalized) return now();
+  return normalized.includes('T') ? normalized.replace('T', ' ').slice(0, 19) : normalized;
+}
+
+function createPersonalStudyHourProofFolder({
+  key = PERSONAL_STUDY_HOUR_PROOF_FOLDER_KEY,
+  name = PERSONAL_STUDY_HOUR_PROOF_FOLDER_NAME,
+  lastEdit = now(),
+} = {}) {
+  return {
+    key,
+    name,
+    isFolder: true,
+    parentKey: null,
+    fileType: 'folder',
+    owner: 'system',
+    parseStatus: 'parsed',
+    lastEdit: normalizeLibraryDateTime(lastEdit),
+    tags: [],
+  };
+}
+
+function findPersonalStudyHourProofFolder(items = []) {
+  return items.find((item) => item?.isFolder && item.key === PERSONAL_STUDY_HOUR_PROOF_FOLDER_KEY)
+    || items.find((item) => item?.isFolder && item.parentKey === null && item.name === PERSONAL_STUDY_HOUR_PROOF_FOLDER_NAME)
+    || null;
+}
+
+function ensurePersonalStudyHourProofFolder(items = []) {
+  if (findPersonalStudyHourProofFolder(items)) return items;
+  return [createPersonalStudyHourProofFolder(), ...items];
+}
+
+export function getPersonalStudyHourProofDirectoryBinding(data = loadResourceLib()) {
+  const folder = findPersonalStudyHourProofFolder(getLibraryItemsById(data, 'personal'));
+  if (!folder) return null;
+
+  const descendantFiles = getLibraryDescendantFiles(data, 'personal', folder.key);
+  const latestEdit = descendantFiles
+    .map((item) => item.lastOpenedAt || item.lastEdit || '')
+    .sort((left, right) => String(right).localeCompare(String(left)))[0] || folder.lastEdit || '';
+
+  return {
+    id: `personal:${folder.key}`,
+    libraryId: 'personal',
+    libraryName: '个人库',
+    libraryScope: 'personal',
+    folderKey: folder.key,
+    folderName: folder.name,
+    folderPath: getLibraryItemPath(data, 'personal', folder),
+    fileCount: descendantFiles.length,
+    parsedFileCount: descendantFiles.filter((item) => item.parseStatus === 'parsed').length,
+    updatedAt: normalizeLibraryDateTime(folder.lastEdit || latestEdit || now()),
+    lastScannedAt: '',
+  };
+}
+
+function createCertificateDemoDataUrl({
+  title,
+  recipient,
+  program,
+  hourLabel,
+  issueDate,
+  issuer,
+  accent = '#0f766e',
+  accentSoft = '#ccfbf1',
+  paper = '#f8fffd',
+}) {
+  const safeTitle = String(title || '');
+  const safeRecipient = String(recipient || '');
+  const safeProgram = String(program || '');
+  const safeHourLabel = String(hourLabel || '');
+  const safeIssueDate = String(issueDate || '');
+  const safeIssuer = String(issuer || '');
+
+  return `data:image/svg+xml;utf8,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="1123" height="794" viewBox="0 0 1123 794">
+      <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="${paper}" />
+          <stop offset="100%" stop-color="#ffffff" />
+        </linearGradient>
+      </defs>
+      <rect width="1123" height="794" rx="24" fill="url(#bg)" />
+      <rect x="28" y="28" width="1067" height="738" rx="18" fill="none" stroke="${accent}" stroke-width="4" />
+      <rect x="52" y="52" width="1019" height="690" rx="12" fill="none" stroke="${accentSoft}" stroke-width="2" stroke-dasharray="10 8" />
+      <circle cx="561.5" cy="154" r="62" fill="${accentSoft}" opacity="0.85" />
+      <text x="561.5" y="170" text-anchor="middle" font-size="24" fill="${accent}" font-family="PingFang SC, Microsoft YaHei, sans-serif">果仁教师发展平台</text>
+      <text x="561.5" y="258" text-anchor="middle" font-size="44" fill="${accent}" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-weight="700">${safeTitle}</text>
+      <text x="561.5" y="326" text-anchor="middle" font-size="24" fill="#475569" font-family="PingFang SC, Microsoft YaHei, sans-serif">兹证明</text>
+      <text x="561.5" y="408" text-anchor="middle" font-size="66" fill="#0f172a" font-family="KaiTi, STKaiti, serif">${safeRecipient}</text>
+      <text x="561.5" y="468" text-anchor="middle" font-size="24" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif">已完成「${safeProgram}」</text>
+      <text x="561.5" y="512" text-anchor="middle" font-size="24" fill="#334155" font-family="PingFang SC, Microsoft YaHei, sans-serif">累计 ${safeHourLabel}</text>
+      <line x1="296" y1="570" x2="827" y2="570" stroke="${accentSoft}" stroke-width="2" />
+      <text x="304" y="628" font-size="22" fill="#475569" font-family="PingFang SC, Microsoft YaHei, sans-serif">发证日期：${safeIssueDate}</text>
+      <text x="304" y="668" font-size="22" fill="#475569" font-family="PingFang SC, Microsoft YaHei, sans-serif">发证机构：${safeIssuer}</text>
+      <text x="819" y="650" text-anchor="end" font-size="26" fill="${accent}" font-family="PingFang SC, Microsoft YaHei, sans-serif">证书模块发放</text>
+      <text x="819" y="688" text-anchor="end" font-size="18" fill="#64748b" font-family="PingFang SC, Microsoft YaHei, sans-serif">Certificate Issue Demo</text>
+    </svg>`,
+  )}`;
+}
+
+function buildPersonalStudyHourProofDemoEntries() {
+  const recipient = PERSONAL_STUDY_HOUR_PROOF_DEMO_OWNER;
+  const demoConfigs = [
+    {
+      key: 'p_study_hour_proof_ai_general',
+      name: `人工智能通识培训学时证明-${recipient}.svg`,
+      title: '学时证明',
+      program: '人工智能通识教师研修班',
+      hourLabel: '24 学时',
+      issueDate: '2026 年 06 月 12 日',
+      issuer: '果仁教师发展中心',
+      accent: '#0f766e',
+      accentSoft: '#ccfbf1',
+      paper: '#f0fdfa',
+      lastEdit: '2026-06-12 16:20:00',
+    },
+    {
+      key: 'p_study_hour_proof_project_learning',
+      name: `项目化学习教学设计结业证书-${recipient}.svg`,
+      title: '结业证书',
+      program: '项目化学习教学设计工作坊',
+      hourLabel: '16 学时',
+      issueDate: '2026 年 05 月 28 日',
+      issuer: '果仁教研院',
+      accent: '#b45309',
+      accentSoft: '#fde68a',
+      paper: '#fffbeb',
+      lastEdit: '2026-05-28 18:05:00',
+    },
+    {
+      key: 'p_study_hour_proof_digital_literacy',
+      name: `教师数字素养提升培训证书-${recipient}.svg`,
+      title: '培训证书',
+      program: '教师数字素养与 AI 工具应用培训',
+      hourLabel: '12 学时',
+      issueDate: '2026 年 04 月 18 日',
+      issuer: '果仁教育技术研究室',
+      accent: '#1d4ed8',
+      accentSoft: '#bfdbfe',
+      paper: '#eff6ff',
+      lastEdit: '2026-04-18 15:30:00',
+    },
+  ];
+
+  return demoConfigs.map((config) => {
+    const url = createCertificateDemoDataUrl({
+      title: config.title,
+      recipient,
+      program: config.program,
+      hourLabel: config.hourLabel,
+      issueDate: config.issueDate,
+      issuer: config.issuer,
+      accent: config.accent,
+      accentSoft: config.accentSoft,
+      paper: config.paper,
+    });
+    return {
+      key: config.key,
+      name: config.name,
+      isFolder: false,
+      parentKey: PERSONAL_STUDY_HOUR_PROOF_FOLDER_KEY,
+      fileType: 'image',
+      owner: recipient,
+      parseStatus: 'parsed',
+      lastEdit: config.lastEdit,
+      tags: [],
+      mime: 'image/svg+xml',
+      url,
+      dataUrl: url,
+      contentText: `${recipient}完成了${config.program}，获得${config.title}，累计 ${config.hourLabel}。`,
+    };
+  });
+}
+
+function ensurePersonalStudyHourProofDemoEntries(items = []) {
+  const existingKeys = new Set((items || []).map((item) => item?.key).filter(Boolean));
+  const nextItems = [...items];
+  const demoEntries = buildPersonalStudyHourProofDemoEntries();
+
+  demoEntries.forEach((entry) => {
+    if (!existingKeys.has(entry.key)) {
+      nextItems.push(entry);
+    }
+  });
+
+  return nextItems;
+}
+
+function buildCertificateIssueRecordPreviewUrl(recordId) {
+  return `/api/certificate/issue/record/${recordId}/file?disposition=inline`;
+}
+
+function inferCertificateIssueFileType(record, fileName) {
+  const inferred = inferFileType(fileName);
+  if (inferred !== 'other') return inferred;
+
+  const format = String(record?.format || '').trim().toLowerCase();
+  if (format === 'pdf') return 'pdf';
+  if (format === 'png' || format === 'jpg' || format === 'jpeg') return 'image';
+  return 'other';
+}
+
+function buildCertificateIssueItemName(batch, record) {
+  const existingName = String(record?.fileName || '').trim();
+  if (existingName) return existingName;
+
+  const recipient = String(record?.recipient || '').trim() || '未命名证书';
+  const templateName = String(batch?.templateName || '').trim();
+  const format = String(record?.format || '').trim().toLowerCase();
+  const extension = format ? `.${format === 'jpeg' ? 'jpg' : format}` : '';
+  return `${templateName ? `${recipient}-${templateName}` : recipient}${extension}`;
+}
+
+function createCertificateIssueLibraryItem(batch, record, parentKey) {
+  const name = buildCertificateIssueItemName(batch, record);
+  const recipient = String(record?.recipient || '').trim();
+  const certNo = String(record?.certNo || '').trim();
+  const batchName = String(batch?.batchName || '').trim();
+  const templateName = String(batch?.templateName || '').trim();
+  const summaryParts = [
+    '证书模块发放的培训学时证明',
+    batchName ? `批次：${batchName}` : null,
+    templateName ? `模版：${templateName}` : null,
+    recipient ? `持证人：${recipient}` : null,
+    certNo ? `证书编号：${certNo}` : null,
+  ].filter(Boolean);
+
+  return {
+    key: `${CERTIFICATE_ISSUE_RECORD_KEY_PREFIX}${record.id}`,
+    name,
+    isFolder: false,
+    parentKey,
+    fileType: inferCertificateIssueFileType(record, name),
+    owner: recipient || batch?.createBy || 'system',
+    parseStatus: 'parsed',
+    lastEdit: normalizeLibraryDateTime(record?.createTime || batch?.updateTime || batch?.createTime),
+    tags: [],
+    mime: record?.mime || undefined,
+    url: buildCertificateIssueRecordPreviewUrl(record.id),
+    contentText: `${summaryParts.join('；')}。`,
+    certificateIssueBatchId: batch?.id || null,
+    certificateIssueRecordId: record?.id || null,
+    certificateIssueTemplateName: templateName || undefined,
+    certNo: certNo || undefined,
+  };
+}
+
 function ensureAiGeneralKnowledgeGraph() {
   if (typeof window === 'undefined') return null;
 
@@ -1183,7 +1439,7 @@ function hydrateSearchContent(data) {
   const hydrateList = (items = []) => items.map(withDemoContentText);
   return {
     ...data,
-    personal: hydrateList(data.personal),
+    personal: hydrateList(ensurePersonalStudyHourProofFolder(data.personal || [])),
     organizations: Object.fromEntries(
       Object.entries(data.organizations || {}).map(([orgId, items]) => [orgId, hydrateList(items)]),
     ),
@@ -1193,7 +1449,11 @@ function hydrateSearchContent(data) {
 const defaultData = {
   _dataVersion: DATA_VERSION,
   // 个人资料库
-  personal: ensureProfileAssociationDemoEntries(ensurePersonalKnowledgeGraphDemoEntry(buildPersonalTeachingDemo())),
+  personal: ensurePersonalStudyHourProofDemoEntries(
+    ensurePersonalStudyHourProofFolder(
+      ensureProfileAssociationDemoEntries(ensurePersonalKnowledgeGraphDemoEntry(buildPersonalTeachingDemo()))
+    )
+  ),
   // 组织资料库（按 orgId 分组）
   organizations: {
     org_default: [
@@ -1282,7 +1542,13 @@ export function loadResourceLib() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed._dataVersion === DATA_VERSION) return hydrateSearchContent(parsed);
+      if (parsed._dataVersion === DATA_VERSION) {
+        const hydrated = hydrateSearchContent(parsed);
+        if (!findPersonalStudyHourProofFolder(parsed.personal || [])) {
+          saveResourceLib(hydrated);
+        }
+        return hydrated;
+      }
       // 旧版本迁移
       const migrated = migrate(parsed);
       saveResourceLib(migrated);
@@ -1328,6 +1594,8 @@ function migrate(old) {
   next.personal = applyPersonalTeachingRootTag(next.personal);
   next.personal = ensurePersonalKnowledgeGraphDemoEntry(next.personal);
   next.personal = ensureProfileAssociationDemoEntries(next.personal);
+  next.personal = ensurePersonalStudyHourProofFolder(next.personal);
+  next.personal = ensurePersonalStudyHourProofDemoEntries(next.personal);
   // 选中文件夹迁移
   if (old.selectedFolderKey) {
     next.selectedFolderKey = { ...next.selectedFolderKey, ...old.selectedFolderKey };
@@ -1827,6 +2095,85 @@ export function inferFileType(name) {
   if (['json'].includes(ext)) return 'whiteboard';
   if (['md', 'txt'].includes(ext)) return 'note';
   return 'other';
+}
+
+export function archiveCertificateIssueBatchToPersonalLibrary(batch, records = []) {
+  const successRecords = (records || []).filter((record) => record?.id && record.status === 'SUCCESS');
+  const data = loadResourceLib();
+  const originalPersonal = data.personal || [];
+  const ensuredPersonal = ensurePersonalStudyHourProofFolder(originalPersonal);
+  const folderCreated = ensuredPersonal !== originalPersonal;
+  const baseData = folderCreated ? { ...data, personal: ensuredPersonal } : data;
+  const personalItems = baseData.personal || [];
+  const rootFolder = findPersonalStudyHourProofFolder(personalItems) || createPersonalStudyHourProofFolder();
+  const existingKeys = new Set(personalItems.map((item) => item.key));
+  const existingRecordIds = new Set(
+    personalItems
+      .map((item) => String(item.certificateIssueRecordId || '').trim())
+      .filter(Boolean),
+  );
+
+  const newItems = successRecords
+    .filter((record) => (
+      !existingKeys.has(`${CERTIFICATE_ISSUE_RECORD_KEY_PREFIX}${record.id}`)
+      && !existingRecordIds.has(String(record.id))
+    ))
+    .map((record) => createCertificateIssueLibraryItem(batch, record, rootFolder.key));
+
+  if (!folderCreated && newItems.length === 0) {
+    return {
+      data: baseData,
+      archivedCount: 0,
+      folderKey: rootFolder.key,
+      folderName: rootFolder.name,
+    };
+  }
+
+  const nextPersonal = personalItems.map((item) => {
+    if (item.key !== rootFolder.key || newItems.length === 0) return item;
+    return {
+      ...item,
+      lastEdit: normalizeLibraryDateTime(batch?.updateTime || batch?.createTime || now()),
+    };
+  });
+  const nextData = {
+    ...baseData,
+    personal: newItems.length > 0 ? [...nextPersonal, ...newItems] : nextPersonal,
+  };
+
+  saveResourceLib(nextData);
+  return {
+    data: nextData,
+    archivedCount: newItems.length,
+    folderKey: rootFolder.key,
+    folderName: rootFolder.name,
+  };
+}
+
+export function removeCertificateIssueRecordsFromPersonalLibrary(recordIds = []) {
+  const targetIds = new Set((recordIds || []).map((id) => String(id || '').trim()).filter(Boolean));
+  if (targetIds.size === 0) return loadResourceLib();
+
+  const data = loadResourceLib();
+  const nextPersonal = (data.personal || []).filter((item) => !targetIds.has(String(item.certificateIssueRecordId || '').trim()));
+  if (nextPersonal.length === (data.personal || []).length) return data;
+
+  const nextData = { ...data, personal: nextPersonal };
+  saveResourceLib(nextData);
+  return nextData;
+}
+
+export function removeCertificateIssueBatchFromPersonalLibrary(batchId) {
+  const targetBatchId = String(batchId || '').trim();
+  if (!targetBatchId) return loadResourceLib();
+
+  const data = loadResourceLib();
+  const nextPersonal = (data.personal || []).filter((item) => String(item.certificateIssueBatchId || '').trim() !== targetBatchId);
+  if (nextPersonal.length === (data.personal || []).length) return data;
+
+  const nextData = { ...data, personal: nextPersonal };
+  saveResourceLib(nextData);
+  return nextData;
 }
 
 // ====== AI 解析状态跨库聚合 ======

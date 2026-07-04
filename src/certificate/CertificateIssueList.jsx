@@ -21,6 +21,7 @@ import {
   SearchOutlined,
 } from '@ant-design/icons';
 import { issueApi } from './api';
+import { removeCertificateIssueBatchFromPersonalLibrary } from '../resourceLib/resourceLibStore';
 
 /**
  * 证书发放 - 批次列表（CRUD）
@@ -78,6 +79,7 @@ const CertificateIssueList = ({ onCreate, onOpen }) => {
   const handleDelete = async (row) => {
     try {
       await issueApi.removeBatch(row.id);
+      removeCertificateIssueBatchFromPersonalLibrary(row.id);
       message.success('已删除');
       load();
     } catch (e) {

@@ -2333,10 +2333,10 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     const listNode = detailListRef.current;
     const rowNode = detailRowNodeMapRef.current.get(selectedKey);
     if (!listNode || !rowNode) return;
-    const listRect = listNode.getBoundingClientRect();
-    const rowRect = rowNode.getBoundingClientRect();
-    const nextTop = Math.max(0, Math.round(rowRect.top - listRect.top));
-    const nextHeight = Math.round(rowRect.height);
+    // The indicator lives inside the scrollable list content, so it must be
+    // positioned from the row's content offset rather than viewport coords.
+    const nextTop = Math.max(0, Math.round(rowNode.offsetTop + 4));
+    const nextHeight = Math.max(0, Math.round(rowNode.offsetHeight - 8));
     setDetailSelectionIndicator((prev) => {
       if (
         prev.visible

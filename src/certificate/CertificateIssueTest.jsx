@@ -9,6 +9,7 @@ import {
   SaveOutlined,
 } from '@ant-design/icons';
 import { templateApi, issueApi, triggerDownload } from './api';
+import { archiveCertificateIssueBatchToPersonalLibrary } from '../resourceLib/resourceLibStore';
 import './CertificateIssueTest.css';
 
 /** 把后端返回的 Blob 转成可预览的 objectURL */
@@ -27,6 +28,25 @@ const parseCsv = (text) => {
     return row;
   });
   return { headers, rows };
+};
+
+const loadAllBatchRecords = async (batchId, totalHint = 0) => {
+  if (!batchId) return [];
+
+  const pageSize = 100;
+  const records = [];
+  let total = totalHint || Number.POSITIVE_INFINITY;
+
+  for (let pageNo = 1; records.length < total; pageNo += 1) {
+    const page = await issueApi.pageRecord({ batchId, pageNo, pageSize });
+    const currentRecords = page?.records || [];
+    if (currentRecords.length === 0) break;
+    records.push(...currentRecords);
+    total = page?.total || totalHint || records.length;
+    if (currentRecords.length < pageSize) break;
+  }
+
+  return records;
 };
 
 const CertificateIssueTest = ({ template: presetTpl, onBack, onSubmitted, embedded = false }) => {
@@ -253,10 +273,31 @@ const CertificateIssueTest = ({ template: presetTpl, onBack, onSubmitted, embedd
       });
       const success = batch?.successCount ?? 0;
       const total = batch?.totalCount ?? dataList.length;
+      let archiveError = null;
+
+      try {
+        const records = await loadAllBatchRecords(batch?.id, total);
+        archiveCertificateIssueBatchToPersonalLibrary(batch, records);
+      } catch (error) {
+        archiveError = error;
+        console.error(error);
+      }
+
       if (success === total) {
-        message.success(`发放成功，共 ${total} 张证书已入库`);
+        message.success(
+          archiveError
+            ? `发放成功，共 ${total} 张证书已生成`
+            : `发放成功，共 ${total} 张证书已归档到个人资料库 / 学时证明`
+        );
       } else {
-        message.warning(`发放完成：成功 ${success} / 总 ${total}`);
+        message.warning(
+          archiveError
+            ? `发放完成：成功 ${success} / 总 ${total}`
+            : `发放完成：成功 ${success} / 总 ${total}，成功证书已同步到个人资料库 / 学时证明`
+        );
+      }
+      if (archiveError && success > 0) {
+        message.warning('证书已生成，但同步到个人资料库 / 学时证明失败');
       }
       if (onSubmitted) {
         onSubmitted(batch);

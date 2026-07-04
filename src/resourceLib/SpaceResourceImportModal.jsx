@@ -606,10 +606,10 @@ export function SpaceResourceImportBrowser({
     const listBodyNode = listBodyRef.current;
     const rowNode = rowNodeMapRef.current.get(selectedKey);
     if (!listBodyNode || !rowNode) return;
-    const listBodyRect = listBodyNode.getBoundingClientRect();
-    const rowRect = rowNode.getBoundingClientRect();
-    const nextTop = Math.max(0, rowRect.top - listBodyRect.top);
-    const nextHeight = rowRect.height;
+    // The indicator sits inside the scrollable content layer, so it needs
+    // content offsets instead of viewport-relative rects.
+    const nextTop = Math.max(0, Math.round(rowNode.offsetTop + 2));
+    const nextHeight = Math.max(0, Math.round(rowNode.offsetHeight - 4));
     setSelectionIndicator((prev) => {
       if (
         prev.visible
