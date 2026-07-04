@@ -584,6 +584,7 @@ function TopicDetail({
   const [knowledgeGraphPickerKeyword, setKnowledgeGraphPickerKeyword] = useState('');
   const [selectedKnowledgeGraphResourceKey, setSelectedKnowledgeGraphResourceKey] = useState(null);
   const [capabilityModelPickerOpen, setCapabilityModelPickerOpen] = useState(false);
+  const [capabilityModelPickerScope, setCapabilityModelPickerScope] = useState('all');
   const [capabilityModelPickerKeyword, setCapabilityModelPickerKeyword] = useState('');
   const [selectedCapabilityModelId, setSelectedCapabilityModelId] = useState(null);
   const [capabilityModelCreateOpen, setCapabilityModelCreateOpen] = useState(false);
@@ -916,23 +917,92 @@ function TopicDetail({
     () => new Map((capabilityModelCatalog.sequences || []).map((item) => [item.id, item])),
     [capabilityModelCatalog.sequences],
   );
+  const capabilityModelLibraryEntriesMap = useMemo(() => {
+    const map = new Map();
+
+    const append = (key, entry) => {
+      if (!key) return;
+      const nextEntries = map.get(key) || [];
+      nextEntries.push(entry);
+      map.set(key, nextEntries);
+    };
+
+    allLibraryItems.forEach((item) => {
+      if (item.fileType !== 'capabilityModel') return;
+      const entry = {
+        ...item,
+        displayPath: getLibraryItemPath(resourceLibraryData, item.libraryId, item),
+      };
+      if (item.capabilityModelId) append(`id:${item.capabilityModelId}`, entry);
+      if (item.capabilityModelSeriesId) append(`series:${item.capabilityModelSeriesId}`, entry);
+      if (item.capabilityModelCode) append(`code:${item.capabilityModelCode}`, entry);
+      if (item.name) append(`name:${item.name}`, entry);
+    });
+
+    return map;
+  }, [allLibraryItems, resourceLibraryData]);
   const capabilityModelPickerItems = useMemo(() => {
     const keyword = capabilityModelPickerKeyword.trim().toLowerCase();
-    return (capabilityModelCatalog.models || []).filter((item) => {
-      if (item.status === 'DISABLED') return false;
-      if (!keyword) return true;
-      const role = capabilityRoleMap.get(item.roleId);
-      const sequence = role ? capabilitySequenceMap.get(role.sequenceId) : null;
-      const roleLevel = sequence?.levels?.find((level) => level.id === item.roleLevelId) || null;
-      const haystack = [
-        item.name,
-        item.modelCode,
-        role?.name,
-        roleLevel?.name,
-      ].filter(Boolean).join(' ').toLowerCase();
-      return haystack.includes(keyword);
-    });
-  }, [capabilityModelCatalog.models, capabilityModelPickerKeyword, capabilityRoleMap, capabilitySequenceMap]);
+    return (capabilityModelCatalog.models || [])
+      .map((item) => {
+        const role = capabilityRoleMap.get(item.roleId) || null;
+        const sequence = role ? capabilitySequenceMap.get(role.sequenceId) : null;
+        const roleLevel = sequence?.levels?.find((level) => level.id === item.roleLevelId) || null;
+        const libraryEntries = [];
+        const libraryEntryKeys = new Set();
+
+        [
+          `id:${item.id}`,
+          `series:${item.versionSeriesId || item.id}`,
+          item.modelCode ? `code:${item.modelCode}` : null,
+          item.name ? `name:${item.name}` : null,
+        ].filter(Boolean).forEach((key) => {
+          (capabilityModelLibraryEntriesMap.get(key) || []).forEach((entry) => {
+            const entryKey = `${entry.libraryId}:${entry.key}`;
+            if (libraryEntryKeys.has(entryKey)) return;
+            libraryEntryKeys.add(entryKey);
+            libraryEntries.push(entry);
+          });
+        });
+
+        return {
+          ...item,
+          role,
+          roleLevel,
+          libraryEntries,
+          libraryScopes: [...new Set(libraryEntries.map((entry) => entry.libraryScope))],
+        };
+      })
+      .filter((item) => {
+        if (item.status === 'DISABLED') return false;
+        if (
+          capabilityModelPickerScope !== 'all'
+          && item.libraryScopes.length
+          && !item.libraryScopes.includes(capabilityModelPickerScope)
+        ) {
+          return false;
+        }
+        if (!keyword) return true;
+        const libraryText = item.libraryEntries
+          .map((entry) => `${entry.libraryName} ${entry.displayPath}`)
+          .join(' ');
+        const haystack = [
+          item.name,
+          item.modelCode,
+          item.role?.name,
+          item.roleLevel?.name,
+          libraryText,
+        ].filter(Boolean).join(' ').toLowerCase();
+        return haystack.includes(keyword);
+      });
+  }, [
+    capabilityModelCatalog.models,
+    capabilityModelLibraryEntriesMap,
+    capabilityModelPickerKeyword,
+    capabilityModelPickerScope,
+    capabilityRoleMap,
+    capabilitySequenceMap,
+  ]);
   const capabilityCreateRoleLevelOptions = useMemo(() => {
     const role = capabilityRoleMap.get(capabilityModelCreateDraft.roleId) || null;
     const sequence = role ? capabilitySequenceMap.get(role.sequenceId) : null;
@@ -2558,6 +2628,27 @@ function TopicDetail({
     return () => window.clearTimeout(timer);
   }, [inlineRenameItemKey, inlineRenameSurface]);
 
+  useEffect(() => {
+    if (!knowledgeGraphPickerOpen) return;
+    if (!selectedKnowledgeGraphResourceKey) return;
+    if (
+      knowledgeGraphPickerItems.some((item) => `${item.libraryId}:${item.key}` === selectedKnowledgeGraphResourceKey)
+    ) {
+      return;
+    }
+    setSelectedKnowledgeGraphResourceKey(
+      knowledgeGraphPickerItems[0] ? `${knowledgeGraphPickerItems[0].libraryId}:${knowledgeGraphPickerItems[0].key}` : null,
+    );
+  }, [knowledgeGraphPickerItems, knowledgeGraphPickerOpen, selectedKnowledgeGraphResourceKey]);
+
+  useEffect(() => {
+    if (!capabilityModelPickerOpen) return;
+    if (selectedCapabilityModelId && capabilityModelPickerItems.some((item) => item.id === selectedCapabilityModelId)) {
+      return;
+    }
+    setSelectedCapabilityModelId(capabilityModelPickerItems[0]?.id || null);
+  }, [capabilityModelPickerItems, capabilityModelPickerOpen, selectedCapabilityModelId]);
+
   const handleCreateVersion = () => {
     const newData = createNewVersion(versionData, versioningConfig);
     if (newData.error) {
@@ -2615,6 +2706,7 @@ function TopicDetail({
 
   const closeCapabilityModelPickerModal = () => {
     setCapabilityModelPickerOpen(false);
+    setCapabilityModelPickerScope('all');
     setCapabilityModelPickerKeyword('');
     setSelectedCapabilityModelId(null);
     setCapabilityModelTargetParentKey(null);
@@ -2781,7 +2873,9 @@ function TopicDetail({
     }
     try {
       const catalog = await loadCapabilityModelCatalog();
+      setResourceLibraryData(loadResourceLib());
       setCapabilityModelTargetParentKey(parentKey ?? null);
+      setCapabilityModelPickerScope('all');
       setCapabilityModelPickerKeyword('');
       setSelectedCapabilityModelId(catalog.models.find((item) => item.status !== 'DISABLED')?.id || null);
       setCapabilityModelPickerOpen(true);
@@ -5927,6 +6021,27 @@ function TopicDetail({
       >
         <div className="topic-knowledge-picker">
           <div className="topic-knowledge-picker-toolbar">
+            <div className="topic-knowledge-picker-scope" role="tablist" aria-label="能力模型范围">
+              {[
+                { label: '全部', value: 'all' },
+                { label: '个人库', value: 'personal' },
+                { label: '组织库', value: 'organization' },
+              ].map((option) => {
+                const isActive = capabilityModelPickerScope === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    className={`topic-knowledge-picker-scope-btn ${isActive ? 'is-active' : ''}`}
+                    onClick={() => setCapabilityModelPickerScope(option.value)}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
             <Input
               allowClear
               className="topic-knowledge-picker-search"
@@ -5937,24 +6052,30 @@ function TopicDetail({
           </div>
           <div className="topic-knowledge-picker-list">
             {capabilityModelPickerItems.length ? capabilityModelPickerItems.map((item) => {
-              const role = capabilityRoleMap.get(item.roleId) || null;
-              const sequence = role ? capabilitySequenceMap.get(role.sequenceId) : null;
-              const roleLevel = sequence?.levels?.find((level) => level.id === item.roleLevelId) || null;
               const itemCount = getTotalCapabilityItems(item);
+              const modelMetaText = [
+                `${item.dimensions?.length || 0} 个能力类`,
+                `${itemCount} 个能力项`,
+                item.modelCode,
+              ].filter(Boolean).join(' · ');
               return (
                 <button
                   key={item.id}
                   type="button"
-                  className={`topic-knowledge-picker-item ${selectedCapabilityModelId === item.id ? 'is-active' : ''}`}
+                  className={`topic-knowledge-picker-item topic-knowledge-picker-item--capability ${selectedCapabilityModelId === item.id ? 'is-active' : ''}`}
                   onClick={() => setSelectedCapabilityModelId(item.id)}
                 >
                   <span className="topic-knowledge-picker-item-icon">
                     {renderFileIcon('capabilityModel', { fontSize: 18 })}
                   </span>
                   <span className="topic-knowledge-picker-item-copy">
-                    <strong>{item.name}</strong>
-                    <span>{role?.name || '未关联岗位'} · {roleLevel?.name || '未分级'}</span>
-                    <span>{item.dimensions?.length || 0} 个能力类 · {itemCount} 个能力项 · {item.modelCode}</span>
+                    <span className="topic-knowledge-picker-item-head">
+                      <strong>{item.name}</strong>
+                    </span>
+                    <span className="topic-knowledge-picker-item-path">
+                      {item.role?.name || '未关联岗位'} · {item.roleLevel?.name || '未分级'}
+                    </span>
+                    <span className="topic-knowledge-picker-item-desc">{modelMetaText}</span>
                   </span>
                   <Tag color={item.status === 'PUBLISHED' ? 'success' : 'processing'}>
                     {item.status === 'PUBLISHED' ? '已发布' : '草稿'}

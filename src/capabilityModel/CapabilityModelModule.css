@@ -301,7 +301,7 @@
   gap: 0;
   margin-bottom: 8px;
   padding: 6px;
-  border: 1px solid #e8edf3;
+  border: 0;
   border-radius: 18px;
   background: #fff;
   box-shadow: none;
@@ -1103,7 +1103,7 @@
   grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
   flex: 1 1 auto;
   min-height: clamp(420px, 62dvh, 760px);
-  border: 1px solid rgba(220, 229, 241, 0.96);
+  border: 0;
   border-radius: 22px;
   overflow: hidden;
   background:
@@ -1461,7 +1461,24 @@
 
 .cap-model-framework-config-card .ant-input,
 .cap-model-framework-config-card .ant-select-selector {
-  min-height: 34px;
+  min-height: 44px;
+}
+
+.cap-model-framework-config-card .ant-select-single .ant-select-selector,
+.cap-model-framework-config-card .ant-select-multiple .ant-select-selector {
+  min-height: 44px;
+  padding-top: 5px !important;
+  padding-bottom: 5px !important;
+}
+
+.cap-model-framework-config-card .ant-select-single .ant-select-selection-item,
+.cap-model-framework-config-card .ant-select-single .ant-select-selection-placeholder {
+  line-height: 32px !important;
+}
+
+.cap-model-framework-config-card .ant-select-multiple .ant-select-selection-overflow {
+  min-height: 32px;
+  align-items: center;
 }
 
 .cap-model-framework-config-card textarea.ant-input {
