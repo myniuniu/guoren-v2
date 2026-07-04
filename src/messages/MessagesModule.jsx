@@ -63,7 +63,13 @@ const MIN_SIDEBAR_WIDTH = 248;
 const MAX_SIDEBAR_WIDTH = 520;
 const MIN_THREAD_WIDTH = 420;
 const SIDEBAR_KEYBOARD_STEP = 16;
-const EMPTY_CONVERSATION_INDICATOR = { x: 0, y: 0, width: 0, height: 0, opacity: 0 };
+const EMPTY_CONVERSATION_INDICATOR = {
+  x: 0,
+  y: 0,
+  width: 0,
+  height: 0,
+  opacity: 0,
+};
 const LUCKY_CONVERSATION_ID = getLuckyConversationId();
 
 function clamp(value, min, max) {
@@ -1338,7 +1344,10 @@ function MessagesModule({
             <Button type="primary" shape="circle" icon={<PlusOutlined />} className="messages-sidebar-plus-btn" />
           </div>
         </div>
-        <div className="messages-conversation-list" ref={conversationListRef}>
+        <div
+          className={`messages-conversation-list ${conversationIndicatorStyle.opacity ? 'messages-conversation-list-has-single-selection' : ''}`}
+          ref={conversationListRef}
+        >
           <div
             className={`messages-conversation-liquid-indicator ${conversationIndicatorStyle.opacity ? 'is-visible' : ''}`}
             style={{
