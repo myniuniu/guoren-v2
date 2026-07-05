@@ -61,7 +61,6 @@
     radial-gradient(circle at 82% 84%, rgba(206, 212, 220, 0.18) 0%, rgba(255, 255, 255, 0) 40%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.03) 100%);
   box-shadow:
-    inset -1px 0 0 rgba(255, 255, 255, 0.38),
     inset 0 1px 0 rgba(255, 255, 255, 0.18),
     10px 0 24px rgba(15, 23, 42, 0.05),
     2px 0 8px rgba(148, 163, 184, 0.14);
@@ -89,16 +88,7 @@
 }
 
 .finder-sidebar::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 8px;
-  background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(240, 242, 245, 0.14) 18%, rgba(226, 230, 235, 0.36) 62%, rgba(255, 255, 255, 0.04) 92%, rgba(255, 255, 255, 0) 100%);
-  opacity: 0.6;
-  pointer-events: none;
+  display: none;
 }
 
 .finder-sidebar-resize-handle {
@@ -128,7 +118,7 @@
   transform: translateX(-50%);
   background:
     linear-gradient(90deg, rgba(148, 163, 184, 0) 0%, rgba(170, 181, 194, 0.18) 24%, rgba(255, 255, 255, 0.44) 58%, rgba(255, 255, 255, 0) 100%);
-  opacity: 0.68;
+  opacity: 0;
   transition: opacity 0.18s ease, filter 0.18s ease;
 }
 
