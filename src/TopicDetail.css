@@ -2124,11 +2124,11 @@
 }
 
 .project-item-selected {
-  border-color: var(--td-selected-glass-border);
-  background: var(--td-selected-glass-bg) !important;
-  box-shadow: var(--td-selected-glass-shadow);
-  backdrop-filter: blur(14px) saturate(1.28);
-  -webkit-backdrop-filter: blur(14px) saturate(1.28);
+  border-color: rgba(221, 227, 235, 0.92);
+  background: var(--td-selected) !important;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .project-list-has-single-selection .project-item-selected:not(.project-item-context-open):not(.project-item-dragover) {
@@ -2147,15 +2147,11 @@
 
 .project-item-context-open,
 .project-item-selected.project-item-context-open {
-  border-color: rgba(223, 228, 234, 0.96);
-  background: var(--td-selected-glass-bg-strong) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.92),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.26),
-    0 12px 20px rgba(148, 163, 184, 0.14),
-    0 4px 10px rgba(15, 23, 42, 0.05);
-  backdrop-filter: blur(16px) saturate(1.32);
-  -webkit-backdrop-filter: blur(16px) saturate(1.32);
+  border-color: rgba(217, 223, 231, 0.96);
+  background: var(--td-selected-strong) !important;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .project-item-dragover {
@@ -2311,40 +2307,33 @@
 }
 
 .project-item-selected .topic-action-btn {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(247, 249, 252, 0.76) 100%);
-  border-color: rgba(255, 255, 255, 0.62);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.84),
-    0 8px 14px rgba(148, 163, 184, 0.08);
+  background: rgba(255, 255, 255, 0.76);
+  border-color: rgba(223, 228, 235, 0.86);
+  box-shadow: none;
   color: #4b5563;
 }
 
 .project-item-selected .topic-action-btn:hover {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(247, 249, 252, 0.82) 100%);
-  border-color: rgba(255, 255, 255, 0.7);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    0 10px 16px rgba(148, 163, 184, 0.1);
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(220, 226, 233, 0.92);
+  box-shadow: none;
   color: #1f2937;
+  transform: none;
 }
 
 .project-item-context-open .topic-action-btn {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(247, 249, 252, 0.74) 100%);
-  border-color: rgba(255, 255, 255, 0.56);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.84),
-    0 8px 16px rgba(148, 163, 184, 0.08);
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(223, 228, 235, 0.88);
+  box-shadow: none;
   color: #4b5563;
 }
 
 .project-item-context-open .topic-action-btn:hover {
-  background: #fff;
-  border-color: rgba(224, 227, 232, 0.96);
-  box-shadow: 0 4px 12px rgba(148, 163, 184, 0.12);
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(220, 226, 233, 0.94);
+  box-shadow: none;
   color: #111827;
+  transform: none;
 }
 
 .topic-tags-inline {
