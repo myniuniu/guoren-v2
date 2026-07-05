@@ -789,7 +789,7 @@ export function SpaceResourceImportBrowser({
                 className={`space-resource-import-sidebar-item ${specialView === 'all' && !selectedFolderKey && !activeTagFilter ? 'is-active' : ''}`}
                 onClick={() => applyNavigationState(ROOT_STATE)}
               >
-                <span className="space-resource-import-sidebar-icon" style={{ color: '#007aff' }}><DesktopOutlined /></span>
+                <span className="space-resource-import-sidebar-icon"><DesktopOutlined /></span>
                 <span className="space-resource-import-sidebar-text">全部资料</span>
               </button>
               <button
