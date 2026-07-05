@@ -339,14 +339,6 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     key: null,
     durationMs: 260,
   });
-  const [columnSelectionIndicator, setColumnSelectionIndicator] = useState({
-    visible: false,
-    top: 0,
-    height: 0,
-    key: null,
-    colIdx: null,
-    durationMs: 260,
-  });
   useEffect(() => {
     capabilityModelCatalogRef.current = capabilityModelCatalog;
   }, [capabilityModelCatalog]);
@@ -1179,6 +1171,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     [folderContextItemMap, selectedItemKeys],
   );
   const selectedItemCount = selectedItems.length;
+  const singleSelectedItem = selectedItemCount === 1 ? selectedItems[0] : null;
 
   const folderContextChildMap = useMemo(() => {
     const childMap = new Map();
@@ -2360,72 +2353,6 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     });
   }, [displayChildren, selectedItemKeys, viewMode]);
 
-  useLayoutEffect(() => {
-    if (viewMode !== 'column' || selectedItemKeys.length !== 1) {
-      setColumnSelectionIndicator((prev) => (prev.visible ? {
-        visible: false,
-        top: 0,
-        height: 0,
-        key: null,
-        colIdx: null,
-        durationMs: prev.durationMs,
-      } : prev));
-      return;
-    }
-    const selectedKey = selectedItemKeys[0];
-    const rowNode = columnSelectedItemRef.current;
-    if (!rowNode) return;
-    const nextColIdx = Number(rowNode.dataset.columnIndex ?? -1);
-    if (Number.isNaN(nextColIdx) || nextColIdx < 0) {
-      setColumnSelectionIndicator((prev) => (prev.visible ? {
-        visible: false,
-        top: 0,
-        height: 0,
-        key: null,
-        colIdx: null,
-        durationMs: prev.durationMs,
-      } : prev));
-      return;
-    }
-    const columnItems = columnLevels[nextColIdx] || [];
-    if (!columnItems.some((item) => item.key === selectedKey)) {
-      setColumnSelectionIndicator((prev) => (prev.visible ? {
-        visible: false,
-        top: 0,
-        height: 0,
-        key: null,
-        colIdx: null,
-        durationMs: prev.durationMs,
-      } : prev));
-      return;
-    }
-    const nextTop = rowNode.offsetTop;
-    const nextHeight = rowNode.offsetHeight;
-    setColumnSelectionIndicator((prev) => {
-      if (
-        prev.visible
-        && prev.key === selectedKey
-        && prev.colIdx === nextColIdx
-        && Math.abs(prev.top - nextTop) < 0.5
-        && Math.abs(prev.height - nextHeight) < 0.5
-      ) {
-        return prev;
-      }
-      const travel = prev.visible
-        ? Math.abs(prev.top - nextTop) + Math.abs(prev.height - nextHeight) * 0.4
-        : nextHeight;
-      const durationMs = Math.max(190, Math.min(380, Math.round(185 + travel * 1.2)));
-      return {
-        visible: true,
-        top: nextTop,
-        height: nextHeight,
-        key: selectedKey,
-        colIdx: nextColIdx,
-        durationMs,
-      };
-    });
-  }, [columnLevels, selectedItemKeys, viewMode]);
-
   const stopSwipeSelection = useCallback(() => {
     const gesture = swipeSelectionRef.current;
     if (!gesture) return;
@@ -2611,17 +2538,44 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     }
   };
 
-  // 切换视图模式时同步 columnPath
+  // 切换视图模式时同步两种视图的定位与选中语义
   const handleViewModeChange = (mode) => {
     if (mode === viewMode) return;
     clearPendingRenameTrigger();
-    setViewMode(mode);
+
     if (mode === 'column') {
-      // 从当前 breadcrumb 构建 columnPath
-      const path = hasActiveSearch ? [null] : [null, ...breadcrumb.map((b) => b.key)];
-      setColumnPath(path);
+      const basePath = (hasActiveSearch || isRecentView) ? [null] : [null, ...breadcrumb.map((b) => b.key)];
+      let nextPath = basePath;
+      let nextColumnSelectedItem = null;
+
+      if (singleSelectedItem) {
+        if (singleSelectedItem.isFolder) {
+          if (hasActiveSearch || isRecentView) {
+            nextColumnSelectedItem = singleSelectedItem;
+          } else {
+            nextPath = [...basePath, singleSelectedItem.key];
+          }
+        } else {
+          nextColumnSelectedItem = singleSelectedItem;
+        }
+      }
+
+      setColumnPath(nextPath);
+      setColumnSelectedItem(nextColumnSelectedItem);
+    } else {
+      if (!hasActiveSearch && !isRecentView) {
+        const activeColumnItem = columnSelectedItem?.key
+          ? (list.find((item) => item.key === columnSelectedItem.key) || columnSelectedItem)
+          : null;
+        const nextFolderKey = activeColumnItem && !activeColumnItem.isFolder
+          ? (activeColumnItem.parentKey ?? null)
+          : (columnPath[columnPath.length - 1] ?? null);
+        setData((d) => setSelectedFolder(d, scope, nextFolderKey));
+      }
       setColumnSelectedItem(null);
     }
+
+    setViewMode(mode);
   };
 
   const createFolderAndStartRename = useCallback((parentKey = null, options = {}) => {
@@ -4572,24 +4526,15 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                   const colWidth = columnWidths[colIdx];
                   return (
                   <div
-                    className={`finder-column ${columnSelectionIndicator.visible && columnSelectionIndicator.colIdx === colIdx ? 'finder-column-has-single-selection' : ''}`}
+                    className="finder-column"
                     key={colIdx}
                     style={colWidth ? { width: colWidth, minWidth: colWidth, maxWidth: colWidth } : undefined}
                   >
-                    <div
-                      className={`finder-column-selection-indicator ${columnSelectionIndicator.visible && columnSelectionIndicator.colIdx === colIdx ? 'is-visible' : ''}`}
-                      style={{
-                        transform: `translate3d(0, ${columnSelectionIndicator.colIdx === colIdx ? columnSelectionIndicator.top : 0}px, 0)`,
-                        height: `${columnSelectionIndicator.colIdx === colIdx ? columnSelectionIndicator.height : 0}px`,
-                        '--finder-selection-motion-duration': `${columnSelectionIndicator.colIdx === colIdx ? columnSelectionIndicator.durationMs : 260}ms`,
-                      }}
-                      aria-hidden="true"
-                    />
                     {items.length === 0 && colIdx === 0 && hasActiveSearch ? (
                       <div className="finder-column-empty">无匹配资料</div>
                     ) : items.map((item, itemIdx) => {
-                      const isActive = columnPath[colIdx + 1] === item.key || (columnSelectedItem?.key === item.key);
                       const isSingleSelected = selectedItemKeys.length === 1 && selectedItemKeys[0] === item.key;
+                      const isCurrentSelection = isSingleSelected;
                       const isContextMenuTarget = contextMenuItemKey === item.key || actionMenuItemKey === item.key;
                       const isInlineRenaming = inlineRenameItemKey === item.key;
                       const itemMoreMenu = getItemMoreMenu(item, {
@@ -4607,7 +4552,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                         >
                           <div
                             ref={isSingleSelected ? columnSelectedItemRef : undefined}
-                            className={`finder-column-item ${isActive ? 'finder-column-item-active' : ''} ${selectedItemKeys.includes(item.key) && !isActive ? 'finder-column-item-selected' : ''} ${isContextMenuTarget ? 'finder-column-item-context-open' : ''} ${item.isFolder && dragOverFolderKey === item.key ? 'finder-column-item-dragover' : ''}`}
+                            className={`finder-column-item ${isCurrentSelection ? 'finder-column-item-active' : ''} ${selectedItemKeys.includes(item.key) && !isCurrentSelection ? 'finder-column-item-selected' : ''} ${isContextMenuTarget ? 'finder-column-item-context-open' : ''} ${item.isFolder && dragOverFolderKey === item.key ? 'finder-column-item-dragover' : ''}`}
                             data-column-index={colIdx}
                             data-item-index={itemIdx}
                             data-item-key={item.key}
