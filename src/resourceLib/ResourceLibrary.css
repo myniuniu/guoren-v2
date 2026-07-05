@@ -266,7 +266,7 @@
 }
 
 .finder-sidebar-item-with-actions {
-  padding-right: 76px;
+  padding-right: 52px;
 }
 
 .finder-sidebar-item > * {
@@ -332,11 +332,12 @@
 
 .finder-sidebar-item-active {
   background:
-    linear-gradient(180deg, rgba(246, 250, 255, 0.92) 0%, rgba(232, 240, 255, 0.78) 100%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(194, 214, 247, 0.2) 100%) !important;
-  color: #203657 !important;
-  border-color: rgba(173, 197, 236, 0.76);
-  box-shadow: inset 0 0 0 1px rgba(176, 198, 233, 0.18);
+    linear-gradient(180deg, rgba(244, 246, 249, 0.92) 0%, rgba(238, 242, 246, 0.78) 100%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(218, 225, 234, 0.14) 100%) !important;
+  color: #283446 !important;
+  border-color: transparent;
+  border-radius: 0;
+  box-shadow: none;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   transform: none;
@@ -344,11 +345,11 @@
 
 .finder-sidebar-item-active:hover {
   background:
-    linear-gradient(180deg, rgba(248, 251, 255, 0.94) 0%, rgba(234, 242, 255, 0.8) 100%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.24) 0%, rgba(194, 214, 247, 0.22) 100%) !important;
-  color: #203657 !important;
-  border-color: rgba(173, 197, 236, 0.82);
-  box-shadow: inset 0 0 0 1px rgba(176, 198, 233, 0.2);
+    linear-gradient(180deg, rgba(246, 248, 250, 0.94) 0%, rgba(240, 244, 247, 0.82) 100%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(220, 227, 235, 0.16) 100%) !important;
+  color: #283446 !important;
+  border-color: transparent;
+  box-shadow: none;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   transform: none;
@@ -357,12 +358,12 @@
 .finder-sidebar-item-active::before {
   inset: -16%;
   border-radius: inherit;
-  opacity: 1;
+  opacity: 0.44;
   animation: none;
 }
 
 .finder-sidebar-item-active::after {
-  opacity: 0.38;
+  opacity: 0.16;
 }
 
 .finder-sidebar-item-active .finder-sidebar-item-icon {

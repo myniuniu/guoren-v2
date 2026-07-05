@@ -3780,6 +3780,54 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     setAddDialogOpen(true);
   };
 
+  const handleCreateFolderAtRoot = useCallback(() => {
+    if (viewMode === 'column') {
+      setData((d) => addItem(d, scope, {
+        name: '未命名文件夹',
+        isFolder: true,
+        parentKey: null,
+        fileType: 'folder',
+        parseStatus: 'parsed',
+      }));
+      message.success('文件夹已创建到根目录');
+      return;
+    }
+
+    if (selectedFolderKey || hasActiveSearch || isRecentView || activeTagFilter) {
+      navigateTo(null);
+      setTimeout(() => handleNewFolderInline(null), 80);
+      return;
+    }
+
+    handleNewFolderInline(null);
+  }, [
+    activeTagFilter,
+    handleNewFolderInline,
+    hasActiveSearch,
+    isRecentView,
+    navigateTo,
+    scope,
+    selectedFolderKey,
+    viewMode,
+  ]);
+
+  const handleAddResourceAtRoot = useCallback(() => {
+    setAddDialogParentKey(ROOT_PARENT_KEY);
+    setAddDialogOpen(true);
+  }, []);
+
+  const rootSidebarMoreMenu = useMemo(() => ({
+    items: [
+      { key: 'newFolder', icon: <FolderAddOutlined />, label: '新建文件夹' },
+      { key: 'addResource', icon: <FileAddOutlined />, label: '添加资料' },
+    ],
+    onClick: ({ key, domEvent }) => {
+      domEvent?.stopPropagation();
+      if (key === 'newFolder') handleCreateFolderAtRoot();
+      if (key === 'addResource') handleAddResourceAtRoot();
+    },
+  }), [handleAddResourceAtRoot, handleCreateFolderAtRoot]);
+
   const renderPreviewActionButtons = (onCreateFolder, onAdd) => (
     <div className="finder-preview-folder-actions">
       <Button
@@ -4178,45 +4226,23 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
             <span className="finder-sidebar-item-icon" style={{ color: '#007aff' }}><DesktopOutlined /></span>
             <span className="finder-sidebar-item-label">全部资料</span>
             <span className="finder-sidebar-root-actions" onClick={(e) => e.stopPropagation()}>
-              <button
-                type="button"
-                className="finder-sidebar-root-action-btn"
-                aria-label="新建文件夹"
-                title="新建文件夹"
-                onClick={() => {
-                  if (viewMode === 'column') {
-                    setData((d) => addItem(d, scope, {
-                      name: '未命名文件夹',
-                      isFolder: true,
-                      parentKey: null,
-                      fileType: 'folder',
-                      parseStatus: 'parsed',
-                    }));
-                    message.success('文件夹已创建到根目录');
-                    return;
-                  }
-                  if (selectedFolderKey || hasActiveSearch || isRecentView || activeTagFilter) {
-                    navigateTo(null);
-                    setTimeout(() => handleNewFolderInline(null), 80);
-                    return;
-                  }
-                  handleNewFolderInline(null);
-                }}
+              <Dropdown
+                trigger={['click']}
+                menu={rootSidebarMoreMenu}
+                overlayClassName={buildMenuOverlayClassName()}
+                placement="bottomRight"
               >
-                <FolderAddOutlined />
-              </button>
-              <button
-                type="button"
-                className="finder-sidebar-root-action-btn"
-                aria-label="添加资料"
-                title="添加资料"
-                onClick={() => {
-                  setAddDialogParentKey(ROOT_PARENT_KEY);
-                  setAddDialogOpen(true);
-                }}
-              >
-                <FileAddOutlined />
-              </button>
+                <span onClick={(e) => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    className="finder-sidebar-root-action-btn"
+                    aria-label="更多"
+                    title="更多"
+                  >
+                    <MoreOutlined />
+                  </button>
+                </span>
+              </Dropdown>
             </span>
           </div>
           <div
