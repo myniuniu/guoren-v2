@@ -173,6 +173,28 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
   }, [selectedFolderKey]);
 
   useEffect(() => {
+    if (!activeBindingTarget) return;
+    setResourceDrawerOpen(true);
+    const keysToReveal = activeBindingTarget.boundKeys || [];
+    if (keysToReveal.length === 0) return;
+    setExpandedFolders((prev) => {
+      const next = new Set(prev);
+      keysToReveal.forEach((key) => {
+        const item = resources.find((resource) => resource.key === key);
+        if (!item) return;
+        if (item.isFolder) next.add(item.key);
+        let parentKey = item.parentKey ?? null;
+        while (parentKey !== null) {
+          next.add(parentKey);
+          const parent = resources.find((resource) => resource.key === parentKey);
+          parentKey = parent?.parentKey ?? null;
+        }
+      });
+      return next;
+    });
+  }, [activeBindingTarget, resources]);
+
+  useEffect(() => {
     if (messages.length === 0) {
       const stages = resources.filter((r) => r.isFolder && r.parentKey === null);
       const activities = resources.filter((r) => r.isFolder && r.parentKey !== null);
@@ -320,10 +342,13 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
       e.dataTransfer.effectAllowed = 'move';
     };
     const dragAvailability = resolveDragAvailability(item);
+    const isBoundResource = !!activeBindingTarget?.boundKeys?.includes(item.key);
     const canDrag = !selectedFolderKey && dragAvailability.draggable;
-    const itemTitle = canDrag
-      ? '可拖拽到右侧画布'
-      : dragAvailability.reason || undefined;
+    const itemTitle = isBoundResource
+      ? '已绑定到当前活动'
+      : canDrag
+        ? '可拖拽到右侧画布'
+        : dragAvailability.reason || undefined;
     if (item.isFolder) {
       const isExpanded = expandedFolders.has(item.key);
       const isSelected = selectedFolderKey === item.key;
@@ -331,7 +356,7 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
       return (
         <div key={item.key} className="tree-folder-group">
           <div
-            className={`project-item project-item-folder ${isSelected ? 'project-item-selected' : ''} ${dragAvailability.disabled ? 'project-item-disabled' : ''}`}
+            className={`project-item project-item-folder ${isSelected ? 'project-item-selected' : ''} ${dragAvailability.disabled ? 'project-item-disabled' : ''} ${isBoundResource ? 'project-item-bound' : ''}`}
             onClick={activeBindingTarget || dragAvailability.disabled ? undefined : () => handleSelectFolder(item.key)}
             draggable={canDrag}
             onDragStart={canDrag ? handleDragStart : undefined}
@@ -347,6 +372,7 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
                 : <FolderFilled style={{ color: '#56a8f5' }} />}
             </span>
             <span className="project-item-title">{item.name}</span>
+            {isBoundResource && <span className="project-bound-badge">已绑定</span>}
           </div>
           {isExpanded && (
             <div className="tree-children">
@@ -360,7 +386,7 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
     return (
       <div
         key={item.key}
-        className={`project-item project-item-child ${dragAvailability.disabled ? 'project-item-disabled' : ''}`}
+        className={`project-item project-item-child ${dragAvailability.disabled ? 'project-item-disabled' : ''} ${isBoundResource ? 'project-item-bound' : ''}`}
         draggable={canDrag}
         onDragStart={canDrag ? handleDragStart : undefined}
         title={itemTitle}
@@ -368,6 +394,7 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
       >
         <span className="project-item-icon">{getResourceIcon(item.type)}</span>
         <span className="project-item-title">{item.name}</span>
+        {isBoundResource && <span className="project-bound-badge">已绑定</span>}
       </div>
     );
   };

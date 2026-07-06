@@ -132,6 +132,147 @@
   width: 100%;
 }
 
+.assessment-risk-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.assessment-risk-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 64px;
+  padding: 10px 12px;
+  border: 1px solid #eef0f3;
+  border-radius: 8px;
+  background: #fafbfc;
+}
+
+.assessment-risk-card span {
+  color: #8b94a3;
+  font-size: 12px;
+}
+
+.assessment-risk-card strong {
+  color: #1f2937;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.assessment-risk-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 34px 16px;
+  border: 1px dashed #cfe8ff;
+  border-radius: 8px;
+  background: #f6fbff;
+  color: #1677ff;
+  text-align: center;
+}
+
+.assessment-risk-empty .anticon {
+  font-size: 26px;
+}
+
+.assessment-risk-empty strong {
+  color: #1f2937;
+  font-size: 15px;
+}
+
+.assessment-risk-empty span {
+  color: #667085;
+  font-size: 13px;
+}
+
+.assessment-risk-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.assessment-risk-item {
+  padding: 12px;
+  border: 1px solid #eef0f3;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.assessment-risk-high {
+  border-color: #ffd6d6;
+  background: #fffafa;
+}
+
+.assessment-risk-medium {
+  border-color: #ffe6ba;
+  background: #fffaf0;
+}
+
+.assessment-risk-low {
+  border-color: #d9e8ff;
+  background: #f7fbff;
+}
+
+.assessment-risk-item-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.assessment-risk-item-head strong {
+  color: #1f2937;
+  font-size: 14px;
+}
+
+.assessment-risk-level {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #eef4ff;
+  color: #2f6fbd;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.assessment-risk-high .assessment-risk-level {
+  background: #fff1f0;
+  color: #d4380d;
+}
+
+.assessment-risk-medium .assessment-risk-level {
+  background: #fff7e6;
+  color: #ad6800;
+}
+
+.assessment-risk-item p {
+  margin: 0;
+  color: #667085;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.assessment-risk-item ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: #344054;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.assessment-risk-more {
+  color: #8b94a3;
+}
+
 /* 右侧属性面板 - 已绑定资料列表 */
 .flow-activity-inspector .inspector-empty-tip {
   font-size: 12px;

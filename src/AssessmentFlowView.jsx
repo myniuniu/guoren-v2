@@ -11,7 +11,7 @@ import ReactFlow, {
   MarkerType,
 } from 'reactflow';
 import { InputNumber, Select, Tooltip, Modal, Input, Button, Radio, message, Popconfirm, Divider, Dropdown } from 'antd';
-import { FolderOutlined, AppstoreOutlined, DeleteOutlined, ClearOutlined, CloseOutlined, EditOutlined, FileOutlined, DatabaseOutlined, CopyOutlined, ArrowUpOutlined, ArrowDownOutlined, PlusOutlined, MoreOutlined } from '@ant-design/icons';
+import { FolderOutlined, AppstoreOutlined, DeleteOutlined, ClearOutlined, CloseOutlined, EditOutlined, FileOutlined, DatabaseOutlined, CopyOutlined, ArrowUpOutlined, ArrowDownOutlined, PlusOutlined, MoreOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 import 'reactflow/dist/style.css';
 import './AssessmentFlowView.css';
 
@@ -458,6 +458,182 @@ function createCustomActivityInStage({ assessment, stageId, siblingIds = [], ins
   };
 }
 
+function getResourcePathLabel(resource, resources) {
+  if (!resource) return '';
+  const segments = [resource.name];
+  let parentKey = resource.parentKey ?? null;
+  while (parentKey !== null) {
+    const parent = resources.find((item) => item.key === parentKey);
+    if (!parent) break;
+    segments.unshift(parent.name);
+    parentKey = parent.parentKey ?? null;
+  }
+  return segments.join(' / ');
+}
+
+function collectCoveredResourceKeys(resourceKey, resources) {
+  const covered = new Set([resourceKey]);
+  const visit = (parentKey) => {
+    resources.forEach((resource) => {
+      if (resource.parentKey !== parentKey) return;
+      covered.add(resource.key);
+      if (resource.isFolder) visit(resource.key);
+    });
+  };
+  visit(resourceKey);
+  return covered;
+}
+
+function buildAssessmentRiskReport({ resources, nodes, edges }) {
+  const resourceByKey = new Map(resources.map((resource) => [resource.key, resource]));
+  const stageNodes = nodes.filter((node) => node.type === 'stage');
+  const activityNodes = nodes.filter((node) => node.type === 'activity');
+  const coveredResourceKeys = new Set();
+
+  activityNodes.forEach((node) => {
+    (node.data?.boundResources || []).forEach((bound) => {
+      collectCoveredResourceKeys(bound.key, resources).forEach((key) => coveredResourceKeys.add(key));
+    });
+  });
+
+  const leafResources = resources.filter((resource) => !resource.isFolder);
+  const unboundLeafResources = leafResources.filter((resource) => !coveredResourceKeys.has(resource.key));
+  const stageActivityCount = new Map(stageNodes.map((stage) => [stage.id, 0]));
+  activityNodes.forEach((node) => {
+    if (stageActivityCount.has(node.parentNode)) {
+      stageActivityCount.set(node.parentNode, stageActivityCount.get(node.parentNode) + 1);
+    }
+  });
+  const emptyStages = stageNodes.filter((stage) => (stageActivityCount.get(stage.id) || 0) === 0);
+  const emptyActivities = activityNodes.filter((node) => {
+    const boundResources = node.data?.boundResources || [];
+    if (boundResources.length === 0) return true;
+    const types = new Set();
+    boundResources.forEach((bound) => {
+      const resource = resourceByKey.get(bound.key);
+      collectResourceTypes({
+        key: bound.key,
+        name: bound.name,
+        isFolder: !!(resource?.isFolder ?? bound.isFolder),
+        type: resource?.type ?? bound.type ?? null,
+      }, resources).forEach((type) => types.add(type));
+    });
+    return types.size === 0;
+  });
+  const noTypeActivities = activityNodes.filter((node) => !node.data?.activityType);
+  const zeroWeightActivities = activityNodes.filter((node) => Number(node.data?.weight || 0) <= 0);
+  const totalWeight = activityNodes.reduce((sum, node) => sum + Number(node.data?.weight || 0), 0);
+  const typeMismatchActivities = activityNodes.filter((node) => {
+    const activityType = node.data?.activityType ?? '';
+    const allowed = allowedResourceTypeMap[activityType];
+    if (!allowed) return false;
+    const types = new Set();
+    (node.data?.boundResources || []).forEach((bound) => {
+      const resource = resourceByKey.get(bound.key);
+      collectResourceTypes({
+        key: bound.key,
+        name: bound.name,
+        isFolder: !!(resource?.isFolder ?? bound.isFolder),
+        type: resource?.type ?? bound.type ?? null,
+      }, resources).forEach((type) => types.add(type));
+    });
+    return [...types].some((type) => !allowed.includes(type));
+  });
+  const stageEdges = edges.filter((edge) => {
+    const source = nodes.find((node) => node.id === edge.source);
+    const target = nodes.find((node) => node.id === edge.target);
+    return source?.type === 'stage' && target?.type === 'stage';
+  });
+
+  const risks = [];
+  const toNames = (items, mapper) => items.slice(0, 10).map(mapper);
+  const overflowText = (count) => (count > 10 ? `另有 ${count - 10} 项未展示` : '');
+
+  if (stageNodes.length === 0) {
+    risks.push({ level: 'high', title: '尚未配置阶段容器', description: '当前画布没有阶段，考核流程无法形成完整结构。' });
+  }
+  if (activityNodes.length === 0) {
+    risks.push({ level: 'high', title: '尚未配置活动', description: '当前画布没有活动，可能无法产生任何考核规则。' });
+  }
+  if (unboundLeafResources.length > 0) {
+    risks.push({
+      level: 'high',
+      title: `存在 ${unboundLeafResources.length} 个未绑定资料`,
+      description: '这些资料没有被任何活动覆盖，可能不会纳入当前考核。',
+      items: toNames(unboundLeafResources, (resource) => getResourcePathLabel(resource, resources)),
+      extra: overflowText(unboundLeafResources.length),
+    });
+  }
+  if (emptyStages.length > 0) {
+    risks.push({
+      level: 'high',
+      title: `存在 ${emptyStages.length} 个空阶段`,
+      description: '空阶段内没有活动，学习路径和考核节点可能断档。',
+      items: toNames(emptyStages, (stage) => stage.data?.label || stage.id),
+      extra: overflowText(emptyStages.length),
+    });
+  }
+  if (emptyActivities.length > 0) {
+    risks.push({
+      level: 'high',
+      title: `存在 ${emptyActivities.length} 个未绑定有效资料的活动`,
+      description: '这些活动没有资料或绑定的是空文件夹，可能无法支撑考核。',
+      items: toNames(emptyActivities, (node) => node.data?.label || node.id),
+      extra: overflowText(emptyActivities.length),
+    });
+  }
+  if (noTypeActivities.length > 0) {
+    risks.push({
+      level: 'medium',
+      title: `存在 ${noTypeActivities.length} 个活动未选择类型`,
+      description: '活动类型会影响可绑定资料和考核规则，建议补齐。',
+      items: toNames(noTypeActivities, (node) => node.data?.label || node.id),
+      extra: overflowText(noTypeActivities.length),
+    });
+  }
+  if (zeroWeightActivities.length > 0) {
+    risks.push({
+      level: 'medium',
+      title: `存在 ${zeroWeightActivities.length} 个活动权重为 0`,
+      description: '权重为 0 的活动不会贡献考核结果，确认是否符合预期。',
+      items: toNames(zeroWeightActivities, (node) => node.data?.label || node.id),
+      extra: overflowText(zeroWeightActivities.length),
+    });
+  }
+  if (activityNodes.length > 0 && totalWeight !== 100) {
+    risks.push({
+      level: 'medium',
+      title: `活动总权重当前为 ${totalWeight}%`,
+      description: '总权重不等于 100%，最终成绩计算可能偏离预期。',
+    });
+  }
+  if (typeMismatchActivities.length > 0) {
+    risks.push({
+      level: 'high',
+      title: `存在 ${typeMismatchActivities.length} 个活动类型与资料不匹配`,
+      description: '这些活动绑定的资料类型不符合当前活动类型限制。',
+      items: toNames(typeMismatchActivities, (node) => node.data?.label || node.id),
+      extra: overflowText(typeMismatchActivities.length),
+    });
+  }
+  if (stageNodes.length > 1 && stageEdges.length === 0) {
+    risks.push({
+      level: 'low',
+      title: '阶段间尚未配置连线',
+      description: '多个阶段之间没有进入关系，若需要严格顺序，可补充阶段连线和进入规则。',
+    });
+  }
+
+  return {
+    stageCount: stageNodes.length,
+    activityCount: activityNodes.length,
+    resourceCount: leafResources.length,
+    unboundResourceCount: unboundLeafResources.length,
+    totalWeight,
+    risks,
+  };
+}
+
 function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment, onSelectFolder, onActivityBindingTargetChange }) {
   const [editingEdge, setEditingEdge] = useState(null);
   const [ruleForm, setRuleForm] = useState(DEFAULT_RULE);
@@ -467,6 +643,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
   const [selectedStageKey, setSelectedStageKey] = useState(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState(null);
   const [dataModalOpen, setDataModalOpen] = useState(false);
+  const [riskModalOpen, setRiskModalOpen] = useState(false);
   const wrapperRef = useRef(null);
 
   useEffect(() => {
@@ -476,14 +653,17 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
       return;
     }
     const customAct = (assessment.customActivities || []).find((item) => item.key === selectedActivityKey);
+    const builtinActivity = resources.find((item) => item.key === selectedActivityKey);
     const rule = (assessment.rules || []).find((item) => item.folderKey === selectedActivityKey);
     onActivityBindingTargetChange({
       key: selectedActivityKey,
       isCustomActivity: !!customAct,
       activityType: rule?.activityType ?? '',
-      boundKeys: (customAct?.boundResources || []).map((item) => item.key),
+      boundKeys: customAct
+        ? (customAct.boundResources || []).map((item) => item.key)
+        : (builtinActivity?.isFolder ? [selectedActivityKey] : []),
     });
-  }, [assessment.customActivities, assessment.rules, onActivityBindingTargetChange, selectedActivityKey]);
+  }, [assessment.customActivities, assessment.rules, onActivityBindingTargetChange, resources, selectedActivityKey]);
 
   // 计算初始节点和边
   const { initialNodes, initialEdges } = useMemo(() => {
@@ -865,6 +1045,10 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const riskReport = useMemo(
+    () => buildAssessmentRiskReport({ resources, nodes, edges }),
+    [resources, nodes, edges]
+  );
 
   // 拖动结束后短暂跳过一次 props 同步，避免 useEffect 把刚算好的位置覆盖回去
   const skipNextSyncRef = useRef(false);
@@ -1647,6 +1831,14 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
         <div className="toolbar-group">
           <Button
             size="small"
+            icon={<SafetyCertificateOutlined />}
+            onClick={() => setRiskModalOpen(true)}
+            title="检测资料绑定、活动配置、权重和流程遗漏风险"
+          >
+            风险检测
+          </Button>
+          <Button
+            size="small"
             icon={<DatabaseOutlined />}
             onClick={() => setDataModalOpen(true)}
             title="查看当前方案的完整数据结构（用于后端持久化对接）"
@@ -1701,6 +1893,67 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
         <Controls />
         <MiniMap nodeColor={(n) => n.type === 'stage' ? '#1677ff' : '#52c41a'} pannable zoomable />
       </ReactFlow>
+
+      <Modal
+        title={
+          <span>
+            <SafetyCertificateOutlined style={{ color: '#1677ff', marginRight: 8 }} />
+            风险检测
+          </span>
+        }
+        open={riskModalOpen}
+        onCancel={() => setRiskModalOpen(false)}
+        width={760}
+        footer={[
+          <Button key="close" type="primary" onClick={() => setRiskModalOpen(false)}>知道了</Button>,
+        ]}
+      >
+        <div className="assessment-risk-summary">
+          <div className="assessment-risk-card">
+            <span>阶段</span>
+            <strong>{riskReport.stageCount}</strong>
+          </div>
+          <div className="assessment-risk-card">
+            <span>活动</span>
+            <strong>{riskReport.activityCount}</strong>
+          </div>
+          <div className="assessment-risk-card">
+            <span>未绑定资料</span>
+            <strong>{riskReport.unboundResourceCount}</strong>
+          </div>
+          <div className="assessment-risk-card">
+            <span>总权重</span>
+            <strong>{riskReport.totalWeight}%</strong>
+          </div>
+        </div>
+        {riskReport.risks.length === 0 ? (
+          <div className="assessment-risk-empty">
+            <SafetyCertificateOutlined />
+            <strong>暂未发现明显风险</strong>
+            <span>当前资料绑定、活动配置和权重结构看起来比较完整。</span>
+          </div>
+        ) : (
+          <div className="assessment-risk-list">
+            {riskReport.risks.map((risk, index) => (
+              <div key={`${risk.level}-${index}`} className={`assessment-risk-item assessment-risk-${risk.level}`}>
+                <div className="assessment-risk-item-head">
+                  <span className="assessment-risk-level">
+                    {risk.level === 'high' ? '高风险' : risk.level === 'medium' ? '需关注' : '提示'}
+                  </span>
+                  <strong>{risk.title}</strong>
+                </div>
+                <p>{risk.description}</p>
+                {risk.items?.length > 0 && (
+                  <ul>
+                    {risk.items.map((item) => <li key={item}>{item}</li>)}
+                    {risk.extra && <li className="assessment-risk-more">{risk.extra}</li>}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </Modal>
 
       <Modal
         title={
@@ -1784,6 +2037,24 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
         };
         const pc = rule.passCondition || { metric: '完成率', op: '>=', value: 80 };
         const updatePc = (patch) => handleRuleChange(selectedActivityKey, 'passCondition', { ...pc, ...patch });
+        const removeCurrentActivityFromCanvas = () => {
+          const next = { ...assessment };
+          if (isCustomActivity) {
+            next.customActivities = (assessment.customActivities || []).filter((ca) => ca.key !== folder.key);
+            next.rules = (assessment.rules || []).filter((r) => r.folderKey !== folder.key);
+          } else {
+            next.deletedNodes = [...(assessment.deletedNodes || []), folder.key];
+          }
+          const flowPositions = { ...(assessment.flowPositions || {}) };
+          delete flowPositions[folder.key];
+          next.flowPositions = flowPositions;
+          const parentOverrides = { ...(assessment.parentOverrides || {}) };
+          delete parentOverrides[folder.key];
+          next.parentOverrides = parentOverrides;
+          setSelectedActivityKey(null);
+          onUpdateAssessment(next);
+          message.success(`已${isCustomActivity ? '删除' : '从画布移除'}「${folder.name || '活动'}」`);
+        };
         return (
           <div className="flow-activity-inspector" onMouseDown={(e) => e.stopPropagation()}>
             <div className="inspector-header">
@@ -1912,27 +2183,28 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
                           {b.isFolder ? <FolderOutlined /> : <FileOutlined />}
                           <span className="inspector-binding-name" title={b.name}>{b.name}</span>
                           {isDraft && (
-                            <Popconfirm
-                              title="确认移除该绑定资料？"
-                              description={`「${b.name}」将从该活动容器中移除。`}
-                              okText="移除"
-                              cancelText="取消"
-                              okButtonProps={{ danger: true }}
-                              onConfirm={() => {
-                                const customActivities = (assessment.customActivities || []).map((ca) => {
-                                  if (ca.key !== selectedActivityKey) return ca;
-                                  return { ...ca, boundResources: (ca.boundResources || []).filter((x) => x.key !== b.key) };
+                            <Button
+                              type="text"
+                              size="small"
+                              icon={<CloseOutlined />}
+                              onClick={() => {
+                                Modal.confirm({
+                                  title: '确认移除该绑定资料？',
+                                  content: `「${b.name}」将从该活动容器中移除。`,
+                                  okText: '移除',
+                                  cancelText: '取消',
+                                  okButtonProps: { danger: true },
+                                  onOk: () => {
+                                    const customActivities = (assessment.customActivities || []).map((ca) => {
+                                      if (ca.key !== selectedActivityKey) return ca;
+                                      return { ...ca, boundResources: (ca.boundResources || []).filter((x) => x.key !== b.key) };
+                                    });
+                                    onUpdateAssessment({ ...assessment, customActivities });
+                                    message.success(`已移除「${b.name}」`);
+                                  },
                                 });
-                                onUpdateAssessment({ ...assessment, customActivities });
-                                message.success(`已移除「${b.name}」`);
                               }}
-                            >
-                              <Button
-                                type="text"
-                                size="small"
-                                icon={<CloseOutlined />}
-                              />
-                            </Popconfirm>
+                            />
                           )}
                         </div>
                       ))}
@@ -1946,6 +2218,23 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
                     <div className="inspector-binding-item">
                       <FolderOutlined />
                       <span className="inspector-binding-name" title={folder.name}>{folder.name}</span>
+                      {isDraft && (
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<CloseOutlined />}
+                          onClick={() => {
+                            Modal.confirm({
+                              title: '确认移除该绑定资料？',
+                              content: `「${folder.name}」将从当前活动中移除，资料本身仍会保留。`,
+                              okText: '移除',
+                              cancelText: '取消',
+                              okButtonProps: { danger: true },
+                              onOk: removeCurrentActivityFromCanvas,
+                            });
+                          }}
+                        />
+                      )}
                     </div>
                   </div>
                 </>
@@ -1960,24 +2249,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
                     okText={isCustomActivity ? '删除' : '移除'}
                     okButtonProps={{ danger: true }}
                     cancelText="取消"
-                    onConfirm={() => {
-                      const next = { ...assessment };
-                      if (isCustomActivity) {
-                        next.customActivities = (assessment.customActivities || []).filter((ca) => ca.key !== folder.key);
-                        next.rules = (assessment.rules || []).filter((r) => r.folderKey !== folder.key);
-                      } else {
-                        next.deletedNodes = [...(assessment.deletedNodes || []), folder.key];
-                      }
-                      const flowPositions = { ...(assessment.flowPositions || {}) };
-                      delete flowPositions[folder.key];
-                      next.flowPositions = flowPositions;
-                      const parentOverrides = { ...(assessment.parentOverrides || {}) };
-                      delete parentOverrides[folder.key];
-                      next.parentOverrides = parentOverrides;
-                      setSelectedActivityKey(null);
-                      onUpdateAssessment(next);
-                      message.success(`已${isCustomActivity ? '删除' : '从画布移除'}「${folder.name || '活动'}」`);
-                    }}
+                    onConfirm={removeCurrentActivityFromCanvas}
                   >
                     <Button danger icon={<DeleteOutlined />} block>{isCustomActivity ? '删除活动容器' : '移除活动'}</Button>
                   </Popconfirm>
