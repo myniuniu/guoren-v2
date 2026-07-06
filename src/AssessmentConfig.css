@@ -187,11 +187,12 @@
   position: absolute;
   top: 52px;
   left: 16px;
-  bottom: 16px;
   z-index: 8;
   display: flex;
   flex-direction: column;
   width: min(330px, calc(100% - 32px));
+  height: calc(100% - 188px);
+  max-height: calc(100% - 188px);
   min-height: 0;
   overflow: hidden;
   border: 1px solid rgba(226, 232, 240, 0.9);
