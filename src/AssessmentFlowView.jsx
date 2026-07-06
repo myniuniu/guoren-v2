@@ -692,7 +692,7 @@ function buildAssessmentRiskReport({ resources, nodes, edges }) {
   };
 }
 
-function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment, onSelectFolder, onActivityBindingTargetChange }) {
+function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment, onSelectFolder, onActivityBindingTargetChange, onPaneBlankClick }) {
   const [editingEdge, setEditingEdge] = useState(null);
   const [ruleForm, setRuleForm] = useState(DEFAULT_RULE);
   const [rfInstance, setRfInstance] = useState(null);
@@ -1067,6 +1067,8 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
                       if (ca.key !== act.key) return ca;
                       return { ...ca, boundResources: (ca.boundResources || []).filter((item) => item.key !== boundResource.key) };
                     });
+                    setSelectedStageKey(null);
+                    setSelectedActivityKey(act.key);
                     onUpdateAssessment({ ...assessment, customActivities });
                     message.success(`已移除「${boundResource.name}」`);
                     return;
@@ -1083,6 +1085,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
                     message.warning(detachResult.message);
                     return;
                   }
+                  setSelectedStageKey(null);
                   setSelectedActivityKey(detachResult.newKey);
                   onUpdateAssessment(detachResult.nextAssessment);
                   message.success(`已解绑「${boundResource.name}」，并保留空活动容器`);
@@ -1443,7 +1446,8 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
     setSelectedStageKey(null);
     setSelectedEdgeId(null);
     setNodes((nds) => nds.map((n) => (n.selected ? { ...n, selected: false } : n)));
-  }, [setNodes]);
+    onPaneBlankClick?.();
+  }, [onPaneBlankClick, setNodes]);
 
   // 双向同步：以「属性面板 state」为唯一真相、强制刷新 ReactFlow 节点 selected 状态。
   // 避免卡片内控件 onMouseDown stopPropagation 拦截后，RF 内部 selection 与面板 state 不一致。
@@ -2148,6 +2152,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
             message.warning(detachResult.message);
             return;
           }
+          setSelectedStageKey(null);
           setSelectedActivityKey(detachResult.newKey);
           onUpdateAssessment(detachResult.nextAssessment);
           message.success(`已解绑「${folder.name}」，并保留空活动容器`);

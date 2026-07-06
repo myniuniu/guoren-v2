@@ -258,6 +258,12 @@
   transform: translateY(-1px);
 }
 
+.assessment-resource-drawer-action.is-active {
+  border-color: rgba(37, 99, 235, 0.28);
+  background: rgba(219, 234, 254, 0.88);
+  color: #2563eb;
+}
+
 .assessment-resource-drawer-body {
   flex: 1;
   min-height: 0;

@@ -17,6 +17,8 @@ import {
   FileTextOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  PushpinFilled,
+  PushpinOutlined,
 } from '@ant-design/icons';
 import './AssessmentConfig.css';
 import AssessmentFlowView, { evaluateResourceBindingAvailability } from './AssessmentFlowView';
@@ -162,6 +164,7 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [resourceDrawerOpen, setResourceDrawerOpen] = useState(false);
+  const [resourceDrawerPinned, setResourceDrawerPinned] = useState(false);
   const [resourceDrawerPosition, setResourceDrawerPosition] = useState(DEFAULT_RESOURCE_DRAWER_POSITION);
   const [rightCollapsed, setRightCollapsed] = useState(true);
   const [rightWidth, setRightWidth] = useState(360);
@@ -354,6 +357,12 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
     message.success('文件夹创建成功');
   };
 
+  const handleFlowPaneClick = () => {
+    if (!resourceDrawerPinned) {
+      setResourceDrawerOpen(false);
+    }
+  };
+
   const handleResourceDrawerHeadMouseDown = (event) => {
     if (event.button !== 0) return;
     const target = event.target instanceof Element ? event.target : null;
@@ -528,6 +537,7 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
             onUpdateAssessment={(a) => { setLocalAssessment(a); onUpdateAssessment(a); }}
             onSelectFolder={(key) => setSelectedFolderKey(key)}
             onActivityBindingTargetChange={setActiveBindingTarget}
+            onPaneBlankClick={handleFlowPaneClick}
           />
           {renderFloatingResourcePanel()}
         </div>
@@ -601,6 +611,15 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
             >
               <MoreOutlined className="panel-more-icon" />
             </Dropdown>
+            <button
+              type="button"
+              className={`assessment-resource-drawer-action ${resourceDrawerPinned ? 'is-active' : ''}`}
+              onClick={() => setResourceDrawerPinned((pinned) => !pinned)}
+              aria-label={resourceDrawerPinned ? '取消固定资料面板' : '固定资料面板'}
+              title={resourceDrawerPinned ? '取消固定' : '固定资料面板'}
+            >
+              {resourceDrawerPinned ? <PushpinFilled /> : <PushpinOutlined />}
+            </button>
             <button
               type="button"
               className="assessment-resource-drawer-action"
