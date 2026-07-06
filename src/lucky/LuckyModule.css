@@ -1,6 +1,6 @@
 .lucky-module {
-  --lucky-bg: #f3f4f6;
-  --lucky-panel: rgba(255, 255, 255, 0.94);
+  --lucky-bg: rgba(244, 246, 248, 0.986);
+  --lucky-panel: rgba(255, 255, 255, 0.92);
   --lucky-panel-strong: #ffffff;
   --lucky-border: rgba(15, 23, 42, 0.06);
   --lucky-border-strong: rgba(15, 23, 42, 0.09);
@@ -16,20 +16,57 @@
   height: 100vh;
   display: flex;
   background:
-    radial-gradient(circle at top right, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 22%),
-    linear-gradient(180deg, #f7f7f8 0%, #f1f2f4 100%);
+    linear-gradient(180deg, rgba(249, 250, 251, 0.995) 0%, rgba(244, 246, 248, 0.988) 46%, rgba(238, 241, 244, 0.98) 100%),
+    radial-gradient(circle at 16% 8%, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 34%),
+    radial-gradient(circle at 84% 86%, rgba(211, 217, 225, 0.16) 0%, rgba(255, 255, 255, 0) 40%);
 }
 
 .lucky-sidebar {
-  width: 248px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding: 12px 10px 16px;
-  background: rgba(250, 250, 251, 0.86);
-  border-right: 1px solid rgba(255, 255, 255, 0.68);
-  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.82);
+  background:
+    linear-gradient(180deg, rgba(246, 247, 248, 0.94) 0%, rgba(241, 243, 245, 0.9) 46%, rgba(235, 237, 239, 0.86) 100%),
+    radial-gradient(circle at 18% 8%, rgba(255, 255, 255, 0.68) 0%, rgba(255, 255, 255, 0) 34%),
+    radial-gradient(circle at 82% 84%, rgba(206, 212, 220, 0.18) 0%, rgba(255, 255, 255, 0) 40%);
+  border-right: none;
+  box-shadow: none;
+  backdrop-filter: blur(24px) saturate(145%) brightness(0.99);
+  -webkit-backdrop-filter: blur(24px) saturate(145%) brightness(0.99);
+}
+
+.lucky-sidebar-resize-handle {
+  width: 10px;
+  margin-left: -5px;
+  margin-right: -5px;
+  flex: 0 0 10px;
+  cursor: col-resize;
+  position: relative;
+  z-index: 5;
+  border-radius: 999px;
+}
+
+.lucky-sidebar-resize-handle::before {
+  content: '';
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 50%;
+  width: 3px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.22);
+  opacity: 0;
+  transition:
+    opacity 0.18s ease,
+    background 0.18s ease;
+}
+
+.lucky-sidebar-resize-handle:hover::before,
+.lucky-sidebar-resize-handle:active::before {
+  opacity: 1;
 }
 
 .lucky-sidebar-profile {
@@ -38,8 +75,8 @@
   gap: 10px;
   padding: 8px 10px;
   color: var(--lucky-text);
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
 }
 
 .lucky-sidebar-avatar.ant-avatar {
@@ -69,7 +106,7 @@
   border: 0;
   background: transparent;
   border-radius: 10px;
-  padding: 8px 10px;
+  padding: 9px 10px;
   color: var(--lucky-text-soft);
   text-align: left;
   cursor: pointer;
@@ -93,11 +130,11 @@
 }
 
 .lucky-nav-icon {
-  width: 18px;
+  width: 20px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .lucky-nav-icon-dot {
@@ -112,7 +149,8 @@
 }
 
 .lucky-nav-label {
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 600;
   line-height: 1.3;
 }
 
@@ -122,7 +160,7 @@
   justify-content: space-between;
   padding: 2px 6px 0 10px;
   color: #9aa3b2;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .lucky-sidebar-group-title {
@@ -138,15 +176,32 @@
   flex: 1;
   overflow-y: auto;
   padding-right: 4px;
+  scrollbar-width: none;
 }
 
 .lucky-history::-webkit-scrollbar {
-  width: 4px;
+  width: 0;
 }
 
 .lucky-history::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.28);
+  background: transparent;
   border-radius: 999px;
+}
+
+.lucky-history:hover,
+.lucky-history:focus-within {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.34) transparent;
+}
+
+.lucky-history:hover::-webkit-scrollbar,
+.lucky-history:focus-within::-webkit-scrollbar {
+  width: 4px;
+}
+
+.lucky-history:hover::-webkit-scrollbar-thumb,
+.lucky-history:focus-within::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.34);
 }
 
 .lucky-history-group + .lucky-history-group {
@@ -155,29 +210,29 @@
 
 .lucky-history-title {
   padding: 0 10px 6px;
-  color: #b0b7c3;
-  font-size: 11px;
+  color: #a0a9b7;
+  font-size: 14px;
   font-weight: 600;
 }
 
 .lucky-history-list {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .lucky-history-item {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 7px 10px;
+  gap: 10px;
+  padding: 9px 10px;
   border: 0;
   background: transparent;
   border-radius: 8px;
   cursor: pointer;
   text-align: left;
-  color: #6b7280;
+  color: #667085;
 }
 
 .lucky-history-item:hover {
@@ -189,7 +244,7 @@
   width: 10px;
   height: 10px;
   border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.9);
+  border: 1.5px solid rgba(100, 116, 139, 0.72);
   flex-shrink: 0;
 }
 
@@ -198,49 +253,54 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 12px;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .lucky-main {
   flex: 1;
   min-width: 0;
-  padding: 10px 12px 12px 0;
+  padding: 16px 14px 16px 0;
 }
 
 .lucky-main-inner {
   height: 100%;
-  padding: 16px;
-  border-radius: 22px 0 0 22px;
+  padding: 14px 32px 22px;
+  border-radius: 16px;
   background:
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 24%),
-    var(--lucky-bg);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(252, 253, 254, 0.96) 100%),
+    radial-gradient(circle at 16% 8%, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0) 34%);
+  border: 1px solid rgba(229, 234, 241, 0.88);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 18px 36px rgba(15, 23, 42, 0.06),
+    0 6px 16px rgba(148, 163, 184, 0.1);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 18px;
 }
 
 .lucky-surface-badge {
   align-self: flex-start;
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
+  padding: 3px 9px;
   border-radius: 999px;
   border: 1px solid rgba(59, 130, 246, 0.12);
   background: rgba(255, 255, 255, 0.72);
   color: #64748b;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .lucky-workspace-card {
   flex: 1;
   min-height: 0;
-  border-radius: 20px;
-  background: var(--lucky-panel);
-  border: 1px solid rgba(255, 255, 255, 0.78);
-  box-shadow:
-    0 20px 40px rgba(15, 23, 42, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.72);
-  padding: 20px 26px 18px;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
   display: flex;
   flex-direction: column;
 }
@@ -503,10 +563,6 @@
 }
 
 @media (max-width: 1180px) {
-  .lucky-sidebar {
-    width: 220px;
-  }
-
   .lucky-stat-grid,
   .lucky-showcase-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -521,9 +577,15 @@
   }
 
   .lucky-sidebar {
-    width: auto;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
     border-right: 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.72);
+  }
+
+  .lucky-sidebar-resize-handle {
+    display: none;
   }
 
   .lucky-main {

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Avatar, Button, Dropdown, Input, Select, Tag, message } from 'antd';
 import {
   BookOutlined,
@@ -14,6 +14,34 @@ import ResourceLibrarySaveModal from '../resourceLib/ResourceLibrarySaveModal.js
 import './LuckyModule.css';
 
 const PAGE_SIZE = 14;
+const LUCKY_SIDEBAR_WIDTH_STORAGE_KEY = 'gr.lucky.sidebar-width.v1';
+const DEFAULT_LUCKY_SIDEBAR_WIDTH = 224;
+const MIN_LUCKY_SIDEBAR_WIDTH = 188;
+const MAX_LUCKY_SIDEBAR_WIDTH = 320;
+
+function getBoundedLuckySidebarWidth(value) {
+  const width = Number(value);
+  if (!Number.isFinite(width)) return DEFAULT_LUCKY_SIDEBAR_WIDTH;
+  return Math.max(MIN_LUCKY_SIDEBAR_WIDTH, Math.min(MAX_LUCKY_SIDEBAR_WIDTH, Math.round(width)));
+}
+
+function loadLuckySidebarWidth() {
+  if (typeof window === 'undefined') return DEFAULT_LUCKY_SIDEBAR_WIDTH;
+  try {
+    return getBoundedLuckySidebarWidth(window.localStorage.getItem(LUCKY_SIDEBAR_WIDTH_STORAGE_KEY));
+  } catch {
+    return DEFAULT_LUCKY_SIDEBAR_WIDTH;
+  }
+}
+
+function persistLuckySidebarWidth(width) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(LUCKY_SIDEBAR_WIDTH_STORAGE_KEY, String(getBoundedLuckySidebarWidth(width)));
+  } catch {
+    // ignore persistence failure
+  }
+}
 
 const NAV_ITEMS = [
   { key: 'new', label: '新建', icon: <PlusOutlined /> },
@@ -202,6 +230,7 @@ function ShowcaseSection({ title, description, cards }) {
 }
 
 function LuckyModule({ mode = 'workspace' }) {
+  const [sidebarWidth, setSidebarWidth] = useState(() => loadLuckySidebarWidth());
   const [activeSection, setActiveSection] = useState('library');
   const [sourceFilter, setSourceFilter] = useState('all');
   const [scopeFilter, setScopeFilter] = useState('all');
@@ -209,6 +238,35 @@ function LuckyModule({ mode = 'workspace' }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [savingItem, setSavingItem] = useState(null);
+  const sidebarWidthRef = useRef(sidebarWidth);
+
+  useEffect(() => {
+    sidebarWidthRef.current = sidebarWidth;
+  }, [sidebarWidth]);
+
+  const handleSidebarResizeStart = useCallback((event) => {
+    event.preventDefault();
+    const startX = event.clientX;
+    const startWidth = sidebarWidth;
+
+    const handlePointerMove = (moveEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      setSidebarWidth(getBoundedLuckySidebarWidth(startWidth + deltaX));
+    };
+
+    const handlePointerUp = () => {
+      persistLuckySidebarWidth(sidebarWidthRef.current);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+    };
+
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+  }, [sidebarWidth]);
 
   const filteredRows = useMemo(() => {
     const normalizedKeyword = keyword.trim().toLowerCase();
@@ -247,7 +305,10 @@ function LuckyModule({ mode = 'workspace' }) {
 
   return (
     <div className="lucky-module">
-      <aside className="lucky-sidebar">
+      <aside
+        className="lucky-sidebar"
+        style={{ width: sidebarWidth, minWidth: sidebarWidth, maxWidth: sidebarWidth }}
+      >
         <div className="lucky-sidebar-profile">
           <Avatar size={28} className="lucky-sidebar-avatar">L</Avatar>
           <span className="lucky-sidebar-name">lucky</span>
@@ -312,6 +373,13 @@ function LuckyModule({ mode = 'workspace' }) {
           ))}
         </div>
       </aside>
+      <div
+        className="lucky-sidebar-resize-handle"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="调整侧栏宽度"
+        onPointerDown={handleSidebarResizeStart}
+      />
 
       <main className="lucky-main">
         <div className="lucky-main-inner">
