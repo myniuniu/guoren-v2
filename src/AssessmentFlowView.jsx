@@ -270,6 +270,23 @@ function ActivityNode({ data, selected }) {
                 <div key={b.key} className="flow-activity-binding-item" title={b.name}>
                   {b.isFolder ? <FolderOutlined /> : <FileOutlined />}
                   <span className="flow-activity-binding-item-name">{b.name}</span>
+                  {data.isDraft && (
+                    <Tooltip title="解绑资料">
+                      <Button
+                        type="text"
+                        size="small"
+                        danger
+                        aria-label={`解绑${b.name}`}
+                        className="flow-activity-binding-remove"
+                        icon={<CloseOutlined />}
+                        onMouseDown={stop}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          data.onUnbindResource?.(b);
+                        }}
+                      />
+                    </Tooltip>
+                  )}
                 </div>
               ))}
             </div>
@@ -456,6 +473,47 @@ function createCustomActivityInStage({ assessment, stageId, siblingIds = [], ins
       flowPositions: { ...(assessment.flowPositions || {}), ...positionsBatch },
     },
   };
+}
+
+function detachBuiltinActivityResource({ assessment, folder, rule, parentStageKey, position }) {
+  if (!parentStageKey) {
+    return { ok: false, message: '未找到所属阶段，无法保留活动容器' };
+  }
+
+  const activityName = folder.name || DEFAULT_ACTIVITY_NAME;
+  const newKey = makeFlowKey('ca');
+  const next = { ...assessment };
+  const flowPositions = { ...(assessment.flowPositions || {}) };
+  flowPositions[newKey] = position || flowPositions[folder.key] || { x: ACTIVITY_NODE_X, y: STAGE_HEADER_H + ACTIVITY_NODE_TOP_GAP };
+  delete flowPositions[folder.key];
+
+  const parentOverrides = { ...(assessment.parentOverrides || {}) };
+  delete parentOverrides[folder.key];
+  parentOverrides[newKey] = parentStageKey;
+
+  const deletedNodes = new Set(assessment.deletedNodes || []);
+  deletedNodes.add(folder.key);
+
+  const nextRule = {
+    ...(rule || createDefaultActivityRule(newKey, activityName)),
+    key: makeFlowKey('ar'),
+    folderKey: newKey,
+    folderName: activityName,
+  };
+
+  next.customActivities = [
+    ...(assessment.customActivities || []),
+    { key: newKey, name: activityName, parentKey: parentStageKey, boundResources: [] },
+  ];
+  next.rules = [
+    ...(assessment.rules || []).filter((item) => item.folderKey !== folder.key),
+    nextRule,
+  ];
+  next.deletedNodes = [...deletedNodes];
+  next.flowPositions = flowPositions;
+  next.parentOverrides = parentOverrides;
+
+  return { ok: true, newKey, nextAssessment: next };
 }
 
 function getResourcePathLabel(resource, resources) {
@@ -992,6 +1050,44 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
                 });
               }
               onUpdateAssessment({ ...assessment, rules });
+            },
+            onUnbindResource: (boundResource) => {
+              if (!isDraft || !boundResource) return;
+              Modal.confirm({
+                title: '确认移除该绑定资料？',
+                content: act.isCustomActivity
+                  ? `「${boundResource.name}」将从该活动容器中移除。`
+                  : `「${boundResource.name}」将从当前活动中移除，资料本身仍会保留。`,
+                okText: '移除',
+                cancelText: '取消',
+                okButtonProps: { danger: true },
+                onOk: () => {
+                  if (act.isCustomActivity) {
+                    const customActivities = (assessment.customActivities || []).map((ca) => {
+                      if (ca.key !== act.key) return ca;
+                      return { ...ca, boundResources: (ca.boundResources || []).filter((item) => item.key !== boundResource.key) };
+                    });
+                    onUpdateAssessment({ ...assessment, customActivities });
+                    message.success(`已移除「${boundResource.name}」`);
+                    return;
+                  }
+
+                  const detachResult = detachBuiltinActivityResource({
+                    assessment,
+                    folder: act,
+                    rule,
+                    parentStageKey: stage.key,
+                    position: { x: ACTIVITY_NODE_X, y: computedActY.get(act.key) ?? (HEADER_H + ACTIVITY_NODE_TOP_GAP + aIdx * ACT_H) },
+                  });
+                  if (!detachResult.ok) {
+                    message.warning(detachResult.message);
+                    return;
+                  }
+                  setSelectedActivityKey(detachResult.newKey);
+                  onUpdateAssessment(detachResult.nextAssessment);
+                  message.success(`已解绑「${boundResource.name}」，并保留空活动容器`);
+                },
+              });
             },
             onDelete: () => {
               if (!isDraft) return;
@@ -2041,43 +2137,19 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
           if (isCustomActivity) return;
           const currentNode = nodes.find((node) => node.id === selectedActivityKey);
           const parentStageKey = currentNode?.parentNode || assessment.parentOverrides?.[folder.key] || folder.parentKey;
-          if (!parentStageKey) {
-            message.warning('未找到所属阶段，无法保留活动容器');
+          const detachResult = detachBuiltinActivityResource({
+            assessment,
+            folder,
+            rule,
+            parentStageKey,
+            position: currentNode?.position,
+          });
+          if (!detachResult.ok) {
+            message.warning(detachResult.message);
             return;
           }
-          const newKey = makeFlowKey('ca');
-          const next = { ...assessment };
-          const flowPositions = { ...(assessment.flowPositions || {}) };
-          flowPositions[newKey] = currentNode?.position || flowPositions[folder.key] || { x: ACTIVITY_NODE_X, y: STAGE_HEADER_H + ACTIVITY_NODE_TOP_GAP };
-          delete flowPositions[folder.key];
-
-          const parentOverrides = { ...(assessment.parentOverrides || {}) };
-          delete parentOverrides[folder.key];
-          parentOverrides[newKey] = parentStageKey;
-
-          const deletedNodes = new Set(assessment.deletedNodes || []);
-          deletedNodes.add(folder.key);
-
-          const nextRule = {
-            ...rule,
-            key: makeFlowKey('ar'),
-            folderKey: newKey,
-            folderName: folder.name || DEFAULT_ACTIVITY_NAME,
-          };
-
-          next.customActivities = [
-            ...(assessment.customActivities || []),
-            { key: newKey, name: folder.name || DEFAULT_ACTIVITY_NAME, parentKey: parentStageKey, boundResources: [] },
-          ];
-          next.rules = [
-            ...(assessment.rules || []).filter((item) => item.folderKey !== folder.key),
-            nextRule,
-          ];
-          next.deletedNodes = [...deletedNodes];
-          next.flowPositions = flowPositions;
-          next.parentOverrides = parentOverrides;
-          setSelectedActivityKey(newKey);
-          onUpdateAssessment(next);
+          setSelectedActivityKey(detachResult.newKey);
+          onUpdateAssessment(detachResult.nextAssessment);
           message.success(`已解绑「${folder.name}」，并保留空活动容器`);
         };
         const removeCurrentActivityFromCanvas = () => {

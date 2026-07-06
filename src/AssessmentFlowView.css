@@ -378,6 +378,20 @@
   overflow: hidden;
   text-overflow: ellipsis;
   flex: 1;
+  min-width: 0;
+}
+.flow-activity-binding-remove.ant-btn {
+  flex-shrink: 0;
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0;
+  color: #a3acba;
+  opacity: 0.72;
+}
+.flow-activity-binding-remove.ant-btn:hover {
+  opacity: 1;
+  color: #ff4d4f;
 }
 
 .flow-view-toolbar {
