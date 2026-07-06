@@ -2037,6 +2037,49 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
         };
         const pc = rule.passCondition || { metric: '完成率', op: '>=', value: 80 };
         const updatePc = (patch) => handleRuleChange(selectedActivityKey, 'passCondition', { ...pc, ...patch });
+        const detachBuiltinResourceAsEmptyActivity = () => {
+          if (isCustomActivity) return;
+          const currentNode = nodes.find((node) => node.id === selectedActivityKey);
+          const parentStageKey = currentNode?.parentNode || assessment.parentOverrides?.[folder.key] || folder.parentKey;
+          if (!parentStageKey) {
+            message.warning('未找到所属阶段，无法保留活动容器');
+            return;
+          }
+          const newKey = makeFlowKey('ca');
+          const next = { ...assessment };
+          const flowPositions = { ...(assessment.flowPositions || {}) };
+          flowPositions[newKey] = currentNode?.position || flowPositions[folder.key] || { x: ACTIVITY_NODE_X, y: STAGE_HEADER_H + ACTIVITY_NODE_TOP_GAP };
+          delete flowPositions[folder.key];
+
+          const parentOverrides = { ...(assessment.parentOverrides || {}) };
+          delete parentOverrides[folder.key];
+          parentOverrides[newKey] = parentStageKey;
+
+          const deletedNodes = new Set(assessment.deletedNodes || []);
+          deletedNodes.add(folder.key);
+
+          const nextRule = {
+            ...rule,
+            key: makeFlowKey('ar'),
+            folderKey: newKey,
+            folderName: folder.name || DEFAULT_ACTIVITY_NAME,
+          };
+
+          next.customActivities = [
+            ...(assessment.customActivities || []),
+            { key: newKey, name: folder.name || DEFAULT_ACTIVITY_NAME, parentKey: parentStageKey, boundResources: [] },
+          ];
+          next.rules = [
+            ...(assessment.rules || []).filter((item) => item.folderKey !== folder.key),
+            nextRule,
+          ];
+          next.deletedNodes = [...deletedNodes];
+          next.flowPositions = flowPositions;
+          next.parentOverrides = parentOverrides;
+          setSelectedActivityKey(newKey);
+          onUpdateAssessment(next);
+          message.success(`已解绑「${folder.name}」，并保留空活动容器`);
+        };
         const removeCurrentActivityFromCanvas = () => {
           const next = { ...assessment };
           if (isCustomActivity) {
@@ -2230,7 +2273,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
                               okText: '移除',
                               cancelText: '取消',
                               okButtonProps: { danger: true },
-                              onOk: removeCurrentActivityFromCanvas,
+                              onOk: detachBuiltinResourceAsEmptyActivity,
                             });
                           }}
                         />
