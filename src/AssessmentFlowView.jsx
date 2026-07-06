@@ -10,8 +10,8 @@ import ReactFlow, {
   Position,
   MarkerType,
 } from 'reactflow';
-import { InputNumber, Select, Tooltip, Modal, Input, Button, Radio, message, Popconfirm, Divider } from 'antd';
-import { FolderOutlined, AppstoreOutlined, DeleteOutlined, ClearOutlined, CloseOutlined, EditOutlined, FileOutlined, DatabaseOutlined, CopyOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
+import { InputNumber, Select, Tooltip, Modal, Input, Button, Radio, message, Popconfirm, Divider, Dropdown } from 'antd';
+import { FolderOutlined, AppstoreOutlined, DeleteOutlined, ClearOutlined, CloseOutlined, EditOutlined, FileOutlined, DatabaseOutlined, CopyOutlined, ArrowUpOutlined, ArrowDownOutlined, PlusOutlined, MoreOutlined } from '@ant-design/icons';
 import 'reactflow/dist/style.css';
 import './AssessmentFlowView.css';
 
@@ -61,6 +61,16 @@ function collectResourceTypes(payload, resources) {
 // 阶段节点（顶级文件夹） - 容器式，包含活动子节点
 function StageNode({ data, selected }) {
   const stop = (e) => e.stopPropagation();
+  const stageMenuItems = [
+    { key: 'addActivity', icon: <PlusOutlined />, label: '添加活动容器' },
+    { type: 'divider' },
+    { key: 'deleteStage', icon: <DeleteOutlined />, danger: true, label: '删除阶段容器' },
+  ];
+  const handleStageMenuClick = ({ key, domEvent }) => {
+    domEvent?.stopPropagation?.();
+    if (key === 'addActivity') data.onAddActivity?.();
+    if (key === 'deleteStage') data.onDelete?.();
+  };
   return (
     <div className={`flow-stage-container ${data.isDropTarget ? 'is-drop-target' : ''} ${selected ? 'is-selected' : ''}`}>
       <Handle type="target" position={Position.Left} style={{ background: '#1677ff' }} />
@@ -69,18 +79,27 @@ function StageNode({ data, selected }) {
         <span className="flow-stage-title">{data.label}</span>
         <span className="flow-stage-meta-inline">{data.activityCount} 个活动 · 总权重 {data.totalWeight}%</span>
       </div>
+      {data.isDraft && (
+        <div className="flow-stage-menu-trigger nodrag nopan" onMouseDown={stop} onClick={stop}>
+          <Dropdown
+            trigger={['click']}
+            placement="bottomRight"
+            menu={{ items: stageMenuItems, onClick: handleStageMenuClick }}
+            getPopupContainer={() => document.body}
+          >
+            <Button
+              type="text"
+              size="small"
+              icon={<MoreOutlined />}
+              className="flow-stage-more-btn"
+              onClick={stop}
+              title="阶段操作"
+            />
+          </Dropdown>
+        </div>
+      )}
       {data.isDropTarget && (
         <div className="flow-stage-snap-tip">松开鼠标以吸附到槽位</div>
-      )}
-      {data.isDraft && data.onDelete && (
-        <div
-          className="flow-node-delete-badge nodrag nopan"
-          title="删除阶段容器"
-          onMouseDown={stop}
-          onClick={(e) => { e.stopPropagation(); data.onDelete(); }}
-        >
-          <CloseOutlined />
-        </div>
       )}
       <Handle type="source" position={Position.Right} style={{ background: '#1677ff' }} />
     </div>
@@ -233,6 +252,60 @@ function formatRuleLabel(rule) {
 }
 
 const DEFAULT_RULE = { type: 'none', threshold: 80, note: '' };
+const DEFAULT_ACTIVITY_NAME = '新活动';
+const STAGE_NODE_WIDTH = 240;
+const ACTIVITY_NODE_X = 1;
+const ACTIVITY_NODE_WIDTH = STAGE_NODE_WIDTH - ACTIVITY_NODE_X * 2;
+const ACTIVITY_NODE_TOP_GAP = 6;
+const STAGE_HEADER_H = 54;
+const ACTIVITY_SLOT_H = 150;
+
+function makeFlowKey(prefix) {
+  return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+}
+
+function createDefaultActivityRule(folderKey, folderName = DEFAULT_ACTIVITY_NAME) {
+  return {
+    key: makeFlowKey('ar'),
+    folderKey,
+    folderName,
+    activityType: '',
+    weight: 0,
+    passCondition: { metric: '完成率', op: '>=', value: 80 },
+    required: true,
+  };
+}
+
+function createCustomActivityInStage({ assessment, stageId, siblingIds = [], insertIndex = siblingIds.length }) {
+  const newKey = makeFlowKey('ca');
+  const safeIndex = Math.max(0, Math.min(insertIndex, siblingIds.length));
+  const order = [
+    ...siblingIds.slice(0, safeIndex),
+    newKey,
+    ...siblingIds.slice(safeIndex),
+  ];
+  const positionsBatch = {};
+  order.forEach((id, index) => {
+    positionsBatch[id] = { x: ACTIVITY_NODE_X, y: STAGE_HEADER_H + ACTIVITY_NODE_TOP_GAP + index * ACTIVITY_SLOT_H };
+  });
+
+  return {
+    newKey,
+    nextAssessment: {
+      ...assessment,
+      customActivities: [
+        ...(assessment.customActivities || []),
+        { key: newKey, name: DEFAULT_ACTIVITY_NAME, parentKey: stageId, boundResources: [] },
+      ],
+      rules: [
+        ...(assessment.rules || []),
+        createDefaultActivityRule(newKey, DEFAULT_ACTIVITY_NAME),
+      ],
+      parentOverrides: { ...(assessment.parentOverrides || {}), [newKey]: stageId },
+      flowPositions: { ...(assessment.flowPositions || {}), ...positionsBatch },
+    },
+  };
+}
 
 function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment, onSelectFolder }) {
   const [editingEdge, setEditingEdge] = useState(null);
@@ -361,7 +434,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
       const totalWeight = stageActivityRules.reduce((sum, r) => sum + (r.weight || 0), 0);
 
       // 阶段容器尺寸：高度随活动数量动态伸缩
-      const STAGE_WIDTH = 240;
+      const STAGE_WIDTH = STAGE_NODE_WIDTH;
       const HEADER_H = 54;
       const ACT_H = 150; // 活动节点高度估算
       const ACT_VISUAL_H = 144; // 活动卡实际渲染高度（header+body 3行+padding）
@@ -388,7 +461,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
       });
       const actOrderIndexMap = new Map(sortedActs.map((a, idx) => [a.key, idx]));
       const computedActY = new Map();
-      let cursorY = HEADER_H;
+      let cursorY = HEADER_H + ACTIVITY_NODE_TOP_GAP;
       sortedActs.forEach((a, idx) => {
         computedActY.set(a.key, cursorY);
         cursorY += computeActVisualH(a);
@@ -409,6 +482,18 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
           activityCount: activities.length,
           totalWeight,
           isDraft,
+          onAddActivity: () => {
+            if (!isDraft) return;
+            const { newKey, nextAssessment } = createCustomActivityInStage({
+              assessment,
+              stageId: stage.key,
+              siblingIds: sortedActs.map((a) => a.key),
+            });
+            onUpdateAssessment(nextAssessment);
+            setSelectedStageKey(null);
+            setSelectedActivityKey(newKey);
+            message.success(`已在「${stage.name || '阶段'}」内新增空活动容器`);
+          },
           onDelete: () => {
             if (!isDraft) return;
             const next = { ...assessment };
@@ -458,7 +543,8 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
           id: act.key,
           type: 'activity',
           parentNode: stage.key,
-          position: { x: 20, y: computedActY.get(act.key) ?? (HEADER_H + aIdx * ACT_H) },
+          position: { x: ACTIVITY_NODE_X, y: computedActY.get(act.key) ?? (HEADER_H + ACTIVITY_NODE_TOP_GAP + aIdx * ACT_H) },
+          style: { width: ACTIVITY_NODE_WIDTH },
           deletable: false,
           data: {
             label: act.name,
@@ -477,7 +563,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
               [nextOrder[actOrderIndex - 1], nextOrder[actOrderIndex]] = [nextOrder[actOrderIndex], nextOrder[actOrderIndex - 1]];
               const flowPositions = { ...(assessment.flowPositions || {}) };
               nextOrder.forEach((key, idx) => {
-                flowPositions[key] = { ...(flowPositions[key] || {}), x: 20, y: HEADER_H + idx * ACT_H };
+                flowPositions[key] = { ...(flowPositions[key] || {}), x: ACTIVITY_NODE_X, y: HEADER_H + ACTIVITY_NODE_TOP_GAP + idx * ACT_H };
               });
               onUpdateAssessment({ ...assessment, flowPositions });
               message.success(`已将「${act.name || '活动'}」上移一位`);
@@ -488,7 +574,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
               [nextOrder[actOrderIndex], nextOrder[actOrderIndex + 1]] = [nextOrder[actOrderIndex + 1], nextOrder[actOrderIndex]];
               const flowPositions = { ...(assessment.flowPositions || {}) };
               nextOrder.forEach((key, idx) => {
-                flowPositions[key] = { ...(flowPositions[key] || {}), x: 20, y: HEADER_H + idx * ACT_H };
+                flowPositions[key] = { ...(flowPositions[key] || {}), x: ACTIVITY_NODE_X, y: HEADER_H + ACTIVITY_NODE_TOP_GAP + idx * ACT_H };
               });
               onUpdateAssessment({ ...assessment, flowPositions });
               message.success(`已将「${act.name || '活动'}」下移一位`);
@@ -625,7 +711,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
   }, [isDraft, setNodes]);
 
   // 拖动中：实时检测活动中心落在哪个阶段内，切换高亮
-  const ACTIVITY_W = 200;
+  const ACTIVITY_W = ACTIVITY_NODE_WIDTH;
   const ACTIVITY_H_VISUAL = 140;
   const HEADER_H = 54;
   const SLOT_H = 150;
@@ -713,7 +799,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
         .sort((a, b) => (a.position?.y ?? 0) - (b.position?.y ?? 0));
       const order = [...oldSiblings, { id: node.id }];
       order.forEach((n, i) => {
-        positionsToWrite[n.id] = { x: 20, y: HEADER_H + i * SLOT_H };
+        positionsToWrite[n.id] = { x: ACTIVITY_NODE_X, y: HEADER_H + ACTIVITY_NODE_TOP_GAP + i * SLOT_H };
       });
       newParentId = parentStage.id;
     } else {
@@ -747,7 +833,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
       ].sort((a, b) => a.y - b.y);
 
       targetAll.forEach((n, i) => {
-        positionsToWrite[n.id] = { x: 20, y: HEADER_H + i * SLOT_H };
+        positionsToWrite[n.id] = { x: ACTIVITY_NODE_X, y: HEADER_H + ACTIVITY_NODE_TOP_GAP + i * SLOT_H };
       });
 
       // 跨阶段时，原阶段剩余活动也重排序避免空隔
@@ -756,7 +842,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
           .filter((n) => n.type === 'activity' && n.id !== node.id && n.parentNode === parentStage.id)
           .sort((a, b) => (a.position?.y ?? 0) - (b.position?.y ?? 0));
         oldSiblings.forEach((n, i) => {
-          positionsToWrite[n.id] = { x: 20, y: HEADER_H + i * SLOT_H };
+          positionsToWrite[n.id] = { x: ACTIVITY_NODE_X, y: HEADER_H + ACTIVITY_NODE_TOP_GAP + i * SLOT_H };
         });
       }
     }
@@ -1153,45 +1239,21 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
           message.warning('「活动容器」仅能拖入「阶段容器」内，请拖到某个阶段内部');
           return;
         }
-        const newKey = `ca_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-        const newCustomAct = { key: newKey, name: '新活动', parentKey: hitStage.id, boundResources: [] };
-        const next = { ...assessment };
-        next.customActivities = [...(assessment.customActivities || []), newCustomAct];
-        // 初始化一条默认规则
-        next.rules = [
-          ...(assessment.rules || []),
-          {
-            key: `ar_${Date.now()}`,
-            folderKey: newKey,
-            folderName: '新活动',
-            activityType: '',
-            weight: 0,
-            passCondition: { metric: '完成率', op: '>=', value: 80 },
-            required: true,
-          },
-        ];
         // 插入到阶段内末位
-        const HEADER_H = 54;
-        const SLOT_H = 150;
         const allNodes = rfInstance.getNodes();
         const siblings = allNodes
           .filter((n) => n.type === 'activity' && n.parentNode === hitStage.id)
           .sort((a, b) => (a.position.y ?? 0) - (b.position.y ?? 0));
         const localY = position.y - hitStage.position.y;
-        let insertIdx = siblings.findIndex((s) => localY < (s.position.y ?? 0) + SLOT_H / 2);
+        let insertIdx = siblings.findIndex((s) => localY < (s.position.y ?? 0) + ACTIVITY_SLOT_H / 2);
         if (insertIdx === -1) insertIdx = siblings.length;
-        const order = [
-          ...siblings.slice(0, insertIdx).map((s) => ({ id: s.id })),
-          { id: newKey },
-          ...siblings.slice(insertIdx).map((s) => ({ id: s.id })),
-        ];
-        const positionsBatch = {};
-        order.forEach((n, i) => {
-          positionsBatch[n.id] = { x: 20, y: HEADER_H + i * SLOT_H };
+        const { newKey, nextAssessment } = createCustomActivityInStage({
+          assessment,
+          stageId: hitStage.id,
+          siblingIds: siblings.map((s) => s.id),
+          insertIndex: insertIdx,
         });
-        next.parentOverrides = { ...(next.parentOverrides || {}), [newKey]: hitStage.id };
-        next.flowPositions = { ...(next.flowPositions || {}), ...positionsBatch };
-        onUpdateAssessment(next);
+        onUpdateAssessment(nextAssessment);
         setSelectedStageKey(null);
         setSelectedActivityKey(newKey);
         message.success(`已在「${hitStage.data?.label || '阶段'}」内新增空活动容器`);
@@ -1218,7 +1280,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
         const parent = stageById.get(n.parentNode);
         const ax = (parent?.position?.x ?? 0) + (n.position?.x ?? 0);
         const ay = (parent?.position?.y ?? 0) + (n.position?.y ?? 0);
-        const aw = n.width ?? 200;
+        const aw = n.width ?? ACTIVITY_NODE_WIDTH;
         const ah = n.height ?? 150;
         return position.x >= ax && position.x <= ax + aw && position.y >= ay && position.y <= ay + ah;
       });
@@ -1370,7 +1432,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
           ...siblings.slice(insertIdx),
         ];
         order.forEach((n, i) => {
-          positionsBatch[n.id] = { x: 20, y: HEADER_H + i * SLOT_H };
+          positionsBatch[n.id] = { x: ACTIVITY_NODE_X, y: HEADER_H + ACTIVITY_NODE_TOP_GAP + i * SLOT_H };
         });
         next.parentOverrides = { ...(next.parentOverrides || {}), [payload.key]: hitStage.id };
         // 若该文件夹之前被提升为阶段，现在恢复为活动
