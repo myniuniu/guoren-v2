@@ -69,7 +69,16 @@ function StageNode({ data, selected }) {
   const handleStageMenuClick = ({ key, domEvent }) => {
     domEvent?.stopPropagation?.();
     if (key === 'addActivity') data.onAddActivity?.();
-    if (key === 'deleteStage') data.onDelete?.();
+    if (key === 'deleteStage') {
+      Modal.confirm({
+        title: '确认删除该阶段容器？',
+        content: `「${data.label || '阶段'}」将从当前考核画布中删除，相关归属关系会一并清理。`,
+        okText: '删除',
+        cancelText: '取消',
+        okButtonProps: { danger: true },
+        onOk: () => data.onDelete?.(),
+      });
+    }
   };
   return (
     <div className={`flow-stage-container ${data.isDropTarget ? 'is-drop-target' : ''} ${selected ? 'is-selected' : ''}`}>
@@ -119,9 +128,21 @@ function ActivityNode({ data, selected }) {
       {data.isDraft && data.onDelete && (
         <div
           className="flow-node-delete-badge nodrag nopan"
-          title="从画布移除该活动"
+          title={data.isCustomActivity ? '删除活动容器' : '从画布移除该活动'}
           onMouseDown={stop}
-          onClick={(e) => { e.stopPropagation(); data.onDelete(); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            Modal.confirm({
+              title: data.isCustomActivity ? '确认删除该活动容器？' : '确认从画布移除该活动？',
+              content: data.isCustomActivity
+                ? `「${data.label || '活动'}」及其已绑定资料、规则将被删除。`
+                : `「${data.label || '活动'}」将从当前考核画布移除，资料仍会保留。`,
+              okText: data.isCustomActivity ? '删除' : '移除',
+              cancelText: '取消',
+              okButtonProps: { danger: true },
+              onOk: () => data.onDelete?.(),
+            });
+          }}
         >
           <CloseOutlined />
         </div>
@@ -637,6 +658,8 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
               if (parentOverrides[k] === stage.key) delete parentOverrides[k];
             });
             next.parentOverrides = parentOverrides;
+            setSelectedStageKey(null);
+            setSelectedActivityKey(null);
             onUpdateAssessment(next);
             message.success(`已删除「${stage.name || '阶段'}」`);
           },
@@ -757,15 +780,21 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
             onDelete: () => {
               if (!isDraft) return;
               const next = { ...assessment };
-              next.deletedNodes = [...(assessment.deletedNodes || []), act.key];
+              if (act.isCustomActivity) {
+                next.customActivities = (assessment.customActivities || []).filter((ca) => ca.key !== act.key);
+                next.rules = (assessment.rules || []).filter((r) => r.folderKey !== act.key);
+              } else if (!(assessment.deletedNodes || []).includes(act.key)) {
+                next.deletedNodes = [...(assessment.deletedNodes || []), act.key];
+              }
               const flowPositions = { ...(assessment.flowPositions || {}) };
               delete flowPositions[act.key];
               next.flowPositions = flowPositions;
               const parentOverrides = { ...(assessment.parentOverrides || {}) };
               delete parentOverrides[act.key];
               next.parentOverrides = parentOverrides;
+              setSelectedActivityKey(null);
               onUpdateAssessment(next);
-              message.success(`已从画布移除「${act.name || '活动'}」`);
+              message.success(`已${act.isCustomActivity ? '删除' : '从画布移除'}「${act.name || '活动'}」`);
             },
           },
           draggable: isDraft,
@@ -1292,7 +1321,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
     setSelectedActivityKey(null);
     setSelectedStageKey(null);
     onUpdateAssessment(next);
-    message.success('已清空画布，可从左侧资料区拖入节点重新组装');
+    message.success('已清空画布，可从资料面板拖入节点重新组装');
   };
 
   // 拖拽资料到画布
@@ -1386,7 +1415,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
       }
     }
 
-    // 其次处理从左侧资料区拖入的资源项
+    // 其次处理从资料面板拖入的资源项
     const raw = event.dataTransfer.getData('application/assessment-resource');
     if (!raw) return;
     let payload;
@@ -1538,7 +1567,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
       onDrop={onDrop}
     >
       <div className="flow-view-tip">
-        <Tooltip title="拖动节点调整位置；拖拽节点右侧圆点到目标节点新增关联；点击活动节点打开详情；点击连线配置进入规则或删除；从左侧资料区拖拽项目到画布定位节点">
+        <Tooltip title="拖动节点调整位置；拖拽节点右侧圆点到目标节点新增关联；点击活动节点打开详情；点击连线配置进入规则或删除；从资料面板拖拽项目到画布定位节点">
           <span style={{ color: '#1677ff', cursor: 'help' }}>💡 操作说明</span>
         </Tooltip>
       </div>
@@ -1590,7 +1619,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
           </Button>
           <Popconfirm
             title="确定清空画布吗？"
-            description="将移除当前画布上的所有节点、连线及进入规则。可重新从左侧拖入资料重建。"
+            description="将移除当前画布上的所有节点、连线及进入规则。可重新从资料面板拖入资料重建。"
             okText="确定清空"
             cancelText="取消"
             okButtonProps={{ danger: true }}
@@ -1619,7 +1648,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
         onConnect={onConnect}
         isValidConnection={isValidConnection}
         onEdgesDelete={onEdgesDelete}
-        deleteKeyCode={isDraft ? ['Delete', 'Backspace'] : null}
+        deleteKeyCode={null}
         onNodeDragStart={onNodeDragStart}
         onNodeDrag={onNodeDrag}
         onNodeDragStop={onNodeDragStop}
@@ -1847,11 +1876,13 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
                           {b.isFolder ? <FolderOutlined /> : <FileOutlined />}
                           <span className="inspector-binding-name" title={b.name}>{b.name}</span>
                           {isDraft && (
-                            <Button
-                              type="text"
-                              size="small"
-                              icon={<CloseOutlined />}
-                              onClick={() => {
+                            <Popconfirm
+                              title="确认移除该绑定资料？"
+                              description={`「${b.name}」将从该活动容器中移除。`}
+                              okText="移除"
+                              cancelText="取消"
+                              okButtonProps={{ danger: true }}
+                              onConfirm={() => {
                                 const customActivities = (assessment.customActivities || []).map((ca) => {
                                   if (ca.key !== selectedActivityKey) return ca;
                                   return { ...ca, boundResources: (ca.boundResources || []).filter((x) => x.key !== b.key) };
@@ -1859,7 +1890,13 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
                                 onUpdateAssessment({ ...assessment, customActivities });
                                 message.success(`已移除「${b.name}」`);
                               }}
-                            />
+                            >
+                              <Button
+                                type="text"
+                                size="small"
+                                icon={<CloseOutlined />}
+                              />
+                            </Popconfirm>
                           )}
                         </div>
                       ))}

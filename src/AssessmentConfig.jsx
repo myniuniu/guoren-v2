@@ -107,7 +107,7 @@ function generateAIResponse(userMsg, resources, currentAssessment) {
       newAssessment.rules = rules;
     }
     const stageNames = stages.map((s) => s.name).join('、');
-    replyText = `根据您的培训目标，我已基于当前资料结构生成考核方案：\n\n📋 培训阶段：${stageNames}\n⏱ 总学时：${newAssessment.totalHours} 学时\n✅ 及格分：${newAssessment.passScore} 分\n🏆 考核通过${newAssessment.certificate ? '发放证书' : '不发证书'}\n📊 共 ${newAssessment.rules.length} 项考核规则\n\n方案已在中间区域展示，点击左侧目录可查看详细配置。`;
+    replyText = `根据您的培训目标，我已基于当前资料结构生成考核方案：\n\n📋 培训阶段：${stageNames}\n⏱ 总学时：${newAssessment.totalHours} 学时\n✅ 及格分：${newAssessment.passScore} 分\n🏆 考核通过${newAssessment.certificate ? '发放证书' : '不发证书'}\n📊 共 ${newAssessment.rules.length} 项考核规则\n\n方案已在中间区域展示，点击画布节点可查看详细配置。`;
   }
   return { reply: replyText, assessment: newAssessment };
 }
