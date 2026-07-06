@@ -64,6 +64,7 @@ import DevDocsPage from './appCenter/DevDocsPage';
 import DevBackendPage from './appCenter/DevBackendPage';
 import DmsModule from './dms/DmsModule';
 import IntegrationModule from './integration/IntegrationModule';
+import KnowledgeSpaceModule from './knowledgeSpace/KnowledgeSpaceModule';
 import KnowledgeGraphModule from './knowledgeGraph/KnowledgeGraphModule';
 import CourseStudioModule from './courseStudio/CourseStudioModule';
 import MyProfileModule from './myProfile/MyProfileModule';
@@ -1045,6 +1046,8 @@ function App() {
       openResourceLibraryPage();
     } else if (key === 'resource-parse') {
       setCurrentPage('resource-parse');
+    } else if (key === 'knowledge-space') {
+      setCurrentPage('knowledge-space');
     } else if (key === 'knowledge-graph') {
       openKnowledgeGraphPage();
     } else if (key === 'course-studio') {
@@ -1104,6 +1107,7 @@ function App() {
       currentPage === 'certificate-issue' ||
       currentPage === 'resource-lib' ||
       currentPage === 'resource-parse' ||
+      currentPage === 'knowledge-space' ||
       currentPage === 'knowledge-graph' ||
       currentPage === 'course-studio' ||
       currentPage === 'archive' ||
@@ -1232,6 +1236,8 @@ function App() {
         <ResourceLibrary onOpenKnowledgeGraph={openKnowledgeGraphPage} />
       ) : currentPage === 'resource-parse' ? (
         <ResourceParseStatus />
+      ) : currentPage === 'knowledge-space' ? (
+        <KnowledgeSpaceModule />
       ) : currentPage === 'knowledge-graph' ? (
         <KnowledgeGraphModule
           entryGraphId={knowledgeGraphEntry?.graphId || null}
