@@ -1596,11 +1596,11 @@
   box-shadow: none;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  color: #30343a;
+  color: #1f2937;
 }
 
 .messages-chat-bubble.is-lucky {
-  color: #233246;
+  color: #172335;
 }
 
 .messages-chat-row.is-self .messages-chat-bubble {
@@ -1610,7 +1610,7 @@
   box-shadow: none;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  color: #334255;
+  color: #1f3650;
   text-shadow: none;
   font-weight: 500;
 }

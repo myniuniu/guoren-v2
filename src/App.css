@@ -286,6 +286,7 @@
   min-width: 16px;
   height: 16px;
   padding: 0 4px;
+  box-sizing: border-box;
   border-radius: 999px;
   background: #ff4d4f;
   border: 2px solid rgba(255, 255, 255, 0.94);

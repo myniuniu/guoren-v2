@@ -27,7 +27,7 @@ import {
   markLuckyConversationRead,
   readLuckyConversation,
 } from './luckyPushStore';
-import { getConversationsUnreadCount } from './messageUnread';
+import { getConversationsUnreadCount, INITIAL_MESSAGE_UNREAD_BY_CONVERSATION } from './messageUnread';
 import { trackEvent, trackRecommendationEvent } from '../shared/analytics';
 import './MessagesModule.css';
 
@@ -244,7 +244,7 @@ const INITIAL_CONVERSATIONS = [
     subtitle: '产品研发群 · 12 人',
     preview: 'WK 08:45 - 09:00，今天先同步验收和联调阻塞项。',
     time: '10:50',
-    unread: 2,
+    unread: INITIAL_MESSAGE_UNREAD_BY_CONVERSATION['group-standup'],
     avatarText: '早',
     avatarColor: 'linear-gradient(135deg, #ffb347 0%, #ff7e5f 100%)',
     description: '日常工作群，聚焦排期、风险和今日任务同步。',
@@ -304,7 +304,7 @@ const INITIAL_CONVERSATIONS = [
     subtitle: '应用接入 · 18 人',
     preview: 'AgentSeek CLI 快速构建和运行模板应用，晚些把视频整理一下。',
     time: '09:04',
-    unread: 5,
+    unread: INITIAL_MESSAGE_UNREAD_BY_CONVERSATION['group-agentseek'],
     avatarText: 'AS',
     avatarColor: 'linear-gradient(135deg, #4cc9f0 0%, #4361ee 100%)',
     description: 'AgentSeek 相关的能力验证与工程联调群。',
