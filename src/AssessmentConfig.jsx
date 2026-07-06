@@ -122,6 +122,32 @@ const activityTypeOptions = [
 ];
 const activityTypeLabel = { video: '视频课', live: '直播课', exam: '考试', offline: '线下集训', other: '通用' };
 const activityTypeColor = { video: 'blue', live: 'cyan', exam: 'red', offline: 'orange', other: 'default' };
+const DEFAULT_RESOURCE_DRAWER_POSITION = Object.freeze({ left: 16, top: 52 });
+
+function clampNumber(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function isSameDrawerPosition(left, right) {
+  return Number(left?.left || 0) === Number(right?.left || 0)
+    && Number(left?.top || 0) === Number(right?.top || 0);
+}
+
+function clampResourceDrawerPosition(position, drawerNode, hostNode) {
+  const hostWidth = Math.max(0, hostNode?.clientWidth || 0);
+  const hostHeight = Math.max(0, hostNode?.clientHeight || 0);
+  const drawerWidth = Math.max(0, drawerNode?.offsetWidth || 330);
+  const drawerHeight = Math.max(0, drawerNode?.offsetHeight || 360);
+  const minLeft = 12;
+  const minTop = 12;
+  const maxLeft = Math.max(minLeft, hostWidth - drawerWidth - 12);
+  const maxTop = Math.max(minTop, hostHeight - drawerHeight - 12);
+
+  return {
+    left: clampNumber(Math.round(position?.left ?? DEFAULT_RESOURCE_DRAWER_POSITION.left), minLeft, maxLeft),
+    top: clampNumber(Math.round(position?.top ?? DEFAULT_RESOURCE_DRAWER_POSITION.top), minTop, maxTop),
+  };
+}
 
 function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUpdateAssessment, onUpdateChat, onOpenAddModal, onCreateFolder }) {
   const [inputValue, setInputValue] = useState('');
@@ -136,10 +162,15 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [resourceDrawerOpen, setResourceDrawerOpen] = useState(false);
+  const [resourceDrawerPosition, setResourceDrawerPosition] = useState(DEFAULT_RESOURCE_DRAWER_POSITION);
   const [rightCollapsed, setRightCollapsed] = useState(true);
   const [rightWidth, setRightWidth] = useState(360);
   const [activeBindingTarget, setActiveBindingTarget] = useState(null);
   const messagesEndRef = useRef(null);
+  const resourcePanelHostRef = useRef(null);
+  const resourceDrawerRef = useRef(null);
+  const resourceDrawerPositionRef = useRef(DEFAULT_RESOURCE_DRAWER_POSITION);
+  const resourceDrawerDragStateRef = useRef(null);
 
   const startResizeRight = (e) => {
     e.preventDefault();
@@ -165,6 +196,39 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
   useEffect(() => { setLocalAssessment(assessment || { totalHours: 0, passScore: 60, certificate: false, rules: [] }); }, [assessment]);
   useEffect(() => { setMessages(assessmentChat || []); }, [assessmentChat]);
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, typing]);
+  useEffect(() => { resourceDrawerPositionRef.current = resourceDrawerPosition; }, [resourceDrawerPosition]);
+  useEffect(() => {
+    if (!resourceDrawerOpen) return undefined;
+
+    const clampPosition = () => {
+      const nextPosition = clampResourceDrawerPosition(
+        resourceDrawerPositionRef.current,
+        resourceDrawerRef.current,
+        resourcePanelHostRef.current,
+      );
+      setResourceDrawerPosition((current) => (isSameDrawerPosition(current, nextPosition) ? current : nextPosition));
+    };
+
+    clampPosition();
+    const hostNode = resourcePanelHostRef.current;
+    if (typeof ResizeObserver === 'undefined' || !hostNode) {
+      window.addEventListener('resize', clampPosition);
+      return () => window.removeEventListener('resize', clampPosition);
+    }
+
+    const observer = new ResizeObserver(clampPosition);
+    observer.observe(hostNode);
+    return () => observer.disconnect();
+  }, [resourceDrawerOpen]);
+  useEffect(() => () => {
+    const dragState = resourceDrawerDragStateRef.current;
+    if (!dragState) return;
+    window.removeEventListener('mousemove', dragState.onMove);
+    window.removeEventListener('mouseup', dragState.onUp);
+    document.body.style.userSelect = '';
+    document.body.style.cursor = '';
+    resourceDrawerRef.current?.classList.remove('is-dragging');
+  }, []);
   useEffect(() => {
     if (selectedFolderKey) {
       setActiveBindingTarget(null);
@@ -290,6 +354,52 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
     message.success('文件夹创建成功');
   };
 
+  const handleResourceDrawerHeadMouseDown = (event) => {
+    if (event.button !== 0) return;
+    const target = event.target instanceof Element ? event.target : null;
+    const interactiveTarget = target?.closest(
+      'button, input, .ant-input, .ant-input-affix-wrapper, .ant-select, .ant-dropdown-trigger, .panel-more-icon, .assessment-resource-drawer-action',
+    );
+    if (interactiveTarget) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const startPosition = resourceDrawerPositionRef.current;
+    const onMove = (moveEvent) => {
+      const nextPosition = clampResourceDrawerPosition({
+        left: startPosition.left + (moveEvent.clientX - startX),
+        top: startPosition.top + (moveEvent.clientY - startY),
+      }, resourceDrawerRef.current, resourcePanelHostRef.current);
+      resourceDrawerPositionRef.current = nextPosition;
+      if (resourceDrawerRef.current) {
+        resourceDrawerRef.current.style.left = `${nextPosition.left}px`;
+        resourceDrawerRef.current.style.top = `${nextPosition.top}px`;
+      }
+    };
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+      resourceDrawerDragStateRef.current = null;
+      resourceDrawerRef.current?.classList.remove('is-dragging');
+      setResourceDrawerPosition((current) => (
+        isSameDrawerPosition(current, resourceDrawerPositionRef.current)
+          ? current
+          : resourceDrawerPositionRef.current
+      ));
+    };
+
+    resourceDrawerDragStateRef.current = { onMove, onUp };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'grabbing';
+    resourceDrawerRef.current?.classList.add('is-dragging');
+  };
+
   const resourcePanelMenuItems = [
     {
       key: 'add-resource',
@@ -410,7 +520,7 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
     if (!selectedFolderKey) {
       // 汇总视图：流程画布充满中间区域
       return (
-        <div className="config-summary">
+        <div className="config-summary" ref={resourcePanelHostRef}>
           <AssessmentFlowView
             resources={resources}
             assessment={localAssessment}
@@ -469,8 +579,19 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
     }
 
     return (
-      <aside className="assessment-resource-drawer">
-        <div className="assessment-resource-drawer-head">
+      <aside
+        ref={resourceDrawerRef}
+        className="assessment-resource-drawer"
+        style={{
+          left: resourceDrawerPosition.left,
+          top: resourceDrawerPosition.top,
+        }}
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <div
+          className="assessment-resource-drawer-head"
+          onMouseDown={handleResourceDrawerHeadMouseDown}
+        >
           <span className="assessment-resource-drawer-title">资料</span>
           <div className="panel-header-actions">
             <Dropdown
