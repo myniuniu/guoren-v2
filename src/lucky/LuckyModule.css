@@ -281,18 +281,6 @@
   gap: 18px;
 }
 
-.lucky-surface-badge {
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 9px;
-  border-radius: 999px;
-  border: 1px solid rgba(59, 130, 246, 0.12);
-  background: rgba(255, 255, 255, 0.72);
-  color: #64748b;
-  font-size: 11px;
-}
-
 .lucky-workspace-card {
   flex: 1;
   min-height: 0;

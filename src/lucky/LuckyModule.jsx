@@ -229,7 +229,7 @@ function ShowcaseSection({ title, description, cards }) {
   );
 }
 
-function LuckyModule({ mode = 'workspace' }) {
+function LuckyModule() {
   const [sidebarWidth, setSidebarWidth] = useState(() => loadLuckySidebarWidth());
   const [activeSection, setActiveSection] = useState('library');
   const [sourceFilter, setSourceFilter] = useState('all');
@@ -297,7 +297,6 @@ function LuckyModule({ mode = 'workspace' }) {
 
   const sectionCopy = SECTION_COPY[activeSection];
   const showLibrary = activeSection === 'library';
-  const surfaceLabel = mode === 'backend' ? 'Lucky 后台' : 'Lucky';
   const handleOpenSaveModal = (item) => {
     setSavingItem(item);
     setSaveModalOpen(true);
@@ -383,8 +382,6 @@ function LuckyModule({ mode = 'workspace' }) {
 
       <main className="lucky-main">
         <div className="lucky-main-inner">
-          <div className="lucky-surface-badge">{surfaceLabel}</div>
-
           {showLibrary ? (
             <div className="lucky-workspace-card">
               <div className="lucky-page-header">
