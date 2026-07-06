@@ -119,34 +119,40 @@ function StageNode({ data, selected }) {
 function ActivityNode({ data, selected }) {
   const color = activityTypeColor[data.activityType ?? ''] || activityTypeColor.other;
   const stop = (e) => e.stopPropagation();
+  const activityMenuItems = [
+    { key: 'addAbove', icon: <PlusOutlined />, label: '上方添加活动' },
+    { key: 'addBelow', icon: <PlusOutlined />, label: '下方添加活动' },
+    { type: 'divider' },
+    {
+      key: 'deleteActivity',
+      icon: <DeleteOutlined />,
+      danger: true,
+      label: data.isCustomActivity ? '删除活动容器' : '删除活动',
+    },
+  ];
+  const handleActivityMenuClick = ({ key, domEvent }) => {
+    domEvent?.stopPropagation?.();
+    if (key === 'addAbove') data.onAddAbove?.();
+    if (key === 'addBelow') data.onAddBelow?.();
+    if (key === 'deleteActivity') {
+      Modal.confirm({
+        title: data.isCustomActivity ? '确认删除该活动容器？' : '确认删除该活动？',
+        content: data.isCustomActivity
+          ? `「${data.label || '活动'}」及其已绑定资料、规则将被删除。`
+          : `「${data.label || '活动'}」将从当前考核画布移除，资料仍会保留。`,
+        okText: '删除',
+        cancelText: '取消',
+        okButtonProps: { danger: true },
+        onOk: () => data.onDelete?.(),
+      });
+    }
+  };
   return (
     <div
       className={`flow-activity-node ${selected ? 'is-selected' : ''}`}
       style={selected ? { borderColor: '#1677ff', borderWidth: 2 } : undefined}
     >
       <Handle type="target" position={Position.Top} style={{ background: color, opacity: 0, pointerEvents: 'none' }} isConnectable={false} />
-      {data.isDraft && data.onDelete && (
-        <div
-          className="flow-node-delete-badge nodrag nopan"
-          title={data.isCustomActivity ? '删除活动容器' : '从画布移除该活动'}
-          onMouseDown={stop}
-          onClick={(e) => {
-            e.stopPropagation();
-            Modal.confirm({
-              title: data.isCustomActivity ? '确认删除该活动容器？' : '确认从画布移除该活动？',
-              content: data.isCustomActivity
-                ? `「${data.label || '活动'}」及其已绑定资料、规则将被删除。`
-                : `「${data.label || '活动'}」将从当前考核画布移除，资料仍会保留。`,
-              okText: data.isCustomActivity ? '删除' : '移除',
-              cancelText: '取消',
-              okButtonProps: { danger: true },
-              onOk: () => data.onDelete?.(),
-            });
-          }}
-        >
-          <CloseOutlined />
-        </div>
-      )}
       <div className="flow-activity-header">
         <div className="flow-activity-header-main">
           <AppstoreOutlined style={{ color }} />
@@ -180,6 +186,21 @@ function ActivityNode({ data, selected }) {
                 }}
               />
             </Tooltip>
+            <Dropdown
+              trigger={['click']}
+              placement="bottomRight"
+              menu={{ items: activityMenuItems, onClick: handleActivityMenuClick }}
+              getPopupContainer={() => document.body}
+            >
+              <Button
+                type="text"
+                size="small"
+                icon={<MoreOutlined />}
+                className="flow-activity-more-btn"
+                onClick={stop}
+                title="活动操作"
+              />
+            </Dropdown>
           </div>
         )}
       </div>
@@ -687,6 +708,19 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
       activities.forEach((act, aIdx) => {
         const rule = assessment.rules.find((r) => r.folderKey === act.key);
         const actOrderIndex = actOrderIndexMap.get(act.key) ?? aIdx;
+        const createAdjacentActivity = (insertIndex, directionLabel) => () => {
+          if (!isDraft) return;
+          const { newKey, nextAssessment } = createCustomActivityInStage({
+            assessment,
+            stageId: stage.key,
+            siblingIds: sortedActs.map((item) => item.key),
+            insertIndex,
+          });
+          onUpdateAssessment(nextAssessment);
+          setSelectedStageKey(null);
+          setSelectedActivityKey(newKey);
+          message.success(`已在「${act.name || '活动'}」${directionLabel}新增空活动容器`);
+        };
         nodes.push({
           id: act.key,
           type: 'activity',
@@ -705,6 +739,8 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
             isDraft,
             canMoveUp: actOrderIndex > 0,
             canMoveDown: actOrderIndex < sortedActs.length - 1,
+            onAddAbove: createAdjacentActivity(actOrderIndex, '上方'),
+            onAddBelow: createAdjacentActivity(actOrderIndex + 1, '下方'),
             onMoveUp: () => {
               if (!isDraft || actOrderIndex <= 0) return;
               const nextOrder = sortedActs.map((item) => item.key);

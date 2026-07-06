@@ -320,47 +320,6 @@
   cursor: pointer;
 }
 
-/* 节点右上角删除角标 */
-.flow-node-delete-badge {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #fff;
-  color: #ff4d4f;
-  border: 1px solid #ff4d4f;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  cursor: pointer;
-  z-index: 4;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s, transform 0.15s, background 0.15s;
-}
-
-.flow-node-delete-badge:hover {
-  background: #ff4d4f;
-  color: #fff;
-  transform: scale(1.08);
-}
-
-.flow-activity-node .flow-node-delete-badge {
-  top: 9px;
-  right: 10px;
-}
-
-.react-flow__node:hover > div > .flow-node-delete-badge,
-.react-flow__node:hover .flow-node-delete-badge,
-.flow-node-delete-badge:focus-within {
-  opacity: 1;
-  pointer-events: auto;
-}
-
 /* 阶段节点（容器式） */
 /* ReactFlow 默认 wrapper 在阶段/活动上不需要额外背景与边框 */
 .react-flow__node-stage,
@@ -558,10 +517,10 @@
   align-items: center;
   gap: 2px;
   flex-shrink: 0;
-  margin-right: 24px;
 }
 
-.flow-activity-sort-btn.ant-btn {
+.flow-activity-sort-btn.ant-btn,
+.flow-activity-more-btn.ant-btn {
   width: 20px;
   min-width: 20px;
   height: 20px;
@@ -569,7 +528,9 @@
   color: #8b94a3;
 }
 
-.flow-activity-sort-btn.ant-btn:hover:not(:disabled) {
+.flow-activity-sort-btn.ant-btn:hover:not(:disabled),
+.flow-activity-more-btn.ant-btn:hover,
+.flow-activity-more-btn.ant-btn:focus-visible {
   color: #1677ff;
   background: #e6f4ff;
 }
