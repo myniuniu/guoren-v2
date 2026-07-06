@@ -643,6 +643,9 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
             )}
           </div>
         </div>
+        <div className="assessment-resource-drawer-tip">
+          可直接拖动资料到活动容器
+        </div>
       </aside>
     );
   };
