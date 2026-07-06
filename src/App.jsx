@@ -89,7 +89,8 @@ import {
   sceneApi,
 } from './scene/api';
 import { getSceneThemeCoverStyle } from './scene/themeCovers';
-import { getLuckyConversationId } from './messages/luckyPushStore';
+import { getLuckyConversationId, getLuckyPushStoreEventName, readLuckyConversation } from './messages/luckyPushStore';
+import { getInitialMessagesUnreadCount } from './messages/messageUnread';
 import { setAnalyticsContext, trackEvent, trackPageView } from './shared/analytics';
 import './App.css';
 
@@ -401,6 +402,7 @@ function App() {
   const [agentQuotaEntryTab, setAgentQuotaEntryTab] = useState('plans');
   const [teacherEvaluationEntryContext, setTeacherEvaluationEntryContext] = useState(null);
   const [messageEntryConversationId, setMessageEntryConversationId] = useState(null);
+  const [messageUnreadCount, setMessageUnreadCount] = useState(() => getInitialMessagesUnreadCount());
   const [knowledgeGraphEntry, setKnowledgeGraphEntry] = useState(() => {
     const route = getInitialHashRoute();
     if ((route.page !== 'knowledge-graph' && route.page !== 'knowledge-graph-full') || !route.params.graphId) return null;
@@ -438,6 +440,7 @@ function App() {
   const siderMenuShellRef = useRef(null);
   const iconBarWidthRef = useRef(iconBarWidth);
   const sceneSiderWidthRef = useRef(sceneSiderWidth);
+  const luckyUnreadCountRef = useRef(Number(readLuckyConversation()?.unread) || 0);
   const handleToggleSceneSystemMenuShortcut = useCallback(async (menuKey, enabled) => {
     try {
       const nextKeys = await sceneApi.toggleSceneSystemMenuShortcut(menuKey, enabled);
@@ -465,17 +468,22 @@ function App() {
     [sceneSystemMenuShortcutKeys],
   );
   const iconBarItems = useMemo(() => {
+    const decoratedBaseItems = baseIconBarItems.map((item) => (
+      item.key === 'messages'
+        ? { ...item, badgeCount: messageUnreadCount }
+        : item
+    ));
     const sceneCategoryItems = sceneSystemMenuShortcutKeys.map((menuKey) => ({
       key: getSceneSystemMenuShortcutKey(menuKey),
       icon: getSceneMenuIcon(menuKey),
       label: sceneApi.getSceneMenuLabel(menuKey),
     }));
     return [
-      ...baseIconBarItems.slice(0, 1),
+      ...decoratedBaseItems.slice(0, 1),
       ...sceneCategoryItems,
-      ...baseIconBarItems.slice(1),
+      ...decoratedBaseItems.slice(1),
     ];
-  }, [sceneSystemMenuShortcutKeys]);
+  }, [messageUnreadCount, sceneSystemMenuShortcutKeys]);
   const menuItems = useMemo(() => {
     const baseItems = [
       {
@@ -762,6 +770,29 @@ function App() {
       product: 'guoren-v2',
       platform: 'web',
     });
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    const handleLuckyUnreadChange = () => {
+      const nextLuckyUnreadCount = Number(readLuckyConversation()?.unread) || 0;
+      setMessageUnreadCount((prev) => (
+        Math.max(0, prev - luckyUnreadCountRef.current + nextLuckyUnreadCount)
+      ));
+      luckyUnreadCountRef.current = nextLuckyUnreadCount;
+    };
+
+    const eventName = getLuckyPushStoreEventName();
+    window.addEventListener(eventName, handleLuckyUnreadChange);
+    return () => {
+      window.removeEventListener(eventName, handleLuckyUnreadChange);
+    };
+  }, []);
+
+  const handleMessageUnreadCountChange = useCallback((nextUnreadCount) => {
+    luckyUnreadCountRef.current = Number(readLuckyConversation()?.unread) || 0;
+    setMessageUnreadCount(Math.max(0, Number(nextUnreadCount) || 0));
   }, []);
 
   useEffect(() => {
@@ -1199,6 +1230,11 @@ function App() {
               onClick={() => handleIconBarClick(item.key)}
             >
               <span className="icon-bar-icon">{item.icon}</span>
+              {item.badgeCount > 0 ? (
+                <span className="icon-bar-unread-badge" aria-label={`${item.badgeCount} 条未读`}>
+                  {item.badgeCount > 99 ? '99+' : item.badgeCount}
+                </span>
+              ) : null}
               <span className="icon-bar-label">{item.label}</span>
             </div>
           ))}
@@ -1213,6 +1249,7 @@ function App() {
           initialConversationId={messageEntryConversationId}
           onNavigateToTeacherEvaluation={openTeacherEvaluationPage}
           onNavigateToResource={openResourceLibraryPage}
+          onUnreadCountChange={handleMessageUnreadCountChange}
         />
       ) : currentPage === 'workflow' ? (
         <LeaveWorkflow onBack={handleBackToHome} />

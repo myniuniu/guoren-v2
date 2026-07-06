@@ -22,10 +22,12 @@ import {
   StarOutlined,
 } from '@ant-design/icons';
 import {
+  getLuckyPushStoreEventName,
   getLuckyConversationId,
   markLuckyConversationRead,
   readLuckyConversation,
 } from './luckyPushStore';
+import { getConversationsUnreadCount } from './messageUnread';
 import { trackEvent, trackRecommendationEvent } from '../shared/analytics';
 import './MessagesModule.css';
 
@@ -350,6 +352,26 @@ const INITIAL_CONVERSATIONS = [
   },
 ];
 
+function getInitialConversations(initialConversationId) {
+  const luckyConversation = readLuckyConversation();
+  const conversations = mergeLuckyConversation(
+    INITIAL_CONVERSATIONS,
+    initialConversationId === LUCKY_CONVERSATION_ID
+      ? { ...luckyConversation, unread: 0 }
+      : luckyConversation,
+  );
+
+  if (!initialConversationId || initialConversationId === LUCKY_CONVERSATION_ID) {
+    return conversations;
+  }
+
+  return conversations.map((conversation) => (
+    conversation.id === initialConversationId && conversation.unread > 0
+      ? { ...conversation, unread: 0 }
+      : conversation
+  ));
+}
+
 function getTimeLabel() {
   return new Date().toLocaleTimeString('zh-CN', {
     hour: '2-digit',
@@ -399,8 +421,9 @@ function MessagesModule({
   initialConversationId = null,
   onNavigateToTeacherEvaluation,
   onNavigateToResource,
+  onUnreadCountChange,
 }) {
-  const [conversations, setConversations] = useState(() => mergeLuckyConversation(INITIAL_CONVERSATIONS, readLuckyConversation()));
+  const [conversations, setConversations] = useState(() => getInitialConversations(initialConversationId));
   const [selectedId, setSelectedId] = useState(initialConversationId || 'topic-genai');
   const [drafts, setDrafts] = useState({});
   const [expandedTopicPosts, setExpandedTopicPosts] = useState({});
@@ -431,6 +454,10 @@ function MessagesModule({
   const currentDraft = drafts[activeConversationId] || '';
 
   useEffect(() => {
+    onUnreadCountChange?.(getConversationsUnreadCount(conversations));
+  }, [conversations, onUnreadCountChange]);
+
+  useEffect(() => {
     if (selectedId !== LUCKY_CONVERSATION_ID) return;
     markLuckyConversationRead();
     trackEvent('message_lucky_open', {
@@ -444,6 +471,23 @@ function MessagesModule({
       },
     });
   }, [initialConversationId, selectedId]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    const handleLuckyChange = () => {
+      const nextLuckyConversation = selectedId === LUCKY_CONVERSATION_ID
+        ? markLuckyConversationRead()
+        : readLuckyConversation();
+      setConversations((prev) => mergeLuckyConversation(prev, nextLuckyConversation));
+    };
+
+    const eventName = getLuckyPushStoreEventName();
+    window.addEventListener(eventName, handleLuckyChange);
+    return () => {
+      window.removeEventListener(eventName, handleLuckyChange);
+    };
+  }, [selectedId]);
 
   useEffect(() => {
     if (selectedConversation?.id !== LUCKY_CONVERSATION_ID) {
@@ -807,7 +851,14 @@ function MessagesModule({
     if (conversationId === LUCKY_CONVERSATION_ID) {
       const nextLuckyConversation = markLuckyConversationRead();
       setConversations((prev) => mergeLuckyConversation(prev, nextLuckyConversation));
+      return;
     }
+
+    setConversations((prev) => prev.map((conversation) => (
+      conversation.id === conversationId && conversation.unread > 0
+        ? { ...conversation, unread: 0 }
+        : conversation
+    )));
   };
 
   const handleLuckyRecommendationAction = (recommendation) => {
