@@ -1,31 +1,25 @@
 import { useState, useRef, useEffect } from 'react';
-import { Button, Input, InputNumber, Switch, Tag, Select, Radio, DatePicker, Divider, Dropdown, Progress, Segmented, message } from 'antd';
+import { Button, Input, InputNumber, Switch, Tag, Select, Radio, DatePicker, Divider, Dropdown, message } from 'antd';
 import {
   RobotOutlined,
   UserOutlined,
   SendOutlined,
-  ClockCircleOutlined,
-  TrophyOutlined,
-  SafetyCertificateOutlined,
-  FileSearchOutlined,
   FolderOutlined,
   FolderFilled,
   FolderOpenFilled,
   CaretDownOutlined,
   CaretRightOutlined,
-  SettingOutlined,
   PlusOutlined,
   AppstoreOutlined,
   PlayCircleOutlined,
   MoreOutlined,
-  MessageOutlined,
   EditOutlined,
   FileTextOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
 } from '@ant-design/icons';
 import './AssessmentConfig.css';
-import AssessmentFlowView from './AssessmentFlowView';
+import AssessmentFlowView, { evaluateResourceBindingAvailability } from './AssessmentFlowView';
 
 const ASSESSMENT_DROPDOWN_OVERLAY_CLASS = 'finder-liquid-glass-menu';
 
@@ -141,22 +135,20 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
   });
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
-  const [overviewMode, setOverviewMode] = useState('flow'); // list | flow
-  const [leftCollapsed, setLeftCollapsed] = useState(false);
-  const [rightCollapsed, setRightCollapsed] = useState(false);
-  const [leftWidth, setLeftWidth] = useState(360);
+  const [resourceDrawerOpen, setResourceDrawerOpen] = useState(false);
+  const [rightCollapsed, setRightCollapsed] = useState(true);
   const [rightWidth, setRightWidth] = useState(360);
+  const [activeBindingTarget, setActiveBindingTarget] = useState(null);
   const messagesEndRef = useRef(null);
 
-  // 拖拽调整宽度
-  const startResize = (side) => (e) => {
+  const startResizeRight = (e) => {
     e.preventDefault();
     const startX = e.clientX;
-    const startW = side === 'left' ? leftWidth : rightWidth;
+    const startW = rightWidth;
     const onMove = (ev) => {
-      const delta = side === 'left' ? ev.clientX - startX : startX - ev.clientX;
+      const delta = startX - ev.clientX;
       const next = Math.max(200, Math.min(600, startW + delta));
-      side === 'left' ? setLeftWidth(next) : setRightWidth(next);
+      setRightWidth(next);
     };
     const onUp = () => {
       window.removeEventListener('mousemove', onMove);
@@ -173,6 +165,12 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
   useEffect(() => { setLocalAssessment(assessment || { totalHours: 0, passScore: 60, certificate: false, rules: [] }); }, [assessment]);
   useEffect(() => { setMessages(assessmentChat || []); }, [assessmentChat]);
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, typing]);
+  useEffect(() => {
+    if (selectedFolderKey) {
+      setActiveBindingTarget(null);
+      setResourceDrawerOpen(false);
+    }
+  }, [selectedFolderKey]);
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -240,14 +238,7 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
     onUpdateAssessment(newA);
   };
 
-  const handleSummaryChange = (field, value) => {
-    if (!isDraft) return;
-    const newA = { ...localAssessment, [field]: value };
-    setLocalAssessment(newA);
-    onUpdateAssessment(newA);
-  };
-
-  // 左侧树
+  // 资料树
   const rootItems = resources.filter((r) => r.parentKey === null);
   const getChildren = (key) => resources.filter((r) => r.parentKey === key);
   const toggleFolder = (key) => {
@@ -265,6 +256,7 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
   };
   const handleCreateFolder = () => {
     if (!isDraft) { message.warning('当前版本不可编辑'); return; }
+    setResourceDrawerOpen(true);
     setCreatingFolder(true);
     setNewFolderName('');
   };
@@ -274,6 +266,45 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
     if (onCreateFolder) onCreateFolder(name);
     setCreatingFolder(false);
     message.success('文件夹创建成功');
+  };
+
+  const resourcePanelMenuItems = [
+    {
+      key: 'add-resource',
+      icon: <PlusOutlined />,
+      label: '添加资料',
+      disabled: !isDraft,
+      onClick: () => {
+        if (isDraft && onOpenAddModal) onOpenAddModal();
+      },
+    },
+    {
+      key: 'new-folder',
+      icon: <FolderOutlined />,
+      label: '新建文件夹',
+      disabled: !isDraft,
+      onClick: handleCreateFolder,
+    },
+  ];
+
+  const resolveDragAvailability = (item) => {
+    if (!activeBindingTarget) {
+      return { draggable: true, disabled: false, reason: '' };
+    }
+    if (!activeBindingTarget.isCustomActivity) {
+      return { draggable: false, disabled: true, reason: '当前活动不支持拖入绑定资料' };
+    }
+    const availability = evaluateResourceBindingAvailability({
+      resource: item,
+      boundKeys: new Set(activeBindingTarget.boundKeys || []),
+      activityType: activeBindingTarget.activityType ?? '',
+      resources,
+    });
+    return {
+      draggable: availability.selectable,
+      disabled: !availability.selectable,
+      reason: availability.reason || '',
+    };
   };
 
   const renderTreeItem = (item) => {
@@ -288,6 +319,11 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
       }));
       e.dataTransfer.effectAllowed = 'move';
     };
+    const dragAvailability = resolveDragAvailability(item);
+    const canDrag = !selectedFolderKey && dragAvailability.draggable;
+    const itemTitle = canDrag
+      ? '可拖拽到右侧画布'
+      : dragAvailability.reason || undefined;
     if (item.isFolder) {
       const isExpanded = expandedFolders.has(item.key);
       const isSelected = selectedFolderKey === item.key;
@@ -295,11 +331,12 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
       return (
         <div key={item.key} className="tree-folder-group">
           <div
-            className={`project-item project-item-folder ${isSelected ? 'project-item-selected' : ''}`}
-            onClick={() => handleSelectFolder(item.key)}
-            draggable={overviewMode === 'flow' && !selectedFolderKey}
-            onDragStart={handleDragStart}
-            title={overviewMode === 'flow' && !selectedFolderKey ? '可拖拽到右侧画布' : undefined}
+            className={`project-item project-item-folder ${isSelected ? 'project-item-selected' : ''} ${dragAvailability.disabled ? 'project-item-disabled' : ''}`}
+            onClick={activeBindingTarget || dragAvailability.disabled ? undefined : () => handleSelectFolder(item.key)}
+            draggable={canDrag}
+            onDragStart={canDrag ? handleDragStart : undefined}
+            title={itemTitle}
+            aria-disabled={dragAvailability.disabled}
           >
             <span className="project-item-arrow" onClick={(e) => { e.stopPropagation(); toggleFolder(item.key); }}>
               {isExpanded ? <CaretDownOutlined /> : <CaretRightOutlined />}
@@ -323,10 +360,11 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
     return (
       <div
         key={item.key}
-        className="project-item project-item-child"
-        draggable={overviewMode === 'flow' && !selectedFolderKey}
-        onDragStart={handleDragStart}
-        title={overviewMode === 'flow' && !selectedFolderKey ? '可拖拽到右侧画布' : undefined}
+        className={`project-item project-item-child ${dragAvailability.disabled ? 'project-item-disabled' : ''}`}
+        draggable={canDrag}
+        onDragStart={canDrag ? handleDragStart : undefined}
+        title={itemTitle}
+        aria-disabled={dragAvailability.disabled}
       >
         <span className="project-item-icon">{getResourceIcon(item.type)}</span>
         <span className="project-item-title">{item.name}</span>
@@ -352,7 +390,9 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
             isDraft={isDraft}
             onUpdateAssessment={(a) => { setLocalAssessment(a); onUpdateAssessment(a); }}
             onSelectFolder={(key) => setSelectedFolderKey(key)}
+            onActivityBindingTargetChange={setActiveBindingTarget}
           />
+          {renderFloatingResourcePanel()}
         </div>
       );
     }
@@ -383,6 +423,79 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
           {actType !== 'video' && actType !== 'exam' && renderGenericForm(rule)}
         </div>
       </div>
+    );
+  };
+
+  const renderFloatingResourcePanel = () => {
+    if (!resourceDrawerOpen) {
+      return (
+        <button
+          type="button"
+          className="assessment-resource-drawer-toggle"
+          onClick={() => setResourceDrawerOpen(true)}
+          aria-label="展开资料"
+          title="展开资料"
+        >
+          <MenuUnfoldOutlined />
+        </button>
+      );
+    }
+
+    return (
+      <aside className="assessment-resource-drawer">
+        <div className="assessment-resource-drawer-head">
+          <span className="assessment-resource-drawer-title">资料</span>
+          <div className="panel-header-actions">
+            <Dropdown
+              overlayClassName={ASSESSMENT_DROPDOWN_OVERLAY_CLASS}
+              menu={{ items: resourcePanelMenuItems }}
+              trigger={['click']}
+            >
+              <MoreOutlined className="panel-more-icon" />
+            </Dropdown>
+            <button
+              type="button"
+              className="assessment-resource-drawer-action"
+              onClick={() => setResourceDrawerOpen(false)}
+              aria-label="收起资料"
+              title="收起资料"
+            >
+              <MenuFoldOutlined />
+            </button>
+          </div>
+        </div>
+
+        <div className="assessment-resource-drawer-body">
+          {creatingFolder && (
+            <div className="new-folder-form">
+              <div className="new-folder-row">
+                <FolderOutlined style={{ color: '#4facfe', fontSize: 14 }} />
+                <Input
+                  size="small"
+                  placeholder="输入文件夹名称"
+                  value={newFolderName}
+                  onChange={(e) => setNewFolderName(e.target.value)}
+                  onPressEnter={handleSaveNewFolder}
+                  autoFocus
+                  style={{ flex: 1 }}
+                />
+              </div>
+              <div className="new-folder-actions">
+                <Button size="small" onClick={() => setCreatingFolder(false)}>取消</Button>
+                <Button size="small" type="primary" onClick={handleSaveNewFolder}>创建</Button>
+              </div>
+            </div>
+          )}
+
+          <div className="project-list">
+            {rootItems.length === 0 && !creatingFolder ? (
+              <div className="project-empty">暂无资料</div>
+            ) : (
+              rootItems.map((item) => renderTreeItem(item))
+            )}
+          </div>
+        </div>
+      </aside>
     );
   };
 
@@ -519,97 +632,12 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
   };
 
   const layoutStyle = {
-    gridTemplateColumns: `${leftCollapsed ? 36 : leftWidth}px 10px 1fr 10px ${rightCollapsed ? 36 : rightWidth}px`,
+    gridTemplateColumns: `1fr 0px ${rightCollapsed ? 36 : rightWidth}px`,
   };
 
   return (
     <div className="assessment-layout" style={layoutStyle}>
-      {/* 左栏 - 资料（与知识模式一致） */}
-      {leftCollapsed ? (
-        <div className="collapsed-panel collapsed-left" onClick={() => setLeftCollapsed(false)}>
-          <MenuUnfoldOutlined className="collapsed-icon" />
-          <span className="collapsed-label">资料</span>
-        </div>
-      ) : (
-        <div className="detail-left-panel">
-          <div className="panel-header">
-            <span className="panel-title">资料</span>
-            <div className="panel-header-actions">
-              <MoreOutlined className="panel-more-icon" />
-              <MenuFoldOutlined
-                className="panel-collapse-icon"
-                title="折叠资料区"
-                onClick={() => setLeftCollapsed(true)}
-              />
-            </div>
-          </div>
-
-          {/* AI 问答 */}
-          <div className="ai-qa-box">
-            <MessageOutlined style={{ color: '#999', fontSize: 14 }} />
-            <span className="ai-qa-text">AI 问答</span>
-          </div>
-
-          {/* 操作按钮 */}
-          <div className="panel-actions">
-            <div
-              className={`panel-action-btn ${!isDraft ? 'panel-action-btn-disabled' : ''}`}
-              onClick={() => isDraft && onOpenAddModal && onOpenAddModal()}
-            >
-              <PlusOutlined style={{ fontSize: 12 }} />
-              <span>添加资料</span>
-            </div>
-            <div className="panel-action-btn">
-              <AppstoreOutlined style={{ fontSize: 12 }} />
-              <span>应用</span>
-            </div>
-          </div>
-
-          {/* 项目列表 - 树形目录 */}
-          <div className="project-section">
-            <div className="project-header">
-              <span className="project-title">项目</span>
-              <Dropdown overlayClassName={ASSESSMENT_DROPDOWN_OVERLAY_CLASS} menu={{ items: [
-                { key: 'new-folder', icon: <FolderOutlined />, label: '新建文件夹', onClick: handleCreateFolder, disabled: !isDraft },
-              ] }} trigger={['click']}>
-                <MoreOutlined className="project-more-icon" />
-              </Dropdown>
-            </div>
-
-            {/* 新建文件夹表单 */}
-            {creatingFolder && (
-              <div className="new-folder-form">
-                <div className="new-folder-row">
-                  <FolderOutlined style={{ color: '#4facfe', fontSize: 14 }} />
-                  <Input size="small" placeholder="输入文件夹名称" value={newFolderName}
-                    onChange={(e) => setNewFolderName(e.target.value)}
-                    onPressEnter={handleSaveNewFolder} autoFocus style={{ flex: 1 }} />
-                </div>
-                <div className="new-folder-actions">
-                  <Button size="small" onClick={() => setCreatingFolder(false)}>取消</Button>
-                  <Button size="small" type="primary" onClick={handleSaveNewFolder}>创建</Button>
-                </div>
-              </div>
-            )}
-
-            <div className="project-list">
-              {rootItems.length === 0 && !creatingFolder ? (
-                <div className="project-empty">暂无资料</div>
-              ) : (
-                rootItems.map((item) => renderTreeItem(item))
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 左侧拖拽手柄 */}
-      <div
-        className={`resize-handle ${leftCollapsed ? 'resize-handle-disabled' : ''}`}
-        onMouseDown={leftCollapsed ? undefined : startResize('left')}
-      />
-
-      {/* 中栏 - 考核配置 */}
+      {/* 考核配置画布 */}
       <div className="config-panel">
         {renderConfigPanel()}
       </div>
@@ -617,7 +645,7 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
       {/* 右侧拖拽手柄 */}
       <div
         className={`resize-handle ${rightCollapsed ? 'resize-handle-disabled' : ''}`}
-        onMouseDown={rightCollapsed ? undefined : startResize('right')}
+        onMouseDown={rightCollapsed ? undefined : startResizeRight}
       />
 
       {/* 右栏 - AI对话 */}

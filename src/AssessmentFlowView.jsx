@@ -276,6 +276,115 @@ function createDefaultActivityRule(folderKey, folderName = DEFAULT_ACTIVITY_NAME
   };
 }
 
+export function createResourcePayload(resource) {
+  return {
+    key: resource.key,
+    name: resource.name,
+    isFolder: !!resource.isFolder,
+    parentKey: resource.parentKey ?? null,
+    type: resource.type ?? null,
+  };
+}
+
+export function evaluateResourceBindingAvailability({ resource, boundKeys, activityType, resources }) {
+  if (boundKeys.has(resource.key)) {
+    return { selectable: false, reason: '已绑定' };
+  }
+
+  const payload = createResourcePayload(resource);
+  const resourceTypes = collectResourceTypes(payload, resources);
+  if (resource.isFolder && resourceTypes.length === 0) {
+    return { selectable: false, reason: '空文件夹不可绑定' };
+  }
+
+  const allowed = allowedResourceTypeMap[activityType ?? ''];
+  if (!allowed) {
+    return { selectable: true, reason: '' };
+  }
+
+  const invalidTypes = resourceTypes.filter((type) => !allowed.includes(type));
+  if (invalidTypes.length > 0) {
+    const invalidLabels = invalidTypes.map((type) => resourceTypeLabelMap[type] || type).join('、');
+    return { selectable: false, reason: `当前活动类型不支持：${invalidLabels}` };
+  }
+
+  return { selectable: true, reason: '' };
+}
+
+function bindResourceToCustomActivity({ assessment, activityKey, payload, resources }) {
+  const customActivities = assessment.customActivities || [];
+  const activityIndex = customActivities.findIndex((item) => item.key === activityKey);
+  if (activityIndex === -1) {
+    return { ok: false, level: 'error', message: '未找到活动容器，无法绑定资料' };
+  }
+
+  const target = customActivities[activityIndex];
+  if (target.key === payload.key) {
+    return { ok: false, level: 'warning', message: '不能绑定自身' };
+  }
+
+  const exists = (target.boundResources || []).some((item) => item.key === payload.key);
+  if (exists) {
+    return { ok: false, level: 'info', message: `「${payload.name}」已绑定，无需重复` };
+  }
+
+  const targetRule = (assessment.rules || []).find((rule) => rule.folderKey === activityKey);
+  const activityType = targetRule?.activityType ?? '';
+  const allowed = allowedResourceTypeMap[activityType];
+  const resourceTypes = collectResourceTypes(payload, resources);
+
+  if (resourceTypes.length === 0 && payload.isFolder) {
+    return { ok: false, level: 'warning', message: `「${payload.name}」为空文件夹，未包含可绑定的资料文件` };
+  }
+
+  let autoFilledType = null;
+  if (!activityType) {
+    autoFilledType = inferActivityType(resourceTypes);
+  } else if (allowed) {
+    const invalid = resourceTypes.filter((type) => !allowed.includes(type));
+    if (invalid.length > 0) {
+      const actLabel = activityTypeLabelMap[activityType] || activityType;
+      const allowedLabels = allowed.map((type) => resourceTypeLabelMap[type] || type).join('、');
+      const invalidLabels = invalid.map((type) => resourceTypeLabelMap[type] || type).join('、');
+      const tip = payload.isFolder
+        ? `「${payload.name}」包含不允许的资料类型：${invalidLabels}。该活动容器为「${actLabel}」，仅可绑定：${allowedLabels}`
+        : `「${payload.name}」为${invalidLabels}类型，与当前活动「${actLabel}」不匹配，仅可绑定：${allowedLabels}`;
+      return { ok: false, level: 'warning', message: tip };
+    }
+  }
+
+  const nextCustomActivities = [...customActivities];
+  nextCustomActivities[activityIndex] = {
+    ...target,
+    boundResources: [
+      ...(target.boundResources || []),
+      { key: payload.key, name: payload.name, isFolder: !!payload.isFolder },
+    ],
+  };
+
+  const nextAssessment = { ...assessment, customActivities: nextCustomActivities };
+  if (autoFilledType) {
+    const rules = assessment.rules || [];
+    const ruleIndex = rules.findIndex((rule) => rule.folderKey === activityKey);
+    if (ruleIndex >= 0) {
+      const nextRules = [...rules];
+      nextRules[ruleIndex] = { ...nextRules[ruleIndex], activityType: autoFilledType };
+      nextAssessment.rules = nextRules;
+    } else {
+      nextAssessment.rules = [
+        ...rules,
+        { ...createDefaultActivityRule(activityKey, target.name || DEFAULT_ACTIVITY_NAME), activityType: autoFilledType },
+      ];
+    }
+  }
+
+  const successMessage = autoFilledType
+    ? `已绑定「${payload.name}」到「${target.name || '活动'}」，活动类型已自动设为「${activityTypeLabelMap[autoFilledType] || autoFilledType}」`
+    : `已绑定「${payload.name}」到「${target.name || '活动'}」`;
+
+  return { ok: true, nextAssessment, autoFilledType, message: successMessage };
+}
+
 function createCustomActivityInStage({ assessment, stageId, siblingIds = [], insertIndex = siblingIds.length }) {
   const newKey = makeFlowKey('ca');
   const safeIndex = Math.max(0, Math.min(insertIndex, siblingIds.length));
@@ -307,7 +416,7 @@ function createCustomActivityInStage({ assessment, stageId, siblingIds = [], ins
   };
 }
 
-function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment, onSelectFolder }) {
+function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment, onSelectFolder, onActivityBindingTargetChange }) {
   const [editingEdge, setEditingEdge] = useState(null);
   const [ruleForm, setRuleForm] = useState(DEFAULT_RULE);
   const [rfInstance, setRfInstance] = useState(null);
@@ -317,6 +426,22 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
   const [selectedEdgeId, setSelectedEdgeId] = useState(null);
   const [dataModalOpen, setDataModalOpen] = useState(false);
   const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    if (!onActivityBindingTargetChange) return;
+    if (!selectedActivityKey) {
+      onActivityBindingTargetChange(null);
+      return;
+    }
+    const customAct = (assessment.customActivities || []).find((item) => item.key === selectedActivityKey);
+    const rule = (assessment.rules || []).find((item) => item.folderKey === selectedActivityKey);
+    onActivityBindingTargetChange({
+      key: selectedActivityKey,
+      isCustomActivity: !!customAct,
+      activityType: rule?.activityType ?? '',
+      boundKeys: (customAct?.boundResources || []).map((item) => item.key),
+    });
+  }, [assessment.customActivities, assessment.rules, onActivityBindingTargetChange, selectedActivityKey]);
 
   // 计算初始节点和边
   const { initialNodes, initialEdges } = useMemo(() => {
@@ -1285,84 +1410,18 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
         return position.x >= ax && position.x <= ax + aw && position.y >= ay && position.y <= ay + ah;
       });
       if (hitCustomAct) {
-        const list = assessment.customActivities || [];
-        const idx = list.findIndex((ca) => ca.key === hitCustomAct.id);
-        if (idx === -1) return;
-        const target = list[idx];
-        if (target.key === payload.key) {
-          message.warning('不能绑定自身');
+        const result = bindResourceToCustomActivity({
+          assessment,
+          activityKey: hitCustomAct.id,
+          payload,
+          resources,
+        });
+        if (!result.ok) {
+          message[result.level || 'warning'](result.message);
           return;
         }
-        const exists = (target.boundResources || []).some((b) => b.key === payload.key);
-        if (exists) {
-          message.info(`「${payload.name}」已绑定，无需重复`);
-          return;
-        }
-        // 类型匹配校验：根据该活动容器的 activityType 限制可绑定的资料 type
-        const targetRule = (assessment.rules || []).find((r) => r.folderKey === hitCustomAct.id);
-        const activityType = targetRule?.activityType ?? '';
-        const allowed = allowedResourceTypeMap[activityType];
-        const resourceTypes = collectResourceTypes(payload, resources);
-        if (resourceTypes.length === 0 && payload.isFolder) {
-          message.warning(`「${payload.name}」为空文件夹，未包含可绑定的资料文件`);
-          return;
-        }
-        let autoFilledType = null;
-        if (!activityType) {
-          // 活动未设置类型：根据资料推断并自动填充
-          autoFilledType = inferActivityType(resourceTypes);
-        } else if (allowed) {
-          const invalid = resourceTypes.filter((t) => !allowed.includes(t));
-          if (invalid.length > 0) {
-            const actLabel = activityTypeLabelMap[activityType] || activityType;
-            const allowedLabels = allowed.map((t) => resourceTypeLabelMap[t] || t).join('、');
-            const invalidLabels = invalid.map((t) => resourceTypeLabelMap[t] || t).join('、');
-            const tip = payload.isFolder
-              ? `「${payload.name}」包含不允许的资料类型：${invalidLabels}。该活动容器为「${actLabel}」，仅可绑定：${allowedLabels}`
-              : `「${payload.name}」为${invalidLabels}类型，与当前活动「${actLabel}」不匹配，仅可绑定：${allowedLabels}`;
-            message.warning(tip);
-            return;
-          }
-        }
-        const updatedTarget = {
-          ...target,
-          boundResources: [
-            ...(target.boundResources || []),
-            { key: payload.key, name: payload.name, isFolder: !!payload.isFolder },
-          ],
-        };
-        const newList = [...list];
-        newList[idx] = updatedTarget;
-        const nextAssessment = { ...assessment, customActivities: newList };
-        // 同步自动填充活动类型到对应 rule
-        if (autoFilledType) {
-          const rules = assessment.rules || [];
-          const ruleIdx = rules.findIndex((r) => r.folderKey === hitCustomAct.id);
-          if (ruleIdx >= 0) {
-            const newRules = [...rules];
-            newRules[ruleIdx] = { ...newRules[ruleIdx], activityType: autoFilledType };
-            nextAssessment.rules = newRules;
-          } else {
-            nextAssessment.rules = [
-              ...rules,
-              {
-                folderKey: hitCustomAct.id,
-                folderName: target.name,
-                activityType: autoFilledType,
-                weight: 0,
-                passCondition: { metric: '完成率', op: '>=', value: 80 },
-                required: true,
-              },
-            ];
-          }
-        }
-        onUpdateAssessment(nextAssessment);
-        if (autoFilledType) {
-          const actLabel = activityTypeLabelMap[autoFilledType] || autoFilledType;
-          message.success(`已绑定「${payload.name}」到「${hitCustomAct.data?.label || '活动'}」，活动类型已自动设为「${actLabel}」`);
-        } else {
-          message.success(`已绑定「${payload.name}」到「${hitCustomAct.data?.label || '活动'}」`);
-        }
+        onUpdateAssessment(result.nextAssessment);
+        message.success(result.message);
         return;
       }
     }
@@ -1780,7 +1839,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
                 <>
                   <Divider style={{ margin: '12px 0' }}>已绑定资料 ({customAct.boundResources?.length || 0})</Divider>
                   {(!customAct.boundResources || customAct.boundResources.length === 0) ? (
-                    <div className="inspector-empty-tip">尚未绑定资料，可从左侧资料区拖入卡片进行绑定</div>
+                    <div className="inspector-empty-tip">尚未绑定资料，可从画布左上角资料面板拖入卡片</div>
                   ) : (
                     <div className="inspector-binding-list">
                       {customAct.boundResources.map((b) => (

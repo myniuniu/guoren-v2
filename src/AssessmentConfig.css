@@ -1,17 +1,11 @@
-/* ====== 三栏布局 ====== */
+/* ====== 考核页签布局 ====== */
 .assessment-layout {
   display: grid;
-  /* grid-template-columns 由组件内联 style 控制，支持拖拽和折叠 */
+  /* grid-template-columns 由组件内联 style 控制，支持右侧智能体折叠 */
   flex: 1;
   min-height: 0;
   overflow: hidden;
   background: #fff;
-}
-
-/* 左栏复用 TopicDetail.css 的 .detail-left-panel 样式，覆盖固定宽度 */
-.assessment-layout .detail-left-panel {
-  width: 100%;
-  min-width: unset;
 }
 
 /* ====== 拖拽手柄 ====== */
@@ -24,7 +18,7 @@
   transition: background 0.18s ease;
 }
 .resize-handle::before {
-  content: '';
+  content: none;
   position: absolute;
   top: 0;
   bottom: 0;
@@ -38,7 +32,7 @@
   transition: opacity 0.18s ease;
 }
 .resize-handle:hover {
-  background: rgba(148, 163, 184, 0.05);
+  background: transparent;
 }
 .resize-handle:hover::before {
   opacity: 0.58;
@@ -126,8 +120,8 @@
 .config-panel {
   position: relative;
   isolation: isolate;
-  overflow-y: auto;
-  padding: 24px;
+  overflow: hidden;
+  padding: 0;
   border: none;
   border-radius: 0;
   background: #fff;
@@ -146,7 +140,183 @@
 }
 
 .config-summary {
+  position: relative;
   width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.assessment-layout .flow-view-wrapper {
+  height: 100%;
+  border-radius: 0;
+}
+
+.assessment-resource-drawer-toggle {
+  position: absolute;
+  top: 52px;
+  left: 16px;
+  z-index: 8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  border: 1px solid rgba(226, 232, 240, 0.92);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(247, 250, 253, 0.86) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    0 14px 28px rgba(15, 23, 42, 0.1);
+  color: #253041;
+  cursor: pointer;
+  font-size: 22px;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.assessment-resource-drawer-toggle:hover {
+  transform: translateY(-1px);
+  border-color: rgba(203, 213, 225, 0.96);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.98),
+    0 18px 34px rgba(15, 23, 42, 0.13);
+}
+
+.assessment-resource-drawer {
+  position: absolute;
+  top: 52px;
+  left: 16px;
+  bottom: 16px;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  width: min(330px, calc(100% - 32px));
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(248, 250, 252, 0.84) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.94),
+    0 20px 42px rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(18px) saturate(132%);
+  -webkit-backdrop-filter: blur(18px) saturate(132%);
+}
+
+.assessment-resource-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 14px 10px 18px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+}
+
+.assessment-resource-drawer-title {
+  color: var(--td-text);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.assessment-resource-drawer-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(226, 232, 240, 0.86);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
+  color: #8c93a0;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.assessment-resource-drawer-action:hover {
+  border-color: rgba(203, 213, 225, 0.96);
+  background: rgba(255, 255, 255, 0.92);
+  color: #253041;
+  transform: translateY(-1px);
+}
+
+.assessment-resource-drawer-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px 12px 14px;
+}
+
+.assessment-resource-drawer-body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.assessment-resource-drawer-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.assessment-resource-drawer-body::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #d7dce3;
+}
+
+.assessment-resource-drawer .project-list {
+  gap: 3px;
+}
+
+.assessment-resource-drawer .project-item {
+  min-height: 38px;
+  padding-right: 12px;
+}
+
+.assessment-resource-drawer .project-item-disabled {
+  cursor: not-allowed;
+}
+
+.assessment-resource-drawer .project-item-disabled:hover {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.assessment-resource-drawer .project-item-disabled .project-item-title,
+.assessment-resource-drawer .project-item-disabled .project-item-icon,
+.assessment-resource-drawer .project-item-disabled .project-item-icon .anticon {
+  color: #c2c9d6 !important;
+}
+
+.assessment-resource-drawer .project-item-disabled .project-item-title {
+  font-weight: 400;
+}
+
+.assessment-resource-drawer .project-item-disabled .project-item-arrow {
+  color: #c2c9d6;
+  cursor: pointer;
+}
+
+.assessment-resource-drawer .new-folder-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 10px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.assessment-resource-drawer .new-folder-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.assessment-resource-drawer .new-folder-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .config-summary-title {
@@ -265,6 +435,9 @@
 /* 配置详情 */
 .config-detail {
   height: 100%;
+  overflow-y: auto;
+  padding: 24px;
+  box-sizing: border-box;
 }
 
 .config-detail-header {
