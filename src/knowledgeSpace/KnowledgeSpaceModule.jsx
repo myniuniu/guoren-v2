@@ -4,19 +4,21 @@ import {
   PlusOutlined,
   PushpinFilled,
   PushpinOutlined,
+  ReloadOutlined,
   SearchOutlined,
+  UploadOutlined,
 } from '@ant-design/icons';
 import './KnowledgeSpaceModule.css';
 
 const knowledgeSpaces = [
-  { id: 'ai-literacy', title: '人工智能通识课', color: 'lemon', pinned: true },
-  { id: 'haha-123', title: '哈哈哈123', color: 'rose', pinned: true },
-  { id: 'class-evaluation', title: '课堂评价', color: 'rose', pinned: false },
-  { id: 'research-math', title: '教研-数学', color: 'rose', pinned: false },
-  { id: 'higher-education', title: '高教-教研', color: 'lemon', pinned: false },
-  { id: 'basic-education', title: '基教-教研', color: 'sky', pinned: false },
-  { id: 'space-teaching', title: '知识空间-教学', color: 'lavender', pinned: false },
-  { id: 'space-001', title: '知识空间001', color: 'honey', pinned: false },
+  { id: 'ai-literacy', title: '人工智能通识课', color: 'lemon', pinned: true, coverId: 'space-stars' },
+  { id: 'haha-123', title: '哈哈哈123', color: 'rose', pinned: true, coverId: 'galaxy' },
+  { id: 'class-evaluation', title: '课堂评价', color: 'rose', pinned: false, coverId: 'blue-lines' },
+  { id: 'research-math', title: '教研-数学', color: 'rose', pinned: false, coverId: 'green-lines' },
+  { id: 'higher-education', title: '高教-教研', color: 'lemon', pinned: false, coverId: 'sphere' },
+  { id: 'basic-education', title: '基教-教研', color: 'sky', pinned: false, coverId: 'navy-stripes' },
+  { id: 'space-teaching', title: '知识空间-教学', color: 'lavender', pinned: false, coverId: 'sky-grid' },
+  { id: 'space-001', title: '知识空间001', color: 'honey', pinned: false, coverId: 'desk-light' },
 ];
 
 const candidateMembers = [
@@ -39,12 +41,54 @@ const permissionUsers = [
 ];
 
 const spaceColorCycle = ['lemon', 'rose', 'sky', 'lavender', 'honey'];
+const coverCategories = [
+  { key: 'all', label: '全部' },
+  { key: 'color', label: '色彩' },
+  { key: 'office', label: '办公' },
+  { key: 'tech', label: '科技' },
+  { key: 'scene', label: '风景' },
+];
+
+const coverOptions = [
+  { id: 'purple', category: 'color', background: 'linear-gradient(135deg, #8338ec 0%, #7c3aed 100%)' },
+  { id: 'office-green', category: 'office', background: 'linear-gradient(135deg, #63d653 0%, #54c848 100%)' },
+  { id: 'blue-lines', category: 'tech', background: 'linear-gradient(145deg, #0f2f58 0%, #143e73 48%, #09111f 100%), repeating-linear-gradient(130deg, rgba(120, 185, 255, 0.32) 0 1px, transparent 1px 16px)' },
+  { id: 'horizon', category: 'scene', background: 'linear-gradient(180deg, #050914 0%, #0d1b2a 55%, #bcc8d0 56%, #6b7280 100%)' },
+  { id: 'sphere', category: 'tech', background: 'radial-gradient(circle at 62% 66%, rgba(234, 243, 255, 0.72) 0 12%, transparent 13%), radial-gradient(circle at 62% 66%, rgba(36, 54, 79, 0.82) 0 28%, transparent 29%), linear-gradient(135deg, #010813 0%, #0e2035 100%)' },
+  { id: 'black-wave', category: 'tech', background: 'radial-gradient(circle at 80% 10%, rgba(40, 83, 125, 0.45), transparent 38%), linear-gradient(135deg, #02040a 0%, #111827 100%)' },
+  { id: 'sky-grid', category: 'office', background: 'linear-gradient(90deg, rgba(77, 163, 221, 0.18) 1px, transparent 1px), linear-gradient(180deg, rgba(77, 163, 221, 0.18) 1px, transparent 1px), linear-gradient(135deg, #f0fbff 0%, #d7eef7 100%)', backgroundSize: '14px 14px, 14px 14px, auto' },
+  { id: 'earth', category: 'scene', background: 'radial-gradient(ellipse at 50% 96%, #d9a441 0 7%, #1f2937 8% 35%, transparent 36%), linear-gradient(180deg, #02030a 0%, #09111e 100%)' },
+  { id: 'galaxy', category: 'scene', background: 'radial-gradient(ellipse at 64% 45%, rgba(86, 135, 214, 0.8), transparent 16%), radial-gradient(ellipse at 43% 54%, rgba(245, 230, 190, 0.7), transparent 11%), radial-gradient(circle at 22% 18%, #ffffff 0 1px, transparent 2px), radial-gradient(circle at 74% 30%, #ffffff 0 1px, transparent 2px), linear-gradient(135deg, #030712 0%, #0e2342 45%, #030712 100%)' },
+  { id: 'space-stars', category: 'scene', background: 'radial-gradient(circle at 34% 20%, #ffffff 0 1px, transparent 2px), radial-gradient(circle at 76% 18%, #ffffff 0 1px, transparent 2px), radial-gradient(circle at 62% 72%, rgba(255, 214, 165, 0.82), transparent 10%), radial-gradient(ellipse at 52% 56%, rgba(118, 167, 255, 0.64), transparent 16%), linear-gradient(135deg, #030712 0%, #09162d 55%, #020617 100%)' },
+  { id: 'green-lines', category: 'tech', background: 'repeating-linear-gradient(100deg, rgba(34, 197, 94, 0.45) 0 2px, transparent 2px 8px), linear-gradient(135deg, #03100a 0%, #092514 100%)' },
+  { id: 'desk-light', category: 'office', background: 'radial-gradient(ellipse at 58% 82%, rgba(255, 122, 24, 0.7), transparent 18%), linear-gradient(180deg, #020617 0%, #0f172a 78%, #fdba74 100%)' },
+  { id: 'navy-stripes', category: 'tech', background: 'repeating-linear-gradient(145deg, rgba(91, 141, 204, 0.24) 0 2px, transparent 2px 11px), linear-gradient(135deg, #061120 0%, #0c2a44 100%)' },
+  { id: 'paper', category: 'office', background: 'radial-gradient(circle at 72% 62%, rgba(226, 232, 240, 0.74), transparent 24%), linear-gradient(135deg, #f8fafc 0%, #eceff4 100%)' },
+  { id: 'blue-grid', category: 'tech', background: 'radial-gradient(circle at 28% 32%, rgba(56, 189, 248, 0.6), transparent 12%), repeating-linear-gradient(90deg, rgba(56, 189, 248, 0.16) 0 2px, transparent 2px 18px), linear-gradient(135deg, #020617 0%, #083344 100%)' },
+  { id: 'black-neon', category: 'tech', background: 'linear-gradient(135deg, #020617 0%, #0f172a 72%, #000000 100%), linear-gradient(90deg, rgba(34, 211, 238, 0.4), transparent)' },
+  { id: 'slate', category: 'color', background: 'linear-gradient(135deg, #475569 0%, #40534e 100%)' },
+  { id: 'sunset', category: 'scene', background: 'linear-gradient(180deg, #172554 0%, #be185d 45%, #fb7185 100%)' },
+  { id: 'soft-lines', category: 'office', background: 'repeating-radial-gradient(circle at 20% 20%, rgba(148, 163, 184, 0.24) 0 2px, transparent 2px 16px), linear-gradient(135deg, #f8fafc 0%, #e9eef7 100%)' },
+  { id: 'sky-lines', category: 'scene', background: 'linear-gradient(135deg, #dbeafe 0%, #fff7ed 100%)' },
+  { id: 'warm-gray', category: 'color', background: 'linear-gradient(135deg, #e7e5e4 0%, #d6d3d1 100%)' },
+];
+
+function getCoverById(coverId) {
+  return coverOptions.find((item) => item.id === coverId) || coverOptions.find((item) => item.id === 'space-stars') || coverOptions[0];
+}
 
 function KnowledgeSpaceCard({ item, onOpenSettings }) {
   const PinIcon = item.pinned ? PushpinFilled : PushpinOutlined;
+  const cover = item.cover || getCoverById(item.coverId);
 
   return (
-    <article className={`ks-card ks-card-${item.color}`}>
+    <article
+      className={`ks-card ks-card-${item.color} ks-card-has-cover`}
+      style={{
+        background: cover.background,
+        backgroundSize: cover.backgroundSize || 'cover',
+      }}
+    >
       <div className="ks-card-title" title={item.title}>{item.title}</div>
       <button
         type="button"
@@ -74,10 +118,105 @@ function SectionTitle({ tone = 'blue', children }) {
   );
 }
 
+function CoverPicker({ cover, title, onCoverChange }) {
+  const [category, setCategory] = useState('all');
+  const activeCover = cover || getCoverById('space-stars');
+  const visibleCovers = category === 'all'
+    ? coverOptions
+    : coverOptions.filter((item) => item.category === category);
+
+  const randomizeCover = () => {
+    const candidates = visibleCovers.length > 0 ? visibleCovers : coverOptions;
+    const currentIndex = candidates.findIndex((item) => item.id === activeCover.id);
+    const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % candidates.length;
+    onCoverChange(candidates[nextIndex]);
+  };
+
+  const handleUpload = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== 'string') return;
+      onCoverChange({
+        id: `upload-${Date.now()}`,
+        category: 'custom',
+        background: `linear-gradient(180deg, rgba(15, 23, 42, 0.18), rgba(15, 23, 42, 0.16)), url("${reader.result}") center / cover no-repeat`,
+      });
+    };
+    reader.readAsDataURL(file);
+    event.target.value = '';
+  };
+
+  return (
+    <div className="ks-cover-setting">
+      <div className="ks-cover-title">设置封面</div>
+      <div className="ks-cover-panel">
+        <div
+          className="ks-cover-preview"
+          style={{
+            background: activeCover.background,
+            backgroundSize: activeCover.backgroundSize || 'cover',
+          }}
+        >
+          <span>{title?.trim() || '知识空间'}</span>
+        </div>
+        <div className="ks-cover-picker">
+          <div className="ks-cover-toolbar">
+            <div className="ks-cover-categories" role="tablist" aria-label="封面分类">
+              {coverCategories.map((item) => (
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={category === item.key}
+                  className={`ks-cover-category ${category === item.key ? 'is-active' : ''}`}
+                  key={item.key}
+                  onClick={() => setCategory(item.key)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+            <div className="ks-cover-actions">
+              <button type="button" className="ks-cover-tool" onClick={randomizeCover}>
+                <ReloadOutlined />
+                <span>随机封面</span>
+              </button>
+              <label className="ks-cover-tool">
+                <UploadOutlined />
+                <span>上传</span>
+                <input type="file" accept="image/*" onChange={handleUpload} />
+              </label>
+            </div>
+          </div>
+          <div className="ks-cover-grid">
+            {visibleCovers.map((item) => (
+              <button
+                type="button"
+                className={`ks-cover-swatch ${activeCover.id === item.id ? 'is-active' : ''}`}
+                key={item.id}
+                aria-label="选择封面"
+                style={{
+                  background: item.background,
+                  backgroundSize: item.backgroundSize || 'cover',
+                }}
+                onClick={() => onCoverChange(item)}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function KnowledgeSpaceCreateModal({
+  cover,
   description,
   name,
   open,
+  onCoverChange,
   onClose,
   onDescriptionChange,
   onNameChange,
@@ -129,6 +268,7 @@ function KnowledgeSpaceCreateModal({
                 onChange={(event) => onDescriptionChange(event.target.value)}
               />
             </label>
+            <CoverPicker cover={cover} title={name} onCoverChange={onCoverChange} />
           </div>
         </div>
 
@@ -144,12 +284,14 @@ function KnowledgeSpaceCreateModal({
 
 function KnowledgeSpaceSettingsModal({
   activeTab,
+  formCover,
   formDescription,
   formName,
   memberKeyword,
   open,
   onActiveTabChange,
   onClose,
+  onCoverChange,
   onDescriptionChange,
   onMemberKeywordChange,
   onNameChange,
@@ -224,6 +366,7 @@ function KnowledgeSpaceSettingsModal({
                   onChange={(event) => onDescriptionChange(event.target.value)}
                 />
               </label>
+              <CoverPicker cover={formCover} title={formName} onCoverChange={onCoverChange} />
             </div>
           ) : (
             <div className="ks-members-panel">
@@ -365,11 +508,13 @@ function KnowledgeSpaceModule() {
   const [createOpen, setCreateOpen] = useState(false);
   const [createName, setCreateName] = useState('');
   const [createDescription, setCreateDescription] = useState('');
+  const [createCover, setCreateCover] = useState(() => getCoverById('space-stars'));
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedSpace, setSelectedSpace] = useState(null);
   const [activeTab, setActiveTab] = useState('basic');
   const [formName, setFormName] = useState('');
   const [formDescription, setFormDescription] = useState('');
+  const [formCover, setFormCover] = useState(() => getCoverById('space-stars'));
   const [memberKeyword, setMemberKeyword] = useState('');
   const pinnedSpaces = spaces.filter((item) => item.pinned);
 
@@ -377,6 +522,7 @@ function KnowledgeSpaceModule() {
     setSelectedSpace(item);
     setFormName(item.title);
     setFormDescription(item.description || '');
+    setFormCover(item.cover || getCoverById(item.coverId));
     setActiveTab('basic');
     setMemberKeyword('');
     setSettingsOpen(true);
@@ -389,6 +535,7 @@ function KnowledgeSpaceModule() {
   const openCreateModal = () => {
     setCreateName('');
     setCreateDescription('');
+    setCreateCover(getCoverById('space-stars'));
     setCreateOpen(true);
   };
 
@@ -408,6 +555,8 @@ function KnowledgeSpaceModule() {
           title: nextName,
           description: createDescription,
           color,
+          cover: createCover,
+          coverId: createCover.id,
           pinned: false,
         },
         ...currentSpaces,
@@ -421,13 +570,15 @@ function KnowledgeSpaceModule() {
     if (selectedSpace?.id && nextName) {
       setSpaces((currentSpaces) => currentSpaces.map((item) => (
         item.id === selectedSpace.id
-          ? { ...item, title: nextName, description: formDescription }
+          ? { ...item, title: nextName, description: formDescription, cover: formCover, coverId: formCover.id }
           : item
       )));
       setSelectedSpace((current) => current ? {
         ...current,
         title: nextName,
         description: formDescription,
+        cover: formCover,
+        coverId: formCover.id,
       } : current);
     }
     closeSettings();
@@ -471,9 +622,11 @@ function KnowledgeSpaceModule() {
         </div>
       </div>
       <KnowledgeSpaceCreateModal
+        cover={createCover}
         description={createDescription}
         name={createName}
         open={createOpen}
+        onCoverChange={setCreateCover}
         onClose={closeCreateModal}
         onDescriptionChange={setCreateDescription}
         onNameChange={setCreateName}
@@ -482,12 +635,14 @@ function KnowledgeSpaceModule() {
       {settingsOpen ? (
         <KnowledgeSpaceSettingsModal
           activeTab={activeTab}
+          formCover={formCover}
           formDescription={formDescription}
           formName={formName}
           memberKeyword={memberKeyword}
           open={settingsOpen}
           onActiveTabChange={setActiveTab}
           onClose={closeSettings}
+          onCoverChange={setFormCover}
           onDescriptionChange={setFormDescription}
           onMemberKeywordChange={setMemberKeyword}
           onNameChange={setFormName}
