@@ -3795,7 +3795,7 @@ function TopicDetail({
   const resourcePanelViewOptions = useMemo(() => (
     knowledgeGraphRef
       ? [
-          { label: '资料', value: 'resources' },
+          { label: '列表', value: 'resources' },
           { label: '知识图谱', value: 'knowledgeGraph' },
         ]
       : [
