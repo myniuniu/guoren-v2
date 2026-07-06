@@ -118,14 +118,14 @@ const MAPPING_ACTION_GROUPS = [
     title: '目标提升',
     description: '因为当前证据覆盖低于稳定支撑线，或目标等级仍缺直接证据；系统建议本周期先补这类能力，补齐后最容易提升评价结果。',
     tagColor: 'volcano',
-    emptyText: '当前没有需要优先提升的能力项',
+    emptyText: '当前没有需要优先提升的节点',
   },
   {
     key: 'REGRESSED',
     title: '较上周期回落',
     description: '因为本周期覆盖度、挂载证据数或等级支撑低于最近周期；通常说明材料漏挂、证据质量变弱，或新周期尚未同步关键材料。',
     tagColor: 'error',
-    emptyText: '当前没有明显回落的能力项',
+    emptyText: '当前没有明显回落的节点',
   },
   {
     key: 'GAP',
@@ -373,7 +373,7 @@ function buildMountedEvidenceEntries(snapshot, item, dimensionName = '') {
 function buildDefaultMappingActions(groupKey, itemName, levelFocusLabel) {
   if (groupKey === 'REGRESSED') {
     return [
-      '先核对本周期是否漏扫、漏导入或漏确认该能力项相关材料。',
+      '先核对本周期是否漏扫、漏导入或漏确认该节点相关材料。',
       `补充能直接支撑“${itemName}”的过程记录或成果证明。`,
     ];
   }
@@ -1375,9 +1375,11 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
   const [resourceDirectorySelection, setResourceDirectorySelection] = useState([]);
   const [resourceDirectoryItems, setResourceDirectoryItems] = useState([]);
   const [mappingSuggestionLoading, setMappingSuggestionLoading] = useState(false);
+  const [matrixScrollPositions, setMatrixScrollPositions] = useState({});
   const [directSubmitForm] = Form.useForm();
   const matrixSectionRefs = useRef({});
   const matrixItemRefs = useRef({});
+  const matrixScrollRefs = useRef({});
   const matrixActionHighlightTimerRef = useRef(null);
 
   const openGrowthRecordDetail = useCallback((growthRecordId, nextSnapshot = snapshot, focus = {}) => {
@@ -1853,7 +1855,7 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
   );
   const analysisDimensionOptions = useMemo(
     () => [
-      { label: '全部能力类', value: 'ALL' },
+      { label: '全部目录节点', value: 'ALL' },
       ...(modelDefinition?.dimensions || []).map((dimension) => ({ label: dimension.name, value: dimension.id })),
     ],
     [modelDefinition],
@@ -1873,12 +1875,12 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
   const focusedAnalysisSuggestion = useMemo(() => {
     if (!focusedAnalysisItem) return '至少保留两个周期的材料沉淀，才能形成稳定的成长趋势判断。';
     if (focusedAnalysisItem.trendTone === 'up') {
-      return '该能力项在最近周期持续走强，建议继续补充高质量成果型材料，巩固增长趋势。';
+      return '该能力节点在最近周期持续走强，建议继续补充高质量成果型材料，巩固增长趋势。';
     }
     if (focusedAnalysisItem.trendTone === 'down') {
-      return '该能力项较早期周期出现回落，建议优先补充本周期的新材料，并检查映射是否遗漏。';
+      return '该能力节点较早期周期出现回落，建议优先补充本周期的新材料，并检查映射是否遗漏。';
     }
-    return '该能力项整体保持平稳，建议继续维持常规材料沉淀，并尝试补充更能体现进阶水平的证据。';
+    return '该能力节点整体保持平稳，建议继续维持常规材料沉淀，并尝试补充更能体现进阶水平的证据。';
   }, [focusedAnalysisItem]);
   const analysisLatestHint = compareVersions[0]
     ? `${compareVersions[0].periodLabel || '-'} · ${compareVersions[0].schemeName || '-'} · ${formatDateTimeText(compareVersions[0].updatedAt || compareVersions[0].createdAt)}`
@@ -2467,10 +2469,31 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
     scrollToMatrixActionItem(item.targetItemId);
   }
 
+  function updateMatrixScrollPosition(sectionKey, scrollNode) {
+    if (!sectionKey || !scrollNode) return;
+    const maxScrollLeft = Math.max(0, scrollNode.scrollWidth - scrollNode.clientWidth);
+    const nextValue = maxScrollLeft ? Math.round((scrollNode.scrollLeft / maxScrollLeft) * 1000) : 0;
+    setMatrixScrollPositions((current) => (
+      current[sectionKey] === nextValue ? current : { ...current, [sectionKey]: nextValue }
+    ));
+  }
+
+  function handleMatrixScroll(sectionKey) {
+    updateMatrixScrollPosition(sectionKey, matrixScrollRefs.current[sectionKey]);
+  }
+
+  function handleMatrixScrollControl(sectionKey, value) {
+    const scrollNode = matrixScrollRefs.current[sectionKey];
+    if (!scrollNode) return;
+    const maxScrollLeft = Math.max(0, scrollNode.scrollWidth - scrollNode.clientWidth);
+    scrollNode.scrollLeft = (Number(value) / 1000) * maxScrollLeft;
+    updateMatrixScrollPosition(sectionKey, scrollNode);
+  }
+
   function getMatrixTreeNodeTitle(node) {
     return node?.nodeType === 'item'
-      ? (node.item?.name || '未命名能力项')
-      : (node?.dimension?.name || '未命名能力类');
+      ? (node.item?.name || '未命名节点')
+      : (node?.dimension?.name || '未命名节点');
   }
 
   function getMatrixTreeNodeMeta(node) {
@@ -2486,8 +2509,8 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
     }
     const dimensionParts = [
       node.orderText ? `${node.orderText} · 第 ${node.level} 层` : `第 ${node.level} 层`,
-      node.dimensionChildCount ? `${node.dimensionChildCount} 个下级分类` : '',
-      node.itemCount ? `${node.itemCount} 个能力项` : '',
+      node.dimensionChildCount ? `${node.dimensionChildCount} 个下级节点` : '',
+      node.itemCount ? `${node.itemCount} 个末级节点` : '',
     ].filter(Boolean);
     return dimensionParts.join(' · ');
   }
@@ -2622,15 +2645,15 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
 
         <Card variant="borderless" className="profile-archive-panel">
           <div className="profile-archive-panel-head">
-            <span>维度证据概览</span>
-            <Tag color="green">{snapshot.currentModel.dimensionCount} 个能力类</Tag>
+            <span>目录证据概览</span>
+            <Tag color="green">{snapshot.currentModel.dimensionCount} 个目录节点</Tag>
           </div>
           <div className="profile-archive-dimension-list">
             {snapshot.dimensions.map((dimension) => (
               <div key={dimension.key} className="profile-archive-dimension-row">
                 <div className="profile-archive-dimension-meta">
                   <strong>{dimension.name}</strong>
-                  <span>{dimension.description || '未填写能力类说明'}</span>
+                  <span>{dimension.description || '未填写节点说明'}</span>
                 </div>
                 <div className="profile-archive-dimension-progress">
                   <Progress percent={dimension.averageScore} size="small" strokeColor={SOURCE_META[dimension.strongestSourceKey].color} />
@@ -2704,7 +2727,7 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
     {
       key: 'target',
       label: '目标提升',
-      value: `${mappingActionSummary.targetCount} 项`,
+      value: `${mappingActionSummary.targetCount} 个`,
       hint: mappingActionSummary.topTarget
         ? `优先看 ${mappingActionSummary.topTarget.name}`
         : '当前暂无系统判定的重点提升项',
@@ -2715,7 +2738,7 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
     {
       key: 'regressed',
       label: '较前回落',
-      value: hasMappingComparisonHistory ? `${mappingActionSummary.regressedCount} 项` : '待形成',
+      value: hasMappingComparisonHistory ? `${mappingActionSummary.regressedCount} 个` : '待形成',
       hint: hasMappingComparisonHistory
         ? (mappingActionSummary.topRegressed ? `${mappingActionSummary.topRegressed.name} ${mappingActionSummary.topRegressed.trendLabel}` : '没有明显回落项')
         : '至少两个周期后展示回落判断',
@@ -2726,7 +2749,7 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
     {
       key: 'gap',
       label: '证据不足',
-      value: `${mappingActionSummary.gapCount} 项`,
+      value: `${mappingActionSummary.gapCount} 个`,
       hint: mappingActionSummary.topGap
         ? `${mappingActionSummary.topGap.name} 还需补证`
         : '当前证据数量基本满足要求',
@@ -2751,9 +2774,9 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
         <div className="profile-archive-panel-head">
           <div className="profile-archive-panel-head-main">
             <Space wrap>
-              <Tag color="blue">当前模型 {snapshot.currentModel.itemCount} 项</Tag>
-              <Tag color="green">证据充分 {snapshot.summary.strongItemCount} 项</Tag>
-              <Tag color="warning">待补证 {snapshot.summary.focusItemCount} 项</Tag>
+              <Tag color="blue">当前模型 {snapshot.currentModel.itemCount} 个末级节点</Tag>
+              <Tag color="green">证据充分 {snapshot.summary.strongItemCount} 个</Tag>
+              <Tag color="warning">待补证 {snapshot.summary.focusItemCount} 个</Tag>
               <Tag>缺证等级 {snapshot.summary.missingLevelCount} 个</Tag>
               <Tag color="warning">证据偏弱等级 {snapshot.summary.lowMatchLevelCount} 个</Tag>
               <Tag color="success">证据强支撑等级 {snapshot.summary.strongLevelCount} 个</Tag>
@@ -2773,7 +2796,7 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
                 <span>{item.label}</span>
                 <strong>{item.value}</strong>
                 <em>{item.hint}</em>
-                <Tag color={item.color}>{item.targetTab ? '查看来源' : '定位能力项'}</Tag>
+                <Tag color={item.color}>{item.targetTab ? '查看来源' : '定位节点'}</Tag>
               </button>
             ))}
           </div>
@@ -2782,7 +2805,7 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
             <div className="profile-archive-matrix-directory-callout">
               <div className="profile-archive-matrix-directory-copy">
                 <strong>当前周期还没有设置档案材料目录</strong>
-                <span>先绑定资料库目录后，AI 扫描结果会进入行动清单，目标能力和补证建议会更准确。</span>
+                <span>先绑定资料库目录后，AI 扫描结果会进入行动清单，目标节点和补证建议会更准确。</span>
               </div>
               <Button size="small" type="primary" icon={<AppstoreOutlined />} onClick={handleOpenResourceDirectory}>
                 设置目录
@@ -2798,7 +2821,7 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
                       <strong>能力目录</strong>
                       <span>按能力模型树状结构快速定位当前证据映射位置。</span>
                     </div>
-                    <Tag color="blue">{mappingMatrixSections.length} 个能力类</Tag>
+                    <Tag color="blue">{mappingMatrixSections.length} 个目录节点</Tag>
                   </div>
                   <div className="cap-model-framework-tree-list">
                     {visibleMappingTreeNodes.length ? visibleMappingTreeNodes.map((node) => renderMatrixTreeNode(node)) : (
@@ -2822,16 +2845,32 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
                     >
                       <div className="profile-archive-matrix-section-head">
                         <div>
-                          <div className="profile-archive-matrix-section-kicker">能力类 {dimension.orderText} · 第 {dimension.level} 层</div>
+                          <div className="profile-archive-matrix-section-kicker">第 {dimension.level} 层节点 · {dimension.orderText}</div>
                           <div className="profile-archive-matrix-section-title">{dimension.name}</div>
-                          <div className="profile-archive-matrix-section-desc">{dimension.description || '未填写能力类说明'}</div>
+                          <div className="profile-archive-matrix-section-desc">{dimension.description || '未填写节点说明'}</div>
                         </div>
                         <Space size={8} wrap>
-                          {dimension.dimensionChildCount ? <Tag>{dimension.dimensionChildCount} 个下级分类</Tag> : null}
-                          <Tag color="blue">{dimension.items.length} 个能力项</Tag>
+                          {dimension.dimensionChildCount ? <Tag>{dimension.dimensionChildCount} 个下级节点</Tag> : null}
+                          <Tag color="blue">{dimension.items.length} 个末级节点</Tag>
                         </Space>
                       </div>
-                      <div className="profile-archive-matrix">
+                      <div className="profile-archive-matrix-scroll-control">
+                        <input
+                          type="range"
+                          min="0"
+                          max="1000"
+                          value={matrixScrollPositions[dimension.key] || 0}
+                          aria-label={`${dimension.name} L1 到 L4 横向滚动条`}
+                          onChange={(event) => handleMatrixScrollControl(dimension.key, event.target.value)}
+                        />
+                      </div>
+                      <div
+                        className="profile-archive-matrix"
+                        ref={(node) => {
+                          matrixScrollRefs.current[dimension.key] = node;
+                        }}
+                        onScroll={() => handleMatrixScroll(dimension.key)}
+                      >
                         <table>
                           <colgroup>
                             <col className="profile-archive-matrix-col-item" />
@@ -2842,7 +2881,7 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
                           <thead>
                             <tr>
                               <th>
-                                <div className="profile-archive-matrix-head-main">能力项</div>
+                                <div className="profile-archive-matrix-head-main">末级节点</div>
                                 <div className="profile-archive-matrix-head-sub">要求与成长记录</div>
                               </th>
                               {(modelDefinition?.levelScheme?.levels || []).map((level) => (
@@ -2856,210 +2895,210 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
                             </tr>
                           </thead>
                           <tbody>
-                              {dimension.items.map((item) => {
-                                const isItemActive = activeMatrixNode?.targetItemId === item.id;
-                                const mountedEvidenceEntries = item.mountedEvidenceEntries || [];
-                                const visibleMountedEvidenceEntries = mountedEvidenceEntries.slice(0, 3);
-                                const moreMountedEvidenceCount = Math.max(0, mountedEvidenceEntries.length - visibleMountedEvidenceEntries.length);
-                                const actionInsight = mappingActionItemMap.get(item.id);
-                                const trendMeta = actionInsight?.hasHistory ? getTrendMeta(actionInsight.trendTone) : { label: '新周期', color: undefined };
-                                const adviceActions = (actionInsight?.nextActions || item.mappingRow?.adviceActions || []).slice(0, 2);
-                                return (
-                                  <tr
-                                    key={item.id}
-                                    ref={(node) => {
-                                      matrixItemRefs.current[item.id] = node;
-                                    }}
-                                    className={`profile-archive-matrix-row${isItemActive ? ' is-active' : ''}${actionInsight ? ` is-action-${actionInsight.groupKey.toLowerCase()}` : ''}`}
-                                    style={actionInsight ? { '--profile-matrix-action-color': getMappingActionGroupColor(actionInsight.groupKey) } : undefined}
-                                  >
-                                  <td>
-                                    <div className="profile-archive-matrix-item-head">
-                                      <div className="profile-archive-matrix-item">{item.name}</div>
-                                      <Tooltip title={item.description || '未填写能力项说明'}>
-                                        <button
-                                          type="button"
-                                          className="profile-archive-matrix-item-info"
-                                          aria-label={`查看${item.name}的能力定义`}
-                                        >
-                                          <InfoCircleOutlined />
-                                        </button>
-                                      </Tooltip>
-                                    </div>
-                                    <div className="profile-archive-matrix-item-meta">
-                                      <span>至少 {item.requiredEvidenceCount || 1} 条证据</span>
-                                        {item.requiredReviewRoles?.length ? (
-                                          <span>{formatReviewRoles(item.requiredReviewRoles)}</span>
-                                        ) : null}
-                                        <span>{item.isGrowthOnly ? '仅成长档案' : '可进入正式评价'}</span>
-                                      </div>
-                                      {actionInsight ? (
-                                        <div className="profile-archive-matrix-action-badges">
-                                          <Tag color={actionInsight.groupMeta.tagColor}>{actionInsight.groupMeta.title}</Tag>
-                                          <Tag color={actionInsight.coverageStatusColor}>{actionInsight.coverageStatusLabel}</Tag>
-                                          <Tag color={trendMeta.color}>{trendMeta.label}</Tag>
-                                          <Tag>{actionInsight.targetLevelLabel}</Tag>
-                                        </div>
+                            {dimension.items.map((item) => {
+                              const isItemActive = activeMatrixNode?.targetItemId === item.id;
+                              const mountedEvidenceEntries = item.mountedEvidenceEntries || [];
+                              const visibleMountedEvidenceEntries = mountedEvidenceEntries.slice(0, 3);
+                              const moreMountedEvidenceCount = Math.max(0, mountedEvidenceEntries.length - visibleMountedEvidenceEntries.length);
+                              const actionInsight = mappingActionItemMap.get(item.id);
+                              const trendMeta = actionInsight?.hasHistory ? getTrendMeta(actionInsight.trendTone) : { label: '新周期', color: undefined };
+                              const adviceActions = (actionInsight?.nextActions || item.mappingRow?.adviceActions || []).slice(0, 2);
+                              return (
+                                <tr
+                                  key={item.id}
+                                  ref={(node) => {
+                                    matrixItemRefs.current[item.id] = node;
+                                  }}
+                                  className={`profile-archive-matrix-row${isItemActive ? ' is-active' : ''}${actionInsight ? ` is-action-${actionInsight.groupKey.toLowerCase()}` : ''}`}
+                                  style={actionInsight ? { '--profile-matrix-action-color': getMappingActionGroupColor(actionInsight.groupKey) } : undefined}
+                                >
+                                <td>
+                                  <div className="profile-archive-matrix-item-head">
+                                    <div className="profile-archive-matrix-item">{item.name}</div>
+                                    <Tooltip title={item.description || '未填写节点说明'}>
+                                      <button
+                                        type="button"
+                                        className="profile-archive-matrix-item-info"
+                                        aria-label={`查看${item.name}的能力定义`}
+                                      >
+                                        <InfoCircleOutlined />
+                                      </button>
+                                    </Tooltip>
+                                  </div>
+                                  <div className="profile-archive-matrix-item-meta">
+                                    <span>至少 {item.requiredEvidenceCount || 1} 条证据</span>
+                                      {item.requiredReviewRoles?.length ? (
+                                        <span>{formatReviewRoles(item.requiredReviewRoles)}</span>
                                       ) : null}
-                                      {actionInsight ? (
-                                        <div className="profile-archive-matrix-action-strip">
-                                          <div>
-                                            <span>当前覆盖</span>
-                                            <strong>{actionInsight.latestCoverage}%</strong>
-                                            <Progress percent={actionInsight.latestCoverage} size="small" strokeColor={getCoverageBarColor(actionInsight.latestCoverage)} showInfo={false} />
-                                          </div>
-                                          <div>
-                                            <span>趋势</span>
-                                            <strong>{actionInsight.trendLabel}</strong>
-                                            <em>{actionInsight.hasHistory ? '按最近周期' : '暂无历史对比'}</em>
-                                          </div>
-                                          <div>
-                                            <span>挂载证据</span>
-                                            <strong>{actionInsight.mountedEvidenceCount} / {actionInsight.requiredEvidenceCount}</strong>
-                                            <em>{actionInsight.evidenceGapCount ? `还需 ${actionInsight.evidenceGapCount} 条` : '数量满足'}</em>
-                                          </div>
-                                        </div>
-                                      ) : null}
-                                      <div className="profile-archive-matrix-item-focus">
-                                      <div className="profile-archive-matrix-item-focus-head">
-                                        <span>当前证据挂载</span>
-                                        <div className="profile-archive-matrix-item-focus-head-side">
-                                          {item.mappingRow?.statusLabel ? (
-                                            <Tag color={item.mappingRow.statusColor}>{item.mappingRow.statusLabel}</Tag>
-                                          ) : null}
-                                          {mountedEvidenceEntries.length ? <em>已挂载 {mountedEvidenceEntries.length} 条</em> : null}
-                                        </div>
-                                      </div>
-                                      {visibleMountedEvidenceEntries.length ? (
-                                        <>
-                                          <div className="profile-archive-matrix-mounted-list">
-                                            {visibleMountedEvidenceEntries.map((entry) => (
-                                              <button
-                                                key={`${item.id}_${entry.id}`}
-                                                type="button"
-                                                className="profile-archive-matrix-mounted-card"
-                                                onClick={() => openGrowthRecordDetail(entry.originGrowthRecordId || entry.growthRecordId, snapshot, {
-                                                  focusItemId: item.id,
-                                                  focusDimensionName: dimension.name,
-                                                  focusItemName: item.name,
-                                                  focusBundleItemId: entry.id,
-                                                  focusCoverage: entry.coverage,
-                                                })}
-                                              >
-                                                <div className="profile-archive-matrix-mounted-card-head">
-                                                  <strong>{entry.title}</strong>
-                                                  {entry.isCurrent ? <span className="profile-archive-matrix-mounted-badge">本周期</span> : null}
-                                                </div>
-                                                <div className="profile-archive-matrix-mounted-card-meta">
-                                                  {entry.sourceLabel ? (
-                                                    <Tag color={SOURCE_META[entry.sourceKey]?.color || 'default'}>{entry.sourceLabel}</Tag>
-                                                  ) : null}
-                                                  {entry.date && entry.date !== '-' ? <span>{entry.date}</span> : null}
-                                                  {typeof entry.coverage === 'number' ? <span>{entry.coverage}% 覆盖</span> : null}
-                                                </div>
-                                                <div className="profile-archive-matrix-mounted-card-copy">
-                                                  {entry.resourcePath && entry.resourcePath !== '-'
-                                                    ? entry.resourcePath
-                                                    : entry.summary || entry.matchNote || '点击查看该条挂载证据'}
-                                                </div>
-                                              </button>
-                                            ))}
-                                          </div>
-                                          <div className="profile-archive-matrix-item-focus-stats">
-                                            <span>当前覆盖 {item.mappingRow?.coverage || 0}%</span>
-                                            {item.mappingRow?.levelFocusLabel ? <span>当前关注 {item.mappingRow.levelFocusLabel}</span> : null}
-                                          </div>
-                                          {moreMountedEvidenceCount ? (
-                                            <div className="profile-archive-matrix-mounted-more">
-                                              另有 {moreMountedEvidenceCount} 条已挂载证据，可点开任一记录查看完整材料包。
-                                            </div>
-                                          ) : null}
-                                        </>
-                                      ) : (
-                                        <div className="profile-archive-matrix-item-focus-empty">
-                                          暂无直接挂载证据，可先补充最能支撑该能力项的过程或结果材料。
-                                        </div>
-                                      )}
+                                      <span>{item.isGrowthOnly ? '仅成长档案' : '可进入正式评价'}</span>
                                     </div>
-                                      <div className="profile-archive-matrix-item-focus is-advice is-action-plan">
-                                        <div className="profile-archive-matrix-item-focus-head">
-                                          <span>行动建议</span>
-                                          {actionInsight?.targetLevelHint ? <em>{actionInsight.targetLevelHint}</em> : (item.mappingRow?.levelFocusLabel ? <em>优先关注 {item.mappingRow.levelFocusLabel}</em> : null)}
-                                        </div>
-                                        <div className="profile-archive-matrix-item-focus-copy">
-                                          {actionInsight?.gapSummary || item.mappingRow?.adviceSummary || '建议先补充直接证据，再逐步完善更高等级的支撑材料。'}
-                                        </div>
-                                        {adviceActions.length ? (
-                                          <ul className="profile-archive-matrix-item-focus-actions">
-                                          {adviceActions.map((action) => (
-                                            <li key={action}>{action}</li>
-                                            ))}
-                                          </ul>
-                                        ) : null}
-                                        {actionInsight ? (
-                                          <div className="profile-archive-matrix-action-buttons">
-                                            <Button size="small" onClick={() => openMappingActionDetail(item.id)}>
-                                              查看行动详情
-                                            </Button>
-                                            <Button size="small" type="primary" icon={<AppstoreOutlined />} onClick={handleOpenResourceDirectory}>
-                                              补充材料
-                                            </Button>
-                                          </div>
-                                        ) : null}
-                                      </div>
-                                    {item.evidenceExamples?.length ? (
-                                      <div className="profile-archive-matrix-item-hint">
-                                        参考示例：{item.evidenceExamples.join('、')}
+                                    {actionInsight ? (
+                                      <div className="profile-archive-matrix-action-badges">
+                                        <Tag color={actionInsight.groupMeta.tagColor}>{actionInsight.groupMeta.title}</Tag>
+                                        <Tag color={actionInsight.coverageStatusColor}>{actionInsight.coverageStatusLabel}</Tag>
+                                        <Tag color={trendMeta.color}>{trendMeta.label}</Tag>
+                                        <Tag>{actionInsight.targetLevelLabel}</Tag>
                                       </div>
                                     ) : null}
-                                  </td>
-                                  {item.cellMappings.map(({ level, descriptor, growthRecord }) => (
-                                    <td key={`${item.id}_${level.key}`}>
-                                      <div className="profile-archive-matrix-cell">
-                                        {growthRecord ? (
-                                          <div className="profile-archive-matrix-status">
-                                            <Tag color={growthRecord.statusColor}>{growthRecord.statusLabel}</Tag>
-                                            <span>
-                                              {growthRecord.hasRecord && typeof growthRecord.coverage === 'number'
-                                                ? `${growthRecord.coverage}% 覆盖`
-                                                : '建议补充直接记录'}
-                                            </span>
-                                          </div>
-                                        ) : null}
-                                        <div className="profile-archive-matrix-cell-block">
-                                          <div className="profile-archive-matrix-cell-label">等级描述</div>
-                                          <div className="profile-archive-matrix-cell-text">{descriptor.text || '-'}</div>
+                                    {actionInsight ? (
+                                      <div className="profile-archive-matrix-action-strip">
+                                        <div>
+                                          <span>当前覆盖</span>
+                                          <strong>{actionInsight.latestCoverage}%</strong>
+                                          <Progress percent={actionInsight.latestCoverage} size="small" strokeColor={getCoverageBarColor(actionInsight.latestCoverage)} showInfo={false} />
                                         </div>
-                                        <div className="profile-archive-matrix-cell-label">当前记录</div>
-                                        {growthRecord?.hasRecord ? (
-                                          <button
-                                            type="button"
-                                            className="profile-archive-matrix-record-card"
-                                            onClick={() => openCellGrowthRecord(item, level, growthRecord)}
-                                          >
-                                            <div className="profile-archive-matrix-record-head">
-                                              <Tag color={SOURCE_META[growthRecord.sourceKey].color}>{growthRecord.sourceLabel}</Tag>
-                                              <span>{growthRecord.coverage}% 覆盖</span>
-                                            </div>
-                                            <strong>{growthRecord.evidenceTitle}</strong>
-                                            <span>{growthRecord.evidenceDate} · {growthRecord.evidenceTag}</span>
-                                          </button>
-                                        ) : (
-                                          <div className="profile-archive-matrix-record-empty">
-                                            {growthRecord?.statusLabel || '暂无映射记录'}
-                                          </div>
-                                        )}
-                                        {growthRecord?.growthAdvice?.summary ? (
-                                          <div className="profile-archive-matrix-advice">
-                                            <div className="profile-archive-matrix-cell-label">改进建议</div>
-                                            <div>{growthRecord.growthAdvice.summary}</div>
+                                        <div>
+                                          <span>趋势</span>
+                                          <strong>{actionInsight.trendLabel}</strong>
+                                          <em>{actionInsight.hasHistory ? '按最近周期' : '暂无历史对比'}</em>
+                                        </div>
+                                        <div>
+                                          <span>挂载证据</span>
+                                          <strong>{actionInsight.mountedEvidenceCount} / {actionInsight.requiredEvidenceCount}</strong>
+                                          <em>{actionInsight.evidenceGapCount ? `还需 ${actionInsight.evidenceGapCount} 条` : '数量满足'}</em>
+                                        </div>
+                                      </div>
+                                    ) : null}
+                                    <div className="profile-archive-matrix-item-focus">
+                                    <div className="profile-archive-matrix-item-focus-head">
+                                      <span>当前证据挂载</span>
+                                      <div className="profile-archive-matrix-item-focus-head-side">
+                                        {item.mappingRow?.statusLabel ? (
+                                          <Tag color={item.mappingRow.statusColor}>{item.mappingRow.statusLabel}</Tag>
+                                        ) : null}
+                                        {mountedEvidenceEntries.length ? <em>已挂载 {mountedEvidenceEntries.length} 条</em> : null}
+                                      </div>
+                                    </div>
+                                    {visibleMountedEvidenceEntries.length ? (
+                                      <>
+                                        <div className="profile-archive-matrix-mounted-list">
+                                          {visibleMountedEvidenceEntries.map((entry) => (
+                                            <button
+                                              key={`${item.id}_${entry.id}`}
+                                              type="button"
+                                              className="profile-archive-matrix-mounted-card"
+                                              onClick={() => openGrowthRecordDetail(entry.originGrowthRecordId || entry.growthRecordId, snapshot, {
+                                                focusItemId: item.id,
+                                                focusDimensionName: dimension.name,
+                                                focusItemName: item.name,
+                                                focusBundleItemId: entry.id,
+                                                focusCoverage: entry.coverage,
+                                              })}
+                                            >
+                                              <div className="profile-archive-matrix-mounted-card-head">
+                                                <strong>{entry.title}</strong>
+                                                {entry.isCurrent ? <span className="profile-archive-matrix-mounted-badge">本周期</span> : null}
+                                              </div>
+                                              <div className="profile-archive-matrix-mounted-card-meta">
+                                                {entry.sourceLabel ? (
+                                                  <Tag color={SOURCE_META[entry.sourceKey]?.color || 'default'}>{entry.sourceLabel}</Tag>
+                                                ) : null}
+                                                {entry.date && entry.date !== '-' ? <span>{entry.date}</span> : null}
+                                                {typeof entry.coverage === 'number' ? <span>{entry.coverage}% 覆盖</span> : null}
+                                              </div>
+                                              <div className="profile-archive-matrix-mounted-card-copy">
+                                                {entry.resourcePath && entry.resourcePath !== '-'
+                                                  ? entry.resourcePath
+                                                  : entry.summary || entry.matchNote || '点击查看该条挂载证据'}
+                                              </div>
+                                            </button>
+                                          ))}
+                                        </div>
+                                        <div className="profile-archive-matrix-item-focus-stats">
+                                          <span>当前覆盖 {item.mappingRow?.coverage || 0}%</span>
+                                          {item.mappingRow?.levelFocusLabel ? <span>当前关注 {item.mappingRow.levelFocusLabel}</span> : null}
+                                        </div>
+                                        {moreMountedEvidenceCount ? (
+                                          <div className="profile-archive-matrix-mounted-more">
+                                            另有 {moreMountedEvidenceCount} 条已挂载证据，可点开任一记录查看完整材料包。
                                           </div>
                                         ) : null}
+                                      </>
+                                    ) : (
+                                      <div className="profile-archive-matrix-item-focus-empty">
+                                        暂无直接挂载证据，可先补充最能支撑该节点的过程或结果材料。
                                       </div>
-                                    </td>
-                                  ))}
-                                </tr>
-                              );
+                                    )}
+                                  </div>
+                                    <div className="profile-archive-matrix-item-focus is-advice is-action-plan">
+                                      <div className="profile-archive-matrix-item-focus-head">
+                                        <span>行动建议</span>
+                                        {actionInsight?.targetLevelHint ? <em>{actionInsight.targetLevelHint}</em> : (item.mappingRow?.levelFocusLabel ? <em>优先关注 {item.mappingRow.levelFocusLabel}</em> : null)}
+                                      </div>
+                                      <div className="profile-archive-matrix-item-focus-copy">
+                                        {actionInsight?.gapSummary || item.mappingRow?.adviceSummary || '建议先补充直接证据，再逐步完善更高等级的支撑材料。'}
+                                      </div>
+                                      {adviceActions.length ? (
+                                        <ul className="profile-archive-matrix-item-focus-actions">
+                                        {adviceActions.map((action) => (
+                                          <li key={action}>{action}</li>
+                                          ))}
+                                        </ul>
+                                      ) : null}
+                                      {actionInsight ? (
+                                        <div className="profile-archive-matrix-action-buttons">
+                                          <Button size="small" onClick={() => openMappingActionDetail(item.id)}>
+                                            查看行动详情
+                                          </Button>
+                                          <Button size="small" type="primary" icon={<AppstoreOutlined />} onClick={handleOpenResourceDirectory}>
+                                            补充材料
+                                          </Button>
+                                        </div>
+                                      ) : null}
+                                    </div>
+                                  {item.evidenceExamples?.length ? (
+                                    <div className="profile-archive-matrix-item-hint">
+                                      参考示例：{item.evidenceExamples.join('、')}
+                                    </div>
+                                  ) : null}
+                                </td>
+                                {item.cellMappings.map(({ level, descriptor, growthRecord }) => (
+                                  <td key={`${item.id}_${level.key}`}>
+                                    <div className="profile-archive-matrix-cell">
+                                      {growthRecord ? (
+                                        <div className="profile-archive-matrix-status">
+                                          <Tag color={growthRecord.statusColor}>{growthRecord.statusLabel}</Tag>
+                                          <span>
+                                            {growthRecord.hasRecord && typeof growthRecord.coverage === 'number'
+                                              ? `${growthRecord.coverage}% 覆盖`
+                                              : '建议补充直接记录'}
+                                          </span>
+                                        </div>
+                                      ) : null}
+                                      <div className="profile-archive-matrix-cell-block">
+                                        <div className="profile-archive-matrix-cell-label">等级描述</div>
+                                        <div className="profile-archive-matrix-cell-text">{descriptor.text || '-'}</div>
+                                      </div>
+                                      <div className="profile-archive-matrix-cell-label">当前记录</div>
+                                      {growthRecord?.hasRecord ? (
+                                        <button
+                                          type="button"
+                                          className="profile-archive-matrix-record-card"
+                                          onClick={() => openCellGrowthRecord(item, level, growthRecord)}
+                                        >
+                                          <div className="profile-archive-matrix-record-head">
+                                            <Tag color={SOURCE_META[growthRecord.sourceKey].color}>{growthRecord.sourceLabel}</Tag>
+                                            <span>{growthRecord.coverage}% 覆盖</span>
+                                          </div>
+                                          <strong>{growthRecord.evidenceTitle}</strong>
+                                          <span>{growthRecord.evidenceDate} · {growthRecord.evidenceTag}</span>
+                                        </button>
+                                      ) : (
+                                        <div className="profile-archive-matrix-record-empty">
+                                          {growthRecord?.statusLabel || '暂无映射记录'}
+                                        </div>
+                                      )}
+                                      {growthRecord?.growthAdvice?.summary ? (
+                                        <div className="profile-archive-matrix-advice">
+                                          <div className="profile-archive-matrix-cell-label">改进建议</div>
+                                          <div>{growthRecord.growthAdvice.summary}</div>
+                                        </div>
+                                      ) : null}
+                                    </div>
+                                  </td>
+                                ))}
+                              </tr>
+                            );
                             })}
                           </tbody>
                         </table>
@@ -3191,7 +3230,7 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
                   </div>
                   <div className="profile-archive-record-tags">
                     <Tag>{record.tag}</Tag>
-                    <Tag color={record.statusColor}>{record.linkedItemCount} 个能力项</Tag>
+                    <Tag color={record.statusColor}>{record.linkedItemCount} 个关联节点</Tag>
                     {record.importMode === 'DIRECTORY_SCAN'
                       ? <Tag color="gold">目录扫描</Tag>
                       : (record.originType === 'RESOURCE_LIBRARY' ? <Tag color="blue">资料库导入</Tag> : <Tag>跨周期带入材料</Tag>)}
@@ -3380,12 +3419,12 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
         <div className="profile-archive-panel-head">
           <div className="profile-archive-history-head">
             <strong>周期分析</strong>
-            <span>按最近多个周期对比各能力项的证据覆盖变化，帮助教师识别持续成长、平稳积累和需要优先补强的能力项。</span>
+            <span>按最近多个周期对比各能力节点的证据覆盖变化，帮助教师识别持续成长、平稳积累和需要优先补强的节点。</span>
             <span>{analysisLatestHint}</span>
           </div>
           <Space wrap>
             <Tag color="blue">{compareVersions.length} 个对比周期</Tag>
-            <Tag color="green">{versionComparisonSummary.visibleItemCount} 个能力项</Tag>
+            <Tag color="green">{versionComparisonSummary.visibleItemCount} 个节点</Tag>
           </Space>
         </div>
 
@@ -3418,14 +3457,14 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
             options={[
               { label: '按变化幅度排序', value: 'DELTA' },
               { label: '按当前覆盖度排序', value: 'LATEST' },
-              { label: '按能力项名称排序', value: 'NAME' },
+              { label: '按节点名称排序', value: 'NAME' },
             ]}
           />
           <Input
             allowClear
             value={analysisSearch}
             onChange={(event) => setAnalysisSearch(event.target.value)}
-            placeholder="搜索能力项或能力类"
+            placeholder="搜索节点名称或目录"
             className="profile-archive-analysis-search"
           />
         </div>
@@ -3438,20 +3477,20 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
               <div className="profile-archive-overview-chip">
                 <span>对比周期</span>
                 <strong>{versionComparisonSummary.comparedVersionCount} 个</strong>
-                <em>按最近更新顺序比较能力项变化</em>
+                <em>按最近更新顺序比较节点变化</em>
               </div>
               <div className="profile-archive-overview-chip">
                 <span>明显提升</span>
-                <strong>{versionComparisonSummary.improvedCount} 项</strong>
+                <strong>{versionComparisonSummary.improvedCount} 个</strong>
                 <em>覆盖度提升 8% 及以上</em>
               </div>
               <div className="profile-archive-overview-chip">
                 <span>需要关注</span>
-                <strong>{versionComparisonSummary.regressedCount} 项</strong>
+                <strong>{versionComparisonSummary.regressedCount} 个</strong>
                 <em>覆盖度回落 8% 及以上</em>
               </div>
               <div className="profile-archive-overview-chip">
-                <span>最明显成长项</span>
+                <span>最明显成长节点</span>
                 <strong>{versionComparisonSummary.strongestGrowthItem?.name || '暂无'}</strong>
                 <em>{versionComparisonSummary.strongestGrowthItem ? `${versionComparisonSummary.strongestGrowthItem.trendLabel} · 当前 ${versionComparisonSummary.strongestGrowthItem.latestCoverage}%` : '需要至少两个周期后才能形成趋势'}</em>
               </div>
@@ -3461,7 +3500,7 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
               <div className="profile-archive-panel-head">
                 <div className="profile-archive-history-head">
                   <strong>周期轨迹</strong>
-                  <span>点击任一能力项后，右侧会给出该能力项的细化趋势和建议。</span>
+                <span>点击任一节点后，右侧会给出该节点的细化趋势和建议。</span>
                 </div>
                 <div className="profile-archive-compare-legend">
                   {compareVersions.map((version) => (
@@ -3479,12 +3518,12 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
                       <div className="profile-archive-panel-head">
                         <div className="profile-archive-evaluation-period-head">
                           <strong>{section.name}</strong>
-                          <span>{section.description || '按周期查看该能力类下各能力项的证据覆盖变化。'}</span>
+                          <span>{section.description || '按周期查看该节点下末级节点的证据覆盖变化。'}</span>
                         </div>
                         <Space wrap>
-                          <Tag color="blue">{section.items.length} 个能力项</Tag>
-                          <Tag color="success">{section.improvedCount} 项提升</Tag>
-                          <Tag color="error">{section.regressedCount} 项关注</Tag>
+                          <Tag color="blue">{section.items.length} 个节点</Tag>
+                          <Tag color="success">{section.improvedCount} 个提升</Tag>
+                          <Tag color="error">{section.regressedCount} 个关注</Tag>
                         </Space>
                       </div>
                       <div className="profile-archive-analysis-item-list">
@@ -3500,7 +3539,7 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
                               <div className="profile-archive-analysis-item-head">
                                 <div className="profile-archive-analysis-item-copy">
                                   <strong>{item.name}</strong>
-                                  <span>{item.description || '未填写能力项说明'}</span>
+                                  <span>{item.description || '未填写节点说明'}</span>
                                 </div>
                                 <Space wrap>
                                   <Tag color={trendMeta.color}>{trendMeta.label}</Tag>
@@ -3533,7 +3572,7 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
                   ))}
                 </div>
               ) : (
-                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="当前筛选条件下没有匹配的能力项" />
+                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="当前筛选条件下没有匹配的节点" />
               )}
             </Card>
           </div>
@@ -3542,7 +3581,7 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
             <div className="profile-archive-panel-head">
               <div className="profile-archive-history-head">
                 <strong>重点观察项</strong>
-                <span>围绕当前选中的能力项查看周期细节和后续建议。</span>
+                <span>围绕当前选中的节点查看周期细节和后续建议。</span>
               </div>
               {focusedAnalysisItem ? <Tag color={getTrendMeta(focusedAnalysisItem.trendTone).color}>{getTrendMeta(focusedAnalysisItem.trendTone).label}</Tag> : null}
             </div>
@@ -3551,7 +3590,7 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
               <div className="profile-archive-analysis-focus-body">
                 <div className="profile-archive-analysis-focus-summary">
                   <strong>{focusedAnalysisItem.name}</strong>
-                  <p>{focusedAnalysisItem.description || '该能力项当前尚未填写额外说明。'}</p>
+                  <p>{focusedAnalysisItem.description || '该节点当前尚未填写额外说明。'}</p>
                   <div className="profile-archive-record-tags">
                     <Tag color="blue">{focusedAnalysisItem.dimensionName}</Tag>
                     <Tag>{focusedAnalysisItem.trendLabel}</Tag>
@@ -3596,13 +3635,13 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
                 </div>
               </div>
             ) : (
-              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="请先从左侧选择一个能力项" />
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="请先从左侧选择一个节点" />
             )}
           </Card>
         </div>
       ) : (
         <Card variant="borderless" className="profile-archive-panel">
-          <Empty description="至少需要两个档案周期，才能形成能力项的跨周期对比分析" />
+          <Empty description="至少需要两个档案周期，才能形成节点的跨周期对比分析" />
         </Card>
       )}
     </div>
@@ -3769,7 +3808,7 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
                   <strong>周期趋势</strong>
                   <Tag>新周期</Tag>
                 </div>
-                <p className="profile-archive-action-drawer-note">至少形成两个周期后，这里会展示能力项覆盖度的变化趋势。</p>
+                <p className="profile-archive-action-drawer-note">至少形成两个周期后，这里会展示节点覆盖度的变化趋势。</p>
               </div>
             )}
 
@@ -3804,7 +3843,7 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
                   ))}
                 </div>
               ) : (
-                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="当前能力项暂无直接挂载证据" />
+                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="当前节点暂无直接挂载证据" />
               )}
             </div>
 
@@ -3831,7 +3870,7 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
               <div className="profile-archive-action-drawer-rule-grid">
                 <div>
                   <span>能力定义</span>
-                  <p>{selectedMappingActionItem.description || '当前能力项尚未填写定义。'}</p>
+                  <p>{selectedMappingActionItem.description || '当前节点尚未填写定义。'}</p>
                 </div>
                 <div>
                   <span>证据要求</span>
@@ -3845,7 +3884,7 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
             </div>
           </div>
         ) : (
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="请先选择一个能力项" />
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="请先选择一个节点" />
         )}
       </Drawer>
 
@@ -3928,11 +3967,11 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
                 <strong>{snapshot.summary.overallCoverage}%</strong>
               </div>
               <div>
-                <span>证据充分项</span>
+                <span>证据充分节点</span>
                 <strong>{snapshot.summary.strongItemCount}</strong>
               </div>
               <div>
-                <span>待补证项</span>
+                <span>待补证节点</span>
                 <strong>{snapshot.summary.focusItemCount}</strong>
               </div>
               <div>
@@ -4015,7 +4054,7 @@ export default function MyProfileModule({ onNavigateToTeacherEvaluation = null }
               <Input placeholder="例如：双师型认定 / 年度考核 / 成长诊断" />
             </Form.Item>
             <Form.Item label="提交说明" name="applicationNote">
-              <TextArea rows={4} placeholder="补充说明本周期重点关注的能力项、补证背景或成长目标。" />
+              <TextArea rows={4} placeholder="补充说明本周期重点关注的节点、补证背景或成长目标。" />
             </Form.Item>
             <div className="profile-archive-direct-submit-section">
               <div className="profile-archive-direct-submit-section-head">

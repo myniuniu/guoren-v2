@@ -5,6 +5,7 @@ import InspireDetailPage from './studyClub/InspireDetailPage.jsx'
 import CourseDetailPage from './studyClub/CourseDetailPage.jsx'
 import ArticleDetailPage from './studyClub/ArticleDetailPage.jsx'
 import ProcessDesignerV2 from './processV2/ProcessDesignerV2.jsx'
+import { registerPwa } from './registerPwa.js'
 
 // 简单 hash 路由
 const hash = window.location.hash || '';
@@ -26,3 +27,4 @@ function RootPage() {
 // StrictMode 在开发期会双重 mount/unmount，导致它们的内部状态树被销毁后仍被异步回调访问。
 const container = document.getElementById('root');
 createRoot(container).render(<RootPage />)
+registerPwa()
