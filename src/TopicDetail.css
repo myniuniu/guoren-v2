@@ -4093,6 +4093,10 @@
   min-height: 0;
 }
 
+.topic-kg-preview-edit-head {
+  justify-content: flex-end;
+}
+
 .topic-kg-preview-stage {
   position: relative;
   flex: 1;

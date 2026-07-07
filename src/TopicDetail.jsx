@@ -535,7 +535,6 @@ function loadTopicVersionData(topicConfig, sceneConfig, storageScopeKey) {
 function TopicDetail({
   topicTitle,
   onBack,
-  onOpenKnowledgeGraph = null,
   sceneConfig = null,
   storageScopeKey,
   sceneDescription,
@@ -647,7 +646,6 @@ function TopicDetail({
   const courseStudioDefaultKnowledgeViewAppliedRef = useRef(false);
   const knowledgeGraphCanvasAreaRef = useRef(null);
   const knowledgeGraphPanelRef = useRef(null);
-  const knowledgeGraphEditorRef = useRef(null);
   const knowledgeGraphDrawerRef = useRef(null);
 
   const markSelectedItemActivation = (itemKey) => {
@@ -2497,19 +2495,6 @@ function TopicDetail({
     });
   };
 
-  const openKnowledgeGraphInNewTab = useCallback((graph, mode = 'graph') => {
-    if (!graph?.id || typeof window === 'undefined') return;
-    const params = new URLSearchParams({
-      graphId: graph.id,
-      mode,
-    });
-    if (graph.collectionId) {
-      params.set('collectionId', graph.collectionId);
-    }
-    const targetUrl = `${window.location.pathname}${window.location.search}#knowledge-graph-full?${params.toString()}`;
-    window.open(targetUrl, '_blank', 'noopener,noreferrer');
-  }, []);
-
   const openCapabilityModelInNewTab = useCallback((model, mode = 'preview', requestId = null, sourceKey = null) => {
     if (!model?.id || typeof window === 'undefined') return;
     const params = new URLSearchParams({
@@ -2580,13 +2565,6 @@ function TopicDetail({
     previewItem,
     previewOverrideModelId,
   ]);
-
-  const handleSaveKnowledgeGraphPreview = useCallback(async () => {
-    const saved = await knowledgeGraphEditorRef.current?.saveCurrentSelection?.();
-    if (!saved) {
-      message.warning('当前没有可保存的知识图谱内容');
-    }
-  }, []);
 
   const handleSelectKnowledgeGraphOverview = () => {
     if (!knowledgeGraphGraph?.id) return;
@@ -4655,30 +4633,21 @@ function TopicDetail({
     if (knowledgeGraphPreviewMode === 'edit') {
       return (
         <div className="finder-kg-preview-embed finder-kg-preview-embed-edit" ref={knowledgeGraphPanelRef}>
-          <div className="finder-kg-preview-head">
-            <div className="finder-kg-preview-head-copy">
-              <div className="finder-kg-preview-head-title">{previewData.graph.name}</div>
-              <div className="finder-kg-preview-head-meta">
-                {previewData.graph.description || '知识图谱结构化编辑'}
-              </div>
-          </div>
-          <div className="finder-kg-preview-head-actions">
-            <Button icon={<DatabaseOutlined />} onClick={handleOpenKnowledgeGraphPicker} disabled={!canEditCurrentVersion}>
-              {knowledgeGraphRef ? '更换图谱' : '绑定图谱'}
-            </Button>
-            {canEditCurrentVersion ? (
-              <Button danger onClick={handleUnbindKnowledgeGraph}>
-                解除关联
-              </Button>
-            ) : null}
-            <Button type="primary" onClick={handleSaveKnowledgeGraphPreview}>
-              保存
-            </Button>
-            </div>
-          </div>
           <KnowledgeGraphModule
-            ref={knowledgeGraphEditorRef}
             embedded
+            hideToolbarCopy
+            toolbarActions={(
+              <>
+                <Button icon={<DatabaseOutlined />} onClick={handleOpenKnowledgeGraphPicker} disabled={!canEditCurrentVersion}>
+                  {knowledgeGraphRef ? '更换图谱' : '绑定图谱'}
+                </Button>
+                {canEditCurrentVersion ? (
+                  <Button danger onClick={handleUnbindKnowledgeGraph}>
+                    解除关联
+                  </Button>
+                ) : null}
+              </>
+            )}
             entryGraphId={previewData.graph.id}
             entryCollectionId={previewData.graph.collectionId}
             entryMode="curriculum"
@@ -4691,13 +4660,7 @@ function TopicDetail({
 
     return (
       <div className="finder-kg-preview-embed topic-kg-preview-embed" ref={knowledgeGraphPanelRef}>
-        <div className="finder-kg-preview-head">
-          <div className="finder-kg-preview-head-copy">
-            <div className="finder-kg-preview-head-title">{previewData.graph.name}</div>
-            <div className="finder-kg-preview-head-meta">
-              {previewData.graph.description || '知识图谱结构化预览'}
-            </div>
-          </div>
+        <div className="finder-kg-preview-head topic-kg-preview-edit-head">
           <div className="finder-kg-preview-head-actions">
             <Button icon={<DatabaseOutlined />} onClick={handleOpenKnowledgeGraphPicker} disabled={!canEditCurrentVersion}>
               {knowledgeGraphRef ? '更换图谱' : '绑定图谱'}
@@ -4707,7 +4670,12 @@ function TopicDetail({
                 解除关联
               </Button>
             ) : null}
-            <Button type="primary" icon={<EditOutlined />} onClick={() => openKnowledgeGraphInNewTab(previewData.graph, 'curriculum')} disabled={!canEditCurrentVersion}>
+            <Button
+              type="primary"
+              icon={<EditOutlined />}
+              onClick={() => setKnowledgeGraphPreviewMode('edit')}
+              disabled={!canEditCurrentVersion}
+            >
               编辑
             </Button>
           </div>
@@ -5434,7 +5402,7 @@ function TopicDetail({
             {isStandaloneKnowledgeGraphView ? (
               <>
                 <div className="panel-header topic-standalone-panel-header">
-                  <span className="panel-title">知识图谱</span>
+                  <span className="panel-title" aria-hidden="true" />
                   {resourcePanelViewOptions.length > 1 ? (
                     <Segmented
                       size="small"

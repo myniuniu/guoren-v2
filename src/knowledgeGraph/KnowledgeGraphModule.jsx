@@ -709,6 +709,8 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
   entryMode = 'curriculum',
   entryRequestId = null,
   embedded = false,
+  hideToolbarCopy = false,
+  toolbarActions = null,
   showBackButton = true,
   onExitEmbedded = null,
 }, ref) {
@@ -1247,11 +1249,27 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
       completeExitEditor();
       return;
     }
-    Modal.confirm({
+    let confirmModal = null;
+    confirmModal = Modal.confirm({
       title: '退出编辑',
-      content: '退出前请先保存当前编辑内容；点击“保存并退出”后将保存当前属性修改并返回。',
+      content: '退出前请先保存当前编辑内容；点击“保存并退出”后将保存当前属性修改并返回，如无需保留可选择“放弃保存”。',
       okText: '保存并退出',
       cancelText: '取消',
+      footer: (_, { CancelBtn, OkBtn }) => (
+        <Space>
+          <CancelBtn />
+          <Button
+            danger
+            onClick={() => {
+              confirmModal?.destroy?.();
+              completeExitEditor();
+            }}
+          >
+            放弃保存
+          </Button>
+          <OkBtn />
+        </Space>
+      ),
       onOk: async () => {
         const saved = await saveCurrentSelection();
         if (!saved) {
@@ -1526,14 +1544,51 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
         : selection?.type === 'relation'
           ? '关系属性'
           : '图谱属性';
+  const showAssistantPanel = viewMode === 'curriculum' && !embedded;
   const inspectorDrawerOffset = viewMode === 'curriculum'
-    ? (agentCollapsed ? 64 : agentWidth + 28)
+    ? (showAssistantPanel ? (agentCollapsed ? 64 : agentWidth + 28) : undefined)
     : undefined;
   const showInspectorToggle = viewMode === 'curriculum'
     && !inspectorOpen
     && selection?.type
     && selection.type !== 'graph';
   const showGraphResourcePreview = viewMode === 'graph' && graphPreviewOpen && Boolean(graphPreviewBinding);
+  const showToolbarBackButton = embedded
+    ? (viewMode !== 'curriculum' && Boolean(onExitEmbedded))
+    : showBackButton;
+  const showExitEditorButton = embedded && Boolean(onExitEmbedded) && viewMode === 'curriculum';
+  const hasToolbarActionGroup = Boolean(toolbarActions);
+  const primaryToolbarActions = currentGraph ? (
+    <>
+      {viewMode === 'graph' ? (
+        <Button type="primary" icon={<EditOutlined />} onClick={enterEditMode}>
+          编辑
+        </Button>
+      ) : null}
+      {viewMode === 'curriculum' ? (
+        <>
+          {showExitEditorButton ? (
+            <Button icon={<ArrowLeftOutlined />} onClick={returnToListPage}>
+              退出编辑
+            </Button>
+          ) : null}
+          <Button type="primary" onClick={saveCurrentSelection}>
+            保存
+          </Button>
+          <Button icon={<ApartmentOutlined />} onClick={() => openSectionModal('create')}>
+            新增分区
+          </Button>
+          <Button icon={<SettingOutlined />} onClick={() => {
+            setSelection(defaultSelection(currentGraph.id));
+            setInspectorOpen(true);
+          }}
+          >
+            图谱属性
+          </Button>
+        </>
+      ) : null}
+    </>
+  ) : null;
 
   const inspectorContent = (
     <div className="kg-inspector kg-inspector-drawer">
@@ -2152,55 +2207,45 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
             </div>
           ) : (
             <>
-              <div className="kg-toolbar">
-                <div className="kg-toolbar-copy">
-                  <div className="kg-toolbar-title-row">
-                    {(embedded ? Boolean(onExitEmbedded) : showBackButton) ? (
-                      <Button
-                        type="text"
-                        icon={<ArrowLeftOutlined />}
-                        className="kg-toolbar-back"
-                        onClick={returnToListPage}
-                      />
-                    ) : null}
-                    <div className="kg-toolbar-title">{currentGraph.name}</div>
+              <div className={`kg-toolbar${hideToolbarCopy ? ' kg-toolbar-actions-only' : ''}`}>
+                {!hideToolbarCopy ? (
+                  <div className="kg-toolbar-copy">
+                    <div className="kg-toolbar-title-row">
+                      {showToolbarBackButton ? (
+                        <Button
+                          type="text"
+                          icon={<ArrowLeftOutlined />}
+                          className="kg-toolbar-back"
+                          onClick={returnToListPage}
+                        />
+                      ) : null}
+                      <div className="kg-toolbar-title">{currentGraph.name}</div>
+                    </div>
+                    <div className="kg-toolbar-subtitle">
+                      {currentGraph.description || (viewMode === 'graph'
+                        ? '面向学员的知识图谱预览，可浏览知识点关系与学习路径。'
+                        : '维护知识点、关系和资料绑定，并支持 AI 草稿生成。')}
+                    </div>
                   </div>
-                  <div className="kg-toolbar-subtitle">
-                    {currentGraph.description || (viewMode === 'graph'
-                      ? '面向学员的知识图谱预览，可浏览知识点关系与学习路径。'
-                      : '维护知识点、关系和资料绑定，并支持 AI 草稿生成。')}
+                ) : null}
+                {hasToolbarActionGroup ? (
+                  <div className="kg-toolbar-action-clusters">
+                    <div className="kg-toolbar-action-group kg-toolbar-action-group-linkage">
+                      <Space wrap>{toolbarActions}</Space>
+                    </div>
+                    <div className="kg-toolbar-action-group kg-toolbar-action-group-editor">
+                      <Space wrap>{primaryToolbarActions}</Space>
+                    </div>
                   </div>
-                </div>
-                <Space wrap>
-                  {viewMode === 'graph' ? (
-                    <Button type="primary" icon={<EditOutlined />} onClick={enterEditMode}>
-                      编辑
-                    </Button>
-                  ) : null}
-                  {viewMode === 'curriculum' ? (
-                    <>
-                      <Button type="primary" onClick={saveCurrentSelection}>
-                        保存
-                      </Button>
-                      <Button icon={<ApartmentOutlined />} onClick={() => openSectionModal('create')}>
-                        新增分区
-                      </Button>
-                      <Button icon={<SettingOutlined />} onClick={() => {
-                        setSelection(defaultSelection(currentGraph.id));
-                        setInspectorOpen(true);
-                      }}
-                      >
-                        图谱属性
-                      </Button>
-                    </>
-                  ) : null}
-                </Space>
+                ) : (
+                  <Space wrap>{primaryToolbarActions}</Space>
+                )}
               </div>
 
               <div
                 className={`kg-editor-layout${viewMode === 'curriculum' ? '' : ' is-preview'}`}
                 style={viewMode === 'curriculum'
-                  ? { gridTemplateColumns: agentCollapsed ? 'minmax(0, 1fr) 48px' : `minmax(0, 1fr) ${agentWidth}px` }
+                  ? { gridTemplateColumns: showAssistantPanel ? (agentCollapsed ? 'minmax(0, 1fr) 48px' : `minmax(0, 1fr) ${agentWidth}px`) : 'minmax(0, 1fr)' }
                   : undefined}
               >
                 <div className="kg-editor-main">
@@ -2302,7 +2347,7 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
                   <button
                     type="button"
                     className="kg-inspector-collapsed"
-                    style={agentCollapsed ? undefined : { right: `${agentWidth + 22}px` }}
+                    style={showAssistantPanel && !agentCollapsed ? { right: `${agentWidth + 22}px` } : undefined}
                     onClick={() => setInspectorOpen(true)}
                   >
                     <MenuUnfoldOutlined className="kg-inspector-collapsed-icon" />
@@ -2310,7 +2355,7 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
                   </button>
                 ) : null}
 
-                {viewMode === 'curriculum' ? (
+                {showAssistantPanel ? (
                   agentCollapsed ? (
                     <div className="kg-agent-collapsed" onClick={() => setAgentCollapsed(false)}>
                       <MenuUnfoldOutlined className="kg-agent-collapsed-icon" />
