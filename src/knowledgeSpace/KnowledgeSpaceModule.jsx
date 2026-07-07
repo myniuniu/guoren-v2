@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import {
   CloseOutlined,
   PlusOutlined,
@@ -75,6 +75,74 @@ const coverOptions = [
 
 function getCoverById(coverId) {
   return coverOptions.find((item) => item.id === coverId) || coverOptions.find((item) => item.id === 'space-stars') || coverOptions[0];
+}
+
+function createTabIndicatorStyle() {
+  return {
+    offset: 0,
+    width: 0,
+    ready: false,
+  };
+}
+
+function useSlidingTabIndicator(activeKey, enabled = true) {
+  const tabsRef = useRef(null);
+  const tabButtonRefs = useRef(new Map());
+  const [indicatorStyle, setIndicatorStyle] = useState(createTabIndicatorStyle);
+
+  useLayoutEffect(() => {
+    if (!enabled) return undefined;
+
+    const updateIndicator = () => {
+      const tabsNode = tabsRef.current;
+      const activeButtonNode = tabButtonRefs.current.get(activeKey);
+      if (!tabsNode || !activeButtonNode) {
+        setIndicatorStyle((current) => (
+          current.ready ? createTabIndicatorStyle() : current
+        ));
+        return;
+      }
+
+      const nextOffset = activeButtonNode.offsetLeft;
+      const nextWidth = activeButtonNode.offsetWidth;
+
+      setIndicatorStyle((current) => (
+        current.offset === nextOffset && current.width === nextWidth && current.ready
+          ? current
+          : { offset: nextOffset, width: nextWidth, ready: true }
+      ));
+    };
+
+    updateIndicator();
+
+    const tabsNode = tabsRef.current;
+    const resizeObserver = typeof ResizeObserver === 'undefined' || !tabsNode
+      ? null
+      : new ResizeObserver(updateIndicator);
+
+    if (resizeObserver) {
+      resizeObserver.observe(tabsNode);
+      tabButtonRefs.current.forEach((node) => resizeObserver.observe(node));
+    }
+
+    window.addEventListener('resize', updateIndicator);
+
+    return () => {
+      window.removeEventListener('resize', updateIndicator);
+      resizeObserver?.disconnect();
+    };
+  }, [activeKey, enabled]);
+
+  const setTabButtonRef = (key, node) => {
+    if (node) tabButtonRefs.current.set(key, node);
+    else tabButtonRefs.current.delete(key);
+  };
+
+  return {
+    indicatorStyle,
+    setTabButtonRef,
+    tabsRef,
+  };
 }
 
 function KnowledgeSpaceCard({ item, onOpenSettings }) {
@@ -222,6 +290,8 @@ function KnowledgeSpaceCreateModal({
   onNameChange,
   onSave,
 }) {
+  const modalTabIndicator = useSlidingTabIndicator('basic', open);
+
   if (!open) return null;
 
   const saveDisabled = !name.trim();
@@ -236,12 +306,26 @@ function KnowledgeSpaceCreateModal({
           </button>
         </header>
 
-        <div className="ks-modal-tabs" role="tablist" aria-label="新建知识空间">
+        <div
+          ref={modalTabIndicator.tabsRef}
+          className="ks-modal-tabs"
+          role="tablist"
+          aria-label="新建知识空间"
+          style={{
+            '--ks-modal-tab-indicator-offset': `${modalTabIndicator.indicatorStyle.offset}px`,
+            '--ks-modal-tab-indicator-width': `${modalTabIndicator.indicatorStyle.width}px`,
+          }}
+        >
+          <span
+            className={`ks-modal-tab-indicator ${modalTabIndicator.indicatorStyle.ready ? 'is-ready' : ''}`}
+            aria-hidden="true"
+          />
           <button
             type="button"
             role="tab"
             aria-selected="true"
             className="ks-modal-tab is-active"
+            ref={(node) => modalTabIndicator.setTabButtonRef('basic', node)}
           >
             基础信息
           </button>
@@ -300,6 +384,8 @@ function KnowledgeSpaceSettingsModal({
   const [memberPickerOpen, setMemberPickerOpen] = useState(false);
   const [pickerTab, setPickerTab] = useState('recent');
   const [permissionRole, setPermissionRole] = useState('admin');
+  const modalTabIndicator = useSlidingTabIndicator(activeTab, open);
+  const permissionTabIndicator = useSlidingTabIndicator(permissionRole, open && activeTab === 'members');
   const currentPermissionRole = permissionRoleTabs.find((item) => item.key === permissionRole) || permissionRoleTabs[0];
   const filteredCandidates = candidateMembers.filter((item) => {
     const keyword = memberKeyword.trim().toLowerCase();
@@ -325,12 +411,26 @@ function KnowledgeSpaceSettingsModal({
           </button>
         </header>
 
-        <div className="ks-modal-tabs" role="tablist" aria-label="知识空间配置">
+        <div
+          ref={modalTabIndicator.tabsRef}
+          className="ks-modal-tabs"
+          role="tablist"
+          aria-label="知识空间配置"
+          style={{
+            '--ks-modal-tab-indicator-offset': `${modalTabIndicator.indicatorStyle.offset}px`,
+            '--ks-modal-tab-indicator-width': `${modalTabIndicator.indicatorStyle.width}px`,
+          }}
+        >
+          <span
+            className={`ks-modal-tab-indicator ${modalTabIndicator.indicatorStyle.ready ? 'is-ready' : ''}`}
+            aria-hidden="true"
+          />
           <button
             type="button"
             role="tab"
             aria-selected={activeTab === 'basic'}
             className={`ks-modal-tab ${activeTab === 'basic' ? 'is-active' : ''}`}
+            ref={(node) => modalTabIndicator.setTabButtonRef('basic', node)}
             onClick={() => onActiveTabChange('basic')}
           >
             基础信息
@@ -340,6 +440,7 @@ function KnowledgeSpaceSettingsModal({
             role="tab"
             aria-selected={activeTab === 'members'}
             className={`ks-modal-tab ${activeTab === 'members' ? 'is-active' : ''}`}
+            ref={(node) => modalTabIndicator.setTabButtonRef('members', node)}
             onClick={() => onActiveTabChange('members')}
           >
             成员设置
@@ -384,7 +485,20 @@ function KnowledgeSpaceSettingsModal({
                   />
                 </div>
               </div>
-              <div className="ks-permission-tabs" role="tablist" aria-label="角色与权限">
+              <div
+                ref={permissionTabIndicator.tabsRef}
+                className="ks-permission-tabs"
+                role="tablist"
+                aria-label="角色与权限"
+                style={{
+                  '--ks-permission-tab-indicator-offset': `${permissionTabIndicator.indicatorStyle.offset}px`,
+                  '--ks-permission-tab-indicator-width': `${permissionTabIndicator.indicatorStyle.width}px`,
+                }}
+              >
+                <span
+                  className={`ks-permission-tab-indicator ${permissionTabIndicator.indicatorStyle.ready ? 'is-ready' : ''}`}
+                  aria-hidden="true"
+                />
                 {permissionRoleTabs.map((item) => (
                   <button
                     type="button"
@@ -392,6 +506,7 @@ function KnowledgeSpaceSettingsModal({
                     aria-selected={permissionRole === item.key}
                     className={`ks-permission-tab ${permissionRole === item.key ? 'is-active' : ''}`}
                     key={item.key}
+                    ref={(node) => permissionTabIndicator.setTabButtonRef(item.key, node)}
                     onClick={() => setPermissionRole(item.key)}
                   >
                     {item.label}

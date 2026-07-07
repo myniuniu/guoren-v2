@@ -377,6 +377,9 @@
 }
 
 .ks-modal-tabs {
+  position: relative;
+  --ks-modal-tab-indicator-offset: 0px;
+  --ks-modal-tab-indicator-width: 0px;
   height: 47px;
   padding: 0 30px;
   border-bottom: 1px solid #edf0f5;
@@ -386,8 +389,30 @@
   flex: 0 0 auto;
 }
 
+.ks-modal-tab-indicator {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: var(--ks-modal-tab-indicator-width);
+  height: 2px;
+  border-radius: 999px 999px 0 0;
+  background: #2c6bed;
+  transform: translateX(var(--ks-modal-tab-indicator-offset));
+  transition:
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.18s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ks-modal-tab-indicator.is-ready {
+  opacity: 1;
+}
+
 .ks-modal-tab {
   position: relative;
+  z-index: 1;
   height: 47px;
   border: none;
   background: transparent;
@@ -402,17 +427,6 @@
 
 .ks-modal-tab.is-active {
   color: #2c6bed;
-}
-
-.ks-modal-tab.is-active::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -1px;
-  height: 2px;
-  border-radius: 999px 999px 0 0;
-  background: #2c6bed;
 }
 
 .ks-modal-body {
@@ -715,6 +729,9 @@
 }
 
 .ks-permission-tabs {
+  position: relative;
+  --ks-permission-tab-indicator-offset: 0px;
+  --ks-permission-tab-indicator-width: 0px;
   height: 56px;
   border-bottom: 1px solid #d6dbe3;
   display: flex;
@@ -723,8 +740,30 @@
   flex: 0 0 auto;
 }
 
+.ks-permission-tab-indicator {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: var(--ks-permission-tab-indicator-width);
+  height: 4px;
+  border-radius: 999px 999px 0 0;
+  background: #2f6df0;
+  transform: translateX(var(--ks-permission-tab-indicator-offset));
+  transition:
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.18s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ks-permission-tab-indicator.is-ready {
+  opacity: 1;
+}
+
 .ks-permission-tab {
   position: relative;
+  z-index: 1;
   height: 40px;
   border: none;
   background: transparent;
@@ -740,17 +779,6 @@
 .ks-permission-tab.is-active {
   color: #2f6df0;
   font-weight: 700;
-}
-
-.ks-permission-tab.is-active::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -1px;
-  height: 4px;
-  border-radius: 999px 999px 0 0;
-  background: #2f6df0;
 }
 
 .ks-permission-toolbar {
