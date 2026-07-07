@@ -4093,8 +4093,12 @@
   min-height: 0;
 }
 
-.topic-kg-preview-edit-head {
+.finder-kg-preview-head.topic-kg-preview-edit-head {
   justify-content: flex-end;
+}
+
+.finder-kg-preview-head.topic-kg-preview-edit-head .finder-kg-preview-head-actions {
+  margin-left: auto;
 }
 
 .topic-kg-preview-stage {
