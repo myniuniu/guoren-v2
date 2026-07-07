@@ -290,7 +290,11 @@ function KnowledgeSpaceCreateModal({
   onNameChange,
   onSave,
 }) {
-  const modalTabIndicator = useSlidingTabIndicator('basic', open);
+  const {
+    indicatorStyle: modalIndicatorStyle,
+    setTabButtonRef: setModalTabButtonRef,
+    tabsRef: modalTabsRef,
+  } = useSlidingTabIndicator('basic', open);
 
   if (!open) return null;
 
@@ -307,17 +311,17 @@ function KnowledgeSpaceCreateModal({
         </header>
 
         <div
-          ref={modalTabIndicator.tabsRef}
+          ref={modalTabsRef}
           className="ks-modal-tabs"
           role="tablist"
           aria-label="新建知识空间"
           style={{
-            '--ks-modal-tab-indicator-offset': `${modalTabIndicator.indicatorStyle.offset}px`,
-            '--ks-modal-tab-indicator-width': `${modalTabIndicator.indicatorStyle.width}px`,
+            '--ks-modal-tab-indicator-offset': `${modalIndicatorStyle.offset}px`,
+            '--ks-modal-tab-indicator-width': `${modalIndicatorStyle.width}px`,
           }}
         >
           <span
-            className={`ks-modal-tab-indicator ${modalTabIndicator.indicatorStyle.ready ? 'is-ready' : ''}`}
+            className={`ks-modal-tab-indicator ${modalIndicatorStyle.ready ? 'is-ready' : ''}`}
             aria-hidden="true"
           />
           <button
@@ -325,7 +329,7 @@ function KnowledgeSpaceCreateModal({
             role="tab"
             aria-selected="true"
             className="ks-modal-tab is-active"
-            ref={(node) => modalTabIndicator.setTabButtonRef('basic', node)}
+            ref={(node) => setModalTabButtonRef('basic', node)}
           >
             基础信息
           </button>
@@ -384,8 +388,16 @@ function KnowledgeSpaceSettingsModal({
   const [memberPickerOpen, setMemberPickerOpen] = useState(false);
   const [pickerTab, setPickerTab] = useState('recent');
   const [permissionRole, setPermissionRole] = useState('admin');
-  const modalTabIndicator = useSlidingTabIndicator(activeTab, open);
-  const permissionTabIndicator = useSlidingTabIndicator(permissionRole, open && activeTab === 'members');
+  const {
+    indicatorStyle: modalIndicatorStyle,
+    setTabButtonRef: setModalTabButtonRef,
+    tabsRef: modalTabsRef,
+  } = useSlidingTabIndicator(activeTab, open);
+  const {
+    indicatorStyle: permissionIndicatorStyle,
+    setTabButtonRef: setPermissionTabButtonRef,
+    tabsRef: permissionTabsRef,
+  } = useSlidingTabIndicator(permissionRole, open && activeTab === 'members');
   const currentPermissionRole = permissionRoleTabs.find((item) => item.key === permissionRole) || permissionRoleTabs[0];
   const filteredCandidates = candidateMembers.filter((item) => {
     const keyword = memberKeyword.trim().toLowerCase();
@@ -412,17 +424,17 @@ function KnowledgeSpaceSettingsModal({
         </header>
 
         <div
-          ref={modalTabIndicator.tabsRef}
+          ref={modalTabsRef}
           className="ks-modal-tabs"
           role="tablist"
           aria-label="知识空间配置"
           style={{
-            '--ks-modal-tab-indicator-offset': `${modalTabIndicator.indicatorStyle.offset}px`,
-            '--ks-modal-tab-indicator-width': `${modalTabIndicator.indicatorStyle.width}px`,
+            '--ks-modal-tab-indicator-offset': `${modalIndicatorStyle.offset}px`,
+            '--ks-modal-tab-indicator-width': `${modalIndicatorStyle.width}px`,
           }}
         >
           <span
-            className={`ks-modal-tab-indicator ${modalTabIndicator.indicatorStyle.ready ? 'is-ready' : ''}`}
+            className={`ks-modal-tab-indicator ${modalIndicatorStyle.ready ? 'is-ready' : ''}`}
             aria-hidden="true"
           />
           <button
@@ -430,7 +442,7 @@ function KnowledgeSpaceSettingsModal({
             role="tab"
             aria-selected={activeTab === 'basic'}
             className={`ks-modal-tab ${activeTab === 'basic' ? 'is-active' : ''}`}
-            ref={(node) => modalTabIndicator.setTabButtonRef('basic', node)}
+            ref={(node) => setModalTabButtonRef('basic', node)}
             onClick={() => onActiveTabChange('basic')}
           >
             基础信息
@@ -440,7 +452,7 @@ function KnowledgeSpaceSettingsModal({
             role="tab"
             aria-selected={activeTab === 'members'}
             className={`ks-modal-tab ${activeTab === 'members' ? 'is-active' : ''}`}
-            ref={(node) => modalTabIndicator.setTabButtonRef('members', node)}
+            ref={(node) => setModalTabButtonRef('members', node)}
             onClick={() => onActiveTabChange('members')}
           >
             成员设置
@@ -486,17 +498,17 @@ function KnowledgeSpaceSettingsModal({
                 </div>
               </div>
               <div
-                ref={permissionTabIndicator.tabsRef}
+                ref={permissionTabsRef}
                 className="ks-permission-tabs"
                 role="tablist"
                 aria-label="角色与权限"
                 style={{
-                  '--ks-permission-tab-indicator-offset': `${permissionTabIndicator.indicatorStyle.offset}px`,
-                  '--ks-permission-tab-indicator-width': `${permissionTabIndicator.indicatorStyle.width}px`,
+                  '--ks-permission-tab-indicator-offset': `${permissionIndicatorStyle.offset}px`,
+                  '--ks-permission-tab-indicator-width': `${permissionIndicatorStyle.width}px`,
                 }}
               >
                 <span
-                  className={`ks-permission-tab-indicator ${permissionTabIndicator.indicatorStyle.ready ? 'is-ready' : ''}`}
+                  className={`ks-permission-tab-indicator ${permissionIndicatorStyle.ready ? 'is-ready' : ''}`}
                   aria-hidden="true"
                 />
                 {permissionRoleTabs.map((item) => (
@@ -506,7 +518,7 @@ function KnowledgeSpaceSettingsModal({
                     aria-selected={permissionRole === item.key}
                     className={`ks-permission-tab ${permissionRole === item.key ? 'is-active' : ''}`}
                     key={item.key}
-                    ref={(node) => permissionTabIndicator.setTabButtonRef(item.key, node)}
+                    ref={(node) => setPermissionTabButtonRef(item.key, node)}
                     onClick={() => setPermissionRole(item.key)}
                   >
                     {item.label}
