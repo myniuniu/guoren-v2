@@ -272,10 +272,136 @@
   grid-template-columns: minmax(0, 1fr) 340px;
   gap: 16px;
   padding-bottom: 24px;
+  position: relative;
 }
 
 .kg-content-full {
   grid-template-columns: minmax(0, 1fr);
+}
+
+.kg-content-preview-split {
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 50%);
+  gap: 0;
+}
+
+.kg-content-preview-split .kg-canvas-shell {
+  min-width: 0;
+}
+
+.kg-content-preview-split .kg-graph-canvas {
+  border-right: none;
+  border-radius: 22px 0 0 22px;
+  box-shadow: none;
+}
+
+.kg-graph-preview-pane {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-left-color: rgba(203, 213, 225, 0.92);
+  border-radius: 0 22px 22px 0;
+  background: #fbfcfe;
+}
+
+.kg-graph-preview-header {
+  min-height: 68px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.95);
+  background: #fff;
+}
+
+.kg-graph-preview-heading {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kg-graph-preview-kicker {
+  font-size: 12px;
+  color: #98a2b3;
+}
+
+.kg-graph-preview-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  color: #172033;
+}
+
+.kg-graph-preview-meta {
+  padding: 10px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.76);
+  color: #667085;
+  font-size: 12px;
+  background: #fff;
+}
+
+.kg-graph-preview-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 14px;
+}
+
+.kg-graph-preview-body .kg-binding-preview-shell {
+  height: 100%;
+  gap: 0;
+}
+
+.kg-graph-preview-body .kg-binding-preview-body {
+  height: 100%;
+  min-height: 0;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.kg-graph-preview-body .kg-binding-preview-image,
+.kg-graph-preview-body .kg-binding-preview-iframe,
+.kg-graph-preview-body .kg-binding-preview-video,
+.kg-graph-preview-body .kg-binding-preview-placeholder {
+  height: 100%;
+  min-height: 0;
+}
+
+.kg-graph-preview-toggle {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  z-index: 8;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(203, 213, 225, 0.92);
+  background: rgba(255, 255, 255, 0.96);
+  color: #475467;
+  font-size: 12px;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+}
+
+.kg-graph-preview-toggle:hover {
+  color: #2563eb;
+  border-color: rgba(37, 99, 235, 0.22);
+}
+
+.kg-graph-preview-toggle-icon {
+  font-size: 14px;
 }
 
 .kg-editor-layout {
@@ -2051,6 +2177,10 @@
     grid-template-columns: minmax(0, 1fr) 320px;
   }
 
+  .kg-content.kg-content-preview-split {
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 50%);
+  }
+
   .kg-curriculum-view {
     grid-template-columns: minmax(280px, 1fr);
     grid-auto-rows: minmax(240px, 1fr);
@@ -2074,6 +2204,23 @@
 
   .kg-content {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .kg-content.kg-content-preview-split {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(320px, 1fr) minmax(300px, 44vh);
+  }
+
+  .kg-content-preview-split .kg-graph-canvas {
+    border-right: 1px solid rgba(15, 23, 42, 0.08);
+    border-bottom: none;
+    border-radius: 22px 22px 0 0;
+  }
+
+  .kg-graph-preview-pane {
+    border-left-color: rgba(15, 23, 42, 0.08);
+    border-top-color: rgba(203, 213, 225, 0.92);
+    border-radius: 0 0 22px 22px;
   }
 
   .kg-inspector {

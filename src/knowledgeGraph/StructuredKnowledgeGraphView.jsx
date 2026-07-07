@@ -272,7 +272,7 @@ function reconcileFlowEdges(previousEdges = [], nextEdges = []) {
   });
 }
 
-function renderBindingPreviewContent(binding) {
+export function renderBindingPreviewContent(binding) {
   if (!binding) return null;
   const fileType = binding.fileType || 'other';
   const previewUrl = binding.snapshotUrl || '';
@@ -519,7 +519,6 @@ function PointNode({ data, selected }) {
               onPointerUp={stopBubbleOnly}
               onMouseDown={stopBubbleOnly}
               onTouchStart={stopBubbleOnly}
-              onClickCapture={stopBubbleOnly}
               onClick={(event) => {
                 if (!data.onPreviewBinding) return;
                 event.stopPropagation();

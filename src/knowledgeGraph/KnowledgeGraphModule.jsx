@@ -84,7 +84,7 @@ import {
   generateGraphDraft,
   getStageEdgeSemanticMeta,
 } from './store';
-import StructuredKnowledgeGraphView from './StructuredKnowledgeGraphView';
+import StructuredKnowledgeGraphView, { renderBindingPreviewContent } from './StructuredKnowledgeGraphView';
 import './KnowledgeGraphModule.css';
 const RELATION_TYPE_LABEL_MAP = Object.fromEntries(RELATION_TYPE_OPTIONS.map((item) => [item.value, item.label]));
 const POINT_TYPE_LABEL_MAP = Object.fromEntries(KNOWLEDGE_POINT_TYPE_OPTIONS.map((item) => [item.value, item.label]));
@@ -738,6 +738,8 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
   const [agentTyping, setAgentTyping] = useState(false);
   const [agentCollapsed, setAgentCollapsed] = useState(embedded);
   const [agentWidth, setAgentWidth] = useState(320);
+  const [graphPreviewBinding, setGraphPreviewBinding] = useState(null);
+  const [graphPreviewOpen, setGraphPreviewOpen] = useState(false);
   const [collectionForm] = Form.useForm();
   const [graphForm] = Form.useForm();
   const [pointForm] = Form.useForm();
@@ -847,6 +849,11 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
       setInspectorOpen(true);
     }
   }, [pageMode, selectedGraphId, selection, viewMode]);
+
+  useEffect(() => {
+    setGraphPreviewBinding(null);
+    setGraphPreviewOpen(false);
+  }, [pageMode, selectedGraphId, viewMode]);
 
   const selectedPoint = useMemo(
     () => (selection?.type === 'point' ? currentPoints.find((point) => point.id === selection.id) || null : null),
@@ -1255,6 +1262,12 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
     });
   }, [completeExitEditor, pageMode, saveCurrentSelection, viewMode]);
 
+  const handleGraphPreviewBinding = useCallback((binding) => {
+    if (!binding) return;
+    setGraphPreviewBinding(binding);
+    setGraphPreviewOpen(true);
+  }, []);
+
   const handleBindResources = ({ selectedItems = [] } = {}) => {
     if (!selectedGraphId || !selectedPoint) return;
     bindResourcesToPoint(selectedGraphId, selectedPoint.id, selectedItems);
@@ -1520,6 +1533,8 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
     && !inspectorOpen
     && selection?.type
     && selection.type !== 'graph';
+  const showGraphResourcePreview = viewMode === 'graph' && graphPreviewOpen && Boolean(graphPreviewBinding);
+  const showGraphResourcePreviewToggle = viewMode === 'graph' && !graphPreviewOpen && Boolean(graphPreviewBinding);
 
   const inspectorContent = (
     <div className="kg-inspector kg-inspector-drawer">
@@ -2201,7 +2216,7 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
                     />
                   ) : null}
 
-                  <div className="kg-content kg-content-full">
+                  <div className={`kg-content kg-content-full${showGraphResourcePreview ? ' kg-content-preview-split' : ''}`}>
                     <section className="kg-canvas-shell">
                       {viewMode === 'graph' ? (
                         <StructuredKnowledgeGraphView
@@ -2213,6 +2228,7 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
                           relationTypeLabelMap={RELATION_TYPE_LABEL_MAP}
                           selection={null}
                           onSelectionChange={() => {}}
+                          onPreviewBinding={handleGraphPreviewBinding}
                           readOnly
                         />
                       ) : (
@@ -2249,6 +2265,47 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
                         />
                       )}
                     </section>
+                    {showGraphResourcePreview ? (
+                      <aside className="kg-graph-preview-pane">
+                        <div className="kg-graph-preview-header">
+                          <div className="kg-graph-preview-heading">
+                            <span className="kg-graph-preview-kicker">绑定资料预览</span>
+                            <strong className="kg-graph-preview-title" title={graphPreviewBinding.resourceName || '资料预览'}>
+                              {graphPreviewBinding.resourceName || '资料预览'}
+                            </strong>
+                          </div>
+                          <Button
+                            type="text"
+                            size="small"
+                            icon={<MenuFoldOutlined />}
+                            onClick={() => setGraphPreviewOpen(false)}
+                            title="收起预览"
+                          />
+                        </div>
+                        <div className="kg-graph-preview-meta">
+                          <span>{graphPreviewBinding.libraryName || '未知资料库'}</span>
+                          <span>{graphPreviewBinding.fileType || 'other'}</span>
+                          <span>{graphPreviewBinding.snapshotPath || '-'}</span>
+                        </div>
+                        <div className="kg-graph-preview-body">
+                          <div className="kg-binding-preview-shell">
+                            <div className="kg-binding-preview-body">
+                              {renderBindingPreviewContent(graphPreviewBinding)}
+                            </div>
+                          </div>
+                        </div>
+                      </aside>
+                    ) : null}
+                    {showGraphResourcePreviewToggle ? (
+                      <button
+                        type="button"
+                        className="kg-graph-preview-toggle"
+                        onClick={() => setGraphPreviewOpen(true)}
+                      >
+                        <MenuUnfoldOutlined className="kg-graph-preview-toggle-icon" />
+                        <span>展开预览</span>
+                      </button>
+                    ) : null}
                   </div>
                 </div>
 

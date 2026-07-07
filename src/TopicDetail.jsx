@@ -29,7 +29,6 @@ import {
   ExperimentOutlined,
   FileTextOutlined,
   FileAddOutlined,
-  FullscreenOutlined,
   ReloadOutlined,
   AppstoreOutlined,
   FolderAddOutlined,
@@ -630,6 +629,7 @@ function TopicDetail({
   const detailTabRefs = useRef(new Map());
   const projectListRef = useRef(null);
   const projectItemNodeMapRef = useRef(new Map());
+  const pendingResourceLocateKeyRef = useRef(null);
   const knowledgeGraphBindingItemRefs = useRef(new Map());
   const inlineRenameInputRef = useRef(null);
   const pendingRenameTimerRef = useRef(null);
@@ -2220,6 +2220,23 @@ function TopicDetail({
   ]);
 
   useLayoutEffect(() => {
+    if (resourcePanelView !== 'resources' || !selectedItemKey) return undefined;
+    if (pendingResourceLocateKeyRef.current !== selectedItemKey) return undefined;
+    let indicatorFrameId = 0;
+    const frameId = window.requestAnimationFrame(() => {
+      const targetNode = projectItemNodeMapRef.current.get(selectedItemKey);
+      targetNode?.scrollIntoView?.({ block: 'nearest' });
+      pendingResourceLocateKeyRef.current = null;
+      indicatorFrameId = window.requestAnimationFrame(updateProjectSelectionIndicator);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      if (indicatorFrameId) window.cancelAnimationFrame(indicatorFrameId);
+    };
+  }, [expandedFolders, resourcePanelView, selectedItemKey, updateProjectSelectionIndicator]);
+
+  useLayoutEffect(() => {
     if (!hasAiFloatingPanel) return undefined;
     const frameId = window.requestAnimationFrame(() => {
       updateAiFloatingPanelPosition();
@@ -2385,6 +2402,38 @@ function TopicDetail({
       applyDefaultLeftPanelWidth();
     }
     setAiKnowledgeGraphPreviewOpen(false);
+  };
+
+  const getResourceAncestorFolderKeys = (resource) => {
+    const folderKeys = [];
+    const visited = new Set();
+    let parentKey = resource?.parentKey || null;
+
+    while (parentKey && !visited.has(parentKey)) {
+      visited.add(parentKey);
+      const parent = resources.find((item) => item.key === parentKey && item.isFolder) || null;
+      if (!parent) break;
+      folderKeys.push(parent.key);
+      parentKey = parent.parentKey || null;
+    }
+
+    return folderKeys;
+  };
+
+  const locateResourceInResourcePanel = (resource) => {
+    if (!resource?.key) return;
+    const ancestorFolderKeys = getResourceAncestorFolderKeys(resource);
+    pendingResourceLocateKeyRef.current = resource.key;
+    handleSwitchResourcePanelView('resources');
+    setExpandedFolders((prev) => {
+      const next = new Set(prev);
+      ancestorFolderKeys.forEach((folderKey) => next.add(folderKey));
+      return next;
+    });
+    selectResourceItem(resource.key);
+    setSelectedFolderKey(resource.parentKey || null);
+    setPreviewItem(resource);
+    setKnowledgeGraphDrawerOpen(false);
   };
 
   const handleOpenKnowledgeGraphPicker = () => {
@@ -2586,10 +2635,24 @@ function TopicDetail({
 
   const handleSelectKnowledgeGraphPreviewBinding = (binding) => {
     if (!binding?.bindingId) return;
-    if (activeTab === 'ai') setAiKnowledgeGraphPreviewOpen(true);
-    const matchedResource = resources.find((item) => item.__kgBindingId === binding.bindingId) || null;
-    if (!matchedResource) return;
     const location = knowledgeGraphBindingLocationMap.get(binding.bindingId);
+    const point = location?.pointId ? knowledgeGraphPointMap.get(location.pointId) : null;
+    const stage = location?.stageId ? knowledgeGraphStageMap.get(location.stageId) : null;
+    const liveResource = resourceLibraryItemMap.get(`${binding.libraryId}:${binding.resourceKey}`) || null;
+    const matchedResource = resources.find((item) => item.__kgBindingId === binding.bindingId)
+      || (point && stage
+        ? {
+            ...buildTopicBindingPreviewResource(binding, liveResource, point.title, stage.name),
+            key: `kg_binding_${binding.bindingId}`,
+            parentKey: `kg_point_${point.id}`,
+            __kgMirror: true,
+            __kgEntityType: 'binding',
+            __kgStageId: stage.id,
+            __kgPointId: point.id,
+            __kgBindingId: binding.bindingId,
+          }
+        : null);
+    if (!matchedResource) return;
     if (location?.stageId) {
       setKnowledgeGraphExpandedStageIds((prev) => {
         const next = new Set(prev);
@@ -2601,10 +2664,7 @@ function TopicDetail({
       setKnowledgeGraphSelection({ type: 'point', id: location.pointId });
     }
     setSelectedKnowledgeGraphBindingId(binding.bindingId);
-    selectResourceItem(matchedResource.key);
-    setSelectedFolderKey(matchedResource.parentKey || null);
-    setPreviewItem(matchedResource);
-    setKnowledgeGraphDrawerOpen(true);
+    locateResourceInResourcePanel(matchedResource);
   };
 
   const handleSelectKnowledgeGraphCanvasSelection = (nextSelection) => {
@@ -4606,9 +4666,6 @@ function TopicDetail({
             <Button type="primary" onClick={handleSaveKnowledgeGraphPreview}>
               保存
             </Button>
-            <Button icon={<FullscreenOutlined />} onClick={() => openKnowledgeGraphInNewTab(previewData.graph, 'curriculum')}>
-              全屏
-            </Button>
             </div>
           </div>
           <KnowledgeGraphModule
@@ -4645,12 +4702,9 @@ function TopicDetail({
             <Button type="primary" icon={<EditOutlined />} onClick={() => openKnowledgeGraphInNewTab(previewData.graph, 'curriculum')} disabled={!canEditCurrentVersion}>
               编辑
             </Button>
-            <Button icon={<FullscreenOutlined />} onClick={() => openKnowledgeGraphInNewTab(previewData.graph, 'graph')}>
-              全屏
-            </Button>
           </div>
         </div>
-        <div className="topic-kg-preview-stage">
+        <div className={`topic-kg-preview-stage ${knowledgeGraphDrawerOpen ? 'is-drawer-open' : ''}`}>
           <div className="topic-kg-preview-canvas-area" ref={knowledgeGraphCanvasAreaRef}>
             <StructuredKnowledgeGraphView
               graphId={previewData.graph.id}
