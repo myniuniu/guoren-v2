@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Layout, Menu, Input, Button, Card, Dropdown, Empty, Modal, Tag, message } from 'antd';
+import { Layout, Menu, Input, Button, Card, Dropdown, Empty, Modal, Segmented, Tag, message } from 'antd';
 import {
   HomeOutlined,
   SearchOutlined,
@@ -101,6 +101,16 @@ const SCENE_SYSTEM_MENU_SHORTCUT_KEY_PREFIX = 'scene-system-menu:';
 const ICON_BAR_WIDTH_STORAGE_KEY = 'gr.icon-bar-width.v1';
 const SCENE_SIDER_WIDTH_STORAGE_KEY = 'gr.scene.sider-width.v1';
 const DEFAULT_SCENE_GROUP_NAME = '人工智能通识体系';
+const SCENE_HOME_OWNERSHIP_TABS = Object.freeze([
+  { key: 'created', label: '我创建的' },
+  { key: 'joined', label: '我加入的' },
+]);
+const JOINED_SCENE_ID_SET = new Set([
+  'scene_research_seed_1',
+  'scene_training_seed_1',
+  'scene_training_seed_2',
+  'scene_community_seed_1',
+]);
 
 function getDefaultIconBarWidth() {
   return 64;
@@ -230,6 +240,18 @@ function getInitialActiveIconKey() {
     return 'capability-model';
   }
   return route.page || 'my-space';
+}
+
+function resolveSceneOwnershipTab(scene = {}) {
+  const membershipType = String(scene.membershipType || '').trim().toUpperCase();
+  if (membershipType === 'JOINED') return 'joined';
+  if (membershipType === 'CREATED') return 'created';
+  if (JOINED_SCENE_ID_SET.has(scene.id)) return 'joined';
+  return 'created';
+}
+
+function getSceneOwnershipTabLabel(tabKey = 'created') {
+  return SCENE_HOME_OWNERSHIP_TABS.find((item) => item.key === tabKey)?.label || SCENE_HOME_OWNERSHIP_TABS[0].label;
 }
 
 function getSceneTheme(scene) {
@@ -430,6 +452,7 @@ function App() {
   const [sceneModalOpen, setSceneModalOpen] = useState(false);
   const [sceneEditing, setSceneEditing] = useState(null);
   const [sceneModalMode, setSceneModalMode] = useState('scene');
+  const [sceneOwnershipTab, setSceneOwnershipTab] = useState('created');
   const [sceneSystemMenuShortcutKeys, setSceneSystemMenuShortcutKeys] = useState([]);
   const [iconBarWidth, setIconBarWidth] = useState(() => loadIconBarWidth());
   const [sceneSiderWidth, setSceneSiderWidth] = useState(() => loadSceneSiderWidth());
@@ -562,14 +585,26 @@ function App() {
     ));
   }, [activeSceneKey, scenes]);
 
+  const sceneOwnershipCounts = useMemo(() => {
+    return menuFilteredScenes.reduce((acc, scene) => {
+      const key = resolveSceneOwnershipTab(scene);
+      acc[key] += 1;
+      return acc;
+    }, { created: 0, joined: 0 });
+  }, [menuFilteredScenes]);
+
+  const ownershipFilteredScenes = useMemo(() => {
+    return menuFilteredScenes.filter((scene) => resolveSceneOwnershipTab(scene) === sceneOwnershipTab);
+  }, [menuFilteredScenes, sceneOwnershipTab]);
+
   const visibleScenes = useMemo(() => {
     const normalizedKeyword = sceneKeyword.trim().toLowerCase();
-    return menuFilteredScenes.filter((scene) => {
+    return ownershipFilteredScenes.filter((scene) => {
       if (!normalizedKeyword) return true;
       const haystack = `${scene.name} ${scene.sceneGroupName || ''} ${scene.templateName} ${scene.description || ''}`.toLowerCase();
       return haystack.includes(normalizedKeyword);
     });
-  }, [menuFilteredScenes, sceneKeyword]);
+  }, [ownershipFilteredScenes, sceneKeyword]);
 
   const buildSceneGroups = useCallback((sceneList) => {
     const groupMap = new Map();
@@ -596,6 +631,57 @@ function App() {
     [buildSceneGroups, visibleScenes],
   );
 
+  const sceneHomeDisplayName = useMemo(() => {
+    if (selectedSceneMenuKey === 'home') {
+      return '首页';
+    }
+    if (selectedSceneMenuKey.startsWith(SCENE_SHORTCUT_KEY_PREFIX)) {
+      const shortcutSceneId = selectedSceneMenuKey.slice(SCENE_SHORTCUT_KEY_PREFIX.length);
+      return scenes.find((item) => item.id === shortcutSceneId)?.name || '快捷空间';
+    }
+    if (activeSceneKey !== 'home') {
+      return sceneApi.getSceneMenuLabel(activeSceneKey);
+    }
+    if (currentSceneGroups.length === 1) {
+      return currentSceneGroups[0].name;
+    }
+    return '全部空间';
+  }, [activeSceneKey, currentSceneGroups, scenes, selectedSceneMenuKey]);
+
+  const sceneOwnershipSegmentOptions = useMemo(() => {
+    return SCENE_HOME_OWNERSHIP_TABS.map((item) => ({
+      value: item.key,
+      label: (
+        <span className="scene-home-segment-label">
+          <span>{item.label}</span>
+          <span className="scene-home-segment-count">{sceneOwnershipCounts[item.key]}</span>
+        </span>
+      ),
+    }));
+  }, [sceneOwnershipCounts]);
+
+  const sceneOwnershipSummary = useMemo(() => {
+    const activeCount = sceneOwnershipCounts[sceneOwnershipTab] || 0;
+    if (menuFilteredScenes.length === 0) {
+      return `${sceneHomeDisplayName}当前分类下还没有空间`;
+    }
+    return `${sceneHomeDisplayName} · ${getSceneOwnershipTabLabel(sceneOwnershipTab)} ${activeCount} 个，当前分类共 ${menuFilteredScenes.length} 个空间`;
+  }, [menuFilteredScenes.length, sceneHomeDisplayName, sceneOwnershipCounts, sceneOwnershipTab]);
+
+  const sceneEmptyDescription = useMemo(() => {
+    const normalizedKeyword = sceneKeyword.trim();
+    if (normalizedKeyword) {
+      return `没有找到符合条件的${getSceneOwnershipTabLabel(sceneOwnershipTab)}空间`;
+    }
+    if (menuFilteredScenes.length === 0) {
+      return activeSceneKey === 'home' ? '暂无空间，先创建一个模板化空间。' : '当前栏目暂无空间，先新建一个。';
+    }
+    if ((sceneOwnershipCounts[sceneOwnershipTab] || 0) === 0) {
+      return `${getSceneOwnershipTabLabel(sceneOwnershipTab)}暂无空间`;
+    }
+    return '当前筛选下暂无空间';
+  }, [activeSceneKey, menuFilteredScenes.length, sceneKeyword, sceneOwnershipCounts, sceneOwnershipTab]);
+
   const sceneGroupOptions = useMemo(() => {
     return currentSceneGroups.map((group) => ({
       label: group.name,
@@ -604,14 +690,20 @@ function App() {
   }, [currentSceneGroups]);
 
   const homeHeaderTitle = useMemo(() => {
-    if (currentSceneGroups.length === 1) {
-      return currentSceneGroups[0].name;
-    }
     if (isSystemMenuSceneCategoryEntry && activeSceneKey !== 'home') {
       return sceneApi.getSceneMenuLabel(activeSceneKey);
     }
-    return DEFAULT_SCENE_GROUP_NAME;
-  }, [activeSceneKey, currentSceneGroups, isSystemMenuSceneCategoryEntry]);
+    return sceneHomeDisplayName;
+  }, [activeSceneKey, isSystemMenuSceneCategoryEntry, sceneHomeDisplayName]);
+
+  useEffect(() => {
+    if (menuFilteredScenes.length === 0) return;
+    setSceneOwnershipTab((prev) => {
+      if ((sceneOwnershipCounts[prev] || 0) > 0) return prev;
+      const fallbackTab = prev === 'created' ? 'joined' : 'created';
+      return (sceneOwnershipCounts[fallbackTab] || 0) > 0 ? fallbackTab : prev;
+    });
+  }, [activeSceneKey, menuFilteredScenes.length, sceneOwnershipCounts.created, sceneOwnershipCounts.joined]);
 
   const loadSceneHomeData = useCallback(async (withLoading = true) => {
     if (withLoading) {
@@ -1411,12 +1503,23 @@ function App() {
 
             {/* Content */}
             <Content className={currentPage === 'agent-quota' ? 'app-content app-content-full' : 'app-content'}>
+              {!sceneDataLoading ? (
+                <div className="scene-home-toolbar">
+                  <Segmented
+                    value={sceneOwnershipTab}
+                    onChange={setSceneOwnershipTab}
+                    options={sceneOwnershipSegmentOptions}
+                    className="scene-home-segmented"
+                  />
+                  <div className="scene-home-toolbar-meta">{sceneOwnershipSummary}</div>
+                </div>
+              ) : null}
               {sceneDataLoading ? (
                 <div className="scene-empty-state">空间加载中...</div>
               ) : visibleScenes.length === 0 ? (
                 <div className="scene-empty-state">
                   <Empty
-                    description={activeSceneKey === 'home' ? '暂无空间，先创建一个模板化空间。' : '当前栏目暂无空间，先新建一个。'}
+                    description={sceneEmptyDescription}
                   />
                 </div>
               ) : (

@@ -1249,34 +1249,36 @@
 
 .topic-sidebar-resize-handle::before {
   left: 50%;
-  width: 8px;
+  width: 4px;
   transform: translateX(-50%);
-  background:
-    linear-gradient(90deg, rgba(148, 163, 184, 0) 0%, rgba(170, 181, 194, 0.18) 24%, rgba(255, 255, 255, 0.44) 58%, rgba(255, 255, 255, 0) 100%);
-  opacity: 0.68;
+  background: rgba(214, 221, 229, 0.18);
+  opacity: 0;
   transition: opacity 0.18s ease, filter 0.18s ease;
 }
 
 .topic-sidebar-resize-handle::after {
   left: 50%;
   width: 1px;
-  transform: translateX(0);
-  background: linear-gradient(180deg, rgba(214, 220, 229, 0.82) 0%, rgba(199, 207, 217, 0.74) 100%);
-  box-shadow:
-    1px 0 0 rgba(255, 255, 255, 0.36),
-    1px 0 4px rgba(255, 255, 255, 0.16);
-  opacity: 0.8;
+  transform: translateX(-50%);
+  background: rgba(214, 220, 228, 0.72);
+  opacity: 1;
+  transition: background 0.18s ease;
 }
 
 .topic-sidebar-resize-handle:hover,
 .topic-sidebar-resize-handle:active {
-  background: rgba(148, 163, 184, 0.05);
+  background: transparent;
 }
 
 .topic-sidebar-resize-handle:hover::before,
 .topic-sidebar-resize-handle:active::before {
-  opacity: 0.96;
-  filter: brightness(1.03);
+  opacity: 0.26;
+  filter: none;
+}
+
+.topic-sidebar-resize-handle:hover::after,
+.topic-sidebar-resize-handle:active::after {
+  background: rgba(202, 211, 221, 0.86);
 }
 
 /* ====== Left Panel ====== */
@@ -1314,10 +1316,7 @@
   top: 0;
   right: 0;
   bottom: 0;
-  width: 8px;
-  background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(237, 242, 248, 0.16) 18%, rgba(221, 228, 237, 0.46) 62%, rgba(255, 255, 255, 0.04) 92%, rgba(255, 255, 255, 0) 100%);
-  opacity: 0.6;
+  display: none;
   pointer-events: none;
   z-index: 0;
 }
@@ -2499,9 +2498,7 @@
   top: 0;
   bottom: 0;
   left: 0;
-  width: 8px;
-  background:
-    linear-gradient(90deg, rgba(227, 234, 241, 0.1) 0%, rgba(244, 247, 251, 0.28) 42%, rgba(245, 247, 250, 0.04) 74%, rgba(245, 247, 250, 0) 100%);
+  display: none;
   pointer-events: none;
   z-index: 0;
 }
