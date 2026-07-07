@@ -18,7 +18,6 @@ import {
   CaretRightOutlined,
   CheckCircleOutlined,
   CloseOutlined,
-  LeftOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   CommentOutlined,
@@ -4643,6 +4642,15 @@ function TopicDetail({
       relations: knowledgeGraphRelations,
       structuredView: knowledgeGraphStructuredView,
     };
+    const knowledgeGraphDrawerTitle = previewItem && !previewItem.isFolder
+      ? '绑定资源预览'
+      : selectedKnowledgeGraphPoint
+        ? '知识点属性'
+        : selectedKnowledgeGraphStage
+          ? '分区属性'
+          : selectedKnowledgeGraphStageEdge
+            ? '分区连线'
+            : '图谱属性';
 
     if (knowledgeGraphPreviewMode === 'edit') {
       return (
@@ -4723,12 +4731,12 @@ function TopicDetail({
           {knowledgeGraphDrawerOpen ? (
             <aside className="topic-knowledge-drawer" ref={knowledgeGraphDrawerRef}>
               <div className="topic-knowledge-drawer-head">
-                <span className="topic-knowledge-drawer-head-label">{previewItem ? '绑定资源预览' : '右侧预览'}</span>
+                <span className="topic-knowledge-drawer-head-label">{knowledgeGraphDrawerTitle}</span>
                 <button
                   type="button"
                   className="topic-knowledge-drawer-action"
                   onClick={() => setKnowledgeGraphDrawerOpen(false)}
-                  aria-label="收起右侧预览"
+                  aria-label="收起属性面板"
                 >
                   <RightOutlined />
                 </button>
@@ -4737,17 +4745,7 @@ function TopicDetail({
                 {renderKnowledgeGraphDrawerContent()}
               </div>
             </aside>
-          ) : (
-            <button
-              type="button"
-              className="topic-knowledge-drawer-toggle"
-              onClick={() => setKnowledgeGraphDrawerOpen(true)}
-              aria-label="展开右侧预览"
-            >
-              <LeftOutlined />
-              <span>展开预览</span>
-            </button>
-          )}
+          ) : null}
         </div>
       </div>
     );

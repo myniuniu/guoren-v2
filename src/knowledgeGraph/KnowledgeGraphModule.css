@@ -376,34 +376,6 @@
   min-height: 0;
 }
 
-.kg-graph-preview-toggle {
-  position: absolute;
-  right: 18px;
-  top: 50%;
-  z-index: 8;
-  transform: translateY(-50%);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(203, 213, 225, 0.92);
-  background: rgba(255, 255, 255, 0.96);
-  color: #475467;
-  font-size: 12px;
-  cursor: pointer;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
-}
-
-.kg-graph-preview-toggle:hover {
-  color: #2563eb;
-  border-color: rgba(37, 99, 235, 0.22);
-}
-
-.kg-graph-preview-toggle-icon {
-  font-size: 14px;
-}
-
 .kg-editor-layout {
   flex: 1;
   min-height: 0;

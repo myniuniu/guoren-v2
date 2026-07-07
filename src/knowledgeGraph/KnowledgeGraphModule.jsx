@@ -1534,7 +1534,6 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
     && selection?.type
     && selection.type !== 'graph';
   const showGraphResourcePreview = viewMode === 'graph' && graphPreviewOpen && Boolean(graphPreviewBinding);
-  const showGraphResourcePreviewToggle = viewMode === 'graph' && !graphPreviewOpen && Boolean(graphPreviewBinding);
 
   const inspectorContent = (
     <div className="kg-inspector kg-inspector-drawer">
@@ -2295,16 +2294,6 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
                           </div>
                         </div>
                       </aside>
-                    ) : null}
-                    {showGraphResourcePreviewToggle ? (
-                      <button
-                        type="button"
-                        className="kg-graph-preview-toggle"
-                        onClick={() => setGraphPreviewOpen(true)}
-                      >
-                        <MenuUnfoldOutlined className="kg-graph-preview-toggle-icon" />
-                        <span>展开预览</span>
-                      </button>
                     ) : null}
                   </div>
                 </div>
