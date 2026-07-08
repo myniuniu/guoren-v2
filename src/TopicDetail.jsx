@@ -5447,7 +5447,7 @@ function TopicDetail({
                                 </div>
                               </div>
                               <Button
-                                type="primary"
+                                className="topic-add-resource-btn"
                                 icon={<PlusOutlined />}
                                 disabled={!canAddResourceAtCurrentLocation}
                                 onClick={() => openAddResourceModal(currentListParentKey)}
@@ -5887,7 +5887,7 @@ function TopicDetail({
                           </div>
                         </div>
                         <div className="folder-info-right">
-                          <Button icon={<PlusOutlined />} disabled={!canAddResourceAtCurrentLocation} onClick={() => openAddResourceModal(currentListParentKey)}>{addResourceLabel}</Button>
+                          <Button className="topic-add-resource-btn" icon={<PlusOutlined />} disabled={!canAddResourceAtCurrentLocation} onClick={() => openAddResourceModal(currentListParentKey)}>{addResourceLabel}</Button>
                         </div>
                       </div>
                     </>
@@ -5901,7 +5901,7 @@ function TopicDetail({
                             <div className="folder-desc">{fileCount} 个文件 {folderCount} 个文件夹</div>
                           </div>
                         </div>
-                        <Button className="add-resource-btn" icon={<PlusOutlined />} disabled={!canAddResourceAtRoot} onClick={() => openAddResourceModal(null)}>
+                        <Button className="topic-add-resource-btn" icon={<PlusOutlined />} disabled={!canAddResourceAtRoot} onClick={() => openAddResourceModal(null)}>
                           {addResourceLabel}
                         </Button>
                       </div>

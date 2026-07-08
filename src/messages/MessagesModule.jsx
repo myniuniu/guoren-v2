@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Avatar, Badge, Button, Dropdown, Empty, Input, Popover, Tag, Tooltip, message } from 'antd';
+import { Avatar, Badge, Button, Dropdown, Empty, Input, Modal, Popover, Radio, Tag, Tooltip, message } from 'antd';
 import {
+  ApartmentOutlined,
+  CameraOutlined,
   CloseOutlined,
   DownOutlined,
   EllipsisOutlined,
@@ -15,11 +17,14 @@ import {
   PlusOutlined,
   PushpinFilled,
   ScissorOutlined,
+  SearchOutlined,
   SendOutlined,
   ShareAltOutlined,
   SmileOutlined,
   StarFilled,
   StarOutlined,
+  TeamOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
 import {
   getLuckyPushStoreEventName,
@@ -59,6 +64,77 @@ const SEND_MODE_META = {
     prefix: '【静默】',
   },
 };
+
+const CREATE_CONVERSATION_META = {
+  group: {
+    title: '新群组',
+    subtitle: '未命名群组 · 1 人',
+    preview: '群组已创建，发一条消息开始协作。',
+    description: '新的群组会话，可继续补充成员、群说明和公告。',
+    avatarText: '群',
+    avatarColor: 'linear-gradient(135deg, #5f8cff 0%, #63c8ff 100%)',
+    seedMessage: '群组已创建，先发一条消息把大家拉进来吧。',
+  },
+  direct: {
+    title: '新单聊',
+    subtitle: '单聊',
+    preview: '单聊已创建，先打个招呼吧。',
+    description: '新的单聊会话，可直接开始沟通。',
+    avatarText: '聊',
+    avatarColor: 'linear-gradient(135deg, #7a7cff 0%, #5fc2ff 100%)',
+    seedMessage: '单聊已创建，可以直接开始沟通。',
+  },
+};
+
+const GROUP_CREATE_DEFAULT_FORM = {
+  mode: 'friends',
+  name: '',
+  avatarText: '',
+  avatarPresetId: 'group-blue',
+  avatarImage: '',
+  keyword: '',
+  selectedMemberIds: [],
+};
+
+const GROUP_AVATAR_PRESETS = [
+  { id: 'group-blue', label: '协作群', color: 'linear-gradient(135deg, #5f8cff 0%, #63c8ff 100%)' },
+  { id: 'course-sky', label: '课程', color: 'linear-gradient(135deg, #38bdf8 0%, #2563eb 100%)' },
+  { id: 'research-green', label: '教研', color: 'linear-gradient(135deg, #34d399 0%, #0f766e 100%)' },
+  { id: 'ai-violet', label: 'AI', color: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)' },
+  { id: 'project-orange', label: '项目', color: 'linear-gradient(135deg, #fb923c 0%, #f97316 100%)' },
+  { id: 'class-cyan', label: '班级', color: 'linear-gradient(135deg, #22d3ee 0%, #0891b2 100%)' },
+  { id: 'topic-rose', label: '话题', color: 'linear-gradient(135deg, #fb7185 0%, #e11d48 100%)' },
+  { id: 'work-lime', label: '工作坊', color: 'linear-gradient(135deg, #a3e635 0%, #65a30d 100%)' },
+  { id: 'team-indigo', label: '团队', color: 'linear-gradient(135deg, #818cf8 0%, #4f46e5 100%)' },
+  { id: 'studio-pink', label: '工作室', color: 'linear-gradient(135deg, #f472b6 0%, #db2777 100%)' },
+];
+
+const GROUP_MODE_META = {
+  friends: {
+    label: '好友工作群',
+    description: '适合日常沟通、项目协作和团队同步。',
+  },
+  topic: {
+    label: '话题论坛',
+    description: '适合围绕主题沉淀讨论、资料和观点。',
+  },
+};
+
+const GROUP_CREATE_DEPARTMENTS = [
+  { id: 'dept-guoren', short: '国', name: '国人通', count: 18 },
+  { id: 'dept-admin', short: '行', name: '行政部门', count: 9 },
+  { id: 'dept-class', short: '班', name: '班级', count: 36 },
+  { id: 'dept-teaching', short: '教', name: '教师空间', count: 24 },
+];
+
+const GROUP_CREATE_MEMBERS = [
+  { id: 'member-linqing', name: '林青', title: '产品经理', dept: '国人通', color: 'linear-gradient(135deg, #4cc9f0 0%, #4361ee 100%)' },
+  { id: 'member-gaobo', name: '高博', title: '研发负责人', dept: '国人通', color: 'linear-gradient(135deg, #ffb347 0%, #ff7e5f 100%)' },
+  { id: 'member-siyue', name: '司玥', title: '课程设计师', dept: '教师空间', color: 'linear-gradient(135deg, #7e89ff 0%, #8dc6ff 100%)' },
+  { id: 'member-heiren', name: '黑仁', title: '体验设计', dept: '教师空间', color: 'linear-gradient(135deg, #b073ff 0%, #7d5fff 100%)' },
+  { id: 'member-zhou', name: '周哥陪伴', title: '项目顾问', dept: '行政部门', color: 'linear-gradient(135deg, #5f8cff 0%, #63c8ff 100%)' },
+  { id: 'member-difang', name: '地方九', title: '教研伙伴', dept: '班级', color: 'linear-gradient(135deg, #36b39f 0%, #73d5b7 100%)' },
+];
 
 const DEFAULT_SIDEBAR_WIDTH = 360;
 const MIN_SIDEBAR_WIDTH = 248;
@@ -388,6 +464,24 @@ function getAvatarStyle(background) {
   };
 }
 
+function getGroupAvatarText(name) {
+  const normalizedName = String(name || '').trim().replace(/\s+/g, '');
+  return normalizedName ? normalizedName.slice(0, 2) : '';
+}
+
+function getGroupAvatarPreset(presetId) {
+  return GROUP_AVATAR_PRESETS.find((preset) => preset.id === presetId) || GROUP_AVATAR_PRESETS[0];
+}
+
+function getGroupAvatarDisplay({ avatarText, avatarPresetId, avatarImage, name }) {
+  const preset = getGroupAvatarPreset(avatarPresetId);
+  return {
+    text: getGroupAvatarText(avatarText),
+    color: preset.color,
+    image: avatarImage || '',
+  };
+}
+
 function LuckyRecommendationCard({ recommendation, onAction }) {
   const resolvedActionLabel = recommendation.target?.type === 'scene' || recommendation.target?.type === 'space_catalog'
     ? '申请加入空间'
@@ -431,6 +525,13 @@ function MessagesModule({
   const [composerExpanded, setComposerExpanded] = useState(false);
   const [formatEnabled, setFormatEnabled] = useState(false);
   const [sendMode, setSendMode] = useState('normal');
+  const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
+  const [isGroupCreateModalOpen, setIsGroupCreateModalOpen] = useState(false);
+  const [isGroupAvatarModalOpen, setIsGroupAvatarModalOpen] = useState(false);
+  const [groupAvatarDraft, setGroupAvatarDraft] = useState('');
+  const [groupAvatarPresetDraft, setGroupAvatarPresetDraft] = useState(GROUP_CREATE_DEFAULT_FORM.avatarPresetId);
+  const [groupAvatarImageDraft, setGroupAvatarImageDraft] = useState('');
+  const [groupCreateForm, setGroupCreateForm] = useState(GROUP_CREATE_DEFAULT_FORM);
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
   const [isResizingSidebar, setIsResizingSidebar] = useState(false);
   const [conversationIndicatorStyle, setConversationIndicatorStyle] = useState(EMPTY_CONVERSATION_INDICATOR);
@@ -438,7 +539,12 @@ function MessagesModule({
   const conversationListRef = useRef(null);
   const conversationItemRefs = useRef(new Map());
   const composerInputRef = useRef(null);
+  const groupAvatarFileInputRef = useRef(null);
   const luckyExposeRegistryRef = useRef(new Set());
+  const createConversationCountRef = useRef({
+    group: 0,
+    direct: 0,
+  });
   const resizeStateRef = useRef({
     startX: 0,
     startWidth: DEFAULT_SIDEBAR_WIDTH,
@@ -452,6 +558,24 @@ function MessagesModule({
     ? (selectedConversation.posts || []).find((post) => post.id === activeTopicThread) || null
     : null;
   const currentDraft = drafts[activeConversationId] || '';
+  const selectedGroupCreateMembers = GROUP_CREATE_MEMBERS.filter((member) => (
+    groupCreateForm.selectedMemberIds.includes(member.id)
+  ));
+  const filteredGroupCreateDepartments = GROUP_CREATE_DEPARTMENTS.filter((dept) => {
+    const keyword = groupCreateForm.keyword.trim().toLowerCase();
+    return !keyword || `${dept.name}${dept.short}`.toLowerCase().includes(keyword);
+  });
+  const filteredGroupCreateMembers = GROUP_CREATE_MEMBERS.filter((member) => {
+    const keyword = groupCreateForm.keyword.trim().toLowerCase();
+    return !keyword || `${member.name}${member.title}${member.dept}`.toLowerCase().includes(keyword);
+  });
+  const groupCreateAvatarDisplay = getGroupAvatarDisplay(groupCreateForm);
+  const groupAvatarPreviewDisplay = getGroupAvatarDisplay({
+    name: groupCreateForm.name,
+    avatarText: groupAvatarDraft,
+    avatarPresetId: groupAvatarPresetDraft,
+    avatarImage: groupAvatarImageDraft,
+  });
 
   useEffect(() => {
     onUnreadCountChange?.(getConversationsUnreadCount(conversations));
@@ -641,6 +765,85 @@ function MessagesModule({
     }));
   };
 
+  const updateGroupCreateForm = (patch) => {
+    setGroupCreateForm((prev) => ({
+      ...prev,
+      ...patch,
+    }));
+  };
+
+  const openGroupCreateModal = () => {
+    setIsCreateMenuOpen(false);
+    setGroupCreateForm(GROUP_CREATE_DEFAULT_FORM);
+    setGroupAvatarDraft('');
+    setGroupAvatarPresetDraft(GROUP_CREATE_DEFAULT_FORM.avatarPresetId);
+    setGroupAvatarImageDraft('');
+    setIsGroupAvatarModalOpen(false);
+    setIsGroupCreateModalOpen(true);
+  };
+
+  const closeGroupCreateModal = () => {
+    setIsGroupCreateModalOpen(false);
+    setIsGroupAvatarModalOpen(false);
+  };
+
+  const openGroupAvatarModal = () => {
+    setGroupAvatarDraft(groupCreateForm.avatarText || groupCreateForm.name || '');
+    setGroupAvatarPresetDraft(groupCreateForm.avatarPresetId || GROUP_CREATE_DEFAULT_FORM.avatarPresetId);
+    setGroupAvatarImageDraft(groupCreateForm.avatarImage || '');
+    setIsGroupAvatarModalOpen(true);
+  };
+
+  const closeGroupAvatarModal = () => {
+    setIsGroupAvatarModalOpen(false);
+  };
+
+  const handleSubmitGroupAvatar = () => {
+    updateGroupCreateForm({
+      avatarText: groupAvatarDraft.trim().slice(0, 8),
+      avatarPresetId: groupAvatarPresetDraft,
+      avatarImage: groupAvatarImageDraft,
+    });
+    setIsGroupAvatarModalOpen(false);
+  };
+
+  const handleSelectLocalAvatar = () => {
+    groupAvatarFileInputRef.current?.click();
+  };
+
+  const handleLocalAvatarChange = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) {
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      message.warning('请选择图片文件');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setGroupAvatarImageDraft(String(reader.result || ''));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const toggleGroupCreateMember = (memberId) => {
+    setGroupCreateForm((prev) => {
+      const selectedSet = new Set(prev.selectedMemberIds);
+      if (selectedSet.has(memberId)) {
+        selectedSet.delete(memberId);
+      } else {
+        selectedSet.add(memberId);
+      }
+      return {
+        ...prev,
+        selectedMemberIds: Array.from(selectedSet),
+      };
+    });
+  };
+
   const focusComposer = () => {
     const nativeTextArea = composerInputRef.current?.resizableTextArea?.textArea;
     nativeTextArea?.focus();
@@ -713,6 +916,43 @@ function MessagesModule({
     label: meta.label,
     onClick: () => setSendMode(key),
   }));
+
+  const buildDraftConversation = (type, options = {}) => {
+    const meta = CREATE_CONVERSATION_META[type];
+    if (!meta) {
+      return null;
+    }
+
+    const nextCount = (createConversationCountRef.current[type] || 0) + 1;
+    createConversationCountRef.current[type] = nextCount;
+    const suffix = nextCount > 1 ? ` ${nextCount}` : '';
+    const id = `${type}-draft-${Date.now()}-${nextCount}`;
+    const memberCount = Number.isFinite(options.memberCount) ? options.memberCount : 1;
+    const title = options.title || `${meta.title}${suffix}`;
+    const groupModeLabel = options.mode ? GROUP_MODE_META[options.mode]?.label : '';
+
+    return {
+      id,
+      type,
+      title,
+      subtitle: options.subtitle || (type === 'group' ? `${groupModeLabel || '群组'} · ${memberCount} 人` : meta.subtitle),
+      preview: options.preview || meta.preview,
+      time: getTimeLabel(),
+      unread: 0,
+      avatarText: options.avatarText || meta.avatarText,
+      avatarColor: options.avatarColor || meta.avatarColor,
+      avatarImage: options.avatarImage || '',
+      description: options.description || meta.description,
+      messages: [
+        {
+          id: `${id}-seed`,
+          sender: '系统助手',
+          time: '刚刚',
+          content: options.seedMessage || meta.seedMessage,
+        },
+      ],
+    };
+  };
 
   const buildReplyPreviewFromComments = (comments) => {
     const normalized = comments.map((item) => ({
@@ -846,6 +1086,7 @@ function MessagesModule({
   };
 
   const handleConversationSelect = (conversationId) => {
+    setIsCreateMenuOpen(false);
     setSelectedId(conversationId);
     setActiveTopicThread(null);
     if (conversationId === LUCKY_CONVERSATION_ID) {
@@ -859,6 +1100,51 @@ function MessagesModule({
         ? { ...conversation, unread: 0 }
         : conversation
     )));
+  };
+
+  const handleCreateConversation = (type) => {
+    const nextConversation = buildDraftConversation(type);
+    if (!nextConversation) {
+      return;
+    }
+
+    setIsCreateMenuOpen(false);
+    setActiveTopicThread(null);
+    setConversations((prev) => [nextConversation, ...prev]);
+    setSelectedId(nextConversation.id);
+    requestAnimationFrame(() => {
+      focusComposer();
+    });
+  };
+
+  const handleSubmitGroupCreate = () => {
+    const groupName = groupCreateForm.name.trim();
+    const selectedNames = selectedGroupCreateMembers.map((member) => member.name);
+    const nextCount = Math.max(1, selectedGroupCreateMembers.length + 1);
+    const title = groupName || (selectedNames.length
+      ? `${selectedNames.slice(0, 2).join('、')}的群组`
+      : '新群组');
+    const modeMeta = GROUP_MODE_META[groupCreateForm.mode] || GROUP_MODE_META.friends;
+    const nextConversation = buildDraftConversation('group', {
+      title,
+      memberCount: nextCount,
+      mode: groupCreateForm.mode,
+      avatarText: groupCreateAvatarDisplay.text,
+      avatarColor: groupCreateAvatarDisplay.color,
+      avatarImage: groupCreateAvatarDisplay.image,
+      subtitle: `${modeMeta.label} · ${nextCount} 人`,
+      preview: `群组已创建，${selectedNames.length ? `已邀请 ${selectedNames.join('、')}` : '可继续邀请成员'}。`,
+      description: modeMeta.description,
+      seedMessage: `群组创建成功。${selectedNames.length ? `已邀请 ${selectedNames.join('、')} 加入，` : ''}可以开始同步议题了。`,
+    });
+
+    setIsGroupCreateModalOpen(false);
+    setActiveTopicThread(null);
+    setConversations((prev) => [nextConversation, ...prev]);
+    setSelectedId(nextConversation.id);
+    requestAnimationFrame(() => {
+      focusComposer();
+    });
   };
 
   const handleLuckyRecommendationAction = (recommendation) => {
@@ -1075,7 +1361,7 @@ function MessagesModule({
         onClick={() => handleConversationSelect(item.id)}
       >
         <div className="messages-conversation-avatar-wrap">
-          <Avatar size={36} style={getAvatarStyle(item.avatarColor)}>
+          <Avatar size={36} src={item.avatarImage || undefined} style={getAvatarStyle(item.avatarColor)}>
             {item.avatarText}
           </Avatar>
           {item.unread > 0 ? (
@@ -1382,6 +1668,290 @@ function MessagesModule({
     </div>
   );
 
+  const createConversationMenu = (
+    <div className="messages-create-menu" role="menu" aria-label="新建会话">
+      <div className="messages-create-menu-panel">
+        <button
+          type="button"
+          className="messages-create-menu-item"
+          data-kind="group"
+          onClick={openGroupCreateModal}
+        >
+          <span className="messages-create-menu-icon">
+            <TeamOutlined />
+          </span>
+          <span className="messages-create-menu-label">创建群组</span>
+        </button>
+        <button
+          type="button"
+          className="messages-create-menu-item"
+          data-kind="direct"
+          onClick={() => handleCreateConversation('direct')}
+        >
+          <span className="messages-create-menu-icon">
+            <PlusOutlined />
+          </span>
+          <span className="messages-create-menu-label">单聊</span>
+        </button>
+      </div>
+    </div>
+  );
+
+  const groupCreateModal = (
+    <Modal
+      title="创建群组"
+      open={isGroupCreateModalOpen}
+      onCancel={closeGroupCreateModal}
+      width={920}
+      centered
+      footer={null}
+      destroyOnHidden
+      className="messages-group-create-modal"
+    >
+      <div className="messages-group-create-form">
+        <div className="messages-group-create-row">
+          <div className="messages-group-create-label">群模式</div>
+          <Radio.Group
+            value={groupCreateForm.mode}
+            onChange={(event) => updateGroupCreateForm({ mode: event.target.value })}
+            className="messages-group-create-mode"
+          >
+            {Object.entries(GROUP_MODE_META).map(([key, meta]) => (
+              <Radio key={key} value={key}>{meta.label}</Radio>
+            ))}
+          </Radio.Group>
+        </div>
+
+        <div className="messages-group-create-row">
+          <div className="messages-group-create-label">群头像</div>
+          <div className="messages-group-create-avatar-field">
+            <button
+              type="button"
+              className={`messages-group-create-avatar ${groupCreateAvatarDisplay.image ? 'has-image' : ''}`}
+              style={{ background: groupCreateAvatarDisplay.color }}
+              onClick={openGroupAvatarModal}
+              aria-label="修改群头像"
+            >
+              {groupCreateAvatarDisplay.image ? (
+                <img src={groupCreateAvatarDisplay.image} alt="" />
+              ) : (
+                groupCreateAvatarDisplay.text
+              )}
+              <span className="messages-group-create-avatar-edit">编辑</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="messages-group-create-row">
+          <div className="messages-group-create-label">群名称</div>
+          <Input
+            value={groupCreateForm.name}
+            onChange={(event) => updateGroupCreateForm({ name: event.target.value })}
+            placeholder="输入群名称（选填）"
+            maxLength={24}
+            className="messages-group-create-name-input"
+          />
+        </div>
+
+        <div className="messages-group-create-row messages-group-create-members-row">
+          <div className="messages-group-create-label">群成员</div>
+          <div className="messages-group-create-picker">
+            <div className="messages-group-create-left">
+              <Input
+                value={groupCreateForm.keyword}
+                onChange={(event) => updateGroupCreateForm({ keyword: event.target.value })}
+                placeholder="搜索部门或成员"
+                prefix={<SearchOutlined />}
+                allowClear
+                className="messages-group-create-search"
+              />
+              <div className="messages-group-create-section-title">联系人</div>
+              <div className="messages-group-create-scroll">
+                {filteredGroupCreateDepartments.length ? (
+                  <>
+                    <div className="messages-group-create-subtitle">部门</div>
+                    {filteredGroupCreateDepartments.map((dept) => (
+                      <div key={dept.id} className="messages-group-create-dept-row">
+                        <div className="messages-group-create-dept-icon">
+                          <ApartmentOutlined />
+                        </div>
+                        <div className="messages-group-create-dept-main">
+                          <div className="messages-group-create-dept-name">{dept.name}</div>
+                          <div className="messages-group-create-dept-count">{dept.count} 人</div>
+                        </div>
+                        <button type="button" className="messages-group-create-next-btn">
+                          下级
+                        </button>
+                      </div>
+                    ))}
+                  </>
+                ) : null}
+
+                {filteredGroupCreateMembers.length ? (
+                  <>
+                    <div className="messages-group-create-subtitle">成员</div>
+                    {filteredGroupCreateMembers.map((member) => {
+                      const selected = groupCreateForm.selectedMemberIds.includes(member.id);
+                      return (
+                        <button
+                          key={member.id}
+                          type="button"
+                          className={`messages-group-create-member-row ${selected ? 'is-selected' : ''}`}
+                          onClick={() => toggleGroupCreateMember(member.id)}
+                        >
+                          <Avatar size={34} style={getAvatarStyle(member.color)}>
+                            {member.name.slice(0, 1)}
+                          </Avatar>
+                          <span className="messages-group-create-member-main">
+                            <span className="messages-group-create-member-name">{member.name}</span>
+                            <span className="messages-group-create-member-meta">{member.dept} · {member.title}</span>
+                          </span>
+                          <span className="messages-group-create-check">
+                            {selected ? '已选' : '选择'}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </>
+                ) : null}
+
+                {!filteredGroupCreateDepartments.length && !filteredGroupCreateMembers.length ? (
+                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="没有匹配的成员" />
+                ) : null}
+              </div>
+            </div>
+
+            <div className="messages-group-create-right">
+              <div className="messages-group-create-selected-head">
+                已选：{selectedGroupCreateMembers.length} 人
+              </div>
+              <div className="messages-group-create-selected-list">
+                {selectedGroupCreateMembers.length ? (
+                  selectedGroupCreateMembers.map((member) => (
+                    <div key={member.id} className="messages-group-create-selected-item">
+                      <Avatar size={30} style={getAvatarStyle(member.color)}>
+                        {member.name.slice(0, 1)}
+                      </Avatar>
+                      <div className="messages-group-create-selected-main">
+                        <div className="messages-group-create-selected-name">{member.name}</div>
+                        <div className="messages-group-create-selected-meta">{member.title}</div>
+                      </div>
+                      <button
+                        type="button"
+                        className="messages-group-create-remove-btn"
+                        onClick={() => toggleGroupCreateMember(member.id)}
+                        aria-label={`移除${member.name}`}
+                      >
+                        <CloseOutlined />
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="messages-group-create-empty-selected">
+                    <UserOutlined />
+                    <span>请从左侧选择群成员</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="messages-group-create-footer">
+          <Button onClick={closeGroupCreateModal}>取消</Button>
+          <Button type="primary" onClick={handleSubmitGroupCreate}>创建</Button>
+        </div>
+      </div>
+    </Modal>
+  );
+
+  const groupAvatarModal = (
+    <Modal
+      title="修改头像"
+      open={isGroupAvatarModalOpen}
+      onCancel={closeGroupAvatarModal}
+      width={640}
+      centered
+      destroyOnHidden
+      className="messages-group-avatar-modal"
+      footer={(
+        <div className="messages-group-avatar-footer">
+          <Button onClick={closeGroupAvatarModal}>取消</Button>
+          <Button type="primary" onClick={handleSubmitGroupAvatar}>保存</Button>
+        </div>
+      )}
+    >
+      <div className="messages-group-avatar-editor">
+        <div className="messages-group-avatar-preview-wrap">
+          <button
+            type="button"
+            className={`messages-group-avatar-preview ${groupAvatarPreviewDisplay.image ? 'has-image' : ''}`}
+            style={{ background: groupAvatarPreviewDisplay.color }}
+            onClick={handleSelectLocalAvatar}
+            aria-label="选择本地图标"
+          >
+            {groupAvatarPreviewDisplay.image ? (
+              <img src={groupAvatarPreviewDisplay.image} alt="" />
+            ) : (
+              groupAvatarPreviewDisplay.text
+            )}
+          </button>
+          <button
+            type="button"
+            className="messages-group-avatar-local-btn"
+            onClick={handleSelectLocalAvatar}
+            aria-label="选择本地图标"
+          >
+            <CameraOutlined />
+          </button>
+          <input
+            ref={groupAvatarFileInputRef}
+            type="file"
+            accept="image/*"
+            className="messages-group-avatar-file-input"
+            onChange={handleLocalAvatarChange}
+          />
+        </div>
+        <div className="messages-group-avatar-config">
+          <div className="messages-group-avatar-label">自定义文字</div>
+          <Input
+            value={groupAvatarDraft}
+            onChange={(event) => setGroupAvatarDraft(event.target.value)}
+            onPressEnter={handleSubmitGroupAvatar}
+            maxLength={8}
+            placeholder="输入头像文字，最多展示前两个字"
+            autoFocus
+          />
+          <div className="messages-group-avatar-note">头像文字仅取自这里，最多展示前两个字。</div>
+          <div className="messages-group-avatar-label messages-group-avatar-preset-title">预设头像</div>
+          <div className="messages-group-avatar-preset-grid">
+            {GROUP_AVATAR_PRESETS.map((preset) => {
+              const active = groupAvatarPresetDraft === preset.id;
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  className={`messages-group-avatar-preset ${active ? 'is-active' : ''}`}
+                  onClick={() => {
+                    setGroupAvatarPresetDraft(preset.id);
+                    setGroupAvatarImageDraft('');
+                  }}
+                  aria-label={`选择${preset.label}头像`}
+                  title={preset.label}
+                >
+                  <span
+                    className="messages-group-avatar-preset-face"
+                    style={{ background: preset.color }}
+                  />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </Modal>
+  );
+
   return (
     <div
       ref={moduleRef}
@@ -1392,7 +1962,21 @@ function MessagesModule({
         <div className="messages-sidebar-header">
           <div className="messages-sidebar-title-row">
             <div className="messages-sidebar-title">消息</div>
-            <Button type="primary" shape="circle" icon={<PlusOutlined />} className="messages-sidebar-plus-btn" />
+            <Popover
+              trigger="click"
+              placement="bottomRight"
+              arrow={false}
+              open={isCreateMenuOpen}
+              onOpenChange={setIsCreateMenuOpen}
+              overlayClassName="messages-create-popover"
+              content={createConversationMenu}
+            >
+              <Button
+                aria-label="新建会话"
+                icon={<PlusOutlined />}
+                className={`messages-sidebar-plus-btn ${isCreateMenuOpen ? 'is-open' : ''}`}
+              />
+            </Popover>
           </div>
         </div>
         <div
@@ -1444,7 +2028,11 @@ function MessagesModule({
                   <header className="messages-thread-header">
                     <div className="messages-thread-header-main">
                       <div className="messages-thread-title-row">
-                        <Avatar size={38} style={getAvatarStyle(selectedConversation.avatarColor)}>
+                        <Avatar
+                          size={38}
+                          src={selectedConversation.avatarImage || undefined}
+                          style={getAvatarStyle(selectedConversation.avatarColor)}
+                        >
                           {selectedConversation.avatarText}
                         </Avatar>
                         <div>
@@ -1469,7 +2057,11 @@ function MessagesModule({
                 <header className="messages-thread-header">
                   <div className="messages-thread-header-main">
                     <div className="messages-thread-title-row">
-                      <Avatar size={38} style={getAvatarStyle(selectedConversation.avatarColor)}>
+                      <Avatar
+                        size={38}
+                        src={selectedConversation.avatarImage || undefined}
+                        style={getAvatarStyle(selectedConversation.avatarColor)}
+                      >
                         {selectedConversation.avatarText}
                       </Avatar>
                       <div>
@@ -1598,6 +2190,8 @@ function MessagesModule({
           </div>
         )}
       </section>
+      {groupCreateModal}
+      {groupAvatarModal}
     </div>
   );
 }
