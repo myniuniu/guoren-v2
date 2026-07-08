@@ -313,7 +313,7 @@ function formatRuleLabel(rule) {
 const DEFAULT_RULE = { type: 'none', threshold: 80, note: '' };
 const DEFAULT_ACTIVITY_NAME = '新活动';
 const STAGE_NODE_WIDTH = 240;
-const ACTIVITY_NODE_X = 1;
+const ACTIVITY_NODE_X = 8;
 const ACTIVITY_NODE_WIDTH = STAGE_NODE_WIDTH - ACTIVITY_NODE_X * 2;
 const ACTIVITY_NODE_TOP_GAP = 6;
 const STAGE_HEADER_H = 54;

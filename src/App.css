@@ -608,6 +608,21 @@
   display: none;
 }
 
+.sider-menu .new-scene-item,
+.sider-menu .scene-home-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 16px !important;
+}
+
+.sider-menu .new-scene-item .ant-menu-title-content,
+.sider-menu .scene-home-item .ant-menu-title-content {
+  flex: 0 0 auto;
+  min-width: 0;
+  text-align: center;
+}
+
 .sider-menu .new-scene-item {
   height: 42px;
   line-height: 42px;

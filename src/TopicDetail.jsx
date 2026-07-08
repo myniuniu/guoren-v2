@@ -756,7 +756,6 @@ function TopicDetail({
     ? (currentVersion?.name || resourcePanelTitle)
     : resourcePanelTitle;
   const addResourceLabel = currentModeConfig?.addResourceLabel || sceneConfig?.topicPage?.addResourceLabel || '添加资料';
-  const appLabel = currentModeConfig?.appLabel || sceneConfig?.topicPage?.appLabel || '应用';
   const emptyStateText = currentModeConfig?.emptyStateText || sceneConfig?.topicPage?.emptyStateText || '暂无资料，右键新建文件夹或添加资料';
   const allowRootResources = sceneConfig?.topicPage?.allowRootResources === true;
   const enabledAddResourceEntries = Array.isArray(sceneConfig?.toolAreas?.resourceAreaTools) && sceneConfig.toolAreas.resourceAreaTools.length
@@ -5313,7 +5312,7 @@ function TopicDetail({
 
                 {resourcePanelView === 'resources' ? (
                   <>
-                    <div className={`panel-actions ${isAiMode ? 'panel-actions-single' : ''}`}>
+                    <div className="panel-actions panel-actions-single">
                       <div
                         className={`panel-action-btn ${!canAddResourceAtCurrentLocation ? 'panel-action-btn-disabled' : ''}`}
                         onClick={() => canAddResourceAtCurrentLocation && openAddResourceModal(currentListParentKey)}
@@ -5321,12 +5320,6 @@ function TopicDetail({
                         <PlusOutlined style={{ fontSize: 12 }} />
                         <span>{addResourceLabel}</span>
                       </div>
-                      {!isAiMode ? (
-                        <div className="panel-action-btn">
-                          <AppstoreOutlined style={{ fontSize: 12 }} />
-                          <span>{appLabel}</span>
-                        </div>
-                      ) : null}
                     </div>
 
                     <div

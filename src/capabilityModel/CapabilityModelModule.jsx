@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Button,
-  Card,
   Drawer,
   Dropdown,
   Empty,
@@ -13,7 +12,6 @@ import {
   Popconfirm,
   Select,
   Space,
-  Statistic,
   Table,
   Tabs,
   Tag,
@@ -21,8 +19,6 @@ import {
   message,
 } from 'antd';
 import {
-  AppstoreOutlined,
-  BankOutlined,
   BranchesOutlined,
   CheckCircleOutlined,
   CopyOutlined,
@@ -35,7 +31,6 @@ import {
   ReloadOutlined,
   SaveOutlined,
   SendOutlined,
-  TeamOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
 import {
@@ -554,12 +549,6 @@ export default function CapabilityModelModule({
   const [roles, setRoles] = useState([]);
   const [models, setModels] = useState([]);
 
-  const [modelKeyword, setModelKeyword] = useState('');
-  const [modelIndustryFilter, setModelIndustryFilter] = useState(undefined);
-  const [modelRoleFilter, setModelRoleFilter] = useState(undefined);
-  const [modelRoleLevelFilter, setModelRoleLevelFilter] = useState(undefined);
-  const [modelStatusFilter, setModelStatusFilter] = useState(undefined);
-
   const [industryKeyword, setIndustryKeyword] = useState('');
   const [sequenceKeyword, setSequenceKeyword] = useState('');
   const [sequenceIndustryFilter, setSequenceIndustryFilter] = useState(undefined);
@@ -717,13 +706,6 @@ export default function CapabilityModelModule({
     return () => window.cancelAnimationFrame(frameId);
   }, [loadAllData]);
 
-  const modelSummary = useMemo(() => ({
-    industryCount: industries.length,
-    roleCount: roles.length,
-    modelCount: models.length,
-    publishedCount: models.filter((item) => item.status === 'PUBLISHED').length,
-  }), [industries, models, roles]);
-
   const industryOptions = useMemo(() => industries.map((item) => ({
     value: item.id,
     label: item.name,
@@ -764,47 +746,6 @@ export default function CapabilityModelModule({
       label: level.name,
     }));
   }, [roles, sequences, watchedRoleId]);
-
-  const filteredRoleLevelOptions = useMemo(() => {
-    const role = roles.find((item) => item.id === modelRoleFilter);
-    const sequence = getSequenceForRole(role, sequences);
-    return (sequence?.levels || []).map((level) => ({
-      value: level.id,
-      label: level.name,
-    }));
-  }, [modelRoleFilter, roles, sequences]);
-
-  const filteredModels = useMemo(() => {
-    return models.filter((item) => {
-      const keyword = modelKeyword.trim().toLowerCase();
-      const role = roles.find((roleItem) => roleItem.id === item.roleId);
-      const sequence = getSequenceForRole(role, sequences);
-      const industryName = industries.find((industry) => industry.id === item.industryId)?.name || '';
-      const roleName = role?.name || '';
-      const sequenceName = sequence?.name || '';
-      const roleLevelName = getRoleLevel(role, item.roleLevelId, sequences)?.name || '';
-
-      if (keyword) {
-        const haystack = `${item.name || ''} ${item.modelCode || ''} ${industryName} ${roleName} ${sequenceName} ${roleLevelName}`.toLowerCase();
-        if (!haystack.includes(keyword)) return false;
-      }
-      if (modelIndustryFilter && item.industryId !== modelIndustryFilter) return false;
-      if (modelRoleFilter && item.roleId !== modelRoleFilter) return false;
-      if (modelRoleLevelFilter && item.roleLevelId !== modelRoleLevelFilter) return false;
-      if (modelStatusFilter && item.status !== modelStatusFilter) return false;
-      return true;
-    });
-  }, [
-    industries,
-    modelIndustryFilter,
-    modelKeyword,
-    modelRoleFilter,
-    modelRoleLevelFilter,
-    modelStatusFilter,
-    models,
-    roles,
-    sequences,
-  ]);
 
   const filteredIndustries = useMemo(() => {
     const keyword = industryKeyword.trim().toLowerCase();
@@ -1841,89 +1782,18 @@ export default function CapabilityModelModule({
 
   const modelTabContent = (
     <div className="cap-model-page">
-      <div className="cap-model-summary-grid">
-        <Card bordered={false} className="cap-model-summary-card">
-          <Statistic title="行业数" value={modelSummary.industryCount} prefix={<BankOutlined />} />
-        </Card>
-        <Card bordered={false} className="cap-model-summary-card">
-          <Statistic title="岗位数" value={modelSummary.roleCount} prefix={<TeamOutlined />} />
-        </Card>
-        <Card bordered={false} className="cap-model-summary-card">
-          <Statistic title="模型总数" value={modelSummary.modelCount} prefix={<AppstoreOutlined />} />
-        </Card>
-        <Card bordered={false} className="cap-model-summary-card">
-          <Statistic title="已发布模型" value={modelSummary.publishedCount} prefix={<SaveOutlined />} />
-        </Card>
-      </div>
-
-      <div className="sys-search-card">
-        <span className="search-label">模型检索</span>
-        <Input
-          value={modelKeyword}
-          onChange={(event) => setModelKeyword(event.target.value)}
-          placeholder="模型名称 / 编码"
-          style={{ width: 220 }}
-          allowClear
-        />
-        <Select
-          value={modelIndustryFilter}
-          onChange={(value) => {
-            setModelIndustryFilter(value);
-            setModelRoleFilter(undefined);
-            setModelRoleLevelFilter(undefined);
-          }}
-          placeholder="所属行业"
-          allowClear
-          style={{ width: 180 }}
-          options={industryOptions}
-        />
-        <Select
-          value={modelRoleFilter}
-          onChange={(value) => {
-            setModelRoleFilter(value);
-            setModelRoleLevelFilter(undefined);
-          }}
-          placeholder="所属岗位"
-          allowClear
-          style={{ width: 180 }}
-          options={roleOptions.filter((item) => !modelIndustryFilter || item.industryId === modelIndustryFilter)}
-        />
-        <Select
-          value={modelRoleLevelFilter}
-          onChange={setModelRoleLevelFilter}
-          placeholder="序列等级"
-          allowClear
-          style={{ width: 180 }}
-          disabled={!modelRoleFilter}
-          options={filteredRoleLevelOptions}
-        />
-        <Select
-          value={modelStatusFilter}
-          onChange={setModelStatusFilter}
-          placeholder="模型状态"
-          allowClear
-          style={{ width: 160 }}
-          options={CAPABILITY_MODEL_STATUS_OPTIONS}
-        />
-        <div className="search-actions">
-          <Button icon={<ReloadOutlined />} onClick={() => loadAllData(false)}>刷新</Button>
-          <Button icon={<ImportOutlined />} onClick={openImportModal}>导入模型</Button>
-          <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModel}>新建模型</Button>
-        </div>
-      </div>
-
       <div className="sys-table-card">
         <div className="sys-table-toolbar">
           <div className="sys-table-toolbar-left">
             <span className="cap-model-table-title">模型库</span>
-            <Tag>{filteredModels.length} 个结果</Tag>
+            <Tag>{models.length} 个结果</Tag>
           </div>
         </div>
         <Table
           rowKey="id"
           loading={loading}
           columns={modelColumns}
-          dataSource={filteredModels}
+          dataSource={models}
           pagination={{ pageSize: 8, showSizeChanger: false }}
           scroll={{ x: 1320 }}
         />
