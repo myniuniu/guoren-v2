@@ -65,6 +65,127 @@ const SEND_MODE_META = {
   },
 };
 
+const TEXT_FORMAT_TOOLS = [
+  { key: 'bold', title: '加粗', label: 'B', command: 'bold', html: '<strong>加粗文字</strong>' },
+  { key: 'strike', title: '删除线', label: 'S', command: 'strikeThrough', html: '<s>删除线文字</s>' },
+  { key: 'italic', title: '斜体', label: 'I', command: 'italic', html: '<em>斜体文字</em>' },
+  { key: 'underline', title: '下划线', label: 'U', command: 'underline', html: '<u>下划线文字</u>' },
+  { key: 'ordered', title: '编号列表', label: '1.', command: 'insertOrderedList', html: '<ol><li>列表项</li></ol>' },
+  { key: 'unordered', title: '项目列表', label: 'list', command: 'insertUnorderedList', html: '<ul><li>列表项</li></ul>' },
+  { key: 'quote', title: '引用', label: '"', command: 'formatBlock', value: 'blockquote', html: '<blockquote>引用内容</blockquote>' },
+  { key: 'link', title: '链接', label: 'link', command: 'createLink', value: 'https://', html: '<a href="https://">链接文字</a>' },
+  { key: 'code', title: '代码', label: '{}', html: '<code>代码</code>' },
+];
+
+const ALLOWED_RICH_TEXT_TAGS = new Set([
+  'A',
+  'B',
+  'BLOCKQUOTE',
+  'BR',
+  'CODE',
+  'DIV',
+  'EM',
+  'I',
+  'LI',
+  'OL',
+  'P',
+  'PRE',
+  'S',
+  'SPAN',
+  'STRIKE',
+  'STRONG',
+  'U',
+  'UL',
+]);
+
+function escapeHtml(value = '') {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function plainTextToHtml(value = '') {
+  return escapeHtml(value).replace(/\n/g, '<br>');
+}
+
+function richHtmlToPlainText(html = '') {
+  const source = String(html || '');
+  if (!source) {
+    return '';
+  }
+
+  if (typeof document === 'undefined') {
+    return source
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/(div|p|li|blockquote)>/gi, '\n')
+      .replace(/<[^>]+>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .trim();
+  }
+
+  const container = document.createElement('div');
+  container.innerHTML = source
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(div|p|li|blockquote)>/gi, '\n');
+  return (container.textContent || '').replace(/\u00a0/g, ' ').trim();
+}
+
+function sanitizeRichHtml(html = '') {
+  const source = String(html || '');
+  if (!source) {
+    return '';
+  }
+
+  if (typeof document === 'undefined') {
+    return plainTextToHtml(source.replace(/<[^>]+>/g, ''));
+  }
+
+  const template = document.createElement('template');
+  template.innerHTML = source;
+
+  const sanitizeNode = (node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return document.createTextNode(node.textContent || '');
+    }
+
+    if (node.nodeType !== Node.ELEMENT_NODE) {
+      return document.createTextNode('');
+    }
+
+    const tagName = node.tagName.toUpperCase();
+    if (!ALLOWED_RICH_TEXT_TAGS.has(tagName)) {
+      const fragment = document.createDocumentFragment();
+      node.childNodes.forEach((child) => {
+        fragment.appendChild(sanitizeNode(child));
+      });
+      return fragment;
+    }
+
+    const next = document.createElement(tagName.toLowerCase());
+    if (tagName === 'A') {
+      const href = node.getAttribute('href') || '';
+      const safeHref = /^(https?:|mailto:)/i.test(href) ? href : '#';
+      next.setAttribute('href', safeHref);
+      next.setAttribute('target', '_blank');
+      next.setAttribute('rel', 'noreferrer');
+    }
+
+    node.childNodes.forEach((child) => {
+      next.appendChild(sanitizeNode(child));
+    });
+    return next;
+  };
+
+  const output = document.createElement('div');
+  template.content.childNodes.forEach((child) => {
+    output.appendChild(sanitizeNode(child));
+  });
+  return output.innerHTML;
+}
+
 const CREATE_CONVERSATION_META = {
   group: {
     title: '新群组',
@@ -538,9 +659,10 @@ function MessagesModule({
   const moduleRef = useRef(null);
   const conversationListRef = useRef(null);
   const conversationItemRefs = useRef(new Map());
-  const composerInputRef = useRef(null);
+  const composerEditorRef = useRef(null);
   const groupAvatarFileInputRef = useRef(null);
   const luckyExposeRegistryRef = useRef(new Set());
+  const lastSyncedComposerConversationRef = useRef('');
   const createConversationCountRef = useRef({
     group: 0,
     direct: 0,
@@ -558,6 +680,7 @@ function MessagesModule({
     ? (selectedConversation.posts || []).find((post) => post.id === activeTopicThread) || null
     : null;
   const currentDraft = drafts[activeConversationId] || '';
+  const currentDraftPlainText = richHtmlToPlainText(currentDraft);
   const selectedGroupCreateMembers = GROUP_CREATE_MEMBERS.filter((member) => (
     groupCreateForm.selectedMemberIds.includes(member.id)
   ));
@@ -732,6 +855,21 @@ function MessagesModule({
     return () => window.cancelAnimationFrame(frameId);
   }, [activeConversationId, conversations, sidebarWidth, updateConversationIndicator]);
 
+  useLayoutEffect(() => {
+    const editor = composerEditorRef.current;
+    if (!editor) {
+      return;
+    }
+
+    const nextHtml = currentDraft || '';
+    const conversationChanged = lastSyncedComposerConversationRef.current !== activeConversationId;
+    const shouldSync = conversationChanged || document.activeElement !== editor || nextHtml === '';
+    if (shouldSync && editor.innerHTML !== nextHtml) {
+      editor.innerHTML = nextHtml;
+    }
+    lastSyncedComposerConversationRef.current = activeConversationId;
+  }, [activeConversationId, currentDraft]);
+
   useEffect(() => {
     const handleConversationListViewportChange = () => {
       updateConversationIndicator();
@@ -844,37 +982,139 @@ function MessagesModule({
     });
   };
 
-  const focusComposer = () => {
-    const nativeTextArea = composerInputRef.current?.resizableTextArea?.textArea;
-    nativeTextArea?.focus();
+  const syncComposerDraft = () => {
+    const editor = composerEditorRef.current;
+    const nextHtml = editor?.innerHTML || '';
+    handleDraftChange(nextHtml);
+    return nextHtml;
   };
 
-  const insertDraftText = (snippet) => {
-    const nativeTextArea = composerInputRef.current?.resizableTextArea?.textArea;
-    if (!nativeTextArea) {
-      handleDraftChange(`${currentDraft}${snippet}`);
+  const placeCaretAtComposerEnd = () => {
+    const editor = composerEditorRef.current;
+    if (!editor || typeof window === 'undefined') {
       return;
     }
 
-    const start = nativeTextArea.selectionStart ?? currentDraft.length;
-    const end = nativeTextArea.selectionEnd ?? currentDraft.length;
-    const nextValue = `${currentDraft.slice(0, start)}${snippet}${currentDraft.slice(end)}`;
-    handleDraftChange(nextValue);
+    const range = document.createRange();
+    range.selectNodeContents(editor);
+    range.collapse(false);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  };
 
-    requestAnimationFrame(() => {
-      const textArea = composerInputRef.current?.resizableTextArea?.textArea;
-      if (!textArea) {
-        return;
-      }
-      const nextCursor = start + snippet.length;
-      textArea.focus();
-      textArea.setSelectionRange(nextCursor, nextCursor);
-    });
+  const ensureComposerSelection = () => {
+    const editor = composerEditorRef.current;
+    if (!editor || typeof window === 'undefined') {
+      return false;
+    }
+
+    editor.focus();
+    const selection = window.getSelection();
+    const hasSelectionInEditor = Boolean(
+      selection?.rangeCount
+        && editor.contains(selection.anchorNode)
+        && editor.contains(selection.focusNode),
+    );
+
+    if (!hasSelectionInEditor) {
+      placeCaretAtComposerEnd();
+    }
+    return true;
+  };
+
+  const insertRichHtml = (html) => {
+    if (!ensureComposerSelection()) {
+      handleDraftChange(`${currentDraft}${html}`);
+      return;
+    }
+
+    document.execCommand('insertHTML', false, html);
+    syncComposerDraft();
+  };
+
+  const insertDraftText = (snippet) => {
+    if (!ensureComposerSelection()) {
+      handleDraftChange(`${currentDraft}${plainTextToHtml(snippet)}`);
+      return;
+    }
+
+    document.execCommand('insertText', false, snippet);
+    syncComposerDraft();
+  };
+
+  const handleComposerInput = () => {
+    syncComposerDraft();
+  };
+
+  const handleComposerPaste = (event) => {
+    event.preventDefault();
+    const text = event.clipboardData?.getData('text/plain') || '';
+    insertDraftText(text);
+  };
+
+  const focusComposer = () => {
+    const editor = composerEditorRef.current;
+    if (!editor) {
+      return;
+    }
+
+    editor.focus();
+    if (!window.getSelection()?.rangeCount) {
+      placeCaretAtComposerEnd();
+    }
+  };
+
+  const applyTextFormat = (tool) => {
+    if (!ensureComposerSelection()) {
+      return;
+    }
+
+    const selection = window.getSelection();
+    const hasSelectedText = Boolean(selection?.toString());
+
+    if (!hasSelectedText) {
+      insertRichHtml(tool.html);
+      return;
+    }
+
+    if (tool.key === 'code') {
+      const selectedText = selection.toString();
+      insertRichHtml(`<code>${escapeHtml(selectedText)}</code>`);
+      return;
+    }
+
+    document.execCommand(tool.command, false, tool.value || null);
+    syncComposerDraft();
+  };
+
+  const renderTextFormatIcon = (tool) => {
+    if (tool.key === 'link') {
+      return <LinkOutlined />;
+    }
+
+    if (tool.key === 'unordered') {
+      return (
+        <span className="messages-format-list-icon" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </span>
+      );
+    }
+
+    return <span>{tool.label}</span>;
   };
 
   const normalizedOutgoingText = (text) => {
     const prefix = SEND_MODE_META[sendMode]?.prefix;
     return prefix ? `${prefix}${text}` : text;
+  };
+
+  const normalizedOutgoingHtml = (html, fallbackText) => {
+    const safeHtml = sanitizeRichHtml(html) || plainTextToHtml(fallbackText);
+    const prefix = SEND_MODE_META[sendMode]?.prefix;
+    return prefix ? `${plainTextToHtml(prefix)}${safeHtml}` : safeHtml;
   };
 
   const emojiPopoverContent = (
@@ -1244,12 +1484,14 @@ function MessagesModule({
   };
 
   const handleSend = () => {
-    const text = currentDraft.trim();
+    const draftHtml = composerEditorRef.current?.innerHTML || currentDraft;
+    const text = richHtmlToPlainText(draftHtml);
     if (!selectedConversation || !text) {
       return;
     }
 
     const outgoingText = normalizedOutgoingText(text);
+    const outgoingHtml = normalizedOutgoingHtml(draftHtml, text);
     const updatedTime = getTimeLabel();
 
     if (selectedConversation.type === 'topic' && activeTopicThread) {
@@ -1272,6 +1514,7 @@ function MessagesModule({
                 author: '你',
                 time: '刚刚',
                 text: outgoingText,
+                contentHtml: outgoingHtml,
                 highlighted: true,
               },
             ];
@@ -1291,6 +1534,9 @@ function MessagesModule({
         ...prev,
         [activeConversationId]: '',
       }));
+      if (composerEditorRef.current) {
+        composerEditorRef.current.innerHTML = '';
+      }
       return;
     }
 
@@ -1314,7 +1560,8 @@ function MessagesModule({
               avatarText: '你',
               avatarColor: 'linear-gradient(135deg, #5f8cff 0%, #63c8ff 100%)',
               time: '刚刚',
-              contentSections: outgoingText.split(/\n{2,}/).filter(Boolean),
+              contentSections: [outgoingText],
+              contentSectionsHtml: [outgoingHtml],
               threadSubscribed: false,
               liked: false,
               starred: false,
@@ -1337,6 +1584,7 @@ function MessagesModule({
               self: true,
               time: '刚刚',
               content: outgoingText,
+              contentHtml: outgoingHtml,
             },
           ],
         };
@@ -1348,7 +1596,20 @@ function MessagesModule({
       ...prev,
       [activeConversationId]: '',
     }));
+    if (composerEditorRef.current) {
+      composerEditorRef.current.innerHTML = '';
+    }
     setSelectedId(selectedConversation.id);
+  };
+
+  const renderRichContent = (html, fallbackText = '', className = '') => {
+    const safeHtml = html ? sanitizeRichHtml(html) : plainTextToHtml(fallbackText);
+    return (
+      <div
+        className={`messages-rich-content ${className}`.trim()}
+        dangerouslySetInnerHTML={{ __html: safeHtml }}
+      />
+    );
   };
 
   const renderSidebarItem = (item) => {
@@ -1425,7 +1686,7 @@ function MessagesModule({
               : (post.contentSections || []).slice(0, post.collapsedSections || post.contentSections?.length || 0)
             ).map((section, index) => (
               <div key={`${post.id}-section-${index}`} className="messages-topic-card-section">
-                {section}
+                {renderRichContent(post.contentSectionsHtml?.[index], section)}
               </div>
             ))}
           </div>
@@ -1590,7 +1851,9 @@ function MessagesModule({
                   <span>{comment.time}</span>
                 </div>
                 <div className="messages-topic-detail-comment-body">
-                  <div className="messages-topic-detail-comment-text">{comment.text}</div>
+                  <div className="messages-topic-detail-comment-text">
+                    {renderRichContent(comment.contentHtml, comment.text)}
+                  </div>
                   <div className="messages-topic-detail-comment-actions">
                     <button
                       type="button"
@@ -1649,7 +1912,7 @@ function MessagesModule({
               {message.summary ? (
                 <div className="messages-lucky-summary">{message.summary}</div>
               ) : null}
-              <div>{message.content}</div>
+              {renderRichContent(message.contentHtml, message.content)}
               {(message.recommendations || []).length ? (
                 <div className="messages-lucky-rec-list">
                   {message.recommendations.map((recommendation) => (
@@ -2083,19 +2346,41 @@ function MessagesModule({
             )}
 
             <footer className="messages-composer">
-              <div className={`messages-composer-box ${composerExpanded ? 'is-expanded' : ''}`}>
-                <Input.TextArea
-                  ref={composerInputRef}
-                  autoSize={composerExpanded ? { minRows: 4, maxRows: 8 } : { minRows: 1, maxRows: 4 }}
-                  value={currentDraft}
-                  onChange={(e) => handleDraftChange(e.target.value)}
-                  placeholder={
-                    formatEnabled
-                      ? `${selectedMeta.placeholder} 支持表情、@提及和快捷模板`
-                      : selectedMeta.placeholder
-                  }
-                  className="messages-composer-input"
-                />
+              <div className={`messages-composer-box ${composerExpanded ? 'is-expanded' : ''} ${formatEnabled ? 'is-format-open' : ''}`}>
+                <div className="messages-composer-input-wrap">
+                  <div
+                    ref={composerEditorRef}
+                    className="messages-composer-editor"
+                    contentEditable
+                    role="textbox"
+                    aria-multiline="true"
+                    data-placeholder={
+                      formatEnabled
+                        ? `${selectedMeta.placeholder} 支持加粗、列表、引用和链接`
+                        : selectedMeta.placeholder
+                    }
+                    suppressContentEditableWarning
+                    onInput={handleComposerInput}
+                    onPaste={handleComposerPaste}
+                  />
+                  {formatEnabled ? (
+                    <div className="messages-format-toolbar" role="toolbar" aria-label="文本增强工具">
+                      {TEXT_FORMAT_TOOLS.map((tool) => (
+                        <Tooltip key={tool.key} title={tool.title}>
+                          <button
+                            type="button"
+                            className={`messages-format-btn messages-format-btn-${tool.key}`}
+                            aria-label={tool.title}
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => applyTextFormat(tool)}
+                          >
+                            {renderTextFormatIcon(tool)}
+                          </button>
+                        </Tooltip>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
                 <div className="messages-composer-toolbar">
                   <Tooltip title={formatEnabled ? '关闭文本增强' : '文本增强'}>
                     <button
@@ -2163,7 +2448,7 @@ function MessagesModule({
                       <button
                         type="button"
                         className="messages-toolbar-btn messages-toolbar-send"
-                        disabled={!currentDraft.trim()}
+                        disabled={!currentDraftPlainText.trim()}
                         onMouseDown={(e) => e.preventDefault()}
                         onClick={handleSend}
                       >

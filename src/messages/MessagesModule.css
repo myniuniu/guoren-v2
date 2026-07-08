@@ -110,10 +110,10 @@
   height: 32px;
   padding: 0;
   outline: none;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e5e7eb;
   border-radius: 10px;
-  background: #f8fafc;
-  color: #2563eb;
+  background: linear-gradient(180deg, #ffffff 0%, #f5f7fa 100%);
+  color: #667085;
   box-shadow:
     0 1px 2px rgba(15, 23, 42, 0.04),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
@@ -129,11 +129,11 @@
 .messages-sidebar-plus-btn.ant-btn:focus-visible,
 .messages-sidebar-plus-btn.ant-btn:active,
 .messages-sidebar-plus-btn.ant-btn.is-open {
-  border-color: #bfdbfe;
-  background: #eff6ff;
-  color: #1d4ed8;
+  border-color: #d7dde6;
+  background: linear-gradient(180deg, #ffffff 0%, #eef2f6 100%);
+  color: #344054;
   box-shadow:
-    0 4px 10px rgba(37, 99, 235, 0.12),
+    0 6px 14px rgba(15, 23, 42, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.92);
 }
 
@@ -1605,21 +1605,122 @@
   align-items: flex-start;
 }
 
-.messages-composer-input.ant-input {
+.messages-composer-box.is-format-open {
+  align-items: flex-end;
+  padding-bottom: 8px;
+}
+
+.messages-composer-input-wrap {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.messages-composer-editor {
+  flex: 1;
+  min-width: 0;
+  min-height: 22px;
+  max-height: 112px;
   background: transparent;
   border: none;
   box-shadow: none;
   padding: 0;
-  resize: none;
+  outline: none;
+  overflow-y: auto;
   font-size: 13px;
   line-height: 1.6;
+  color: #223043;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
-.messages-composer-input.ant-input:focus,
-.messages-composer-input.ant-input-focused {
+.messages-composer-box.is-expanded .messages-composer-editor {
+  min-height: 92px;
+  max-height: 180px;
+}
+
+.messages-composer-editor:focus {
   box-shadow: none;
+}
+
+.messages-composer-editor:empty::before {
+  content: attr(data-placeholder);
+  color: #8a96a7;
+  pointer-events: none;
+}
+
+.messages-composer-editor strong,
+.messages-rich-content strong,
+.messages-composer-editor b,
+.messages-rich-content b {
+  font-weight: 800;
+}
+
+.messages-composer-editor em,
+.messages-rich-content em,
+.messages-composer-editor i,
+.messages-rich-content i {
+  font-style: italic;
+}
+
+.messages-composer-editor s,
+.messages-rich-content s,
+.messages-composer-editor strike,
+.messages-rich-content strike {
+  text-decoration: line-through;
+}
+
+.messages-composer-editor u,
+.messages-rich-content u {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.messages-composer-editor a,
+.messages-rich-content a {
+  color: #2563eb;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.messages-composer-editor code,
+.messages-rich-content code {
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.08);
+  color: #334155;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.92em;
+}
+
+.messages-composer-editor blockquote,
+.messages-rich-content blockquote {
+  margin: 4px 0;
+  padding: 4px 0 4px 10px;
+  border-left: 3px solid rgba(37, 99, 235, 0.32);
+  color: #4f6076;
+}
+
+.messages-composer-editor ul,
+.messages-composer-editor ol,
+.messages-rich-content ul,
+.messages-rich-content ol {
+  margin: 4px 0;
+  padding-left: 20px;
+}
+
+.messages-composer-editor p,
+.messages-rich-content p,
+.messages-composer-editor div,
+.messages-rich-content div {
+  margin: 0;
+}
+
+.messages-rich-content {
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .messages-thread-empty {
@@ -1712,6 +1813,90 @@
 .messages-toolbar-caret {
   width: 22px;
   min-width: 22px;
+}
+
+.messages-format-toolbar {
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.messages-format-toolbar::-webkit-scrollbar {
+  display: none;
+}
+
+.messages-format-btn {
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #667383;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.messages-format-btn:hover {
+  border-color: rgba(218, 226, 236, 0.9);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(242, 246, 251, 0.78) 100%);
+  box-shadow:
+    0 8px 18px rgba(15, 23, 42, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.84);
+  color: #243244;
+  transform: translateY(-1px);
+}
+
+.messages-format-btn .anticon {
+  font-size: 15px;
+}
+
+.messages-format-btn-bold {
+  font-weight: 800;
+}
+
+.messages-format-btn-strike > span {
+  text-decoration: line-through;
+}
+
+.messages-format-btn-italic > span {
+  font-style: italic;
+  transform: skewX(-8deg);
+}
+
+.messages-format-btn-underline > span {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.messages-format-btn-quote {
+  font-family: Georgia, serif;
+  font-size: 20px;
+}
+
+.messages-format-btn-code {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.messages-format-list-icon {
+  width: 16px;
+  display: grid;
+  gap: 3px;
+}
+
+.messages-format-list-icon span {
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
 }
 
 .messages-emoji-panel {
@@ -1866,14 +2051,25 @@
 }
 
 .messages-sidebar-plus-btn.ant-btn {
-  border: 1px solid rgba(255, 255, 255, 0.42);
-  background: linear-gradient(135deg, #8cb7ff 0%, #5e83ff 100%) !important;
+  border: 1px solid rgba(218, 224, 232, 0.94);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(241, 244, 248, 0.92) 100%) !important;
+  color: #667085;
   box-shadow:
-    0 14px 28px rgba(83, 127, 255, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.42);
+    0 10px 20px rgba(15, 23, 42, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.88);
 }
 
-.messages-sidebar-plus-btn.ant-btn:hover {
+.messages-sidebar-plus-btn.ant-btn:hover,
+.messages-sidebar-plus-btn.ant-btn:focus,
+.messages-sidebar-plus-btn.ant-btn:focus-visible,
+.messages-sidebar-plus-btn.ant-btn:active,
+.messages-sidebar-plus-btn.ant-btn.is-open {
+  border-color: rgba(201, 209, 219, 0.98);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(233, 237, 243, 0.94) 100%) !important;
+  color: #344054;
+  box-shadow:
+    0 12px 24px rgba(15, 23, 42, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
   transform: translateY(-1px);
 }
 
@@ -2264,12 +2460,8 @@
     var(--messages-glass-stroke);
 }
 
-.messages-composer-input.ant-input {
+.messages-composer-editor {
   color: #223043;
-}
-
-.messages-composer-input.ant-input::placeholder {
-  color: #8a96a7;
 }
 
 .messages-send-group {
