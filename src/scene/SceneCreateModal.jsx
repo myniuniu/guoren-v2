@@ -129,6 +129,7 @@ export default function SceneCreateModal({
       okText={initialValues?.id ? (isSceneMode ? '保存场景' : '保存空间') : (isSceneMode ? '创建场景' : '创建空间')}
       cancelText="取消"
       width={1040}
+      centered
       destroyOnClose
       className="scene-create-modal"
     >
