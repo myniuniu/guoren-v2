@@ -612,15 +612,21 @@
 .sider-menu .scene-home-item {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  gap: 12px;
   padding-inline: 16px !important;
 }
 
 .sider-menu .new-scene-item .ant-menu-title-content,
 .sider-menu .scene-home-item .ant-menu-title-content {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
   min-width: 0;
-  text-align: center;
+  text-align: left;
+}
+
+.sider-menu .new-scene-item .anticon + .ant-menu-title-content,
+.sider-menu .scene-home-item .anticon + .ant-menu-title-content {
+  margin-inline-start: 0 !important;
 }
 
 .sider-menu .new-scene-item {
@@ -646,9 +652,11 @@
 
 .sider-menu .new-scene-item .anticon {
   display: inline-flex;
+  flex: 0 0 20px;
   align-items: center;
   justify-content: center;
   width: 20px;
+  min-width: 20px;
   height: 20px;
   border-radius: 999px;
   background:
@@ -719,12 +727,17 @@
 }
 
 .sider-menu .scene-home-item .anticon {
+  display: inline-flex;
+  flex: 0 0 20px;
+  align-items: center;
+  justify-content: center;
   color: #5d7393;
   background: none;
   border: none;
   box-shadow: none;
-  width: auto;
-  height: auto;
+  width: 20px;
+  min-width: 20px;
+  height: 20px;
   border-radius: 0;
   font-size: 16px;
 }
