@@ -3597,6 +3597,13 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     </span>
   );
 
+  const getSelectionModeMenuItem = () => ({
+    key: 'selection-mode',
+    className: `finder-selection-mode-menu-item ${mouseMultiSelectMode ? 'is-active' : ''}`,
+    icon: mouseMultiSelectMode ? <CheckSquareOutlined /> : <BorderOutlined />,
+    label: renderSelectionModeMenuLabel(mouseMultiSelectMode),
+  });
+
   const renderResourceAssociationBlock = useCallback((item, associationRule) => {
     if (!item || item.isFolder || !associationRule) return null;
     const sourceKey = inferResourceSourceKey(item);
@@ -3759,6 +3766,10 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
   } = {}) => {
     const isFavorited = item.isFolder && favorites.some((f) => f.key === item.key);
     const selectionPayload = { selectionView, colIdx, itemIdx };
+    if (key === 'selection-mode') {
+      setMouseMultiSelectMode((prev) => !prev);
+      return;
+    }
     if (key === 'enter' && item.isFolder) {
       navigateTo(item.key);
       return;
@@ -3818,6 +3829,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
   const getItemMoreMenu = (item, {
     includeFavorite = false,
     includeAddResource = false,
+    includeSelectionMode = false,
     columnPathToOpen = null,
     selectionView = viewMode,
     colIdx = null,
@@ -3842,6 +3854,10 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
         ] : []),
         ...(includeAddResource && item.isFolder ? [
           { key: 'addResource', icon: <PlusOutlined />, label: '添加资料' },
+          { type: 'divider' },
+        ] : []),
+        ...(includeSelectionMode ? [
+          getSelectionModeMenuItem(),
           { type: 'divider' },
         ] : []),
         {
@@ -3885,7 +3901,12 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
 
   // 右键菜单 - 文件/文件夹
   const getContextMenu = (item, { includeFavorite = false, ...selectionOptions } = {}) => (
-    getItemMoreMenu(item, { includeFavorite, includeAddResource: true, ...selectionOptions })
+    getItemMoreMenu(item, {
+      includeFavorite,
+      includeAddResource: true,
+      includeSelectionMode: true,
+      ...selectionOptions,
+    })
   );
 
   const handleItemContextMenuOpenChange = useCallback((itemKey, open) => {
@@ -4109,12 +4130,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
       { key: 'newFolder', icon: <FolderAddOutlined />, label: '新建文件夹' },
       { key: 'addResource', icon: <FileAddOutlined />, label: '添加资料' },
       { type: 'divider' },
-      {
-        key: 'selection-mode',
-        className: `finder-selection-mode-menu-item ${mouseMultiSelectMode ? 'is-active' : ''}`,
-        icon: mouseMultiSelectMode ? <CheckSquareOutlined /> : <BorderOutlined />,
-        label: renderSelectionModeMenuLabel(mouseMultiSelectMode),
-      },
+      getSelectionModeMenuItem(),
       {
         key: 'selection-all-visible',
         icon: <SelectOutlined />,
@@ -4177,8 +4193,11 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     items: [
       { key: 'newFolder', icon: <FolderAddOutlined />, label: '新建文件夹' },
       { key: 'addResource', icon: <FileAddOutlined />, label: '添加资料' },
+      { type: 'divider' },
+      getSelectionModeMenuItem(),
     ],
     onClick: ({ key }) => {
+      if (key === 'selection-mode') setMouseMultiSelectMode((prev) => !prev);
       if (key === 'newFolder') handleCreateFolderAtCurrentLocation();
       if (key === 'addResource') handleAddResourceAtCurrentLocation();
       setBgMenuPos(null);
