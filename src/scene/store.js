@@ -2652,6 +2652,65 @@ function guessResourceType(folder) {
   return 'file';
 }
 
+function getTrainingActivityCategoryLabel(activityType) {
+  if (activityType === 'video') return '点播课程';
+  if (activityType === 'live') return '直播课程';
+  if (activityType === 'exam') return '考试测评';
+  if (activityType === 'offline') return '线下活动';
+  return '研修任务';
+}
+
+function buildTrainingResourceMeta(stage, activity, resource) {
+  return {
+    summary: `${stage.name} / ${activity.name} 的配套内容。`,
+    paragraphs: [
+      `${resource.name}用于支撑“${activity.name}”的学习、参与或评阅记录。`,
+      `该活动属于${getTrainingActivityCategoryLabel(activity.type)}。`,
+    ],
+  };
+}
+
+function appendTrainingActivityResourceEntries({
+  entries = [],
+  parentKey,
+  stage,
+  activity,
+  resources,
+  owner,
+}) {
+  entries.forEach((entry, index) => {
+    const isFolder = entry.isFolder === true || Array.isArray(entry.children);
+    const entryKey = entry.key || `${parentKey}_${isFolder ? 'f' : 'r'}${index + 1}`;
+    const baseResource = {
+      key: entryKey,
+      name: entry.name,
+      isFolder,
+      parentKey,
+      owner,
+      lastEdit: nowText(),
+    };
+
+    if (isFolder) {
+      resources.push(baseResource);
+      appendTrainingActivityResourceEntries({
+        entries: entry.children || [],
+        parentKey: entryKey,
+        stage,
+        activity,
+        resources,
+        owner,
+      });
+      return;
+    }
+
+    resources.push({
+      ...baseResource,
+      type: entry.type,
+      meta: buildTrainingResourceMeta(stage, activity, entry),
+    });
+  });
+}
+
 function buildTrainingInitialVersionData(template) {
   const owner = template.roles[0]?.name || '培训中心';
   const stageConfigs = [
@@ -2668,8 +2727,53 @@ function buildTrainingInitialVersionData(template) {
       key: 'training_stage_2',
       name: '第二阶段 · AI基础与政策理解',
       activities: [
-        { key: 'training_s2_vod', name: 'AI基础概念点播课', type: 'video', weight: 7, required: true, metric: '完成率', op: '>=', value: 90, files: [{ name: '人工智能发展简史.mp4', type: 'video' }, { name: '生成式AI核心概念.mp4', type: 'video' }, { name: 'AI伦理与数据安全讲义.pdf', type: 'file' }] },
-        { key: 'training_s2_live', name: '专家直播讲座：AI教育应用边界', type: 'live', weight: 5, required: true, metric: '出勤率', op: '>=', value: 90, files: [{ name: '专家直播讲座回放', type: 'file' }, { name: '直播互动问答纪要.docx', type: 'file' }] },
+        {
+          key: 'training_s2_vod',
+          name: 'AI基础概念点播课',
+          type: 'video',
+          weight: 7,
+          required: true,
+          metric: '完成率',
+          op: '>=',
+          value: 90,
+          files: [
+            { name: '人工智能发展简史.mp4', type: 'video' },
+            { name: '生成式AI核心概念.mp4', type: 'video' },
+            {
+              key: 'training_s2_vod_casepack',
+              name: '课后案例拆解',
+              isFolder: true,
+              children: [
+                { key: 'training_s2_vod_casepack_r1', name: '生成式AI课堂案例拆解.mp4', type: 'video' },
+                { key: 'training_s2_vod_casepack_r2', name: '校园应用边界情境分析.mp4', type: 'video' },
+              ],
+            },
+            { name: 'AI伦理与数据安全讲义.pdf', type: 'file' },
+          ],
+        },
+        {
+          key: 'training_s2_live',
+          name: '专家直播讲座：AI教育应用边界',
+          type: 'live',
+          weight: 5,
+          required: true,
+          metric: '出勤率',
+          op: '>=',
+          value: 90,
+          files: [
+            { name: '专家直播讲座回放', type: 'file' },
+            {
+              key: 'training_s2_live_materials',
+              name: '讲座配套资料',
+              isFolder: true,
+              children: [
+                { key: 'training_s2_live_materials_r1', name: '专家讲座课件.pdf', type: 'file' },
+                { key: 'training_s2_live_materials_r2', name: '讲座案例补充清单.docx', type: 'file' },
+              ],
+            },
+            { name: '直播互动问答纪要.docx', type: 'file' },
+          ],
+        },
         { key: 'training_s2_quiz', name: '基础知识随堂测验', type: 'exam', weight: 5, required: true, metric: '分数', op: '>=', value: 70, files: [{ name: 'AI基础知识随堂测验', type: 'exam' }] },
         { key: 'training_s2_note', name: '课程笔记提交', type: 'other', weight: 3, required: false, metric: '提交率', op: '=', value: 100, files: [{ name: 'AI应用边界学习笔记模板.docx', type: 'file' }] },
       ],
@@ -2725,23 +2829,13 @@ function buildTrainingInitialVersionData(template) {
         owner,
         lastEdit: nowText(),
       });
-      activity.files.forEach((file, fileIndex) => {
-        resources.push({
-          key: `${activity.key}_r${fileIndex + 1}`,
-          name: file.name,
-          type: file.type,
-          isFolder: false,
-          parentKey: activity.key,
-          owner,
-          lastEdit: nowText(),
-          meta: {
-            summary: `${stage.name} / ${activity.name} 的配套内容。`,
-            paragraphs: [
-              `${file.name}用于支撑“${activity.name}”的学习、参与或评阅记录。`,
-              `该活动属于${activity.type === 'video' ? '点播课程' : activity.type === 'live' ? '直播课程' : activity.type === 'exam' ? '考试测评' : activity.type === 'offline' ? '线下活动' : '研修任务'}。`,
-            ],
-          },
-        });
+      appendTrainingActivityResourceEntries({
+        entries: activity.files,
+        parentKey: activity.key,
+        stage,
+        activity,
+        resources,
+        owner,
       });
       rules.push({
         key: `training_rule_${stageIndex + 1}_${activityIndex + 1}`,

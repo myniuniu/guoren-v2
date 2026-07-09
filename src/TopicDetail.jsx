@@ -536,6 +536,15 @@ const RICH_TRAINING_SAMPLE_KEYS = Object.freeze([
   'training_s5_survey',
 ]);
 
+const TRAINING_NESTED_SAMPLE_RESOURCES = Object.freeze([
+  { key: 'training_s2_vod_casepack', parentKey: 'training_s2_vod', name: '课后案例拆解', isFolder: true },
+  { key: 'training_s2_vod_casepack_r1', parentKey: 'training_s2_vod_casepack', name: '生成式AI课堂案例拆解.mp4', type: 'video' },
+  { key: 'training_s2_vod_casepack_r2', parentKey: 'training_s2_vod_casepack', name: '校园应用边界情境分析.mp4', type: 'video' },
+  { key: 'training_s2_live_materials', parentKey: 'training_s2_live', name: '讲座配套资料', isFolder: true },
+  { key: 'training_s2_live_materials_r1', parentKey: 'training_s2_live_materials', name: '专家讲座课件.pdf', type: 'file' },
+  { key: 'training_s2_live_materials_r2', parentKey: 'training_s2_live_materials', name: '讲座案例补充清单.docx', type: 'file' },
+]);
+
 const FULL_STAGE_PROGRESS_ACTIVITY_KEYS = Object.freeze([
   'training_s1_live',
   'training_s1_vod',
@@ -644,6 +653,52 @@ function shouldRefreshTrainingAssessmentProgressSample(versionData, sceneConfig)
   return isPreviousGeneratedFirstStageProgress(currentVersion);
 }
 
+function buildTrainingNestedSampleResources(resources = []) {
+  const resourceMap = new Map(resources.map((resource) => [resource.key, resource]));
+  const stage = resourceMap.get('training_stage_2');
+  const nextResources = [];
+
+  TRAINING_NESTED_SAMPLE_RESOURCES.forEach((entry) => {
+    if (resourceMap.has(entry.key) || !resourceMap.has(entry.parentKey)) return;
+
+    const parent = resourceMap.get(entry.parentKey);
+    const parentOfParent = parent?.parentKey ? resourceMap.get(parent.parentKey) : null;
+    const activity = parent?.isFolder
+      ? ((parentOfParent?.parentKey ?? null) === null ? parent : (parentOfParent || parent))
+      : parent;
+    const baseResource = {
+      key: entry.key,
+      name: entry.name,
+      isFolder: !!entry.isFolder,
+      parentKey: entry.parentKey,
+      owner: parent?.owner || stage?.owner || '培训中心',
+      lastEdit: parent?.lastEdit || stage?.lastEdit || '--',
+    };
+
+    if (entry.isFolder) {
+      nextResources.push(baseResource);
+      resourceMap.set(baseResource.key, baseResource);
+      return;
+    }
+
+    const nextResource = {
+      ...baseResource,
+      type: entry.type,
+      meta: {
+        summary: `${stage?.name || '第二阶段 · AI基础与政策理解'} / ${activity?.name || '当前活动'} 的子目录示例资料。`,
+        paragraphs: [
+          `${entry.name}用于展示活动目录下继续按子目录组织资料的效果。`,
+          `该资料归属于“${parent?.name || activity?.name || '当前活动'}”，界面会自动随所属活动同步展示状态与进度。`,
+        ],
+      },
+    };
+    nextResources.push(nextResource);
+    resourceMap.set(nextResource.key, nextResource);
+  });
+
+  return nextResources;
+}
+
 function refreshTrainingAssessmentProgressSampleIfNeeded(versionData, sceneConfig) {
   if (!shouldRefreshTrainingAssessmentProgressSample(versionData, sceneConfig)) return versionData;
   const currentVersion = getCurrentVersion(versionData);
@@ -662,9 +717,34 @@ function refreshTrainingAssessmentProgressSampleIfNeeded(versionData, sceneConfi
   return refreshedData;
 }
 
+function refreshTrainingNestedSampleIfNeeded(versionData, sceneConfig) {
+  if (!isTrainingSceneConfig(sceneConfig)) return versionData;
+  const currentVersion = getCurrentVersion(versionData);
+  if (!currentVersion) return versionData;
+
+  const resources = Array.isArray(currentVersion.resources) ? currentVersion.resources : [];
+  const nestedSampleResources = buildTrainingNestedSampleResources(resources);
+  if (!nestedSampleResources.length) return versionData;
+
+  const refreshedData = {
+    ...versionData,
+    versions: (versionData.versions || []).map((version) => (
+      version.id === currentVersion.id
+        ? {
+            ...version,
+            resources: [...resources, ...nestedSampleResources],
+          }
+        : version
+    )),
+  };
+  saveToStorage(refreshedData);
+  return refreshedData;
+}
+
 function refreshTrainingSampleDataIfNeeded(versionData, sceneConfig) {
   if (!shouldRefreshTrainingSampleData(versionData, sceneConfig)) {
-    return refreshTrainingAssessmentProgressSampleIfNeeded(versionData, sceneConfig);
+    const refreshedProgressData = refreshTrainingAssessmentProgressSampleIfNeeded(versionData, sceneConfig);
+    return refreshTrainingNestedSampleIfNeeded(refreshedProgressData, sceneConfig);
   }
   const refreshedData = {
     ...buildSceneInitialVersionData(sceneConfig),
@@ -672,7 +752,7 @@ function refreshTrainingSampleDataIfNeeded(versionData, sceneConfig) {
     _storageKey: versionData?._storageKey,
   };
   saveToStorage(refreshedData);
-  return refreshedData;
+  return refreshTrainingNestedSampleIfNeeded(refreshedData, sceneConfig);
 }
 
 function getResourceProgressTone(statusKey, percent = 0) {
@@ -4250,7 +4330,7 @@ function TopicDetail({
           className={`tree-folder-group ${treeProgressSource ? `tree-folder-group-assessment-${treeProgressSource}` : ''}`}
         >
           <Dropdown
-            overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
+            classNames={{ root: TOPIC_DROPDOWN_OVERLAY_CLASS }}
             menu={rowMenu}
             trigger={['contextMenu']}
             onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
@@ -4306,7 +4386,7 @@ function TopicDetail({
                     </button>
                   ) : null}
                   <Dropdown
-                    overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
+                    classNames={{ root: TOPIC_DROPDOWN_OVERLAY_CLASS }}
                     menu={rowMenu}
                     trigger={['click']}
                     onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
@@ -4336,7 +4416,7 @@ function TopicDetail({
     return (
       <Dropdown
         key={item.key}
-        overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
+        classNames={{ root: TOPIC_DROPDOWN_OVERLAY_CLASS }}
         menu={rowMenu}
         trigger={['contextMenu']}
         onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
@@ -4355,6 +4435,7 @@ function TopicDetail({
             handleActivateItem(item, 'tree');
           }}
         >
+          <span className="project-item-arrow project-item-arrow-placeholder" aria-hidden="true" />
           <span className="project-item-icon">{getResourceIcon(item)}</span>
           {isInlineRenaming ? renderInlineRenameInput('tree') : (
             <span className="project-item-title-stack">
@@ -4366,7 +4447,7 @@ function TopicDetail({
           {!isLearnerProgressMode && !isInlineRenaming ? (
             <span className="topic-tree-item-actions" onClick={(event) => event.stopPropagation()}>
               <Dropdown
-                overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
+                classNames={{ root: TOPIC_DROPDOWN_OVERLAY_CLASS }}
                 menu={rowMenu}
                 trigger={['click']}
                 onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
@@ -4401,7 +4482,7 @@ function TopicDetail({
     return (
       <Dropdown
         key={item.key}
-        overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
+        classNames={{ root: TOPIC_DROPDOWN_OVERLAY_CLASS }}
         menu={rowMenu}
         trigger={['contextMenu']}
         onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
@@ -4452,7 +4533,7 @@ function TopicDetail({
                   </button>
                 ) : null}
                 <Dropdown
-                  overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
+                  classNames={{ root: TOPIC_DROPDOWN_OVERLAY_CLASS }}
                   menu={rowMenu}
                   trigger={['click']}
                   onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
@@ -5542,7 +5623,7 @@ function TopicDetail({
         <div className="detail-header-right">
           {versioningEnabled ? (
             <Dropdown
-              overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
+              classNames={{ root: TOPIC_DROPDOWN_OVERLAY_CLASS }}
               menu={{
                 items: [
                   {
@@ -5642,7 +5723,7 @@ function TopicDetail({
 
       {bgMenuPos ? (
         <Dropdown
-          overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
+          classNames={{ root: TOPIC_DROPDOWN_OVERLAY_CLASS }}
           menu={bgContextMenu}
           open
           onOpenChange={(open) => {
@@ -5731,7 +5812,7 @@ function TopicDetail({
                         <span className="project-title">项目</span>
                         {!isLearnerProgressMode ? (
                           <Dropdown
-                            overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
+                            classNames={{ root: TOPIC_DROPDOWN_OVERLAY_CLASS }}
                             menu={{
                               items: [
                                 {
@@ -6109,7 +6190,7 @@ function TopicDetail({
                               ))}
                               {aiOverflowSkills.length ? (
                                 <Dropdown
-                                  overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
+                                  classNames={{ root: TOPIC_DROPDOWN_OVERLAY_CLASS }}
                                   menu={{
                                     items: aiOverflowSkills.map((skill) => ({
                                       key: skill.key,
@@ -6389,7 +6470,7 @@ function TopicDetail({
         okButtonProps={{ disabled: !selectedKnowledgeGraphResourceKey }}
         width={720}
         className="topic-knowledge-picker-modal"
-        destroyOnClose
+        destroyOnHidden
       >
         <div className="topic-knowledge-picker">
           <div className="topic-knowledge-picker-toolbar">
@@ -6466,7 +6547,7 @@ function TopicDetail({
         okButtonProps={{ disabled: !selectedCapabilityModelId }}
         width={720}
         className="topic-knowledge-picker-modal"
-        destroyOnClose
+        destroyOnHidden
       >
         <div className="topic-knowledge-picker">
           <div className="topic-knowledge-picker-toolbar">
@@ -6553,7 +6634,7 @@ function TopicDetail({
             || !capabilityModelCreateDraft.roleLevelId,
         }}
         width={560}
-        destroyOnClose
+        destroyOnHidden
       >
         <div style={{ display: 'grid', gap: 16 }}>
           <div>
@@ -6627,7 +6708,7 @@ function TopicDetail({
         open={!!tagPickerTarget}
         onCancel={() => setTagPickerTarget(null)}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
         width={320}
       >
         {tagPickerItem ? (
@@ -6660,7 +6741,7 @@ function TopicDetail({
         onOk={handleAddTagConfirm}
         okText="创建"
         cancelText="取消"
-        destroyOnClose
+        destroyOnHidden
         width={360}
       >
         <div className="topic-tag-create-form">

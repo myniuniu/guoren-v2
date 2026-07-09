@@ -25,13 +25,13 @@
     0 12px 22px rgba(120, 162, 227, 0.16),
     0 3px 8px rgba(15, 23, 42, 0.04);
   --td-library-selected-bg:
-    linear-gradient(180deg, rgba(246, 249, 255, 0.99) 0%, rgba(234, 242, 255, 0.96) 100%),
-    linear-gradient(90deg, rgba(116, 166, 236, 0.16) 0%, rgba(255, 255, 255, 0) 24%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.42) 0%, rgba(189, 213, 248, 0.22) 100%);
-  --td-library-selected-border: rgba(159, 190, 237, 0.6);
-  --td-library-selected-text: #26415f;
-  --td-library-selected-meta: #5f7ba3;
-  --td-library-selected-accent: #5f95dd;
+    linear-gradient(180deg, rgba(238, 246, 255, 0.99) 0%, rgba(221, 236, 255, 0.97) 100%),
+    linear-gradient(90deg, rgba(86, 160, 245, 0.28) 0%, rgba(255, 255, 255, 0) 26%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(165, 203, 255, 0.3) 100%);
+  --td-library-selected-border: rgba(102, 158, 235, 0.78);
+  --td-library-selected-text: #1f3f67;
+  --td-library-selected-meta: #4a6e9f;
+  --td-library-selected-accent: #4586e0;
   --td-accent: #aeb7c2;
   --td-accent-start: #72829a;
   --td-accent-end: #c3cbd5;
@@ -2014,8 +2014,8 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.98),
     inset 0 -1px 0 rgba(255, 255, 255, 0.28),
     inset 0 0 0 1px var(--td-library-selected-border),
-    0 14px 26px rgba(118, 161, 228, 0.16),
-    0 3px 10px rgba(118, 161, 228, 0.08);
+    0 16px 30px rgba(90, 142, 221, 0.22),
+    0 4px 12px rgba(90, 142, 221, 0.12);
   backdrop-filter: blur(16px) saturate(1.3);
   -webkit-backdrop-filter: blur(16px) saturate(1.3);
   will-change: transform, width, height, opacity;
@@ -2037,6 +2037,21 @@
     linear-gradient(112deg, rgba(255, 255, 255, 0) 22%, rgba(255, 255, 255, 0.68) 42%, rgba(183, 209, 248, 0.2) 50%, rgba(255, 255, 255, 0) 72%);
   opacity: 0.84;
   filter: blur(0.5px);
+}
+
+.project-list-selection-indicator::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 8px;
+  bottom: 8px;
+  width: 4px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #8ec2ff 0%, #4b8fe7 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.52),
+    0 6px 12px rgba(75, 143, 231, 0.24);
+  opacity: 0.92;
 }
 
 .project-list-selection-indicator.is-visible {
@@ -2128,9 +2143,12 @@
 }
 
 .project-item-selected {
-  border-color: rgba(221, 227, 235, 0.92);
-  background: var(--td-selected) !important;
-  box-shadow: none;
+  border-color: var(--td-library-selected-border);
+  background: var(--td-library-selected-bg) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.18),
+    0 8px 18px rgba(90, 142, 221, 0.08);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
@@ -2201,6 +2219,11 @@
   width: 14px;
   color: #98a2b3;
   font-size: 9px;
+}
+
+.project-item-arrow-placeholder {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .project-item-icon {

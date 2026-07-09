@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Button, Input, InputNumber, Switch, Tag, Select, Radio, DatePicker, Divider, Dropdown, message } from 'antd';
 import {
   RobotOutlined,
@@ -427,6 +427,14 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
       onClick: handleCreateFolder,
     },
   ];
+  const activeBindingBoundKeySet = useMemo(
+    () => new Set(activeBindingTarget?.boundKeys || []),
+    [activeBindingTarget?.boundKeys],
+  );
+  const activeBindingCoveredKeySet = useMemo(
+    () => new Set(activeBindingTarget?.coveredKeys || []),
+    [activeBindingTarget?.coveredKeys],
+  );
 
   const resolveDragAvailability = (item) => {
     if (!activeBindingTarget) {
@@ -437,7 +445,8 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
     }
     const availability = evaluateResourceBindingAvailability({
       resource: item,
-      boundKeys: new Set(activeBindingTarget.boundKeys || []),
+      boundKeys: activeBindingBoundKeySet,
+      coveredKeys: activeBindingCoveredKeySet,
       activityType: activeBindingTarget.activityType ?? '',
       resources,
     });
@@ -461,10 +470,13 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
       e.dataTransfer.effectAllowed = 'move';
     };
     const dragAvailability = resolveDragAvailability(item);
-    const isBoundResource = !!activeBindingTarget?.boundKeys?.includes(item.key);
+    const isBoundResource = activeBindingBoundKeySet.has(item.key);
+    const isIncludedResource = activeBindingCoveredKeySet.has(item.key) && !isBoundResource;
     const canDrag = !selectedFolderKey && dragAvailability.draggable;
     const itemTitle = isBoundResource
       ? '已绑定到当前活动'
+      : isIncludedResource
+        ? '已包含在当前绑定目录中'
       : canDrag
         ? '可拖拽到右侧画布'
         : dragAvailability.reason || undefined;
@@ -475,7 +487,7 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
       return (
         <div key={item.key} className="tree-folder-group">
           <div
-            className={`project-item project-item-folder ${isSelected ? 'project-item-selected' : ''} ${dragAvailability.disabled ? 'project-item-disabled' : ''} ${isBoundResource ? 'project-item-bound' : ''}`}
+            className={`project-item project-item-folder ${isSelected ? 'project-item-selected' : ''} ${dragAvailability.disabled ? 'project-item-disabled' : ''} ${isBoundResource ? 'project-item-bound' : ''} ${isIncludedResource ? 'project-item-included' : ''}`}
             onClick={activeBindingTarget || dragAvailability.disabled ? undefined : () => handleSelectFolder(item.key)}
             draggable={canDrag}
             onDragStart={canDrag ? handleDragStart : undefined}
@@ -491,7 +503,11 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
                 : <FolderFilled style={{ color: '#56a8f5' }} />}
             </span>
             <span className="project-item-title">{item.name}</span>
-            {isBoundResource && <span className="project-bound-badge">已绑定</span>}
+            {(isBoundResource || isIncludedResource) && (
+              <span className={`project-bound-badge ${isIncludedResource ? 'is-included' : ''}`}>
+                {isBoundResource ? '已绑定' : '已包含'}
+              </span>
+            )}
           </div>
           {isExpanded && (
             <div className="tree-children">
@@ -505,7 +521,7 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
     return (
       <div
         key={item.key}
-        className={`project-item project-item-child ${dragAvailability.disabled ? 'project-item-disabled' : ''} ${isBoundResource ? 'project-item-bound' : ''}`}
+        className={`project-item project-item-child ${dragAvailability.disabled ? 'project-item-disabled' : ''} ${isBoundResource ? 'project-item-bound' : ''} ${isIncludedResource ? 'project-item-included' : ''}`}
         draggable={canDrag}
         onDragStart={canDrag ? handleDragStart : undefined}
         title={itemTitle}
@@ -513,7 +529,11 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
       >
         <span className="project-item-icon">{getResourceIcon(item.type)}</span>
         <span className="project-item-title">{item.name}</span>
-        {isBoundResource && <span className="project-bound-badge">已绑定</span>}
+        {(isBoundResource || isIncludedResource) && (
+          <span className={`project-bound-badge ${isIncludedResource ? 'is-included' : ''}`}>
+            {isBoundResource ? '已绑定' : '已包含'}
+          </span>
+        )}
       </div>
     );
   };
@@ -605,7 +625,7 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
           <span className="assessment-resource-drawer-title">资料</span>
           <div className="panel-header-actions">
             <Dropdown
-              overlayClassName={ASSESSMENT_DROPDOWN_OVERLAY_CLASS}
+              classNames={{ root: ASSESSMENT_DROPDOWN_OVERLAY_CLASS }}
               menu={{ items: resourcePanelMenuItems }}
               trigger={['click']}
             >
@@ -663,7 +683,9 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
           </div>
         </div>
         <div className="assessment-resource-drawer-tip">
-          可拖动一个资料目录到活动容器
+          {activeBindingTarget
+            ? '绑定目录后将自动包含其下全部子目录和文件'
+            : '可拖动一个资料目录到活动容器'}
         </div>
       </aside>
     );

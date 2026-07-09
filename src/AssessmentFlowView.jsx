@@ -58,6 +58,124 @@ function collectResourceTypes(payload, resources) {
   return [...types];
 }
 
+function buildResourceIndexes(resources = []) {
+  const resourceByKey = new Map();
+  const childrenByParent = new Map();
+
+  resources.forEach((resource) => {
+    resourceByKey.set(resource.key, resource);
+    const parentKey = resource.parentKey ?? null;
+    const siblings = childrenByParent.get(parentKey) || [];
+    siblings.push(resource);
+    childrenByParent.set(parentKey, siblings);
+  });
+
+  return { resourceByKey, childrenByParent };
+}
+
+function collectBindingCoverage(rootKey, childrenByParent) {
+  const coveredKeySet = new Set([rootKey]);
+  let descendantFolderCount = 0;
+  let fileCount = 0;
+
+  const visit = (parentKey) => {
+    (childrenByParent.get(parentKey) || []).forEach((child) => {
+      coveredKeySet.add(child.key);
+      if (child.isFolder) {
+        descendantFolderCount += 1;
+        visit(child.key);
+      } else {
+        fileCount += 1;
+      }
+    });
+  };
+
+  visit(rootKey);
+  return {
+    coveredKeys: [...coveredKeySet],
+    descendantFolderCount,
+    fileCount,
+  };
+}
+
+function buildBindingTreeNode(resource, childrenByParent) {
+  return {
+    key: resource.key,
+    name: resource.name,
+    isFolder: !!resource.isFolder,
+    type: resource.type ?? null,
+    children: (childrenByParent.get(resource.key) || []).map((child) => buildBindingTreeNode(child, childrenByParent)),
+  };
+}
+
+function buildBindingSummary(boundResource, resources, indexes, options = {}) {
+  if (!boundResource?.key) return null;
+  const resolvedIndexes = indexes || buildResourceIndexes(resources);
+  const rootResource = resolvedIndexes.resourceByKey.get(boundResource.key) || {
+    ...boundResource,
+    isFolder: !!boundResource.isFolder,
+    parentKey: boundResource.parentKey ?? null,
+    type: boundResource.type ?? null,
+  };
+
+  if (!rootResource.isFolder) return null;
+
+  const coverage = collectBindingCoverage(rootResource.key, resolvedIndexes.childrenByParent);
+  return {
+    key: rootResource.key,
+    name: rootResource.name || boundResource.name || '未命名目录',
+    path: getResourcePathLabel(rootResource, resolvedIndexes.resourceByKey) || rootResource.name || '未命名目录',
+    descendantFolderCount: coverage.descendantFolderCount,
+    fileCount: coverage.fileCount,
+    coveredKeys: coverage.coveredKeys,
+    tree: options.includeTree ? buildBindingTreeNode(rootResource, resolvedIndexes.childrenByParent) : null,
+  };
+}
+
+function buildActivityBindingMeta(boundResources, resources, indexes, options = {}) {
+  const summaries = [];
+  const boundKeySet = new Set();
+  const coveredKeySet = new Set();
+
+  (Array.isArray(boundResources) ? boundResources : []).forEach((boundResource) => {
+    const summary = buildBindingSummary(boundResource, resources, indexes, options);
+    if (!summary) return;
+    summaries.push(summary);
+    boundKeySet.add(summary.key);
+    summary.coveredKeys.forEach((key) => coveredKeySet.add(key));
+  });
+
+  return {
+    summaries,
+    boundKeys: [...boundKeySet],
+    coveredKeys: [...coveredKeySet],
+  };
+}
+
+function formatBindingCoverage(summary) {
+  return `已包含 ${summary?.descendantFolderCount || 0} 个子目录、${summary?.fileCount || 0} 个文件`;
+}
+
+function hasBindingTreeChildren(summary) {
+  return Array.isArray(summary?.tree?.children) && summary.tree.children.length > 0;
+}
+
+function renderBindingTreeNodes(nodes = [], depth = 0) {
+  return nodes.map((node) => (
+    <div key={node.key} className="inspector-binding-tree-branch">
+      <div
+        className={`inspector-binding-tree-node ${node.isFolder ? 'is-folder' : 'is-file'}`}
+        style={{ paddingLeft: `${depth * 16}px` }}
+        title={node.name}
+      >
+        {node.isFolder ? <FolderOutlined /> : <FileOutlined />}
+        <span>{node.name}</span>
+      </div>
+      {node.children?.length ? renderBindingTreeNodes(node.children, depth + 1) : null}
+    </div>
+  ));
+}
+
 // 阶段节点（顶级文件夹） - 容器式，包含活动子节点
 function StageNode({ data, selected }) {
   const stop = (e) => e.stopPropagation();
@@ -118,6 +236,7 @@ function StageNode({ data, selected }) {
 // 活动节点（子文件夹）
 function ActivityNode({ data, selected }) {
   const color = activityTypeColor[data.activityType ?? ''] || activityTypeColor.other;
+  const bindingSummaries = data.bindingSummaries || [];
   const stop = (e) => e.stopPropagation();
   const activityMenuItems = [
     { key: 'addAbove', icon: <PlusOutlined />, label: '上方添加活动' },
@@ -259,34 +378,37 @@ function ActivityNode({ data, selected }) {
           />
         </div>
       </div>
-      {(data.isCustomActivity || (data.boundResources && data.boundResources.length > 0)) && (
+      {(data.isCustomActivity || bindingSummaries.length > 0) && (
         <div className="flow-activity-binding">
-          <div className="flow-activity-binding-title">已绑定目录 · {data.boundResources?.length || 0}</div>
-          {(!data.boundResources || data.boundResources.length === 0) ? (
+          <div className="flow-activity-binding-title">已绑定目录{bindingSummaries.length > 0 ? ` · ${bindingSummaries.length}` : ''}</div>
+          {bindingSummaries.length === 0 ? (
             <div className="flow-activity-binding-empty">拖入一个资料目录以绑定</div>
           ) : (
             <div className="flow-activity-binding-list nodrag nopan" onMouseDown={stop} onWheelCapture={stop}>
-              {data.boundResources.map((b) => (
-                <div key={b.key} className="flow-activity-binding-item" title={b.name}>
-                  {b.isFolder ? <FolderOutlined /> : <FileOutlined />}
-                  <span className="flow-activity-binding-item-name">{b.name}</span>
-                  {data.isDraft && (
-                    <Tooltip title="解绑资料">
-                      <Button
-                        type="text"
-                        size="small"
-                        danger
-                        aria-label={`解绑${b.name}`}
-                        className="flow-activity-binding-remove"
-                        icon={<CloseOutlined />}
-                        onMouseDown={stop}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          data.onUnbindResource?.(b);
-                        }}
-                      />
-                    </Tooltip>
-                  )}
+              {bindingSummaries.map((summary) => (
+                <div key={summary.key} className="flow-activity-binding-card">
+                  <div className="flow-activity-binding-item" title={summary.path || summary.name}>
+                    <FolderOutlined />
+                    <span className="flow-activity-binding-item-name">{summary.name}</span>
+                    {data.isDraft && (
+                      <Tooltip title="解绑资料">
+                        <Button
+                          type="text"
+                          size="small"
+                          danger
+                          aria-label={`解绑${summary.name}`}
+                          className="flow-activity-binding-remove"
+                          icon={<CloseOutlined />}
+                          onMouseDown={stop}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            data.onUnbindResource?.({ key: summary.key, name: summary.name, isFolder: true });
+                          }}
+                        />
+                      </Tooltip>
+                    )}
+                  </div>
+                  <div className="flow-activity-binding-summary">{formatBindingCoverage(summary)}</div>
                 </div>
               ))}
             </div>
@@ -368,10 +490,15 @@ export function createResourcePayload(resource) {
   };
 }
 
-export function evaluateResourceBindingAvailability({ resource, boundKeys, activityType, resources }) {
+export function evaluateResourceBindingAvailability({ resource, boundKeys, coveredKeys, activityType, resources }) {
   const currentBoundKeys = boundKeys || new Set();
+  const currentCoveredKeys = coveredKeys || currentBoundKeys;
   if (currentBoundKeys.has(resource.key)) {
     return { selectable: false, reason: '已绑定' };
+  }
+
+  if (currentCoveredKeys.has(resource.key)) {
+    return { selectable: false, reason: '已包含在当前绑定目录中' };
   }
 
   if (!resource.isFolder) {
@@ -559,10 +686,13 @@ function detachBuiltinActivityResource({ assessment, folder, rule, parentStageKe
 
 function getResourcePathLabel(resource, resources) {
   if (!resource) return '';
+  const getResourceByKey = resources instanceof Map
+    ? (key) => resources.get(key)
+    : (key) => resources.find((item) => item.key === key);
   const segments = [resource.name];
   let parentKey = resource.parentKey ?? null;
   while (parentKey !== null) {
-    const parent = resources.find((item) => item.key === parentKey);
+    const parent = getResourceByKey(parentKey);
     if (!parent) break;
     segments.unshift(parent.name);
     parentKey = parent.parentKey ?? null;
@@ -744,6 +874,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
   const [dataModalOpen, setDataModalOpen] = useState(false);
   const [riskModalOpen, setRiskModalOpen] = useState(false);
   const wrapperRef = useRef(null);
+  const resourceIndexes = useMemo(() => buildResourceIndexes(resources), [resources]);
 
   useEffect(() => {
     if (!onActivityBindingTargetChange) return;
@@ -754,15 +885,22 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
     const customAct = (assessment.customActivities || []).find((item) => item.key === selectedActivityKey);
     const builtinActivity = resources.find((item) => item.key === selectedActivityKey);
     const rule = (assessment.rules || []).find((item) => item.folderKey === selectedActivityKey);
+    const bindingMeta = buildActivityBindingMeta(
+      customAct
+        ? (customAct.boundResources || [])
+        : (builtinActivity?.isFolder ? [createResourcePayload(builtinActivity)] : []),
+      resources,
+      resourceIndexes,
+    );
     onActivityBindingTargetChange({
       key: selectedActivityKey,
       isCustomActivity: !!customAct,
       activityType: rule?.activityType ?? '',
-      boundKeys: customAct
-        ? (customAct.boundResources || []).map((item) => item.key)
-        : (builtinActivity?.isFolder ? [selectedActivityKey] : []),
+      boundKeys: bindingMeta.boundKeys,
+      coveredKeys: bindingMeta.coveredKeys,
+      bindingSummaries: bindingMeta.summaries,
     });
-  }, [assessment.customActivities, assessment.rules, onActivityBindingTargetChange, resources, selectedActivityKey]);
+  }, [assessment.customActivities, assessment.rules, onActivityBindingTargetChange, resourceIndexes, resources, selectedActivityKey]);
 
   // 计算初始节点和边
   const { initialNodes, initialEdges } = useMemo(() => {
@@ -872,7 +1010,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
           // 非自定义活动（资料区文件夹拖入阶段成为活动）：直接将该文件夹作为“已绑定资料”单项展示，不展开子项
           if (a.isCustomActivity) return a;
           if (!a.isFolder) return a;
-          return { ...a, boundResources: [{ key: a.key, name: a.name, isFolder: true }] };
+          return { ...a, boundResources: [createResourcePayload(a)] };
         });
       const stageX = sIdx * 380;
       const stageY = 0;
@@ -987,6 +1125,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
       activities.forEach((act, aIdx) => {
         const rule = assessment.rules.find((r) => r.folderKey === act.key);
         const activityDisplayName = getActivityDisplayName(act, resources);
+        const bindingMeta = buildActivityBindingMeta(act.boundResources || [], resources, resourceIndexes);
         const actOrderIndex = actOrderIndexMap.get(act.key) ?? aIdx;
         const createAdjacentActivity = (insertIndex, directionLabel) => () => {
           if (!isDraft) return;
@@ -1013,6 +1152,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
             folderKey: act.key,
             isCustomActivity: !!act.isCustomActivity,
             boundResources: act.boundResources || [],
+            bindingSummaries: bindingMeta.summaries,
             activityType: rule?.activityType ?? '',
             weight: rule?.weight ?? 0,
             required: rule?.required ?? true,
@@ -1182,7 +1322,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
     }
 
     return { initialNodes: nodes, initialEdges: edges };
-  }, [resources, assessment, isDraft, onUpdateAssessment]);
+  }, [assessment, isDraft, onUpdateAssessment, resourceIndexes, resources]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -2177,6 +2317,15 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
           passCondition: { metric: '完成率', op: '>=', value: 80 },
           required: true,
         };
+        const bindingMeta = buildActivityBindingMeta(
+          isCustomActivity
+            ? (customAct.boundResources || [])
+            : (folder.isFolder ? [createResourcePayload(folder)] : []),
+          resources,
+          resourceIndexes,
+          { includeTree: true },
+        );
+        const bindingSummaries = bindingMeta.summaries;
         const pc = rule.passCondition || { metric: '完成率', op: '>=', value: 80 };
         const updatePc = (patch) => handleRuleChange(selectedActivityKey, 'passCondition', { ...pc, ...patch });
         const detachBuiltinResourceAsEmptyActivity = () => {
@@ -2216,6 +2365,30 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
           setSelectedActivityKey(null);
           onUpdateAssessment(next);
           message.success(`已${isCustomActivity ? '删除' : '从画布移除'}「${folder.name || '活动'}」`);
+        };
+        const handleRemoveBindingSummary = (summary) => {
+          if (!summary) return;
+          Modal.confirm({
+            title: '确认移除该绑定目录？',
+            content: isCustomActivity
+              ? `「${summary.name}」将从该活动容器中移除，已包含的子目录和文件也会一并解绑。`
+              : `「${summary.name}」将从当前活动中移除，已包含的子目录和文件也会同步移除。`,
+            okText: '移除',
+            cancelText: '取消',
+            okButtonProps: { danger: true },
+            onOk: () => {
+              if (isCustomActivity) {
+                const customActivities = (assessment.customActivities || []).map((ca) => {
+                  if (ca.key !== selectedActivityKey) return ca;
+                  return { ...ca, boundResources: (ca.boundResources || []).filter((x) => x.key !== summary.key) };
+                });
+                onUpdateAssessment({ ...assessment, customActivities });
+                message.success(`已移除「${summary.name}」`);
+                return;
+              }
+              detachBuiltinResourceAsEmptyActivity();
+            },
+          });
         };
         return (
           <div className="flow-activity-inspector" onMouseDown={(e) => e.stopPropagation()}>
@@ -2333,72 +2506,43 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
                   />
                 </div>
               </div>
-              {isCustomActivity ? (
+              {(isCustomActivity || bindingSummaries.length > 0) ? (
                 <>
-                  <Divider style={{ margin: '12px 0' }}>已绑定目录 ({customAct.boundResources?.length || 0})</Divider>
-                  {(!customAct.boundResources || customAct.boundResources.length === 0) ? (
+                  <Divider style={{ margin: '12px 0' }}>已绑定目录 ({bindingSummaries.length})</Divider>
+                  {bindingSummaries.length === 0 ? (
                     <div className="inspector-empty-tip">尚未绑定目录，可从画布左上角资料面板拖入一个资料目录</div>
                   ) : (
                     <div className="inspector-binding-list">
-                      {customAct.boundResources.map((b) => (
-                        <div key={b.key} className="inspector-binding-item">
-                          {b.isFolder ? <FolderOutlined /> : <FileOutlined />}
-                          <span className="inspector-binding-name" title={b.name}>{b.name}</span>
-                          {isDraft && (
-                            <Button
-                              type="text"
-                              size="small"
-                              icon={<CloseOutlined />}
-                              onClick={() => {
-                                Modal.confirm({
-                                  title: '确认移除该绑定目录？',
-                                  content: `「${b.name}」将从该活动容器中移除。`,
-                                  okText: '移除',
-                                  cancelText: '取消',
-                                  okButtonProps: { danger: true },
-                                  onOk: () => {
-                                    const customActivities = (assessment.customActivities || []).map((ca) => {
-                                      if (ca.key !== selectedActivityKey) return ca;
-                                      return { ...ca, boundResources: (ca.boundResources || []).filter((x) => x.key !== b.key) };
-                                    });
-                                    onUpdateAssessment({ ...assessment, customActivities });
-                                    message.success(`已移除「${b.name}」`);
-                                  },
-                                });
-                              }}
-                            />
-                          )}
+                      {bindingSummaries.map((summary) => (
+                        <div key={summary.key} className="inspector-binding-group">
+                          <div className="inspector-binding-item">
+                            <FolderOutlined />
+                            <span className="inspector-binding-name" title={summary.path || summary.name}>{summary.name}</span>
+                            {isDraft && (
+                              <Button
+                                type="text"
+                                size="small"
+                                icon={<CloseOutlined />}
+                                onClick={() => handleRemoveBindingSummary(summary)}
+                              />
+                            )}
+                          </div>
+                          <div className="inspector-binding-meta">
+                            <div className="inspector-binding-path" title={summary.path}>{summary.path}</div>
+                            <div className="inspector-binding-coverage">{formatBindingCoverage(summary)}</div>
+                          </div>
+                          {hasBindingTreeChildren(summary) ? (
+                            <details className="inspector-binding-tree-details">
+                              <summary>查看目录结构</summary>
+                              <div className="inspector-binding-tree">
+                                {renderBindingTreeNodes(summary.tree.children)}
+                              </div>
+                            </details>
+                          ) : null}
                         </div>
                       ))}
                     </div>
                   )}
-                </>
-              ) : folder.isFolder ? (
-                <>
-                  <Divider style={{ margin: '12px 0' }}>已绑定目录 (1)</Divider>
-                  <div className="inspector-binding-list">
-                    <div className="inspector-binding-item">
-                      <FolderOutlined />
-                      <span className="inspector-binding-name" title={folder.name}>{folder.name}</span>
-                      {isDraft && (
-                        <Button
-                          type="text"
-                          size="small"
-                          icon={<CloseOutlined />}
-                          onClick={() => {
-                            Modal.confirm({
-                              title: '确认移除该绑定目录？',
-                              content: `「${folder.name}」将从当前活动中移除，目录本身仍会保留。`,
-                              okText: '移除',
-                              cancelText: '取消',
-                              okButtonProps: { danger: true },
-                              onOk: detachBuiltinResourceAsEmptyActivity,
-                            });
-                          }}
-                        />
-                      )}
-                    </div>
-                  </div>
                 </>
               ) : null}
               {isDraft && (
