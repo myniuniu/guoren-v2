@@ -52,6 +52,7 @@ import {
 } from '@ant-design/icons';
 import AddResourceModal from './AddResourceModal';
 import AssessmentConfig from './AssessmentConfig';
+import LearnerAssessmentProgressView from './LearnerAssessmentProgressView';
 import SpaceResourceImportModal from './resourceLib/SpaceResourceImportModal.jsx';
 import ResourceLibraryTagPicker from './resourceLib/ResourceLibraryTagPicker.jsx';
 import {
@@ -83,6 +84,7 @@ import {
   moveResource,
   publishVersion,
   rollbackVersion,
+  saveToStorage,
   switchVersion,
   updateAssessment,
   updateAssessmentChat,
@@ -179,6 +181,16 @@ const SCENE_HOME_MEMBER_PANEL_TITLE_MAP = Object.freeze({
   COMMUNITY: '频道成员',
   CUSTOM: '空间成员',
 });
+const PRACTICE_LAB_OPTIONS = Object.freeze([
+  { value: 'block-programming-lab', label: '积木编程实验室' },
+  { value: 'python-ai-lab', label: 'pythonAI编程实验室' },
+  { value: 'lobster-lab', label: '龙虾实验室' },
+  { value: 'agent-lab', label: '智能体实验室' },
+  { value: 'virtual-classroom-lab', label: '虚拟课堂实验室' },
+  { value: 'codebuddy-lab', label: 'CodeBuddy实验室' },
+]);
+const PRACTICE_BLOCK_PROGRAMMING_LAB_KEY = 'block-programming-lab';
+const SCRATCH_LAB_URL = '/scratch-lab/index.html';
 const SCENE_HOME_TASK_TITLE_MAP = Object.freeze({
   TEACHING: '课堂任务',
   RESEARCH: '研讨任务',
@@ -516,12 +528,81 @@ function buildKnowledgeGraphMirrorResources(stages, stagePointEntries, resourceL
   return nextResources;
 }
 
+const RICH_TRAINING_SAMPLE_KEYS = Object.freeze([
+  'training_stage_5',
+  'training_s5_exam',
+  'training_s5_defense',
+  'training_s5_survey',
+]);
+
+const LEGACY_TRAINING_RULE_KEYS = Object.freeze([
+  'm1a1',
+  'm1a2',
+  'm1a3',
+  'm2a1',
+  'm2a2',
+  'm2a3',
+  'm3a1',
+  'm3a2',
+  'm3a3',
+]);
+
+function isTrainingSceneConfig(sceneConfig) {
+  return (sceneConfig?.sceneType || sceneConfig?.templateSnapshot?.sceneType) === 'TRAINING';
+}
+
+function hasRichTrainingSample(version) {
+  const resources = Array.isArray(version?.resources) ? version.resources : [];
+  const rules = Array.isArray(version?.assessment?.rules) ? version.assessment.rules : [];
+  return RICH_TRAINING_SAMPLE_KEYS.some((key) => (
+    resources.some((resource) => resource?.key === key)
+    || rules.some((rule) => rule?.folderKey === key)
+  ));
+}
+
+function isLegacyTrainingRuleSet(rules = []) {
+  if (rules.length !== LEGACY_TRAINING_RULE_KEYS.length) return false;
+  const legacyKeys = new Set(LEGACY_TRAINING_RULE_KEYS);
+  return rules.every((rule) => legacyKeys.has(rule?.folderKey));
+}
+
+function isGeneratedTrainingStarter(resources = []) {
+  if (resources.length === 0) return true;
+  if (resources.length > 8) return false;
+  return resources.every((resource) => (
+    /^folder_\d+$/.test(String(resource?.key || ''))
+    || /^resource_\d+$/.test(String(resource?.key || ''))
+  ));
+}
+
+function shouldRefreshTrainingSampleData(versionData, sceneConfig) {
+  if (!isTrainingSceneConfig(sceneConfig)) return false;
+  const currentVersion = getCurrentVersion(versionData);
+  if (!currentVersion || hasRichTrainingSample(currentVersion)) return false;
+
+  const resources = Array.isArray(currentVersion.resources) ? currentVersion.resources : [];
+  const rules = Array.isArray(currentVersion.assessment?.rules) ? currentVersion.assessment.rules : [];
+  return isLegacyTrainingRuleSet(rules) || (rules.length === 0 && isGeneratedTrainingStarter(resources));
+}
+
+function refreshTrainingSampleDataIfNeeded(versionData, sceneConfig) {
+  if (!shouldRefreshTrainingSampleData(versionData, sceneConfig)) return versionData;
+  const refreshedData = {
+    ...buildSceneInitialVersionData(sceneConfig),
+    _dataVersion: versionData?._dataVersion,
+    _storageKey: versionData?._storageKey,
+  };
+  saveToStorage(refreshedData);
+  return refreshedData;
+}
+
 function loadTopicVersionData(topicConfig, sceneConfig, storageScopeKey) {
   if (sceneConfig) {
-    return loadFromStorage({
+    const loadedData = loadFromStorage({
       scopeKey: storageScopeKey || 'default',
       initialData: () => buildSceneInitialVersionData(sceneConfig),
     });
+    return refreshTrainingSampleDataIfNeeded(loadedData, sceneConfig);
   }
   if (topicConfig) {
     return loadFromStorage({
@@ -545,6 +626,7 @@ function TopicDetail({
   const topicAdminConfig = sceneConfig ? null : getTopicAdminConfig(topicTitle);
   const topicStorageScopeKey = storageScopeKey || topicAdminConfig?.storageScopeKey || 'default';
   const [activeTab, setActiveTab] = useState(() => getDefaultTopicTabKey(sceneConfig));
+  const [selectedPracticeLabKey, setSelectedPracticeLabKey] = useState(() => PRACTICE_LAB_OPTIONS[0]?.value || null);
   const [modalOpen, setModalOpen] = useState(false);
   const [previewItem, setPreviewItem] = useState(null);
   const [versionData, setVersionData] = useState(() => loadTopicVersionData(topicAdminConfig, sceneConfig, topicStorageScopeKey));
@@ -720,6 +802,7 @@ function TopicDetail({
     setAiInternetSearchEnabled(true);
     setAiPromptValue('');
     setAiLibraryCollapsed(false);
+    setSelectedPracticeLabKey(PRACTICE_LAB_OPTIONS[0]?.value || null);
     setResourcePanelView(loadTopicPanelView(topicStorageScopeKey));
     courseStudioDefaultKnowledgeViewAppliedRef.current = false;
   }, [sceneConfig, topicAdminConfig, topicStorageScopeKey, topicTitle]);
@@ -1818,12 +1901,43 @@ function TopicDetail({
   const tabs = useMemo(() => {
     const hasConfiguredTabs = Array.isArray(sceneConfig?.topicPage?.modeTabs);
     const configuredTabs = hasConfiguredTabs
-      ? sceneConfig.topicPage.modeTabs.filter((item) => item.enabled !== false)
+      ? sceneConfig.topicPage.modeTabs.filter((item) => item?.key !== 'practice' && item.enabled !== false)
       : [];
     if (hasConfiguredTabs) {
-      const normalizedTabs = sceneConfig && !configuredTabs.some((item) => item?.key === 'home')
+      let normalizedTabs = sceneConfig && !configuredTabs.some((item) => item?.key === 'home')
         ? [{ key: 'home', label: '首页' }, ...configuredTabs]
         : configuredTabs;
+      const configuredPracticeTab = sceneConfig.topicPage.modeTabs.find((item) => item?.key === 'practice') || {};
+      const practiceTab = {
+        ...configuredPracticeTab,
+        key: 'practice',
+        label: '实训模式',
+        enabled: true,
+      };
+      const assessmentIndex = normalizedTabs.findIndex((item) => item?.key === 'assessment');
+      const practiceInsertIndex = assessmentIndex >= 0 ? assessmentIndex : normalizedTabs.length;
+      normalizedTabs = [
+        ...normalizedTabs.slice(0, practiceInsertIndex),
+        practiceTab,
+        ...normalizedTabs.slice(practiceInsertIndex),
+      ];
+      if (activeSceneType === 'TRAINING') {
+        const configuredLearnerProgressTab = sceneConfig.topicPage.modeTabs.find((item) => item?.key === 'learner-progress') || {};
+        const learnerProgressTab = {
+          ...configuredLearnerProgressTab,
+          key: 'learner-progress',
+          label: configuredLearnerProgressTab.label || '考核进度',
+          enabled: true,
+        };
+        normalizedTabs = normalizedTabs.filter((item) => item?.key !== 'learner-progress');
+        const learnerAssessmentIndex = normalizedTabs.findIndex((item) => item?.key === 'assessment');
+        const learnerInsertIndex = learnerAssessmentIndex >= 0 ? learnerAssessmentIndex : normalizedTabs.length;
+        normalizedTabs = [
+          ...normalizedTabs.slice(0, learnerInsertIndex),
+          learnerProgressTab,
+          ...normalizedTabs.slice(learnerInsertIndex),
+        ];
+      }
       return normalizedTabs.map((item, index) => ({
         key: item.key,
         label: item.label || item.key || `模式 ${index + 1}`,
@@ -1850,6 +1964,14 @@ function TopicDetail({
         icon: resolveDetailTabIcon({ key: 'practice', label: '实训模式' }),
         iconColor: resolveDetailTabIconColor({ key: 'practice', label: '实训模式' }),
       },
+      ...(activeSceneType === 'TRAINING'
+        ? [{
+            key: 'learner-progress',
+            label: '考核进度',
+            icon: resolveDetailTabIcon({ key: 'learner-progress', label: '考核进度' }),
+            iconColor: resolveDetailTabIconColor({ key: 'learner-progress', label: '考核进度' }),
+          }]
+        : []),
       {
         key: 'assessment',
         label: '考核配置模式',
@@ -1857,9 +1979,16 @@ function TopicDetail({
         iconColor: resolveDetailTabIconColor({ key: 'assessment', label: '考核配置模式' }),
       },
     ];
-  }, [sceneConfig]);
+  }, [activeSceneType, sceneConfig]);
   const hasHomeTab = tabs.some((tab) => tab.key === 'home');
   const isHomeTab = hasHomeTab && activeTab === 'home';
+  const isPracticeLabMode = activeTab === 'practice';
+
+  useEffect(() => {
+    if (isPracticeLabMode && resourcePanelView !== 'resources') {
+      setResourcePanelView('resources');
+    }
+  }, [isPracticeLabMode, resourcePanelView]);
 
   useEffect(() => {
     if (tabs.length === 0) {
@@ -5290,6 +5419,14 @@ function TopicDetail({
             setVersionData(newData);
           }}
         />
+      ) : activeTab === 'learner-progress' ? (
+        <div className="detail-body topic-learner-progress-body">
+          <LearnerAssessmentProgressView
+            resources={resources}
+            assessment={currentVersion?.assessment}
+            assessmentProgress={currentVersion?.assessmentProgress}
+          />
+        </div>
       ) : (
         <div className="detail-body" ref={detailBodyRef}>
           {!isStandaloneKnowledgeGraphView ? (
@@ -5805,6 +5942,42 @@ function TopicDetail({
                     </>
                   ) : null}
                 </aside>
+              </div>
+            ) : isPracticeLabMode ? (
+              <div className="topic-practice-shell">
+                <div className="topic-practice-head">
+                  <div className="topic-practice-head-title">实训实验室</div>
+                  <Select
+                    aria-label="选择实验室"
+                    value={selectedPracticeLabKey}
+                    onChange={setSelectedPracticeLabKey}
+                    options={PRACTICE_LAB_OPTIONS}
+                    popupClassName="topic-practice-lab-dropdown"
+                    className="topic-practice-lab-select"
+                    suffixIcon={<CaretDownOutlined />}
+                  />
+                </div>
+                <div className="topic-practice-stage">
+                  {selectedPracticeLabKey === PRACTICE_BLOCK_PROGRAMMING_LAB_KEY ? (
+                    <div className="topic-practice-iframe-card">
+                      <iframe
+                        title="Scratch Web Editor"
+                        src={SCRATCH_LAB_URL}
+                        className="topic-practice-iframe"
+                        allow="camera; microphone; clipboard-write; fullscreen"
+                        allowFullScreen
+                      />
+                    </div>
+                  ) : (
+                    <div className="topic-practice-empty">
+                      <div className="topic-practice-empty-icon">
+                        <DesktopOutlined />
+                      </div>
+                      <div className="topic-practice-empty-title">接入的云电脑</div>
+                      <div className="topic-practice-empty-desc">点击接入云电脑</div>
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
               previewItem ? (

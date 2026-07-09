@@ -1,4 +1,5 @@
 import { trackEvent } from '../shared/analytics';
+import { buildSampleAssessmentProgress } from '../assessmentProgress';
 import { createFieldSchema } from '../processV2/form/fieldDefs';
 import { getDefaultSceneThemeCoverPresetId, getSceneThemeCoverPreset } from './themeCovers';
 
@@ -6,7 +7,7 @@ const TEMPLATE_STORAGE_KEY = 'gr.scene.templates.v1';
 const SCENE_STORAGE_KEY = 'gr.scenes.v1';
 const SCENE_SYSTEM_MENU_SHORTCUT_STORAGE_KEY = 'gr.scene.system-menu-shortcuts.v1';
 const SEED_KEY = 'gr.scene.seeded.v1';
-const BUILT_IN_SYNC_KEY = 'gr.scene.builtin-sync.v10';
+const BUILT_IN_SYNC_KEY = 'gr.scene.builtin-sync.v11';
 const STORE_CHANGE_EVENT = 'gr:scene-store-change';
 const VERSION_STORAGE_KEY = 'guoren_version_data';
 const DEFAULT_SCENE_GROUP_NAME = '人工智能通识体系';
@@ -248,6 +249,7 @@ export const MODE_TAB_PRESET_OPTIONS = [
   { value: 'knowledge', label: '知识模式' },
   { value: 'ai', label: 'AI模式' },
   { value: 'practice', label: '实训模式' },
+  { value: 'learner-progress', label: '考核进度' },
   { value: 'assessment', label: '考核配置模式' },
 ];
 
@@ -845,7 +847,11 @@ function createModeTabs(labels = {}, modeConfigs = {}, sceneType = 'CUSTOM', hom
     ...(modeConfigs[item.value] || {}),
     key: item.value,
     label: labels[item.value] || modeConfigs[item.value]?.label || item.label,
-    enabled: modeConfigs[item.value]?.enabled !== false,
+    enabled: typeof modeConfigs[item.value]?.enabled === 'boolean'
+      ? modeConfigs[item.value].enabled
+      : (item.value === 'learner-progress'
+          ? Object.prototype.hasOwnProperty.call(labels, item.value)
+          : true),
   }, item, index, sceneType, homepageTemplateName));
 }
 
@@ -1673,6 +1679,7 @@ function buildPresetTemplates() {
           knowledge: '学习内容',
           ai: 'AI辅学',
           practice: '研修任务',
+          'learner-progress': '考核进度',
           assessment: '考试评阅',
         }),
       },
@@ -2202,6 +2209,66 @@ function migrateBuiltInCourseStudioEntries(existingTemplates, existingScenes) {
   };
 }
 
+function hasLearnerProgressTab(topicPage = {}) {
+  return Array.isArray(topicPage?.modeTabs)
+    && topicPage.modeTabs.some((tab) => tab?.key === 'learner-progress');
+}
+
+function migrateBuiltInTrainingEntries(existingTemplates, existingScenes) {
+  let templateChanged = false;
+  let sceneChanged = false;
+  const presetTemplates = buildPresetTemplates();
+  const presetTemplate = presetTemplates.find((template) => (
+    template?.id === 'tpl_training_builtin' || template?.templateCode === 'TPL-TRAINING'
+  )) || null;
+  if (!presetTemplate) {
+    return { nextTemplates: existingTemplates, nextScenes: existingScenes, templateChanged, sceneChanged };
+  }
+
+  const nextTemplates = existingTemplates.map((template) => {
+    if (
+      template?.id !== 'tpl_training_builtin'
+      && template?.templateCode !== 'TPL-TRAINING'
+    ) {
+      return template;
+    }
+    if (hasLearnerProgressTab(template.topicPage)) return template;
+    templateChanged = true;
+    return {
+      ...template,
+      topicPage: clone(presetTemplate.topicPage),
+      updatedAt: nowIso(),
+    };
+  });
+
+  const nextScenes = existingScenes.map((scene) => {
+    const templateSnapshot = scene?.templateSnapshot;
+    if (
+      templateSnapshot?.id !== 'tpl_training_builtin'
+      && templateSnapshot?.templateCode !== 'TPL-TRAINING'
+    ) {
+      return scene;
+    }
+    if (hasLearnerProgressTab(templateSnapshot.topicPage)) return scene;
+    sceneChanged = true;
+    return {
+      ...scene,
+      templateSnapshot: {
+        ...templateSnapshot,
+        topicPage: clone(presetTemplate.topicPage),
+      },
+      updatedAt: nowIso(),
+    };
+  });
+
+  return {
+    nextTemplates,
+    nextScenes,
+    templateChanged,
+    sceneChanged,
+  };
+}
+
 function migrateBuiltInRootUploadPolicy(existingTemplates, existingScenes) {
   let templateChanged = false;
   let sceneChanged = false;
@@ -2330,14 +2397,20 @@ export function seedSceneData() {
       templateChanged: rootUploadTemplateChanged,
       sceneChanged: rootUploadSceneChanged,
     } = migrateBuiltInRootUploadPolicy(migratedMenuTemplates, migratedMenuScenes);
-    const { nextTemplates, changed: versioningChanged } = migrateTemplateVersioningPolicy(migratedRootUploadTemplates);
-    const scenesToAppend = mergeMissingBuiltInScenes(migratedRootUploadScenes, nextTemplates);
+    const {
+      nextTemplates: migratedTrainingTemplates,
+      nextScenes: migratedTrainingScenes,
+      templateChanged: trainingTemplateChanged,
+      sceneChanged: trainingSceneChanged,
+    } = migrateBuiltInTrainingEntries(migratedRootUploadTemplates, migratedRootUploadScenes);
+    const { nextTemplates, changed: versioningChanged } = migrateTemplateVersioningPolicy(migratedTrainingTemplates);
+    const scenesToAppend = mergeMissingBuiltInScenes(migratedTrainingScenes, nextTemplates);
 
-    if (templatesToAppend.length > 0 || templateChanged || rootUploadTemplateChanged || versioningChanged) {
+    if (templatesToAppend.length > 0 || templateChanged || rootUploadTemplateChanged || trainingTemplateChanged || versioningChanged) {
       writeList(TEMPLATE_STORAGE_KEY, nextTemplates);
     }
-    if (scenesToAppend.length > 0 || sceneChanged || rootUploadSceneChanged) {
-      writeList(SCENE_STORAGE_KEY, [...migratedRootUploadScenes, ...scenesToAppend]);
+    if (scenesToAppend.length > 0 || sceneChanged || rootUploadSceneChanged || trainingSceneChanged) {
+      writeList(SCENE_STORAGE_KEY, [...migratedTrainingScenes, ...scenesToAppend]);
     }
 
     localStorage.setItem(BUILT_IN_SYNC_KEY, '1');
@@ -2348,6 +2421,8 @@ export function seedSceneData() {
       || sceneChanged
       || rootUploadTemplateChanged
       || rootUploadSceneChanged
+      || trainingTemplateChanged
+      || trainingSceneChanged
       || versioningChanged
     ) {
       emitChange();
@@ -2577,8 +2652,139 @@ function guessResourceType(folder) {
   return 'file';
 }
 
+function buildTrainingInitialVersionData(template) {
+  const owner = template.roles[0]?.name || '培训中心';
+  const stageConfigs = [
+    {
+      key: 'training_stage_1',
+      name: '第一阶段 · 入营导学',
+      activities: [
+        { key: 'training_s1_live', name: '开营直播与学习规则说明', type: 'live', weight: 5, required: true, metric: '出勤率', op: '>=', value: 90, files: [{ name: '开营直播回放', type: 'file' }, { name: '培训学习手册.pdf', type: 'file' }] },
+        { key: 'training_s1_vod', name: '平台操作点播课', type: 'video', weight: 4, required: true, metric: '完成率', op: '>=', value: 85, files: [{ name: '学习平台操作指南.mp4', type: 'video' }, { name: '移动端学习入口说明.pdf', type: 'file' }] },
+        { key: 'training_s1_exam', name: '入营诊断测评', type: 'exam', weight: 5, required: true, metric: '分数', op: '>=', value: 60, files: [{ name: 'AI基础入营诊断测评', type: 'exam' }] },
+      ],
+    },
+    {
+      key: 'training_stage_2',
+      name: '第二阶段 · AI基础与政策理解',
+      activities: [
+        { key: 'training_s2_vod', name: 'AI基础概念点播课', type: 'video', weight: 7, required: true, metric: '完成率', op: '>=', value: 90, files: [{ name: '人工智能发展简史.mp4', type: 'video' }, { name: '生成式AI核心概念.mp4', type: 'video' }, { name: 'AI伦理与数据安全讲义.pdf', type: 'file' }] },
+        { key: 'training_s2_live', name: '专家直播讲座：AI教育应用边界', type: 'live', weight: 5, required: true, metric: '出勤率', op: '>=', value: 90, files: [{ name: '专家直播讲座回放', type: 'file' }, { name: '直播互动问答纪要.docx', type: 'file' }] },
+        { key: 'training_s2_quiz', name: '基础知识随堂测验', type: 'exam', weight: 5, required: true, metric: '分数', op: '>=', value: 70, files: [{ name: 'AI基础知识随堂测验', type: 'exam' }] },
+        { key: 'training_s2_note', name: '课程笔记提交', type: 'other', weight: 3, required: false, metric: '提交率', op: '=', value: 100, files: [{ name: 'AI应用边界学习笔记模板.docx', type: 'file' }] },
+      ],
+    },
+    {
+      key: 'training_stage_3',
+      name: '第三阶段 · 工具实操训练',
+      activities: [
+        { key: 'training_s3_vod', name: '提示词设计点播课', type: 'video', weight: 7, required: true, metric: '完成率', op: '>=', value: 85, files: [{ name: '提示词结构化设计.mp4', type: 'video' }, { name: '课堂任务生成案例.mp4', type: 'video' }] },
+        { key: 'training_s3_offline', name: '工具实操线下集训', type: 'offline', weight: 5, required: true, metric: '出勤率', op: '>=', value: 80, files: [{ name: '线下集训签到与任务清单', type: 'activity' }, { name: '工具实操步骤卡.pdf', type: 'file' }] },
+        { key: 'training_s3_assignment', name: '实操作业提交', type: 'other', weight: 6, required: true, metric: '提交率', op: '=', value: 100, files: [{ name: 'AI课堂活动设计作业.docx', type: 'file' }, { name: '优秀作业示例.pdf', type: 'file' }] },
+        { key: 'training_s3_exam', name: '工具应用阶段考试', type: 'exam', weight: 5, required: true, metric: '分数', op: '>=', value: 70, files: [{ name: 'AI工具应用阶段考试', type: 'exam' }] },
+      ],
+    },
+    {
+      key: 'training_stage_4',
+      name: '第四阶段 · 项目研修与成果共创',
+      activities: [
+        { key: 'training_s4_live', name: '项目方案直播答疑', type: 'live', weight: 5, required: true, metric: '出勤率', op: '>=', value: 85, files: [{ name: '项目方案答疑直播回放', type: 'file' }, { name: '常见问题答疑清单.docx', type: 'file' }] },
+        { key: 'training_s4_seminar', name: '小组共创研讨', type: 'offline', weight: 4, required: false, metric: '出勤率', op: '>=', value: 80, files: [{ name: '小组研讨记录表', type: 'activity' }, { name: '共创白板导出.pdf', type: 'file' }] },
+        { key: 'training_s4_outcome', name: '项目成果提交', type: 'other', weight: 12, required: true, metric: '提交率', op: '=', value: 100, files: [{ name: 'AI应用改进方案提交入口', type: 'file' }, { name: '成果评价量规.pdf', type: 'file' }] },
+        { key: 'training_s4_peer', name: '同伴互评问卷', type: 'other', weight: 3, required: false, metric: '提交率', op: '=', value: 100, files: [{ name: '同伴互评问卷', type: 'survey' }] },
+      ],
+    },
+    {
+      key: 'training_stage_5',
+      name: '第五阶段 · 结业评估与复盘',
+      activities: [
+        { key: 'training_s5_exam', name: '结业综合考试', type: 'exam', weight: 11, required: true, metric: '分数', op: '>=', value: 75, files: [{ name: '结业综合能力考试', type: 'exam' }] },
+        { key: 'training_s5_defense', name: '成果答辩直播', type: 'live', weight: 6, required: true, metric: '出勤率', op: '>=', value: 90, files: [{ name: '成果答辩直播回放', type: 'file' }, { name: '答辩评分表.xlsx', type: 'file' }] },
+        { key: 'training_s5_survey', name: '培训满意度调查', type: 'other', weight: 2, required: false, metric: '提交率', op: '=', value: 100, files: [{ name: '培训满意度调查问卷', type: 'survey' }] },
+      ],
+    },
+  ];
+  const resources = [];
+  const rules = [];
+
+  stageConfigs.forEach((stage, stageIndex) => {
+    resources.push({
+      key: stage.key,
+      name: stage.name,
+      isFolder: true,
+      parentKey: null,
+      owner,
+      lastEdit: nowText(),
+    });
+    stage.activities.forEach((activity, activityIndex) => {
+      resources.push({
+        key: activity.key,
+        name: activity.name,
+        isFolder: true,
+        parentKey: stage.key,
+        owner,
+        lastEdit: nowText(),
+      });
+      activity.files.forEach((file, fileIndex) => {
+        resources.push({
+          key: `${activity.key}_r${fileIndex + 1}`,
+          name: file.name,
+          type: file.type,
+          isFolder: false,
+          parentKey: activity.key,
+          owner,
+          lastEdit: nowText(),
+          meta: {
+            summary: `${stage.name} / ${activity.name} 的配套内容。`,
+            paragraphs: [
+              `${file.name}用于支撑“${activity.name}”的学习、参与或评阅记录。`,
+              `该活动属于${activity.type === 'video' ? '点播课程' : activity.type === 'live' ? '直播课程' : activity.type === 'exam' ? '考试测评' : activity.type === 'offline' ? '线下活动' : '研修任务'}。`,
+            ],
+          },
+        });
+      });
+      rules.push({
+        key: `training_rule_${stageIndex + 1}_${activityIndex + 1}`,
+        folderKey: activity.key,
+        folderName: `${stage.name} / ${activity.name}`,
+        activityType: activity.type,
+        weight: activity.weight,
+        passCondition: { metric: activity.metric, op: activity.op, value: activity.value },
+        required: activity.required,
+      });
+    });
+  });
+
+  const assessment = {
+    totalHours: 36,
+    passScore: 75,
+    certificate: true,
+    rules,
+  };
+
+  return {
+    versions: [
+      {
+        id: 'v1',
+        name: formatVersionName(template.versioning?.namePattern, 1),
+        status: 'active',
+        createdAt: nowText(),
+        publishedAt: nowText(),
+        resources,
+        assessment,
+        assessmentProgress: buildSampleAssessmentProgress(assessment, resources),
+        assessmentChat: [],
+      },
+    ],
+    currentVersionId: 'v1',
+  };
+}
+
 export function buildSceneInitialVersionData(sceneOrTemplate) {
   const template = normalizeTemplate(sceneOrTemplate?.templateSnapshot || sceneOrTemplate);
+  if (template.sceneType === 'TRAINING') {
+    return buildTrainingInitialVersionData(template);
+  }
   const rootFolders = template.folderTypes.length > 0
     ? template.folderTypes
     : (template.topicPage?.allowRootResources

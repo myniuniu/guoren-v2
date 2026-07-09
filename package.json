@@ -8,7 +8,9 @@
     "dev:lan": "vite --host 0.0.0.0 --port 5173 --strictPort",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "scratch-lab:install": "npm install --prefix scratch-lab --legacy-peer-deps",
+    "scratch-lab:build": "npm run build --prefix scratch-lab"
   },
   "dependencies": {
     "@ant-design/icons": "6.2.3",

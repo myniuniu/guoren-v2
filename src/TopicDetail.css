@@ -2498,6 +2498,158 @@
   overflow: hidden;
 }
 
+/* 实训模式 */
+.topic-practice-shell {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.topic-practice-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(221, 227, 235, 0.88);
+}
+
+.topic-practice-head-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.topic-practice-lab-select {
+  flex: 0 0 228px;
+  width: 228px;
+}
+
+.topic-practice-lab-select .ant-select-selector {
+  height: 36px !important;
+  padding: 0 12px !important;
+  border: 1px solid rgba(212, 219, 229, 0.96) !important;
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.94) !important;
+  box-shadow: none !important;
+}
+
+.topic-practice-lab-select .ant-select-selection-item,
+.topic-practice-lab-select .ant-select-selection-placeholder {
+  line-height: 34px !important;
+  font-size: 13px;
+}
+
+.topic-practice-lab-select .ant-select-selection-item {
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.topic-practice-lab-select .ant-select-arrow {
+  color: #a0a8b6;
+}
+
+.topic-practice-lab-select.ant-select-focused .ant-select-selector,
+.topic-practice-lab-select.ant-select-open .ant-select-selector {
+  border-color: rgba(113, 160, 235, 0.98) !important;
+  box-shadow: 0 0 0 3px rgba(113, 160, 235, 0.14) !important;
+}
+
+.topic-practice-stage {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding-top: 16px;
+}
+
+.topic-practice-iframe-card {
+  display: flex;
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid rgba(221, 227, 235, 0.88);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+}
+
+.topic-practice-iframe {
+  width: 100%;
+  height: 100%;
+  min-height: 520px;
+  border: 0;
+  background: #fff;
+}
+
+.topic-practice-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transform: translateY(-28px);
+}
+
+.topic-practice-empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 104px;
+  height: 104px;
+  border: 1px solid rgba(233, 237, 243, 0.94);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(246, 248, 251, 0.9) 100%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(239, 243, 248, 0.3) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    0 8px 20px rgba(15, 23, 42, 0.04);
+  color: #c3cad6;
+  font-size: 42px;
+}
+
+.topic-practice-empty-title {
+  margin-top: 8px;
+  color: #3f4653;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.topic-practice-empty-desc {
+  color: #98a2b3;
+  font-size: 12px;
+}
+
+.topic-practice-lab-dropdown .ant-select-item {
+  margin: 4px 6px;
+  border-radius: 12px;
+}
+
+.topic-practice-lab-dropdown .ant-select-item-option-content {
+  font-size: 13px;
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.topic-practice-lab-dropdown .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  background: linear-gradient(180deg, rgba(243, 247, 255, 0.98) 0%, rgba(237, 242, 251, 0.94) 100%);
+}
+
+.topic-practice-lab-dropdown .ant-select-item-option-selected:not(.ant-select-item-option-disabled) .ant-select-item-option-content {
+  color: #2f64f2;
+  font-weight: 700;
+}
+
+.topic-practice-lab-dropdown .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+  background: rgba(243, 246, 251, 0.94);
+}
+
 .topic-ai-main {
   display: flex;
   flex: 1;
@@ -5709,6 +5861,16 @@
     overflow-y: auto;
   }
 
+  .topic-practice-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .topic-practice-lab-select {
+    width: 100%;
+    flex-basis: auto;
+  }
+
   .topic-ai-main {
     min-height: 420px;
   }
@@ -5796,6 +5958,10 @@
   .topic-home-summary-grid,
   .topic-home-member-grid {
     grid-template-columns: 1fr;
+  }
+
+  .topic-practice-empty {
+    transform: none;
   }
 
   .topic-home-course-grid {

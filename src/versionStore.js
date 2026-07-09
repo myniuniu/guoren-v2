@@ -1,4 +1,5 @@
 import { formatVersionName, normalizeVersioningConfig } from './scene/store';
+import { buildSampleAssessmentProgress, normalizeAssessmentProgress } from './assessmentProgress';
 
 const STORAGE_KEY = 'guoren_version_data';
 const DATA_VERSION = 8; // 增加版本号，当默认数据结构变化时递增，自动重置本地存储
@@ -120,6 +121,19 @@ const defaultData = {
           { key: 'ar9', folderKey: 'm3a3', folderName: '第三阶段 · 项目实战 / 结业考核', activityType: 'exam', weight: 20, passCondition: { metric: '分数', op: '>=', value: 60 }, required: true },
         ],
       },
+      assessmentProgress: buildSampleAssessmentProgress({
+        rules: [
+          { folderKey: 'm1a1' },
+          { folderKey: 'm1a2' },
+          { folderKey: 'm1a3' },
+          { folderKey: 'm2a1' },
+          { folderKey: 'm2a2' },
+          { folderKey: 'm2a3' },
+          { folderKey: 'm3a1' },
+          { folderKey: 'm3a2' },
+          { folderKey: 'm3a3' },
+        ],
+      }),
       assessmentChat: [],
       knowledgeGraphRef: null,
     },
@@ -139,10 +153,13 @@ function normalizeKnowledgeGraphRef(ref) {
 }
 
 function normalizeVersionRecord(version = {}) {
+  const resources = Array.isArray(version.resources) ? version.resources : [];
+  const assessment = version.assessment || buildEmptyAssessment();
   return {
     ...version,
-    resources: Array.isArray(version.resources) ? version.resources : [],
-    assessment: version.assessment || buildEmptyAssessment(),
+    resources,
+    assessment,
+    assessmentProgress: normalizeAssessmentProgress(version.assessmentProgress || buildSampleAssessmentProgress(assessment, resources)),
     assessmentChat: Array.isArray(version.assessmentChat) ? version.assessmentChat : [],
     tagDefinitions: Array.isArray(version.tagDefinitions) ? version.tagDefinitions : [],
     tagGroups: Array.isArray(version.tagGroups) ? version.tagGroups : [],
@@ -264,20 +281,34 @@ export function createNewVersion(data, versioningConfig) {
   const inheritedAssessment = shouldCopyActive && activeVersion?.assessment
     ? cloneData(activeVersion.assessment)
     : buildEmptyAssessment();
+  const inheritedResourceKeyMap = new Map();
 
   if (Array.isArray(inheritedAssessment.rules)) {
-    const keyMap = new Map();
     if (shouldCopyActive && activeVersion) {
       activeVersion.resources.forEach((resource, index) => {
         const nextResource = inheritedResources[index];
-        if (nextResource) keyMap.set(resource.key, nextResource.key);
+        if (nextResource) inheritedResourceKeyMap.set(resource.key, nextResource.key);
       });
     }
     inheritedAssessment.rules = inheritedAssessment.rules.map((rule) => ({
       ...rule,
-      folderKey: rule.folderKey ? keyMap.get(rule.folderKey) || rule.folderKey : rule.folderKey,
+      folderKey: rule.folderKey ? inheritedResourceKeyMap.get(rule.folderKey) || rule.folderKey : rule.folderKey,
     }));
   }
+  const inheritedAssessmentProgress = shouldCopyActive && activeVersion?.assessmentProgress
+    ? {
+        ...cloneData(activeVersion.assessmentProgress),
+        activityRecords: (activeVersion.assessmentProgress.activityRecords || []).map((record) => ({
+          ...record,
+          activityKey: record.activityKey
+            ? inheritedResourceKeyMap.get(record.activityKey) || record.activityKey
+            : record.activityKey,
+          evidenceResourceKeys: Array.isArray(record.evidenceResourceKeys)
+            ? record.evidenceResourceKeys.map((key) => inheritedResourceKeyMap.get(key) || key)
+            : [],
+        })),
+      }
+    : buildSampleAssessmentProgress(inheritedAssessment);
 
   const newVersion = {
     id: `v${Date.now()}`,
@@ -289,6 +320,7 @@ export function createNewVersion(data, versioningConfig) {
     tagDefinitions: shouldCopyActive && activeVersion?.tagDefinitions ? cloneData(activeVersion.tagDefinitions) : [],
     tagGroups: shouldCopyActive && activeVersion?.tagGroups ? cloneData(activeVersion.tagGroups) : [],
     assessment: inheritedAssessment,
+    assessmentProgress: inheritedAssessmentProgress,
     assessmentChat: shouldCopyActive && activeVersion?.assessmentChat ? cloneData(activeVersion.assessmentChat) : [],
     knowledgeGraphRef: shouldCopyActive && activeVersion?.knowledgeGraphRef
       ? cloneData(activeVersion.knowledgeGraphRef)

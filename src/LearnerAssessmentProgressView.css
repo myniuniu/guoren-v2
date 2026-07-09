@@ -1,0 +1,376 @@
+.learner-progress-shell {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  min-height: 0;
+  padding: 18px;
+  overflow: auto;
+  background: linear-gradient(180deg, #f7fafc 0%, #eef4f8 100%);
+}
+
+.learner-progress-empty-shell {
+  align-items: center;
+  justify-content: center;
+}
+
+.learner-progress-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 20px;
+  border: 1px solid rgba(213, 222, 230, 0.9);
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(239, 248, 250, 0.96) 100%),
+    linear-gradient(135deg, rgba(20, 184, 166, 0.12) 0%, rgba(234, 88, 12, 0.08) 100%);
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
+}
+
+.learner-progress-hero-main {
+  min-width: 0;
+}
+
+.learner-progress-eyebrow {
+  display: block;
+  margin-bottom: 6px;
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.learner-progress-hero h2 {
+  margin: 0;
+  color: #172033;
+  font-size: 24px;
+  line-height: 1.25;
+}
+
+.learner-progress-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.learner-progress-hero-score {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 14px;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.learner-progress-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.learner-progress-stat-card {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 4px 10px;
+  align-items: center;
+  min-height: 86px;
+  padding: 14px;
+  border: 1px solid rgba(218, 226, 234, 0.92);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.learner-progress-stat-card .anticon {
+  grid-row: span 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(20, 184, 166, 0.12);
+  color: #0f766e;
+  font-size: 17px;
+}
+
+.learner-progress-stat-card span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.learner-progress-stat-card strong {
+  min-width: 0;
+  color: #182235;
+  font-size: 22px;
+  line-height: 1.05;
+  word-break: break-word;
+}
+
+.learner-progress-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 16px;
+  align-items: start;
+}
+
+.learner-progress-stage-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.learner-progress-stage-card,
+.learner-progress-next-panel {
+  border: 1px solid rgba(218, 226, 234, 0.92);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.04);
+}
+
+.learner-progress-stage-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 156px;
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+.learner-progress-stage-head h3 {
+  margin: 0 0 4px;
+  color: #182235;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.learner-progress-stage-head span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.learner-progress-stage-meter {
+  min-width: 0;
+  text-align: right;
+}
+
+.learner-progress-stage-meter strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #0f766e;
+  font-size: 16px;
+}
+
+.learner-progress-activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.learner-progress-activity {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 132px;
+  gap: 14px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.learner-progress-activity:last-child {
+  border-bottom: 0;
+}
+
+.learner-progress-activity-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.learner-progress-activity-title-row strong {
+  color: #1f2937;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.learner-progress-activity-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 7px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.learner-progress-activity-meta span {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #f1f5f9;
+}
+
+.learner-progress-activity-note,
+.learner-progress-evidence {
+  margin-top: 8px;
+  color: #6b7280;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.learner-progress-evidence {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.learner-progress-activity-value {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  text-align: right;
+}
+
+.learner-progress-activity-value span,
+.learner-progress-activity-value em {
+  color: #94a3b8;
+  font-size: 11px;
+  font-style: normal;
+}
+
+.learner-progress-activity-value strong {
+  color: #172033;
+  font-size: 18px;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.learner-progress-activity-passed .learner-progress-activity-value strong {
+  color: #0f766e;
+}
+
+.learner-progress-activity-failed .learner-progress-activity-value strong {
+  color: #dc2626;
+}
+
+.learner-progress-next-panel {
+  position: sticky;
+  top: 0;
+  padding: 14px;
+}
+
+.learner-progress-next-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: #172033;
+}
+
+.learner-progress-next-head .anticon {
+  color: #ea580c;
+}
+
+.learner-progress-next-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.learner-progress-next-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 16px;
+  gap: 8px;
+  align-items: center;
+  padding: 10px;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.learner-progress-next-item strong,
+.learner-progress-next-item span {
+  display: block;
+  min-width: 0;
+}
+
+.learner-progress-next-item strong {
+  color: #1f2937;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.learner-progress-next-item span {
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.learner-progress-next-item .anticon {
+  color: #94a3b8;
+}
+
+.learner-progress-next-done {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(16, 185, 129, 0.1);
+  color: #047857;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+@media (max-width: 1180px) {
+  .learner-progress-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .learner-progress-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .learner-progress-next-panel {
+    position: static;
+  }
+}
+
+@media (max-width: 720px) {
+  .learner-progress-shell {
+    padding: 12px;
+  }
+
+  .learner-progress-hero,
+  .learner-progress-stage-head,
+  .learner-progress-activity {
+    grid-template-columns: 1fr;
+  }
+
+  .learner-progress-hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .learner-progress-hero-score {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .learner-progress-stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .learner-progress-stage-meter,
+  .learner-progress-activity-value {
+    align-items: flex-start;
+    text-align: left;
+  }
+}

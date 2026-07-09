@@ -1,0 +1,13 @@
+{
+  "name": "guoren-scratch-lab",
+  "private": true,
+  "version": "0.0.1",
+  "scripts": {
+    "build": "node scripts/build.mjs"
+  },
+  "dependencies": {
+    "react": "16.14.0",
+    "react-dom": "16.14.0",
+    "scratch-gui": "5.3.0"
+  }
+}
