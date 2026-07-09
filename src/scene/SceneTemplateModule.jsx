@@ -999,6 +999,7 @@ function SceneTemplatePreview({ template, sceneCount }) {
                     </div>
                   </SceneTemplateStaticField>
                   <SceneTemplateStaticField label="允许根目录直接放资料" value={template.topicPage?.allowRootResources ? '是' : '否'} />
+                  <SceneTemplateStaticField label="资料区域显示资料进度" value={template.topicPage?.showResourceAssessmentProgress !== false ? '是' : '否'} />
                 </div>
 
                 <div className="scene-template-subsection-title">
@@ -2547,6 +2548,14 @@ export default function SceneTemplateModule() {
                         name={['topicPage', 'allowRootResources']}
                         valuePropName="checked"
                         extra="开启后可不创建资料目录，直接把资料放在根目录。"
+                      >
+                        <Switch />
+                      </Form.Item>
+                      <Form.Item
+                        label="资料区域显示资料进度"
+                        name={['topicPage', 'showResourceAssessmentProgress']}
+                        valuePropName="checked"
+                        extra="控制学习内容页资料区域是否显示资料进度。"
                       >
                         <Switch />
                       </Form.Item>

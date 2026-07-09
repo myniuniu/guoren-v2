@@ -901,6 +901,19 @@ function ensureModeTabs(modeTabs, sceneType = 'CUSTOM', homepageTemplateName = '
   ));
 }
 
+function resolveTopicPageResourceProgressVisibility(topicPage = {}) {
+  if (typeof topicPage?.showResourceAssessmentProgress === 'boolean') {
+    return topicPage.showResourceAssessmentProgress;
+  }
+  const knowledgeTab = Array.isArray(topicPage?.modeTabs)
+    ? topicPage.modeTabs.find((item) => item?.key === 'knowledge')
+    : null;
+  if (typeof knowledgeTab?.showResourceAssessmentProgress === 'boolean') {
+    return knowledgeTab.showResourceAssessmentProgress;
+  }
+  return true;
+}
+
 export function normalizeVersioningConfig(input = {}, sceneType = null) {
   const maxVersions = Number.parseInt(input?.maxVersions, 10);
   const versioningSupported = typeof sceneType === 'string' ? isSceneVersioningSupported(sceneType) : null;
@@ -1318,6 +1331,7 @@ function normalizeTemplate(input = {}) {
       appLabel: trimToNull(input.topicPage?.appLabel) || '应用',
       emptyStateText: trimToNull(input.topicPage?.emptyStateText) || '暂无资料，右键新建文件夹或添加资料',
       allowRootResources: input.topicPage?.allowRootResources !== false,
+      showResourceAssessmentProgress: resolveTopicPageResourceProgressVisibility(input.topicPage),
       modeTabs: ensureModeTabs(input.topicPage?.modeTabs, sceneType, input.homepage?.templateName),
     },
     topicCard: normalizeTopicCardConfig(input.topicCard),

@@ -2347,15 +2347,15 @@
 
 .topic-resource-progress-meter {
   --resource-progress-color: #94a3b8;
-  --resource-progress-soft: rgba(148, 163, 184, 0.14);
-  --resource-progress-glow: rgba(148, 163, 184, 0.2);
+  --resource-progress-soft: rgba(148, 163, 184, 0.08);
+  --resource-progress-glow: rgba(148, 163, 184, 0.1);
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   width: min(100%, 154px);
-  color: #64748b;
+  color: #7b8798;
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1;
   letter-spacing: -0.01em;
 }
@@ -2372,34 +2372,30 @@
   position: relative;
   width: min(100%, 186px);
   max-width: 186px;
-  min-height: 22px;
-  gap: 8px;
-  padding: 4px 7px 4px 6px;
-  border: 1px solid color-mix(in srgb, var(--resource-progress-color) 28%, transparent);
+  min-height: 20px;
+  gap: 7px;
+  padding: 3px 6px;
+  border: 1px solid color-mix(in srgb, var(--resource-progress-color) 16%, rgba(203, 213, 225, 0.88));
   border-radius: 999px;
-  background:
-    radial-gradient(circle at 14% 50%, color-mix(in srgb, var(--resource-progress-color) 18%, transparent) 0, transparent 46%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, var(--resource-progress-soft) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    0 7px 16px var(--resource-progress-glow);
+  background: color-mix(in srgb, var(--resource-progress-color) 5%, rgba(255, 255, 255, 0.72));
+  box-shadow: none;
 }
 
 .topic-resource-progress-status {
   flex-shrink: 0;
-  padding: 3px 6px;
+  padding: 2px 6px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--resource-progress-color) 13%, #fff);
+  background: color-mix(in srgb, var(--resource-progress-color) 8%, rgba(255, 255, 255, 0.8));
   color: var(--resource-progress-color);
   font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.02em;
+  font-weight: 800;
+  letter-spacing: 0.01em;
   white-space: nowrap;
 }
 
 .topic-resource-progress-meter-activity,
 .topic-resource-progress-meter-resource {
-  opacity: 0.92;
+  opacity: 0.8;
 }
 
 .topic-resource-progress-meter-resource {
@@ -2407,38 +2403,34 @@
   max-width: 132px;
   gap: 6px;
   font-size: 10px;
-  font-weight: 700;
-  opacity: 0.72;
+  font-weight: 600;
+  opacity: 0.62;
 }
 
 .topic-resource-progress-track {
   position: relative;
   flex: 1;
   min-width: 42px;
-  height: 7px;
+  height: 6px;
   overflow: hidden;
   border-radius: 999px;
-  background:
-    linear-gradient(180deg, rgba(226, 232, 240, 0.86) 0%, rgba(241, 245, 249, 0.88) 100%);
-  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
+  background: rgba(226, 232, 240, 0.72);
+  box-shadow: none;
 }
 
 .topic-resource-progress-fill {
   position: absolute;
   inset: 0 auto 0 0;
   border-radius: inherit;
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--resource-progress-color) 78%, #fff) 0%, var(--resource-progress-color) 72%, color-mix(in srgb, var(--resource-progress-color) 84%, #fff) 100%);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--resource-progress-color) 74%, #fff) 0%, var(--resource-progress-color) 100%);
   min-width: 4px;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.34),
-    0 0 10px var(--resource-progress-glow);
+  box-shadow: none;
 }
 
 .topic-resource-progress-meter-stage .topic-resource-progress-track {
   min-width: 54px;
-  height: 8px;
-  background: rgba(255, 255, 255, 0.74);
+  height: 6px;
+  background: rgba(226, 232, 240, 0.76);
 }
 
 .topic-resource-progress-meter-resource .topic-resource-progress-track {
@@ -2448,7 +2440,7 @@
 
 .topic-resource-progress-meter-resource .topic-resource-progress-fill {
   min-width: 3px;
-  opacity: 0.86;
+  opacity: 0.78;
 }
 
 .topic-resource-progress-number {
@@ -2496,15 +2488,13 @@
 
 .project-item-selected .topic-resource-progress-meter-stage,
 .topic-file-row-selected .topic-resource-progress-meter-stage {
-  background:
-    radial-gradient(circle at 14% 50%, color-mix(in srgb, var(--resource-progress-color) 24%, transparent) 0, transparent 48%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, color-mix(in srgb, var(--resource-progress-color) 10%, #fff) 100%);
-  border-color: color-mix(in srgb, var(--resource-progress-color) 34%, rgba(255, 255, 255, 0.8));
+  background: color-mix(in srgb, var(--resource-progress-color) 7%, rgba(255, 255, 255, 0.8));
+  border-color: color-mix(in srgb, var(--resource-progress-color) 22%, rgba(203, 213, 225, 0.86));
 }
 
 .project-item:hover .topic-resource-progress-meter-resource,
 .topic-file-row:hover .topic-resource-progress-meter-resource {
-  opacity: 0.9;
+  opacity: 0.74;
 }
 
 .topic-tree-item-actions {

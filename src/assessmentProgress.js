@@ -9,6 +9,15 @@ const ACTIVITY_TYPE_LABELS = {
   '': '活动',
 };
 
+const ACTIVITY_ALLOWED_RESOURCE_TYPES = {
+  video: ['video'],
+  live: ['file', 'video', 'activity'],
+  exam: ['exam'],
+  offline: ['activity'],
+  other: null,
+  '': null,
+};
+
 const REVIEW_STATUS_LABELS = {
   not_started: '未开始',
   in_progress: '进行中',
@@ -29,6 +38,65 @@ const METRIC_KEY_BY_LABEL = {
 };
 
 const UNNAMED_ACTIVITY_LABELS = new Set(['', '新活动', '未命名活动']);
+
+function isLeafResourceVisibleForActivityProgress(resource, activityType = '') {
+  if (!resource || resource.isFolder) return false;
+  const allowedTypes = ACTIVITY_ALLOWED_RESOURCE_TYPES[activityType ?? ''];
+  return !allowedTypes || allowedTypes.includes(resource.type);
+}
+
+function collectVisibleDescendantKeys(rootKey, activityType, childrenByParent, visibleKeys) {
+  let hasVisibleDescendant = false;
+
+  (childrenByParent.get(rootKey) || []).forEach((child) => {
+    if (child.isFolder) {
+      const childHasVisibleDescendant = collectVisibleDescendantKeys(child.key, activityType, childrenByParent, visibleKeys);
+      if (childHasVisibleDescendant) {
+        visibleKeys.add(child.key);
+        hasVisibleDescendant = true;
+      }
+      return;
+    }
+
+    if (isLeafResourceVisibleForActivityProgress(child, activityType)) {
+      visibleKeys.add(child.key);
+      hasVisibleDescendant = true;
+    }
+  });
+
+  return hasVisibleDescendant;
+}
+
+export function collectActivityProgressVisibleResourceKeys({
+  rootKey,
+  activityType = '',
+  resourceMap,
+  childrenByParent,
+}) {
+  const visibleKeys = new Set();
+  if (!rootKey || !resourceMap?.has(rootKey)) return visibleKeys;
+  collectVisibleDescendantKeys(rootKey, activityType, childrenByParent, visibleKeys);
+  return visibleKeys;
+}
+
+export function shouldShowActivityProgressForResource({
+  resourceKey,
+  activityType = '',
+  resourceMap,
+  childrenByParent,
+}) {
+  if (!resourceKey || !resourceMap?.has(resourceKey)) return false;
+  const resource = resourceMap.get(resourceKey);
+  if (!resource?.isFolder) {
+    return isLeafResourceVisibleForActivityProgress(resource, activityType);
+  }
+  return collectActivityProgressVisibleResourceKeys({
+    rootKey: resourceKey,
+    activityType,
+    resourceMap,
+    childrenByParent,
+  }).size > 0;
+}
 
 export function getDefaultAssessmentProgress() {
   return {

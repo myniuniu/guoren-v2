@@ -53,7 +53,12 @@ import {
 import AddResourceModal from './AddResourceModal';
 import AssessmentConfig from './AssessmentConfig';
 import LearnerAssessmentProgressView from './LearnerAssessmentProgressView';
-import { buildLearnerAssessmentProgress, buildSampleAssessmentProgress } from './assessmentProgress';
+import {
+  buildLearnerAssessmentProgress,
+  buildSampleAssessmentProgress,
+  collectActivityProgressVisibleResourceKeys,
+  shouldShowActivityProgressForResource,
+} from './assessmentProgress';
 import SpaceResourceImportModal from './resourceLib/SpaceResourceImportModal.jsx';
 import ResourceLibraryTagPicker from './resourceLib/ResourceLibraryTagPicker.jsx';
 import {
@@ -763,24 +768,11 @@ function getResourceProgressTone(statusKey, percent = 0) {
   return 'empty';
 }
 
-function collectDescendantResourceKeys(resourceKey, childrenByParent) {
-  const result = [];
-  const queue = [...(childrenByParent.get(resourceKey) || [])];
-
-  while (queue.length) {
-    const item = queue.shift();
-    if (!item?.key) continue;
-    result.push(item.key);
-    queue.push(...(childrenByParent.get(item.key) || []));
-  }
-
-  return result;
-}
-
 function buildResourceAssessmentProgressMap(resources = [], assessment = {}, assessmentProgress = {}) {
   const progress = buildLearnerAssessmentProgress({ resources, assessment, assessmentProgress });
   if (!progress.summary.totalActivities) return new Map();
 
+  const resourceMap = new Map(resources.map((resource) => [resource.key, resource]));
   const childrenByParent = resources.reduce((map, resource) => {
     const parentKey = resource.parentKey || '';
     if (!parentKey) return map;
@@ -818,11 +810,32 @@ function buildResourceAssessmentProgressMap(resources = [], assessment = {}, ass
       const activityResourceKey = activity.displayResourceKey || activity.key;
       setProgress(activityResourceKey, activityPayload);
       const resourcePayload = { ...activityPayload, source: 'resource' };
-      collectDescendantResourceKeys(activityResourceKey, childrenByParent).forEach((key) => setProgress(key, resourcePayload));
+      collectActivityProgressVisibleResourceKeys({
+        rootKey: activityResourceKey,
+        activityType: activity.activityType,
+        resourceMap,
+        childrenByParent,
+      }).forEach((key) => setProgress(key, resourcePayload));
       (activity.boundResources || [])
         .filter((resource) => resource.key !== activity.key && resource.key !== activityResourceKey)
-        .forEach((resource) => setProgress(resource.key, resourcePayload));
-      (activity.record?.evidenceResourceKeys || []).forEach((key) => setProgress(key, resourcePayload));
+        .forEach((resource) => {
+          if (!shouldShowActivityProgressForResource({
+            resourceKey: resource.key,
+            activityType: activity.activityType,
+            resourceMap,
+            childrenByParent,
+          })) return;
+          setProgress(resource.key, resourcePayload);
+        });
+      (activity.record?.evidenceResourceKeys || []).forEach((key) => {
+        if (!shouldShowActivityProgressForResource({
+          resourceKey: key,
+          activityType: activity.activityType,
+          resourceMap,
+          childrenByParent,
+        })) return;
+        setProgress(key, resourcePayload);
+      });
     });
   });
 
@@ -1340,7 +1353,10 @@ function TopicDetail({
         )
       : new Map()
   ), [activeSceneType, currentVersion?.assessment, currentVersion?.assessmentProgress, sourceResources]);
-  const showResourceAssessmentProgress = activeSceneType === 'TRAINING' && activeTab === 'knowledge' && !isKnowledgeGraphView;
+  const showResourceAssessmentProgress = activeSceneType === 'TRAINING'
+    && activeTab === 'knowledge'
+    && !isKnowledgeGraphView
+    && sceneConfig?.topicPage?.showResourceAssessmentProgress !== false;
   const rootItems = resources.filter((r) => r.parentKey === null);
   const getChildren = (folderKey) => resources.filter((r) => r.parentKey === folderKey);
   const selectedFolder = selectedFolderKey ? resources.find((r) => r.key === selectedFolderKey && r.isFolder) : null;

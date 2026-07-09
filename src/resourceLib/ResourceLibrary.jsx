@@ -20,6 +20,9 @@ import {
   PlayCircleOutlined, SoundOutlined, TagsOutlined,
   FileExcelOutlined, FileWordOutlined, FilePptOutlined,
   StarOutlined, StarFilled,
+  CheckSquareOutlined, SelectOutlined, MinusSquareOutlined,
+  BorderOutlined,
+  ClearOutlined, BorderOuterOutlined,
 } from '@ant-design/icons';
 import {
   loadResourceLib, addItem, renameItem, deleteItems, saveResourceLib, setSelectedFolder, inferFileType, moveItem,
@@ -96,7 +99,7 @@ const SWIPE_SELECT_ACTIVATION_DISTANCE = 6;
 const RESOURCE_RENAME_CLICK_WINDOW_MS = 800;
 const RESOURCE_LIB_HELP_TIPS = [
   '在文件夹上双击可进入文件夹。',
-  '支持 Cmd/Ctrl + Click、Shift + Click、Cmd/Ctrl + A 多选，Delete 批量删除。',
+  '可在操作菜单开启多选模式，或用行内菜单加入所选。',
   '按住鼠标在列表中滑动可连续多选。',
   '支持对文件、文件夹和空白区域使用鼠标右键操作。',
   '悬停行内按钮可快速添加资料或打开更多操作。',
@@ -145,6 +148,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
   const [activeTagFilter, setActiveTagFilter] = useState(null);
   const [tagFilterContextFolderKeys, setTagFilterContextFolderKeys] = useState([]);
   const [selectedItemKeys, setSelectedItemKeys] = useState([]); // 多选
+  const [mouseMultiSelectMode, setMouseMultiSelectMode] = useState(false);
   const swipeSelectionRef = useRef(null);
   const suppressClickSelectionRef = useRef(false);
   const suppressNextItemClickRef = useRef(false);
@@ -2494,6 +2498,24 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     return true;
   }, [clearPendingRenameTrigger, clearSingleSelectionActivation, markSuppressContextMenu]);
 
+  const handleMouseMultiSelectItemClick = useCallback((item, idx, { view = 'detail', colIdx = null } = {}) => {
+    if (!item?.key) return;
+    clearPendingRenameTrigger();
+    clearSingleSelectionActivation();
+    setSelectedItemKeys((prev) => (
+      prev.includes(item.key)
+        ? prev.filter((key) => key !== item.key)
+        : [...prev, item.key]
+    ));
+    if (view === 'column') {
+      setColumnSelectedItem((prev) => (prev?.key === item.key ? null : prev));
+    } else {
+      setColumnSelectedItem(null);
+    }
+    lastClickedRef.current = { view, colIdx, idx };
+    if (!item.isFolder) recordItemOpened(item);
+  }, [clearPendingRenameTrigger, clearSingleSelectionActivation, recordItemOpened]);
+
   // 多选点击处理（Cmd+Click 切换选中，Shift+Click 范围选，普通点击单选）
   const handleItemClick = (item, idx, e) => {
     if (suppressNextItemClickRef.current) {
@@ -2517,6 +2539,8 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
       const end = Math.max(lastClickedRef.current.idx, idx);
       const rangeKeys = displayChildren.slice(start, end + 1).map((it) => it.key);
       setSelectedItemKeys(rangeKeys);
+    } else if (mouseMultiSelectMode) {
+      handleMouseMultiSelectItemClick(item, idx, { view: 'detail' });
     } else if (
       selectedItemKeys.length === 1
       && selectedItemKeys[0] === item.key
@@ -2811,6 +2835,113 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     setSelectedItemKeys(nextKeys);
     setColumnSelectedItem(null);
   }, [visibleSelectionItems]);
+
+  const getSelectionItemsForView = useCallback((selectionView = 'detail', colIdx = null) => (
+    selectionView === 'column'
+      ? (columnLevels[colIdx] || [])
+      : displayChildren
+  ), [columnLevels, displayChildren]);
+
+  const getSelectionRangeKeys = useCallback((itemKey, { selectionView = 'detail', colIdx = null } = {}) => {
+    const items = getSelectionItemsForView(selectionView, colIdx);
+    const targetIndex = items.findIndex((entry) => entry.key === itemKey);
+    if (targetIndex < 0) return [];
+
+    const lastSelection = lastClickedRef.current;
+    let anchorIndex = (
+      lastSelection.view === selectionView
+      && (selectionView !== 'column' || lastSelection.colIdx === colIdx)
+      && Number.isInteger(lastSelection.idx)
+      && lastSelection.idx >= 0
+      && lastSelection.idx < items.length
+    )
+      ? lastSelection.idx
+      : -1;
+
+    if (anchorIndex < 0 || !items[anchorIndex]) {
+      anchorIndex = items.findIndex((entry) => selectedItemKeys.includes(entry.key));
+    }
+    if (anchorIndex < 0) return [];
+
+    const start = Math.min(anchorIndex, targetIndex);
+    const end = Math.max(anchorIndex, targetIndex);
+    return items.slice(start, end + 1).map((entry) => entry.key);
+  }, [getSelectionItemsForView, selectedItemKeys]);
+
+  const selectItemFromMenu = useCallback((item, {
+    selectionView = 'detail',
+    colIdx = null,
+    itemIdx = null,
+    append = false,
+  } = {}) => {
+    if (!item?.key) return;
+    clearPendingRenameTrigger();
+    clearSingleSelectionActivation();
+    setMouseMultiSelectMode(true);
+    setSelectedItemKeys((prev) => {
+      if (append) {
+        return prev.includes(item.key) ? prev : [...prev, item.key];
+      }
+      return [item.key];
+    });
+    setColumnSelectedItem(selectionView === 'column' && !item.isFolder ? item : null);
+    lastClickedRef.current = { view: selectionView, colIdx, idx: itemIdx };
+    if (!item.isFolder) recordItemOpened(item);
+  }, [clearPendingRenameTrigger, clearSingleSelectionActivation, recordItemOpened]);
+
+  const removeItemFromSelectionMenu = useCallback((item) => {
+    if (!item?.key) return;
+    clearPendingRenameTrigger();
+    clearSingleSelectionActivation();
+    setSelectedItemKeys((prev) => prev.filter((key) => key !== item.key));
+    setColumnSelectedItem((prev) => (prev?.key === item.key ? null : prev));
+  }, [clearPendingRenameTrigger, clearSingleSelectionActivation]);
+
+  const selectRangeFromMenu = useCallback((item, {
+    selectionView = 'detail',
+    colIdx = null,
+    itemIdx = null,
+  } = {}) => {
+    if (!item?.key) return;
+    const rangeKeys = getSelectionRangeKeys(item.key, { selectionView, colIdx });
+    if (rangeKeys.length === 0) {
+      selectItemFromMenu(item, { selectionView, colIdx, itemIdx, append: true });
+      return;
+    }
+    clearPendingRenameTrigger();
+    clearSingleSelectionActivation();
+    setMouseMultiSelectMode(true);
+    setSelectedItemKeys(rangeKeys);
+    setColumnSelectedItem(null);
+    lastClickedRef.current = { view: selectionView, colIdx, idx: itemIdx };
+  }, [
+    clearPendingRenameTrigger,
+    clearSingleSelectionActivation,
+    getSelectionRangeKeys,
+    selectItemFromMenu,
+  ]);
+
+  const selectAllVisibleItemsFromMenu = useCallback(() => {
+    clearPendingRenameTrigger();
+    clearSingleSelectionActivation();
+    setMouseMultiSelectMode(true);
+    selectAllVisibleItems();
+  }, [clearPendingRenameTrigger, clearSingleSelectionActivation, selectAllVisibleItems]);
+
+  const invertVisibleSelectionFromMenu = useCallback(() => {
+    clearPendingRenameTrigger();
+    clearSingleSelectionActivation();
+    setMouseMultiSelectMode(true);
+    setColumnSelectedItem(null);
+    setSelectedItemKeys((prev) => {
+      const visibleKeys = visibleSelectionItems.map((item) => item.key);
+      const visibleKeySet = new Set(visibleKeys);
+      const prevKeySet = new Set(prev);
+      const keptOutsideVisible = prev.filter((key) => !visibleKeySet.has(key));
+      const invertedVisible = visibleKeys.filter((key) => !prevKeySet.has(key));
+      return [...keptOutsideVisible, ...invertedVisible];
+    });
+  }, [clearPendingRenameTrigger, clearSingleSelectionActivation, visibleSelectionItems]);
 
   // 选中文件夹的子项数量
   const previewFolderCount = useMemo(() => {
@@ -3457,6 +3588,15 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     </span>
   );
 
+  const renderSelectionModeMenuLabel = (enabled) => (
+    <span className="finder-selection-mode-menu-label">
+      <span>多选模式</span>
+      <span className={`finder-selection-mode-menu-status ${enabled ? 'is-active' : ''}`}>
+        {enabled ? '已开启' : '已关闭'}
+      </span>
+    </span>
+  );
+
   const renderResourceAssociationBlock = useCallback((item, associationRule) => {
     if (!item || item.isFolder || !associationRule) return null;
     const sourceKey = inferResourceSourceKey(item);
@@ -3613,10 +3753,30 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
   const handleItemMenuAction = useCallback((item, key, {
     includeFavorite = false,
     columnPathToOpen = null,
+    selectionView = viewMode,
+    colIdx = null,
+    itemIdx = null,
   } = {}) => {
     const isFavorited = item.isFolder && favorites.some((f) => f.key === item.key);
+    const selectionPayload = { selectionView, colIdx, itemIdx };
     if (key === 'enter' && item.isFolder) {
       navigateTo(item.key);
+      return;
+    }
+    if (key === 'selection-select') {
+      selectItemFromMenu(item, selectionPayload);
+      return;
+    }
+    if (key === 'selection-add') {
+      selectItemFromMenu(item, { ...selectionPayload, append: true });
+      return;
+    }
+    if (key === 'selection-remove') {
+      removeItemFromSelectionMenu(item);
+      return;
+    }
+    if (key === 'selection-range') {
+      selectRangeFromMenu(item, selectionPayload);
       return;
     }
     if (key === 'addResource' && item.isFolder) {
@@ -3647,8 +3807,11 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     handleDelete,
     handleRename,
     navigateTo,
+    removeItemFromSelectionMenu,
     resolveDeleteTargetKeys,
     saveFavorites,
+    selectItemFromMenu,
+    selectRangeFromMenu,
     viewMode,
   ]);
 
@@ -3656,11 +3819,21 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     includeFavorite = false,
     includeAddResource = false,
     columnPathToOpen = null,
+    selectionView = viewMode,
+    colIdx = null,
+    itemIdx = null,
   } = {}) => {
     const isFavorited = item.isFolder && favorites.some((f) => f.key === item.key);
+    const isItemSelected = selectedItemKeys.includes(item.key);
+    const rangeKeys = getSelectionRangeKeys(item.key, { selectionView, colIdx });
+    const canSelectRangeToItem = rangeKeys.length > 1;
     const deleteLabel = selectedItemCount > 1 && selectedItemKeys.includes(item.key)
       ? `删除所选 (${selectedItemCount})`
       : '删除';
+    const selectionToggleKey = isItemSelected ? 'selection-remove' : (selectedItemCount > 0 ? 'selection-add' : 'selection-select');
+    const selectionToggleLabel = isItemSelected
+      ? '从所选移除'
+      : (selectedItemCount > 0 ? '加入所选' : '选中此项');
     return {
       items: [
         ...(item.isFolder ? [
@@ -3671,6 +3844,18 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
           { key: 'addResource', icon: <PlusOutlined />, label: '添加资料' },
           { type: 'divider' },
         ] : []),
+        {
+          key: selectionToggleKey,
+          icon: isItemSelected ? <MinusSquareOutlined /> : <CheckSquareOutlined />,
+          label: selectionToggleLabel,
+        },
+        {
+          key: 'selection-range',
+          icon: <SelectOutlined />,
+          label: '选择到此项',
+          disabled: !canSelectRangeToItem,
+        },
+        { type: 'divider' },
         { key: 'tags-row', label: renderMenuTagDots(item) },
         { key: 'tags-manage', icon: <TagsOutlined />, label: '标签…' },
         { type: 'divider' },
@@ -3687,14 +3872,20 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
       ],
       onClick: ({ key, domEvent }) => {
         domEvent?.stopPropagation();
-        handleItemMenuAction(item, key, { includeFavorite, columnPathToOpen });
+        handleItemMenuAction(item, key, {
+          includeFavorite,
+          columnPathToOpen,
+          selectionView,
+          colIdx,
+          itemIdx,
+        });
       },
     };
   };
 
   // 右键菜单 - 文件/文件夹
-  const getContextMenu = (item, { includeFavorite = false } = {}) => (
-    getItemMoreMenu(item, { includeFavorite, includeAddResource: true })
+  const getContextMenu = (item, { includeFavorite = false, ...selectionOptions } = {}) => (
+    getItemMoreMenu(item, { includeFavorite, includeAddResource: true, ...selectionOptions })
   );
 
   const handleItemContextMenuOpenChange = useCallback((itemKey, open) => {
@@ -3849,6 +4040,22 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
   const handleToolbarMenuAction = ({ key, domEvent }) => {
     domEvent?.stopPropagation();
 
+    if (key === 'selection-mode') {
+      setMouseMultiSelectMode((prev) => !prev);
+      return;
+    }
+    if (key === 'selection-all-visible') {
+      selectAllVisibleItemsFromMenu();
+      return;
+    }
+    if (key === 'selection-invert-visible') {
+      invertVisibleSelectionFromMenu();
+      return;
+    }
+    if (key === 'selection-clear') {
+      clearCurrentSelection();
+      return;
+    }
     if (key === 'newFolder') {
       handleCreateFolderAtCurrentLocation();
       return;
@@ -3901,6 +4108,31 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     items: [
       { key: 'newFolder', icon: <FolderAddOutlined />, label: '新建文件夹' },
       { key: 'addResource', icon: <FileAddOutlined />, label: '添加资料' },
+      { type: 'divider' },
+      {
+        key: 'selection-mode',
+        className: `finder-selection-mode-menu-item ${mouseMultiSelectMode ? 'is-active' : ''}`,
+        icon: mouseMultiSelectMode ? <CheckSquareOutlined /> : <BorderOutlined />,
+        label: renderSelectionModeMenuLabel(mouseMultiSelectMode),
+      },
+      {
+        key: 'selection-all-visible',
+        icon: <SelectOutlined />,
+        label: visibleSelectionItems.length > 0 ? `选择当前列表全部 (${visibleSelectionItems.length})` : '选择当前列表全部',
+        disabled: visibleSelectionItems.length === 0,
+      },
+      {
+        key: 'selection-invert-visible',
+        icon: <BorderOuterOutlined />,
+        label: '反选当前列表',
+        disabled: visibleSelectionItems.length === 0,
+      },
+      {
+        key: 'selection-clear',
+        icon: <ClearOutlined />,
+        label: selectedItemCount > 0 ? `清空选择 (${selectedItemCount})` : '清空选择',
+        disabled: selectedItemCount === 0,
+      },
       { type: 'divider' },
       { key: 'tags-row', label: renderMenuTagDots(toolbarMenuTargetItem, { disabled: !toolbarMenuTargetItem }), disabled: !toolbarMenuTargetItem },
       { key: 'tags-manage', icon: <TagsOutlined />, label: '标签…', disabled: !toolbarMenuTargetItem },
@@ -4328,13 +4560,21 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
             </button>
           </div>
           <div className="finder-toolbar-title">
-            {hasActiveSearch
-              ? `正在搜索“${normalizedKeyword}”`
-              : isRecentView
-              ? '最近使用'
-              : activeTagFilter
-              ? `${activeTagFilterDef?.name || '标签'}${isTagFilterContextActive && tagFilterContextLabel ? ` · ${tagFilterContextLabel}` : ''}`
-              : (currentFolder?.name || (scope === 'personal' ? '全部资料' : '组织资料'))}
+            <span className="finder-toolbar-title-text">
+              {hasActiveSearch
+                ? `正在搜索“${normalizedKeyword}”`
+                : isRecentView
+                ? '最近使用'
+                : activeTagFilter
+                ? `${activeTagFilterDef?.name || '标签'}${isTagFilterContextActive && tagFilterContextLabel ? ` · ${tagFilterContextLabel}` : ''}`
+                : (currentFolder?.name || (scope === 'personal' ? '全部资料' : '组织资料'))}
+            </span>
+            {mouseMultiSelectMode && (
+              <span className="finder-selection-mode-badge">
+                <CheckSquareOutlined />
+                <span>多选 · 已选 {selectedItemCount} 项</span>
+              </span>
+            )}
           </div>
 
           <Dropdown
@@ -4539,12 +4779,15 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                       const isInlineRenaming = inlineRenameItemKey === item.key;
                       const itemMoreMenu = getItemMoreMenu(item, {
                         columnPathToOpen: [...columnPath.slice(0, colIdx + 1), item.key],
+                        selectionView: 'column',
+                        colIdx,
+                        itemIdx,
                       });
 
                       return (
                         <Dropdown
                           key={item.key}
-                          menu={getContextMenu(item)}
+                          menu={getContextMenu(item, { selectionView: 'column', colIdx, itemIdx })}
                           open={contextMenuItemKey === item.key}
                           trigger={['contextMenu']}
                           onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
@@ -4603,6 +4846,8 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                                 } else {
                                   setSelectedItemKeys([item.key]);
                                 }
+                              } else if (mouseMultiSelectMode) {
+                                handleMouseMultiSelectItemClick(item, itemIdx, { view: 'column', colIdx });
                               } else if (
                                 selectedItemKeys.length === 1
                                 && selectedItemKeys[0] === item.key
@@ -4810,7 +5055,11 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                   const isInlineRenaming = inlineRenameItemKey === item.key;
                   const depth = item._depth || 0;
                   const isExpanded = expandedFolders.has(item.key);
-                  const rowMoreMenu = getItemMoreMenu(item, { includeFavorite: true });
+                  const rowMoreMenu = getItemMoreMenu(item, {
+                    includeFavorite: true,
+                    selectionView: 'detail',
+                    itemIdx: idx,
+                  });
                   const detailNameCellStyle = viewMode === 'detail'
                     ? (nameColResized
                         ? { width: Math.max(72, detailColWidths.name - 28 - 16 - depth * 16), flex: 'none' }
@@ -4955,7 +5204,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
                   return (
                     <Dropdown
                       key={item.key}
-                      menu={getContextMenu(item, { includeFavorite: true })}
+                      menu={getContextMenu(item, { includeFavorite: true, selectionView: 'detail', itemIdx: idx })}
                       open={contextMenuItemKey === item.key}
                       trigger={['contextMenu']}
                       onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
