@@ -1843,9 +1843,9 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
     // 3) 文件夹角色判定：命中阶段容器 -> 作为活动；未命中 -> 仅一级目录（builtin stage）可独立放置于画布
     const positionsBatch = {};
     if (payload.isFolder) {
-      // 「活动」只能拖入阶段容器：非一级目录且未命中任何阶段时拒绝放置
+      // 非一级目录会被识别为「活动」：未命中阶段时不允许直接作为阶段落到画布
       if (!hitStage && payload.parentKey !== null) {
-        message.warning('「活动」仅能拖入「阶段容器」内，请将「' + (payload.name || '该项') + '」拖到某个阶段内部');
+        message.warning(`「${payload.name || '该项'}」位于资料区子目录，系统会将非一级目录识别为“活动”，不能直接作为“阶段”。请拖到某个阶段内部；如需作为阶段，请先在资料区创建一级目录后再拖入。`);
         return;
       }
       // 为任何层级文件夹初始化一条默认规则（作为活动时需要）
