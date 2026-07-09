@@ -1900,6 +1900,23 @@
   padding: 16px;
 }
 
+.kg-structured-stage-empty-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  max-width: 250px;
+}
+
+.kg-structured-stage-empty-title {
+  color: #344054;
+  font-weight: 500;
+}
+
+.kg-structured-stage-empty-tip {
+  font-size: 12px;
+}
+
 .kg-structured-handle,
 .kg-structured-point-handle {
   width: 10px;

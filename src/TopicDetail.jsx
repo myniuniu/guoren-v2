@@ -53,6 +53,7 @@ import {
 import AddResourceModal from './AddResourceModal';
 import AssessmentConfig from './AssessmentConfig';
 import LearnerAssessmentProgressView from './LearnerAssessmentProgressView';
+import { buildLearnerAssessmentProgress, buildSampleAssessmentProgress } from './assessmentProgress';
 import SpaceResourceImportModal from './resourceLib/SpaceResourceImportModal.jsx';
 import ResourceLibraryTagPicker from './resourceLib/ResourceLibraryTagPicker.jsx';
 import {
@@ -535,6 +536,12 @@ const RICH_TRAINING_SAMPLE_KEYS = Object.freeze([
   'training_s5_survey',
 ]);
 
+const FULL_STAGE_PROGRESS_ACTIVITY_KEYS = Object.freeze([
+  'training_s1_live',
+  'training_s1_vod',
+  'training_s1_exam',
+]);
+
 const LEGACY_TRAINING_RULE_KEYS = Object.freeze([
   'm1a1',
   'm1a2',
@@ -585,8 +592,80 @@ function shouldRefreshTrainingSampleData(versionData, sceneConfig) {
   return isLegacyTrainingRuleSet(rules) || (rules.length === 0 && isGeneratedTrainingStarter(resources));
 }
 
+function getCurrentLearnerRecordMap(version) {
+  const progress = version?.assessmentProgress || {};
+  const learnerId = progress.currentLearnerId || 'learner_self';
+  const activityRecords = Array.isArray(progress.activityRecords) ? progress.activityRecords : [];
+  return new Map(
+    activityRecords
+      .filter((record) => record?.learnerId === learnerId)
+      .map((record) => [record.activityKey, record]),
+  );
+}
+
+function isFullStageProgressRecord(record) {
+  const metricValues = record?.metricValues || {};
+  return record?.reviewStatus === 'passed'
+    && ['completionRate', 'attendanceRate', 'submitRate', 'score'].every((metricKey) => (
+      Number(metricValues[metricKey]) === 100
+    ));
+}
+
+function hasFullStageProgressSample(version) {
+  const recordMap = getCurrentLearnerRecordMap(version);
+  return FULL_STAGE_PROGRESS_ACTIVITY_KEYS.every((activityKey) => (
+    isFullStageProgressRecord(recordMap.get(activityKey))
+  ));
+}
+
+function isPreviousGeneratedFirstStageProgress(version) {
+  const recordMap = getCurrentLearnerRecordMap(version);
+  const previousSamples = [
+    ['training_s1_live', { completionRate: 100, attendanceRate: 96, score: 88 }],
+    ['training_s1_vod', { completionRate: 94, attendanceRate: 92, score: 78 }],
+    ['training_s1_exam', { completionRate: 86, attendanceRate: 84, score: 72 }],
+  ];
+
+  return previousSamples.every(([activityKey, expectedValues]) => {
+    const record = recordMap.get(activityKey);
+    const metricValues = record?.metricValues || {};
+    return record?.reviewStatus === 'passed'
+      && Object.entries(expectedValues).every(([metricKey, expectedValue]) => (
+        Number(metricValues[metricKey]) === expectedValue
+      ));
+  });
+}
+
+function shouldRefreshTrainingAssessmentProgressSample(versionData, sceneConfig) {
+  if (!isTrainingSceneConfig(sceneConfig)) return false;
+  const currentVersion = getCurrentVersion(versionData);
+  if (!currentVersion || !hasRichTrainingSample(currentVersion)) return false;
+  if (hasFullStageProgressSample(currentVersion)) return false;
+  return isPreviousGeneratedFirstStageProgress(currentVersion);
+}
+
+function refreshTrainingAssessmentProgressSampleIfNeeded(versionData, sceneConfig) {
+  if (!shouldRefreshTrainingAssessmentProgressSample(versionData, sceneConfig)) return versionData;
+  const currentVersion = getCurrentVersion(versionData);
+  const refreshedData = {
+    ...versionData,
+    versions: (versionData.versions || []).map((version) => (
+      version.id === currentVersion.id
+        ? {
+            ...version,
+            assessmentProgress: buildSampleAssessmentProgress(version.assessment, version.resources),
+          }
+        : version
+    )),
+  };
+  saveToStorage(refreshedData);
+  return refreshedData;
+}
+
 function refreshTrainingSampleDataIfNeeded(versionData, sceneConfig) {
-  if (!shouldRefreshTrainingSampleData(versionData, sceneConfig)) return versionData;
+  if (!shouldRefreshTrainingSampleData(versionData, sceneConfig)) {
+    return refreshTrainingAssessmentProgressSampleIfNeeded(versionData, sceneConfig);
+  }
   const refreshedData = {
     ...buildSceneInitialVersionData(sceneConfig),
     _dataVersion: versionData?._dataVersion,
@@ -594,6 +673,80 @@ function refreshTrainingSampleDataIfNeeded(versionData, sceneConfig) {
   };
   saveToStorage(refreshedData);
   return refreshedData;
+}
+
+function getResourceProgressTone(statusKey, percent = 0) {
+  if (statusKey === 'failed') return 'failed';
+  if (statusKey === 'pending') return 'pending';
+  if (statusKey === 'passed' || percent >= 100) return 'passed';
+  if (percent > 0) return 'active';
+  return 'empty';
+}
+
+function collectDescendantResourceKeys(resourceKey, childrenByParent) {
+  const result = [];
+  const queue = [...(childrenByParent.get(resourceKey) || [])];
+
+  while (queue.length) {
+    const item = queue.shift();
+    if (!item?.key) continue;
+    result.push(item.key);
+    queue.push(...(childrenByParent.get(item.key) || []));
+  }
+
+  return result;
+}
+
+function buildResourceAssessmentProgressMap(resources = [], assessment = {}, assessmentProgress = {}) {
+  const progress = buildLearnerAssessmentProgress({ resources, assessment, assessmentProgress });
+  if (!progress.summary.totalActivities) return new Map();
+
+  const childrenByParent = resources.reduce((map, resource) => {
+    const parentKey = resource.parentKey || '';
+    if (!parentKey) return map;
+    const list = map.get(parentKey) || [];
+    list.push(resource);
+    map.set(parentKey, list);
+    return map;
+  }, new Map());
+  const progressMap = new Map();
+  const setProgress = (key, payload) => {
+    if (!key) return;
+    const percent = Math.max(0, Math.min(100, Math.round(Number(payload.percent || 0))));
+    progressMap.set(key, {
+      ...payload,
+      percent,
+      tone: getResourceProgressTone(payload.statusKey, percent),
+    });
+  };
+
+  progress.stages.forEach((stage) => {
+    setProgress(stage.key, {
+      percent: stage.progressPercent,
+      statusKey: stage.progressPercent >= 100 ? 'passed' : 'in_progress',
+      label: `${stage.passedCount}/${stage.activities.length} 个活动达标`,
+      source: 'stage',
+    });
+
+    stage.activities.forEach((activity) => {
+      const activityPayload = {
+        percent: activity.progressPercent,
+        statusKey: activity.statusKey,
+        label: activity.statusLabel,
+        source: 'activity',
+      };
+      const activityResourceKey = activity.displayResourceKey || activity.key;
+      setProgress(activityResourceKey, activityPayload);
+      const resourcePayload = { ...activityPayload, source: 'resource' };
+      collectDescendantResourceKeys(activityResourceKey, childrenByParent).forEach((key) => setProgress(key, resourcePayload));
+      (activity.boundResources || [])
+        .filter((resource) => resource.key !== activity.key && resource.key !== activityResourceKey)
+        .forEach((resource) => setProgress(resource.key, resourcePayload));
+      (activity.record?.evidenceResourceKeys || []).forEach((key) => setProgress(key, resourcePayload));
+    });
+  });
+
+  return progressMap;
 }
 
 function loadTopicVersionData(topicConfig, sceneConfig, storageScopeKey) {
@@ -1094,8 +1247,20 @@ function TopicDetail({
     () => buildKnowledgeGraphMirrorResources(knowledgeGraphStages, knowledgeGraphStagePointEntries, resourceLibraryItemMap),
     [knowledgeGraphStagePointEntries, knowledgeGraphStages, resourceLibraryItemMap],
   );
-  const resources = knowledgeGraphGraph ? knowledgeGraphMirrorResources : sourceResources;
-  const canEditDisplayedResources = canEditCurrentVersion && !knowledgeGraphGraph;
+  const isLearnerProgressMode = activeTab === 'learner-progress';
+  const isKnowledgeGraphView = resourcePanelView === 'knowledgeGraph';
+  const resources = isKnowledgeGraphView && knowledgeGraphGraph && !isLearnerProgressMode ? knowledgeGraphMirrorResources : sourceResources;
+  const canEditDisplayedResources = canEditCurrentVersion && !isKnowledgeGraphView && !isLearnerProgressMode;
+  const resourceAssessmentProgressMap = useMemo(() => (
+    activeSceneType === 'TRAINING'
+      ? buildResourceAssessmentProgressMap(
+          sourceResources,
+          currentVersion?.assessment,
+          currentVersion?.assessmentProgress,
+        )
+      : new Map()
+  ), [activeSceneType, currentVersion?.assessment, currentVersion?.assessmentProgress, sourceResources]);
+  const showResourceAssessmentProgress = activeSceneType === 'TRAINING' && activeTab === 'knowledge' && !isKnowledgeGraphView;
   const rootItems = resources.filter((r) => r.parentKey === null);
   const getChildren = (folderKey) => resources.filter((r) => r.parentKey === folderKey);
   const selectedFolder = selectedFolderKey ? resources.find((r) => r.key === selectedFolderKey && r.isFolder) : null;
@@ -1175,7 +1340,6 @@ function TopicDetail({
   const aiPrimarySkills = aiSelectedSkill ? aiVisibleSkills : aiVisibleSkills.slice(0, aiVisibleSkillCount);
   const aiOverflowSkills = aiSelectedSkill ? [] : aiVisibleSkills.slice(aiVisibleSkillCount);
   const isAiMode = activeTab === 'ai';
-  const isKnowledgeGraphView = resourcePanelView === 'knowledgeGraph';
   const isAiKnowledgeGraphLayout = activeTab === 'ai' && isKnowledgeGraphView;
   const isAiKnowledgeGraphPreviewVisible = isAiKnowledgeGraphLayout && aiKnowledgeGraphPreviewOpen;
   const isStandaloneKnowledgeGraphView = isKnowledgeGraphView && !isAiMode;
@@ -1444,7 +1608,7 @@ function TopicDetail({
   }, [knowledgeGraphPickerOpen, resourcePanelView]);
 
   useEffect(() => {
-    if (activeTab === 'assessment' && resourcePanelView !== 'resources') {
+    if ((activeTab === 'assessment' || activeTab === 'learner-progress') && resourcePanelView !== 'resources') {
       setResourcePanelView('resources');
     }
   }, [activeTab, resourcePanelView]);
@@ -2553,12 +2717,56 @@ function TopicDetail({
     setExpandedFolders((prev) => {
       const next = new Set(prev);
       ancestorFolderKeys.forEach((folderKey) => next.add(folderKey));
+      if (resource.isFolder) next.add(resource.key);
       return next;
     });
     selectResourceItem(resource.key);
-    setSelectedFolderKey(resource.parentKey || null);
-    setPreviewItem(resource);
+    if (resource.isFolder) {
+      setSelectedFolderKey(resource.key);
+      setPreviewItem(null);
+    } else {
+      setSelectedFolderKey(resource.parentKey || null);
+      setPreviewItem(resource);
+    }
     setKnowledgeGraphDrawerOpen(false);
+  };
+
+  const findLearnerProgressActivityTarget = (activity) => {
+    if (!activity?.key) return null;
+    const displayResourceTarget = activity.displayResourceKey
+      ? resources.find((resource) => resource.key === activity.displayResourceKey)
+      : null;
+    if (displayResourceTarget) return displayResourceTarget;
+
+    const evidenceKeys = activity.record?.evidenceResourceKeys || [];
+    const evidenceTarget = evidenceKeys
+      .map((key) => resources.find((resource) => resource.key === key))
+      .find(Boolean);
+    if (evidenceTarget) return evidenceTarget;
+
+    const children = resources.filter((resource) => resource.parentKey === activity.key);
+    const firstFile = children.find((resource) => !resource.isFolder);
+    return firstFile || resources.find((resource) => resource.key === activity.key) || children[0] || null;
+  };
+
+  const handleOpenLearnerProgressResource = (resourceKey) => {
+    const target = resources.find((resource) => resource.key === resourceKey);
+    if (!target) {
+      message.warning('未找到关联的培训资料');
+      return;
+    }
+    setActiveTab('knowledge');
+    locateResourceInResourcePanel(target);
+  };
+
+  const handleOpenLearnerProgressActivity = (activity) => {
+    const target = findLearnerProgressActivityTarget(activity);
+    if (!target) {
+      message.warning('未找到该活动关联的培训资料');
+      return;
+    }
+    setActiveTab('knowledge');
+    locateResourceInResourcePanel(target);
   };
 
   const handleOpenKnowledgeGraphPicker = () => {
@@ -3985,6 +4193,39 @@ function TopicDetail({
     },
   };
 
+  const renderResourceAssessmentProgressMeter = (resourceKey, variant = 'tree') => {
+    if (!showResourceAssessmentProgress) return null;
+    const progressMeta = resourceAssessmentProgressMap.get(resourceKey);
+    if (!progressMeta) return null;
+    const progressSource = progressMeta.source || 'resource';
+    const stageStatusText = progressSource === 'stage'
+      ? progressMeta.tone === 'passed'
+        ? '阶段达标'
+        : progressMeta.tone === 'pending'
+          ? '待评阅'
+          : progressMeta.tone === 'failed'
+            ? '需补修'
+            : progressMeta.percent > 0
+              ? '推进中'
+              : '未开始'
+      : '';
+    return (
+      <span
+        className={`topic-resource-progress-meter topic-resource-progress-meter-${variant} topic-resource-progress-meter-${progressSource} topic-resource-progress-meter-${progressMeta.tone}`}
+        title={`${stageStatusText || progressMeta.label || '完成进度'} · ${progressMeta.percent}%`}
+      >
+        {stageStatusText ? <span className="topic-resource-progress-status">{stageStatusText}</span> : null}
+        <span className="topic-resource-progress-track" aria-hidden="true">
+          <span
+            className="topic-resource-progress-fill"
+            style={{ width: `${progressMeta.percent}%` }}
+          />
+        </span>
+        <span className="topic-resource-progress-number">{progressMeta.percent}%</span>
+      </span>
+    );
+  };
+
   const renderTreeItem = (item) => {
     const rowMenu = getItemMoreMenu(item, 'tree');
     const isSelected = selectedItemKey === item.key;
@@ -3995,12 +4236,19 @@ function TopicDetail({
     const treeDropPosition = dropIndicator?.itemKey === item.key && dropIndicator?.surface === 'tree'
       ? dropIndicator.position
       : null;
+    const treeProgressMeta = showResourceAssessmentProgress ? resourceAssessmentProgressMap.get(item.key) : null;
+    const treeProgressSource = treeProgressMeta?.source || '';
+    const treeAssessmentClass = treeProgressSource ? `project-item-assessment-${treeProgressSource}` : '';
+    const treeAssessmentToneClass = treeProgressMeta?.tone ? `project-item-assessment-tone-${treeProgressMeta.tone}` : '';
 
     if (item.isFolder) {
       const isExpanded = expandedFolders.has(item.key);
       const children = getChildren(item.key);
       return (
-        <div key={item.key} className="tree-folder-group">
+        <div
+          key={item.key}
+          className={`tree-folder-group ${treeProgressSource ? `tree-folder-group-assessment-${treeProgressSource}` : ''}`}
+        >
           <Dropdown
             overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
             menu={rowMenu}
@@ -4009,7 +4257,7 @@ function TopicDetail({
           >
             <div
               ref={(node) => setProjectItemNode(item.key, node)}
-              className={`project-item project-item-folder ${isInlineRenaming ? 'project-item-inline-renaming' : ''} ${isSelected ? 'project-item-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''} ${isDragOverFolder ? 'project-item-dragover' : ''} ${isDragging ? 'project-item-dragging' : ''} ${treeDropPosition === 'before' ? 'project-item-drop-before' : ''} ${treeDropPosition === 'after' ? 'project-item-drop-after' : ''}`}
+              className={`project-item project-item-folder ${treeAssessmentClass} ${treeAssessmentToneClass} ${isInlineRenaming ? 'project-item-inline-renaming' : ''} ${isSelected ? 'project-item-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''} ${isDragOverFolder ? 'project-item-dragover' : ''} ${isDragging ? 'project-item-dragging' : ''} ${treeDropPosition === 'before' ? 'project-item-drop-before' : ''} ${treeDropPosition === 'after' ? 'project-item-drop-after' : ''}`}
               draggable={!isInlineRenaming && canEditDisplayedResources}
               onDragStart={(event) => startResourceDrag(event, item)}
               onDragEnd={finishResourceDrag}
@@ -4038,10 +4286,13 @@ function TopicDetail({
                 })}
               </span>
               {isInlineRenaming ? renderInlineRenameInput('tree') : (
-                <span className="project-item-title">{item.name}</span>
+                <span className="project-item-title-stack">
+                  <span className="project-item-title">{item.name}</span>
+                  {renderResourceAssessmentProgressMeter(item.key, 'tree')}
+                </span>
               )}
               {!isInlineRenaming ? renderResourceTagDots(item) : null}
-              {!isInlineRenaming ? (
+              {!isLearnerProgressMode && !isInlineRenaming ? (
                 <span className="topic-tree-item-actions" onClick={(event) => event.stopPropagation()}>
                   {canEditDisplayedResources ? (
                     <button
@@ -4074,7 +4325,7 @@ function TopicDetail({
             </div>
           </Dropdown>
           {isExpanded && (
-            <div className="tree-children">
+            <div className={`tree-children ${treeProgressSource ? `tree-children-assessment-${treeProgressSource}` : ''}`}>
               {children.map((child) => renderTreeItem(child))}
             </div>
           )}
@@ -4092,7 +4343,7 @@ function TopicDetail({
       >
         <div
           ref={(node) => setProjectItemNode(item.key, node)}
-          className={`project-item project-item-child ${isInlineRenaming ? 'project-item-inline-renaming' : ''} ${isSelected ? 'project-item-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''} ${isDragging ? 'project-item-dragging' : ''} ${treeDropPosition === 'before' ? 'project-item-drop-before' : ''} ${treeDropPosition === 'after' ? 'project-item-drop-after' : ''}`}
+          className={`project-item project-item-child ${treeAssessmentClass} ${treeAssessmentToneClass} ${isInlineRenaming ? 'project-item-inline-renaming' : ''} ${isSelected ? 'project-item-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''} ${isDragging ? 'project-item-dragging' : ''} ${treeDropPosition === 'before' ? 'project-item-drop-before' : ''} ${treeDropPosition === 'after' ? 'project-item-drop-after' : ''}`}
           draggable={!isInlineRenaming && canEditDisplayedResources}
           onDragStart={(event) => startResourceDrag(event, item)}
           onDragEnd={finishResourceDrag}
@@ -4106,10 +4357,13 @@ function TopicDetail({
         >
           <span className="project-item-icon">{getResourceIcon(item)}</span>
           {isInlineRenaming ? renderInlineRenameInput('tree') : (
-            <span className="project-item-title">{item.name}</span>
+            <span className="project-item-title-stack">
+              <span className="project-item-title">{item.name}</span>
+              {renderResourceAssessmentProgressMeter(item.key, 'tree')}
+            </span>
           )}
           {!isInlineRenaming ? renderResourceTagDots(item) : null}
-          {!isInlineRenaming ? (
+          {!isLearnerProgressMode && !isInlineRenaming ? (
             <span className="topic-tree-item-actions" onClick={(event) => event.stopPropagation()}>
               <Dropdown
                 overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
@@ -4179,9 +4433,12 @@ function TopicDetail({
                 : getResourceIcon(item)}
             </span>
             {isInlineRenaming ? renderInlineRenameInput('list') : (
-              <span className={`topic-file-name ${item.isFolder ? 'topic-file-name-folder' : ''}`}>{item.name}</span>
+              <span className="topic-file-name-stack">
+                <span className={`topic-file-name ${item.isFolder ? 'topic-file-name-folder' : ''}`}>{item.name}</span>
+                {renderResourceAssessmentProgressMeter(item.key, 'list')}
+              </span>
             )}
-            {!isInlineRenaming ? (
+            {!isLearnerProgressMode && !isInlineRenaming ? (
               <span className="topic-file-row-actions" onClick={(event) => event.stopPropagation()}>
                 {item.isFolder && canEditDisplayedResources ? (
                   <button
@@ -5425,6 +5682,8 @@ function TopicDetail({
             resources={resources}
             assessment={currentVersion?.assessment}
             assessmentProgress={currentVersion?.assessmentProgress}
+            onOpenActivity={handleOpenLearnerProgressActivity}
+            onOpenResource={handleOpenLearnerProgressResource}
           />
         </div>
       ) : (
@@ -5449,15 +5708,17 @@ function TopicDetail({
 
                 {resourcePanelView === 'resources' ? (
                   <>
-                    <div className="panel-actions panel-actions-single">
-                      <div
-                        className={`panel-action-btn ${!canAddResourceAtCurrentLocation ? 'panel-action-btn-disabled' : ''}`}
-                        onClick={() => canAddResourceAtCurrentLocation && openAddResourceModal(currentListParentKey)}
-                      >
-                        <PlusOutlined style={{ fontSize: 12 }} />
-                        <span>{addResourceLabel}</span>
+                    {!isLearnerProgressMode ? (
+                      <div className="panel-actions panel-actions-single">
+                        <div
+                          className={`panel-action-btn ${!canAddResourceAtCurrentLocation ? 'panel-action-btn-disabled' : ''}`}
+                          onClick={() => canAddResourceAtCurrentLocation && openAddResourceModal(currentListParentKey)}
+                        >
+                          <PlusOutlined style={{ fontSize: 12 }} />
+                          <span>{addResourceLabel}</span>
+                        </div>
                       </div>
-                    </div>
+                    ) : null}
 
                     <div
                       className={`project-section ${dragOverSurface === 'tree' ? 'project-section-dragover' : ''}`}
@@ -5468,30 +5729,32 @@ function TopicDetail({
                     >
                       <div className="project-header">
                         <span className="project-title">项目</span>
-                        <Dropdown
-                          overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
-                          menu={{
-                            items: [
-                              {
-                                key: 'add-resource',
-                                icon: <FileAddOutlined />,
-                                label: addResourceLabel,
-                                onClick: () => openAddResourceModal(null),
-                                disabled: !canAddResourceAtRoot,
-                              },
-                              {
-                                key: 'new-folder',
-                                icon: <FolderAddOutlined />,
-                                label: '新建文件夹',
-                                onClick: () => createFolderAndStartRename(null, 'tree'),
-                                disabled: !canEditDisplayedResources,
-                              },
-                            ],
-                          }}
-                          trigger={['click']}
-                        >
-                          <MoreOutlined className="project-more-icon" />
-                        </Dropdown>
+                        {!isLearnerProgressMode ? (
+                          <Dropdown
+                            overlayClassName={TOPIC_DROPDOWN_OVERLAY_CLASS}
+                            menu={{
+                              items: [
+                                {
+                                  key: 'add-resource',
+                                  icon: <FileAddOutlined />,
+                                  label: addResourceLabel,
+                                  onClick: () => openAddResourceModal(null),
+                                  disabled: !canAddResourceAtRoot,
+                                },
+                                {
+                                  key: 'new-folder',
+                                  icon: <FolderAddOutlined />,
+                                  label: '新建文件夹',
+                                  onClick: () => createFolderAndStartRename(null, 'tree'),
+                                  disabled: !canEditDisplayedResources,
+                                },
+                              ],
+                            }}
+                            trigger={['click']}
+                          >
+                            <MoreOutlined className="project-more-icon" />
+                          </Dropdown>
+                        ) : null}
                       </div>
 
                       <div

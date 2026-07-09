@@ -28,6 +28,8 @@ const METRIC_KEY_BY_LABEL = {
   出勤次数: 'attendanceCount',
 };
 
+const UNNAMED_ACTIVITY_LABELS = new Set(['', '新活动', '未命名活动']);
+
 export function getDefaultAssessmentProgress() {
   return {
     currentLearnerId: DEFAULT_LEARNER_ID,
@@ -134,6 +136,26 @@ function buildActivityParentMap({ resources, assessment, stages, customActivitie
   return activityParentMap;
 }
 
+function getExplicitActivityName(activity) {
+  const name = String(activity?.name ?? '').trim();
+  return name && !UNNAMED_ACTIVITY_LABELS.has(name) ? name : '';
+}
+
+function getSingleBoundFolderActivityResource(customActivity, resourceMap) {
+  const boundResources = Array.isArray(customActivity?.boundResources) ? customActivity.boundResources : [];
+  if (boundResources.length !== 1) return null;
+  const boundResource = boundResources[0];
+  if (!boundResource?.key || !boundResource.isFolder) return null;
+  const resource = resourceMap.get(boundResource.key);
+  if (resource && !resource.isFolder) return null;
+  return resource || {
+    key: boundResource.key,
+    name: boundResource.name || '',
+    isFolder: true,
+    parentKey: boundResource.parentKey ?? null,
+  };
+}
+
 export function buildAssessmentTree(resources = [], assessment = {}) {
   const safeAssessment = assessment || {};
   const deletedSet = new Set(safeAssessment.deletedNodes || []);
@@ -154,7 +176,7 @@ export function buildAssessmentTree(resources = [], assessment = {}) {
     .filter((activity) => activity?.key && !deletedSet.has(activity.key))
     .map((activity) => ({
       key: activity.key,
-      name: activity.name || '未命名活动',
+      name: typeof activity.name === 'string' ? activity.name : '',
       isFolder: true,
       parentKey: activity.parentKey,
       isCustomActivity: true,
@@ -181,13 +203,27 @@ export function buildAssessmentTree(resources = [], assessment = {}) {
         const activity = customActivity || resourceActivity;
         if (!activity) return null;
         const rule = ruleMap.get(activityKey);
+        const singleBoundFolderActivity = customActivity
+          ? getSingleBoundFolderActivityResource(customActivity, resourceMap)
+          : null;
+        const explicitActivityName = customActivity ? getExplicitActivityName(customActivity) : activity.name;
+        const activityName = explicitActivityName
+          || singleBoundFolderActivity?.name
+          || rule.folderName
+          || activity.name
+          || '未命名活动';
         const boundResources = customActivity
           ? customActivity.boundResources
           : [{ key: activity.key, name: activity.name, isFolder: !!activity.isFolder }];
         return {
           key: activity.key,
-          name: activity.name || rule.folderName || '未命名活动',
-          path: resourceActivity ? getResourcePath(resourceActivity, resourceMap) : rule.folderName || activity.name || '',
+          name: activityName,
+          path: singleBoundFolderActivity
+            ? getResourcePath(singleBoundFolderActivity, resourceMap)
+            : resourceActivity
+              ? getResourcePath(resourceActivity, resourceMap)
+              : rule.folderName || activityName || '',
+          displayResourceKey: singleBoundFolderActivity?.key || resourceActivity?.key || '',
           activityType: rule.activityType || '',
           activityTypeLabel: ACTIVITY_TYPE_LABELS[rule.activityType || ''] || ACTIVITY_TYPE_LABELS.other,
           weight: Number(rule.weight || 0),
@@ -356,6 +392,30 @@ export function buildLearnerAssessmentProgress({ resources = [], assessment = {}
 export function buildSampleAssessmentProgress(assessment = {}, resources = []) {
   const fallback = getDefaultAssessmentProgress();
   const rules = Array.isArray(assessment?.rules) ? assessment.rules : [];
+  const ruleActivityKeys = new Set(rules.map((rule) => rule?.folderKey).filter(Boolean));
+  const firstStage = resources.find((resource) => (
+    resource?.isFolder && (resource.parentKey ?? null) === null
+  ));
+  const firstStageActivityKeys = firstStage
+    ? resources
+        .filter((resource) => resource?.isFolder && resource.parentKey === firstStage.key && ruleActivityKeys.has(resource.key))
+        .map((resource) => resource.key)
+    : [];
+  const fullStageActivityKeys = new Set(
+    firstStageActivityKeys.length
+      ? firstStageActivityKeys
+      : rules.slice(0, Math.min(3, rules.length)).map((rule) => rule?.folderKey).filter(Boolean),
+  );
+  const fullStageSample = {
+    completionRate: 100,
+    attendanceRate: 100,
+    submitRate: 100,
+    score: 100,
+    durationMinutes: 120,
+    attendanceCount: 3,
+    reviewStatus: 'passed',
+    note: '阶段整体达标示例：该活动已满进度完成，所在阶段汇总显示 100%。',
+  };
   const patterns = [
     { completionRate: 100, attendanceRate: 96, submitRate: 100, score: 88, durationMinutes: 82, attendanceCount: 3, reviewStatus: 'passed', note: '已完成学习要求，记录已归档。' },
     { completionRate: 94, attendanceRate: 92, submitRate: 100, score: 78, durationMinutes: 68, attendanceCount: 2, reviewStatus: 'passed', note: '完成情况良好，可继续推进下一阶段。' },
@@ -378,7 +438,7 @@ export function buildSampleAssessmentProgress(assessment = {}, resources = []) {
   return {
     ...fallback,
     activityRecords: rules.map((rule, index) => {
-      const sample = patterns[index % patterns.length];
+      const sample = fullStageActivityKeys.has(rule.folderKey) ? fullStageSample : patterns[index % patterns.length];
       const metricValues = {
         completionRate: sample.completionRate,
         attendanceRate: sample.attendanceRate,

@@ -433,7 +433,7 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
       return { draggable: true, disabled: false, reason: '' };
     }
     if (!activeBindingTarget.isCustomActivity) {
-      return { draggable: false, disabled: true, reason: '当前活动不支持拖入绑定资料' };
+      return { draggable: false, disabled: true, reason: '当前活动不支持拖入绑定目录' };
     }
     const availability = evaluateResourceBindingAvailability({
       resource: item,
@@ -663,7 +663,7 @@ function AssessmentConfig({ assessment, assessmentChat, resources, isDraft, onUp
           </div>
         </div>
         <div className="assessment-resource-drawer-tip">
-          可直接拖动资料到活动容器
+          可拖动一个资料目录到活动容器
         </div>
       </aside>
     );

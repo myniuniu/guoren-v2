@@ -193,10 +193,26 @@
   min-width: 0;
 }
 
-.learner-progress-activity-title-row strong {
+.learner-progress-activity-title-row strong,
+.learner-progress-activity-title-link {
   color: #1f2937;
   font-size: 14px;
+  font-weight: 700;
   line-height: 1.35;
+}
+
+.learner-progress-activity-title-link {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.18s ease;
+}
+
+.learner-progress-activity-title-link:hover {
+  color: #0f766e;
 }
 
 .learner-progress-activity-meta {
@@ -226,6 +242,40 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
+}
+
+.learner-progress-evidence-list {
+  display: inline-flex;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.learner-progress-evidence-entry {
+  display: inline-flex;
+  min-width: 0;
+}
+
+.learner-progress-evidence-separator {
+  color: #94a3b8;
+}
+
+.learner-progress-evidence-link {
+  max-width: 220px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  color: #0f766e;
+  cursor: pointer;
+  font: inherit;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.learner-progress-evidence-link:hover {
+  color: #0d9488;
+  text-decoration: underline;
 }
 
 .learner-progress-activity-value {
@@ -289,9 +339,23 @@
   grid-template-columns: minmax(0, 1fr) 16px;
   gap: 8px;
   align-items: center;
+  width: 100%;
   padding: 10px;
+  border: 0;
   border-radius: 10px;
   background: #f8fafc;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.18s ease, transform 0.18s ease;
+}
+
+.learner-progress-next-item:hover:not(:disabled) {
+  background: #eefdf9;
+  transform: translateY(-1px);
+}
+
+.learner-progress-next-item:disabled {
+  cursor: default;
 }
 
 .learner-progress-next-item strong,

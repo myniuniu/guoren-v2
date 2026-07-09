@@ -2069,6 +2069,31 @@
   padding-left: 18px;
 }
 
+.tree-folder-group-assessment-stage > .tree-children {
+  padding-left: 20px;
+}
+
+.tree-folder-group-assessment-activity {
+  margin: 1px 0 4px;
+}
+
+.tree-folder-group-assessment-activity > .tree-children {
+  position: relative;
+  margin: 1px 0 3px 10px;
+  padding-left: 20px;
+  border-left: 1px dashed rgba(148, 163, 184, 0.34);
+}
+
+.tree-folder-group-assessment-activity > .tree-children::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -1px;
+  width: 1px;
+  height: 10px;
+  background: linear-gradient(180deg, rgba(148, 163, 184, 0), rgba(148, 163, 184, 0.34));
+}
+
 .project-item {
   display: flex;
   align-items: center;
@@ -2210,8 +2235,76 @@
   color: var(--td-library-selected-meta);
 }
 
-.project-item-title {
+.project-item-assessment-activity {
+  --tree-assessment-row-color: #3b82f6;
+  min-height: 42px;
+  margin: 0;
+  padding-left: 9px;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--tree-assessment-row-color) 34%, transparent);
+}
+
+.project-item-assessment-activity:hover {
+  border-color: color-mix(in srgb, var(--tree-assessment-row-color) 16%, transparent);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--tree-assessment-row-color) 7%, transparent) 0%, rgba(255, 255, 255, 0.58) 58%, transparent 100%);
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--tree-assessment-row-color) 46%, transparent);
+}
+
+.project-item-assessment-activity.project-item-selected {
+  border-color: color-mix(in srgb, var(--tree-assessment-row-color) 20%, rgba(221, 227, 235, 0.64));
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--tree-assessment-row-color) 8%, #fff) 0%, var(--td-selected) 82%) !important;
+  box-shadow:
+    inset 2px 0 0 color-mix(in srgb, var(--tree-assessment-row-color) 54%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.68);
+}
+
+.project-item-assessment-resource {
+  min-height: 38px;
+  padding-left: 8px;
+  padding-right: 56px;
+  border-radius: 10px;
+}
+
+.project-item-assessment-resource .project-item-icon {
+  opacity: 0.82;
+  transform: scale(0.92);
+}
+
+.project-item-assessment-resource .project-item-title {
+  color: #475569;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.project-item-assessment-tone-passed {
+  --tree-assessment-row-color: #10b981;
+}
+
+.project-item-assessment-tone-pending {
+  --tree-assessment-row-color: #d97706;
+}
+
+.project-item-assessment-tone-failed {
+  --tree-assessment-row-color: #dc2626;
+}
+
+.project-item-assessment-tone-empty {
+  --tree-assessment-row-color: #94a3b8;
+}
+
+.project-item-title-stack {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.project-item-title {
+  display: block;
   min-width: 0;
   overflow: hidden;
   color: #303846;
@@ -2227,6 +2320,168 @@
   gap: 4px;
   margin-left: auto;
   flex-shrink: 0;
+}
+
+.topic-resource-progress-meter {
+  --resource-progress-color: #94a3b8;
+  --resource-progress-soft: rgba(148, 163, 184, 0.14);
+  --resource-progress-glow: rgba(148, 163, 184, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: min(100%, 154px);
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+
+.topic-resource-progress-meter-tree {
+  max-width: 146px;
+}
+
+.topic-resource-progress-meter-list {
+  max-width: 176px;
+}
+
+.topic-resource-progress-meter-stage {
+  position: relative;
+  width: min(100%, 186px);
+  max-width: 186px;
+  min-height: 22px;
+  gap: 8px;
+  padding: 4px 7px 4px 6px;
+  border: 1px solid color-mix(in srgb, var(--resource-progress-color) 28%, transparent);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 14% 50%, color-mix(in srgb, var(--resource-progress-color) 18%, transparent) 0, transparent 46%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, var(--resource-progress-soft) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 7px 16px var(--resource-progress-glow);
+}
+
+.topic-resource-progress-status {
+  flex-shrink: 0;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--resource-progress-color) 13%, #fff);
+  color: var(--resource-progress-color);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.topic-resource-progress-meter-activity,
+.topic-resource-progress-meter-resource {
+  opacity: 0.92;
+}
+
+.topic-resource-progress-meter-resource {
+  width: min(100%, 132px);
+  max-width: 132px;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  opacity: 0.72;
+}
+
+.topic-resource-progress-track {
+  position: relative;
+  flex: 1;
+  min-width: 42px;
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(226, 232, 240, 0.86) 0%, rgba(241, 245, 249, 0.88) 100%);
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+.topic-resource-progress-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--resource-progress-color) 78%, #fff) 0%, var(--resource-progress-color) 72%, color-mix(in srgb, var(--resource-progress-color) 84%, #fff) 100%);
+  min-width: 4px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    0 0 10px var(--resource-progress-glow);
+}
+
+.topic-resource-progress-meter-stage .topic-resource-progress-track {
+  min-width: 54px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.topic-resource-progress-meter-resource .topic-resource-progress-track {
+  height: 4px;
+  min-width: 34px;
+}
+
+.topic-resource-progress-meter-resource .topic-resource-progress-fill {
+  min-width: 3px;
+  opacity: 0.86;
+}
+
+.topic-resource-progress-number {
+  flex-shrink: 0;
+  min-width: 31px;
+  color: var(--resource-progress-color);
+  text-align: right;
+}
+
+.topic-resource-progress-meter-active {
+  --resource-progress-color: #2563eb;
+  --resource-progress-soft: rgba(37, 99, 235, 0.1);
+  --resource-progress-glow: rgba(37, 99, 235, 0.2);
+}
+
+.topic-resource-progress-meter-empty {
+  --resource-progress-color: #94a3b8;
+  --resource-progress-soft: rgba(148, 163, 184, 0.1);
+  --resource-progress-glow: rgba(148, 163, 184, 0.12);
+}
+
+.topic-resource-progress-meter-pending {
+  --resource-progress-color: #b45309;
+  --resource-progress-soft: rgba(245, 158, 11, 0.12);
+  --resource-progress-glow: rgba(245, 158, 11, 0.2);
+}
+
+.topic-resource-progress-meter-passed {
+  --resource-progress-color: #059669;
+  --resource-progress-soft: rgba(16, 185, 129, 0.12);
+  --resource-progress-glow: rgba(16, 185, 129, 0.2);
+  color: #047857;
+}
+
+.topic-resource-progress-meter-failed {
+  --resource-progress-color: #dc2626;
+  --resource-progress-soft: rgba(220, 38, 38, 0.1);
+  --resource-progress-glow: rgba(220, 38, 38, 0.18);
+}
+
+.project-item-selected .topic-resource-progress-track,
+.topic-file-row-selected .topic-resource-progress-track {
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.project-item-selected .topic-resource-progress-meter-stage,
+.topic-file-row-selected .topic-resource-progress-meter-stage {
+  background:
+    radial-gradient(circle at 14% 50%, color-mix(in srgb, var(--resource-progress-color) 24%, transparent) 0, transparent 48%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, color-mix(in srgb, var(--resource-progress-color) 10%, #fff) 100%);
+  border-color: color-mix(in srgb, var(--resource-progress-color) 34%, rgba(255, 255, 255, 0.8));
+}
+
+.project-item:hover .topic-resource-progress-meter-resource,
+.topic-file-row:hover .topic-resource-progress-meter-resource {
+  opacity: 0.9;
 }
 
 .topic-tree-item-actions {
@@ -3794,6 +4049,7 @@
 
 .topic-file-row {
   position: relative;
+  min-height: 54px;
   border-bottom: 1px solid rgba(220, 226, 234, 0.56);
   cursor: default;
   transition: background 0.08s ease;
@@ -3908,8 +4164,16 @@
   color: #8a94a6;
 }
 
-.topic-file-name {
+.topic-file-name-stack {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.topic-file-name {
+  display: block;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;

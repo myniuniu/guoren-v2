@@ -39,18 +39,27 @@ function formatActual(activity) {
   return `${formatNumber(activity.actualValue)}${activity.metricUnit}`;
 }
 
-function getEvidenceNames(activity, resourceMap) {
+function getEvidenceItems(activity, resourceMap) {
   const keys = activity.record?.evidenceResourceKeys || [];
   return keys
-    .map((key) => resourceMap.get(key)?.name)
+    .map((key) => resourceMap.get(key))
     .filter(Boolean)
-    .slice(0, 2);
+    .slice(0, 2)
+    .map((resource) => ({ key: resource.key, name: resource.name }));
 }
 
-function LearnerAssessmentProgressView({ resources = [], assessment = {}, assessmentProgress = {} }) {
+function LearnerAssessmentProgressView({
+  resources = [],
+  assessment = {},
+  assessmentProgress = {},
+  onOpenActivity,
+  onOpenResource,
+}) {
   const resourceMap = new Map(resources.map((resource) => [resource.key, resource]));
   const progress = buildLearnerAssessmentProgress({ resources, assessment, assessmentProgress });
   const { learner, stages, summary } = progress;
+  const canOpenActivity = typeof onOpenActivity === 'function';
+  const canOpenResource = typeof onOpenResource === 'function';
 
   if (!summary.totalActivities) {
     return (
@@ -123,12 +132,22 @@ function LearnerAssessmentProgressView({ resources = [], assessment = {}, assess
 
               <div className="learner-progress-activity-list">
                 {stage.activities.map((activity) => {
-                  const evidenceNames = getEvidenceNames(activity, resourceMap);
+                  const evidenceItems = getEvidenceItems(activity, resourceMap);
                   return (
                     <div key={activity.key} className={`learner-progress-activity learner-progress-activity-${activity.statusKey}`}>
                       <div className="learner-progress-activity-main">
                         <div className="learner-progress-activity-title-row">
-                          <strong>{activity.name}</strong>
+                          {canOpenActivity ? (
+                            <button
+                              type="button"
+                              className="learner-progress-activity-title-link"
+                              onClick={() => onOpenActivity(activity)}
+                            >
+                              {activity.name}
+                            </button>
+                          ) : (
+                            <strong>{activity.name}</strong>
+                          )}
                           <Tag color={STATUS_TONE[activity.statusKey]}>{activity.statusLabel}</Tag>
                         </div>
                         <div className="learner-progress-activity-meta">
@@ -140,10 +159,28 @@ function LearnerAssessmentProgressView({ resources = [], assessment = {}, assess
                         {activity.record?.note ? (
                           <div className="learner-progress-activity-note">{activity.record.note}</div>
                         ) : null}
-                        {evidenceNames.length ? (
+                        {evidenceItems.length ? (
                           <div className="learner-progress-evidence">
                             <FileTextOutlined />
-                            <span>{evidenceNames.join('、')}</span>
+                            <span>关联资料</span>
+                            <span className="learner-progress-evidence-list">
+                              {evidenceItems.map((item, index) => (
+                                <span key={item.key} className="learner-progress-evidence-entry">
+                                  {index > 0 ? <span className="learner-progress-evidence-separator">、</span> : null}
+                                  {canOpenResource ? (
+                                    <button
+                                      type="button"
+                                      className="learner-progress-evidence-link"
+                                      onClick={() => onOpenResource(item.key)}
+                                    >
+                                      {item.name}
+                                    </button>
+                                  ) : (
+                                    item.name
+                                  )}
+                                </span>
+                              ))}
+                            </span>
                           </div>
                         ) : null}
                       </div>
@@ -168,13 +205,19 @@ function LearnerAssessmentProgressView({ resources = [], assessment = {}, assess
           {summary.nextActions.length ? (
             <div className="learner-progress-next-list">
               {summary.nextActions.map((activity) => (
-                <div key={activity.key} className="learner-progress-next-item">
+                <button
+                  key={activity.key}
+                  type="button"
+                  className="learner-progress-next-item"
+                  onClick={() => canOpenActivity && onOpenActivity(activity)}
+                  disabled={!canOpenActivity}
+                >
                   <div>
                     <strong>{activity.name}</strong>
                     <span>{activity.required ? '必修活动' : '选修活动'} · {formatCondition(activity)}</span>
                   </div>
                   <RightOutlined />
-                </div>
+                </button>
               ))}
             </div>
           ) : (

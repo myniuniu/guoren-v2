@@ -414,7 +414,14 @@ function StageNode({ data, selected }) {
       <div className="kg-structured-stage-body">
         {data.pointCount ? null : (
           <div className="kg-structured-stage-empty">
-            {data.readOnly ? '当前分区还没有知识点。' : '可在这里拖入已有知识点进行编排。'}
+            {data.readOnly ? (
+              '当前分区还没有知识点。'
+            ) : (
+              <div className="kg-structured-stage-empty-copy">
+                <div className="kg-structured-stage-empty-title">点击右上角“+”新建知识点</div>
+                <div className="kg-structured-stage-empty-tip">或将已有知识点拖到此处，开始编排</div>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -138,7 +138,7 @@ function ActivityNode({ data, selected }) {
       Modal.confirm({
         title: data.isCustomActivity ? '确认删除该活动容器？' : '确认删除该活动？',
         content: data.isCustomActivity
-          ? `「${data.label || '活动'}」及其已绑定资料、规则将被删除。`
+          ? `「${data.label || '活动'}」及其已绑定目录、规则将被删除。`
           : `「${data.label || '活动'}」将从当前考核画布移除，资料仍会保留。`,
         okText: '删除',
         cancelText: '取消',
@@ -261,9 +261,9 @@ function ActivityNode({ data, selected }) {
       </div>
       {(data.isCustomActivity || (data.boundResources && data.boundResources.length > 0)) && (
         <div className="flow-activity-binding">
-          <div className="flow-activity-binding-title">已绑定资料 · {data.boundResources?.length || 0}</div>
+          <div className="flow-activity-binding-title">已绑定目录 · {data.boundResources?.length || 0}</div>
           {(!data.boundResources || data.boundResources.length === 0) ? (
-            <div className="flow-activity-binding-empty">拖入资料以绑定</div>
+            <div className="flow-activity-binding-empty">拖入一个资料目录以绑定</div>
           ) : (
             <div className="flow-activity-binding-list nodrag nopan" onMouseDown={stop} onWheelCapture={stop}>
               {data.boundResources.map((b) => (
@@ -312,12 +312,35 @@ function formatRuleLabel(rule) {
 
 const DEFAULT_RULE = { type: 'none', threshold: 80, note: '' };
 const DEFAULT_ACTIVITY_NAME = '新活动';
+const UNNAMED_ACTIVITY_LABELS = new Set(['', DEFAULT_ACTIVITY_NAME, '未命名活动']);
 const STAGE_NODE_WIDTH = 240;
 const ACTIVITY_NODE_X = 8;
 const ACTIVITY_NODE_WIDTH = STAGE_NODE_WIDTH - ACTIVITY_NODE_X * 2;
 const ACTIVITY_NODE_TOP_GAP = 6;
 const STAGE_HEADER_H = 54;
 const ACTIVITY_SLOT_H = 150;
+
+function getExplicitActivityName(activity) {
+  const name = String(activity?.name ?? '').trim();
+  return name && !UNNAMED_ACTIVITY_LABELS.has(name) ? name : '';
+}
+
+function getSingleBoundFolderActivityResource(activity, resources) {
+  const boundResources = Array.isArray(activity?.boundResources) ? activity.boundResources : [];
+  if (boundResources.length !== 1) return null;
+  const boundResource = boundResources[0];
+  if (!boundResource?.key || !boundResource.isFolder) return null;
+  const resource = resources.find((item) => item.key === boundResource.key);
+  if (resource && !resource.isFolder) return null;
+  return resource || boundResource;
+}
+
+function getActivityDisplayName(activity, resources) {
+  if (!activity?.isCustomActivity) return activity?.name || DEFAULT_ACTIVITY_NAME;
+  return getExplicitActivityName(activity)
+    || getSingleBoundFolderActivityResource(activity, resources)?.name
+    || DEFAULT_ACTIVITY_NAME;
+}
 
 function makeFlowKey(prefix) {
   return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
@@ -346,8 +369,17 @@ export function createResourcePayload(resource) {
 }
 
 export function evaluateResourceBindingAvailability({ resource, boundKeys, activityType, resources }) {
-  if (boundKeys.has(resource.key)) {
+  const currentBoundKeys = boundKeys || new Set();
+  if (currentBoundKeys.has(resource.key)) {
     return { selectable: false, reason: '已绑定' };
+  }
+
+  if (!resource.isFolder) {
+    return { selectable: false, reason: '活动只能绑定资料目录' };
+  }
+
+  if (currentBoundKeys.size > 0) {
+    return { selectable: false, reason: '每个活动只能绑定一个目录' };
   }
 
   const payload = createResourcePayload(resource);
@@ -374,7 +406,7 @@ function bindResourceToCustomActivity({ assessment, activityKey, payload, resour
   const customActivities = assessment.customActivities || [];
   const activityIndex = customActivities.findIndex((item) => item.key === activityKey);
   if (activityIndex === -1) {
-    return { ok: false, level: 'error', message: '未找到活动容器，无法绑定资料' };
+    return { ok: false, level: 'error', message: '未找到活动容器，无法绑定目录' };
   }
 
   const target = customActivities[activityIndex];
@@ -382,9 +414,18 @@ function bindResourceToCustomActivity({ assessment, activityKey, payload, resour
     return { ok: false, level: 'warning', message: '不能绑定自身' };
   }
 
-  const exists = (target.boundResources || []).some((item) => item.key === payload.key);
+  if (!payload.isFolder) {
+    return { ok: false, level: 'warning', message: '一个活动只能绑定一个资料目录，请拖入目录' };
+  }
+
+  const existingBindings = target.boundResources || [];
+  const exists = existingBindings.some((item) => item.key === payload.key);
   if (exists) {
     return { ok: false, level: 'info', message: `「${payload.name}」已绑定，无需重复` };
+  }
+
+  if (existingBindings.length > 0) {
+    return { ok: false, level: 'warning', message: '每个活动只能绑定一个资料目录，请先移除已有目录后再绑定' };
   }
 
   const targetRule = (assessment.rules || []).find((rule) => rule.folderKey === activityKey);
@@ -438,8 +479,8 @@ function bindResourceToCustomActivity({ assessment, activityKey, payload, resour
   }
 
   const successMessage = autoFilledType
-    ? `已绑定「${payload.name}」到「${target.name || '活动'}」，活动类型已自动设为「${activityTypeLabelMap[autoFilledType] || autoFilledType}」`
-    : `已绑定「${payload.name}」到「${target.name || '活动'}」`;
+    ? `已绑定目录「${payload.name}」到「${target.name || '活动'}」，活动类型已自动设为「${activityTypeLabelMap[autoFilledType] || autoFilledType}」`
+    : `已绑定目录「${payload.name}」到「${target.name || '活动'}」`;
 
   return { ok: true, nextAssessment, autoFilledType, message: successMessage };
 }
@@ -945,6 +986,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
       // 活动节点——作为阶段子节点嵌套在阶段容器内
       activities.forEach((act, aIdx) => {
         const rule = assessment.rules.find((r) => r.folderKey === act.key);
+        const activityDisplayName = getActivityDisplayName(act, resources);
         const actOrderIndex = actOrderIndexMap.get(act.key) ?? aIdx;
         const createAdjacentActivity = (insertIndex, directionLabel) => () => {
           if (!isDraft) return;
@@ -967,7 +1009,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
           style: { width: ACTIVITY_NODE_WIDTH },
           deletable: false,
           data: {
-            label: act.name,
+            label: activityDisplayName,
             folderKey: act.key,
             isCustomActivity: !!act.isCustomActivity,
             boundResources: act.boundResources || [],
@@ -1019,7 +1061,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
                       const actLabel = activityTypeLabelMap[value] || value;
                       const allowedLabels = allowed.map((t) => resourceTypeLabelMap[t] || t).join('、');
                       const invalidLabels = invalid.map((t) => resourceTypeLabelMap[t] || t).join('、');
-                      message.warning(`已绑定资料中包含${invalidLabels}类型，与「${actLabel}」不匹配（仅可绑定：${allowedLabels}）。请先移除不匹配的资料再切换类型`);
+                      message.warning(`已绑定目录中包含${invalidLabels}类型，与「${actLabel}」不匹配（仅可绑定：${allowedLabels}）。请先移除不匹配的目录再切换类型`);
                       // 强制刷新该节点，让 Select 重读 value prop 回滚显示
                       setNodes((nds) =>
                         nds.map((n) =>
@@ -1054,7 +1096,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
             onUnbindResource: (boundResource) => {
               if (!isDraft || !boundResource) return;
               Modal.confirm({
-                title: '确认移除该绑定资料？',
+                title: '确认移除该绑定目录？',
                 content: act.isCustomActivity
                   ? `「${boundResource.name}」将从该活动容器中移除。`
                   : `「${boundResource.name}」将从当前活动中移除，资料本身仍会保留。`,
@@ -1485,7 +1527,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
             const actLabel = activityTypeLabelMap[value] || value;
             const allowedLabels = allowed.map((t) => resourceTypeLabelMap[t] || t).join('、');
             const invalidLabels = invalid.map((t) => resourceTypeLabelMap[t] || t).join('、');
-            message.warning(`已绑定资料中包含${invalidLabels}类型，与「${actLabel}」不匹配（仅可绑定：${allowedLabels}）。请先移除不匹配的资料再切换类型`);
+            message.warning(`已绑定目录中包含${invalidLabels}类型，与「${actLabel}」不匹配（仅可绑定：${allowedLabels}）。请先移除不匹配的目录再切换类型`);
             return;
           }
         }
@@ -1921,7 +1963,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
               );
               e.dataTransfer.effectAllowed = 'move';
             }}
-            title="拖拽到某个阶段内创建一个空活动容器，可再拖入资料进行绑定"
+            title="拖拽到某个阶段内创建一个空活动容器，可再拖入一个资料目录进行绑定"
           >
             <AppstoreOutlined style={{ color: '#13c2c2' }} />
             <span>活动容器</span>
@@ -2293,9 +2335,9 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
               </div>
               {isCustomActivity ? (
                 <>
-                  <Divider style={{ margin: '12px 0' }}>已绑定资料 ({customAct.boundResources?.length || 0})</Divider>
+                  <Divider style={{ margin: '12px 0' }}>已绑定目录 ({customAct.boundResources?.length || 0})</Divider>
                   {(!customAct.boundResources || customAct.boundResources.length === 0) ? (
-                    <div className="inspector-empty-tip">尚未绑定资料，可从画布左上角资料面板拖入卡片</div>
+                    <div className="inspector-empty-tip">尚未绑定目录，可从画布左上角资料面板拖入一个资料目录</div>
                   ) : (
                     <div className="inspector-binding-list">
                       {customAct.boundResources.map((b) => (
@@ -2309,7 +2351,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
                               icon={<CloseOutlined />}
                               onClick={() => {
                                 Modal.confirm({
-                                  title: '确认移除该绑定资料？',
+                                  title: '确认移除该绑定目录？',
                                   content: `「${b.name}」将从该活动容器中移除。`,
                                   okText: '移除',
                                   cancelText: '取消',
@@ -2333,7 +2375,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
                 </>
               ) : folder.isFolder ? (
                 <>
-                  <Divider style={{ margin: '12px 0' }}>已绑定资料 (1)</Divider>
+                  <Divider style={{ margin: '12px 0' }}>已绑定目录 (1)</Divider>
                   <div className="inspector-binding-list">
                     <div className="inspector-binding-item">
                       <FolderOutlined />
@@ -2345,8 +2387,8 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
                           icon={<CloseOutlined />}
                           onClick={() => {
                             Modal.confirm({
-                              title: '确认移除该绑定资料？',
-                              content: `「${folder.name}」将从当前活动中移除，资料本身仍会保留。`,
+                              title: '确认移除该绑定目录？',
+                              content: `「${folder.name}」将从当前活动中移除，目录本身仍会保留。`,
                               okText: '移除',
                               cancelText: '取消',
                               okButtonProps: { danger: true },
@@ -2364,7 +2406,7 @@ function AssessmentFlowView({ resources, assessment, isDraft, onUpdateAssessment
                   <Popconfirm
                     title={isCustomActivity ? '确认删除该活动容器？' : '确认从画布移除该活动？'}
                     description={isCustomActivity
-                      ? `「${folder.name}」及其已绑定资料、规则将被删除（不可恢复）`
+                      ? `「${folder.name}」及其已绑定目录、规则将被删除（不可恢复）`
                       : `「${folder.name}」将从画布移除（仍保留于资料区，可重新拖入）`}
                     okText={isCustomActivity ? '删除' : '移除'}
                     okButtonProps={{ danger: true }}
