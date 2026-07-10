@@ -145,7 +145,6 @@ export default function SceneCreateModal({
         <div className="scene-create-modal-titlebar">
           <span>{modalTitle}</span>
           <div className="scene-create-modal-actions">
-            <Button onClick={onCancel}>取消</Button>
             <Button type="primary" onClick={handleOk}>{modalOkText}</Button>
           </div>
         </div>
