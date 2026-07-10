@@ -3,12 +3,11 @@ import { Avatar, Button, Dropdown, Input, Select, Tag, message } from 'antd';
 import {
   BookOutlined,
   CompassOutlined,
+  DownOutlined,
   EllipsisOutlined,
   PlusOutlined,
-  RobotOutlined,
   SearchOutlined,
   ThunderboltOutlined,
-  UserOutlined,
 } from '@ant-design/icons';
 import ResourceLibrarySaveModal from '../resourceLib/ResourceLibrarySaveModal.jsx';
 import './LuckyModule.css';
@@ -48,12 +47,15 @@ const NAV_ITEMS = [
   { key: 'discover', label: '发现', icon: <CompassOutlined /> },
   { key: 'library', label: '库', icon: <BookOutlined /> },
   { key: 'skills', label: '技能', icon: <ThunderboltOutlined /> },
-  { key: 'partners', label: '智能伙伴', icon: <RobotOutlined /> },
-  { key: 'assistant', label: '小助手', icon: <UserOutlined /> },
+];
+
+const PARTNER_AGENT_ITEMS = [
+  { key: 'assistant', label: '小助手', marker: '小' },
 ];
 
 const CUSTOM_AGENT_ITEMS = [
-  { key: 'navigator', label: '学海导航者' },
+  { key: 'programmer', label: '编程助手', marker: '编' },
+  { key: 'navigator', label: '学海导航者', marker: '学' },
 ];
 
 const HISTORY_GROUPS = [
@@ -127,6 +129,15 @@ const SECTION_COPY = {
       { title: '灵感便签', desc: '快速记下想法并自动归类。', accent: 'blue' },
       { title: '会议纪要', desc: '从聊天或录音快速生成纪要。', accent: 'gold' },
       { title: '今日总结', desc: '按任务与成果整理每日输出。', accent: 'green' },
+    ],
+  },
+  programmer: {
+    title: '编程助手',
+    description: '面向流程配置、脚本整理和工具搭建的专属智能体。',
+    cards: [
+      { title: '脚本整理', desc: '把零散需求拆成可执行步骤。', accent: 'blue' },
+      { title: '接口联调', desc: '辅助梳理字段、参数和异常路径。', accent: 'gold' },
+      { title: '问题定位', desc: '根据报错和上下文给出排查建议。', accent: 'green' },
     ],
   },
   navigator: {
@@ -238,6 +249,8 @@ function LuckyModule() {
   const [currentPage, setCurrentPage] = useState(1);
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [savingItem, setSavingItem] = useState(null);
+  const [isCustomAgentCollapsed, setIsCustomAgentCollapsed] = useState(false);
+  const [isCustomAgentExpandedByUser, setIsCustomAgentExpandedByUser] = useState(false);
   const sidebarWidthRef = useRef(sidebarWidth);
 
   useEffect(() => {
@@ -268,6 +281,18 @@ function LuckyModule() {
     window.addEventListener('pointerup', handlePointerUp);
   }, [sidebarWidth]);
 
+  const handleSidebarScroll = useCallback((event) => {
+    const nextCollapsed = event.currentTarget.scrollTop > 4;
+    if (!nextCollapsed) {
+      setIsCustomAgentExpandedByUser(false);
+    }
+    setIsCustomAgentCollapsed((prev) => (prev === nextCollapsed ? prev : nextCollapsed));
+  }, []);
+
+  const handleExpandCustomAgents = useCallback(() => {
+    setIsCustomAgentExpandedByUser(true);
+  }, []);
+
   const filteredRows = useMemo(() => {
     const normalizedKeyword = keyword.trim().toLowerCase();
     return LIBRARY_ROWS.filter((item) => {
@@ -297,6 +322,7 @@ function LuckyModule() {
 
   const sectionCopy = SECTION_COPY[activeSection];
   const showLibrary = activeSection === 'library';
+  const isCustomAgentListCollapsed = isCustomAgentCollapsed && !isCustomAgentExpandedByUser;
   const handleOpenSaveModal = (item) => {
     setSavingItem(item);
     setSaveModalOpen(true);
@@ -327,49 +353,88 @@ function LuckyModule() {
           ))}
         </div>
 
-        <div className="lucky-sidebar-group">
-          <div className="lucky-sidebar-group-title">自定义智能体</div>
-          <Button
-            type="text"
-            size="small"
-            className="lucky-sidebar-add-btn"
-            icon={<PlusOutlined />}
-            onClick={() => message.success('已打开自定义智能体创建入口')}
-          />
-        </div>
-        <div className="lucky-sidebar-nav lucky-sidebar-nav-compact">
-          {CUSTOM_AGENT_ITEMS.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              className={`lucky-nav-item ${activeSection === item.key ? 'is-active' : ''}`}
-              onClick={() => setActiveSection(item.key)}
-            >
-              <span className="lucky-nav-icon lucky-nav-icon-dot" />
-              <span className="lucky-nav-label">{item.label}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="lucky-history">
-          {HISTORY_GROUPS.map((group) => (
-            <div key={group.title} className="lucky-history-group">
-              <div className="lucky-history-title">{group.title}</div>
-              <div className="lucky-history-list">
-                {group.items.map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    className="lucky-history-item"
-                    onClick={() => message.info(`已打开会话：${item}`)}
-                  >
-                    <span className="lucky-history-bullet" />
-                    <span className="lucky-history-text">{item}</span>
-                  </button>
-                ))}
-              </div>
+        <div
+          className={`lucky-sidebar-scroll-area ${isCustomAgentListCollapsed ? 'is-agent-collapsed' : ''}`}
+          onScroll={handleSidebarScroll}
+        >
+          <div className="lucky-agent-section">
+            <div className="lucky-agent-section-title">智能伙伴</div>
+            <div className="lucky-agent-list">
+              {PARTNER_AGENT_ITEMS.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  className={`lucky-agent-item ${activeSection === item.key ? 'is-active' : ''}`}
+                  onClick={() => setActiveSection(item.key)}
+                >
+                  <span className="lucky-agent-avatar">{item.marker}</span>
+                  <span className="lucky-agent-label">{item.label}</span>
+                </button>
+              ))}
             </div>
-          ))}
+          </div>
+
+          <div className="lucky-sidebar-group">
+            <div className="lucky-sidebar-group-title">自定义智能体</div>
+            <div className="lucky-sidebar-group-actions">
+              {isCustomAgentListCollapsed ? (
+                <Button
+                  type="text"
+                  size="small"
+                  className="lucky-sidebar-expand-btn"
+                  icon={<DownOutlined />}
+                  aria-label="展开自定义智能体"
+                  title="展开自定义智能体"
+                  onClick={handleExpandCustomAgents}
+                />
+              ) : null}
+              <Button
+                type="text"
+                size="small"
+                className="lucky-sidebar-add-btn"
+                icon={<PlusOutlined />}
+                onClick={() => message.success('已打开自定义智能体创建入口')}
+              />
+            </div>
+          </div>
+          <div
+            className="lucky-agent-list lucky-custom-agent-list"
+            aria-hidden={isCustomAgentListCollapsed}
+          >
+            {CUSTOM_AGENT_ITEMS.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                tabIndex={isCustomAgentListCollapsed ? -1 : undefined}
+                className={`lucky-agent-item ${activeSection === item.key ? 'is-active' : ''}`}
+                onClick={() => setActiveSection(item.key)}
+              >
+                <span className="lucky-agent-avatar">{item.marker}</span>
+                <span className="lucky-agent-label">{item.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="lucky-history">
+            {HISTORY_GROUPS.map((group) => (
+              <div key={group.title} className="lucky-history-group">
+                <div className="lucky-history-title">{group.title}</div>
+                <div className="lucky-history-list">
+                  {group.items.map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      className="lucky-history-item"
+                      onClick={() => message.info(`已打开会话：${item}`)}
+                    >
+                      <span className="lucky-history-bullet" />
+                      <span className="lucky-history-text">{item}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </aside>
       <div

@@ -1800,9 +1800,9 @@
 }
 
 .finder-file-row-selected {
-  background: var(--finder-selected-bg) !important;
+  background: transparent !important;
   color: var(--finder-selected-text) !important;
-  box-shadow: inset 0 0 0 1px var(--finder-selected-border);
+  box-shadow: none;
   border-bottom-color: transparent;
   transform: none;
   z-index: 1;
