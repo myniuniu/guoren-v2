@@ -592,6 +592,28 @@
   width: 100%;
 }
 
+.finder-library-org-select-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.finder-library-org-select-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: #4d84d7;
+  font-size: 15px;
+  line-height: 1;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
 .finder-library-org-select .ant-select-selector {
   min-height: 40px !important;
   padding: 0 14px !important;
@@ -606,6 +628,18 @@
   font-size: 13px;
   backdrop-filter: blur(16px) saturate(1.16);
   -webkit-backdrop-filter: blur(16px) saturate(1.16);
+}
+
+.finder-library-org-select .ant-select-selection-wrap {
+  padding-left: 26px;
+}
+
+.finder-library-org-select .ant-select-content {
+  padding-left: 26px;
+}
+
+.finder-library-org-select .ant-select-input {
+  padding-left: 26px !important;
 }
 
 .finder-library-org-select.ant-select-single .ant-select-selector {

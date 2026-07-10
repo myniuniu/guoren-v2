@@ -15,6 +15,7 @@ import {
   CloudOutlined, ShareAltOutlined, GlobalOutlined,
   QuestionCircleOutlined,
   RobotOutlined,
+  BulbOutlined,
   CaretDownOutlined, MoreOutlined, CaretRightOutlined,
   FileTextOutlined, FilePdfOutlined, FileImageOutlined,
   PlayCircleOutlined, SoundOutlined, TagsOutlined,
@@ -87,6 +88,7 @@ import KnowledgeGraphModule from '../knowledgeGraph/KnowledgeGraphModule';
 import StructuredKnowledgeGraphView from '../knowledgeGraph/StructuredKnowledgeGraphView';
 import ResourceLibraryOverlays from './ResourceLibraryOverlays.jsx';
 import useResourceLibraryFileImport from './useResourceLibraryFileImport';
+import { clearPendingResourceLibraryEntry, peekPendingResourceLibraryEntry } from './resourceLibraryEntry';
 import './ResourceLibrary.css';
 
 const ROOT_PARENT_KEY = '__resource_lib_root__';
@@ -97,6 +99,7 @@ const DETAIL_PREVIEW_DEFAULT_RATIO = 0.5;
 const FOLDER_HOVER_TIP_DELAY = 1;
 const SWIPE_SELECT_ACTIVATION_DISTANCE = 6;
 const RESOURCE_RENAME_CLICK_WINDOW_MS = 800;
+const RESOURCE_LIBRARY_ENTRY_STORAGE_KEY = 'gr.resource-library-entry.v1';
 const RESOURCE_LIB_HELP_TIPS = [
   '在文件夹上双击可进入文件夹。',
   '可在操作菜单开启多选模式，或用行内菜单加入所选。',
@@ -134,7 +137,34 @@ const isRowDragHandleTarget = (target) => (
   && !!target.closest('.finder-file-icon, .finder-column-item-icon')
 );
 
-export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
+function readResourceLibraryEntryRequest() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = (window.sessionStorage?.getItem(RESOURCE_LIBRARY_ENTRY_STORAGE_KEY))
+      || window.localStorage.getItem(RESOURCE_LIBRARY_ENTRY_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function clearResourceLibraryEntryRequest(requestId) {
+  if (typeof window === 'undefined') return;
+  try {
+    const current = readResourceLibraryEntryRequest();
+    if (!requestId || current?.requestId === requestId) {
+      window.sessionStorage?.removeItem(RESOURCE_LIBRARY_ENTRY_STORAGE_KEY);
+      window.localStorage.removeItem(RESOURCE_LIBRARY_ENTRY_STORAGE_KEY);
+    }
+  } catch {
+    window.sessionStorage?.removeItem(RESOURCE_LIBRARY_ENTRY_STORAGE_KEY);
+    window.localStorage.removeItem(RESOURCE_LIBRARY_ENTRY_STORAGE_KEY);
+  }
+}
+
+export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = null }) {
   const [data, setData] = useState(() => loadResourceLib());
   const [scope, setScope] = useState(() => data?.currentScope || 'personal');
   const [currentOrgId, setCurrentOrgId] = useState(() => data?.currentOrgId || 'org_default');
@@ -334,6 +364,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
   const detailListRef = useRef(null);
   const detailRowNodeMapRef = useRef(new Map());
   const columnSelectedItemRef = useRef(null);
+  const appliedEntryRequestRef = useRef('');
   // 记录用户是否在列表视图下手动拖过，避免覆盖用户选择
   const previewListResizedRef = useRef(false);
   const [detailSelectionIndicator, setDetailSelectionIndicator] = useState({
@@ -634,6 +665,53 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
     setNavIndex(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [libraryId]);
+
+  useEffect(() => {
+    const resolvedEntryRequest = entryRequest?.requestId
+      ? entryRequest
+      : (peekPendingResourceLibraryEntry() || readResourceLibraryEntryRequest());
+    if (!resolvedEntryRequest?.requestId) return;
+
+    const targetScope = resolvedEntryRequest.scope || resolvedEntryRequest.libraryScope || (resolvedEntryRequest.libraryId === 'personal' ? 'personal' : 'organization');
+    const targetLibraryId = targetScope === 'personal' ? 'personal' : (resolvedEntryRequest.libraryId || currentOrgId);
+
+    if (targetScope === 'organization' && (scope !== 'organization' || currentOrgId !== targetLibraryId || libraryId !== targetLibraryId)) {
+      setScope('organization');
+      setCurrentOrgId(targetLibraryId);
+      setData((currentData) => setCurrentOrg(setCurrentScope(currentData, 'organization'), targetLibraryId));
+      return;
+    }
+
+    if (targetScope === 'personal' && scope !== 'personal') {
+      setScope('personal');
+      setData((currentData) => setCurrentScope(currentData, 'personal'));
+      return;
+    }
+
+    if (appliedEntryRequestRef.current === resolvedEntryRequest.requestId) return;
+
+    const nextKeyword = resolvedEntryRequest.keyword || '';
+    const targetItem = resolvedEntryRequest.resourceKey
+      ? list.find((item) => item.key === resolvedEntryRequest.resourceKey) || null
+      : null;
+
+    window.setTimeout(() => {
+      appliedEntryRequestRef.current = resolvedEntryRequest.requestId;
+      setSpecialView('all');
+      setSearchMode('name');
+      setKeyword(nextKeyword);
+      setSearchPanelOpen(false);
+      setActiveTagFilter(null);
+      setTagFilterContextFolderKeys([]);
+      setSelectedItemKeys(targetItem ? [targetItem.key] : []);
+      setColumnSelectedItem(targetItem);
+      if (targetItem) {
+        setData((currentData) => setSelectedFolder(currentData, scope, targetItem.parentKey ?? null));
+      }
+      clearPendingResourceLibraryEntry(resolvedEntryRequest.requestId);
+      clearResourceLibraryEntryRequest(resolvedEntryRequest.requestId);
+    }, 0);
+  }, [currentOrgId, entryRequest, libraryId, list, scope]);
 
   useEffect(() => {
     setFavorites((prev) => {
@@ -4406,14 +4484,19 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph }) {
             </span>
           </div>
           {scope === 'organization' && (
-            <Select
-              className="finder-library-org-select"
-              popupClassName="finder-library-org-dropdown"
-              value={currentOrgId}
-              onChange={handleOrgChange}
-              options={organizations.map((o) => ({ label: o.name, value: o.id }))}
-              suffixIcon={<CaretDownOutlined style={{ fontSize: 11, color: '#959daa' }} />}
-            />
+            <div className="finder-library-org-select-wrap">
+              <span className="finder-library-org-select-icon" aria-hidden="true">
+                <BulbOutlined />
+              </span>
+              <Select
+                className="finder-library-org-select"
+                popupClassName="finder-library-org-dropdown"
+                value={currentOrgId}
+                onChange={handleOrgChange}
+                options={organizations.map((o) => ({ label: o.name, value: o.id }))}
+                suffixIcon={<CaretDownOutlined style={{ fontSize: 11, color: '#959daa' }} />}
+              />
+            </div>
           )}
         </div>
 

@@ -53,6 +53,7 @@ import CertificateModule from './certificate/CertificateModule';
 import CertificateIssueModule from './certificate/CertificateIssueModule';
 import ResourceLibrary from './resourceLib/ResourceLibrary';
 import ResourceParseStatus from './resourceLib/ResourceParseStatus';
+import { setPendingResourceLibraryEntry } from './resourceLib/resourceLibraryEntry';
 import ArchiveModule from './archive/ArchiveModule';
 import StudyClubModule from './studyClub/StudyClubModule';
 import OnlineDevModule from './onlineDev/OnlineDevModule';
@@ -78,6 +79,7 @@ import TeacherEvaluationModule from './teacherEvaluation/TeacherEvaluationModule
 import TeacherEvaluationSchemeModule from './teacherEvaluation/TeacherEvaluationSchemeModule';
 import TeacherDevelopmentModule from './teacherDevelopment/TeacherDevelopmentModule';
 import TeacherPortraitModule from './teacherPortrait/TeacherPortraitModule';
+import ResourceRecommendationModule from './resourceRecommendation/ResourceRecommendationModule';
 import LuckyModule from './lucky/LuckyModule';
 import TasksModule from './tasks/TasksModule';
 import SceneCreateModal from './scene/SceneCreateModal';
@@ -100,6 +102,7 @@ const SCENE_SHORTCUT_KEY_PREFIX = 'scene-shortcut:';
 const SCENE_SYSTEM_MENU_SHORTCUT_KEY_PREFIX = 'scene-system-menu:';
 const ICON_BAR_WIDTH_STORAGE_KEY = 'gr.icon-bar-width.v1';
 const SCENE_SIDER_WIDTH_STORAGE_KEY = 'gr.scene.sider-width.v1';
+const RESOURCE_LIBRARY_ENTRY_STORAGE_KEY = 'gr.resource-library-entry.v1';
 const DEFAULT_SCENE_GROUP_NAME = '人工智能通识体系';
 const SCENE_HOME_OWNERSHIP_TABS = Object.freeze([
   { key: 'created', label: '我创建的' },
@@ -194,6 +197,7 @@ const APP_HASH_ROUTE_PAGES = new Set([
   'knowledge-graph-full',
   'capability-model',
   'capability-model-full',
+  'resource-recommendation',
 ]);
 
 function replaceAppHash(nextHash = '') {
@@ -226,6 +230,10 @@ function buildPersistentHashRoute(page, knowledgeGraphEntry, capabilityModelEntr
       params.set('requestId', capabilityModelEntry.requestId);
     }
     return `capability-model-full?${params.toString()}`;
+  }
+
+  if (page === 'resource-recommendation') {
+    return 'resource-recommendation';
   }
 
   return '';
@@ -313,6 +321,7 @@ const iconBarAccentColorMap = Object.freeze({
   'my-space': '#4f7cff',
   'cloud-disk': '#0ea5e9',
   'resource-lib': '#f59e0b',
+  'resource-recommendation': '#0f766e',
   'resource-parse': '#8b5cf6',
   'knowledge-space': '#22c55e',
   'knowledge-graph': '#2563eb',
@@ -380,6 +389,7 @@ function getIconBarAccentColor(iconKey) {
 const baseIconBarItems = [
   { key: 'my-space', icon: <AppstoreOutlined />, label: '空间', active: true },
   { key: 'resource-lib', icon: <BookOutlined />, label: '资料库' },
+  { key: 'resource-recommendation', icon: <ReadOutlined />, label: '推荐' },
   { key: 'knowledge-space', icon: <BulbOutlined />, label: '知识空间' },
   { key: 'messages', icon: <MessageOutlined />, label: '消息' },
   { key: 'org-management', icon: <TeamOutlined />, label: '组织管理' },
@@ -423,6 +433,8 @@ function App() {
   const [currentPage, setCurrentPage] = useState(() => getInitialHashRoute().page || 'home'); // 'home', 'detail', or 'workflow'
   const [agentQuotaEntryTab, setAgentQuotaEntryTab] = useState('plans');
   const [teacherEvaluationEntryContext, setTeacherEvaluationEntryContext] = useState(null);
+  const [resourceLibraryEntry, setResourceLibraryEntry] = useState(null);
+  const resourceLibraryEntryRef = useRef(null);
   const [messageEntryConversationId, setMessageEntryConversationId] = useState(null);
   const [messageUnreadCount, setMessageUnreadCount] = useState(() => getInitialMessagesUnreadCount());
   const [knowledgeGraphEntry, setKnowledgeGraphEntry] = useState(() => {
@@ -1027,8 +1039,29 @@ function App() {
     setCurrentPage('messages');
   }, []);
 
-  const openResourceLibraryPage = useCallback(() => {
+  const openResourceLibraryPage = useCallback((entry = null) => {
+    const nextEntry = entry ? {
+      ...entry,
+      requestId: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    } : null;
+    resourceLibraryEntryRef.current = nextEntry;
+    setPendingResourceLibraryEntry(nextEntry);
+    if (typeof window !== 'undefined') {
+      if (nextEntry) {
+        const serializedEntry = JSON.stringify(nextEntry);
+        if (window.sessionStorage) {
+          window.sessionStorage.setItem(RESOURCE_LIBRARY_ENTRY_STORAGE_KEY, serializedEntry);
+        }
+        window.localStorage.setItem(RESOURCE_LIBRARY_ENTRY_STORAGE_KEY, serializedEntry);
+      } else {
+        if (window.sessionStorage) {
+          window.sessionStorage.removeItem(RESOURCE_LIBRARY_ENTRY_STORAGE_KEY);
+        }
+        window.localStorage.removeItem(RESOURCE_LIBRARY_ENTRY_STORAGE_KEY);
+      }
+    }
     setActiveIconKey('resource-lib');
+    setResourceLibraryEntry(nextEntry);
     setCurrentPage('resource-lib');
   }, []);
 
@@ -1167,6 +1200,8 @@ function App() {
       setCurrentPage('certificate-issue');
     } else if (key === 'resource-lib') {
       openResourceLibraryPage();
+    } else if (key === 'resource-recommendation') {
+      setCurrentPage('resource-recommendation');
     } else if (key === 'resource-parse') {
       setCurrentPage('resource-parse');
     } else if (key === 'knowledge-space') {
@@ -1229,6 +1264,7 @@ function App() {
       currentPage === 'certificate' ||
       currentPage === 'certificate-issue' ||
       currentPage === 'resource-lib' ||
+      currentPage === 'resource-recommendation' ||
       currentPage === 'resource-parse' ||
       currentPage === 'knowledge-space' ||
       currentPage === 'knowledge-graph' ||
@@ -1362,7 +1398,9 @@ function App() {
       ) : currentPage === 'certificate-issue' ? (
         <CertificateIssueModule />
       ) : currentPage === 'resource-lib' ? (
-        <ResourceLibrary onOpenKnowledgeGraph={openKnowledgeGraphPage} />
+        <ResourceLibrary onOpenKnowledgeGraph={openKnowledgeGraphPage} entryRequest={resourceLibraryEntry || resourceLibraryEntryRef.current} />
+      ) : currentPage === 'resource-recommendation' ? (
+        <ResourceRecommendationModule onNavigateToResource={openResourceLibraryPage} />
       ) : currentPage === 'resource-parse' ? (
         <ResourceParseStatus />
       ) : currentPage === 'knowledge-space' ? (

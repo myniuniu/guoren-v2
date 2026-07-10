@@ -1512,6 +1512,9 @@ const defaultData = {
 // 'personal' → 'personal'；'organization' → currentOrgId
 export function getLibraryId(data, scope) {
   if (scope === 'personal') return 'personal';
+  if (data.organizations?.[data.currentOrgId]) {
+    return data.currentOrgId;
+  }
   const organizations = getOrganizations(data);
   if (organizations.some((item) => item.id === data.currentOrgId)) {
     return data.currentOrgId;
