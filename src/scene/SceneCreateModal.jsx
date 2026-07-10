@@ -3,7 +3,7 @@ import { Form, Input, Modal, Select, Tag } from 'antd';
 import {
   SCENE_VISIBILITY_OPTIONS,
   TOOL_OPTIONS,
-  getHomeComponentLabel,
+  VERSION_CREATE_MODE_OPTIONS,
   getSceneTypeLabel,
 } from './api';
 import { getSceneThemeCoverStyle } from './themeCovers';
@@ -21,6 +21,18 @@ function getTemplateToolSummary(template) {
     ...(template?.toolAreas?.resultAreaTools || []),
   ]);
   return Array.from(keys);
+}
+
+function getTemplateModeTabs(template) {
+  return Array.isArray(template?.topicPage?.modeTabs) ? template.topicPage.modeTabs : [];
+}
+
+function getEnabledTemplateModeTabs(template) {
+  return getTemplateModeTabs(template).filter((item) => item?.enabled !== false);
+}
+
+function getVersionCreateModeLabel(value) {
+  return VERSION_CREATE_MODE_OPTIONS.find((item) => item.value === value)?.label || value || '-';
 }
 
 const DEFAULT_SCENE_GROUP_NAME = '人工智能通识体系';
@@ -66,7 +78,7 @@ export default function SceneCreateModal({
         || null;
     }
     return activeTemplates[0] || sortedTemplates[0] || null;
-  }, [defaultMenuKey, initialValues?.templateId, sortedTemplates]);
+  }, [defaultMenuKey, initialValues, sortedTemplates]);
 
   useEffect(() => {
     if (!open) return;
@@ -115,10 +127,15 @@ export default function SceneCreateModal({
   };
 
   const templateTools = getTemplateToolSummary(selectedTemplate);
-  const selectedTemplateHomeMode = selectedTemplate?.topicPage?.modeTabs?.find((item) => item?.key === 'home') || null;
-  const selectedTemplateHomeComponentLabel = getHomeComponentLabel(selectedTemplateHomeMode?.homeComponent)
-    || selectedTemplate?.homepage?.templateName
-    || '标准主页模板';
+  const templateModeTabs = getTemplateModeTabs(selectedTemplate);
+  const enabledModeTabs = getEnabledTemplateModeTabs(selectedTemplate);
+  const disabledModeCount = Math.max(templateModeTabs.length - enabledModeTabs.length, 0);
+  const resourceAreaTools = selectedTemplate?.toolAreas?.resourceAreaTools || [];
+  const resultAreaTools = selectedTemplate?.toolAreas?.resultAreaTools || [];
+  const folderTypes = selectedTemplate?.folderTypes || [];
+  const requiredFolders = folderTypes.filter((folder) => folder?.required);
+  const versioning = selectedTemplate?.versioning || {};
+  const versioningEnabled = versioning.enabled !== false;
 
   return (
     <Modal
@@ -278,34 +295,93 @@ export default function SceneCreateModal({
                   </div>
 
                   <div className="scene-create-preview-section">
-                    <div className="scene-create-preview-section-title">主题页面</div>
-                    <div className="scene-create-inline-meta">
-                      <span>资料区：{selectedTemplate.topicPage.resourcePanelTitle}</span>
-                      <span>新增按钮：{selectedTemplate.topicPage.addResourceLabel}</span>
-                      <span>首页组件：{selectedTemplateHomeComponentLabel}</span>
+                    <div className="scene-create-preview-section-head">
+                      <div className="scene-create-preview-section-title">主题模式</div>
+                      <div className="scene-create-preview-section-note">
+                        {enabledModeTabs.length} / {templateModeTabs.length} 已启用
+                      </div>
                     </div>
                     <div className="scene-create-tag-list">
-                      {selectedTemplate.topicPage.modeTabs.filter((item) => item.enabled !== false).map((item) => (
+                      {enabledModeTabs.map((item) => (
                         <Tag key={item.key} color="blue">{item.label}</Tag>
                       ))}
+                      {enabledModeTabs.length ? null : <span className="scene-create-empty-text">未启用主题模式</span>}
                     </div>
+                    {disabledModeCount > 0 ? (
+                      <div className="scene-create-summary-line">另有 {disabledModeCount} 个模式未启用。</div>
+                    ) : null}
                   </div>
 
                   <div className="scene-create-preview-section">
-                    <div className="scene-create-preview-section-title">工具能力</div>
-                    <div className="scene-create-tag-list">
-                      {templateTools.slice(0, 8).map((toolKey) => (
-                        <Tag key={toolKey}>{getToolLabel(toolKey)}</Tag>
-                      ))}
+                    <div className="scene-create-preview-section-head">
+                      <div className="scene-create-preview-section-title">版本管理</div>
+                      <Tag color={versioningEnabled ? 'geekblue' : 'default'}>
+                        {versioningEnabled ? '已开启' : '未开启'}
+                      </Tag>
                     </div>
+                    {versioningEnabled ? (
+                      <>
+                        <div className="scene-create-summary-pill-list">
+                          <span>最多 {versioning.maxVersions || 5} 个版本</span>
+                          <span>{getVersionCreateModeLabel(versioning.createMode)}</span>
+                          <span>{versioning.namePattern || '版本 {index}'}</span>
+                          <span>{versioning.allowRollback ? '允许回退' : '不允许回退'}</span>
+                          <span>{versioning.allowDeletePublished !== false ? '可删除失效版本' : '不可删除失效版本'}</span>
+                        </div>
+                        {versioning.description ? (
+                          <div className="scene-create-summary-line">{versioning.description}</div>
+                        ) : null}
+                      </>
+                    ) : (
+                      <div className="scene-create-summary-line">
+                        当前模板采用单份内容维护，不显示版本切换入口。
+                      </div>
+                    )}
                   </div>
 
                   <div className="scene-create-preview-section">
-                    <div className="scene-create-preview-section-title">默认目录</div>
-                    <div className="scene-create-inline-list">
-                      {selectedTemplate.folderTypes.map((folder) => (
-                        <span key={folder.id}>{folder.name}</span>
-                      ))}
+                    <div className="scene-create-preview-section-head">
+                      <div className="scene-create-preview-section-title">工具与资料</div>
+                      <div className="scene-create-preview-section-note">
+                        {templateTools.length} 个工具 · {folderTypes.length} 类目录
+                      </div>
+                    </div>
+                    <div className="scene-create-summary-pill-list">
+                      <span>资料区 {resourceAreaTools.length} 个工具</span>
+                      <span>成果区 {resultAreaTools.length} 个工具</span>
+                      <span>必选目录 {requiredFolders.length} 类</span>
+                      <span>{selectedTemplate.topicPage?.allowRootResources ? '允许根目录资料' : '需按目录归档'}</span>
+                    </div>
+                    <div className="scene-create-preview-subsection">
+                      <span>资料区</span>
+                      <div className="scene-create-tag-list">
+                        {resourceAreaTools.length
+                          ? resourceAreaTools.map((toolKey) => (
+                              <Tag key={`resource_${toolKey}`}>{getToolLabel(toolKey)}</Tag>
+                            ))
+                          : <span className="scene-create-empty-text">未配置</span>}
+                      </div>
+                    </div>
+                    <div className="scene-create-preview-subsection">
+                      <span>成果区</span>
+                      <div className="scene-create-tag-list">
+                        {resultAreaTools.length
+                          ? resultAreaTools.map((toolKey) => (
+                              <Tag key={`result_${toolKey}`}>{getToolLabel(toolKey)}</Tag>
+                            ))
+                          : <span className="scene-create-empty-text">未配置</span>}
+                      </div>
+                    </div>
+                    <div className="scene-create-preview-subsection">
+                      <span>资料目录</span>
+                      <div className="scene-create-inline-list">
+                        {folderTypes.map((folder) => (
+                          <span key={folder.id || folder.key}>
+                            {folder.name}{folder.required ? ' · 必选' : ''}
+                          </span>
+                        ))}
+                        {folderTypes.length ? null : <span className="scene-create-empty-text">未配置</span>}
+                      </div>
                     </div>
                   </div>
                 </div>
