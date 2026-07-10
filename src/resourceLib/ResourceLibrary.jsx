@@ -15,7 +15,7 @@ import {
   CloudOutlined, ShareAltOutlined, GlobalOutlined,
   QuestionCircleOutlined,
   RobotOutlined,
-  BulbOutlined,
+  ClusterOutlined,
   CaretDownOutlined, MoreOutlined, CaretRightOutlined,
   FileTextOutlined, FilePdfOutlined, FileImageOutlined,
   PlayCircleOutlined, SoundOutlined, TagsOutlined,
@@ -4486,7 +4486,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
           {scope === 'organization' && (
             <div className="finder-library-org-select-wrap">
               <span className="finder-library-org-select-icon" aria-hidden="true">
-                <BulbOutlined />
+                <ClusterOutlined />
               </span>
               <Select
                 className="finder-library-org-select"
