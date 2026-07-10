@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { Form, Input, Modal, Select, Tag } from 'antd';
+import { Button, Form, Input, Modal, Select, Tag } from 'antd';
 import {
   SCENE_VISIBILITY_OPTIONS,
   TOOL_OPTIONS,
@@ -136,15 +136,23 @@ export default function SceneCreateModal({
   const requiredFolders = folderTypes.filter((folder) => folder?.required);
   const versioning = selectedTemplate?.versioning || {};
   const versioningEnabled = versioning.enabled !== false;
+  const modalTitle = initialValues?.id ? (isSceneMode ? '编辑场景' : '编辑空间') : (isSceneMode ? '新建场景' : '新建空间');
+  const modalOkText = initialValues?.id ? (isSceneMode ? '保存场景' : '保存空间') : (isSceneMode ? '创建场景' : '创建空间');
 
   return (
     <Modal
-      title={initialValues?.id ? (isSceneMode ? '编辑场景' : '编辑空间') : (isSceneMode ? '新建场景' : '新建空间')}
+      title={(
+        <div className="scene-create-modal-titlebar">
+          <span>{modalTitle}</span>
+          <div className="scene-create-modal-actions">
+            <Button onClick={onCancel}>取消</Button>
+            <Button type="primary" onClick={handleOk}>{modalOkText}</Button>
+          </div>
+        </div>
+      )}
       open={open}
       onCancel={onCancel}
-      onOk={handleOk}
-      okText={initialValues?.id ? (isSceneMode ? '保存场景' : '保存空间') : (isSceneMode ? '创建场景' : '创建空间')}
-      cancelText="取消"
+      footer={null}
       width={1040}
       centered
       destroyOnClose

@@ -351,7 +351,7 @@
 
 .resource-rec-score-bars {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -411,7 +411,7 @@
 
 .resource-rec-evidence-path {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 8px;
 }
 
@@ -455,6 +455,43 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
+}
+
+.resource-rec-graph-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.resource-rec-graph-grid > div {
+  padding: 12px;
+  border: 1px solid rgba(15, 118, 110, 0.18);
+  border-radius: 10px;
+  background: #f0fdfa;
+}
+
+.resource-rec-graph-grid span,
+.resource-rec-graph-grid em {
+  display: block;
+  color: #0f766e;
+  font-size: 12px;
+  font-style: normal;
+}
+
+.resource-rec-graph-grid strong {
+  display: block;
+  margin: 5px 0;
+  color: #134e4a;
+  overflow-wrap: anywhere;
+}
+
+.resource-rec-graph-empty {
+  margin: 0;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #64748b;
+  line-height: 1.6;
 }
 
 .resource-rec-match-grid > div {
@@ -539,6 +576,7 @@
   .resource-rec-hero-metrics,
   .resource-rec-score-bars,
   .resource-rec-evidence-path,
+  .resource-rec-graph-grid,
   .resource-rec-match-grid,
   .resource-rec-filter-list {
     grid-template-columns: 1fr;

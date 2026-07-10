@@ -39,6 +39,7 @@ import {
   RECOMMENDATION_FILTERS,
   buildArchiveResourceRecommendations,
 } from './recommendationEngine';
+import { loadKnowledgeGraphStore } from '../knowledgeGraph/store';
 import './ResourceRecommendationModule.css';
 
 const PROFILE_BASE = {
@@ -52,6 +53,7 @@ const PROFILE_BASE = {
 };
 
 const COMPONENT_META = [
+  { key: 'graph', label: '图谱关联', color: '#0f766e' },
   { key: 'ability', label: '能力匹配', color: '#2563eb' },
   { key: 'evidence', label: '证据补强', color: '#f97316' },
   { key: 'quality', label: '资源质量', color: '#16a34a' },
@@ -147,6 +149,7 @@ async function loadArchiveProfileContext() {
 
 function buildResourceInputs() {
   const resourceLibData = loadResourceLib();
+  const knowledgeGraphState = loadKnowledgeGraphStore();
   const organizationResources = getAllItemsAcrossLibraries(resourceLibData)
     .filter((item) => item.libraryScope === 'organization')
     .map((item) => ({
@@ -158,6 +161,7 @@ function buildResourceInputs() {
     organizations: getOrganizations(resourceLibData),
     tagDefinitions: getTagDefinitions(resourceLibData, 'organization'),
     resources: organizationResources,
+    knowledgeGraphState,
   };
 }
 
@@ -177,7 +181,7 @@ function ProfileSummary({ basis, stats, loading }) {
         <h2>根据用户档案推荐可复用资源</h2>
         <p>
           {basis?.hasProfile
-            ? `当前依据 ${profile.name || '当前用户'} 的档案版本、目标层级和证据覆盖情况生成。`
+            ? `当前依据 ${profile.name || '当前用户'} 的档案版本、目标层级、证据覆盖情况和知识图谱关系生成。`
             : '档案信息不足，当前按组织资料库标签、解析状态和更新时间生成降级推荐。'}
         </p>
         <div className="resource-rec-profile-tags">
@@ -196,12 +200,12 @@ function ProfileSummary({ basis, stats, loading }) {
           <strong>{basis?.focusItemCount ?? 0}</strong>
         </div>
         <div>
-          <span>组织资源</span>
-          <strong>{stats?.organizationResourceCount ?? 0}</strong>
+          <span>图谱命中</span>
+          <strong>{stats?.graphLinkedRecommendationCount ?? 0}</strong>
         </div>
         <div>
-          <span>平均匹配</span>
-          <strong>{stats?.averageScore ?? 0}</strong>
+          <span>知识点</span>
+          <strong>{stats?.graphPointCount ?? 0}</strong>
         </div>
       </div>
     </section>
@@ -303,6 +307,8 @@ function RecommendationCard({ recommendation, onOpen }) {
   const tone = scoreTone(recommendation.score);
   const componentScores = recommendation.meta?.componentScores || {};
   const matchedRows = recommendation.meta?.matchedRows || [];
+  const graphMatches = recommendation.meta?.graphMatches || [];
+  const primaryGraphMatch = graphMatches[0] || null;
   const details = [
     {
       key: 'why',
@@ -310,6 +316,25 @@ function RecommendationCard({ recommendation, onOpen }) {
       children: (
         <div className="resource-rec-why">
           <EvidencePath path={recommendation.meta?.evidencePath || []} />
+          {graphMatches.length ? (
+            <div className="resource-rec-graph-grid">
+              {graphMatches.map((match) => (
+                <div key={`${match.graphId}_${match.pointId}`}>
+                  <span>{match.matchType === 'binding' ? '图谱显式绑定' : '图谱语义命中'}</span>
+                  <strong>{match.graphName} / {match.pointTitle}</strong>
+                  {match.relationPath?.length ? (
+                    <em>
+                      关系：{match.relationPath.map((relation) => `${relation.label} ${relation.neighborTitle}`).join('；')}
+                    </em>
+                  ) : (
+                    <em>暂无相邻关系路径</em>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="resource-rec-graph-empty">该资源暂无知识图谱绑定或知识点命中，本条为档案与组织资源规则降级推荐。</p>
+          )}
           {matchedRows.length ? (
             <div className="resource-rec-match-grid">
               {matchedRows.map((row) => (
@@ -365,6 +390,11 @@ function RecommendationCard({ recommendation, onOpen }) {
 
       <div className="resource-rec-card-meta">
         <span><DatabaseOutlined /> {recommendation.meta?.libraryName || '组织资料库'}</span>
+        {primaryGraphMatch ? (
+          <span><AimOutlined /> {primaryGraphMatch.graphName} / {primaryGraphMatch.pointTitle}</span>
+        ) : (
+          <span><InfoCircleOutlined /> 暂无图谱绑定</span>
+        )}
         <span><CheckCircleOutlined /> {recommendation.meta?.parseStatus === 'parsed' ? '内容已解析' : '解析状态待确认'}</span>
         <span><ThunderboltOutlined /> {recommendation.meta?.lastEdit || '暂无更新时间'}</span>
       </div>
@@ -403,6 +433,7 @@ export default function ResourceRecommendationModule({ onNavigateToResource }) {
         ...profileContext,
         resources: resourceInputs.resources,
         tagDefinitions: resourceInputs.tagDefinitions,
+        knowledgeGraphState: resourceInputs.knowledgeGraphState,
       });
       setBundle({
         ...recommendationBundle,
@@ -513,7 +544,10 @@ export default function ResourceRecommendationModule({ onNavigateToResource }) {
       <div className="resource-rec-toolbar">
         <div>
           <RiseOutlined />
-          <span>推荐依据：{bundle?.stats?.topReasonLabel || '档案匹配'}</span>
+          <span>
+            推荐依据：{bundle?.stats?.topReasonLabel || '档案匹配'} ·
+            图谱 {bundle?.stats?.graphCount || 0} 个 / 知识点 {bundle?.stats?.graphPointCount || 0} 个 / 命中 {bundle?.stats?.graphLinkedRecommendationCount || 0} 条
+          </span>
         </div>
         <Tooltip title="重新读取档案与组织资料库">
           <Button icon={<ReloadOutlined />} onClick={loadData} loading={loading}>
@@ -557,7 +591,7 @@ export default function ResourceRecommendationModule({ onNavigateToResource }) {
                 </div>
                 <span>
                   {bundle?.basis?.hasProfile
-                    ? '已结合档案证据缺口、目标层级和资源质量排序'
+                    ? `已结合知识图谱、档案证据缺口、目标层级和资源质量排序；图谱命中 ${bundle?.stats?.graphLinkedRecommendationCount || 0} 条`
                     : '档案不足时按组织资源质量排序'}
                 </span>
               </div>

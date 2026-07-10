@@ -4,6 +4,7 @@ const EXCLUDED_FILE_TYPES = new Set(['knowledgeGraph', 'capabilityModel', 'folde
 
 export const RECOMMENDATION_FILTERS = [
   { key: 'all', label: '全部' },
+  { key: 'graph', label: '图谱关联' },
   { key: 'evidence_gap', label: '补证优先' },
   { key: 'target', label: '目标提升' },
   { key: 'recent', label: '近期相关' },
@@ -19,6 +20,9 @@ export const REASON_LABEL_MAP = {
   PARSED_CONTENT: '内容已解析',
   RECENT_UPDATE: '近期更新',
   HIGH_QUALITY_REUSE: '适合复用',
+  KNOWLEDGE_GRAPH_BINDING: '图谱绑定资源',
+  KNOWLEDGE_POINT_MATCH: '知识点命中',
+  GRAPH_RELATION_PATH: '存在关系路径',
   ORG_LIBRARY_TRUSTED: '组织资料库',
   FALLBACK_ORG: '按组织资源推荐',
 };
@@ -80,6 +84,176 @@ function getFreshnessScore(value) {
 
 function buildTagMap(tagDefinitions = []) {
   return new Map((tagDefinitions || []).map((tag) => [tag.id, tag.name]));
+}
+
+function buildPointSearchText(point) {
+  return normalizeText([
+    point?.title,
+    point?.summary,
+    point?.type,
+    ...(point?.tags || []),
+  ].filter(Boolean).join(' '));
+}
+
+function buildKnowledgeGraphIndex(knowledgeGraphState = {}) {
+  const graphsById = new Map((knowledgeGraphState.graphs || []).map((graph) => [graph.id, graph]));
+  const pointsById = new Map((knowledgeGraphState.points || []).map((point) => [point.id, point]));
+  const relationsByPointId = new Map();
+  const bindingsByResourceKey = new Map();
+  const bindingsByResourceName = new Map();
+
+  (knowledgeGraphState.relations || []).forEach((relation) => {
+    [relation.sourceId, relation.targetId].forEach((pointId) => {
+      if (!relationsByPointId.has(pointId)) relationsByPointId.set(pointId, []);
+      relationsByPointId.get(pointId).push(relation);
+    });
+  });
+
+  const indexedPoints = (knowledgeGraphState.points || []).map((point) => {
+    const graph = graphsById.get(point.graphId) || {};
+    const relations = relationsByPointId.get(point.id) || [];
+    const indexedPoint = {
+      point,
+      graph,
+      searchText: buildPointSearchText(point),
+      relations,
+    };
+
+    (point.resourceBindings || []).forEach((binding) => {
+      if (binding.resourceKey) {
+        const key = `${binding.libraryId || ''}:${binding.resourceKey}`;
+        if (!bindingsByResourceKey.has(key)) bindingsByResourceKey.set(key, []);
+        bindingsByResourceKey.get(key).push({ ...indexedPoint, binding });
+
+        if (!bindingsByResourceKey.has(binding.resourceKey)) bindingsByResourceKey.set(binding.resourceKey, []);
+        bindingsByResourceKey.get(binding.resourceKey).push({ ...indexedPoint, binding });
+      }
+      if (binding.resourceName) {
+        const nameKey = compactText(binding.resourceName);
+        if (!bindingsByResourceName.has(nameKey)) bindingsByResourceName.set(nameKey, []);
+        bindingsByResourceName.get(nameKey).push({ ...indexedPoint, binding });
+      }
+    });
+
+    return indexedPoint;
+  });
+
+  return {
+    graphCount: graphsById.size,
+    pointCount: indexedPoints.length,
+    relationCount: (knowledgeGraphState.relations || []).length,
+    pointsById,
+    indexedPoints,
+    bindingsByResourceKey,
+    bindingsByResourceName,
+  };
+}
+
+function buildRelationPath(index, indexedPoint) {
+  const point = indexedPoint?.point;
+  if (!point) return [];
+  return (indexedPoint.relations || [])
+    .slice(0, 3)
+    .map((relation) => {
+      const neighborId = relation.sourceId === point.id ? relation.targetId : relation.sourceId;
+      const neighbor = index.pointsById.get(neighborId);
+      return {
+        relationType: relation.relationType,
+        label: relation.label || relation.relationType || '相关',
+        neighborTitle: neighbor?.title || '相邻知识点',
+      };
+    });
+}
+
+function buildGraphMatch(resource, searchText, basis, graphIndex) {
+  if (!graphIndex?.pointCount) {
+    return {
+      score: 0,
+      matches: [],
+      directBindingCount: 0,
+      semanticMatchCount: 0,
+      relationPathCount: 0,
+    };
+  }
+
+  const directCandidates = [
+    ...(graphIndex.bindingsByResourceKey.get(`${resource.libraryId || ''}:${resource.key}`) || []),
+    ...(graphIndex.bindingsByResourceKey.get(resource.key) || []),
+    ...(graphIndex.bindingsByResourceName.get(compactText(resource.name)) || []),
+  ];
+  const matchMap = new Map();
+
+  directCandidates.forEach((candidate) => {
+    matchMap.set(candidate.point.id, {
+      ...candidate,
+      matchType: 'binding',
+      resourceHit: true,
+      profileHits: matchAnyKeyword(candidate.searchText, basis.profileKeywords).slice(0, 4),
+      relationPath: buildRelationPath(graphIndex, candidate),
+    });
+  });
+
+  graphIndex.indexedPoints.forEach((candidate) => {
+    if (matchMap.has(candidate.point.id)) return;
+    const resourceHit = includesLoose(searchText, candidate.point.title)
+      || (candidate.point.tags || []).some((tag) => includesLoose(searchText, tag));
+    const profileHits = matchAnyKeyword(candidate.searchText, basis.profileKeywords).slice(0, 4);
+    const focusHit = basis.focusRows.some((row) => (
+      includesLoose(candidate.searchText, row.itemName)
+      || includesLoose(candidate.searchText, row.dimensionName)
+    ));
+    if (!resourceHit && !profileHits.length && !focusHit) return;
+
+    matchMap.set(candidate.point.id, {
+      ...candidate,
+      matchType: resourceHit ? 'semantic_resource' : 'semantic_profile',
+      resourceHit,
+      profileHits,
+      focusHit,
+      relationPath: buildRelationPath(graphIndex, candidate),
+    });
+  });
+
+  const matches = Array.from(matchMap.values())
+    .map((match) => {
+      const directScore = match.matchType === 'binding' ? 22 : 0;
+      const resourceScore = match.resourceHit ? 10 : 0;
+      const profileScore = Math.min(10, (match.profileHits || []).length * 4 + (match.focusHit ? 4 : 0));
+      const relationScore = Math.min(6, (match.relationPath || []).length * 2);
+      return {
+        graphId: match.graph.id,
+        graphName: match.graph.name || '未命名图谱',
+        pointId: match.point.id,
+        pointTitle: match.point.title,
+        pointType: match.point.type,
+        pointTags: match.point.tags || [],
+        matchType: match.matchType,
+        profileHits: match.profileHits || [],
+        relationPath: match.relationPath || [],
+        score: directScore + resourceScore + profileScore + relationScore,
+      };
+    })
+    .sort((left, right) => right.score - left.score)
+    .slice(0, 4);
+
+  const directBindingCount = matches.filter((match) => match.matchType === 'binding').length;
+  const semanticMatchCount = matches.filter((match) => match.matchType !== 'binding').length;
+  const relationPathCount = matches.reduce((sum, match) => sum + (match.relationPath?.length || 0), 0);
+  const score = clamp(
+    directBindingCount * 22
+      + semanticMatchCount * 9
+      + Math.min(10, relationPathCount * 2),
+    0,
+    34,
+  );
+
+  return {
+    score,
+    matches,
+    directBindingCount,
+    semanticMatchCount,
+    relationPathCount,
+  };
 }
 
 function getResourceTagNames(resource, tagMap) {
@@ -273,7 +447,14 @@ function calculateQuality(resource, tagNames, pathText) {
   return clamp(score, 0, 22);
 }
 
-function buildPrimaryReason({ basis, abilityMatch, evidenceBoost, tagNames, qualityScore, freshnessScore, associationRule }) {
+function buildPrimaryReason({ basis, abilityMatch, graphMatch, evidenceBoost, tagNames, qualityScore, freshnessScore, associationRule }) {
+  const firstGraphMatch = graphMatch.matches?.[0];
+  if (firstGraphMatch?.matchType === 'binding') {
+    return `知识图谱“${firstGraphMatch.graphName}”已将该资源绑定到知识点“${firstGraphMatch.pointTitle}”`;
+  }
+  if (firstGraphMatch) {
+    return `知识图谱“${firstGraphMatch.graphName}”中的“${firstGraphMatch.pointTitle}”与该资源和档案关注项相关`;
+  }
   const firstRow = abilityMatch.matchedRows[0];
   if (firstRow) {
     if (firstRow.groupKey === 'target') {
@@ -299,8 +480,11 @@ function buildPrimaryReason({ basis, abilityMatch, evidenceBoost, tagNames, qual
   return '组织资料库中可进一步查看的候选资源';
 }
 
-function buildRecommendationCategories({ abilityMatch, evidenceBoost, qualityScore, freshnessScore }) {
+function buildRecommendationCategories({ abilityMatch, graphMatch, evidenceBoost, qualityScore, freshnessScore }) {
   const categories = new Set(['all']);
+  if (graphMatch.matches?.length) {
+    categories.add('graph');
+  }
   if (abilityMatch.matchedRows.some((row) => row.groupKey === 'evidence_gap') || evidenceBoost >= 14) {
     categories.add('evidence_gap');
   }
@@ -316,8 +500,11 @@ function buildRecommendationCategories({ abilityMatch, evidenceBoost, qualitySco
   return Array.from(categories);
 }
 
-function buildReasonCodes({ basis, abilityMatch, evidenceBoost, tagNames, qualityScore, freshnessScore, associationRule }) {
+function buildReasonCodes({ basis, abilityMatch, graphMatch, evidenceBoost, tagNames, qualityScore, freshnessScore, associationRule }) {
   const codes = [];
+  if (graphMatch.directBindingCount > 0) codes.push('KNOWLEDGE_GRAPH_BINDING');
+  if (graphMatch.semanticMatchCount > 0) codes.push('KNOWLEDGE_POINT_MATCH');
+  if (graphMatch.relationPathCount > 0) codes.push('GRAPH_RELATION_PATH');
   if (abilityMatch.matchedRows.length) codes.push('PROFILE_GAP_MATCH');
   if (abilityMatch.matchedRows.some((row) => row.groupKey === 'target')) codes.push('TARGET_LEVEL_SUPPORT');
   if (evidenceBoost >= 12) codes.push('EVIDENCE_SHORTAGE');
@@ -331,8 +518,9 @@ function buildReasonCodes({ basis, abilityMatch, evidenceBoost, tagNames, qualit
   return Array.from(new Set(codes));
 }
 
-function buildEvidencePath({ basis, resource, abilityMatch, tagNames, pathText, primaryReason }) {
+function buildEvidencePath({ basis, resource, abilityMatch, graphMatch, tagNames, pathText, primaryReason }) {
   const firstRow = abilityMatch.matchedRows[0];
+  const firstGraphMatch = graphMatch.matches?.[0];
   const profileName = basis.profile?.name || basis.teacherProfile?.name || '当前用户';
   const abilityNode = firstRow
     ? `${firstRow.dimensionName || '能力项'} / ${firstRow.itemName}`
@@ -341,21 +529,36 @@ function buildEvidencePath({ basis, resource, abilityMatch, tagNames, pathText, 
     ? `标签：${tagNames.slice(0, 3).join('、')}`
     : `标题：${resource.name}`;
 
-  return [
+  const path = [
     { label: '用户档案', value: `${profileName} · ${basis.targetLevel}` },
     { label: firstRow ? '档案关注项' : '推荐线索', value: abilityNode },
+  ];
+
+  if (firstGraphMatch) {
+    path.push(
+      { label: '知识图谱', value: firstGraphMatch.graphName },
+      { label: firstGraphMatch.matchType === 'binding' ? '绑定知识点' : '命中知识点', value: firstGraphMatch.pointTitle },
+    );
+  } else {
+    path.push({ label: '图谱状态', value: '暂无绑定知识点，按档案与资源规则降级推荐' });
+  }
+
+  path.push(
     { label: '资源命中点', value: matchNode },
     { label: '资料库路径', value: pathText || `${resource.libraryName || '组织资料库'} / ${resource.name}` },
     { label: '推荐动作', value: primaryReason },
-  ];
+  );
+
+  return path;
 }
 
-function buildResourceRecommendation(resource, basis, tagMap) {
+function buildResourceRecommendation(resource, basis, tagMap, graphIndex) {
   const tagNames = getResourceTagNames(resource, tagMap);
   const searchText = buildResourceSearchText(resource, tagNames);
   const associationRule = findResourceAssociationRule(resource, { ignoreFileType: !resource?.fileType });
   const sourceKey = inferResourceSourceKey(resource);
   const abilityMatch = calculateAbilityMatch(resource, searchText, basis.focusRows, basis.profileKeywords, associationRule);
+  const graphMatch = buildGraphMatch(resource, searchText, basis, graphIndex);
   const evidenceBoost = calculateEvidenceBoost(resource, abilityMatch, associationRule, sourceKey);
   const pathText = resource.path || resource.resourcePath || `${resource.libraryName || '组织资料库'} / ${resource.name}`;
   const qualityScore = calculateQuality(resource, tagNames, pathText);
@@ -363,13 +566,14 @@ function buildResourceRecommendation(resource, basis, tagMap) {
   const failedPenalty = resource.parseStatus === 'failed' ? 14 : 0;
   const noProfileBoost = basis.hasProfile ? 0 : Math.min(10, qualityScore + freshnessScore > 24 ? 8 : 4);
   const score = clamp(
-    Math.round(38 + abilityMatch.score + evidenceBoost + qualityScore * 0.65 + freshnessScore * 0.5 + noProfileBoost - failedPenalty),
+    Math.round(34 + graphMatch.score + abilityMatch.score + evidenceBoost + qualityScore * 0.56 + freshnessScore * 0.42 + noProfileBoost - failedPenalty),
     45,
     98,
   );
   const primaryReason = buildPrimaryReason({
     basis,
     abilityMatch,
+    graphMatch,
     evidenceBoost,
     tagNames,
     qualityScore,
@@ -379,6 +583,7 @@ function buildResourceRecommendation(resource, basis, tagMap) {
   const reasonCodes = buildReasonCodes({
     basis,
     abilityMatch,
+    graphMatch,
     evidenceBoost,
     tagNames,
     qualityScore,
@@ -388,6 +593,7 @@ function buildResourceRecommendation(resource, basis, tagMap) {
   const reasonLabels = reasonCodes.map((code) => REASON_LABEL_MAP[code] || code);
   const categories = buildRecommendationCategories({
     abilityMatch,
+    graphMatch,
     evidenceBoost,
     qualityScore,
     freshnessScore,
@@ -396,6 +602,7 @@ function buildResourceRecommendation(resource, basis, tagMap) {
     basis,
     resource,
     abilityMatch,
+    graphMatch,
     tagNames,
     pathText,
     primaryReason,
@@ -444,26 +651,42 @@ function buildResourceRecommendation(resource, basis, tagMap) {
       })),
       keywordHits: abilityMatch.keywordHits,
       componentScores: {
+        graph: clamp(Math.round((graphMatch.score / 34) * 100), 0, 100),
         ability: clamp(Math.round((abilityMatch.score / 32) * 100), 0, 100),
         evidence: clamp(Math.round((evidenceBoost / 28) * 100), 0, 100),
         quality: clamp(Math.round((qualityScore / 22) * 100), 0, 100),
         freshness: clamp(Math.round((freshnessScore / 18) * 100), 0, 100),
       },
       rawComponentScores: {
+        graph: graphMatch.score,
         ability: abilityMatch.score,
         evidence: evidenceBoost,
         quality: qualityScore,
         freshness: freshnessScore,
       },
       evidencePath,
+      graphMatches: graphMatch.matches,
+      graphCoverage: {
+        directBindingCount: graphMatch.directBindingCount,
+        semanticMatchCount: graphMatch.semanticMatchCount,
+        relationPathCount: graphMatch.relationPathCount,
+      },
       associationNote: associationRule?.matchNote || '',
       nextAction: associationRule?.nextAction || '',
     },
   };
 }
 
-export function buildArchiveResourceRecommendations({ snapshot, version, teacherProfile, resources = [], tagDefinitions = [] } = {}) {
+export function buildArchiveResourceRecommendations({
+  snapshot,
+  version,
+  teacherProfile,
+  resources = [],
+  tagDefinitions = [],
+  knowledgeGraphState = {},
+} = {}) {
   const tagMap = buildTagMap(tagDefinitions);
+  const graphIndex = buildKnowledgeGraphIndex(knowledgeGraphState);
   const basis = buildArchiveProfileBasis({ snapshot, version, teacherProfile });
   const seen = new Set();
   const organizationResources = (resources || [])
@@ -478,9 +701,11 @@ export function buildArchiveResourceRecommendations({ snapshot, version, teacher
     });
 
   const recommendations = organizationResources
-    .map((resource) => buildResourceRecommendation(resource, basis, tagMap))
+    .map((resource) => buildResourceRecommendation(resource, basis, tagMap, graphIndex))
     .sort((left, right) => right.score - left.score)
     .slice(0, 24);
+  const graphLinkedRecommendationCount = recommendations.filter((item) => item.meta?.graphMatches?.length).length;
+  const graphBoundRecommendationCount = recommendations.filter((item) => item.meta?.graphCoverage?.directBindingCount > 0).length;
 
   const topReason = recommendations
     .flatMap((item) => item.reasonLabels || [])
@@ -501,6 +726,11 @@ export function buildArchiveResourceRecommendations({ snapshot, version, teacher
       topReasonLabel: topReason.label || (basis.hasProfile ? '档案匹配' : '组织资源质量'),
       focusItemCount: basis.focusItemCount,
       missingLevelCount: basis.missingLevelCount,
+      graphCount: graphIndex.graphCount,
+      graphPointCount: graphIndex.pointCount,
+      graphRelationCount: graphIndex.relationCount,
+      graphLinkedRecommendationCount,
+      graphBoundRecommendationCount,
     },
   };
 }

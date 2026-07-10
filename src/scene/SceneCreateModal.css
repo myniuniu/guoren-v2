@@ -2,6 +2,22 @@
   padding-top: 12px;
 }
 
+.scene-create-modal-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+  padding-right: 48px;
+}
+
+.scene-create-modal-actions {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+}
+
 .scene-create-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
@@ -297,6 +313,13 @@
 }
 
 @media (max-width: 720px) {
+  .scene-create-modal-titlebar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+    padding-right: 36px;
+  }
+
   .scene-create-template-grid,
   .scene-create-form-grid {
     grid-template-columns: 1fr;
