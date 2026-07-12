@@ -217,7 +217,17 @@
 }
 
 .pkg-switch-line {
-  justify-content: end;
+  width: max-content;
+  min-width: 168px;
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  align-self: end;
+}
+
+.pkg-switch-line .ant-switch {
+  flex: 0 0 auto;
 }
 
 .pkg-risk-list {
@@ -295,8 +305,8 @@
 }
 
 .pkg-module-list-item.is-active {
-  border-color: #7c3aed;
-  background: #f6f0ff;
+  border-color: #95c5ff;
+  background: #eef6ff;
 }
 
 .pkg-module-list-item.is-disabled {
@@ -351,11 +361,18 @@
 .pkg-resource-card-detail {
   min-height: 100%;
   box-sizing: border-box;
+  border: 0;
+  padding: 0;
+  background: transparent;
 }
 
 .pkg-resource-card.is-disabled {
   background: #f8fafc;
   color: #98a2b3;
+}
+
+.pkg-resource-card-detail.is-disabled {
+  background: transparent;
 }
 
 .pkg-resource-card.is-disabled .pkg-resource-name,

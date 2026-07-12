@@ -706,15 +706,6 @@ function SolutionPrototypeModule() {
     });
   }, [keyword, solutions]);
 
-  const summary = useMemo(() => {
-    const publishedCount = solutions.filter((item) => item.status === 'PUBLISHED').length;
-    const avgCompleteness = solutions.length
-      ? Math.round(solutions.reduce((sum, item) => sum + getSolutionCompleteness(item, moduleCatalog), 0) / solutions.length)
-      : 0;
-    const moduleCount = solutions.reduce((sum, item) => sum + item.modules.length, 0);
-    return { publishedCount, avgCompleteness, moduleCount };
-  }, [moduleCatalog, solutions]);
-
   useEffect(() => {
     if (!activeConfigAssignment || !activeConfigModule) {
       inlineConfigForm.resetFields();
@@ -1372,40 +1363,6 @@ function SolutionPrototypeModule() {
 
   return (
     <div className="solution-prototype-module">
-      <div className="sp-page-header">
-        <div>
-          <div className="sp-eyebrow">独立前端原型</div>
-          <h1>解决方案管理</h1>
-          <p>管理方案画像、模块编排、配置完整性与发布预览。数据仅保存在当前页面状态。</p>
-        </div>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateModalOpen(true)}>
-          新建方案
-        </Button>
-      </div>
-
-      <div className="sp-summary-grid">
-        <div className="sp-summary-card">
-          <span>解决方案</span>
-          <strong>{solutions.length}</strong>
-          <small>当前原型内方案数量</small>
-        </div>
-        <div className="sp-summary-card">
-          <span>已发布</span>
-          <strong>{summary.publishedCount}</strong>
-          <small>通过完整性检查后可发布</small>
-        </div>
-        <div className="sp-summary-card">
-          <span>平均完整度</span>
-          <strong>{summary.avgCompleteness}%</strong>
-          <small>基础信息、模块、配置和依赖</small>
-        </div>
-        <div className="sp-summary-card">
-          <span>模块实例</span>
-          <strong>{summary.moduleCount}</strong>
-          <small>所有方案已选模块合计</small>
-        </div>
-      </div>
-
       <div className="sp-main-panel">
         <Tabs
           activeKey={activeTab}
@@ -1483,10 +1440,11 @@ function SolutionPrototypeModule() {
         onCancel={() => setCreateModalOpen(false)}
         onOk={handleCreateSolution}
         okText="创建"
-        width={760}
+        width={680}
+        className="sp-create-solution-modal"
         destroyOnClose
       >
-        <Form form={solutionForm} layout="vertical" initialValues={{ status: 'DRAFT', version: 'v1.0', targetUsers: [], tags: [] }}>
+        <Form form={solutionForm} layout="vertical" className="sp-create-form" initialValues={{ status: 'DRAFT', version: 'v1.0', targetUsers: [], tags: [] }}>
           <div className="sp-form-grid">
             <Form.Item label="方案名称" name="name" rules={[{ required: true, message: '请输入方案名称' }]}>
               <Input placeholder="例如：教师数字素养提升培训方案" />
@@ -1513,7 +1471,7 @@ function SolutionPrototypeModule() {
               <Select mode="tags" options={TAG_OPTIONS} placeholder="输入或选择标签" />
             </Form.Item>
             <Form.Item className="sp-form-span" label="方案简介" name="description">
-              <TextArea rows={3} placeholder="描述该方案的适用范围和交付目标" />
+              <TextArea rows={2} placeholder="描述该方案的适用范围和交付目标" />
             </Form.Item>
             <Form.Item className="sp-form-span" label="版本说明" name="versionNote">
               <TextArea rows={2} placeholder="记录当前版本的设计说明" />
