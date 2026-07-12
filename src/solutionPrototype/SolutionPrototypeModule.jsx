@@ -3,7 +3,6 @@ import {
   Alert,
   Avatar,
   Button,
-  Checkbox,
   Drawer,
   Empty,
   Form,
@@ -23,6 +22,8 @@ import {
 } from 'antd';
 import {
   AppstoreOutlined,
+  ArrowDownOutlined,
+  ArrowUpOutlined,
   CheckCircleOutlined,
   ClusterOutlined,
   CopyOutlined,
@@ -51,13 +52,6 @@ const STATUS_OPTIONS = [
   { value: 'DISABLED', label: '停用' },
 ];
 
-const DEPLOY_STATUS_OPTIONS = [
-  { value: 'TODO', label: '待配置' },
-  { value: 'CONFIGURING', label: '配置中' },
-  { value: 'READY', label: '已就绪' },
-  { value: 'BLOCKED', label: '有风险' },
-];
-
 const SCENARIO_OPTIONS = [
   '教学空间',
   '组织培训',
@@ -76,17 +70,6 @@ const TAG_OPTIONS = ['AI', '培训', '协作', '证书', '资源沉淀', '知识
   value,
   label: value,
 }));
-
-const CAPABILITIES = [
-  { key: 'space_operation', title: '空间运营', desc: '支持模板化空间创建、入口与成员组织。' },
-  { key: 'lucky_agent', title: 'Lucky 智能体', desc: '内置技能、智能体和资料联动能力。' },
-  { key: 'resource_deposit', title: '资料沉淀', desc: '沉淀组织资料、成果与结构化知识资产。' },
-  { key: 'knowledge_navigation', title: '知识导航', desc: '支持知识空间、图谱绑定与学习路径。' },
-  { key: 'message_touch', title: '消息触达', desc: '面向活动、任务、证书与问卷推送提醒。' },
-  { key: 'seminar_operation', title: '研讨会组织', desc: '组织报名、工具协作、过程资料归档。' },
-  { key: 'survey_feedback', title: '问卷反馈', desc: '采集满意度、过程反馈和评价数据。' },
-  { key: 'certificate_issue', title: '证书发放', desc: '支持证书模板、编号、发放与归档。' },
-];
 
 const MODULE_CATALOG = [
   {
@@ -733,12 +716,6 @@ function getSolutionChecks(solution, moduleCatalog) {
       passed: dependencyMissing.length === 0,
       detail: dependencyMissing.length ? dependencyMissing.join('；') : '当前模块依赖关系正常。',
     },
-    {
-      key: 'capability',
-      title: '能力清单已选择',
-      passed: solution.enabledCapabilities.length > 0,
-      detail: solution.enabledCapabilities.length ? '方案能力概览已配置。' : '至少选择一个方案能力。',
-    },
   ];
 }
 
@@ -941,6 +918,23 @@ function SolutionPrototypeModule() {
     updateSolution(selectedSolution.id, (solution) => ({
       modules: solution.modules.map((item) => (item.id === assignmentId ? { ...item, ...patch } : item)),
     }));
+  };
+
+  const handleMoveModule = (assignmentId, direction) => {
+    if (!selectedSolution) return;
+    updateSolution(selectedSolution.id, (solution) => {
+      const sorted = [...solution.modules].sort((a, b) => (a.sortNo || 0) - (b.sortNo || 0));
+      const currentIndex = sorted.findIndex((item) => item.id === assignmentId);
+      const nextIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+      if (currentIndex < 0 || nextIndex < 0 || nextIndex >= sorted.length) {
+        return { modules: solution.modules };
+      }
+      const nextModules = [...sorted];
+      [nextModules[currentIndex], nextModules[nextIndex]] = [nextModules[nextIndex], nextModules[currentIndex]];
+      return {
+        modules: nextModules.map((item, index) => ({ ...item, sortNo: index + 1 })),
+      };
+    });
   };
 
   const openTemplateConfig = (moduleDef) => {
@@ -1185,8 +1179,8 @@ function SolutionPrototypeModule() {
           <div className="sp-section sp-module-capability-section">
             <div className="sp-section-toolbar">
               <div>
-                <div className="sp-section-title">能力、模块与配置</div>
-                <div className="sp-section-subtitle">在同一个视图完成能力勾选、模块编排和当前模块配置。</div>
+                <div className="sp-section-title">模块编排与配置</div>
+                <div className="sp-section-subtitle">在同一个视图完成模块排序、启停、必选和当前模块配置。</div>
               </div>
               <Space wrap>
                 <Button icon={<PlusOutlined />} onClick={() => setAddModuleOpen(true)}>
@@ -1198,27 +1192,11 @@ function SolutionPrototypeModule() {
               </Space>
             </div>
 
-            <Checkbox.Group
-              value={selectedSolution.enabledCapabilities}
-              onChange={(value) => handleChangeSelectedField('enabledCapabilities', value)}
-              className="sp-capability-grid sp-capability-grid-compact"
-            >
-              {CAPABILITIES.map((item) => (
-                <label key={item.key} className="sp-capability-card">
-                  <Checkbox value={item.key} />
-                  <div>
-                    <div className="sp-capability-title">{item.title}</div>
-                    <div className="sp-capability-desc">{item.desc}</div>
-                  </div>
-                </label>
-              ))}
-            </Checkbox.Group>
-
             {selectedSortedModules.length ? (
               <div className="sp-config-layout sp-unified-config-layout">
                 <div className="sp-config-sidebar">
                   <div className="sp-config-sidebar-title">模块编排</div>
-                  {selectedSortedModules.map((assignment) => {
+                  {selectedSortedModules.map((assignment, index) => {
                     const moduleDef = moduleCatalog.find((item) => item.key === assignment.moduleKey);
                     if (!moduleDef) return null;
                     const configStatus = getModuleConfigStatus(assignment, moduleDef);
@@ -1235,48 +1213,25 @@ function SolutionPrototypeModule() {
                             <strong>{moduleDef.name}</strong>
                             <small>{configStatus.percent}% 完成 · {assignment.required ? '必选' : '可选'}</small>
                           </span>
-                          {configStatus.percent === 100 ? (
-                            <CheckCircleOutlined className="sp-config-ok" />
-                          ) : (
-                            <WarningOutlined className="sp-config-risk" />
-                          )}
+                          <span className="sp-module-order-actions" onClick={(event) => event.stopPropagation()}>
+                            <Tooltip title="上移">
+                              <Button
+                                size="small"
+                                icon={<ArrowUpOutlined />}
+                                disabled={index === 0}
+                                onClick={() => handleMoveModule(assignment.id, 'up')}
+                              />
+                            </Tooltip>
+                            <Tooltip title="下移">
+                              <Button
+                                size="small"
+                                icon={<ArrowDownOutlined />}
+                                disabled={index === selectedSortedModules.length - 1}
+                                onClick={() => handleMoveModule(assignment.id, 'down')}
+                              />
+                            </Tooltip>
+                          </span>
                         </button>
-                        <div className="sp-module-mini-controls">
-                          <label>
-                            <span>排序</span>
-                            <InputNumber
-                              min={1}
-                              value={assignment.sortNo}
-                              onChange={(value) => handleChangeModule(assignment.id, { sortNo: value || 1 })}
-                            />
-                          </label>
-                          <label>
-                            <span>状态</span>
-                            <Select
-                              value={assignment.deployStatus}
-                              options={DEPLOY_STATUS_OPTIONS}
-                              onChange={(value) => handleChangeModule(assignment.id, { deployStatus: value })}
-                            />
-                          </label>
-                          <label className="sp-mini-switch">
-                            <span>必选</span>
-                            <Switch size="small" checked={assignment.required} onChange={(checked) => handleChangeModule(assignment.id, { required: checked })} />
-                          </label>
-                          <label className="sp-mini-switch">
-                            <span>启用</span>
-                            <Switch size="small" checked={assignment.enabled} onChange={(checked) => handleChangeModule(assignment.id, { enabled: checked })} />
-                          </label>
-                        </div>
-                        <div className="sp-config-module-actions">
-                          <Button size="small" type="link" onClick={() => setActiveConfigAssignmentId(assignment.id)}>
-                            编辑配置
-                          </Button>
-                          <Popconfirm title="确定从方案中移除该模块吗？" onConfirm={() => handleRemoveModule(assignment.id)}>
-                            <Button size="small" danger type="link" icon={<DeleteOutlined />}>
-                              移除
-                            </Button>
-                          </Popconfirm>
-                        </div>
                       </div>
                     );
                   })}
@@ -1328,10 +1283,19 @@ function SolutionPrototypeModule() {
                       </Form>
 
                       <div className="sp-inline-config-actions">
-                        <Button onClick={handleResetInlineConfig}>还原默认配置</Button>
-                        <Button type="primary" icon={<SettingOutlined />} onClick={handleSaveInlineConfig}>
-                          保存当前模块配置
-                        </Button>
+                        <div>
+                          <Popconfirm title="确定从方案中删除当前模块吗？" onConfirm={() => handleRemoveModule(activeConfigAssignment.id)}>
+                            <Button danger icon={<DeleteOutlined />}>
+                              删除当前模块
+                            </Button>
+                          </Popconfirm>
+                        </div>
+                        <Space>
+                          <Button onClick={handleResetInlineConfig}>还原默认配置</Button>
+                          <Button type="primary" icon={<SettingOutlined />} onClick={handleSaveInlineConfig}>
+                            保存当前模块配置
+                          </Button>
+                        </Space>
                       </div>
                     </>
                   ) : (
@@ -1358,7 +1322,7 @@ function SolutionPrototypeModule() {
               type={completeness === 100 ? 'success' : 'warning'}
               showIcon
               message={completeness === 100 ? '方案可以发布' : '方案仍有待完善项'}
-              description={`当前完整度 ${completeness}%。发布前需完成基础信息、推荐模块、必填配置、依赖关系和能力清单。`}
+              description={`当前完整度 ${completeness}%。发布前需完成基础信息、推荐模块、必填配置和依赖关系。`}
             />
             <div className="sp-check-list">
               {checks.map((item) => (
@@ -1469,7 +1433,7 @@ function SolutionPrototypeModule() {
         <div>
           <div className="sp-eyebrow">独立前端原型</div>
           <h1>解决方案管理</h1>
-          <p>管理方案画像、能力清单、模块编排、配置完整性与发布预览。数据仅保存在当前页面状态。</p>
+          <p>管理方案画像、模块编排、配置完整性与发布预览。数据仅保存在当前页面状态。</p>
         </div>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateModalOpen(true)}>
           新建方案
