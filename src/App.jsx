@@ -73,6 +73,8 @@ import MessagesModule from './messages/MessagesModule';
 import AgentQuotaModule from './agentQuota/AgentQuotaModule';
 import ModelStatisticsModule from './modelStatistics/ModelStatisticsModule';
 import SolutionPrototypeModule from './solutionPrototype/SolutionPrototypeModule';
+import PackagePrototypeModule from './packagePrototype/PackagePrototypeModule';
+import TenantPrototypeModule from './tenantPrototype/TenantPrototypeModule';
 import SceneTemplateModule from './scene/SceneTemplateModule';
 import CapabilityModelModule from './capabilityModel/CapabilityModelModule';
 import TeacherEvaluationModule from './teacherEvaluation/TeacherEvaluationModule';
@@ -358,6 +360,8 @@ const iconBarAccentColorMap = Object.freeze({
   'teacher-evaluation': '#ef4444',
   'capability-model': '#0f766e',
   'solution-management': '#4f46e5',
+  'package-management': '#7c3aed',
+  'tenant-management': '#0f766e',
   dms: '#0891b2',
   integration: '#f97316',
 });
@@ -423,6 +427,8 @@ const baseIconBarItems = [
   { key: 'teacher-evaluation', icon: <AuditOutlined />, label: '教师评价' },
   { key: 'capability-model', icon: <AppstoreOutlined />, label: '能力模型' },
   { key: 'solution-management', icon: <AppstoreOutlined />, label: '解决方案' },
+  { key: 'package-management', icon: <TagsOutlined />, label: '套餐管理' },
+  { key: 'tenant-management', icon: <BankOutlined />, label: '租户管理' },
   { key: 'dms', icon: <FileTextOutlined />, label: '文档管理' },
   { key: 'integration', icon: <PartitionOutlined />, label: '三方对接' }
 ];
@@ -1247,6 +1253,10 @@ function App() {
       setCurrentPage('capability-model');
     } else if (key === 'solution-management') {
       setCurrentPage('solution-management');
+    } else if (key === 'package-management') {
+      setCurrentPage('package-management');
+    } else if (key === 'tenant-management') {
+      setCurrentPage('tenant-management');
     } else if (key === 'dms') {
       setCurrentPage('dms');
     } else if (key === 'integration') {
@@ -1289,6 +1299,8 @@ function App() {
       currentPage === 'teacher-evaluation' ||
       currentPage === 'capability-model' ||
       currentPage === 'solution-management' ||
+      currentPage === 'package-management' ||
+      currentPage === 'tenant-management' ||
       currentPage === 'dms' ||
       currentPage === 'integration'
     ) {
@@ -1458,6 +1470,10 @@ function App() {
         <CapabilityModelModule />
       ) : currentPage === 'solution-management' ? (
         <SolutionPrototypeModule />
+      ) : currentPage === 'package-management' ? (
+        <PackagePrototypeModule />
+      ) : currentPage === 'tenant-management' ? (
+        <TenantPrototypeModule />
       ) : currentPage === 'dms' ? (
         <DmsModule />
       ) : currentPage === 'integration' ? (

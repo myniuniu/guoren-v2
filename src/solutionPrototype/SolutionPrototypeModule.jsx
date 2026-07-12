@@ -71,6 +71,15 @@ const TAG_OPTIONS = ['AI', '培训', '协作', '证书', '资源沉淀', '知识
   label: value,
 }));
 
+const PACKAGE_RESOURCE_NOTE_MAP = {
+  SPACE: '空间数量上限、是否支持自定义创建场景等空间资源边界已迁移到套餐管理中定义。',
+  RESOURCE_LIBRARY: '可用资源类型、单文件上传上限、资料库容量和 AI 解析次数等资料库资源边界已迁移到套餐管理中定义。',
+  MESSAGE: '可用消息通道、月消息发送量和消息保留天数等消息资源边界已迁移到套餐管理中定义。',
+  SEMINAR: '单场人数上限、报名人数上限和月研讨会场次等研讨会资源边界已迁移到套餐管理中定义。',
+  SURVEY: '可用题型、月问卷数量和月答卷数量等问卷资源边界已迁移到套餐管理中定义。',
+  CERTIFICATE: '可导出格式、证书模板数量和月发放数量等证书资源边界已迁移到套餐管理中定义。',
+};
+
 const MODULE_CATALOG = [
   {
     key: 'SPACE',
@@ -103,14 +112,6 @@ const MODULE_CATALOG = [
         description: '新建空间的默认可见范围。',
       },
       {
-        key: 'allow_custom_template',
-        label: '允许自定义模板',
-        type: 'BOOLEAN',
-        required: false,
-        defaultValue: true,
-        description: '是否允许运营人员在模板外创建自定义空间。',
-      },
-      {
         key: 'entry_methods',
         label: '支持进入方式',
         type: 'MULTI_SELECT',
@@ -118,14 +119,6 @@ const MODULE_CATALOG = [
         defaultValue: ['手动邀请', '邀请链接'],
         options: ['手动邀请', '批量导入', '邀请链接', '报名表单', '学习广场'],
         description: '成员进入空间的方式。',
-      },
-      {
-        key: 'max_space_count',
-        label: '最大空间数',
-        type: 'NUMBER',
-        required: true,
-        defaultValue: 50,
-        description: '该方案建议承载的空间数量上限。',
       },
     ],
   },
@@ -208,15 +201,6 @@ const MODULE_CATALOG = [
         description: '方案中可使用的资料库范围。',
       },
       {
-        key: 'allowed_resource_types',
-        label: '支持资源类型',
-        type: 'MULTI_SELECT',
-        required: true,
-        defaultValue: ['文档', '图片', '视频', '知识图谱'],
-        options: ['文档', '图片', '视频', '链接', '知识图谱', '能力模型', '研讨会', '问卷', '证书'],
-        description: '资料库允许上传或沉淀的资源类型。',
-      },
-      {
         key: 'tag_management_enabled',
         label: '标签管理开关',
         type: 'BOOLEAN',
@@ -231,14 +215,6 @@ const MODULE_CATALOG = [
         required: false,
         defaultValue: true,
         description: '是否启用资料解析、摘要和结构化提取。',
-      },
-      {
-        key: 'max_upload_size_mb',
-        label: '上传大小限制(MB)',
-        type: 'NUMBER',
-        required: true,
-        defaultValue: 200,
-        description: '单个资源的建议上传大小限制。',
       },
     ],
   },
@@ -312,15 +288,6 @@ const MODULE_CATALOG = [
     deliveryItems: ['消息中心入口', '通知通道配置', '自动提醒规则'],
     configTemplates: [
       {
-        key: 'channels',
-        label: '消息通道',
-        type: 'MULTI_SELECT',
-        required: true,
-        defaultValue: ['站内消息'],
-        options: ['站内消息', '短信', '邮件', '企业微信', '飞书'],
-        description: '可用消息触达通道。',
-      },
-      {
         key: 'lucky_push_enabled',
         label: 'Lucky 推送开关',
         type: 'BOOLEAN',
@@ -343,14 +310,6 @@ const MODULE_CATALOG = [
         required: false,
         defaultValue: true,
         description: '是否启用审批相关提醒。',
-      },
-      {
-        key: 'message_retention_days',
-        label: '消息保留天数',
-        type: 'NUMBER',
-        required: true,
-        defaultValue: 180,
-        description: '消息中心保留历史消息的天数。',
       },
     ],
   },
@@ -391,14 +350,6 @@ const MODULE_CATALOG = [
         description: '是否启用报名流程。',
       },
       {
-        key: 'max_participants',
-        label: '最大参与人数',
-        type: 'NUMBER',
-        required: true,
-        defaultValue: 200,
-        description: '单场研讨会建议参与上限。',
-      },
-      {
         key: 'certificate_binding_enabled',
         label: '证书联动开关',
         type: 'BOOLEAN',
@@ -426,15 +377,6 @@ const MODULE_CATALOG = [
         required: true,
         defaultValue: true,
         description: '是否允许创建问卷。',
-      },
-      {
-        key: 'question_types',
-        label: '支持题型',
-        type: 'MULTI_SELECT',
-        required: true,
-        defaultValue: ['单选', '多选', '填空', '评分'],
-        options: ['单选', '多选', '填空', '评分', '矩阵', '上传附件'],
-        description: '问卷可使用的题型范围。',
       },
       {
         key: 'anonymous_allowed',
@@ -489,15 +431,6 @@ const MODULE_CATALOG = [
         required: true,
         defaultValue: true,
         description: '是否允许发放证书。',
-      },
-      {
-        key: 'enabled_formats',
-        label: '导出格式',
-        type: 'MULTI_SELECT',
-        required: true,
-        defaultValue: ['PNG', 'PDF'],
-        options: ['PNG', 'JPG', 'PDF'],
-        description: '证书可导出的文件格式。',
       },
       {
         key: 'serial_rule_pattern',
@@ -1276,6 +1209,16 @@ function SolutionPrototypeModule() {
                             ...(activeConfigModule.serves || []).map((name) => `服务于 ${name}`),
                           ].join('；')}
                         </div>
+                      ) : null}
+
+                      {PACKAGE_RESOURCE_NOTE_MAP[activeConfigModule.key] ? (
+                        <Alert
+                          type="info"
+                          showIcon
+                          className="sp-config-note"
+                          message="资源限制由套餐定义"
+                          description={`${PACKAGE_RESOURCE_NOTE_MAP[activeConfigModule.key]}解决方案这里只保留模块能力与业务配置。`}
+                        />
                       ) : null}
 
                       <Form form={inlineConfigForm} layout="vertical" className="sp-config-form sp-inline-config-form">
