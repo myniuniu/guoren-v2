@@ -6,6 +6,7 @@ import {
   CaretRightOutlined,
   ClockCircleOutlined,
   CloseOutlined,
+  ClusterOutlined,
   DesktopOutlined,
   FolderFilled,
   LeftOutlined,
@@ -774,13 +775,19 @@ export function SpaceResourceImportBrowser({
             </div>
 
             {scope === 'organization' ? (
-              <Select
-                size="small"
-                value={organizationId}
-                onChange={handleOrganizationChange}
-                options={organizations.map((item) => ({ label: item.name, value: item.id }))}
-                className="space-resource-import-org-select"
-              />
+              <div className="space-resource-import-org-select-wrap">
+                <span className="space-resource-import-org-select-icon" aria-hidden="true">
+                  <ClusterOutlined />
+                </span>
+                <Select
+                  value={organizationId}
+                  onChange={handleOrganizationChange}
+                  options={organizations.map((item) => ({ label: item.name, value: item.id }))}
+                  className="space-resource-import-org-select"
+                  popupClassName="space-resource-import-org-dropdown"
+                  suffixIcon={<CaretDownOutlined style={{ fontSize: 11, color: '#959daa' }} />}
+                />
+              </div>
             ) : null}
 
             <div className="space-resource-import-sidebar-section">
@@ -862,13 +869,19 @@ export function SpaceResourceImportBrowser({
                       </div>
                       {scope === 'organization' ? (
                         <div className="space-resource-import-toolbar-org-field">
-                          <Select
-                            size="small"
-                            value={organizationId}
-                            onChange={handleOrganizationChange}
-                            options={organizations.map((item) => ({ label: item.name, value: item.id }))}
-                            className="space-resource-import-org-select space-resource-import-org-select-toolbar"
-                          />
+                          <div className="space-resource-import-org-select-wrap">
+                            <span className="space-resource-import-org-select-icon" aria-hidden="true">
+                              <ClusterOutlined />
+                            </span>
+                            <Select
+                              value={organizationId}
+                              onChange={handleOrganizationChange}
+                              options={organizations.map((item) => ({ label: item.name, value: item.id }))}
+                              className="space-resource-import-org-select space-resource-import-org-select-toolbar"
+                              popupClassName="space-resource-import-org-dropdown"
+                              suffixIcon={<CaretDownOutlined style={{ fontSize: 11, color: '#959daa' }} />}
+                            />
+                          </div>
                         </div>
                       ) : null}
                     </div>
