@@ -72,7 +72,7 @@ import MyProfileModule from './myProfile/MyProfileModule';
 import MessagesModule from './messages/MessagesModule';
 import AgentQuotaModule from './agentQuota/AgentQuotaModule';
 import ModelStatisticsModule from './modelStatistics/ModelStatisticsModule';
-import SolutionManagementModule from './solution/SolutionManagementModule';
+import SolutionPrototypeModule from './solutionPrototype/SolutionPrototypeModule';
 import SceneTemplateModule from './scene/SceneTemplateModule';
 import CapabilityModelModule from './capabilityModel/CapabilityModelModule';
 import TeacherEvaluationModule from './teacherEvaluation/TeacherEvaluationModule';
@@ -1457,7 +1457,7 @@ function App() {
       ) : currentPage === 'capability-model' ? (
         <CapabilityModelModule />
       ) : currentPage === 'solution-management' ? (
-        <SolutionManagementModule />
+        <SolutionPrototypeModule />
       ) : currentPage === 'dms' ? (
         <DmsModule />
       ) : currentPage === 'integration' ? (
