@@ -6307,15 +6307,22 @@ function TopicDetail({
               <div className="topic-practice-shell">
                 <div className="topic-practice-head">
                   <div className="topic-practice-head-title">实训实验室</div>
-                  <Select
-                    aria-label="选择实验室"
-                    value={selectedPracticeLabKey}
-                    onChange={setSelectedPracticeLabKey}
-                    options={PRACTICE_LAB_OPTIONS}
-                    popupClassName="topic-practice-lab-dropdown"
-                    className="topic-practice-lab-select"
-                    suffixIcon={<CaretDownOutlined />}
-                  />
+                  <div className="topic-practice-lab-control">
+                    <Select
+                      aria-label="选择实验室"
+                      value={selectedPracticeLabKey}
+                      onChange={setSelectedPracticeLabKey}
+                      options={PRACTICE_LAB_OPTIONS}
+                      popupClassName="topic-practice-lab-dropdown"
+                      className="topic-practice-lab-select"
+                      prefix={(
+                        <span className="topic-practice-lab-icon" aria-hidden="true">
+                          <ExperimentOutlined />
+                        </span>
+                      )}
+                      suffixIcon={<CaretDownOutlined />}
+                    />
+                  </div>
                 </div>
                 <div className="topic-practice-stage">
                   {selectedPracticeLabKey === PRACTICE_BLOCK_PROGRAMMING_LAB_KEY ? (
