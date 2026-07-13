@@ -1,4 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
+import ReactFlow, {
+  Background,
+  Controls,
+  MiniMap,
+} from 'reactflow';
 import {
   Alert,
   Avatar,
@@ -18,6 +23,7 @@ import {
   Tabs,
   Tag,
   Tooltip,
+  Tree,
   message,
 } from 'antd';
 import {
@@ -44,6 +50,7 @@ import {
   ToolOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
+import 'reactflow/dist/style.css';
 import './SolutionPrototypeModule.css';
 
 const { TextArea } = Input;
@@ -131,15 +138,6 @@ const MODULE_CATALOG = [
     deliveryItems: ['创建空间入口', '预置空间模板', '成员进入方式配置'],
     configTemplates: [
       {
-        key: 'supported_space_templates',
-        label: '支持的空间模板',
-        type: 'MULTI_SELECT',
-        required: true,
-        defaultValue: ['教学场景', '组织培训场景'],
-        options: ['教学场景', '组织培训场景', '教研场景', '社区共创场景', '课程创作中心'],
-        description: '允许该方案创建的空间模板范围。',
-      },
-      {
         key: 'default_visibility',
         label: '默认可见范围',
         type: 'SELECT',
@@ -147,6 +145,17 @@ const MODULE_CATALOG = [
         defaultValue: '组织内可见',
         options: ['公开', '组织内可见', '私密'],
         description: '新建空间的默认可见范围。',
+      },
+    ],
+    dataAuthTemplates: [
+      {
+        key: 'supported_space_templates',
+        label: '支持的空间模板',
+        type: 'MULTI_SELECT',
+        required: true,
+        defaultValue: ['教学场景', '组织培训场景'],
+        options: ['教学场景', '组织培训场景', '教研场景', '社区共创场景', '课程创作中心'],
+        description: '允许该方案创建的空间模板范围。',
       },
       {
         key: 'entry_methods',
@@ -189,6 +198,8 @@ const MODULE_CATALOG = [
         defaultValue: true,
         description: '是否允许用户创建新的智能体。',
       },
+    ],
+    dataAuthTemplates: [
       {
         key: 'builtin_skills',
         label: '内置技能',
@@ -233,15 +244,6 @@ const MODULE_CATALOG = [
     deliveryItems: ['资料库入口', '资料类型规则', '标签与解析能力'],
     configTemplates: [
       {
-        key: 'enabled_scopes',
-        label: '启用库范围',
-        type: 'MULTI_SELECT',
-        required: true,
-        defaultValue: ['组织资料库', '个人资料库'],
-        options: ['个人资料库', '组织资料库', '共享资料库'],
-        description: '方案中可使用的资料库范围。',
-      },
-      {
         key: 'tag_management_enabled',
         label: '标签管理开关',
         type: 'BOOLEAN',
@@ -256,6 +258,35 @@ const MODULE_CATALOG = [
         required: false,
         defaultValue: true,
         description: '是否启用资料解析、摘要和结构化提取。',
+      },
+    ],
+    dataAuthTemplates: [
+      {
+        key: 'enabled_scopes',
+        label: '启用库范围',
+        type: 'MULTI_SELECT',
+        required: true,
+        defaultValue: ['组织资料库', '个人资料库'],
+        options: ['个人资料库', '组织资料库', '共享资料库'],
+        description: '方案中可使用的资料库范围。',
+      },
+      {
+        key: 'resource_types',
+        label: '资料类型',
+        type: 'MULTI_SELECT',
+        required: true,
+        defaultValue: ['文档', '图片', '视频'],
+        options: ['文档', '图片', '视频', '音频', '链接', '题库', '课件'],
+        description: '资料库允许沉淀和检索的资料类型。',
+      },
+      {
+        key: 'builtin_tag_groups',
+        label: '内置标签组',
+        type: 'MULTI_SELECT',
+        required: false,
+        defaultValue: ['学科', '年级', '资源类型'],
+        options: ['学科', '年级', '资源类型', '培训阶段', '成果类型', '适用角色'],
+        description: '初始化资料库时预置的标签组。',
       },
     ],
   },
@@ -282,6 +313,25 @@ const MODULE_CATALOG = [
         description: '是否允许创建知识空间。',
       },
       {
+        key: 'knowledge_graph_binding_enabled',
+        label: '知识图谱绑定开关',
+        type: 'BOOLEAN',
+        required: false,
+        defaultValue: true,
+        description: '是否允许从资料库绑定知识图谱。',
+      },
+      {
+        key: 'default_visibility',
+        label: '默认可见范围',
+        type: 'SELECT',
+        required: true,
+        defaultValue: '组织内可见',
+        options: ['公开', '组织内可见', '私密'],
+        description: '知识空间默认可见范围。',
+      },
+    ],
+    dataAuthTemplates: [
+      {
         key: 'supported_templates',
         label: '支持模板',
         type: 'MULTI_SELECT',
@@ -298,23 +348,6 @@ const MODULE_CATALOG = [
         defaultValue: ['管理员', '成员'],
         options: ['管理员', '教师', '学员', '专家', '成员', '访客'],
         description: '创建知识空间时预置的成员角色。',
-      },
-      {
-        key: 'knowledge_graph_binding_enabled',
-        label: '知识图谱绑定开关',
-        type: 'BOOLEAN',
-        required: false,
-        defaultValue: true,
-        description: '是否允许从资料库绑定知识图谱。',
-      },
-      {
-        key: 'default_visibility',
-        label: '默认可见范围',
-        type: 'SELECT',
-        required: true,
-        defaultValue: '组织内可见',
-        options: ['公开', '组织内可见', '私密'],
-        description: '知识空间默认可见范围。',
       },
     ],
   },
@@ -340,24 +373,6 @@ const MODULE_CATALOG = [
         required: true,
         defaultValue: true,
         description: '是否允许用户在方案内创建日程。',
-      },
-      {
-        key: 'default_calendar_scope',
-        label: '默认日历范围',
-        type: 'SELECT',
-        required: true,
-        defaultValue: '空间日历',
-        options: ['个人日历', '空间日历', '组织日历'],
-        description: '新建日程默认归属的日历范围。',
-      },
-      {
-        key: 'enabled_event_types',
-        label: '启用日程类型',
-        type: 'MULTI_SELECT',
-        required: true,
-        defaultValue: ['课程安排', '研讨会', '任务截止'],
-        options: ['课程安排', '研讨会', '任务截止', '证书发放', '审批节点', '直播活动'],
-        description: '该方案中允许创建和展示的日程类型。',
       },
       {
         key: 'default_reminder_minutes',
@@ -393,6 +408,26 @@ const MODULE_CATALOG = [
         description: '控制日程参与人信息在方案内的可见范围。',
       },
     ],
+    dataAuthTemplates: [
+      {
+        key: 'default_calendar_scope',
+        label: '默认日历范围',
+        type: 'SELECT',
+        required: true,
+        defaultValue: '空间日历',
+        options: ['个人日历', '空间日历', '组织日历'],
+        description: '新建日程默认归属的日历范围。',
+      },
+      {
+        key: 'enabled_event_types',
+        label: '启用日程类型',
+        type: 'MULTI_SELECT',
+        required: true,
+        defaultValue: ['课程安排', '研讨会', '任务截止'],
+        options: ['课程安排', '研讨会', '任务截止', '证书发放', '审批节点', '直播活动'],
+        description: '该方案中允许创建和展示的日程类型。',
+      },
+    ],
   },
   {
     key: 'MESSAGE',
@@ -415,24 +450,6 @@ const MODULE_CATALOG = [
         required: true,
         defaultValue: true,
         description: '是否开启系统级通知。',
-      },
-      {
-        key: 'default_touch_strategy',
-        label: '默认触达策略',
-        type: 'SELECT',
-        required: true,
-        defaultValue: '站内消息优先',
-        options: ['站内消息优先', '多通道同时触达', '失败后外部补发', '仅站内留痕'],
-        description: '方案内通知默认采用的触达策略。',
-      },
-      {
-        key: 'reminder_event_types',
-        label: '启用提醒类型',
-        type: 'MULTI_SELECT',
-        required: true,
-        defaultValue: ['审批提醒', '活动提醒', '日程提醒'],
-        options: ['审批提醒', '活动提醒', '日程提醒', '任务提醒', '证书发放提醒', 'Lucky 建议提醒'],
-        description: '允许消息模块自动触发提醒的业务事件。',
       },
       {
         key: 'digest_frequency',
@@ -468,6 +485,26 @@ const MODULE_CATALOG = [
         description: '是否允许 Lucky 主动推送建议和提醒。',
       },
     ],
+    dataAuthTemplates: [
+      {
+        key: 'default_touch_strategy',
+        label: '默认触达策略',
+        type: 'SELECT',
+        required: true,
+        defaultValue: '站内消息优先',
+        options: ['站内消息优先', '多通道同时触达', '失败后外部补发', '仅站内留痕'],
+        description: '方案内通知默认采用的触达策略。',
+      },
+      {
+        key: 'reminder_event_types',
+        label: '启用提醒类型',
+        type: 'MULTI_SELECT',
+        required: true,
+        defaultValue: ['审批提醒', '活动提醒', '日程提醒'],
+        options: ['审批提醒', '活动提醒', '日程提醒', '任务提醒', '证书发放提醒', 'Lucky 建议提醒'],
+        description: '允许消息模块自动触发提醒的业务事件。',
+      },
+    ],
   },
   {
     key: 'TASKS',
@@ -491,24 +528,6 @@ const MODULE_CATALOG = [
         required: true,
         defaultValue: true,
         description: '是否允许用户在方案内创建任务。',
-      },
-      {
-        key: 'enabled_task_types',
-        label: '启用任务类型',
-        type: 'MULTI_SELECT',
-        required: true,
-        defaultValue: ['学习任务', '运营任务', '协作任务'],
-        options: ['学习任务', '运营任务', '协作任务', '审批跟进', '资料补充', '证书发放'],
-        description: '该方案中允许创建和展示的任务类型。',
-      },
-      {
-        key: 'default_assignee_scope',
-        label: '默认指派范围',
-        type: 'SELECT',
-        required: true,
-        defaultValue: '空间成员',
-        options: ['本人', '空间成员', '组织成员', '指定角色'],
-        description: '创建任务时默认可指派的人群范围。',
       },
       {
         key: 'due_reminder_enabled',
@@ -543,6 +562,26 @@ const MODULE_CATALOG = [
         description: '是否启用按状态拖拽流转的任务看板。',
       },
     ],
+    dataAuthTemplates: [
+      {
+        key: 'enabled_task_types',
+        label: '启用任务类型',
+        type: 'MULTI_SELECT',
+        required: true,
+        defaultValue: ['学习任务', '运营任务', '协作任务'],
+        options: ['学习任务', '运营任务', '协作任务', '审批跟进', '资料补充', '证书发放'],
+        description: '该方案中允许创建和展示的任务类型。',
+      },
+      {
+        key: 'default_assignee_scope',
+        label: '默认指派范围',
+        type: 'SELECT',
+        required: true,
+        defaultValue: '空间成员',
+        options: ['本人', '空间成员', '组织成员', '指定角色'],
+        description: '创建任务时默认可指派的人群范围。',
+      },
+    ],
   },
   {
     key: 'SEMINAR',
@@ -565,15 +604,6 @@ const MODULE_CATALOG = [
         description: '是否允许创建研讨会。',
       },
       {
-        key: 'default_tools',
-        label: '默认工具',
-        type: 'MULTI_SELECT',
-        required: true,
-        defaultValue: ['在线文档', '白板', '直播'],
-        options: ['在线文档', '白板', '直播', '论坛', '投票', '资料库'],
-        description: '研讨会默认开启的协作工具。',
-      },
-      {
         key: 'registration_enabled',
         label: '报名开关',
         type: 'BOOLEAN',
@@ -588,6 +618,26 @@ const MODULE_CATALOG = [
         required: false,
         defaultValue: true,
         description: '研讨会完成后是否可联动发放证书。',
+      },
+    ],
+    dataAuthTemplates: [
+      {
+        key: 'default_tools',
+        label: '默认工具',
+        type: 'MULTI_SELECT',
+        required: true,
+        defaultValue: ['在线文档', '白板', '直播'],
+        options: ['在线文档', '白板', '直播', '论坛', '投票', '资料库'],
+        description: '研讨会默认开启的协作工具。',
+      },
+      {
+        key: 'participant_roles',
+        label: '参与人角色',
+        type: 'MULTI_SELECT',
+        required: false,
+        defaultValue: ['主持人', '参与教师', '专家顾问'],
+        options: ['主持人', '参与教师', '专家顾问', '记录员', '观察员'],
+        description: '研讨会中预置的参与角色。',
       },
     ],
   },
@@ -634,6 +684,26 @@ const MODULE_CATALOG = [
         required: false,
         defaultValue: false,
         description: '问卷结果是否允许接入考核或评价。',
+      },
+    ],
+    dataAuthTemplates: [
+      {
+        key: 'question_types',
+        label: '启用题型',
+        type: 'MULTI_SELECT',
+        required: true,
+        defaultValue: ['单选', '多选', '问答'],
+        options: ['单选', '多选', '问答', '评分', '矩阵', '上传附件'],
+        description: '方案中允许创建的问卷题型。',
+      },
+      {
+        key: 'export_fields',
+        label: '结果字段',
+        type: 'MULTI_SELECT',
+        required: false,
+        defaultValue: ['提交人', '提交时间', '答题明细'],
+        options: ['提交人', '提交时间', '答题明细', '组织信息', '角色信息', '统计得分'],
+        description: '问卷结果导出和统计中可使用的字段。',
       },
     ],
   },
@@ -691,6 +761,26 @@ const MODULE_CATALOG = [
         description: '证书发放前是否需要审批。',
       },
     ],
+    dataAuthTemplates: [
+      {
+        key: 'builtin_certificate_templates',
+        label: '内置证书模板',
+        type: 'MULTI_SELECT',
+        required: true,
+        defaultValue: ['培训结业证书', '研讨参与证明'],
+        options: ['培训结业证书', '研讨参与证明', '优秀学员证书', '讲师聘书', '学时证明'],
+        description: '方案中可直接使用的证书模板。',
+      },
+      {
+        key: 'recipient_fields',
+        label: '证书字段',
+        type: 'MULTI_SELECT',
+        required: false,
+        defaultValue: ['姓名', '组织', '证书编号'],
+        options: ['姓名', '组织', '证书编号', '培训名称', '学时', '发证日期'],
+        description: '生成证书时可引用的内置字段。',
+      },
+    ],
   },
 ];
 
@@ -710,6 +800,94 @@ function buildConfigs(moduleDef) {
   return Object.fromEntries(moduleDef.configTemplates.map((item) => [item.key, cloneValue(item.defaultValue)]));
 }
 
+function buildDataAuths(moduleDef) {
+  return Object.fromEntries((moduleDef.dataAuthTemplates || []).map((item) => [item.key, cloneValue(item.defaultValue)]));
+}
+
+function featureNodeTitle(title, description, tag) {
+  return (
+    <span className="sp-feature-node-title">
+      <span>
+        <strong>{title}</strong>
+        {description ? <small>{description}</small> : null}
+      </span>
+      {tag ? <Tag>{tag}</Tag> : null}
+    </span>
+  );
+}
+
+function flattenTreeLeafKeys(nodes = []) {
+  return nodes.flatMap((node) => (
+    node.children?.length ? flattenTreeLeafKeys(node.children) : [node.key]
+  ));
+}
+
+function buildModuleFeatureTree(moduleDef, moduleCatalog, assignment = {}) {
+  if (!moduleDef) return [];
+  const menuName = assignment.navLabel || moduleDef.navLabel || moduleDef.name;
+  const moduleKey = moduleDef.key;
+  const deliveryChildren = [
+    {
+      key: `${moduleKey}:entry`,
+      title: featureNodeTitle(
+        isMenuModule(moduleDef) ? `${menuName}菜单入口` : `${menuName}能力入口`,
+        isMenuModule(moduleDef) ? '作为系统菜单入口交付给用户' : '作为方案内虚拟业务能力交付',
+        isMenuModule(moduleDef) ? '菜单' : '虚拟',
+      ),
+    },
+    ...(moduleDef.deliveryItems || []).map((item, index) => ({
+      key: `${moduleKey}:delivery:${index}`,
+      title: featureNodeTitle(item, '纳入方案交付清单', '交付'),
+    })),
+  ];
+  const configChildren = (moduleDef.configTemplates || []).map((template) => ({
+    key: `${moduleKey}:config:${template.key}`,
+    title: featureNodeTitle(template.label, template.description, template.required ? '必开' : '可选'),
+  }));
+  const relationChildren = [
+    ...(moduleDef.dependsOn || []).map((depKey) => {
+      const depName = moduleCatalog.find((item) => item.key === depKey)?.name || depKey;
+      return {
+        key: `${moduleKey}:depends:${depKey}`,
+        title: featureNodeTitle(`依赖 ${depName}`, '开发时需要同步接入该模块能力', '依赖'),
+      };
+    }),
+    ...(moduleDef.dependsOnAny || []).map((depKey) => {
+      const depName = moduleCatalog.find((item) => item.key === depKey)?.name || depKey;
+      return {
+        key: `${moduleKey}:depends-any:${depKey}`,
+        title: featureNodeTitle(`可接入 ${depName}`, '至少满足其中一个协同能力即可', '可选依赖'),
+      };
+    }),
+    ...(moduleDef.serves || []).map((name, index) => ({
+      key: `${moduleKey}:serves:${index}`,
+      title: featureNodeTitle(`服务于 ${name}`, '作为其他业务流程的支撑能力', '协同'),
+    })),
+  ];
+
+  return [
+    {
+      key: `${moduleKey}:delivery`,
+      title: featureNodeTitle('入口与交付', '用户可感知的模块入口和交付内容'),
+      children: deliveryChildren,
+    },
+    {
+      key: `${moduleKey}:capabilities`,
+      title: featureNodeTitle('功能能力', '需要开发或开放的模块功能项'),
+      children: configChildren,
+    },
+    ...(relationChildren.length ? [{
+      key: `${moduleKey}:relations`,
+      title: featureNodeTitle('依赖与协同', '与其他模块或业务流程的关系'),
+      children: relationChildren,
+    }] : []),
+  ];
+}
+
+function getModuleFeatureLeafKeys(moduleDef, moduleCatalog, assignment = {}) {
+  return flattenTreeLeafKeys(buildModuleFeatureTree(moduleDef, moduleCatalog, assignment));
+}
+
 function createModuleAssignment(moduleDef, sortNo) {
   const menuOrder = isMenuModule(moduleDef) ? (moduleDef.defaultMenuOrder ?? sortNo * 10) : null;
   return {
@@ -719,6 +897,9 @@ function createModuleAssignment(moduleDef, sortNo) {
     enabled: true,
     sortNo,
     menuOrder,
+    navLabel: moduleDef.navLabel || moduleDef.name,
+    featureKeys: getModuleFeatureLeafKeys(moduleDef, MODULE_CATALOG),
+    dataAuths: buildDataAuths(moduleDef),
     deployStatus: 'CONFIGURING',
     configs: buildConfigs(moduleDef),
     remark: '',
@@ -778,17 +959,6 @@ function statusTag(status) {
   return <Tag color={target.color}>{target.label}</Tag>;
 }
 
-function deployTag(status) {
-  const map = {
-    TODO: { color: 'default', label: '待配置' },
-    CONFIGURING: { color: 'processing', label: '配置中' },
-    READY: { color: 'success', label: '已就绪' },
-    BLOCKED: { color: 'error', label: '有风险' },
-  };
-  const target = map[status] || map.TODO;
-  return <Tag color={target.color}>{target.label}</Tag>;
-}
-
 function ModuleIcon({ type }) {
   const iconMap = {
     space: <AppstoreOutlined />,
@@ -822,9 +992,17 @@ function isFilled(value, type) {
 }
 
 function getModuleConfigStatus(assignment, moduleDef) {
-  const requiredItems = moduleDef.configTemplates.filter((item) => item.required);
+  const requiredItems = [
+    ...moduleDef.configTemplates.map((item) => ({ ...item, source: 'configs' })),
+    ...(moduleDef.dataAuthTemplates || []).map((item) => ({ ...item, source: 'dataAuths' })),
+  ].filter((item) => item.required);
   if (!requiredItems.length) return { percent: 100, missing: [] };
-  const missing = requiredItems.filter((item) => !isFilled(assignment.configs?.[item.key], item.type));
+  const missing = requiredItems.filter((item) => {
+    const values = item.source === 'dataAuths'
+      ? { ...buildDataAuths(moduleDef), ...(assignment.dataAuths || {}) }
+      : { ...buildConfigs(moduleDef), ...(assignment.configs || {}) };
+    return !isFilled(values[item.key], item.type);
+  });
   return {
     percent: Math.round(((requiredItems.length - missing.length) / requiredItems.length) * 100),
     missing,
@@ -924,6 +1102,299 @@ function getFieldOptions(template) {
   return (template.options || []).map((item) => ({ label: item, value: item }));
 }
 
+const FUNCTION_MAP_DEPENDENCY_RULES = [
+  {
+    source: { moduleKey: 'LUCKY', group: 'data', key: 'library_scopes' },
+    target: { moduleKey: 'RESOURCE_LIBRARY', group: 'data', key: 'enabled_scopes' },
+    label: '资料检索范围',
+  },
+  {
+    source: { moduleKey: 'CALENDAR', group: 'config', key: 'message_reminder_enabled' },
+    target: { moduleKey: 'MESSAGE', group: 'data', key: 'reminder_event_types' },
+    label: '日程提醒触达',
+  },
+  {
+    source: { moduleKey: 'TASKS', group: 'config', key: 'due_reminder_enabled' },
+    target: { moduleKey: 'MESSAGE', group: 'data', key: 'reminder_event_types' },
+    label: '任务提醒触达',
+  },
+  {
+    source: { moduleKey: 'TASKS', group: 'config', key: 'calendar_binding_enabled' },
+    target: { moduleKey: 'CALENDAR', group: 'data', key: 'enabled_event_types' },
+    label: '任务截止进日历',
+  },
+  {
+    source: { moduleKey: 'SEMINAR', group: 'config', key: 'certificate_binding_enabled' },
+    target: { moduleKey: 'CERTIFICATE', group: 'config', key: 'issue_enabled' },
+    label: '研讨完成发证',
+  },
+  {
+    source: { moduleKey: 'CERTIFICATE', group: 'config', key: 'resource_library_archive_enabled' },
+    target: { moduleKey: 'RESOURCE_LIBRARY', group: 'data', key: 'resource_types' },
+    label: '证书归档',
+  },
+  {
+    source: { moduleKey: 'SURVEY', group: 'config', key: 'bind_assessment_enabled' },
+    target: { moduleKey: 'CERTIFICATE', group: 'data', key: 'recipient_fields' },
+    label: '反馈结果入证书字段',
+  },
+];
+
+function getFeatureMapNodeId(moduleKey, group, key) {
+  return `feature:${moduleKey}:${group}:${key}`;
+}
+
+function getModuleMapNodeId(moduleKey) {
+  return `module:${moduleKey}`;
+}
+
+function buildFeatureMapLabel(title, subtitle, kind) {
+  return (
+    <div className="sp-function-map-node-label">
+      <span>{title}</span>
+      <small>{subtitle}</small>
+      {kind ? <em>{kind}</em> : null}
+    </div>
+  );
+}
+
+function getFunctionMapFeatureItems(moduleDef) {
+  return [
+    ...(moduleDef.deliveryItems || []).map((item, index) => ({
+      id: getFeatureMapNodeId(moduleDef.key, 'delivery', index),
+      title: item,
+      subtitle: '交付功能',
+      kind: '交付',
+    })),
+    ...(moduleDef.configTemplates || []).map((item) => ({
+      id: getFeatureMapNodeId(moduleDef.key, 'config', item.key),
+      title: item.label,
+      subtitle: item.description || '参数能力',
+      kind: item.required ? '必配' : '功能',
+    })),
+    ...(moduleDef.dataAuthTemplates || []).map((item) => ({
+      id: getFeatureMapNodeId(moduleDef.key, 'data', item.key),
+      title: item.label,
+      subtitle: item.description || '内置数据',
+      kind: '数据',
+    })),
+  ];
+}
+
+function collectFunctionMapPath(selectedKey, edges) {
+  if (!selectedKey) return { nodeIds: new Set(), edgeIds: new Set() };
+  const adjacency = new Map();
+  edges.forEach((edge) => {
+    if (!adjacency.has(edge.source)) adjacency.set(edge.source, []);
+    if (!adjacency.has(edge.target)) adjacency.set(edge.target, []);
+    adjacency.get(edge.source).push({ nodeId: edge.target, edgeId: edge.id });
+    adjacency.get(edge.target).push({ nodeId: edge.source, edgeId: edge.id });
+  });
+
+  const nodeIds = new Set([selectedKey]);
+  const edgeIds = new Set();
+  const queue = [{ nodeId: selectedKey, depth: 0 }];
+  const maxDepth = selectedKey.startsWith('module:') ? 3 : 4;
+  while (queue.length) {
+    const current = queue.shift();
+    if (current.depth >= maxDepth) continue;
+    (adjacency.get(current.nodeId) || []).forEach((next) => {
+      if (edgeIds.has(next.edgeId) && nodeIds.has(next.nodeId)) return;
+      edgeIds.add(next.edgeId);
+      if (!nodeIds.has(next.nodeId)) {
+        nodeIds.add(next.nodeId);
+        queue.push({ nodeId: next.nodeId, depth: current.depth + 1 });
+      }
+    });
+  }
+  return { nodeIds, edgeIds };
+}
+
+function buildSolutionFunctionMap(assignments, moduleCatalog, selectedKey) {
+  const moduleEntries = assignments
+    .map((assignment) => ({
+      assignment,
+      moduleDef: moduleCatalog.find((item) => item.key === assignment.moduleKey),
+    }))
+    .filter((item) => item.moduleDef);
+  const moduleKeySet = new Set(moduleEntries.map(({ moduleDef }) => moduleDef.key));
+  const moduleNameMap = new Map(moduleCatalog.flatMap((moduleDef) => ([
+    [moduleDef.name, moduleDef.key],
+    [moduleDef.navLabel, moduleDef.key],
+    [`${moduleDef.navLabel}模块`, moduleDef.key],
+  ])));
+  const rawNodes = [];
+  const rawEdges = [];
+  const nodeMeta = new Map();
+  const featureItemsByModule = new Map();
+
+  moduleEntries.forEach(({ assignment, moduleDef }, moduleIndex) => {
+    const moduleNodeId = getModuleMapNodeId(moduleDef.key);
+    const moduleLabel = assignment.navLabel || moduleDef.navLabel || moduleDef.name;
+    const x = moduleIndex * 230;
+    rawNodes.push({
+      id: moduleNodeId,
+      type: 'default',
+      position: { x, y: 20 },
+      data: {
+        label: buildFeatureMapLabel(moduleLabel, getModuleKindLabel(moduleDef), isMenuModule(moduleDef) ? '模块' : '虚拟'),
+      },
+      className: 'sp-function-map-node sp-function-map-module-node',
+    });
+    nodeMeta.set(moduleNodeId, {
+      label: moduleLabel,
+      typeLabel: getModuleKindLabel(moduleDef),
+      moduleKey: moduleDef.key,
+    });
+
+    const featureItems = getFunctionMapFeatureItems(moduleDef);
+    featureItemsByModule.set(moduleDef.key, featureItems);
+    featureItems.forEach((feature, featureIndex) => {
+      rawNodes.push({
+        id: feature.id,
+        type: 'default',
+        position: { x, y: 150 + featureIndex * 92 },
+        data: {
+          label: buildFeatureMapLabel(feature.title, feature.subtitle, feature.kind),
+        },
+        className: 'sp-function-map-node sp-function-map-feature-node',
+      });
+      nodeMeta.set(feature.id, {
+        label: feature.title,
+        typeLabel: feature.kind,
+        moduleKey: moduleDef.key,
+      });
+      rawEdges.push({
+        id: `contains:${moduleDef.key}:${feature.id}`,
+        source: moduleNodeId,
+        target: feature.id,
+        label: '包含',
+        kind: 'contains',
+      });
+    });
+  });
+
+  moduleEntries.forEach(({ moduleDef }) => {
+    const sourceNodeId = getModuleMapNodeId(moduleDef.key);
+    (moduleDef.dependsOn || []).forEach((depKey) => {
+      if (!moduleKeySet.has(depKey)) return;
+      rawEdges.push({
+        id: `module-dep:${moduleDef.key}:${depKey}`,
+        source: sourceNodeId,
+        target: getModuleMapNodeId(depKey),
+        label: '模块依赖',
+        kind: 'dependency',
+      });
+    });
+    (moduleDef.dependsOnAny || []).forEach((depKey) => {
+      if (!moduleKeySet.has(depKey)) return;
+      rawEdges.push({
+        id: `module-any:${moduleDef.key}:${depKey}`,
+        source: sourceNodeId,
+        target: getModuleMapNodeId(depKey),
+        label: '可选依赖',
+        kind: 'dependency',
+      });
+    });
+    (moduleDef.serves || []).forEach((name, index) => {
+      const servedModuleKey = moduleNameMap.get(name);
+      if (!servedModuleKey || !moduleKeySet.has(servedModuleKey)) return;
+      rawEdges.push({
+        id: `module-serves:${moduleDef.key}:${servedModuleKey}:${index}`,
+        source: getModuleMapNodeId(servedModuleKey),
+        target: sourceNodeId,
+        label: '业务支撑',
+        kind: 'dependency',
+      });
+    });
+  });
+
+  FUNCTION_MAP_DEPENDENCY_RULES.forEach((rule) => {
+    if (!moduleKeySet.has(rule.source.moduleKey) || !moduleKeySet.has(rule.target.moduleKey)) return;
+    const source = getFeatureMapNodeId(rule.source.moduleKey, rule.source.group, rule.source.key);
+    const target = getFeatureMapNodeId(rule.target.moduleKey, rule.target.group, rule.target.key);
+    if (!nodeMeta.has(source) || !nodeMeta.has(target)) return;
+    rawEdges.push({
+      id: `feature-dep:${source}:${target}`,
+      source,
+      target,
+      label: rule.label,
+      kind: 'featureDependency',
+    });
+  });
+
+  const path = collectFunctionMapPath(selectedKey, rawEdges);
+  const hasSelection = Boolean(selectedKey && nodeMeta.has(selectedKey));
+  const highlightedNodeIds = hasSelection ? path.nodeIds : new Set(rawNodes.map((node) => node.id));
+  const highlightedEdgeIds = hasSelection ? path.edgeIds : new Set(rawEdges.map((edge) => edge.id));
+
+  const nodes = rawNodes.map((node) => {
+    const highlighted = highlightedNodeIds.has(node.id);
+    return {
+      ...node,
+      className: `${node.className} ${highlighted ? 'is-highlight' : 'is-dim'}`,
+      style: {
+        opacity: highlighted ? 1 : 0.2,
+      },
+    };
+  });
+
+  const edges = rawEdges.map((edge) => {
+    const highlighted = highlightedEdgeIds.has(edge.id);
+    const isDependency = edge.kind !== 'contains';
+    return {
+      ...edge,
+      type: 'smoothstep',
+      animated: hasSelection && highlighted && isDependency,
+      label: isDependency ? edge.label : undefined,
+      className: `${isDependency ? 'sp-function-map-dependency-edge' : 'sp-function-map-contain-edge'} ${highlighted ? 'is-highlight' : 'is-dim'}`,
+      style: {
+        stroke: highlighted ? (isDependency ? '#2563eb' : '#94a3b8') : '#cbd5e1',
+        strokeWidth: highlighted ? (isDependency ? 2.4 : 1.4) : 1,
+        opacity: highlighted ? 1 : 0.12,
+      },
+    };
+  });
+
+  const moduleOptions = moduleEntries.map(({ assignment, moduleDef }) => {
+    const label = assignment.navLabel || moduleDef.navLabel || moduleDef.name;
+    return {
+      value: getModuleMapNodeId(moduleDef.key),
+      label,
+      searchText: `${label} ${moduleDef.name} ${moduleDef.code}`,
+    };
+  });
+  const featureOptions = moduleEntries.flatMap(({ assignment, moduleDef }) => {
+    const moduleLabel = assignment.navLabel || moduleDef.navLabel || moduleDef.name;
+    return (featureItemsByModule.get(moduleDef.key) || []).map((feature) => ({
+      value: feature.id,
+      label: `${moduleLabel} / ${feature.title}`,
+      searchText: `${moduleLabel} ${moduleDef.name} ${feature.title} ${feature.subtitle}`,
+    }));
+  });
+
+  const dependencyRows = rawEdges
+    .filter((edge) => highlightedEdgeIds.has(edge.id) && edge.kind !== 'contains')
+    .map((edge) => ({
+      id: edge.id,
+      source: nodeMeta.get(edge.source)?.label || edge.source,
+      target: nodeMeta.get(edge.target)?.label || edge.target,
+      label: edge.label,
+    }));
+
+  return {
+    nodes,
+    edges,
+    queryOptions: [
+      { label: '模块', options: moduleOptions },
+      { label: '功能点', options: featureOptions },
+    ],
+    dependencyRows,
+    selectedLabel: nodeMeta.get(selectedKey)?.label || '',
+    hasSelection,
+  };
+}
+
 function SolutionPrototypeModule() {
   const [moduleCatalog, setModuleCatalog] = useState(MODULE_CATALOG);
   const [solutions, setSolutions] = useState(buildInitialSolutions);
@@ -933,11 +1404,13 @@ function SolutionPrototypeModule() {
   const [drawerActiveTab, setDrawerActiveTab] = useState('base');
   const [selectedSolutionId, setSelectedSolutionId] = useState(null);
   const [activeConfigAssignmentId, setActiveConfigAssignmentId] = useState(null);
+  const [functionMapQueryKey, setFunctionMapQueryKey] = useState(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [addModuleOpen, setAddModuleOpen] = useState(false);
   const [configModal, setConfigModal] = useState({ open: false });
   const [solutionForm] = Form.useForm();
   const [inlineConfigForm] = Form.useForm();
+  const [dataAuthForm] = Form.useForm();
   const [configForm] = Form.useForm();
 
   const selectedSolution = useMemo(
@@ -989,10 +1462,18 @@ function SolutionPrototypeModule() {
   useEffect(() => {
     if (!activeConfigAssignment || !activeConfigModule) {
       inlineConfigForm.resetFields();
+      dataAuthForm.resetFields();
       return;
     }
-    inlineConfigForm.setFieldsValue(activeConfigAssignment.configs || buildConfigs(activeConfigModule));
-  }, [activeConfigAssignment, activeConfigModule, inlineConfigForm]);
+    inlineConfigForm.setFieldsValue({
+      ...buildConfigs(activeConfigModule),
+      ...(activeConfigAssignment.configs || {}),
+    });
+    dataAuthForm.setFieldsValue({
+      ...buildDataAuths(activeConfigModule),
+      ...(activeConfigAssignment.dataAuths || {}),
+    });
+  }, [activeConfigAssignment, activeConfigModule, dataAuthForm, inlineConfigForm]);
 
   const updateSolution = (id, updater) => {
     setSolutions((prev) => prev.map((item) => {
@@ -1006,6 +1487,7 @@ function SolutionPrototypeModule() {
     setSelectedSolutionId(solution.id);
     setDrawerActiveTab('base');
     setActiveConfigAssignmentId(solution.modules[0]?.id || null);
+    setFunctionMapQueryKey(null);
     setDrawerOpen(true);
   };
 
@@ -1056,6 +1538,8 @@ function SolutionPrototypeModule() {
       modules: solution.modules.map((item, index) => ({
         ...item,
         id: `${item.id}-copy-${copyIndex}-${index}`,
+        featureKeys: Array.isArray(item.featureKeys) ? [...item.featureKeys] : item.featureKeys,
+        dataAuths: Object.fromEntries(Object.entries(item.dataAuths || {}).map(([key, value]) => [key, cloneValue(value)])),
         configs: Object.fromEntries(Object.entries(item.configs || {}).map(([key, value]) => [key, cloneValue(value)])),
       })),
     };
@@ -1187,14 +1671,26 @@ function SolutionPrototypeModule() {
   const handleSaveInlineConfig = async () => {
     if (!activeConfigAssignment || !activeConfigModule) return;
     const values = await inlineConfigForm.validateFields();
-    handleChangeModule(activeConfigAssignment.id, { configs: values, deployStatus: 'READY' });
+    const dataAuthValues = await dataAuthForm.validateFields();
+    handleChangeModule(activeConfigAssignment.id, {
+      configs: values,
+      dataAuths: dataAuthValues,
+      deployStatus: 'READY',
+    });
     message.success(`${activeConfigModule.name} 配置已保存`);
   };
 
   const handleResetInlineConfig = () => {
     if (!activeConfigModule) return;
     inlineConfigForm.setFieldsValue(buildConfigs(activeConfigModule));
-    message.info('已还原为模块默认配置，保存后生效');
+    dataAuthForm.setFieldsValue(buildDataAuths(activeConfigModule));
+    if (activeConfigAssignment) {
+      handleChangeModule(activeConfigAssignment.id, {
+        featureKeys: getModuleFeatureLeafKeys(activeConfigModule, moduleCatalog, activeConfigAssignment),
+        dataAuths: buildDataAuths(activeConfigModule),
+      });
+    }
+    message.info('已还原为模块默认配置和功能授权，保存后生效');
   };
 
   const tryPublish = () => {
@@ -1354,6 +1850,30 @@ function SolutionPrototypeModule() {
         moduleDef: moduleCatalog.find((moduleDef) => moduleDef.key === assignment.moduleKey),
       }))
       .filter((item) => item.moduleDef);
+    const activeModuleDisplayName = activeConfigAssignment && activeConfigModule
+      ? (activeConfigAssignment.navLabel || activeConfigModule.navLabel || activeConfigModule.name)
+      : '';
+    const activeDependencyLabels = activeConfigModule
+      ? [
+          ...(activeConfigModule.dependsOn || []).map((depKey) => `依赖 ${moduleCatalog.find((item) => item.key === depKey)?.name || depKey}`),
+          ...(activeConfigModule.dependsOnAny?.length
+            ? [`需要 ${activeConfigModule.dependsOnAny.map((depKey) => moduleCatalog.find((item) => item.key === depKey)?.name || depKey).join(' 或 ')}`]
+            : []),
+          ...(activeConfigModule.serves || []).map((name) => `服务于 ${name}`),
+        ]
+      : [];
+    const activeFeatureTreeData = activeConfigModule
+      ? buildModuleFeatureTree(activeConfigModule, moduleCatalog, activeConfigAssignment)
+      : [];
+    const activeFeatureLeafKeys = activeConfigModule
+      ? getModuleFeatureLeafKeys(activeConfigModule, moduleCatalog, activeConfigAssignment)
+      : [];
+    const activeFeatureCheckedKeys = Array.isArray(activeConfigAssignment?.featureKeys)
+      ? activeFeatureLeafKeys.filter((key) => activeConfigAssignment.featureKeys.includes(key))
+      : activeFeatureLeafKeys;
+    const activeFeatureCheckedCount = activeFeatureLeafKeys.filter((key) => activeFeatureCheckedKeys.includes(key)).length;
+    const activeDataAuthTemplates = activeConfigModule?.dataAuthTemplates || [];
+    const functionMap = buildSolutionFunctionMap(selectedSortedModules, moduleCatalog, functionMapQueryKey);
 
     const drawerTabs = [
       {
@@ -1421,25 +1941,20 @@ function SolutionPrototypeModule() {
         label: '模块能力',
         children: (
           <div className="sp-section sp-module-capability-section">
-            <div className="sp-section-toolbar">
-              <div>
-                <div className="sp-section-title">模块编排与配置</div>
-                <div className="sp-section-subtitle">菜单模块配置系统菜单位置，虚拟能力只维护方案能力与业务配置。</div>
-              </div>
-              <Space wrap>
-                <Button icon={<PlusOutlined />} onClick={() => setAddModuleOpen(true)}>
-                  添加模块
-                </Button>
-                <Button icon={<RocketOutlined />} type="primary" onClick={handleInitStandardModules}>
-                  一键加入标准模块
-                </Button>
-              </Space>
-            </div>
-
             {selectedSortedModules.length ? (
               <div className="sp-config-layout sp-unified-config-layout">
                 <div className="sp-config-sidebar">
-                  <div className="sp-config-sidebar-title">菜单排序与虚拟能力</div>
+                  <div className="sp-config-sidebar-head">
+                    <div className="sp-config-sidebar-title">菜单排序与虚拟能力</div>
+                    <Space wrap className="sp-config-sidebar-actions">
+                      <Button size="small" icon={<PlusOutlined />} onClick={() => setAddModuleOpen(true)}>
+                        添加模块
+                      </Button>
+                      <Button size="small" icon={<RocketOutlined />} type="primary" onClick={handleInitStandardModules}>
+                        一键加入标准模块
+                      </Button>
+                    </Space>
+                  </div>
                   {selectedSortedModules.map((assignment) => {
                     const moduleDef = moduleCatalog.find((item) => item.key === assignment.moduleKey);
                     if (!moduleDef) return null;
@@ -1498,94 +2013,171 @@ function SolutionPrototypeModule() {
                 <div className="sp-config-detail">
                   {activeConfigAssignment && activeConfigModule ? (
                     <>
-                      <div className="sp-config-detail-head">
-                        <div>
-                          <div className="sp-config-detail-title">{activeConfigModule.name}</div>
-                          <div className="sp-config-detail-desc">{activeConfigModule.description}</div>
-                          <Space wrap className="sp-tag-row">
-                            <Tag>{activeConfigModule.code}</Tag>
-                            <Tag color="geekblue">{activeConfigModule.category}</Tag>
-                            <Tag color={isMenuModule(activeConfigModule) ? 'cyan' : 'purple'}>
-                              {getModuleKindLabel(activeConfigModule)}
-                            </Tag>
-                            {isMenuModule(activeConfigModule) ? (
-                              <Tag color="blue">菜单位置 {getMenuOrder(activeConfigAssignment, activeConfigModule) ?? '-'}</Tag>
-                            ) : (
-                              <Tag>不注册菜单</Tag>
-                            )}
-                            {activeConfigAssignment.required ? <Tag color="blue">必选模块</Tag> : <Tag>可选模块</Tag>}
-                            {activeConfigAssignment.enabled ? <Tag color="success">已启用</Tag> : <Tag>已停用</Tag>}
-                            {deployTag(activeConfigAssignment.deployStatus)}
-                          </Space>
-                        </div>
-                        <Progress
-                          type="circle"
-                          size={62}
-                          percent={getModuleConfigStatus(activeConfigAssignment, activeConfigModule).percent}
-                        />
-                      </div>
+                      <Tabs
+                        className="sp-module-config-tabs"
+                        items={[
+                          {
+                            key: 'base-info',
+                            label: '基本信息',
+                            forceRender: true,
+                            children: (
+                              <div className="sp-module-basic-pane">
+                                <div className="sp-basic-info-grid">
+                                  <label>
+                                    <span>{isMenuModule(activeConfigModule) ? '菜单名称' : '能力名称'}</span>
+                                    <Input
+                                      value={activeModuleDisplayName}
+                                      onChange={(event) => handleChangeModule(activeConfigAssignment.id, { navLabel: event.target.value })}
+                                    />
+                                  </label>
+                                  {isMenuModule(activeConfigModule) ? (
+                                    <label>
+                                      <span>系统菜单位置</span>
+                                      <InputNumber
+                                        min={1}
+                                        value={getMenuOrder(activeConfigAssignment, activeConfigModule)}
+                                        onChange={(value) => handleChangeModule(activeConfigAssignment.id, { menuOrder: value })}
+                                        style={{ width: '100%' }}
+                                      />
+                                    </label>
+                                  ) : (
+                                    <label>
+                                      <span>系统菜单</span>
+                                      <Input value="不注册系统菜单" readOnly />
+                                    </label>
+                                  )}
+                                  <label>
+                                    <span>系统菜单 Key</span>
+                                    <Input
+                                      value={isMenuModule(activeConfigModule) ? (activeConfigModule.systemMenuKey || activeConfigModule.key.toLowerCase()) : '-'}
+                                      readOnly
+                                    />
+                                  </label>
+                                  <label>
+                                    <span>模块编码</span>
+                                    <Input value={activeConfigModule.code} readOnly />
+                                  </label>
+                                  <label>
+                                    <span>模块分类</span>
+                                    <Input value={activeConfigModule.category} readOnly />
+                                  </label>
+                                  <label>
+                                    <span>模块类型</span>
+                                    <Input value={getModuleKindLabel(activeConfigModule)} readOnly />
+                                  </label>
+                                  <label className="sp-basic-switch-field">
+                                    <span>启用模块</span>
+                                    <Switch
+                                      checked={activeConfigAssignment.enabled}
+                                      checkedChildren="启用"
+                                      unCheckedChildren="停用"
+                                      onChange={(enabled) => handleChangeModule(activeConfigAssignment.id, { enabled })}
+                                    />
+                                  </label>
+                                  <label className="sp-basic-switch-field">
+                                    <span>必选模块</span>
+                                    <Switch
+                                      checked={activeConfigAssignment.required}
+                                      checkedChildren="必选"
+                                      unCheckedChildren="可选"
+                                      onChange={(required) => handleChangeModule(activeConfigAssignment.id, { required })}
+                                    />
+                                  </label>
+                                  <label className="sp-basic-info-span">
+                                    <span>备注</span>
+                                    <TextArea
+                                      rows={2}
+                                      value={activeConfigAssignment.remark}
+                                      placeholder="记录该模块在当前方案中的交付说明"
+                                      onChange={(event) => handleChangeModule(activeConfigAssignment.id, { remark: event.target.value })}
+                                    />
+                                  </label>
+                                </div>
 
-                      {isMenuModule(activeConfigModule) ? (
-                        <div className="sp-menu-config-strip">
-                          <label>
-                            <span>系统菜单位置</span>
-                            <InputNumber
-                              min={1}
-                              value={getMenuOrder(activeConfigAssignment, activeConfigModule)}
-                              onChange={(value) => handleChangeModule(activeConfigAssignment.id, { menuOrder: value })}
-                              style={{ width: '100%' }}
-                            />
-                          </label>
-                          <label>
-                            <span>系统菜单 Key</span>
-                            <Input value={activeConfigModule.systemMenuKey || activeConfigModule.key.toLowerCase()} readOnly />
-                          </label>
-                          <div>
-                            菜单模块会注册到系统菜单，位置数字越小越靠前；左侧上移/下移会调整这个位置。
-                          </div>
-                        </div>
-                      ) : (
-                        <Alert
-                          type="warning"
-                          showIcon
-                          className="sp-module-kind-note"
-                          message="虚拟能力模块"
-                          description="不注册到系统菜单，不参与菜单排序；在方案中作为研讨、反馈、证书等业务能力被其他菜单模块调用。"
-                        />
-                      )}
+                                {!isMenuModule(activeConfigModule) ? (
+                                  <Alert
+                                    type="warning"
+                                    showIcon
+                                    className="sp-module-kind-note"
+                                    message="虚拟能力模块"
+                                    description="不注册到系统菜单，不参与菜单排序；在方案中作为研讨、反馈、证书等业务能力被其他菜单模块调用。"
+                                  />
+                                ) : null}
 
-                      {[
-                        ...(activeConfigModule.dependsOn || []).map((depKey) => `依赖 ${moduleCatalog.find((item) => item.key === depKey)?.name || depKey}`),
-                        ...(activeConfigModule.dependsOnAny?.length
-                          ? [`需要 ${activeConfigModule.dependsOnAny.map((depKey) => moduleCatalog.find((item) => item.key === depKey)?.name || depKey).join(' 或 ')}`]
-                          : []),
-                        ...(activeConfigModule.serves || []).map((name) => `服务于 ${name}`),
-                      ].length ? (
-                        <div className="sp-dependency-line sp-config-dependency">
-                          <ToolOutlined />
-                          {[
-                            ...(activeConfigModule.dependsOn || []).map((depKey) => `依赖 ${moduleCatalog.find((item) => item.key === depKey)?.name || depKey}`),
-                            ...(activeConfigModule.dependsOnAny?.length
-                              ? [`需要 ${activeConfigModule.dependsOnAny.map((depKey) => moduleCatalog.find((item) => item.key === depKey)?.name || depKey).join(' 或 ')}`]
-                              : []),
-                            ...(activeConfigModule.serves || []).map((name) => `服务于 ${name}`),
-                          ].join('；')}
-                        </div>
-                      ) : null}
+                                {activeDependencyLabels.length ? (
+                                  <div className="sp-dependency-line sp-config-dependency">
+                                    <ToolOutlined />
+                                    {activeDependencyLabels.join('；')}
+                                  </div>
+                                ) : null}
 
-                      {PACKAGE_RESOURCE_NOTE_MAP[activeConfigModule.key] ? (
-                        <Alert
-                          type="info"
-                          showIcon
-                          className="sp-config-note"
-                          message="资源限制由套餐定义"
-                          description={`${PACKAGE_RESOURCE_NOTE_MAP[activeConfigModule.key]}解决方案这里只保留模块能力与业务配置。`}
-                        />
-                      ) : null}
+                                {PACKAGE_RESOURCE_NOTE_MAP[activeConfigModule.key] ? (
+                                  <Alert
+                                    type="info"
+                                    showIcon
+                                    className="sp-config-note"
+                                    message="资源限制由套餐定义"
+                                    description={`${PACKAGE_RESOURCE_NOTE_MAP[activeConfigModule.key]}解决方案这里只保留模块能力与业务配置。`}
+                                  />
+                                ) : null}
 
-                      <Form form={inlineConfigForm} layout="vertical" className="sp-config-form sp-inline-config-form">
-                        {activeConfigModule.configTemplates.map(renderConfigField)}
-                      </Form>
+                                <div className="sp-config-subsection">
+                                  <div className="sp-config-subsection-head">
+                                    <span>参数配置</span>
+                                    <small>保留模块运行时需要的默认参数。</small>
+                                  </div>
+                                  <Form form={inlineConfigForm} layout="vertical" className="sp-config-form sp-inline-config-form">
+                                    {activeConfigModule.configTemplates.map(renderConfigField)}
+                                  </Form>
+                                </div>
+                              </div>
+                            ),
+                          },
+                          {
+                            key: 'feature-auth',
+                            label: '功能授权',
+                            forceRender: true,
+                            children: (
+                              <div className="sp-feature-auth-pane">
+                                <div className="sp-config-subsection-head">
+                                  <span>功能清单</span>
+                                  <small>{activeFeatureCheckedCount} / {activeFeatureLeafKeys.length} 项已勾选开发</small>
+                                </div>
+                                <Tree
+                                  checkable
+                                  defaultExpandAll
+                                  selectable={false}
+                                  className="sp-feature-tree"
+                                  treeData={activeFeatureTreeData}
+                                  checkedKeys={activeFeatureCheckedKeys}
+                                  onCheck={(checkedKeys) => {
+                                    const nextCheckedKeys = Array.isArray(checkedKeys) ? checkedKeys : checkedKeys.checked || [];
+                                    handleChangeModule(activeConfigAssignment.id, {
+                                      featureKeys: activeFeatureLeafKeys.filter((key) => nextCheckedKeys.includes(key)),
+                                    });
+                                  }}
+                                />
+                              </div>
+                            ),
+                          },
+                          {
+                            key: 'data-auth',
+                            label: '数据授权',
+                            forceRender: true,
+                            children: (
+                              <div className="sp-data-auth-pane">
+                                {activeDataAuthTemplates.length ? (
+                                  <Form form={dataAuthForm} layout="vertical" className="sp-config-form sp-data-auth-form">
+                                    {activeDataAuthTemplates.map(renderConfigField)}
+                                  </Form>
+                                ) : (
+                                  <Empty description="当前模块暂无内置数据授权项" />
+                                )}
+                              </div>
+                            ),
+                          },
+                        ]}
+                      />
 
                       <div className="sp-inline-config-actions">
                         <div>
@@ -1615,6 +2207,75 @@ function SolutionPrototypeModule() {
                 </Button>
               </Empty>
             )}
+          </div>
+        ),
+      },
+      {
+        key: 'function-map',
+        label: '功能地图',
+        children: (
+          <div className="sp-section sp-function-map-section">
+            <div className="sp-function-map-toolbar">
+              <div>
+                <div className="sp-section-title">功能地图</div>
+                <div className="sp-section-subtitle">以知识图谱形式展示模块、功能点和内置数据之间的依赖路径。</div>
+              </div>
+              <Select
+                allowClear
+                showSearch
+                value={functionMapQueryKey}
+                options={functionMap.queryOptions}
+                placeholder="搜索模块或功能点"
+                style={{ width: 360 }}
+                onChange={(value) => setFunctionMapQueryKey(value || null)}
+                filterOption={(input, option) => String(option?.searchText || option?.label || '').toLowerCase().includes(input.toLowerCase())}
+              />
+            </div>
+            <div className="sp-function-map-layout">
+              <div className="sp-function-map-canvas">
+                <ReactFlow
+                  nodes={functionMap.nodes}
+                  edges={functionMap.edges}
+                  fitView
+                  nodesDraggable={false}
+                  nodesConnectable={false}
+                  edgesFocusable={false}
+                  proOptions={{ hideAttribution: true }}
+                  minZoom={0.2}
+                  maxZoom={1.6}
+                >
+                  <Background gap={18} color="#dbe4f0" />
+                  <Controls />
+                  <MiniMap pannable zoomable nodeColor={(node) => (
+                    node.className?.includes('sp-function-map-module-node') ? '#2563eb' : '#16a34a'
+                  )} />
+                </ReactFlow>
+              </div>
+              <div className="sp-function-map-path-panel">
+                <div className="sp-function-map-path-title">依赖路径</div>
+                {functionMap.hasSelection ? (
+                  <>
+                    <div className="sp-function-map-selected">当前查询：{functionMap.selectedLabel}</div>
+                    {functionMap.dependencyRows.length ? (
+                      <div className="sp-function-map-path-list">
+                        {functionMap.dependencyRows.map((row) => (
+                          <div key={row.id} className="sp-function-map-path-item">
+                            <Tag color="blue">{row.label}</Tag>
+                            <span>{row.source}</span>
+                            <strong>→</strong>
+                            <span>{row.target}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="当前节点暂无跨模块依赖" />
+                    )}
+                  </>
+                ) : (
+                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="搜索模块或功能点后查看依赖路径" />
+                )}
+              </div>
+            </div>
           </div>
         ),
       },
@@ -1654,7 +2315,7 @@ function SolutionPrototypeModule() {
                 {previewMenuModules.map(({ assignment, moduleDef }) => (
                   <div key={assignment.id} className="sp-preview-nav-item">
                     <ModuleIcon type={moduleDef.icon} />
-                    <span>{moduleDef.navLabel}</span>
+                    <span>{assignment.navLabel || moduleDef.navLabel}</span>
                     <small>#{getMenuOrder(assignment, moduleDef) ?? '-'}</small>
                   </div>
                 ))}

@@ -40,6 +40,13 @@ import {
   ReadOutlined,
   EditOutlined,
   DeleteOutlined,
+  CloseOutlined,
+  CheckCircleFilled,
+  CustomerServiceOutlined,
+  LogoutOutlined,
+  QrcodeOutlined,
+  RightOutlined,
+  UserAddOutlined,
 } from '@ant-design/icons';
 import TopicDetail from './TopicDetail';
 import LeaveWorkflow from './workflow/LeaveWorkflow';
@@ -404,6 +411,44 @@ const baseIconBarItems = [
   { key: 'integration', icon: <PartitionOutlined />, label: '三方对接' }
 ];
 
+const currentAccountProfile = {
+  name: '张洪磊',
+  company: '北京国人通教育科技有限公司',
+  phone: '+8615313950356',
+  verified: true,
+};
+
+const accountSwitchItems = [
+  { key: 'xbb', title: 'xbb', subtitle: 'benbenxb', avatar: 'X', tone: 'blue' },
+  { key: 'personal', title: '飞书个人用户', subtitle: '张洪磊', tone: 'feishu' },
+  { key: 'test', title: 'test', subtitle: '张洪磊', avatar: 'T', tone: 'blue' },
+  { key: 'guoren', title: '国人通教育科技有限公司', subtitle: '张洪磊', avatar: '国', tone: 'blue' },
+  { key: 'meituan', title: '美团外卖', subtitle: 'xbb', avatar: '美', tone: 'blue', status: '未认证' },
+  { key: 'developer', title: '飞书开发者体验企业', subtitle: '张洪磊', tone: 'feishu-wave', verified: true },
+];
+
+const accountSwitchActionItems = [
+  { key: 'join', title: '加入已有企业', icon: <UserAddOutlined /> },
+  { key: 'create', title: '创建新账号', icon: <UserOutlined /> },
+];
+
+function renderAccountSwitchAvatar(account) {
+  const tone = account.tone || 'blue';
+  if (tone.startsWith('feishu')) {
+    return (
+      <span className={`account-switch-avatar account-switch-avatar-${tone}`}>
+        <span className="account-feishu-mark" />
+      </span>
+    );
+  }
+
+  return (
+    <span className={`account-switch-avatar account-switch-avatar-${tone}`}>
+      {account.avatar || account.title?.slice(0, 1)}
+    </span>
+  );
+}
+
 function App() {
   const [selectedKeys, setSelectedKeys] = useState(['home']);
   const [activeIconKey, setActiveIconKey] = useState(() => getInitialActiveIconKey());
@@ -414,6 +459,8 @@ function App() {
   const resourceLibraryEntryRef = useRef(null);
   const [messageEntryConversationId, setMessageEntryConversationId] = useState(null);
   const [messageUnreadCount, setMessageUnreadCount] = useState(() => getInitialMessagesUnreadCount());
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [accountSwitchModalOpen, setAccountSwitchModalOpen] = useState(false);
   const [knowledgeGraphEntry, setKnowledgeGraphEntry] = useState(() => {
     const route = getInitialHashRoute();
     if ((route.page !== 'knowledge-graph' && route.page !== 'knowledge-graph-full') || !route.params.graphId) return null;
@@ -1153,6 +1200,15 @@ function App() {
     setSelectedScene(null);
   };
 
+  const handleOpenAccountSwitchModal = useCallback(() => {
+    setAccountMenuOpen(false);
+    setAccountSwitchModalOpen(true);
+  }, []);
+
+  const handleAccountMenuPlaceholder = useCallback((label) => {
+    message.info(`${label}暂未接入`);
+  }, []);
+
   const openAgentQuotaPage = (tab = 'plans') => {
     setActiveIconKey('agent-quota');
     setAgentQuotaEntryTab(tab);
@@ -1425,6 +1481,83 @@ function App() {
     }
   };
 
+  const accountProfileMenu = (
+    <div className="account-profile-menu" onClick={(event) => event.stopPropagation()}>
+      <div className="account-profile-head">
+        <div className="account-profile-avatar">
+          <UserOutlined />
+        </div>
+        <div className="account-profile-copy">
+          <div className="account-profile-name-row">
+            <span className="account-profile-name">{currentAccountProfile.name}</span>
+            <EditOutlined className="account-profile-edit" />
+          </div>
+          <div className="account-profile-company-row">
+            <span className="account-profile-company">{currentAccountProfile.company}</span>
+            {currentAccountProfile.verified ? (
+              <span className="account-profile-verified">
+                <CheckCircleFilled />
+                已认证
+              </span>
+            ) : null}
+          </div>
+          <button
+            type="button"
+            className="account-status-btn"
+            onClick={() => handleAccountMenuPlaceholder('状态')}
+          >
+            + 状态
+          </button>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        className="account-signature-input"
+        onClick={() => handleAccountMenuPlaceholder('个性签名')}
+      >
+        输入你的个性签名...
+      </button>
+
+      <div className="account-menu-section">
+        <button type="button" className="account-menu-row" onClick={() => handleAccountMenuPlaceholder('我的个人名片')}>
+          <span>我的个人名片</span>
+        </button>
+        <button type="button" className="account-menu-row" onClick={() => handleAccountMenuPlaceholder('我的二维码与链接')}>
+          <span>我的二维码与链接</span>
+          <QrcodeOutlined />
+        </button>
+        <button type="button" className="account-menu-row" onClick={handleOpenAccountSwitchModal}>
+          <span>登录更多账号</span>
+        </button>
+      </div>
+
+      <div className="account-menu-divider" />
+
+      <div className="account-menu-section">
+        <button type="button" className="account-menu-row" onClick={() => handleAccountMenuPlaceholder('帮助与客服')}>
+          <span>帮助与客服</span>
+          <CustomerServiceOutlined />
+        </button>
+        <button type="button" className="account-menu-row" onClick={() => handleAccountMenuPlaceholder('设置')}>
+          <span>设置</span>
+          <SettingOutlined />
+        </button>
+        <button type="button" className="account-menu-row" onClick={() => handleAccountMenuPlaceholder('退出登录')}>
+          <span>退出登录</span>
+          <LogoutOutlined />
+        </button>
+      </div>
+
+      <div className="account-menu-divider" />
+
+      <button type="button" className="account-menu-row" onClick={() => handleAccountMenuPlaceholder('管理后台')}>
+        <span>管理后台</span>
+        <RightOutlined />
+      </button>
+    </div>
+  );
+
   // 开发者文档页面（独立全屏，不带侧边图标栏）
   if (currentPage === 'dev-docs') {
     return <DevDocsPage />;
@@ -1464,9 +1597,19 @@ function App() {
       {/* Far-left Icon Bar */}
       <div className="icon-bar" style={{ width: iconBarWidth, minWidth: iconBarWidth, maxWidth: iconBarWidth }}>
         <div className="icon-bar-avatar">
-          <div className="avatar-circle">
-            <UserOutlined />
-          </div>
+          <Dropdown
+            trigger={['click']}
+            open={accountMenuOpen}
+            onOpenChange={(open) => setAccountMenuOpen(open)}
+            placement="bottomLeft"
+            popupRender={() => accountProfileMenu}
+            classNames={{ root: 'account-profile-dropdown' }}
+            destroyOnHidden
+          >
+            <button type="button" className="avatar-circle" aria-label="打开账号菜单">
+              <UserOutlined />
+            </button>
+          </Dropdown>
         </div>
         <div className="icon-bar-list" ref={iconBarListRef}>
           <div
@@ -1848,13 +1991,81 @@ function App() {
       ) : null}
 
       <Modal
+        open={accountSwitchModalOpen}
+        footer={null}
+        closable={false}
+        centered
+        width={392}
+        onCancel={() => setAccountSwitchModalOpen(false)}
+        className="account-switch-modal"
+        destroyOnHidden
+      >
+        <div className="account-switch-panel">
+          <div className="account-switch-head">
+            <h2>登录更多账号</h2>
+            <button
+              type="button"
+              className="account-switch-close"
+              aria-label="关闭"
+              onClick={() => setAccountSwitchModalOpen(false)}
+            >
+              <CloseOutlined />
+            </button>
+          </div>
+          <div className="account-switch-phone">{currentAccountProfile.phone} 已在以下企业或组织绑定了账号</div>
+
+          <div className="account-switch-list">
+            {accountSwitchItems.map((account) => (
+              <button
+                key={account.key}
+                type="button"
+                className="account-switch-row"
+                onClick={() => handleAccountMenuPlaceholder(account.title)}
+              >
+                {renderAccountSwitchAvatar(account)}
+                <span className="account-switch-copy">
+                  <span className="account-switch-title">{account.title}</span>
+                  <span className="account-switch-subtitle">
+                    <span>{account.subtitle}</span>
+                    {account.status ? <span className="account-switch-status">{account.status}</span> : null}
+                    {account.verified ? (
+                      <span className="account-switch-verified">
+                        <CheckCircleFilled />
+                        已认证
+                      </span>
+                    ) : null}
+                  </span>
+                </span>
+                <RightOutlined className="account-switch-arrow" />
+              </button>
+            ))}
+          </div>
+
+          <div className="account-switch-action-list">
+            {accountSwitchActionItems.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                className="account-switch-action-row"
+                onClick={() => handleAccountMenuPlaceholder(item.title)}
+              >
+                <span className="account-switch-action-icon">{item.icon}</span>
+                <span className="account-switch-action-title">{item.title}</span>
+                <RightOutlined className="account-switch-arrow" />
+              </button>
+            ))}
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
         title={sceneCategoryEditing ? '修改场景分类' : '创建场景分类'}
         open={sceneCategoryModalOpen}
         okText="保存"
         cancelText="取消"
         onOk={handleSaveSceneCategory}
         onCancel={closeSceneCategoryModal}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={sceneCategoryForm} layout="vertical">
           <Form.Item
