@@ -547,7 +547,7 @@
   white-space: nowrap;
 }
 
-.scene-menu-pin-btn {
+.scene-menu-more-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -563,17 +563,19 @@
   transition: opacity 0.18s ease, color 0.18s ease, background 0.18s ease;
 }
 
-.sider-menu .ant-menu-item:hover .scene-menu-pin-btn,
-.scene-menu-pin-btn.is-pinned {
+.sider-menu .ant-menu-item:hover .scene-menu-more-btn,
+.sider-menu .ant-menu-item:focus-within .scene-menu-more-btn,
+.scene-menu-more-btn:focus,
+.scene-menu-more-btn:focus-visible {
   opacity: 1;
 }
 
-.scene-menu-pin-btn:hover {
+.scene-menu-more-btn:hover {
   background: rgba(59, 130, 246, 0.1);
   color: #2563eb;
 }
 
-.scene-menu-pin-btn.is-pinned {
+.scene-menu-more-btn.is-active {
   color: #2563eb;
 }
 

@@ -5,6 +5,7 @@ import { getDefaultSceneThemeCoverPresetId, getSceneThemeCoverPreset } from './t
 
 const TEMPLATE_STORAGE_KEY = 'gr.scene.templates.v1';
 const SCENE_STORAGE_KEY = 'gr.scenes.v1';
+const SCENE_MENU_CATEGORY_STORAGE_KEY = 'gr.scene.menu-categories.v1';
 const SCENE_SYSTEM_MENU_SHORTCUT_STORAGE_KEY = 'gr.scene.system-menu-shortcuts.v1';
 const SEED_KEY = 'gr.scene.seeded.v1';
 const BUILT_IN_SYNC_KEY = 'gr.scene.builtin-sync.v11';
@@ -20,16 +21,38 @@ export const SCENE_TYPE_OPTIONS = [
   { value: 'CUSTOM', label: '自定义场景' },
 ];
 
-export const SCENE_MENU_OPTIONS = [
-  { value: 'my-learning-space', label: '我的学习空间' },
-  { value: 'workshop', label: '研讨会' },
-  { value: 'study-club-channel', label: '研习社-频道' },
-  { value: 'my-classroom', label: '我的课堂' },
-  { value: 'workshop-cloud', label: '工作坊' },
-  { value: 'teaching-research', label: '教研空间' },
-  { value: 'course-creation-center', label: '课程创作中心' },
-  { value: 'org-training', label: '组织培训' },
+export const DEFAULT_SCENE_MENU_GROUPS = [
+  {
+    key: 'my-scenes',
+    label: '我的场景',
+    children: [
+      { key: 'my-learning-space', label: '我的学习空间' },
+      { key: 'workshop', label: '研讨会' },
+      { key: 'study-club-channel', label: '研习社-频道' },
+    ],
+  },
+  {
+    key: 'cloud',
+    label: '',
+    children: [
+      { key: 'my-classroom', label: '我的课堂' },
+      { key: 'workshop-cloud', label: '工作坊' },
+    ],
+  },
+  {
+    key: 'resource',
+    label: '',
+    children: [
+      { key: 'teaching-research', label: '教研空间' },
+      { key: 'course-creation-center', label: '课程创作中心' },
+      { key: 'org-training', label: '组织培训' },
+    ],
+  },
 ];
+
+export const SCENE_MENU_OPTIONS = DEFAULT_SCENE_MENU_GROUPS.flatMap((group) => (
+  group.children.map((item) => ({ value: item.key, label: item.label }))
+));
 
 export const TEMPLATE_STATUS_OPTIONS = [
   { value: 'ACTIVE', label: '启用' },
@@ -645,6 +668,196 @@ function optionLabel(options, value, fallback = '-') {
   return options.find((item) => item.value === value)?.label || fallback;
 }
 
+function getDefaultSceneMenuOption(value) {
+  return SCENE_MENU_OPTIONS.find((item) => item.value === value) || null;
+}
+
+function normalizeSceneMenuCategoryRecord(input = {}) {
+  const key = trimToNull(input.key || input.value || input.menuKey);
+  if (!key) return null;
+  const defaultOption = getDefaultSceneMenuOption(key);
+  const label = trimToNull(input.label) || defaultOption?.label || key;
+  return {
+    key,
+    label,
+    hidden: input.hidden === true,
+    createdAt: trimToNull(input.createdAt) || nowIso(),
+    updatedAt: trimToNull(input.updatedAt) || nowIso(),
+  };
+}
+
+function readSceneMenuCategoryRecords() {
+  const recordMap = new Map();
+  readList(SCENE_MENU_CATEGORY_STORAGE_KEY).forEach((item) => {
+    const normalized = normalizeSceneMenuCategoryRecord(item);
+    if (!normalized) return;
+    recordMap.set(normalized.key, normalized);
+  });
+  return Array.from(recordMap.values());
+}
+
+function writeSceneMenuCategoryRecords(records) {
+  writeList(
+    SCENE_MENU_CATEGORY_STORAGE_KEY,
+    records
+      .map(normalizeSceneMenuCategoryRecord)
+      .filter(Boolean),
+  );
+}
+
+function getSceneMenuCategoryRecordMap() {
+  return new Map(readSceneMenuCategoryRecords().map((item) => [item.key, item]));
+}
+
+export function listSceneMenuGroups() {
+  const recordMap = getSceneMenuCategoryRecordMap();
+  const defaultKeySet = new Set(SCENE_MENU_OPTIONS.map((item) => item.value));
+  const defaultGroups = DEFAULT_SCENE_MENU_GROUPS
+    .map((group) => ({
+      ...group,
+      children: group.children
+        .map((item) => {
+          const record = recordMap.get(item.key);
+          if (record?.hidden) return null;
+          return {
+            ...item,
+            value: item.key,
+            label: record?.label || item.label,
+            builtIn: true,
+          };
+        })
+        .filter(Boolean),
+    }))
+    .filter((group) => group.children.length > 0);
+
+  const customChildren = readSceneMenuCategoryRecords()
+    .filter((item) => !item.hidden && !defaultKeySet.has(item.key))
+    .map((item) => ({
+      key: item.key,
+      value: item.key,
+      label: item.label,
+      builtIn: false,
+    }));
+
+  if (customChildren.length === 0) {
+    return defaultGroups;
+  }
+
+  return [
+    ...defaultGroups,
+    {
+      key: 'custom-scenes',
+      label: '自定义场景',
+      children: customChildren,
+    },
+  ];
+}
+
+export function listSceneMenuOptions() {
+  return listSceneMenuGroups().flatMap((group) => (
+    group.children.map((item) => ({
+      value: item.value || item.key,
+      label: item.label,
+    }))
+  ));
+}
+
+export function saveSceneMenuCategory(category = {}) {
+  const label = trimToNull(category.label);
+  if (!label) {
+    throw new Error('场景分类名称不能为空');
+  }
+
+  const records = readSceneMenuCategoryRecords();
+  const key = trimToNull(category.key || category.value) || createId('scene-category');
+  const visibleOptions = listSceneMenuOptions();
+  const duplicated = visibleOptions.find((item) => item.value !== key && item.label === label);
+  if (duplicated) {
+    throw new Error('场景分类名称已存在');
+  }
+
+  const existing = records.find((item) => item.key === key) || null;
+  const nextRecord = {
+    key,
+    label,
+    hidden: false,
+    createdAt: existing?.createdAt || nowIso(),
+    updatedAt: nowIso(),
+  };
+  const nextRecords = existing
+    ? records.map((item) => (item.key === key ? nextRecord : item))
+    : [...records, nextRecord];
+
+  writeSceneMenuCategoryRecords(nextRecords);
+  trackEvent(existing ? 'space_scene_category_update_success' : 'space_scene_category_create_success', {
+    module: 'space',
+    objectType: 'scene_category',
+    objectId: key,
+    properties: {
+      label,
+      builtIn: Boolean(getDefaultSceneMenuOption(key)),
+    },
+  });
+  emitChange();
+  return {
+    key,
+    value: key,
+    label,
+    builtIn: Boolean(getDefaultSceneMenuOption(key)),
+  };
+}
+
+export function removeSceneMenuCategory(menuKey) {
+  const normalizedMenuKey = trimToNull(menuKey);
+  if (!normalizedMenuKey) return false;
+
+  const target = listSceneMenuOptions().find((item) => item.value === normalizedMenuKey);
+  if (!target) {
+    throw new Error('场景分类不存在');
+  }
+
+  const scenes = readScenes();
+  const sceneCount = scenes.filter((scene) => scene.menuKey === normalizedMenuKey).length;
+  if (sceneCount > 0) {
+    throw new Error(`该分类下还有 ${sceneCount} 个空间，不能删除`);
+  }
+
+  const records = readSceneMenuCategoryRecords();
+  const defaultOption = getDefaultSceneMenuOption(normalizedMenuKey);
+  const now = nowIso();
+  const nextRecords = defaultOption
+    ? [
+      ...records.filter((item) => item.key !== normalizedMenuKey),
+      {
+        key: normalizedMenuKey,
+        label: target.label || defaultOption.label,
+        hidden: true,
+        createdAt: now,
+        updatedAt: now,
+      },
+    ]
+    : records.filter((item) => item.key !== normalizedMenuKey);
+
+  writeSceneMenuCategoryRecords(nextRecords);
+  writeList(
+    SCENE_SYSTEM_MENU_SHORTCUT_STORAGE_KEY,
+    readList(SCENE_SYSTEM_MENU_SHORTCUT_STORAGE_KEY)
+      .map((item) => trimToNull(typeof item === 'string' ? item : item?.menuKey))
+      .filter((item, index, list) => item && item !== normalizedMenuKey && list.indexOf(item) === index),
+  );
+  trackEvent('space_scene_category_delete_success', {
+    module: 'space',
+    objectType: 'scene_category',
+    objectId: normalizedMenuKey,
+    properties: {
+      label: target.label,
+      builtIn: Boolean(defaultOption),
+    },
+  });
+  emitChange();
+  return true;
+}
+
 function normalizeIconSource(source, image) {
   const normalizedSource = trimToNull(source);
   if (normalizedSource === 'UPLOAD') return 'UPLOAD';
@@ -686,11 +899,11 @@ export function getSceneTypeLabel(value) {
 }
 
 export function getSceneMenuLabel(value) {
-  return optionLabel(SCENE_MENU_OPTIONS, value, value || '-');
+  return optionLabel(listSceneMenuOptions(), value, value || '-');
 }
 
 export function listSceneSystemMenuShortcuts() {
-  const validKeys = new Set(SCENE_MENU_OPTIONS.map((item) => item.value));
+  const validKeys = new Set(listSceneMenuOptions().map((item) => item.value));
   return readList(SCENE_SYSTEM_MENU_SHORTCUT_STORAGE_KEY)
     .map((item) => trimToNull(typeof item === 'string' ? item : item?.menuKey))
     .filter((item, index, list) => item && validKeys.has(item) && list.indexOf(item) === index);
@@ -698,7 +911,7 @@ export function listSceneSystemMenuShortcuts() {
 
 export function toggleSceneSystemMenuShortcut(menuKey, enabled) {
   const normalizedMenuKey = trimToNull(menuKey);
-  if (!normalizedMenuKey || !SCENE_MENU_OPTIONS.some((item) => item.value === normalizedMenuKey)) {
+  if (!normalizedMenuKey || !listSceneMenuOptions().some((item) => item.value === normalizedMenuKey)) {
     throw new Error('场景分类不存在');
   }
 

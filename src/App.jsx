@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Layout, Menu, Input, Button, Card, Dropdown, Empty, Modal, Segmented, Tag, message } from 'antd';
+import { Layout, Menu, Input, Button, Card, Dropdown, Empty, Form, Modal, Segmented, Tag, message } from 'antd';
 import {
   HomeOutlined,
   SearchOutlined,
@@ -34,12 +34,12 @@ import {
   CodeOutlined,
   LayoutOutlined,
   TagsOutlined,
-  ScanOutlined,
   FileTextOutlined,
-  NodeIndexOutlined,
   PushpinFilled,
   PushpinOutlined,
   ReadOutlined,
+  EditOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons';
 import TopicDetail from './TopicDetail';
 import LeaveWorkflow from './workflow/LeaveWorkflow';
@@ -268,35 +268,6 @@ function getSceneTheme(scene) {
   return scene?.templateSnapshot?.theme || {};
 }
 
-const sceneMenuGroups = [
-  {
-    key: 'my-scenes',
-    label: '我的场景',
-    children: [
-      { key: 'my-learning-space', icon: <DesktopOutlined />, label: '我的学习空间' },
-      { key: 'workshop', icon: <TeamOutlined />, label: '研讨会' },
-      { key: 'study-club-channel', icon: <RocketOutlined />, label: '研习社-频道' },
-    ],
-  },
-  {
-    key: 'cloud',
-    label: '',
-    children: [
-      { key: 'my-classroom', icon: <CloudOutlined />, label: '我的课堂' },
-      { key: 'workshop-cloud', icon: <FolderOutlined />, label: '工作坊' },
-    ],
-  },
-  {
-    key: 'resource',
-    label: '',
-    children: [
-      { key: 'teaching-research', icon: <BookOutlined />, label: '教研空间' },
-      { key: 'course-creation-center', icon: <ReadOutlined />, label: '课程创作中心' },
-      { key: 'org-training', icon: <DatabaseOutlined />, label: '组织培训' },
-    ],
-  },
-];
-
 const sceneMenuIconMap = Object.freeze({
   'my-learning-space': <DesktopOutlined />,
   workshop: <TeamOutlined />,
@@ -465,13 +436,18 @@ function App() {
   const [selectedScene, setSelectedScene] = useState(null);
   const [sceneTemplates, setSceneTemplates] = useState([]);
   const [scenes, setScenes] = useState([]);
+  const [sceneMenuGroups, setSceneMenuGroups] = useState([]);
   const [sceneKeyword, setSceneKeyword] = useState('');
   const [sceneDataLoading, setSceneDataLoading] = useState(true);
   const [sceneModalOpen, setSceneModalOpen] = useState(false);
   const [sceneEditing, setSceneEditing] = useState(null);
   const [sceneModalMode, setSceneModalMode] = useState('scene');
+  const [sceneModalDefaultMenuKey, setSceneModalDefaultMenuKey] = useState(null);
+  const [sceneCategoryModalOpen, setSceneCategoryModalOpen] = useState(false);
+  const [sceneCategoryEditing, setSceneCategoryEditing] = useState(null);
   const [sceneOwnershipTab, setSceneOwnershipTab] = useState('created');
   const [sceneSystemMenuShortcutKeys, setSceneSystemMenuShortcutKeys] = useState([]);
+  const [sceneCategoryForm] = Form.useForm();
   const [iconBarWidth, setIconBarWidth] = useState(() => loadIconBarWidth());
   const [sceneSiderWidth, setSceneSiderWidth] = useState(() => loadSceneSiderWidth());
   const [iconBarIndicatorStyle, setIconBarIndicatorStyle] = useState(EMPTY_MENU_INDICATOR);
@@ -489,11 +465,113 @@ function App() {
       if (!enabled && activeIconKey === getSceneSystemMenuShortcutKey(menuKey)) {
         setActiveIconKey('my-space');
       }
-      message.success(enabled ? '已添加到系统菜单' : '已从系统菜单移除');
+      message.success(enabled ? '已添加到菜单栏' : '已从菜单栏移除');
     } catch (error) {
-      message.error(error?.message || '更新系统菜单失败');
+      message.error(error?.message || '更新菜单栏失败');
     }
   }, [activeIconKey]);
+
+  const openCreateSceneModal = useCallback(() => {
+    setSceneModalMode('scene');
+    setSceneEditing(null);
+    setSceneModalDefaultMenuKey(null);
+    setSceneModalOpen(true);
+  }, []);
+
+  const openCreateSpaceModal = useCallback((options = {}) => {
+    setSceneModalMode('space');
+    setSceneEditing(null);
+    setSceneModalDefaultMenuKey(options?.menuKey || null);
+    setSceneModalOpen(true);
+  }, []);
+
+  const openEditSceneModal = useCallback((scene) => {
+    setSceneModalMode('space');
+    setSceneEditing(scene);
+    setSceneModalDefaultMenuKey(null);
+    setSceneModalOpen(true);
+  }, []);
+
+  const refreshSceneMenuData = useCallback(async () => {
+    const [nextMenuGroups, nextSystemMenuShortcutKeys] = await Promise.all([
+      sceneApi.listSceneMenuGroups(),
+      sceneApi.listSceneSystemMenuShortcuts(),
+    ]);
+    setSceneMenuGroups(nextMenuGroups);
+    setSceneSystemMenuShortcutKeys(nextSystemMenuShortcutKeys);
+  }, []);
+
+  const openCreateSceneCategoryModal = useCallback(() => {
+    setSceneCategoryEditing(null);
+    sceneCategoryForm.resetFields();
+    sceneCategoryForm.setFieldsValue({ label: '' });
+    setSceneCategoryModalOpen(true);
+  }, [sceneCategoryForm]);
+
+  const openEditSceneCategoryModal = useCallback((category) => {
+    setSceneCategoryEditing(category);
+    sceneCategoryForm.resetFields();
+    sceneCategoryForm.setFieldsValue({ label: category?.label || '' });
+    setSceneCategoryModalOpen(true);
+  }, [sceneCategoryForm]);
+
+  const closeSceneCategoryModal = useCallback(() => {
+    setSceneCategoryModalOpen(false);
+    setSceneCategoryEditing(null);
+    sceneCategoryForm.resetFields();
+  }, [sceneCategoryForm]);
+
+  const handleSaveSceneCategory = useCallback(async () => {
+    try {
+      const values = await sceneCategoryForm.validateFields();
+      await sceneApi.saveSceneMenuCategory({
+        key: sceneCategoryEditing?.key,
+        label: values.label,
+      });
+      closeSceneCategoryModal();
+      await refreshSceneMenuData();
+      message.success(sceneCategoryEditing ? '场景分类已更新' : '场景分类已创建');
+    } catch (error) {
+      if (error?.errorFields) return;
+      message.error(error?.message || '保存场景分类失败');
+    }
+  }, [closeSceneCategoryModal, refreshSceneMenuData, sceneCategoryEditing, sceneCategoryForm]);
+
+  const handleDeleteSceneCategory = useCallback((category) => {
+    const menuKey = category?.key || category?.value;
+    if (!menuKey) return;
+    const sceneCount = scenes.filter((scene) => scene.menuKey === menuKey).length;
+    if (sceneCount > 0) {
+      message.warning(`该分类下还有 ${sceneCount} 个空间，不能删除`);
+      return;
+    }
+
+    Modal.confirm({
+      title: '删除场景分类',
+      content: `确定删除“${category.label}”吗？删除后该分类不会再显示在侧边栏。`,
+      okText: '删除',
+      okButtonProps: { danger: true },
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          await sceneApi.removeSceneMenuCategory(menuKey);
+          if (selectedKeys[0] === menuKey) {
+            setSelectedKeys(['home']);
+            setSelectedScene(null);
+            setCurrentPage('home');
+          }
+          if (activeIconKey === getSceneSystemMenuShortcutKey(menuKey)) {
+            setActiveIconKey('my-space');
+          }
+          await refreshSceneMenuData();
+          message.success('场景分类已删除');
+        } catch (error) {
+          message.error(error?.message || '删除场景分类失败');
+        }
+      },
+    });
+  }, [activeIconKey, refreshSceneMenuData, scenes, selectedKeys]);
+
   const selectedSceneMenuKey = selectedKeys[0] || 'home';
   const activeSceneKey = selectedSceneMenuKey.startsWith(SCENE_SHORTCUT_KEY_PREFIX)
     ? 'home'
@@ -508,6 +586,15 @@ function App() {
     () => new Set(sceneSystemMenuShortcutKeys),
     [sceneSystemMenuShortcutKeys],
   );
+  const sceneMenuLabelMap = useMemo(() => {
+    const entries = sceneMenuGroups.flatMap((group) => (
+      (group.children || []).map((item) => [item.key, item.label])
+    ));
+    return new Map(entries);
+  }, [sceneMenuGroups]);
+  const getSceneMenuDisplayLabel = useCallback((menuKey) => (
+    sceneMenuLabelMap.get(menuKey) || sceneApi.getSceneMenuLabel(menuKey)
+  ), [sceneMenuLabelMap]);
   const iconBarItems = useMemo(() => {
     const decoratedBaseItems = baseIconBarItems.map((item) => (
       item.key === 'messages'
@@ -517,14 +604,14 @@ function App() {
     const sceneCategoryItems = sceneSystemMenuShortcutKeys.map((menuKey) => ({
       key: getSceneSystemMenuShortcutKey(menuKey),
       icon: getSceneMenuIcon(menuKey),
-      label: sceneApi.getSceneMenuLabel(menuKey),
+      label: getSceneMenuDisplayLabel(menuKey),
     }));
     return [
       ...decoratedBaseItems.slice(0, 1),
       ...sceneCategoryItems,
       ...decoratedBaseItems.slice(1),
     ];
-  }, [messageUnreadCount, sceneSystemMenuShortcutKeys]);
+  }, [getSceneMenuDisplayLabel, messageUnreadCount, sceneSystemMenuShortcutKeys]);
   const menuItems = useMemo(() => {
     const baseItems = [
       {
@@ -543,28 +630,65 @@ function App() {
         key: group.key,
         type: 'group',
         label: group.label,
-        children: group.children.map((item) => ({
-          key: item.key,
-          icon: item.icon,
-          label: (
-            <span className="scene-menu-item-label">
-              <span className="scene-menu-item-text" title={item.label}>{item.label}</span>
-              <button
-                type="button"
-                className={`scene-menu-pin-btn ${systemMenuShortcutSet.has(item.key) ? 'is-pinned' : ''}`}
-                aria-label={systemMenuShortcutSet.has(item.key) ? '从系统菜单移除' : '添加到系统菜单'}
-                title={systemMenuShortcutSet.has(item.key) ? '从系统菜单移除' : '添加到系统菜单'}
-                onClick={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  handleToggleSceneSystemMenuShortcut(item.key, !systemMenuShortcutSet.has(item.key));
-                }}
-              >
-                {systemMenuShortcutSet.has(item.key) ? <PushpinFilled /> : <PushpinOutlined />}
-              </button>
-            </span>
-          ),
-        })),
+        children: group.children.map((item) => {
+          const pinned = systemMenuShortcutSet.has(item.key);
+          const sceneCategoryMoreMenu = {
+            items: [
+              { key: 'create-category', icon: <PlusOutlined />, label: '创建场景分类' },
+              { key: 'edit-category', icon: <EditOutlined />, label: '修改场景分类' },
+              { key: 'delete-category', icon: <DeleteOutlined />, label: '删除场景分类', danger: true },
+              { type: 'divider' },
+              {
+                key: 'toggle-system-menu-shortcut',
+                icon: pinned ? <PushpinFilled /> : <PushpinOutlined />,
+                label: pinned ? '从菜单栏移除' : '添加到菜单栏',
+              },
+            ],
+            onClick: ({ key, domEvent }) => {
+              domEvent?.preventDefault();
+              domEvent?.stopPropagation();
+              if (key === 'create-category') {
+                openCreateSceneCategoryModal();
+                return;
+              }
+              if (key === 'edit-category') {
+                openEditSceneCategoryModal(item);
+                return;
+              }
+              if (key === 'delete-category') {
+                handleDeleteSceneCategory(item);
+                return;
+              }
+              if (key === 'toggle-system-menu-shortcut') {
+                handleToggleSceneSystemMenuShortcut(item.key, !pinned);
+              }
+            },
+          };
+
+          return {
+            key: item.key,
+            icon: getSceneMenuIcon(item.key),
+            label: (
+              <span className="scene-menu-item-label">
+                <span className="scene-menu-item-text" title={item.label}>{item.label}</span>
+                <Dropdown menu={sceneCategoryMoreMenu} placement="bottomRight" trigger={['click']}>
+                  <button
+                    type="button"
+                    className={`scene-menu-more-btn ${pinned ? 'is-active' : ''}`}
+                    aria-label={`${item.label}更多操作`}
+                    title="更多操作"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                    }}
+                  >
+                    <EllipsisOutlined />
+                  </button>
+                </Dropdown>
+              </span>
+            ),
+          };
+        }),
       })),
     ];
 
@@ -595,7 +719,15 @@ function App() {
       shortcutGroup,
       ...baseItems.slice(insertIndex),
     ];
-  }, [handleToggleSceneSystemMenuShortcut, shortcutScenes, systemMenuShortcutSet]);
+  }, [
+    handleDeleteSceneCategory,
+    handleToggleSceneSystemMenuShortcut,
+    openCreateSceneCategoryModal,
+    openEditSceneCategoryModal,
+    sceneMenuGroups,
+    shortcutScenes,
+    systemMenuShortcutSet,
+  ]);
 
   const menuFilteredScenes = useMemo(() => {
     return scenes.filter((scene) => (
@@ -658,13 +790,13 @@ function App() {
       return scenes.find((item) => item.id === shortcutSceneId)?.name || '快捷空间';
     }
     if (activeSceneKey !== 'home') {
-      return sceneApi.getSceneMenuLabel(activeSceneKey);
+      return getSceneMenuDisplayLabel(activeSceneKey);
     }
     if (currentSceneGroups.length === 1) {
       return currentSceneGroups[0].name;
     }
     return '全部空间';
-  }, [activeSceneKey, currentSceneGroups, scenes, selectedSceneMenuKey]);
+  }, [activeSceneKey, currentSceneGroups, getSceneMenuDisplayLabel, scenes, selectedSceneMenuKey]);
 
   const sceneOwnershipSegmentOptions = useMemo(() => {
     return SCENE_HOME_OWNERSHIP_TABS.map((item) => ({
@@ -709,10 +841,10 @@ function App() {
 
   const homeHeaderTitle = useMemo(() => {
     if (isSystemMenuSceneCategoryEntry && activeSceneKey !== 'home') {
-      return sceneApi.getSceneMenuLabel(activeSceneKey);
+      return getSceneMenuDisplayLabel(activeSceneKey);
     }
     return sceneHomeDisplayName;
-  }, [activeSceneKey, isSystemMenuSceneCategoryEntry, sceneHomeDisplayName]);
+  }, [activeSceneKey, getSceneMenuDisplayLabel, isSystemMenuSceneCategoryEntry, sceneHomeDisplayName]);
 
   useEffect(() => {
     if (menuFilteredScenes.length === 0) return;
@@ -729,13 +861,15 @@ function App() {
     }
     try {
       await sceneApi.seed();
-      const [nextTemplates, nextScenes, nextSystemMenuShortcutKeys] = await Promise.all([
+      const [nextTemplates, nextScenes, nextMenuGroups, nextSystemMenuShortcutKeys] = await Promise.all([
         sceneApi.listTemplates(),
         sceneApi.listScenes(),
+        sceneApi.listSceneMenuGroups(),
         sceneApi.listSceneSystemMenuShortcuts(),
       ]);
       setSceneTemplates(nextTemplates);
       setScenes(nextScenes);
+      setSceneMenuGroups(nextMenuGroups);
       setSceneSystemMenuShortcutKeys(nextSystemMenuShortcutKeys);
       setSelectedScene((prev) => {
         if (!prev?.id) return prev;
@@ -1102,24 +1236,6 @@ function App() {
     setCurrentPage('home');
   }, [handleCardClick, scenes]);
 
-  const openCreateSceneModal = () => {
-    setSceneModalMode('scene');
-    setSceneEditing(null);
-    setSceneModalOpen(true);
-  };
-
-  const openCreateSpaceModal = () => {
-    setSceneModalMode('space');
-    setSceneEditing(null);
-    setSceneModalOpen(true);
-  };
-
-  const openEditSceneModal = (scene) => {
-    setSceneModalMode('space');
-    setSceneEditing(scene);
-    setSceneModalOpen(true);
-  };
-
   const handleToggleSceneMenuShortcut = async (scene, enabled) => {
     if (!scene?.id) return;
     try {
@@ -1140,6 +1256,7 @@ function App() {
       const saved = await sceneApi.saveScene(values);
       setSceneModalOpen(false);
       setSceneEditing(null);
+      setSceneModalDefaultMenuKey(null);
       setSelectedKeys([saved.menuKey || 'home']);
       await loadSceneHomeData(false);
       message.success(values.id
@@ -1730,17 +1847,38 @@ function App() {
         />
       ) : null}
 
+      <Modal
+        title={sceneCategoryEditing ? '修改场景分类' : '创建场景分类'}
+        open={sceneCategoryModalOpen}
+        okText="保存"
+        cancelText="取消"
+        onOk={handleSaveSceneCategory}
+        onCancel={closeSceneCategoryModal}
+        destroyOnClose
+      >
+        <Form form={sceneCategoryForm} layout="vertical">
+          <Form.Item
+            name="label"
+            label="分类名称"
+            rules={[{ required: true, whitespace: true, message: '请输入分类名称' }]}
+          >
+            <Input placeholder="请输入场景分类名称" maxLength={24} showCount />
+          </Form.Item>
+        </Form>
+      </Modal>
+
       <SceneCreateModal
         open={sceneModalOpen}
         templates={sceneTemplates}
         sceneGroupOptions={sceneGroupOptions}
         initialValues={sceneEditing}
-        defaultMenuKey={activeSceneKey !== 'home' ? activeSceneKey : undefined}
+        defaultMenuKey={sceneModalDefaultMenuKey || (activeSceneKey !== 'home' ? activeSceneKey : undefined)}
         defaultSceneGroupName={currentSceneGroups.length === 1 ? currentSceneGroups[0].name : undefined}
         mode={sceneModalMode}
         onCancel={() => {
           setSceneModalOpen(false);
           setSceneEditing(null);
+          setSceneModalDefaultMenuKey(null);
         }}
         onSubmit={handleSceneSave}
       />

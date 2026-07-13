@@ -216,6 +216,13 @@
   color: #667085;
 }
 
+.sp-catalog-kind-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
 .sp-module-desc {
   margin-top: 6px;
   color: #667085;
@@ -371,6 +378,27 @@
   background: #fbfcff;
   color: #344054;
   font-weight: 700;
+}
+
+.sp-preview-nav-item small {
+  margin-left: auto;
+  color: #667085;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.sp-preview-virtual-title {
+  margin-top: 16px;
+  margin-bottom: 8px;
+  color: #667085;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.sp-preview-virtual-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .sp-role-list {
@@ -554,7 +582,8 @@
 }
 
 .sp-config-module-main strong,
-.sp-config-module-main small {
+.sp-config-module-main small,
+.sp-config-module-main em {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -572,6 +601,14 @@
   color: #667085;
 }
 
+.sp-config-module-main em {
+  margin-top: 3px;
+  color: #2563eb;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+
 .sp-module-order-actions {
   display: flex;
   justify-content: flex-end;
@@ -581,6 +618,19 @@
 .sp-module-order-actions .ant-btn {
   width: 34px;
   padding-inline: 0;
+}
+
+.sp-module-order-placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  height: 24px;
+  border-radius: 8px;
+  background: #f5f3ff;
+  color: #7c3aed;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .sp-config-detail {
@@ -622,6 +672,41 @@
   margin-bottom: 14px;
 }
 
+.sp-menu-config-strip {
+  display: grid;
+  grid-template-columns: 150px 190px minmax(0, 1fr);
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  background: #f8fbff;
+}
+
+.sp-menu-config-strip label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.sp-menu-config-strip label span {
+  color: #344054;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.sp-menu-config-strip > div {
+  color: #667085;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.sp-module-kind-note {
+  margin-bottom: 14px;
+}
+
 .sp-inline-config-form {
   margin-top: 6px;
 }
@@ -645,7 +730,8 @@
   }
 
   .sp-module-control-grid,
-  .sp-unified-config-layout {
+  .sp-unified-config-layout,
+  .sp-menu-config-strip {
     grid-template-columns: 1fr;
   }
 

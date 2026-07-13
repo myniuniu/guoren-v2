@@ -24,7 +24,9 @@ import {
   AppstoreOutlined,
   ArrowDownOutlined,
   ArrowUpOutlined,
+  CalendarOutlined,
   CheckCircleOutlined,
+  CheckSquareOutlined,
   ClusterOutlined,
   CopyOutlined,
   DatabaseOutlined,
@@ -66,7 +68,7 @@ const USER_OPTIONS = ['管理员', '教师', '学员', '专家', '运营人员',
   label: value,
 }));
 
-const TAG_OPTIONS = ['AI', '培训', '协作', '证书', '资源沉淀', '知识管理', '活动运营', '问卷反馈'].map((value) => ({
+const TAG_OPTIONS = ['AI', '培训', '协作', '证书', '资源沉淀', '知识管理', '日程协同', '任务协同', '活动运营', '问卷反馈'].map((value) => ({
   value,
   label: value,
 }));
@@ -74,11 +76,44 @@ const TAG_OPTIONS = ['AI', '培训', '协作', '证书', '资源沉淀', '知识
 const PACKAGE_RESOURCE_NOTE_MAP = {
   SPACE: '空间数量上限、是否支持自定义创建场景等空间资源边界已迁移到套餐管理中定义。',
   RESOURCE_LIBRARY: '可用资源类型、单文件上传上限、资料库容量和 AI 解析次数等资料库资源边界已迁移到套餐管理中定义。',
+  CALENDAR: '可建日历数量、外部日历同步和提醒发送额度等日程资源边界已迁移到套餐管理中定义。',
   MESSAGE: '可用消息通道、月消息发送量和消息保留天数等消息资源边界已迁移到套餐管理中定义。',
+  TASKS: '可建任务数量、任务提醒频率和任务附件容量等任务资源边界已迁移到套餐管理中定义。',
   SEMINAR: '单场人数上限、报名人数上限和月研讨会场次等研讨会资源边界已迁移到套餐管理中定义。',
   SURVEY: '可用题型、月问卷数量和月答卷数量等问卷资源边界已迁移到套餐管理中定义。',
   CERTIFICATE: '可导出格式、证书模板数量和月发放数量等证书资源边界已迁移到套餐管理中定义。',
 };
+
+const VIRTUAL_MODULE_KEYS = new Set(['SEMINAR', 'SURVEY', 'CERTIFICATE']);
+
+function getModuleKind(moduleDef) {
+  return moduleDef?.moduleKind || (VIRTUAL_MODULE_KEYS.has(moduleDef?.key) ? 'VIRTUAL' : 'MENU');
+}
+
+function isMenuModule(moduleDef) {
+  return getModuleKind(moduleDef) === 'MENU';
+}
+
+function getModuleKindLabel(moduleDef) {
+  return isMenuModule(moduleDef) ? '菜单模块' : '虚拟能力';
+}
+
+function getMenuOrder(assignment, moduleDef) {
+  if (!assignment || !isMenuModule(moduleDef)) return null;
+  const rawValue = assignment.menuOrder ?? moduleDef.defaultMenuOrder ?? assignment.sortNo;
+  const order = Number(rawValue);
+  return Number.isFinite(order) ? order : null;
+}
+
+function compareCatalogModules(a, b) {
+  const aMenu = isMenuModule(a);
+  const bMenu = isMenuModule(b);
+  if (aMenu !== bMenu) return aMenu ? -1 : 1;
+  if (aMenu && bMenu) {
+    return (a.defaultMenuOrder ?? 999) - (b.defaultMenuOrder ?? 999);
+  }
+  return 0;
+}
 
 const MODULE_CATALOG = [
   {
@@ -88,6 +123,8 @@ const MODULE_CATALOG = [
     icon: 'space',
     category: '基础承载',
     recommendedRequired: true,
+    systemMenuKey: 'space',
+    defaultMenuOrder: 10,
     description: '提供解决方案落地后的空间创建、模板选择、入口与基础运营能力。',
     capabilityKeys: ['space_operation'],
     navLabel: '空间',
@@ -128,6 +165,8 @@ const MODULE_CATALOG = [
     code: 'LUCKY',
     icon: 'lucky',
     category: 'AI 能力',
+    systemMenuKey: 'lucky',
+    defaultMenuOrder: 30,
     description: '配置 Lucky 的技能、智能体、资料访问和面向用户的智能入口。',
     capabilityKeys: ['lucky_agent'],
     dependsOn: ['RESOURCE_LIBRARY'],
@@ -186,6 +225,8 @@ const MODULE_CATALOG = [
     icon: 'library',
     category: '内容资产',
     recommendedRequired: true,
+    systemMenuKey: 'resource-library',
+    defaultMenuOrder: 20,
     description: '管理个人、组织与共享资料，支持标签、解析、上传和成果归档。',
     capabilityKeys: ['resource_deposit'],
     navLabel: '资料库',
@@ -224,6 +265,8 @@ const MODULE_CATALOG = [
     code: 'KNOWLEDGE_SPACE',
     icon: 'knowledge',
     category: '知识组织',
+    systemMenuKey: 'knowledge-space',
+    defaultMenuOrder: 40,
     description: '提供知识空间、成员角色、图谱绑定和面向学习/研究的知识导航。',
     capabilityKeys: ['knowledge_navigation'],
     dependsOn: ['SPACE'],
@@ -276,25 +319,95 @@ const MODULE_CATALOG = [
     ],
   },
   {
+    key: 'CALENDAR',
+    name: '日历模块',
+    code: 'CALENDAR',
+    icon: 'calendar',
+    category: '日程协同',
+    systemMenuKey: 'calendar',
+    defaultMenuOrder: 50,
+    description: '提供个人、空间和组织维度的日程编排、提醒、冲突检查与协同看板能力。',
+    capabilityKeys: ['calendar_schedule'],
+    dependsOn: ['MESSAGE'],
+    serves: ['研讨会模块', '任务模块', '培训运营'],
+    navLabel: '日历',
+    deliveryItems: ['日历入口', '日程类型规则', '提醒与冲突检查配置'],
+    configTemplates: [
+      {
+        key: 'event_creation_enabled',
+        label: '日程创建开关',
+        type: 'BOOLEAN',
+        required: true,
+        defaultValue: true,
+        description: '是否允许用户在方案内创建日程。',
+      },
+      {
+        key: 'default_calendar_scope',
+        label: '默认日历范围',
+        type: 'SELECT',
+        required: true,
+        defaultValue: '空间日历',
+        options: ['个人日历', '空间日历', '组织日历'],
+        description: '新建日程默认归属的日历范围。',
+      },
+      {
+        key: 'enabled_event_types',
+        label: '启用日程类型',
+        type: 'MULTI_SELECT',
+        required: true,
+        defaultValue: ['课程安排', '研讨会', '任务截止'],
+        options: ['课程安排', '研讨会', '任务截止', '证书发放', '审批节点', '直播活动'],
+        description: '该方案中允许创建和展示的日程类型。',
+      },
+      {
+        key: 'default_reminder_minutes',
+        label: '默认提醒提前分钟',
+        type: 'NUMBER',
+        required: true,
+        defaultValue: 30,
+        description: '日程开始前默认提前多少分钟提醒参与人。',
+      },
+      {
+        key: 'message_reminder_enabled',
+        label: '消息提醒联动',
+        type: 'BOOLEAN',
+        required: false,
+        defaultValue: true,
+        description: '是否将日程提醒同步到消息模块。',
+      },
+      {
+        key: 'conflict_check_enabled',
+        label: '冲突检查开关',
+        type: 'BOOLEAN',
+        required: false,
+        defaultValue: true,
+        description: '是否在创建日程时检查参与人时间冲突。',
+      },
+      {
+        key: 'attendee_visibility',
+        label: '参与人可见范围',
+        type: 'SELECT',
+        required: true,
+        defaultValue: '参与人可见',
+        options: ['仅创建人可见', '参与人可见', '组织内可见'],
+        description: '控制日程参与人信息在方案内的可见范围。',
+      },
+    ],
+  },
+  {
     key: 'MESSAGE',
     name: '消息模块',
     code: 'MESSAGE',
     icon: 'message',
     category: '运营触达',
+    systemMenuKey: 'messages',
+    defaultMenuOrder: 60,
     description: '面向系统通知、Lucky 推送、审批提醒、活动提醒和消息留存的触达能力。',
     capabilityKeys: ['message_touch'],
-    serves: ['研讨会模块', '问卷模块', '证书模块'],
+    serves: ['日历模块', '研讨会模块', '问卷模块', '证书模块'],
     navLabel: '消息',
     deliveryItems: ['消息中心入口', '通知通道配置', '自动提醒规则'],
     configTemplates: [
-      {
-        key: 'lucky_push_enabled',
-        label: 'Lucky 推送开关',
-        type: 'BOOLEAN',
-        required: false,
-        defaultValue: true,
-        description: '是否允许 Lucky 主动推送建议和提醒。',
-      },
       {
         key: 'system_notice_enabled',
         label: '系统通知开关',
@@ -304,12 +417,130 @@ const MODULE_CATALOG = [
         description: '是否开启系统级通知。',
       },
       {
+        key: 'default_touch_strategy',
+        label: '默认触达策略',
+        type: 'SELECT',
+        required: true,
+        defaultValue: '站内消息优先',
+        options: ['站内消息优先', '多通道同时触达', '失败后外部补发', '仅站内留痕'],
+        description: '方案内通知默认采用的触达策略。',
+      },
+      {
+        key: 'reminder_event_types',
+        label: '启用提醒类型',
+        type: 'MULTI_SELECT',
+        required: true,
+        defaultValue: ['审批提醒', '活动提醒', '日程提醒'],
+        options: ['审批提醒', '活动提醒', '日程提醒', '任务提醒', '证书发放提醒', 'Lucky 建议提醒'],
+        description: '允许消息模块自动触发提醒的业务事件。',
+      },
+      {
+        key: 'digest_frequency',
+        label: '摘要发送频率',
+        type: 'SELECT',
+        required: false,
+        defaultValue: '每日',
+        options: ['关闭', '每日', '每周'],
+        description: '未读消息摘要的默认发送频率。',
+      },
+      {
+        key: 'quiet_hours_enabled',
+        label: '免打扰时段开关',
+        type: 'BOOLEAN',
+        required: false,
+        defaultValue: true,
+        description: '是否启用夜间或休息日免打扰策略。',
+      },
+      {
         key: 'approval_reminder_enabled',
         label: '审批提醒开关',
         type: 'BOOLEAN',
         required: false,
         defaultValue: true,
         description: '是否启用审批相关提醒。',
+      },
+      {
+        key: 'lucky_push_enabled',
+        label: 'Lucky 推送开关',
+        type: 'BOOLEAN',
+        required: false,
+        defaultValue: true,
+        description: '是否允许 Lucky 主动推送建议和提醒。',
+      },
+    ],
+  },
+  {
+    key: 'TASKS',
+    name: '任务模块',
+    code: 'TASKS',
+    icon: 'tasks',
+    category: '任务协同',
+    systemMenuKey: 'tasks',
+    defaultMenuOrder: 70,
+    description: '提供任务创建、分派、截止提醒、看板跟进和完成证据沉淀能力。',
+    capabilityKeys: ['task_management'],
+    dependsOn: ['MESSAGE'],
+    serves: ['日历模块', '研讨会模块', '培训运营'],
+    navLabel: '任务',
+    deliveryItems: ['任务中心入口', '任务类型规则', '截止提醒联动'],
+    configTemplates: [
+      {
+        key: 'task_creation_enabled',
+        label: '任务创建开关',
+        type: 'BOOLEAN',
+        required: true,
+        defaultValue: true,
+        description: '是否允许用户在方案内创建任务。',
+      },
+      {
+        key: 'enabled_task_types',
+        label: '启用任务类型',
+        type: 'MULTI_SELECT',
+        required: true,
+        defaultValue: ['学习任务', '运营任务', '协作任务'],
+        options: ['学习任务', '运营任务', '协作任务', '审批跟进', '资料补充', '证书发放'],
+        description: '该方案中允许创建和展示的任务类型。',
+      },
+      {
+        key: 'default_assignee_scope',
+        label: '默认指派范围',
+        type: 'SELECT',
+        required: true,
+        defaultValue: '空间成员',
+        options: ['本人', '空间成员', '组织成员', '指定角色'],
+        description: '创建任务时默认可指派的人群范围。',
+      },
+      {
+        key: 'due_reminder_enabled',
+        label: '截止提醒开关',
+        type: 'BOOLEAN',
+        required: false,
+        defaultValue: true,
+        description: '是否在任务截止前通过消息模块提醒责任人。',
+      },
+      {
+        key: 'calendar_binding_enabled',
+        label: '日历联动开关',
+        type: 'BOOLEAN',
+        required: false,
+        defaultValue: true,
+        description: '是否将任务截止时间同步到日历模块。',
+      },
+      {
+        key: 'completion_evidence_required',
+        label: '完成证据必填',
+        type: 'BOOLEAN',
+        required: false,
+        defaultValue: false,
+        description: '任务完成时是否必须上传说明、链接或附件作为证据。',
+      },
+      {
+        key: 'kanban_view_enabled',
+        label: '看板视图开关',
+        type: 'BOOLEAN',
+        required: false,
+        defaultValue: true,
+        description: '是否启用按状态拖拽流转的任务看板。',
       },
     ],
   },
@@ -319,10 +550,11 @@ const MODULE_CATALOG = [
     code: 'SEMINAR',
     icon: 'seminar',
     category: '活动协作',
+    moduleKind: 'VIRTUAL',
     description: '支持研讨会创建、报名、协作工具、过程资料和成果沉淀。',
     capabilityKeys: ['seminar_operation'],
     navLabel: '研讨会',
-    deliveryItems: ['研讨会入口', '报名和参与规则', '活动资料归档'],
+    deliveryItems: ['研讨会能力配置', '报名和参与规则', '活动资料归档'],
     configTemplates: [
       {
         key: 'creation_enabled',
@@ -365,10 +597,11 @@ const MODULE_CATALOG = [
     code: 'SURVEY',
     icon: 'survey',
     category: '反馈采集',
+    moduleKind: 'VIRTUAL',
     description: '用于满意度、过程反馈、测评问卷和结果导出的轻量采集能力。',
     capabilityKeys: ['survey_feedback'],
     navLabel: '问卷',
-    deliveryItems: ['问卷入口', '题型范围', '结果导出配置'],
+    deliveryItems: ['问卷能力配置', '题型范围', '结果导出配置'],
     configTemplates: [
       {
         key: 'creation_enabled',
@@ -410,11 +643,12 @@ const MODULE_CATALOG = [
     code: 'CERTIFICATE',
     icon: 'certificate',
     category: '成果认证',
+    moduleKind: 'VIRTUAL',
     description: '支持证书模板、编号规则、发放、导出、审批与归档。',
     capabilityKeys: ['certificate_issue'],
     dependsOnAny: ['SURVEY', 'SEMINAR'],
     navLabel: '证书',
-    deliveryItems: ['证书模板入口', '发放批次能力', '证书资料归档'],
+    deliveryItems: ['证书能力配置', '发放批次能力', '证书资料归档'],
     configTemplates: [
       {
         key: 'template_creation_enabled',
@@ -477,12 +711,14 @@ function buildConfigs(moduleDef) {
 }
 
 function createModuleAssignment(moduleDef, sortNo) {
+  const menuOrder = isMenuModule(moduleDef) ? (moduleDef.defaultMenuOrder ?? sortNo * 10) : null;
   return {
     id: `${moduleDef.key.toLowerCase()}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
     moduleKey: moduleDef.key,
     required: Boolean(moduleDef.recommendedRequired),
     enabled: true,
     sortNo,
+    menuOrder,
     deployStatus: 'CONFIGURING',
     configs: buildConfigs(moduleDef),
     remark: '',
@@ -491,9 +727,9 @@ function createModuleAssignment(moduleDef, sortNo) {
 
 function buildInitialSolutions() {
   const findModule = (key) => MODULE_CATALOG.find((item) => item.key === key);
-  const trainingModules = ['SPACE', 'RESOURCE_LIBRARY', 'LUCKY', 'MESSAGE', 'SEMINAR', 'SURVEY', 'CERTIFICATE']
+  const trainingModules = ['SPACE', 'RESOURCE_LIBRARY', 'LUCKY', 'CALENDAR', 'MESSAGE', 'TASKS', 'SEMINAR', 'SURVEY', 'CERTIFICATE']
     .map((key, index) => createModuleAssignment(findModule(key), index + 1));
-  const researchModules = ['SPACE', 'RESOURCE_LIBRARY', 'KNOWLEDGE_SPACE', 'MESSAGE']
+  const researchModules = ['SPACE', 'RESOURCE_LIBRARY', 'KNOWLEDGE_SPACE', 'CALENDAR', 'MESSAGE', 'TASKS']
     .map((key, index) => createModuleAssignment(findModule(key), index + 1));
 
   return [
@@ -507,10 +743,10 @@ function buildInitialSolutions() {
       owner: '运营中心',
       scenario: '组织培训',
       targetUsers: ['管理员', '教师', '学员'],
-      tags: ['AI', '培训', '证书', '资源沉淀'],
-      description: '面向教师数字素养提升项目，提供空间、资料、研讨、反馈与证书发放的一体化运营方案。',
+      tags: ['AI', '培训', '证书', '日程协同', '任务协同', '资源沉淀'],
+      description: '面向教师数字素养提升项目，提供空间、资料、日程、任务、研讨、反馈与证书发放的一体化运营方案。',
       updatedAt: '2026-07-10 16:20',
-      enabledCapabilities: ['space_operation', 'lucky_agent', 'resource_deposit', 'message_touch', 'seminar_operation', 'survey_feedback', 'certificate_issue'],
+      enabledCapabilities: ['space_operation', 'lucky_agent', 'resource_deposit', 'calendar_schedule', 'message_touch', 'task_management', 'seminar_operation', 'survey_feedback', 'certificate_issue'],
       modules: trainingModules,
     },
     {
@@ -523,10 +759,10 @@ function buildInitialSolutions() {
       owner: '教研中心',
       scenario: '教研共创',
       targetUsers: ['管理员', '教师', '专家'],
-      tags: ['协作', '知识管理', '资源沉淀'],
-      description: '用于跨校教研议题共创、资料沉淀、知识空间建设和过程消息触达。',
+      tags: ['协作', '知识管理', '日程协同', '任务协同', '资源沉淀'],
+      description: '用于跨校教研议题共创、资料沉淀、知识空间建设、日程任务协同和过程消息触达。',
       updatedAt: '2026-07-08 09:45',
-      enabledCapabilities: ['space_operation', 'resource_deposit', 'knowledge_navigation', 'message_touch'],
+      enabledCapabilities: ['space_operation', 'resource_deposit', 'knowledge_navigation', 'calendar_schedule', 'message_touch', 'task_management'],
       modules: researchModules,
     },
   ];
@@ -559,7 +795,9 @@ function ModuleIcon({ type }) {
     lucky: <ThunderboltOutlined />,
     library: <DatabaseOutlined />,
     knowledge: <ClusterOutlined />,
+    calendar: <CalendarOutlined />,
     message: <MessageOutlined />,
+    tasks: <CheckSquareOutlined />,
     seminar: <TeamOutlined />,
     survey: <FileTextOutlined />,
     certificate: <SafetyCertificateOutlined />,
@@ -599,10 +837,14 @@ function getSolutionChecks(solution, moduleCatalog) {
   const missingBaseline = moduleCatalog.filter((item) => item.recommendedRequired && !moduleKeys.has(item.key));
   const configMissing = [];
   const dependencyMissing = [];
+  const menuAssignments = [];
 
   solution.modules.forEach((assignment) => {
     const moduleDef = moduleCatalog.find((item) => item.key === assignment.moduleKey);
     if (!moduleDef || !assignment.enabled) return;
+    if (isMenuModule(moduleDef)) {
+      menuAssignments.push({ assignment, moduleDef });
+    }
     const configStatus = getModuleConfigStatus(assignment, moduleDef);
     if (assignment.required && configStatus.missing.length) {
       configMissing.push(`${moduleDef.name}: ${configStatus.missing.map((item) => item.label).join('、')}`);
@@ -623,6 +865,16 @@ function getSolutionChecks(solution, moduleCatalog) {
   if (!solution.scenario?.trim()) baseMissing.push('适用场景');
   if (!solution.description?.trim()) baseMissing.push('方案简介');
   if (!solution.targetUsers?.length) baseMissing.push('目标用户');
+
+  const menuMissing = menuAssignments.filter(({ assignment, moduleDef }) => getMenuOrder(assignment, moduleDef) == null);
+  const menuOrderCounts = menuAssignments.reduce((acc, { assignment, moduleDef }) => {
+    const order = getMenuOrder(assignment, moduleDef);
+    if (order != null) acc.set(order, (acc.get(order) || 0) + 1);
+    return acc;
+  }, new Map());
+  const duplicateMenuOrders = Array.from(menuOrderCounts.entries())
+    .filter(([, count]) => count > 1)
+    .map(([order]) => order);
 
   return [
     {
@@ -648,6 +900,16 @@ function getSolutionChecks(solution, moduleCatalog) {
       title: '模块依赖已满足',
       passed: dependencyMissing.length === 0,
       detail: dependencyMissing.length ? dependencyMissing.join('；') : '当前模块依赖关系正常。',
+    },
+    {
+      key: 'menu',
+      title: '菜单模块位置已配置',
+      passed: menuMissing.length === 0 && duplicateMenuOrders.length === 0,
+      detail: menuMissing.length
+        ? `缺少菜单位置：${menuMissing.map(({ moduleDef }) => moduleDef.name).join('、')}`
+        : duplicateMenuOrders.length
+          ? `菜单位置重复：${duplicateMenuOrders.join('、')}`
+          : '菜单模块均已配置系统菜单位置，虚拟能力不参与菜单注册。',
     },
   ];
 }
@@ -684,8 +946,26 @@ function SolutionPrototypeModule() {
   );
 
   const selectedSortedModules = useMemo(() => {
-    return selectedSolution ? [...selectedSolution.modules].sort((a, b) => (a.sortNo || 0) - (b.sortNo || 0)) : [];
-  }, [selectedSolution]);
+    if (!selectedSolution) return [];
+    const menuAssignments = [];
+    const virtualAssignments = [];
+    selectedSolution.modules.forEach((assignment) => {
+      const moduleDef = moduleCatalog.find((item) => item.key === assignment.moduleKey);
+      if (isMenuModule(moduleDef)) {
+        menuAssignments.push(assignment);
+      } else {
+        virtualAssignments.push(assignment);
+      }
+    });
+    menuAssignments.sort((a, b) => {
+      const aModule = moduleCatalog.find((item) => item.key === a.moduleKey);
+      const bModule = moduleCatalog.find((item) => item.key === b.moduleKey);
+      return (getMenuOrder(a, aModule) ?? 0) - (getMenuOrder(b, bModule) ?? 0)
+        || (a.sortNo || 0) - (b.sortNo || 0);
+    });
+    virtualAssignments.sort((a, b) => (a.sortNo || 0) - (b.sortNo || 0));
+    return [...menuAssignments, ...virtualAssignments];
+  }, [moduleCatalog, selectedSolution]);
 
   const activeConfigAssignment = useMemo(() => {
     if (!selectedSortedModules.length) return null;
@@ -808,7 +1088,8 @@ function SolutionPrototypeModule() {
   const handleInitStandardModules = () => {
     if (!selectedSolution) return;
     const existing = new Set(selectedSolution.modules.map((item) => item.moduleKey));
-    const additions = moduleCatalog
+    const additions = [...moduleCatalog]
+      .sort(compareCatalogModules)
       .filter((item) => !existing.has(item.key))
       .map((item, index) => createModuleAssignment(item, selectedSolution.modules.length + index + 1));
     if (!additions.length) {
@@ -847,16 +1128,34 @@ function SolutionPrototypeModule() {
   const handleMoveModule = (assignmentId, direction) => {
     if (!selectedSolution) return;
     updateSolution(selectedSolution.id, (solution) => {
-      const sorted = [...solution.modules].sort((a, b) => (a.sortNo || 0) - (b.sortNo || 0));
+      const sorted = solution.modules
+        .filter((assignment) => {
+          const moduleDef = moduleCatalog.find((item) => item.key === assignment.moduleKey);
+          return isMenuModule(moduleDef);
+        })
+        .sort((a, b) => {
+          const aModule = moduleCatalog.find((item) => item.key === a.moduleKey);
+          const bModule = moduleCatalog.find((item) => item.key === b.moduleKey);
+          return (getMenuOrder(a, aModule) ?? 0) - (getMenuOrder(b, bModule) ?? 0)
+            || (a.sortNo || 0) - (b.sortNo || 0);
+        });
       const currentIndex = sorted.findIndex((item) => item.id === assignmentId);
       const nextIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
       if (currentIndex < 0 || nextIndex < 0 || nextIndex >= sorted.length) {
         return { modules: solution.modules };
       }
-      const nextModules = [...sorted];
-      [nextModules[currentIndex], nextModules[nextIndex]] = [nextModules[nextIndex], nextModules[currentIndex]];
+      const current = sorted[currentIndex];
+      const next = sorted[nextIndex];
+      const currentModule = moduleCatalog.find((item) => item.key === current.moduleKey);
+      const nextModule = moduleCatalog.find((item) => item.key === next.moduleKey);
+      const currentMenuOrder = getMenuOrder(current, currentModule);
+      const nextMenuOrder = getMenuOrder(next, nextModule);
       return {
-        modules: nextModules.map((item, index) => ({ ...item, sortNo: index + 1 })),
+        modules: solution.modules.map((item) => {
+          if (item.id === current.id) return { ...item, menuOrder: nextMenuOrder };
+          if (item.id === next.id) return { ...item, menuOrder: currentMenuOrder };
+          return item;
+        }),
       };
     });
   };
@@ -1030,10 +1329,31 @@ function SolutionPrototypeModule() {
     if (!selectedSolution) return null;
     const checks = getSolutionChecks(selectedSolution, moduleCatalog);
     const completeness = getSolutionCompleteness(selectedSolution, moduleCatalog);
-    const previewModules = selectedSortedModules
+    const selectedMenuAssignments = selectedSortedModules.filter((assignment) => {
+      const moduleDef = moduleCatalog.find((item) => item.key === assignment.moduleKey);
+      return isMenuModule(moduleDef);
+    });
+    const previewMenuModules = selectedMenuAssignments
       .filter((item) => item.enabled)
-      .map((item) => moduleCatalog.find((moduleDef) => moduleDef.key === item.moduleKey))
-      .filter(Boolean);
+      .map((assignment) => ({
+        assignment,
+        moduleDef: moduleCatalog.find((moduleDef) => moduleDef.key === assignment.moduleKey),
+      }))
+      .filter((item) => item.moduleDef);
+    const previewVirtualModules = selectedSortedModules
+      .filter((item) => item.enabled)
+      .map((assignment) => ({
+        assignment,
+        moduleDef: moduleCatalog.find((moduleDef) => moduleDef.key === assignment.moduleKey),
+      }))
+      .filter((item) => item.moduleDef && !isMenuModule(item.moduleDef));
+    const previewCapabilityModules = selectedSortedModules
+      .filter((item) => item.enabled)
+      .map((assignment) => ({
+        assignment,
+        moduleDef: moduleCatalog.find((moduleDef) => moduleDef.key === assignment.moduleKey),
+      }))
+      .filter((item) => item.moduleDef);
 
     const drawerTabs = [
       {
@@ -1104,7 +1424,7 @@ function SolutionPrototypeModule() {
             <div className="sp-section-toolbar">
               <div>
                 <div className="sp-section-title">模块编排与配置</div>
-                <div className="sp-section-subtitle">在同一个视图完成模块排序、启停、必选和当前模块配置。</div>
+                <div className="sp-section-subtitle">菜单模块配置系统菜单位置，虚拟能力只维护方案能力与业务配置。</div>
               </div>
               <Space wrap>
                 <Button icon={<PlusOutlined />} onClick={() => setAddModuleOpen(true)}>
@@ -1119,12 +1439,15 @@ function SolutionPrototypeModule() {
             {selectedSortedModules.length ? (
               <div className="sp-config-layout sp-unified-config-layout">
                 <div className="sp-config-sidebar">
-                  <div className="sp-config-sidebar-title">模块编排</div>
-                  {selectedSortedModules.map((assignment, index) => {
+                  <div className="sp-config-sidebar-title">菜单排序与虚拟能力</div>
+                  {selectedSortedModules.map((assignment) => {
                     const moduleDef = moduleCatalog.find((item) => item.key === assignment.moduleKey);
                     if (!moduleDef) return null;
                     const configStatus = getModuleConfigStatus(assignment, moduleDef);
                     const isActive = activeConfigAssignment?.id === assignment.id;
+                    const isMenu = isMenuModule(moduleDef);
+                    const menuIndex = selectedMenuAssignments.findIndex((item) => item.id === assignment.id);
+                    const menuOrder = getMenuOrder(assignment, moduleDef);
                     return (
                       <div key={assignment.id} className={`sp-config-module-card ${isActive ? 'is-active' : ''}`}>
                         <button
@@ -1135,25 +1458,36 @@ function SolutionPrototypeModule() {
                           <Avatar className="sp-module-avatar" shape="square" icon={<ModuleIcon type={moduleDef.icon} />} />
                           <span className="sp-config-module-main">
                             <strong>{moduleDef.name}</strong>
-                            <small>{configStatus.percent}% 完成 · {assignment.required ? '必选' : '可选'}</small>
+                            <small>
+                              {getModuleKindLabel(moduleDef)} · {configStatus.percent}% 完成 · {assignment.required ? '必选' : '可选'}
+                            </small>
+                            <em>{isMenu ? `菜单位置 ${menuOrder ?? '-'}` : '不注册系统菜单'}</em>
                           </span>
                           <span className="sp-module-order-actions" onClick={(event) => event.stopPropagation()}>
-                            <Tooltip title="上移">
-                              <Button
-                                size="small"
-                                icon={<ArrowUpOutlined />}
-                                disabled={index === 0}
-                                onClick={() => handleMoveModule(assignment.id, 'up')}
-                              />
-                            </Tooltip>
-                            <Tooltip title="下移">
-                              <Button
-                                size="small"
-                                icon={<ArrowDownOutlined />}
-                                disabled={index === selectedSortedModules.length - 1}
-                                onClick={() => handleMoveModule(assignment.id, 'down')}
-                              />
-                            </Tooltip>
+                            {isMenu ? (
+                              <>
+                                <Tooltip title="菜单位置上移">
+                                  <Button
+                                    size="small"
+                                    icon={<ArrowUpOutlined />}
+                                    disabled={menuIndex === 0}
+                                    onClick={() => handleMoveModule(assignment.id, 'up')}
+                                  />
+                                </Tooltip>
+                                <Tooltip title="菜单位置下移">
+                                  <Button
+                                    size="small"
+                                    icon={<ArrowDownOutlined />}
+                                    disabled={menuIndex === selectedMenuAssignments.length - 1}
+                                    onClick={() => handleMoveModule(assignment.id, 'down')}
+                                  />
+                                </Tooltip>
+                              </>
+                            ) : (
+                              <Tooltip title="虚拟能力不参与系统菜单排序">
+                                <span className="sp-module-order-placeholder">虚拟</span>
+                              </Tooltip>
+                            )}
                           </span>
                         </button>
                       </div>
@@ -1171,6 +1505,14 @@ function SolutionPrototypeModule() {
                           <Space wrap className="sp-tag-row">
                             <Tag>{activeConfigModule.code}</Tag>
                             <Tag color="geekblue">{activeConfigModule.category}</Tag>
+                            <Tag color={isMenuModule(activeConfigModule) ? 'cyan' : 'purple'}>
+                              {getModuleKindLabel(activeConfigModule)}
+                            </Tag>
+                            {isMenuModule(activeConfigModule) ? (
+                              <Tag color="blue">菜单位置 {getMenuOrder(activeConfigAssignment, activeConfigModule) ?? '-'}</Tag>
+                            ) : (
+                              <Tag>不注册菜单</Tag>
+                            )}
                             {activeConfigAssignment.required ? <Tag color="blue">必选模块</Tag> : <Tag>可选模块</Tag>}
                             {activeConfigAssignment.enabled ? <Tag color="success">已启用</Tag> : <Tag>已停用</Tag>}
                             {deployTag(activeConfigAssignment.deployStatus)}
@@ -1182,6 +1524,35 @@ function SolutionPrototypeModule() {
                           percent={getModuleConfigStatus(activeConfigAssignment, activeConfigModule).percent}
                         />
                       </div>
+
+                      {isMenuModule(activeConfigModule) ? (
+                        <div className="sp-menu-config-strip">
+                          <label>
+                            <span>系统菜单位置</span>
+                            <InputNumber
+                              min={1}
+                              value={getMenuOrder(activeConfigAssignment, activeConfigModule)}
+                              onChange={(value) => handleChangeModule(activeConfigAssignment.id, { menuOrder: value })}
+                              style={{ width: '100%' }}
+                            />
+                          </label>
+                          <label>
+                            <span>系统菜单 Key</span>
+                            <Input value={activeConfigModule.systemMenuKey || activeConfigModule.key.toLowerCase()} readOnly />
+                          </label>
+                          <div>
+                            菜单模块会注册到系统菜单，位置数字越小越靠前；左侧上移/下移会调整这个位置。
+                          </div>
+                        </div>
+                      ) : (
+                        <Alert
+                          type="warning"
+                          showIcon
+                          className="sp-module-kind-note"
+                          message="虚拟能力模块"
+                          description="不注册到系统菜单，不参与菜单排序；在方案中作为研讨、反馈、证书等业务能力被其他菜单模块调用。"
+                        />
+                      )}
 
                       {[
                         ...(activeConfigModule.dependsOn || []).map((depKey) => `依赖 ${moduleCatalog.find((item) => item.key === depKey)?.name || depKey}`),
@@ -1280,13 +1651,24 @@ function SolutionPrototypeModule() {
             <div className="sp-preview-panel">
               <div className="sp-preview-title">默认导航结构</div>
               <div className="sp-preview-nav">
-                {previewModules.map((item) => (
-                  <div key={item.key} className="sp-preview-nav-item">
-                    <ModuleIcon type={item.icon} />
-                    <span>{item.navLabel}</span>
+                {previewMenuModules.map(({ assignment, moduleDef }) => (
+                  <div key={assignment.id} className="sp-preview-nav-item">
+                    <ModuleIcon type={moduleDef.icon} />
+                    <span>{moduleDef.navLabel}</span>
+                    <small>#{getMenuOrder(assignment, moduleDef) ?? '-'}</small>
                   </div>
                 ))}
               </div>
+              {previewVirtualModules.length ? (
+                <>
+                  <div className="sp-preview-virtual-title">虚拟能力模块</div>
+                  <div className="sp-preview-virtual-list">
+                    {previewVirtualModules.map(({ assignment, moduleDef }) => (
+                      <Tag key={assignment.id} color="purple">{moduleDef.name}</Tag>
+                    ))}
+                  </div>
+                </>
+              ) : null}
             </div>
             <div className="sp-preview-panel">
               <div className="sp-preview-title">角色体验</div>
@@ -1305,8 +1687,8 @@ function SolutionPrototypeModule() {
             <div className="sp-preview-panel sp-preview-wide">
               <div className="sp-preview-title">交付清单</div>
               <div className="sp-delivery-grid">
-                {previewModules.flatMap((item) => item.deliveryItems.map((delivery) => (
-                  <div key={`${item.key}-${delivery}`} className="sp-delivery-item">
+                {previewCapabilityModules.flatMap(({ moduleDef }) => moduleDef.deliveryItems.map((delivery) => (
+                  <div key={`${moduleDef.key}-${delivery}`} className="sp-delivery-item">
                     <CheckCircleOutlined />
                     <span>{delivery}</span>
                   </div>
@@ -1358,7 +1740,9 @@ function SolutionPrototypeModule() {
 
   const currentConfigModule = moduleCatalog.find((item) => item.key === configModal.moduleKey);
   const availableModules = selectedSolution
-    ? moduleCatalog.filter((item) => !selectedSolution.modules.some((moduleItem) => moduleItem.moduleKey === item.key))
+    ? [...moduleCatalog]
+        .sort(compareCatalogModules)
+        .filter((item) => !selectedSolution.modules.some((moduleItem) => moduleItem.moduleKey === item.key))
     : [];
 
   return (
@@ -1403,13 +1787,21 @@ function SolutionPrototypeModule() {
               label: '模块目录',
               children: (
                 <div className="sp-catalog-grid">
-                  {moduleCatalog.map((moduleDef) => (
+                  {[...moduleCatalog].sort(compareCatalogModules).map((moduleDef) => (
                     <div key={moduleDef.key} className="sp-catalog-card">
                       <div className="sp-catalog-head">
                         <Avatar className="sp-module-avatar" shape="square" icon={<ModuleIcon type={moduleDef.icon} />} />
                         <div>
                           <div className="sp-catalog-title">{moduleDef.name}</div>
                           <div className="sp-module-meta">{moduleDef.code} · {moduleDef.category}</div>
+                          <div className="sp-catalog-kind-row">
+                            <Tag color={isMenuModule(moduleDef) ? 'cyan' : 'purple'}>{getModuleKindLabel(moduleDef)}</Tag>
+                            {isMenuModule(moduleDef) ? (
+                              <Tag>菜单位置 {moduleDef.defaultMenuOrder ?? '-'}</Tag>
+                            ) : (
+                              <Tag>不注册菜单</Tag>
+                            )}
+                          </div>
                         </div>
                       </div>
                       <p>{moduleDef.description}</p>
@@ -1495,6 +1887,14 @@ function SolutionPrototypeModule() {
                 <div>
                   <div className="sp-catalog-title">{moduleDef.name}</div>
                   <div className="sp-module-meta">{moduleDef.code} · {moduleDef.category}</div>
+                  <div className="sp-catalog-kind-row">
+                    <Tag color={isMenuModule(moduleDef) ? 'cyan' : 'purple'}>{getModuleKindLabel(moduleDef)}</Tag>
+                    {isMenuModule(moduleDef) ? (
+                      <Tag>菜单位置 {moduleDef.defaultMenuOrder ?? '-'}</Tag>
+                    ) : (
+                      <Tag>不注册菜单</Tag>
+                    )}
+                  </div>
                   <p>{moduleDef.description}</p>
                   <Button type="primary" onClick={() => handleAddModule(moduleDef)}>
                     加入方案
