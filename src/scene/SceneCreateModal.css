@@ -162,6 +162,22 @@
   grid-column: span 2;
 }
 
+.scene-create-space-tabs .ant-tabs-nav {
+  margin-bottom: 18px;
+}
+
+.scene-create-space-tabs .ant-tabs-tab {
+  padding: 8px 0 10px;
+}
+
+.scene-create-space-tabs .scene-create-panel-head {
+  margin-bottom: 16px;
+}
+
+.scene-create-space-tabs .scene-create-preview {
+  margin-top: 0;
+}
+
 .scene-create-preview {
   margin-top: 10px;
   border-radius: 18px;
@@ -304,6 +320,18 @@
   background: #eef2ff;
   color: #4338ca;
   font-size: 12px;
+}
+
+.scene-create-empty-preview {
+  min-height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #d1d5db;
+  border-radius: 12px;
+  background: #f9fafb;
+  color: #6b7280;
+  font-size: 13px;
 }
 
 @media (max-width: 960px) {

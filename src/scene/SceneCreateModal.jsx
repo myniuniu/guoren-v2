@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { Button, Form, Input, Modal, Select, Tag } from 'antd';
+import { Button, Form, Input, Modal, Select, Tabs, Tag } from 'antd';
 import {
   SCENE_VISIBILITY_OPTIONS,
   TOOL_OPTIONS,
@@ -138,6 +138,176 @@ export default function SceneCreateModal({
   const versioningEnabled = versioning.enabled !== false;
   const modalTitle = initialValues?.id ? (isSceneMode ? '编辑场景' : '编辑空间') : (isSceneMode ? '新建场景' : '新建空间');
   const modalOkText = initialValues?.id ? (isSceneMode ? '保存场景' : '保存空间') : (isSceneMode ? '创建场景' : '创建空间');
+  const modalWidth = isSceneMode ? 1040 : 840;
+  const infoContent = (
+    <>
+      <div className="scene-create-panel-head">
+        <div className="scene-create-panel-title">{isSceneMode ? '2. 填写场景信息' : '填写空间信息'}</div>
+        <div className="scene-create-panel-desc">
+          {isSceneMode
+            ? '创建场景时会根据所选模板生成默认结构。'
+            : '新建空间会沿用当前场景模板，不需要再次选择模板。'}
+        </div>
+      </div>
+
+      <div className="scene-create-form-grid">
+        <Form.Item
+          label={isSceneMode ? '场景名称' : '空间名称'}
+          name="name"
+          rules={[{ required: true, message: isSceneMode ? '请输入场景名称' : '请输入空间名称' }]}
+        >
+          <Input placeholder="例如：新教师岗前培训" />
+        </Form.Item>
+        <Form.Item label={isSceneMode ? '场景编码' : '空间编码'} name="sceneCode">
+          <Input placeholder="留空则自动生成" />
+        </Form.Item>
+        {isSceneMode ? (
+          <Form.Item label="可见范围" name="visibility">
+            <Select options={SCENE_VISIBILITY_OPTIONS} />
+          </Form.Item>
+        ) : (
+          <>
+            <Form.Item
+              label="所属场景"
+              name="sceneGroupName"
+              rules={[{ required: true, message: '请选择所属场景' }]}
+            >
+              <Select
+                options={sceneGroupOptions}
+                placeholder="请选择所属场景"
+                showSearch
+                optionFilterProp="label"
+              />
+            </Form.Item>
+            <Form.Item name="visibility" hidden>
+              <Input />
+            </Form.Item>
+          </>
+        )}
+        <Form.Item className="scene-create-form-span-2" label={isSceneMode ? '场景简介' : '空间简介'} name="description">
+          <TextArea rows={4} placeholder={isSceneMode ? '填写场景简介，用于后续空间创建和展示说明。' : '填写空间简介，用于首页卡片和空间说明。'} />
+        </Form.Item>
+      </div>
+    </>
+  );
+  const sceneDescriptionContent = selectedTemplate ? (
+    <div className="scene-create-preview">
+      <div
+        className="scene-create-preview-hero"
+        style={getSceneThemeCoverStyle(selectedTemplate.theme)}
+      >
+        <div className="scene-create-preview-hero-copy">
+          <div className="scene-create-preview-kicker">{selectedTemplate.theme.badgeText}</div>
+          <div className="scene-create-preview-title">{selectedTemplate.theme.heroTitle}</div>
+          <div className="scene-create-preview-desc">{selectedTemplate.theme.heroSubtitle}</div>
+        </div>
+      </div>
+
+      <div className="scene-create-preview-sections">
+        <div className="scene-create-preview-section">
+          <div className="scene-create-preview-section-title">角色限定</div>
+          <div className="scene-create-tag-list">
+            {selectedTemplate.roles.map((role) => (
+              <Tag key={role.id}>{role.name}</Tag>
+            ))}
+          </div>
+        </div>
+
+        <div className="scene-create-preview-section">
+          <div className="scene-create-preview-section-head">
+            <div className="scene-create-preview-section-title">主题模式</div>
+            <div className="scene-create-preview-section-note">
+              {enabledModeTabs.length} / {templateModeTabs.length} 已启用
+            </div>
+          </div>
+          <div className="scene-create-tag-list">
+            {enabledModeTabs.map((item) => (
+              <Tag key={item.key} color="blue">{item.label}</Tag>
+            ))}
+            {enabledModeTabs.length ? null : <span className="scene-create-empty-text">未启用主题模式</span>}
+          </div>
+          {disabledModeCount > 0 ? (
+            <div className="scene-create-summary-line">另有 {disabledModeCount} 个模式未启用。</div>
+          ) : null}
+        </div>
+
+        <div className="scene-create-preview-section">
+          <div className="scene-create-preview-section-head">
+            <div className="scene-create-preview-section-title">版本管理</div>
+            <Tag color={versioningEnabled ? 'geekblue' : 'default'}>
+              {versioningEnabled ? '已开启' : '未开启'}
+            </Tag>
+          </div>
+          {versioningEnabled ? (
+            <>
+              <div className="scene-create-summary-pill-list">
+                <span>最多 {versioning.maxVersions || 5} 个版本</span>
+                <span>{getVersionCreateModeLabel(versioning.createMode)}</span>
+                <span>{versioning.namePattern || '版本 {index}'}</span>
+                <span>{versioning.allowRollback ? '允许回退' : '不允许回退'}</span>
+                <span>{versioning.allowDeletePublished !== false ? '可删除失效版本' : '不可删除失效版本'}</span>
+              </div>
+              {versioning.description ? (
+                <div className="scene-create-summary-line">{versioning.description}</div>
+              ) : null}
+            </>
+          ) : (
+            <div className="scene-create-summary-line">
+              当前模板采用单份内容维护，不显示版本切换入口。
+            </div>
+          )}
+        </div>
+
+        <div className="scene-create-preview-section">
+          <div className="scene-create-preview-section-head">
+            <div className="scene-create-preview-section-title">工具与资料</div>
+            <div className="scene-create-preview-section-note">
+              {templateTools.length} 个工具 · {folderTypes.length} 类目录
+            </div>
+          </div>
+          <div className="scene-create-summary-pill-list">
+            <span>资料区 {resourceAreaTools.length} 个工具</span>
+            <span>成果区 {resultAreaTools.length} 个工具</span>
+            <span>必选目录 {requiredFolders.length} 类</span>
+            <span>{selectedTemplate.topicPage?.allowRootResources ? '允许根目录资料' : '需按目录归档'}</span>
+          </div>
+          <div className="scene-create-preview-subsection">
+            <span>资料区</span>
+            <div className="scene-create-tag-list">
+              {resourceAreaTools.length
+                ? resourceAreaTools.map((toolKey) => (
+                    <Tag key={`resource_${toolKey}`}>{getToolLabel(toolKey)}</Tag>
+                  ))
+                : <span className="scene-create-empty-text">未配置</span>}
+            </div>
+          </div>
+          <div className="scene-create-preview-subsection">
+            <span>成果区</span>
+            <div className="scene-create-tag-list">
+              {resultAreaTools.length
+                ? resultAreaTools.map((toolKey) => (
+                    <Tag key={`result_${toolKey}`}>{getToolLabel(toolKey)}</Tag>
+                  ))
+                : <span className="scene-create-empty-text">未配置</span>}
+            </div>
+          </div>
+          <div className="scene-create-preview-subsection">
+            <span>资料目录</span>
+            <div className="scene-create-inline-list">
+              {folderTypes.map((folder) => (
+                <span key={folder.id || folder.key}>
+                  {folder.name}{folder.required ? ' · 必选' : ''}
+                </span>
+              ))}
+              {folderTypes.length ? null : <span className="scene-create-empty-text">未配置</span>}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  ) : (
+    <div className="scene-create-empty-preview">暂无场景说明</div>
+  );
 
   return (
     <Modal
@@ -152,7 +322,7 @@ export default function SceneCreateModal({
       open={open}
       onCancel={onCancel}
       footer={null}
-      width={1040}
+      width={modalWidth}
       centered
       destroyOnClose
       className="scene-create-modal"
@@ -230,170 +400,30 @@ export default function SceneCreateModal({
           ) : null}
 
           <div className="scene-create-form-panel">
-            <div className="scene-create-panel-head">
-              <div className="scene-create-panel-title">{isSceneMode ? '2. 填写场景信息' : '填写空间信息'}</div>
-              <div className="scene-create-panel-desc">
-                {isSceneMode
-                  ? '创建场景时会根据所选模板生成默认结构。'
-                  : '新建空间会沿用当前场景模板，不需要再次选择模板。'}
-              </div>
-            </div>
-
-            <div className="scene-create-form-grid">
-              <Form.Item
-                label={isSceneMode ? '场景名称' : '空间名称'}
-                name="name"
-                rules={[{ required: true, message: isSceneMode ? '请输入场景名称' : '请输入空间名称' }]}
-              >
-                <Input placeholder="例如：新教师岗前培训" />
-              </Form.Item>
-              <Form.Item label={isSceneMode ? '场景编码' : '空间编码'} name="sceneCode">
-                <Input placeholder="留空则自动生成" />
-              </Form.Item>
-              {isSceneMode ? (
-                <Form.Item label="可见范围" name="visibility">
-                  <Select options={SCENE_VISIBILITY_OPTIONS} />
-                </Form.Item>
-              ) : (
-                <>
-                  <Form.Item
-                    label="所属场景"
-                    name="sceneGroupName"
-                    rules={[{ required: true, message: '请选择所属场景' }]}
-                  >
-                    <Select
-                      options={sceneGroupOptions}
-                      placeholder="请选择所属场景"
-                      showSearch
-                      optionFilterProp="label"
-                    />
-                  </Form.Item>
-                  <Form.Item name="visibility" hidden>
-                    <Input />
-                  </Form.Item>
-                </>
-              )}
-              <Form.Item className="scene-create-form-span-2" label={isSceneMode ? '场景简介' : '空间简介'} name="description">
-                <TextArea rows={4} placeholder={isSceneMode ? '填写场景简介，用于后续空间创建和展示说明。' : '填写空间简介，用于首页卡片和空间说明。'} />
-              </Form.Item>
-            </div>
-
-            {selectedTemplate ? (
-              <div className="scene-create-preview">
-                <div
-                  className="scene-create-preview-hero"
-                  style={getSceneThemeCoverStyle(selectedTemplate.theme)}
-                >
-                  <div className="scene-create-preview-hero-copy">
-                    <div className="scene-create-preview-kicker">{selectedTemplate.theme.badgeText}</div>
-                    <div className="scene-create-preview-title">{selectedTemplate.theme.heroTitle}</div>
-                    <div className="scene-create-preview-desc">{selectedTemplate.theme.heroSubtitle}</div>
-                  </div>
-                </div>
-
-                <div className="scene-create-preview-sections">
-                  <div className="scene-create-preview-section">
-                    <div className="scene-create-preview-section-title">角色限定</div>
-                    <div className="scene-create-tag-list">
-                      {selectedTemplate.roles.map((role) => (
-                        <Tag key={role.id}>{role.name}</Tag>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="scene-create-preview-section">
-                    <div className="scene-create-preview-section-head">
-                      <div className="scene-create-preview-section-title">主题模式</div>
-                      <div className="scene-create-preview-section-note">
-                        {enabledModeTabs.length} / {templateModeTabs.length} 已启用
-                      </div>
-                    </div>
-                    <div className="scene-create-tag-list">
-                      {enabledModeTabs.map((item) => (
-                        <Tag key={item.key} color="blue">{item.label}</Tag>
-                      ))}
-                      {enabledModeTabs.length ? null : <span className="scene-create-empty-text">未启用主题模式</span>}
-                    </div>
-                    {disabledModeCount > 0 ? (
-                      <div className="scene-create-summary-line">另有 {disabledModeCount} 个模式未启用。</div>
-                    ) : null}
-                  </div>
-
-                  <div className="scene-create-preview-section">
-                    <div className="scene-create-preview-section-head">
-                      <div className="scene-create-preview-section-title">版本管理</div>
-                      <Tag color={versioningEnabled ? 'geekblue' : 'default'}>
-                        {versioningEnabled ? '已开启' : '未开启'}
-                      </Tag>
-                    </div>
-                    {versioningEnabled ? (
-                      <>
-                        <div className="scene-create-summary-pill-list">
-                          <span>最多 {versioning.maxVersions || 5} 个版本</span>
-                          <span>{getVersionCreateModeLabel(versioning.createMode)}</span>
-                          <span>{versioning.namePattern || '版本 {index}'}</span>
-                          <span>{versioning.allowRollback ? '允许回退' : '不允许回退'}</span>
-                          <span>{versioning.allowDeletePublished !== false ? '可删除失效版本' : '不可删除失效版本'}</span>
-                        </div>
-                        {versioning.description ? (
-                          <div className="scene-create-summary-line">{versioning.description}</div>
-                        ) : null}
-                      </>
-                    ) : (
-                      <div className="scene-create-summary-line">
-                        当前模板采用单份内容维护，不显示版本切换入口。
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="scene-create-preview-section">
-                    <div className="scene-create-preview-section-head">
-                      <div className="scene-create-preview-section-title">工具与资料</div>
-                      <div className="scene-create-preview-section-note">
-                        {templateTools.length} 个工具 · {folderTypes.length} 类目录
-                      </div>
-                    </div>
-                    <div className="scene-create-summary-pill-list">
-                      <span>资料区 {resourceAreaTools.length} 个工具</span>
-                      <span>成果区 {resultAreaTools.length} 个工具</span>
-                      <span>必选目录 {requiredFolders.length} 类</span>
-                      <span>{selectedTemplate.topicPage?.allowRootResources ? '允许根目录资料' : '需按目录归档'}</span>
-                    </div>
-                    <div className="scene-create-preview-subsection">
-                      <span>资料区</span>
-                      <div className="scene-create-tag-list">
-                        {resourceAreaTools.length
-                          ? resourceAreaTools.map((toolKey) => (
-                              <Tag key={`resource_${toolKey}`}>{getToolLabel(toolKey)}</Tag>
-                            ))
-                          : <span className="scene-create-empty-text">未配置</span>}
-                      </div>
-                    </div>
-                    <div className="scene-create-preview-subsection">
-                      <span>成果区</span>
-                      <div className="scene-create-tag-list">
-                        {resultAreaTools.length
-                          ? resultAreaTools.map((toolKey) => (
-                              <Tag key={`result_${toolKey}`}>{getToolLabel(toolKey)}</Tag>
-                            ))
-                          : <span className="scene-create-empty-text">未配置</span>}
-                      </div>
-                    </div>
-                    <div className="scene-create-preview-subsection">
-                      <span>资料目录</span>
-                      <div className="scene-create-inline-list">
-                        {folderTypes.map((folder) => (
-                          <span key={folder.id || folder.key}>
-                            {folder.name}{folder.required ? ' · 必选' : ''}
-                          </span>
-                        ))}
-                        {folderTypes.length ? null : <span className="scene-create-empty-text">未配置</span>}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : null}
+            {isSceneMode ? (
+              <>
+                {infoContent}
+                {selectedTemplate ? sceneDescriptionContent : null}
+              </>
+            ) : (
+              <Tabs
+                className="scene-create-space-tabs"
+                defaultActiveKey="info"
+                destroyOnHidden={false}
+                items={[
+                  {
+                    key: 'info',
+                    label: '空间信息',
+                    children: infoContent,
+                  },
+                  {
+                    key: 'sceneDescription',
+                    label: '场景说明',
+                    children: sceneDescriptionContent,
+                  },
+                ]}
+              />
+            )}
           </div>
         </div>
       </Form>
