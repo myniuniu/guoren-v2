@@ -68,89 +68,6 @@ const REVIEW_STATUS_OPTIONS = [
 
 const CATEGORY_LABEL_MAP = Object.fromEntries(CATEGORY_OPTIONS.map((item) => [item.value, item.label]));
 
-const INITIAL_RULES = [
-  {
-    id: 'rule-learning',
-    name: '完成果仁课程学习',
-    category: 'learning',
-    points: 20,
-    reviewMode: '自动入账',
-    enabled: true,
-    limit: '每门课程计一次',
-    desc: '完成研习社中的果仁系统课程，并提交课程反馈后计分。',
-  },
-  {
-    id: 'rule-beta-feedback',
-    name: '提交有效内测反馈',
-    category: 'beta',
-    points: 30,
-    reviewMode: '运营审核',
-    enabled: true,
-    limit: '同一问题不重复计分',
-    desc: '参与果仁新功能内测，提交可复现、可验证的反馈。',
-  },
-  {
-    id: 'rule-defect',
-    name: '确认有效缺陷或重要优化建议',
-    category: 'feedback',
-    points: 50,
-    reviewMode: '产品确认',
-    enabled: true,
-    limit: '按问题价值追加',
-    desc: '反馈被确认为有效缺陷或关键优化建议后追加积分。',
-  },
-  {
-    id: 'rule-ugc-share',
-    name: '发起 UGC 自主分享',
-    category: 'ugc',
-    points: 40,
-    reviewMode: '运营审核',
-    enabled: true,
-    limit: '需完成分享并留存资料',
-    desc: '自主发起果仁使用技巧、场景案例、内测体验或模板方法分享。',
-  },
-  {
-    id: 'rule-template',
-    name: '贡献可复用模板',
-    category: 'ugc',
-    points: 20,
-    reviewMode: '运营审核',
-    enabled: true,
-    limit: '收录后计分',
-    desc: '贡献空间结构、任务、问卷、反馈或复盘模板。',
-  },
-  {
-    id: 'rule-faq',
-    name: '补充 FAQ 或问题复盘',
-    category: 'feedback',
-    points: 15,
-    reviewMode: '运营审核',
-    enabled: true,
-    limit: '重复问题不计分',
-    desc: '将高频问题整理为可复用 FAQ 或问题复盘。',
-  },
-  {
-    id: 'rule-practice',
-    name: '最佳实践被收录',
-    category: 'practice',
-    points: 60,
-    reviewMode: '运营审核',
-    enabled: true,
-    limit: '含基础分与收录加分',
-    desc: '使用案例被收录到资历库、资料区或研习社课程。',
-  },
-  {
-    id: 'rule-answer',
-    name: '答疑贡献被采纳',
-    category: 'qa',
-    points: 10,
-    reviewMode: '运营审核',
-    enabled: false,
-    limit: '需有采纳记录',
-    desc: '在 IM、空间或研讨会中帮助其他员工解决果仁使用问题。',
-  },
-];
-
 const INITIAL_REVIEWS = [
   {
     id: 'review-001',
@@ -413,7 +330,6 @@ function ConditionTreeEditor({ tree, eventFields, onChange }) {
 
 export default function PointsAdminModule() {
   const [taskRules, setTaskRules] = useState(() => readPointTaskRules());
-  const [rules, setRules] = useState(INITIAL_RULES);
   const [reviews, setReviews] = useState(INITIAL_REVIEWS);
   const [rewards, setRewards] = useState(INITIAL_REWARDS);
   const [ledger, setLedger] = useState(INITIAL_LEDGER);
@@ -425,7 +341,6 @@ export default function PointsAdminModule() {
   const [taskRuleKeyword, setTaskRuleKeyword] = useState('');
   const [selectedReview, setSelectedReview] = useState(null);
   const [taskRuleDraft, setTaskRuleDraft] = useState(null);
-  const [ruleDraft, setRuleDraft] = useState(null);
   const [rewardDraft, setRewardDraft] = useState(null);
   const [boardPeriod, setBoardPeriod] = useState('本月');
   const [boardMetric, setBoardMetric] = useState('points');
@@ -601,29 +516,6 @@ export default function PointsAdminModule() {
     message.success(status === 'approved' ? '已通过审核并模拟入账' : '已驳回该积分申请');
   };
 
-  const handleCopyRule = (rule) => {
-    const copied = {
-      ...rule,
-      id: `rule-${Date.now()}`,
-      name: `${rule.name} 副本`,
-      enabled: false,
-    };
-    setRules((prev) => [copied, ...prev]);
-    message.success('已复制积分规则，可继续编辑');
-  };
-
-  const handleSaveRule = () => {
-    if (!ruleDraft?.name?.trim()) {
-      message.warning('请填写规则名称');
-      return;
-    }
-    setRules((prev) => prev.map((item) => (
-      item.id === ruleDraft.id ? ruleDraft : item
-    )));
-    setRuleDraft(null);
-    message.success('积分规则已保存');
-  };
-
   const handleSaveReward = () => {
     if (!rewardDraft?.title?.trim()) {
       message.warning('请填写权益名称');
@@ -788,52 +680,6 @@ export default function PointsAdminModule() {
     },
   ];
 
-  const ruleColumns = [
-    {
-      title: '规则',
-      dataIndex: 'name',
-      key: 'name',
-      render: (text, record) => (
-        <div>
-          <div style={{ color: '#172033', fontWeight: 600 }}>{text}</div>
-          <div style={{ marginTop: 4, color: '#7b8598', fontSize: 12 }}>{record.desc}</div>
-        </div>
-      ),
-    },
-    { title: '场景', dataIndex: 'category', key: 'category', width: 110, render: (value) => <Tag>{CATEGORY_LABEL_MAP[value]}</Tag> },
-    { title: '积分', dataIndex: 'points', key: 'points', width: 90, render: (value) => <span className="points-gain">+{value}</span> },
-    { title: '审核', dataIndex: 'reviewMode', key: 'reviewMode', width: 120 },
-    { title: '限制', dataIndex: 'limit', key: 'limit', width: 160 },
-    {
-      title: '状态',
-      dataIndex: 'enabled',
-      key: 'enabled',
-      width: 100,
-      render: (enabled, record) => (
-        <Switch
-          checked={enabled}
-          checkedChildren="启用"
-          unCheckedChildren="停用"
-          onChange={(checked) => {
-            setRules((prev) => prev.map((item) => (item.id === record.id ? { ...item, enabled: checked } : item)));
-            message.success(checked ? '规则已启用' : '规则已停用');
-          }}
-        />
-      ),
-    },
-    {
-      title: '操作',
-      key: 'action',
-      width: 130,
-      render: (_, record) => (
-        <Space>
-          <Button size="small" icon={<EditOutlined />} onClick={() => setRuleDraft({ ...record })} />
-          <Button size="small" icon={<CopyOutlined />} onClick={() => handleCopyRule(record)} />
-        </Space>
-      ),
-    },
-  ];
-
   const rewardColumns = [
     {
       title: '权益',
@@ -963,17 +809,6 @@ export default function PointsAdminModule() {
           </Card>
           <Card className="points-panel-card points-table-card">
             <Table rowKey="id" columns={reviewColumns} dataSource={filteredReviews} pagination={{ pageSize: 6 }} />
-          </Card>
-        </div>
-      ),
-    },
-    {
-      key: 'rules',
-      label: '规则配置',
-      children: (
-        <div className="points-tab-pane">
-          <Card className="points-panel-card points-table-card">
-            <Table rowKey="id" columns={ruleColumns} dataSource={rules} pagination={{ pageSize: 8 }} />
           </Card>
         </div>
       ),
@@ -1271,30 +1106,6 @@ export default function PointsAdminModule() {
               <Switch checked={taskRuleDraft.enabled} onChange={(checked) => setTaskRuleDraft((prev) => ({ ...prev, enabled: checked }))} />
               <span>在我的积分展示</span>
               <Switch checked={taskRuleDraft.taskDisplay} onChange={(checked) => setTaskRuleDraft((prev) => ({ ...prev, taskDisplay: checked }))} />
-            </div>
-          </div>
-        ) : null}
-      </Modal>
-
-      <Modal
-        title="编辑积分规则"
-        open={Boolean(ruleDraft)}
-        onOk={handleSaveRule}
-        onCancel={() => setRuleDraft(null)}
-        okText="保存规则"
-        cancelText="取消"
-      >
-        {ruleDraft ? (
-          <div className="points-detail-block">
-            <Input value={ruleDraft.name} onChange={(event) => setRuleDraft((prev) => ({ ...prev, name: event.target.value }))} placeholder="规则名称" />
-            <Select value={ruleDraft.category} options={CATEGORY_OPTIONS.filter((item) => item.value !== 'all')} onChange={(value) => setRuleDraft((prev) => ({ ...prev, category: value }))} />
-            <InputNumber min={0} value={ruleDraft.points} onChange={(value) => setRuleDraft((prev) => ({ ...prev, points: Number(value) || 0 }))} style={{ width: '100%' }} addonAfter="分" />
-            <Input value={ruleDraft.reviewMode} onChange={(event) => setRuleDraft((prev) => ({ ...prev, reviewMode: event.target.value }))} placeholder="审核方式" />
-            <Input value={ruleDraft.limit} onChange={(event) => setRuleDraft((prev) => ({ ...prev, limit: event.target.value }))} placeholder="计分限制" />
-            <Input.TextArea rows={3} value={ruleDraft.desc} onChange={(event) => setRuleDraft((prev) => ({ ...prev, desc: event.target.value }))} placeholder="规则说明" />
-            <div className="points-status-line">
-              <span>启用状态</span>
-              <Switch checked={ruleDraft.enabled} onChange={(checked) => setRuleDraft((prev) => ({ ...prev, enabled: checked }))} />
             </div>
           </div>
         ) : null}
