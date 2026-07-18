@@ -225,6 +225,155 @@
   background: #eef2f7;
 }
 
+.account-points-card {
+  position: relative;
+  margin: 0 0 10px;
+  padding: 12px;
+  border: 1px solid rgba(192, 213, 255, 0.86);
+  border-radius: 12px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(244, 248, 255, 0.96) 58%, rgba(239, 253, 248, 0.95) 100%),
+    linear-gradient(135deg, rgba(29, 99, 255, 0.12), rgba(16, 185, 129, 0.08));
+  box-shadow:
+    0 12px 28px rgba(37, 99, 235, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  cursor: pointer;
+  outline: none;
+}
+
+.account-points-card:hover,
+.account-points-card:focus-visible {
+  border-color: rgba(79, 124, 255, 0.9);
+  box-shadow:
+    0 14px 32px rgba(37, 99, 235, 0.15),
+    0 0 0 3px rgba(79, 124, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.86);
+}
+
+.account-points-top,
+.account-points-main,
+.account-points-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.account-points-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 23px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #eaf2ff;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.account-points-note {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.account-points-main {
+  margin-top: 10px;
+  align-items: flex-end;
+}
+
+.account-points-value {
+  color: #172033;
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.account-points-caption {
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.account-points-mini-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  color: #334155;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.account-points-mini-stats span {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(226, 232, 240, 0.86);
+}
+
+.account-points-progress {
+  height: 6px;
+  margin-top: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(203, 213, 225, 0.62);
+}
+
+.account-points-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #1d63ff 0%, #10b981 100%);
+}
+
+.account-points-meta {
+  margin-top: 8px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 17px;
+}
+
+.account-points-actions {
+  margin-top: 10px;
+}
+
+.account-points-primary,
+.account-points-secondary {
+  height: 28px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 26px;
+  cursor: pointer;
+}
+
+.account-points-primary {
+  flex: 1;
+  border: 1px solid #1d63ff;
+  background: #1d63ff;
+  color: #fff;
+}
+
+.account-points-primary:hover {
+  background: #1557e6;
+}
+
+.account-points-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 9px;
+  border: 1px solid rgba(148, 163, 184, 0.52);
+  background: rgba(255, 255, 255, 0.82);
+  color: #334155;
+}
+
+.account-points-secondary:hover {
+  border-color: #1d63ff;
+  color: #1d63ff;
+}
+
 .account-menu-section {
   display: flex;
   flex-direction: column;

@@ -1,0 +1,141 @@
+{"kind":"deck","id":"pr/4c0l1e","name":"Deck"}
+{"kind":"layout","layoutId":"f908aed4-1258-4236-a460-f6a5edb50439","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"01fa33eb-4ad2-43d0-8df3-98f308fb83f4","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/r6njlc","slide":1,"title":"证书模板设计与发放","textShapes":5}
+{"kind":"shape","id":"sh/29gr2p8n","slide":1,"name":"shape-ac19f40m32","bbox":[0,0,858,720]}
+{"kind":"textbox","id":"sh/vu9knih4","slide":1,"name":"cover-title","text":"证书模板设计与发放\n端到端建设汇报","textPreview":"证书模板设计与发放 | 端到端建设汇报","textChars":17,"textLines":2,"bbox":[42,76,780,230]}
+{"kind":"textbox","id":"sh/knih4byh","slide":1,"name":"cover-subtitle","text":"围绕“模板可配置、数据可替换、服务端可渲染、结果可预览下载”建立一条闭环链路。","textPreview":"围绕“模板可配置、数据可替换、服务端可渲染、结果可预览下载”建立一条闭环链路。","textChars":39,"textLines":1,"bbox":[42,334,690,82]}
+{"kind":"shape","id":"sh/d8bat47y","slide":1,"name":"shape-wf43nnm0q2p","bbox":[452,457,27,27]}
+{"kind":"shape","id":"sh/2lszqtcj","slide":1,"name":"shape-fb9tkabt9o5","bbox":[864,457,27,27]}
+{"kind":"textbox","id":"sh/v6psfil0","slide":1,"name":"cover-goal","text":"建设目标\n新增“证书模板”和“证书发放测试”两个入口","textPreview":"建设目标 | 新增“证书模板”和“证书发放测试”两个入口","textChars":26,"textLines":2,"bbox":[452,506,374,124]}
+{"kind":"textbox","id":"sh/kre1w7mp","slide":1,"name":"cover-method","text":"交付方式\n前端 fabric.js 设计器 + 后端 Graphics2D 渲染服务","textPreview":"交付方式 | 前端 fabric.js 设计器 + 后端 Graphics2D 渲染服务","textChars":42,"textLines":2,"bbox":[864,506,374,124]}
+{"kind":"textbox","id":"sh/dcbulwva","slide":1,"name":"footer-1","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"image","id":"im/4vmtwra5","slide":1,"name":"host-app-screenshot-strip","alt":"现有主应用界面截图","bbox":[858,0,422,720]}
+{"kind":"notes","id":"nt/r6njlc","slide":1,"text":""}
+{"kind":"slide","id":"sl/l4k1mb","slide":2,"title":"这次建设要解决的是","textShapes":12}
+{"kind":"textbox","id":"sh/neloj2t8","slide":2,"name":"slide-title","text":"这次建设要解决的是\n证书生产链路的断点","textPreview":"这次建设要解决的是 | 证书生产链路的断点","textChars":19,"textLines":2,"bbox":[42,36,630,110]}
+{"kind":"textbox","id":"sh/czed8v6p","slide":2,"name":"summary","text":"当前方案不是单独做一个页面，而是把模板设计、字段定义、数据录入、服务端渲染和下载交付串成同一条链路。","textPreview":"当前方案不是单独做一个页面，而是把模板设计、字段定义、数据录入、服务端渲染和下载交付串成同一条链路。","textChars":50,"textLines":1,"bbox":[718,42,520,104]}
+{"kind":"shape","id":"sh/5kb6xkf6","slide":2,"name":"shape-lqiwnawflm","bbox":[41,213,271,279]}
+{"kind":"textbox","id":"sh/u54zidon","slide":2,"name":"stat-41","text":"2 个入口","textPreview":"2 个入口","textChars":5,"textLines":1,"bbox":[66,236,224,92]}
+{"kind":"textbox","id":"sh/nqxs72x4","slide":2,"name":"stat-body-41","text":"证书模板 / 证书发放测试","textPreview":"证书模板 / 证书发放测试","textChars":13,"textLines":1,"bbox":[72,392,216,80]}
+{"kind":"shape","id":"sh/cbulwval","slide":2,"name":"shape-abbgejeonl6","bbox":[351,213,271,279]}
+{"kind":"textbox","id":"sh/5sneloj2","slide":2,"name":"stat-351","text":"8 个接口","textPreview":"8 个接口","textChars":5,"textLines":1,"bbox":[376,236,224,92]}
+{"kind":"textbox","id":"sh/y90je9cv","slide":2,"name":"stat-body-351","text":"上传、模板 CRUD、详情、删除、单张与批量渲染","textPreview":"上传、模板 CRUD、详情、删除、单张与批量渲染","textChars":24,"textLines":1,"bbox":[382,392,216,80]}
+{"kind":"shape","id":"sh/nuxc3ylc","slide":2,"name":"shape-fveqkm9ujjk","bbox":[658,213,271,279]}
+{"kind":"textbox","id":"sh/36hcrmhk","slide":2,"name":"stat-658","text":"5 个字段","textPreview":"5 个字段","textChars":5,"textLines":1,"bbox":[683,236,224,92]}
+{"kind":"textbox","id":"sh/eloj2t83","slide":2,"name":"stat-body-658","text":"姓名、课程、成绩、发证日期、证书编号","textPreview":"姓名、课程、成绩、发证日期、证书编号","textChars":18,"textLines":1,"bbox":[689,392,216,80]}
+{"kind":"shape","id":"sh/lc7u54zi","slide":2,"name":"shape-0kjevcntxw3","bbox":[968,213,271,279]}
+{"kind":"textbox","id":"sh/wra5gbq1","slide":2,"name":"stat-968","text":"1 张核心表","textPreview":"1 张核心表","textChars":6,"textLines":1,"bbox":[993,236,224,92]}
+{"kind":"textbox","id":"sh/7u54zido","slide":2,"name":"stat-body-968","text":"certificate_template 统一承载模板配置","textPreview":"certificate_template 统一承载模板配置","textChars":29,"textLines":1,"bbox":[999,392,216,80]}
+{"kind":"shape","id":"sh/ed8bat47","slide":2,"name":"shape-zeon5k2k0aj","bbox":[0,565,1280,156]}
+{"kind":"textbox","id":"sh/l0rqd4vm","slide":2,"name":"bottom-takeaway","text":"核心判断：首期先交付可运行闭环，后续再叠加 OSS、二维码、批量 ZIP 等增强能力。","textPreview":"核心判断：首期先交付可运行闭环，后续再叠加 OSS、二维码、批量 ZIP 等增强能力。","textChars":43,"textLines":1,"bbox":[42,602,900,52]}
+{"kind":"textbox","id":"sh/wfyxobm5","slide":2,"name":"footer-2","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"notes","id":"nt/l4k1mb","slide":2,"text":""}
+{"kind":"slide","id":"sl/ya39ye","slide":3,"title":"端到端流程把设计、数据和渲染收束到同一闭环","textShapes":23}
+{"kind":"textbox","id":"sh/yxobm58z","slide":3,"name":"slide-title","text":"端到端流程把设计、数据和渲染收束到同一闭环","textPreview":"端到端流程把设计、数据和渲染收束到同一闭环","textChars":21,"textLines":1,"bbox":[42,36,1138,96]}
+{"kind":"textbox","id":"sh/5o7qpg3e","slide":3,"name":"process-intro","text":"流程关键不在于页面数量，而在于同一份模板 JSON 同时服务设计预览与发放渲染。","textPreview":"流程关键不在于页面数量，而在于同一份模板 JSON 同时服务设计预览与发放渲染。","textChars":40,"textLines":1,"bbox":[42,130,780,60]}
+{"kind":"shape","id":"sh/g3ex0nux","slide":3,"name":"shape-m0ek9vryra","bbox":[42,250,196,208]}
+{"kind":"textbox","id":"sh/r65wjudg","slide":3,"name":"step-no-0","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[66,274,54,38]}
+{"kind":"textbox","id":"sh/ylc7u54z","slide":3,"name":"step-head-0","text":"上传底图","textPreview":"上传底图","textChars":4,"textLines":1,"bbox":[66,334,148,42]}
+{"kind":"textbox","id":"sh/9cvixcze","slide":3,"name":"step-body-0","text":"保存为 /uploads/certificates/ 相对资源","textPreview":"保存为 /uploads/certificates/ 相对资源","textChars":31,"textLines":1,"bbox":[66,390,148,58]}
+{"kind":"textbox","id":"sh/gr2p8nqx","slide":3,"name":"step-arrow-0","text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[246,336,36,36]}
+{"kind":"shape","id":"sh/rytsvu9k","slide":3,"name":"shape-6tvb19k2hgd","bbox":[281,250,196,208]}
+{"kind":"textbox","id":"sh/yd0z6103","slide":3,"name":"step-no-1","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[305,274,54,38]}
+{"kind":"textbox","id":"sh/wb2hwfyx","slide":3,"name":"step-head-1","text":"拖拽设计","textPreview":"拖拽设计","textChars":4,"textLines":1,"bbox":[305,334,148,42]}
+{"kind":"textbox","id":"sh/lwval87e","slide":3,"name":"step-body-1","text":"文本、图片、动态字段在画布中定位","textPreview":"文本、图片、动态字段在画布中定位","textChars":16,"textLines":1,"bbox":[305,390,148,58]}
+{"kind":"textbox","id":"sh/e9cvixcz","slide":3,"name":"step-arrow-1","text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[485,336,36,36]}
+{"kind":"shape","id":"sh/3q5o7qpg","slide":3,"name":"shape-wnhfowx2aog","bbox":[520,250,196,208]}
+{"kind":"textbox","id":"sh/w3m94fu1","slide":3,"name":"step-no-2","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[544,274,54,38]}
+{"kind":"textbox","id":"sh/loj2t83i","slide":3,"name":"step-head-2","text":"保存模板","textPreview":"保存模板","textChars":4,"textLines":1,"bbox":[544,334,148,42]}
+{"kind":"textbox","id":"sh/ex0nuxc3","slide":3,"name":"step-body-2","text":"fields_json + canvas_json 持久化","textPreview":"fields_json + canvas_json 持久化","textChars":29,"textLines":1,"bbox":[544,390,148,58]}
+{"kind":"textbox","id":"sh/3itgfmlk","slide":3,"name":"step-arrow-2","text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[724,336,36,36]}
+{"kind":"shape","id":"sh/szqtcj6t","slide":3,"name":"shape-mpvfsx3355f","bbox":[759,250,196,208]}
+{"kind":"textbox","id":"sh/lkjm1cfa","slide":3,"name":"step-no-3","text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[783,274,54,38]}
+{"kind":"textbox","id":"sh/lc7u54zi","slide":3,"name":"step-head-3","text":"录入数据","textPreview":"录入数据","textChars":4,"textLines":1,"bbox":[783,334,148,42]}
+{"kind":"textbox","id":"sh/wra5gbq1","slide":3,"name":"step-body-3","text":"单条表单或批量 CSV 数据","textPreview":"单条表单或批量 CSV 数据","textChars":14,"textLines":1,"bbox":[783,390,148,58]}
+{"kind":"textbox","id":"sh/36hcrmhk","slide":3,"name":"step-arrow-3","text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[963,336,36,36]}
+{"kind":"shape","id":"sh/eloj2t83","slide":3,"name":"shape-58wxfdgsvuw","bbox":[998,250,196,208]}
+{"kind":"textbox","id":"sh/l0rqd4vm","slide":3,"name":"step-no-4","text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1022,274,54,38]}
+{"kind":"textbox","id":"sh/wfyxobm5","slide":3,"name":"step-head-4","text":"渲染下载","textPreview":"渲染下载","textChars":4,"textLines":1,"bbox":[1022,334,148,42]}
+{"kind":"textbox","id":"sh/7u54zido","slide":3,"name":"step-body-4","text":"后端替换字段并输出 PNG","textPreview":"后端替换字段并输出 PNG","textChars":13,"textLines":1,"bbox":[1022,390,148,58]}
+{"kind":"textbox","id":"sh/ed8bat47","slide":3,"name":"process-deliverable","text":"交付物：模板列表、可视化设计器、发放测试页、上传接口、模板接口、渲染接口和核心数据表。","textPreview":"交付物：模板列表、可视化设计器、发放测试页、上传接口、模板接口、渲染接口和核心数据表。","textChars":43,"textLines":1,"bbox":[42,556,1110,54]}
+{"kind":"textbox","id":"sh/psfil0rq","slide":3,"name":"footer-3","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"notes","id":"nt/ya39ye","slide":3,"text":""}
+{"kind":"slide","id":"sl/p8extr","slide":4,"title":"前端重点是让非技术人员可视化配置证书模板","textShapes":6}
+{"kind":"textbox","id":"sh/7mp0bi9s","slide":4,"name":"slide-title","text":"前端重点是让非技术人员可视化配置证书模板","textPreview":"前端重点是让非技术人员可视化配置证书模板","textChars":20,"textLines":1,"bbox":[42,36,1138,96]}
+{"kind":"textbox","id":"sh/w7mp0bi9","slide":4,"name":"frontend-intro","text":"设计器沿用主应用的工作台形态：左侧工具、中间画布、右侧属性面板，减少重新学习成本。","textPreview":"设计器沿用主应用的工作台形态：左侧工具、中间画布、右侧属性面板，减少重新学习成本。","textChars":41,"textLines":1,"bbox":[42,132,560,66]}
+{"kind":"textbox","id":"sh/psfil0rq","slide":4,"name":"frontend-bullets","text":"fabric.js 画布负责拖拽、缩放、旋转、选中和 Delete 删除。\n动态字段以 elementType:'field' 和 fieldKey 进入 JSON 序列化。\n属性面板统一管理字号、颜色、加粗、对齐、字体与图片替换。\n保存时输出 fields、canvasJson、thumbnail 和 bgUrl，供后端渲染复用。","textPreview":"fabric.js 画布负责拖拽、缩放、旋转、选中和 Delete 删除。 | 动态字段以 elementType:'field' 和 fieldKey 进入 JSON 序列化。 | 属性面板统一管理字号、颜色、加粗、对齐、字体与图片替换。 | 保存时输出 fields、c...","textChars":167,"textLines":4,"bbox":[42,236,548,270]}
+{"kind":"shape","id":"sh/epkzupwb","slide":4,"name":"shape-ltzbfth4po8","bbox":[657,156,581,365]}
+{"kind":"textbox","id":"sh/wval87ed","slide":4,"name":"image-caption-head","text":"复用主应用设计语言","textPreview":"复用主应用设计语言","textChars":9,"textLines":1,"bbox":[657,546,260,30]}
+{"kind":"textbox","id":"sh/pg3ex0nu","slide":4,"name":"image-caption-body","text":"截图用于说明布局与交互骨架；证书设计器在此基础上替换为证书画布与字段属性。","textPreview":"截图用于说明布局与交互骨架；证书设计器在此基础上替换为证书画布与字段属性。","textChars":37,"textLines":1,"bbox":[657,576,560,42]}
+{"kind":"textbox","id":"sh/eloj2t83","slide":4,"name":"footer-4","text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"image","id":"im/25kb6xkf","slide":4,"name":"main-app-style-evidence","alt":"主应用设计器界面截图，展示左工具、中画布、右属性布局","bbox":[657,156,581,365]}
+{"kind":"notes","id":"nt/p8extr","slide":4,"text":""}
+{"kind":"slide","id":"sl/lzbf41","slide":5,"title":"服务端渲染保证预览与发放结果一致","textShapes":10}
+{"kind":"textbox","id":"sh/xkf6dcbu","slide":5,"name":"slide-title","text":"服务端渲染保证预览与发放结果一致","textPreview":"服务端渲染保证预览与发放结果一致","textChars":16,"textLines":1,"bbox":[42,36,1138,96]}
+{"kind":"textbox","id":"sh/mtwra5gb","slide":5,"name":"backend-intro","text":"后端不重新理解页面，而是读取模板持久化结果，按 canvas_json 逐对象绘制，并把字段值替换为发放数据。","textPreview":"后端不重新理解页面，而是读取模板持久化结果，按 canvas_json 逐对象绘制，并把字段值替换为发放数据。","textChars":55,"textLines":1,"bbox":[42,126,1120,58]}
+{"kind":"shape","id":"sh/fepkzupw","slide":5,"name":"shape-p5323xw1u8e","bbox":[42,248,374,250]}
+{"kind":"shape","id":"sh/4r65wjud","slide":5,"name":"shape-cjcl0qb4f0l","bbox":[70,282,24,24]}
+{"kind":"textbox","id":"sh/xc3ylc7u","slide":5,"name":"backend-head-0","text":"模板服务","textPreview":"模板服务","textChars":4,"textLines":1,"bbox":[70,332,312,42]}
+{"kind":"textbox","id":"sh/mlkjm1cf","slide":5,"name":"backend-body-0","text":"负责模板 CRUD、字段定义、缩略图和逻辑删除。","textPreview":"负责模板 CRUD、字段定义、缩略图和逻辑删除。","textChars":24,"textLines":1,"bbox":[70,392,310,76]}
+{"kind":"shape","id":"sh/f6dcbulw","slide":5,"name":"shape-8xywzy3z2wr","bbox":[453,248,374,250]}
+{"kind":"shape","id":"sh/4fu18jqh","slide":5,"name":"shape-t6utzylw8yi","bbox":[481,282,24,24]}
+{"kind":"textbox","id":"sh/x0nuxc3y","slide":5,"name":"backend-head-1","text":"上传与静态资源","textPreview":"上传与静态资源","textChars":7,"textLines":1,"bbox":[481,332,312,42]}
+{"kind":"textbox","id":"sh/lkjm1cfa","slide":5,"name":"backend-body-1","text":"底图写入 uploads/certificates，并通过 /uploads/** 映射访问。","textPreview":"底图写入 uploads/certificates，并通过 /uploads/** 映射访问。","textChars":47,"textLines":1,"bbox":[481,392,310,76]}
+{"kind":"shape","id":"sh/szqtcj6t","slide":5,"name":"shape-s81bewc2p4","bbox":[864,248,374,250]}
+{"kind":"shape","id":"sh/3ex0nuxc","slide":5,"name":"shape-rurubzyntk8","bbox":[892,282,24,24]}
+{"kind":"textbox","id":"sh/at47y1kr","slide":5,"name":"backend-head-2","text":"渲染服务","textPreview":"渲染服务","textChars":4,"textLines":1,"bbox":[892,332,312,42]}
+{"kind":"textbox","id":"sh/l87ed8ba","slide":5,"name":"backend-body-2","text":"BufferedImage + Graphics2D 绘制底图、文本、字段和图片，输出 PNG。","textPreview":"BufferedImage + Graphics2D 绘制底图、文本、字段和图片，输出 PNG。","textChars":48,"textLines":1,"bbox":[892,392,310,76]}
+{"kind":"textbox","id":"sh/sneloj2t","slide":5,"name":"backend-takeaway","text":"字段替换策略：fieldKey 命中发放数据时使用真实值，缺失时回退到 sample，再缺失则置空。","textPreview":"字段替换策略：fieldKey 命中发放数据时使用真实值，缺失时回退到 sample，再缺失则置空。","textChars":50,"textLines":1,"bbox":[42,562,1100,48]}
+{"kind":"textbox","id":"sh/32lszqtc","slide":5,"name":"footer-5","text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"notes","id":"nt/lzbf41","slide":5,"text":""}
+{"kind":"slide","id":"sl/s72qtt","slide":6,"title":"接口和数据表围绕模板、资源和发放三类能力设计","textShapes":7}
+{"kind":"textbox","id":"sh/bm58z25k","slide":6,"name":"slide-title","text":"接口和数据表围绕模板、资源和发放三类能力设计","textPreview":"接口和数据表围绕模板、资源和发放三类能力设计","textChars":22,"textLines":1,"bbox":[42,36,1138,96]}
+{"kind":"textbox","id":"sh/47y1kre1","slide":6,"name":"api-intro","text":"接口不追求一次性覆盖所有证书业务，而是覆盖首期闭环所需的最小稳定面。","textPreview":"接口不追求一次性覆盖所有证书业务，而是覆盖首期闭环所需的最小稳定面。","textChars":34,"textLines":1,"bbox":[42,122,980,48]}
+{"kind":"textbox","id":"sh/tsvu9kni","slide":6,"name":"label-核心接口分组","text":"核心接口分组","textPreview":"核心接口分组","textChars":6,"textLines":1,"bbox":[42,204,180,24]}
+{"kind":"textbox","id":"sh/mp0bi9s3","slide":6,"name":"label-核心数据表","text":"核心数据表","textPreview":"核心数据表","textChars":5,"textLines":1,"bbox":[724,204,180,24]}
+{"kind":"shape","id":"sh/bat47y1k","slide":6,"name":"shape-5bqbhd8dwnb","bbox":[724,248,514,318]}
+{"kind":"textbox","id":"sh/4vmtwra5","slide":6,"name":"table-name","text":"certificate_template","textPreview":"certificate_template","textChars":20,"textLines":1,"bbox":[758,278,430,36]}
+{"kind":"textbox","id":"sh/tgfmlkjm","slide":6,"name":"data-fields","text":"tpl_key、name：模板标识和名称。\nbg_url、width、height：底图与画布尺寸。\nfields_json：动态字段定义。\ncanvas_json：fabric 画布对象序列化结果。\nthumbnail、deleted：缩略图和软删除。","textPreview":"tpl_key、name：模板标识和名称。 | bg_url、width、height：底图与画布尺寸。 | fields_json：动态字段定义。 | canvas_json：fabric 画布对象序列化结果。 | thumbnail、deleted：缩略图和软删除。","textChars":127,"textLines":5,"bbox":[758,336,430,190]}
+{"kind":"textbox","id":"sh/mhk3q5o7","slide":6,"name":"footer-6","text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"table","id":"tb/y90je9cv","slide":6,"name":"","rows":5,"cols":3,"preview":"能力 | 接口 | 用途","bbox":[42,248,640,318]}
+{"kind":"notes","id":"nt/s72qtt","slide":6,"text":""}
+{"kind":"slide","id":"sl/644p87","slide":7,"title":"验证路径以一次完整发放为主，而不是只测页面打开","textShapes":19}
+{"kind":"textbox","id":"sh/jqh0fepk","slide":7,"name":"slide-title","text":"验证路径以一次完整发放为主，而不是只测页面打开","textPreview":"验证路径以一次完整发放为主，而不是只测页面打开","textChars":23,"textLines":1,"bbox":[42,36,1138,96]}
+{"kind":"textbox","id":"sh/8bat47y1","slide":7,"name":"qa-intro","text":"首期验收应围绕真实闭环：保存后能否落库，渲染后能否替换字段，下载结果能否被业务使用。","textPreview":"首期验收应围绕真实闭环：保存后能否落库，渲染后能否替换字段，下载结果能否被业务使用。","textChars":42,"textLines":1,"bbox":[42,128,1080,56]}
+{"kind":"textbox","id":"sh/1w7mp0bi","slide":7,"name":"qa-no-0","text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[44,224,56,44]}
+{"kind":"shape","id":"sh/qh0fepkz","slide":7,"name":"shape-cegycn3e20n","bbox":[116,233,396,1]}
+{"kind":"textbox","id":"sh/j2t83itg","slide":7,"name":"qa-head-0","text":"启动服务","textPreview":"启动服务","textChars":4,"textLines":1,"bbox":[552,220,210,36]}
+{"kind":"textbox","id":"sh/8nqxs72x","slide":7,"name":"qa-body-0","text":"后端 Spring Boot 与前端 Vite 代理联通","textPreview":"后端 Spring Boot 与前端 Vite 代理联通","textChars":28,"textLines":1,"bbox":[774,223,420,38]}
+{"kind":"textbox","id":"sh/18jqh0fe","slide":7,"name":"qa-no-1","text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[44,302,56,44]}
+{"kind":"shape","id":"sh/ulwval87","slide":7,"name":"shape-se8laenb4w","bbox":[116,311,396,1]}
+{"kind":"textbox","id":"sh/j6tovaho","slide":7,"name":"qa-head-1","text":"新建模板","textPreview":"新建模板","textChars":4,"textLines":1,"bbox":[552,298,210,36]}
+{"kind":"textbox","id":"sh/j2t83itg","slide":7,"name":"qa-body-1","text":"上传底图，配置画布尺寸与字段","textPreview":"上传底图，配置画布尺寸与字段","textChars":14,"textLines":1,"bbox":[774,301,420,38]}
+{"kind":"textbox","id":"sh/qh0fepkz","slide":7,"name":"qa-no-2","text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[44,380,56,44]}
+{"kind":"shape","id":"sh/18jqh0fe","slide":7,"name":"shape-up0wwm95ak","bbox":[116,389,396,1]}
+{"kind":"textbox","id":"sh/8nqxs72x","slide":7,"name":"qa-head-2","text":"保存配置","textPreview":"保存配置","textChars":4,"textLines":1,"bbox":[552,376,210,36]}
+{"kind":"textbox","id":"sh/jqh0fepk","slide":7,"name":"qa-body-2","text":"确认 bgUrl、fields、canvasJson、thumbnail 落库","textPreview":"确认 bgUrl、fields、canvasJson、thumbnail 落库","textChars":39,"textLines":1,"bbox":[774,379,420,38]}
+{"kind":"textbox","id":"sh/q5o7qpg3","slide":7,"name":"qa-no-3","text":"4","textPreview":"4","textChars":1,"textLines":1,"bbox":[44,458,56,44]}
+{"kind":"shape","id":"sh/1w7mp0bi","slide":7,"name":"shape-4wljrzvj4s","bbox":[116,467,396,1]}
+{"kind":"textbox","id":"sh/8bat47y1","slide":7,"name":"qa-head-3","text":"单张渲染","textPreview":"单张渲染","textChars":4,"textLines":1,"bbox":[552,454,210,36]}
+{"kind":"textbox","id":"sh/ji5snelo","slide":7,"name":"qa-body-3","text":"输入字段数据，预览并下载 PNG","textPreview":"输入字段数据，预览并下载 PNG","textChars":16,"textLines":1,"bbox":[774,457,420,38]}
+{"kind":"textbox","id":"sh/uxc3ylc7","slide":7,"name":"qa-no-4","text":"5","textPreview":"5","textChars":1,"textLines":1,"bbox":[44,536,56,44]}
+{"kind":"shape","id":"sh/2t83itgf","slide":7,"name":"shape-rspet30tems","bbox":[116,545,396,1]}
+{"kind":"textbox","id":"sh/re1w7mp0","slide":7,"name":"qa-head-4","text":"批量验证","textPreview":"批量验证","textChars":4,"textLines":1,"bbox":[552,532,210,36]}
+{"kind":"textbox","id":"sh/kzupwb2h","slide":7,"name":"qa-body-4","text":"CSV 2-3 行进入批量渲染结果列表","textPreview":"CSV 2-3 行进入批量渲染结果列表","textChars":19,"textLines":1,"bbox":[774,535,420,38]}
+{"kind":"shape","id":"sh/9knih4by","slide":7,"name":"shape-mv6dps2xxd","bbox":[42,620,876,1]}
+{"kind":"textbox","id":"sh/25kb6xkf","slide":7,"name":"qa-standard","text":"通过标准：字段替换正确、图片不失真、批量结果完整、设计预览与服务端输出口径一致。","textPreview":"通过标准：字段替换正确、图片不失真、批量结果完整、设计预览与服务端输出口径一致。","textChars":40,"textLines":1,"bbox":[42,638,1080,34]}
+{"kind":"textbox","id":"sh/rqd4vmtw","slide":7,"name":"footer-7","text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"notes","id":"nt/644p87","slide":7,"text":""}
+{"kind":"slide","id":"sl/ujdmkf","slide":8,"title":"首期边界清晰，后续扩展保留接口位置","textShapes":8}
+{"kind":"textbox","id":"sh/donyd0z6","slide":8,"name":"slide-title","text":"首期边界清晰，后续扩展保留接口位置","textPreview":"首期边界清晰，后续扩展保留接口位置","textChars":17,"textLines":1,"bbox":[42,36,1138,96]}
+{"kind":"textbox","id":"sh/2x4nap4r","slide":8,"name":"next-intro","text":"这版汇报的落点是“先跑通闭环”，不是把所有证书治理能力一次性做完。","textPreview":"这版汇报的落点是“先跑通闭环”，不是把所有证书治理能力一次性做完。","textChars":33,"textLines":1,"bbox":[42,128,900,54]}
+{"kind":"shape","id":"sh/vixczed8","slide":8,"name":"shape-5p3utngrcji","bbox":[42,228,520,300]}
+{"kind":"shape","id":"sh/kre1w7mp","slide":8,"name":"shape-m1iuyao72pc","bbox":[658,228,520,300]}
+{"kind":"textbox","id":"sh/dcbulwva","slide":8,"name":"scope-title","text":"首期明确不做","textPreview":"首期明确不做","textChars":6,"textLines":1,"bbox":[74,260,440,38]}
+{"kind":"textbox","id":"sh/6psfil0r","slide":8,"name":"scope-list","text":"不接入 OSS，演示阶段使用本地 uploads。\n不做批量 ZIP 下载，先保留批量接口扩展位。\n不做二维码生成，后续可通过 zxing 叠加。\n不改 workflow-designer Vue 工程。","textPreview":"不接入 OSS，演示阶段使用本地 uploads。 | 不做批量 ZIP 下载，先保留批量接口扩展位。 | 不做二维码生成，后续可通过 zxing 叠加。 | 不改 workflow-designer Vue 工程。","textChars":102,"textLines":4,"bbox":[74,326,430,154]}
+{"kind":"textbox","id":"sh/val87ed8","slide":8,"name":"next-title","text":"下一步建议","textPreview":"下一步建议","textChars":5,"textLines":1,"bbox":[690,260,440,38]}
+{"kind":"textbox","id":"sh/knih4byh","slide":8,"name":"next-list","text":"先完成模板 CRUD、设计器保存和单张渲染。\n再补齐批量导入、批量预览和下载体验。\n最后扩展 OSS、二维码、编号规则和发放审计。","textPreview":"先完成模板 CRUD、设计器保存和单张渲染。 | 再补齐批量导入、批量预览和下载体验。 | 最后扩展 OSS、二维码、编号规则和发放审计。","textChars":65,"textLines":3,"bbox":[690,326,430,142]}
+{"kind":"textbox","id":"sh/d8bat47y","slide":8,"name":"closing","text":"结论：以“可配置、可保存、可渲染、可下载”为第一交付口径，后续再扩展可信发放能力。","textPreview":"结论：以“可配置、可保存、可渲染、可下载”为第一交付口径，后续再扩展可信发放能力。","textChars":41,"textLines":1,"bbox":[42,590,1100,64]}
+{"kind":"textbox","id":"sh/pkzupwb2","slide":8,"name":"footer-8","text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"notes","id":"nt/ujdmkf","slide":8,"text":""}

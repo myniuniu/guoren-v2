@@ -7,6 +7,7 @@ import {
 import { templateApi, triggerDownload } from './api';
 import CertificateDesigner from './CertificateDesigner';
 import CertificateIssueTest from './CertificateIssueTest';
+import CertificateOperationsPanel from './CertificateOperationsPanel';
 import './CertificateModule.css';
 
 const { Header, Content } = Layout;
@@ -140,6 +141,7 @@ export default function CertificateModule() {
         </Space>
       </Header>
       <Content className="cm-content">
+        <CertificateOperationsPanel className="cm-ops-panel" />
         <Table
           rowKey="id"
           size="middle"

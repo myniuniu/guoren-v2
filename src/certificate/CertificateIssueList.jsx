@@ -21,6 +21,7 @@ import {
   SearchOutlined,
 } from '@ant-design/icons';
 import { issueApi } from './api';
+import CertificateOperationsPanel from './CertificateOperationsPanel';
 import { removeCertificateIssueBatchFromPersonalLibrary } from '../resourceLib/resourceLibStore';
 
 /**
@@ -194,71 +195,74 @@ const CertificateIssueList = ({ onCreate, onOpen }) => {
   ];
 
   return (
-    <Card
-      style={{ margin: 16 }}
-      title="证书发放"
-      extra={
-        <Space>
-          <Input
-            placeholder="按批次名 / 模版搜索"
-            prefix={<SearchOutlined />}
-            allowClear
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            onPressEnter={() => load({ pageNo: 1 })}
-            style={{ width: 240 }}
-          />
-          <Tooltip title="刷新">
-            <Button icon={<ReloadOutlined />} onClick={() => load()} />
-          </Tooltip>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => onCreate?.()}>
-            新建发放
-          </Button>
-        </Space>
-      }
-    >
-      <Table
-        rowKey="id"
-        size="middle"
-        loading={loading}
-        dataSource={list}
-        columns={columns}
-        scroll={{ x: 1148 }}
-        pagination={{
-          current: pageNo,
-          pageSize,
-          total,
-          showSizeChanger: true,
-          showTotal: (t) => `共 ${t} 个批次`,
-          onChange: (p, ps) => {
-            setPageNo(p);
-            setPageSize(ps);
-            load({ pageNo: p, pageSize: ps });
-          },
-        }}
-      />
-
-      <Modal
-        title="编辑批次"
-        open={!!editing}
-        onOk={handleSaveEdit}
-        onCancel={() => setEditing(null)}
-        destroyOnClose
+    <>
+      <CertificateOperationsPanel compact className="ci-ops-panel" />
+      <Card
+        style={{ margin: '16px 16px 0' }}
+        title="证书发放"
+        extra={
+          <Space>
+            <Input
+              placeholder="按批次名 / 模版搜索"
+              prefix={<SearchOutlined />}
+              allowClear
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              onPressEnter={() => load({ pageNo: 1 })}
+              style={{ width: 240 }}
+            />
+            <Tooltip title="刷新">
+              <Button icon={<ReloadOutlined />} onClick={() => load()} />
+            </Tooltip>
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => onCreate?.()}>
+              新建发放
+            </Button>
+          </Space>
+        }
       >
-        <Form form={editForm} layout="vertical" preserve={false}>
-          <Form.Item
-            name="batchName"
-            label="批次名"
-            rules={[{ required: true, message: '请输入批次名' }]}
-          >
-            <Input maxLength={128} />
-          </Form.Item>
-          <Form.Item name="remark" label="备注">
-            <Input.TextArea rows={3} maxLength={512} />
-          </Form.Item>
-        </Form>
-      </Modal>
-    </Card>
+        <Table
+          rowKey="id"
+          size="middle"
+          loading={loading}
+          dataSource={list}
+          columns={columns}
+          scroll={{ x: 1148 }}
+          pagination={{
+            current: pageNo,
+            pageSize,
+            total,
+            showSizeChanger: true,
+            showTotal: (t) => `共 ${t} 个批次`,
+            onChange: (p, ps) => {
+              setPageNo(p);
+              setPageSize(ps);
+              load({ pageNo: p, pageSize: ps });
+            },
+          }}
+        />
+
+        <Modal
+          title="编辑批次"
+          open={!!editing}
+          onOk={handleSaveEdit}
+          onCancel={() => setEditing(null)}
+          destroyOnClose
+        >
+          <Form form={editForm} layout="vertical" preserve={false}>
+            <Form.Item
+              name="batchName"
+              label="批次名"
+              rules={[{ required: true, message: '请输入批次名' }]}
+            >
+              <Input maxLength={128} />
+            </Form.Item>
+            <Form.Item name="remark" label="备注">
+              <Input.TextArea rows={3} maxLength={512} />
+            </Form.Item>
+          </Form>
+        </Modal>
+      </Card>
+    </>
   );
 };
 

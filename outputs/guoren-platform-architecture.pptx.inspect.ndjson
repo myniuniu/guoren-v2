@@ -1,0 +1,631 @@
+{"kind":"deck","id":"pr/pay1pt","name":"Deck"}
+{"kind":"layout","layoutId":"a82049ad-1ebf-4ec8-8df8-622d8ca7d551","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"7eb9b3e4-19f4-425f-8f4b-bbe007326a36","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/cz4o0o","slide":1,"title":"通答平台：从 AI 原生底座","textShapes":6}
+{"kind":"textbox","id":"sh/tgfmlkjm","slide":1,"text":"通答平台：从 AI 原生底座\n到商业化套件","textPreview":"通答平台：从 AI 原生底座 | 到商业化套件","textChars":21,"textLines":2,"bbox":[41,82,790,158]}
+{"kind":"textbox","id":"sh/mp0bi9s3","slide":1,"text":"AI 原生教育业务平台","textPreview":"AI 原生教育业务平台","textChars":11,"textLines":1,"bbox":[43,260,500,44]}
+{"kind":"textbox","id":"sh/bat47y1k","slide":1,"text":"以 Lucky 智能体为智能引擎，以资料库为知识底座，以空间承载业务过程，以场景模板实现业务复制，并通过套餐、租户、服务、资源和 Token 算力形成商业闭环。","textPreview":"以 Lucky 智能体为智能引擎，以资料库为知识底座，以空间承载业务过程，以场景模板实现业务复制，并通过套餐、租户、服务、资源和 Token 算力形成商业闭环。","textChars":80,"textLines":1,"bbox":[43,356,690,132]}
+{"kind":"shape","id":"sh/47y1kre1","slide":1,"bbox":[864,82,374,501]}
+{"kind":"textbox","id":"sh/tsvu9kni","slide":1,"text":"Lucky\n资料库\n空间\n场景模板","textPreview":"Lucky | 资料库 | 空间 | 场景模板","textChars":17,"textLines":4,"bbox":[900,128,305,238]}
+{"kind":"shape","id":"sh/m1cfa9w3","slide":1,"bbox":[900,409,286,2]}
+{"kind":"textbox","id":"sh/bm58z25k","slide":1,"text":"从平台能力到业务场景\n从算力消耗到商业交付","textPreview":"从平台能力到业务场景 | 从算力消耗到商业交付","textChars":21,"textLines":2,"bbox":[900,442,286,86]}
+{"kind":"textbox","id":"sh/4byhgn29","slide":1,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"notes","id":"nt/cz4o0o","slide":1,"text":""}
+{"kind":"slide","id":"sl/f31oiy","slide":2,"title":"目录","textShapes":16}
+{"kind":"textbox","id":"sh/9cvixcze","slide":2,"text":"目录","textPreview":"目录","textChars":2,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/ylc7u54z","slide":2,"text":"目录","textPreview":"目录","textChars":2,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/r65wjudg","slide":2,"bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/g3ex0nux","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"textbox","id":"sh/5o7qpg3e","slide":2,"text":"汇报结构","textPreview":"汇报结构","textChars":4,"textLines":1,"bbox":[41,198,180,30]}
+{"kind":"shape","id":"sh/yxobm58z","slide":2,"bbox":[41,246,360,122]}
+{"kind":"textbox","id":"sh/nih4byhg","slide":2,"text":"01  平台定位与价值","textPreview":"01  平台定位与价值","textChars":11,"textLines":1,"bbox":[65,270,312,36]}
+{"kind":"textbox","id":"sh/g7adsji5","slide":2,"text":"AI 原生业务底座、建设初衷、平台价值和 AI 原生底座能力。","textPreview":"AI 原生业务底座、建设初衷、平台价值和 AI 原生底座能力。","textChars":31,"textLines":1,"bbox":[65,318,312,30]}
+{"kind":"shape","id":"sh/9s36hcrm","slide":2,"bbox":[460,246,360,122]}
+{"kind":"textbox","id":"sh/d8v6psfi","slide":2,"text":"02  架构与交付体系","textPreview":"02  架构与交付体系","textChars":11,"textLines":1,"bbox":[484,270,312,36]}
+{"kind":"textbox","id":"sh/onyd0z61","slide":2,"text":"Lucky、资料库、空间、场景模板，以及组合交付、套餐和租户。","textPreview":"Lucky、资料库、空间、场景模板，以及组合交付、套餐和租户。","textChars":31,"textLines":1,"bbox":[484,318,312,30]}
+{"kind":"shape","id":"sh/z25kb6xk","slide":2,"bbox":[879,246,360,122]}
+{"kind":"textbox","id":"sh/6hcrmhk3","slide":2,"text":"03  商业模式与渠道","textPreview":"03  商业模式与渠道","textChars":11,"textLines":1,"bbox":[903,270,312,36]}
+{"kind":"textbox","id":"sh/dg7adsji","slide":2,"text":"平台、服务、资源、Token 算力、模型统计和运营商渠道合作。","textPreview":"平台、服务、资源、Token 算力、模型统计和运营商渠道合作。","textChars":31,"textLines":1,"bbox":[903,318,312,30]}
+{"kind":"shape","id":"sh/ovahoza1","slide":2,"bbox":[41,432,360,122]}
+{"kind":"textbox","id":"sh/vahoza1g","slide":2,"text":"04  标杆案例与场景深化","textPreview":"04  标杆案例与场景深化","textChars":13,"textLines":1,"bbox":[65,456,312,36]}
+{"kind":"textbox","id":"sh/6tovahoz","slide":2,"text":"宁波大学科学技术学院工作坊、学员智能体成果、两大场景和商业化套件。","textPreview":"宁波大学科学技术学院工作坊、学员智能体成果、两大场景和商业化套件。","textChars":33,"textLines":1,"bbox":[65,504,312,30]}
+{"kind":"shape","id":"sh/dsji5sne","slide":2,"bbox":[460,432,360,122]}
+{"kind":"textbox","id":"sh/o7qpg3ex","slide":2,"text":"05  生态、愿景与开发模式","textPreview":"05  生态、愿景与开发模式","textChars":14,"textLines":1,"bbox":[484,456,312,36]}
+{"kind":"textbox","id":"sh/kjm1cfa9","slide":2,"text":"研习社、平台闭环、教师全场景愿景，以及 AI 驱动的开发模式创新。","textPreview":"研习社、平台闭环、教师全场景愿景，以及 AI 驱动的开发模式创新。","textChars":33,"textLines":1,"bbox":[484,504,312,30]}
+{"kind":"shape","id":"sh/94fu18jq","slide":2,"bbox":[879,432,360,122]}
+{"kind":"textbox","id":"sh/2hwfyxob","slide":2,"text":"主线","textPreview":"主线","textChars":2,"textLines":1,"bbox":[903,456,312,32]}
+{"kind":"textbox","id":"sh/r2p8nqxs","slide":2,"text":"从 AI 原生底座，到场景化交付，再到商业化增长与研发模式升级。","textPreview":"从 AI 原生底座，到场景化交付，再到商业化增长与研发模式升级。","textChars":32,"textLines":1,"bbox":[903,504,312,36]}
+{"kind":"notes","id":"nt/f31oiy","slide":2,"text":""}
+{"kind":"slide","id":"sl/5q2q5x","slide":3,"title":"平台定位","textShapes":14}
+{"kind":"textbox","id":"sh/oza1gvy9","slide":3,"text":"平台定位","textPreview":"平台定位","textChars":4,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/zed8v6ps","slide":3,"text":"通答平台不是传统系统加 AI，而是 AI 原生的业务底座","textPreview":"通答平台不是传统系统加 AI，而是 AI 原生的业务底座","textChars":28,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/6xkf6dcb","slide":3,"bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/hwfyxobm","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"textbox","id":"sh/obm58z25","slide":3,"text":"核心定位","textPreview":"核心定位","textChars":4,"textLines":1,"bbox":[41,204,220,34]}
+{"kind":"textbox","id":"sh/zqtcj6to","slide":3,"text":"AI 不作为外挂工具存在，而是嵌入资料沉淀、空间协作、角色赋能、流程推进、内容生成和数据分析全过程。","textPreview":"AI 不作为外挂工具存在，而是嵌入资料沉淀、空间协作、角色赋能、流程推进、内容生成和数据分析全过程。","textChars":50,"textLines":1,"bbox":[41,250,525,132]}
+{"kind":"textbox","id":"sh/65wjudg7","slide":3,"text":"平台的目标不是多做一个系统，而是把教师培训、教研、教学等业务转化为可沉淀、可复用、可智能驱动的业务平台。","textPreview":"平台的目标不是多做一个系统，而是把教师培训、教研、教学等业务转化为可沉淀、可复用、可智能驱动的业务平台。","textChars":52,"textLines":1,"bbox":[41,438,525,92]}
+{"kind":"shape","id":"sh/h0fepkzu","slide":3,"bbox":[660,207,260,136]}
+{"kind":"textbox","id":"sh/sfil0rqd","slide":3,"text":"知识资产","textPreview":"知识资产","textChars":4,"textLines":1,"bbox":[684,231,212,36]}
+{"kind":"textbox","id":"sh/qtcj6tov","slide":3,"text":"资料库持续沉淀课程、案例、成果和制度材料。","textPreview":"资料库持续沉淀课程、案例、成果和制度材料。","textChars":21,"textLines":1,"bbox":[684,279,212,44]}
+{"kind":"shape","id":"sh/je9cvixc","slide":3,"bbox":[978,207,260,136]}
+{"kind":"textbox","id":"sh/8z25kb6x","slide":3,"text":"业务过程","textPreview":"业务过程","textChars":4,"textLines":1,"bbox":[1002,231,212,36]}
+{"kind":"textbox","id":"sh/1gvy90je","slide":3,"text":"空间承载成员、任务、流程、协同与成果。","textPreview":"空间承载成员、任务、流程、协同与成果。","textChars":19,"textLines":1,"bbox":[1002,279,212,44]}
+{"kind":"shape","id":"sh/q1orytsv","slide":3,"bbox":[660,395,260,136]}
+{"kind":"textbox","id":"sh/fmlkjm1c","slide":3,"text":"智能驱动","textPreview":"智能驱动","textChars":4,"textLines":1,"bbox":[684,419,212,36]}
+{"kind":"textbox","id":"sh/87ed8bat","slide":3,"text":"Lucky 理解资料、场景和角色，辅助业务推进。","textPreview":"Lucky 理解资料、场景和角色，辅助业务推进。","textChars":24,"textLines":1,"bbox":[684,467,212,44]}
+{"kind":"shape","id":"sh/xs72x4na","slide":3,"bbox":[978,395,260,136]}
+{"kind":"textbox","id":"sh/qd4vmtwr","slide":3,"text":"场景复制","textPreview":"场景复制","textChars":4,"textLines":1,"bbox":[1002,419,212,36]}
+{"kind":"textbox","id":"sh/fyxobm58","slide":3,"text":"场景模板把组件组装为垂直业务解决方案。","textPreview":"场景模板把组件组装为垂直业务解决方案。","textChars":19,"textLines":1,"bbox":[1002,467,212,44]}
+{"kind":"notes","id":"nt/5q2q5x","slide":3,"text":""}
+{"kind":"slide","id":"sl/jjr5i7","slide":4,"title":"建设初衷","textShapes":12}
+{"kind":"textbox","id":"sh/donyd0z6","slide":4,"text":"建设初衷","textPreview":"建设初衷","textChars":4,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/2x4nap4r","slide":4,"text":"通答平台建设初衷，是让前沿技术真正适配市场和用户体验","textPreview":"通答平台建设初衷，是让前沿技术真正适配市场和用户体验","textChars":26,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/vixczed8","slide":4,"bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/kre1w7mp","slide":4,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"shape","id":"sh/dcbulwva","slide":4,"bbox":[41,206,560,142]}
+{"kind":"textbox","id":"sh/6psfil0r","slide":4,"text":"技术前沿性","textPreview":"技术前沿性","textChars":5,"textLines":1,"bbox":[65,230,512,36]}
+{"kind":"textbox","id":"sh/val87ed8","slide":4,"text":"以AI原生架构、智能体、知识库、空间和场景模板承接大模型能力，把前沿技术内化为平台底座。","textPreview":"以AI原生架构、智能体、知识库、空间和场景模板承接大模型能力，把前沿技术内化为平台底座。","textChars":44,"textLines":1,"bbox":[65,278,512,50]}
+{"kind":"shape","id":"sh/knih4byh","slide":4,"bbox":[678,206,560,142]}
+{"kind":"textbox","id":"sh/d8bat47y","slide":4,"text":"市场需求适配性","textPreview":"市场需求适配性","textChars":7,"textLines":1,"bbox":[702,230,512,36]}
+{"kind":"textbox","id":"sh/pkzupwb2","slide":4,"text":"面向教师培训、教研、教学、干部培训和区域服务等真实需求，快速转化为可理解、可采购、可使用的场景方案。","textPreview":"面向教师培训、教研、教学、干部培训和区域服务等真实需求，快速转化为可理解、可采购、可使用的场景方案。","textChars":50,"textLines":1,"bbox":[702,278,512,50]}
+{"kind":"shape","id":"sh/0z61032l","slide":4,"bbox":[41,386,560,142]}
+{"kind":"textbox","id":"sh/7ed8bat4","slide":4,"text":"产品灵活性","textPreview":"产品灵活性","textChars":5,"textLines":1,"bbox":[65,410,512,36]}
+{"kind":"textbox","id":"sh/itgfmlkj","slide":4,"text":"通过Lucky、资料库、空间、场景模板、套餐和租户组合，支持从轻量工具到完整业务平台的多种交付形态。","textPreview":"通过Lucky、资料库、空间、场景模板、套餐和租户组合，支持从轻量工具到完整业务平台的多种交付形态。","textChars":50,"textLines":1,"bbox":[65,458,512,50]}
+{"kind":"shape","id":"sh/p8nqxs72","slide":4,"bbox":[678,386,560,142]}
+{"kind":"textbox","id":"sh/0nuxc3yl","slide":4,"text":"体验简单性","textPreview":"体验简单性","textChars":5,"textLines":1,"bbox":[702,410,512,36]}
+{"kind":"textbox","id":"sh/72x4nap4","slide":4,"text":"坚持两个简单：UI和交互采用主流方式，操作简单；产品设计克制，概念尽可能少。","textPreview":"坚持两个简单：UI和交互采用主流方式，操作简单；产品设计克制，概念尽可能少。","textChars":38,"textLines":1,"bbox":[702,458,512,50]}
+{"kind":"shape","id":"sh/ih4byhgn","slide":4,"bbox":[41,575,1197,54]}
+{"kind":"textbox","id":"sh/p4r65wju","slide":4,"text":"建设出发点：用前沿技术匹配市场需求，以灵活产品形态和简单清晰体验支撑规模化落地","textPreview":"建设出发点：用前沿技术匹配市场需求，以灵活产品形态和简单清晰体验支撑规模化落地","textChars":39,"textLines":1,"bbox":[70,588,1138,28]}
+{"kind":"notes","id":"nt/jjr5i7","slide":4,"text":""}
+{"kind":"slide","id":"sl/hnob7t","slide":5,"title":"价值总览","textShapes":12}
+{"kind":"textbox","id":"sh/yd0z6103","slide":5,"text":"价值总览","textPreview":"价值总览","textChars":4,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/90je9cvi","slide":5,"text":"AI 原生平台的价值不只在工具能力，而在业务增长和组织效率","textPreview":"AI 原生平台的价值不只在工具能力，而在业务增长和组织效率","textChars":29,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/gfmlkjm1","slide":5,"bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/rmhk3q5o","slide":5,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"shape","id":"sh/y1kre1w7","slide":5,"bbox":[41,206,560,142]}
+{"kind":"textbox","id":"sh/9s36hcrm","slide":5,"text":"对公司","textPreview":"对公司","textChars":3,"textLines":1,"bbox":[65,230,512,36]}
+{"kind":"textbox","id":"sh/g7adsji5","slide":5,"text":"为后续业务扩展提供统一平台底座，支持从教师培训扩展到教研、教学、干部培训、区域服务等更多场景。","textPreview":"为后续业务扩展提供统一平台底座，支持从教师培训扩展到教研、教学、干部培训、区域服务等更多场景。","textChars":47,"textLines":1,"bbox":[65,278,512,50]}
+{"kind":"shape","id":"sh/nih4byhg","slide":5,"bbox":[678,206,560,142]}
+{"kind":"textbox","id":"sh/yxobm58z","slide":5,"text":"对用户","textPreview":"对用户","textChars":3,"textLines":1,"bbox":[702,230,512,36]}
+{"kind":"textbox","id":"sh/obm58z25","slide":5,"text":"让教师、干部、教研员等角色获得 AI 助理能力，提升资料处理、内容生成、方案设计和任务执行效率","textPreview":"让教师、干部、教研员等角色获得 AI 助理能力，提升资料处理、内容生成、方案设计和任务执行效率","textChars":47,"textLines":1,"bbox":[702,278,512,50]}
+{"kind":"shape","id":"sh/hwfyxobm","slide":5,"bbox":[41,386,560,142]}
+{"kind":"textbox","id":"sh/65wjudg7","slide":5,"text":"对客户组织","textPreview":"对客户组织","textChars":5,"textLines":1,"bbox":[65,410,512,36]}
+{"kind":"textbox","id":"sh/zqtcj6to","slide":5,"text":"帮助学校、区域和机构沉淀知识资产、规范业务流程、提升协同效率，并形成可复制的数字化业务能力。","textPreview":"帮助学校、区域和机构沉淀知识资产、规范业务流程、提升协同效率，并形成可复制的数字化业务能力。","textChars":46,"textLines":1,"bbox":[65,458,512,50]}
+{"kind":"shape","id":"sh/oza1gvy9","slide":5,"bbox":[678,386,560,142]}
+{"kind":"textbox","id":"sh/hk3q5o7q","slide":5,"text":"商业价值空间","textPreview":"商业价值空间","textChars":6,"textLines":1,"bbox":[702,410,512,36]}
+{"kind":"textbox","id":"sh/6xkf6dcb","slide":5,"text":"通过平台、服务、资源和 Token 算力形成持续付费空间，支撑套餐、租户、场景解决方案和运营商合作。","textPreview":"通过平台、服务、资源和 Token 算力形成持续付费空间，支撑套餐、租户、场景解决方案和运营商合作。","textChars":50,"textLines":1,"bbox":[702,458,512,50]}
+{"kind":"shape","id":"sh/zed8v6ps","slide":5,"bbox":[41,575,1197,54]}
+{"kind":"textbox","id":"sh/orytsvu9","slide":5,"text":"通答平台的核心价值，是把 AI 从单点工具升级为业务基础设施，既支撑客户组织提效，也支撑公司持续扩展业务边界和商业收入空间。","textPreview":"通答平台的核心价值，是把 AI 从单点工具升级为业务基础设施，既支撑客户组织提效，也支撑公司持续扩展业务边界和商业收入空间。","textChars":62,"textLines":1,"bbox":[70,588,1138,28]}
+{"kind":"notes","id":"nt/hnob7t","slide":5,"text":""}
+{"kind":"slide","id":"sl/ikajk1","slide":6,"title":"AI 原生底座","textShapes":15}
+{"kind":"textbox","id":"sh/v6psfil0","slide":6,"text":"AI 原生底座","textPreview":"AI 原生底座","textChars":7,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/knih4byh","slide":6,"text":"AI 原生底座让每个业务模块天然具备智能能力","textPreview":"AI 原生底座让每个业务模块天然具备智能能力","textChars":22,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/d8bat47y","slide":6,"bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/29gr2p8n","slide":6,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"textbox","id":"sh/vu9knih4","slide":6,"text":"基于AI原生平台架构，AI不是后续叠加功能，而是所有业务模块的默认能力","textPreview":"基于AI原生平台架构，AI不是后续叠加功能，而是所有业务模块的默认能力","textChars":35,"textLines":1,"bbox":[72,208,1060,72]}
+{"kind":"shape","id":"sh/kf6dcbul","slide":6,"bbox":[94,336,180,58]}
+{"kind":"textbox","id":"sh/d0z61032","slide":6,"text":"业务模块","textPreview":"业务模块","textChars":4,"textLines":1,"bbox":[104,342,160,46]}
+{"kind":"shape","id":"sh/2x4nap4r","slide":6,"bbox":[306,347,74,36]}
+{"kind":"shape","id":"sh/vixczed8","slide":6,"bbox":[412,336,160,58]}
+{"kind":"textbox","id":"sh/vmtwra5g","slide":6,"text":"AI能力","textPreview":"AI能力","textChars":4,"textLines":1,"bbox":[422,342,140,46]}
+{"kind":"shape","id":"sh/61032lsz","slide":6,"bbox":[604,347,74,36]}
+{"kind":"shape","id":"sh/dsji5sne","slide":6,"bbox":[710,336,210,58]}
+{"kind":"textbox","id":"sh/o7qpg3ex","slide":6,"text":"智能体+体验","textPreview":"智能体+体验","textChars":6,"textLines":1,"bbox":[720,342,190,46]}
+{"kind":"shape","id":"sh/vy90je9c","slide":6,"bbox":[952,347,74,36]}
+{"kind":"shape","id":"sh/6dcbulwv","slide":6,"bbox":[1058,336,180,58]}
+{"kind":"textbox","id":"sh/d4vmtwra","slide":6,"text":"业务场景落地","textPreview":"业务场景落地","textChars":6,"textLines":1,"bbox":[1068,342,160,46]}
+{"kind":"shape","id":"sh/oj2t83it","slide":6,"bbox":[41,470,340,112]}
+{"kind":"textbox","id":"sh/z25kb6xk","slide":6,"text":"资料库","textPreview":"资料库","textChars":3,"textLines":1,"bbox":[65,494,292,36]}
+{"kind":"textbox","id":"sh/6hcrmhk3","slide":6,"text":"业务资料天然沉淀为知识资产，支撑检索、问答、生成和复用。","textPreview":"业务资料天然沉淀为知识资产，支撑检索、问答、生成和复用。","textChars":28,"textLines":1,"bbox":[65,542,292,20]}
+{"kind":"shape","id":"sh/at47y1kr","slide":6,"bbox":[470,470,340,112]}
+{"kind":"textbox","id":"sh/3ex0nuxc","slide":6,"text":"空间","textPreview":"空间","textChars":2,"textLines":1,"bbox":[494,494,292,36]}
+{"kind":"textbox","id":"sh/szqtcj6t","slide":6,"text":"业务过程天然进入空间，承载成员、任务、流程、协同和成果。","textPreview":"业务过程天然进入空间，承载成员、任务、流程、协同和成果。","textChars":28,"textLines":1,"bbox":[494,542,292,20]}
+{"kind":"shape","id":"sh/lkjm1cfa","slide":6,"bbox":[899,470,340,112]}
+{"kind":"textbox","id":"sh/ahoza1gv","slide":6,"text":"智能体","textPreview":"智能体","textChars":3,"textLines":1,"bbox":[923,494,292,36]}
+{"kind":"textbox","id":"sh/32lszqtc","slide":6,"text":"不同角色天然获得智能助手，形成问答、生成、分析和任务推进能力。","textPreview":"不同角色天然获得智能助手，形成问答、生成、分析和任务推进能力。","textChars":31,"textLines":1,"bbox":[923,542,292,20]}
+{"kind":"textbox","id":"sh/sneloj2t","slide":6,"text":"未来扩展新业务时，不需要重建AI能力，而是直接复用“资料库 + 空间 + 智能体”的平台底座。","textPreview":"未来扩展新业务时，不需要重建AI能力，而是直接复用“资料库 + 空间 + 智能体”的平台底座。","textChars":47,"textLines":1,"bbox":[116,616,1048,32]}
+{"kind":"notes","id":"nt/ikajk1","slide":6,"text":""}
+{"kind":"slide","id":"sl/1nmdxq","slide":7,"title":"章节目录","textShapes":20}
+{"kind":"textbox","id":"sh/tcj6tova","slide":7,"text":"章节目录","textPreview":"章节目录","textChars":4,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/il0rqd4v","slide":7,"text":"章节目录：02 架构与交付体系","textPreview":"章节目录：02 架构与交付体系","textChars":15,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/b6xkf6dc","slide":7,"bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/0je9cvix","slide":7,"text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"textbox","id":"sh/t47y1kre","slide":7,"text":"当前位置","textPreview":"当前位置","textChars":4,"textLines":1,"bbox":[41,176,160,30]}
+{"kind":"shape","id":"sh/idonyd0z","slide":7,"bbox":[82,208,1115,58]}
+{"kind":"textbox","id":"sh/byhgn29g","slide":7,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[112,221,70,30]}
+{"kind":"textbox","id":"sh/0fepkzup","slide":7,"text":"平台定位与价值","textPreview":"平台定位与价值","textChars":7,"textLines":1,"bbox":[212,221,300,30]}
+{"kind":"textbox","id":"sh/p0bi9s36","slide":7,"text":"说明通答为什么是 AI 原生业务底座，以及平台建设初衷和核心价值。","textPreview":"说明通答为什么是 AI 原生业务底座，以及平台建设初衷和核心价值。","textChars":33,"textLines":1,"bbox":[540,223,610,28]}
+{"kind":"shape","id":"sh/x0nuxc3y","slide":7,"bbox":[82,284,1115,58]}
+{"kind":"textbox","id":"sh/4fu18jqh","slide":7,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[112,297,70,30]}
+{"kind":"textbox","id":"sh/fu18jqh0","slide":7,"text":"架构与交付体系","textPreview":"架构与交付体系","textChars":7,"textLines":1,"bbox":[212,297,300,30]}
+{"kind":"textbox","id":"sh/m94fu18j","slide":7,"text":"展开 Lucky、资料库、空间、场景模板，以及组合交付、套餐和租户。","textPreview":"展开 Lucky、资料库、空间、场景模板，以及组合交付、套餐和租户。","textChars":34,"textLines":1,"bbox":[540,299,610,28]}
+{"kind":"shape","id":"sh/xobm58z2","slide":7,"bbox":[82,360,1115,58]}
+{"kind":"textbox","id":"sh/83itgfml","slide":7,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[112,373,70,30]}
+{"kind":"textbox","id":"sh/fil0rqd4","slide":7,"text":"商业模式与渠道","textPreview":"商业模式与渠道","textChars":7,"textLines":1,"bbox":[212,373,300,30]}
+{"kind":"textbox","id":"sh/qxs72x4n","slide":7,"text":"说明平台、服务、资源、Token 算力和运营商渠道如何形成收入变量。","textPreview":"说明平台、服务、资源、Token 算力和运营商渠道如何形成收入变量。","textChars":34,"textLines":1,"bbox":[540,375,610,28]}
+{"kind":"shape","id":"sh/xkf6dcbu","slide":7,"bbox":[82,436,1115,58]}
+{"kind":"textbox","id":"sh/4zidonyd","slide":7,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[112,449,70,30]}
+{"kind":"textbox","id":"sh/0fepkzup","slide":7,"text":"标杆案例与场景深化","textPreview":"标杆案例与场景深化","textChars":9,"textLines":1,"bbox":[212,449,300,30]}
+{"kind":"textbox","id":"sh/p0bi9s36","slide":7,"text":"用宁波大学科学技术学院工作坊验证交付，并明确两大场景完善方向。","textPreview":"用宁波大学科学技术学院工作坊验证交付，并明确两大场景完善方向。","textChars":31,"textLines":1,"bbox":[540,451,610,28]}
+{"kind":"shape","id":"sh/i9s36hcr","slide":7,"bbox":[82,512,1115,58]}
+{"kind":"textbox","id":"sh/bulwval8","slide":7,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[112,525,70,30]}
+{"kind":"textbox","id":"sh/032lszqt","slide":7,"text":"生态、愿景与开发模式","textPreview":"生态、愿景与开发模式","textChars":10,"textLines":1,"bbox":[212,525,300,30]}
+{"kind":"textbox","id":"sh/tovahoza","slide":7,"text":"收束研习社、平台闭环、教师全场景愿景和 AI 驱动开发模式创新。","textPreview":"收束研习社、平台闭环、教师全场景愿景和 AI 驱动开发模式创新。","textChars":32,"textLines":1,"bbox":[540,527,610,28]}
+{"kind":"shape","id":"sh/ixczed8v","slide":7,"bbox":[82,610,1115,44]}
+{"kind":"textbox","id":"sh/bi9s36hc","slide":7,"text":"本节重点：把平台能力拆成可理解、可组合、可复制的产品与交付结构。","textPreview":"本节重点：把平台能力拆成可理解、可组合、可复制的产品与交付结构。","textChars":32,"textLines":1,"bbox":[112,620,1055,24]}
+{"kind":"notes","id":"nt/1nmdxq","slide":7,"text":""}
+{"kind":"slide","id":"sl/jsdfn6","slide":8,"title":"核心架构","textShapes":14}
+{"kind":"textbox","id":"sh/1orytsvu","slide":8,"text":"核心架构","textPreview":"核心架构","textChars":4,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/u18jqh0f","slide":8,"text":"Lucky、资料库和空间构成平台的核心业务架构","textPreview":"Lucky、资料库和空间构成平台的核心业务架构","textChars":23,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/jm1cfa9w","slide":8,"bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/cfa9w3m9","slide":8,"text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"shape","id":"sh/1032lszq","slide":8,"bbox":[66,238,260,290]}
+{"kind":"shape","id":"sh/u9knih4b","slide":8,"bbox":[510,238,260,290]}
+{"kind":"shape","id":"sh/judg7ads","slide":8,"bbox":[954,238,260,290]}
+{"kind":"textbox","id":"sh/cj6tovah","slide":8,"text":"资料库 / 知识库","textPreview":"资料库 / 知识库","textChars":9,"textLines":1,"bbox":[90,270,212,38]}
+{"kind":"textbox","id":"sh/54zidony","slide":8,"text":"业务资料统一沉淀，形成可检索、可复用、可问答、可生成的知识资产。","textPreview":"业务资料统一沉淀，形成可检索、可复用、可问答、可生成的知识资产。","textChars":32,"textLines":1,"bbox":[91,334,210,112]}
+{"kind":"textbox","id":"sh/t47y1kre","slide":8,"text":"知识底座","textPreview":"知识底座","textChars":4,"textLines":1,"bbox":[108,468,176,32]}
+{"kind":"textbox","id":"sh/0je9cvix","slide":8,"text":"空间","textPreview":"空间","textChars":2,"textLines":1,"bbox":[554,270,172,38]}
+{"kind":"textbox","id":"sh/byhgn29g","slide":8,"text":"承载教师培训、教研、教学和项目协作，把成员、权限、流程、工具和成果组织起来。","textPreview":"承载教师培训、教研、教学和项目协作，把成员、权限、流程、工具和成果组织起来。","textChars":38,"textLines":1,"bbox":[535,334,220,112]}
+{"kind":"textbox","id":"sh/idonyd0z","slide":8,"text":"业务载体","textPreview":"业务载体","textChars":4,"textLines":1,"bbox":[552,468,176,32]}
+{"kind":"textbox","id":"sh/tcj6tova","slide":8,"text":"Lucky 智能体","textPreview":"Lucky 智能体","textChars":9,"textLines":1,"bbox":[990,270,188,38]}
+{"kind":"textbox","id":"sh/0rqd4vmt","slide":8,"text":"可独立使用，也可导入空间，为不同角色提供问答、生成、分析和任务辅助。","textPreview":"可独立使用，也可导入空间，为不同角色提供问答、生成、分析和任务辅助。","textChars":34,"textLines":1,"bbox":[980,334,210,112]}
+{"kind":"textbox","id":"sh/b6xkf6dc","slide":8,"text":"智能引擎","textPreview":"智能引擎","textChars":4,"textLines":1,"bbox":[996,468,176,32]}
+{"kind":"shape","id":"sh/il0rqd4v","slide":8,"bbox":[360,351,112,40]}
+{"kind":"shape","id":"sh/tovahoza","slide":8,"bbox":[804,351,112,40]}
+{"kind":"textbox","id":"sh/032lszqt","slide":8,"text":"资料进入业务","textPreview":"资料进入业务","textChars":6,"textLines":1,"bbox":[353,402,126,28]}
+{"kind":"textbox","id":"sh/czed8v6p","slide":8,"text":"AI 赋能角色","textPreview":"AI 赋能角色","textChars":7,"textLines":1,"bbox":[797,402,126,28]}
+{"kind":"notes","id":"nt/jsdfn6","slide":8,"text":""}
+{"kind":"slide","id":"sl/rewdf0","slide":9,"title":"场景模板","textShapes":17}
+{"kind":"textbox","id":"sh/6dcbulwv","slide":9,"text":"场景模板","textPreview":"场景模板","textChars":4,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/d4vmtwra","slide":9,"text":"空间先把业务组件化，场景模板再把组件装配成垂直业务","textPreview":"空间先把业务组件化，场景模板再把组件装配成垂直业务","textChars":25,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/oj2t83it","slide":9,"bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/vmtwra5g","slide":9,"text":"09","textPreview":"09","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"shape","id":"sh/61032lsz","slide":9,"bbox":[55,235,202,70]}
+{"kind":"textbox","id":"sh/dsji5sne","slide":9,"text":"业务抽象","textPreview":"业务抽象","textChars":4,"textLines":1,"bbox":[65,241,182,58]}
+{"kind":"shape","id":"sh/o7qpg3ex","slide":9,"bbox":[285,252,70,36]}
+{"kind":"shape","id":"sh/vahoza1g","slide":9,"bbox":[382,235,202,70]}
+{"kind":"textbox","id":"sh/6tovahoz","slide":9,"text":"组件化","textPreview":"组件化","textChars":3,"textLines":1,"bbox":[392,241,182,58]}
+{"kind":"shape","id":"sh/c3ylc7u5","slide":9,"bbox":[612,252,70,36]}
+{"kind":"shape","id":"sh/1kre1w7m","slide":9,"bbox":[709,235,202,70]}
+{"kind":"textbox","id":"sh/uxc3ylc7","slide":9,"text":"场景模板","textPreview":"场景模板","textChars":4,"textLines":1,"bbox":[719,241,182,58]}
+{"kind":"shape","id":"sh/ji5snelo","slide":9,"bbox":[939,252,70,36]}
+{"kind":"shape","id":"sh/crmhk3q5","slide":9,"bbox":[1036,235,202,70]}
+{"kind":"textbox","id":"sh/1cfa9w3m","slide":9,"text":"垂直业务","textPreview":"垂直业务","textChars":4,"textLines":1,"bbox":[1046,241,182,58]}
+{"kind":"textbox","id":"sh/ulwval87","slide":9,"text":"空间的抽象是为了应对多类业务，把资料、任务、角色、权限、工具、协同、评价和智能体能力沉淀为可复用组件。","textPreview":"空间的抽象是为了应对多类业务，把资料、任务、角色、权限、工具、协同、评价和智能体能力沉淀为可复用组件。","textChars":51,"textLines":1,"bbox":[73,353,500,90]}
+{"kind":"textbox","id":"sh/j6tovaho","slide":9,"text":"场景模板是组装过程，把通用组件按照教师培训、教研、教学、工作室、工作坊等场景预配置，形成可复制的业务空间。","textPreview":"场景模板是组装过程，把通用组件按照教师培训、教研、教学、工作室、工作坊等场景预配置，形成可复制的业务空间。","textChars":53,"textLines":1,"bbox":[707,353,500,90]}
+{"kind":"shape","id":"sh/8nqxs72x","slide":9,"bbox":[77,515,102,42]}
+{"kind":"textbox","id":"sh/18jqh0fe","slide":9,"text":"资料","textPreview":"资料","textChars":2,"textLines":1,"bbox":[87,521,82,30]}
+{"kind":"shape","id":"sh/1032lszq","slide":9,"bbox":[217,515,102,42]}
+{"kind":"textbox","id":"sh/cfa9w3m9","slide":9,"text":"任务","textPreview":"任务","textChars":2,"textLines":1,"bbox":[227,521,82,30]}
+{"kind":"shape","id":"sh/judg7ads","slide":9,"bbox":[357,515,102,42]}
+{"kind":"textbox","id":"sh/u9knih4b","slide":9,"text":"角色","textPreview":"角色","textChars":2,"textLines":1,"bbox":[367,521,82,30]}
+{"kind":"shape","id":"sh/1orytsvu","slide":9,"bbox":[497,515,102,42]}
+{"kind":"textbox","id":"sh/c7u54zid","slide":9,"text":"权限","textPreview":"权限","textChars":2,"textLines":1,"bbox":[507,521,82,30]}
+{"kind":"shape","id":"sh/jm1cfa9w","slide":9,"bbox":[637,515,102,42]}
+{"kind":"textbox","id":"sh/u18jqh0f","slide":9,"text":"工具","textPreview":"工具","textChars":2,"textLines":1,"bbox":[647,521,82,30]}
+{"kind":"shape","id":"sh/5gbq1ory","slide":9,"bbox":[777,515,102,42]}
+{"kind":"textbox","id":"sh/cvixczed","slide":9,"text":"协同","textPreview":"协同","textChars":2,"textLines":1,"bbox":[787,521,82,30]}
+{"kind":"shape","id":"sh/mtwra5gb","slide":9,"bbox":[917,515,102,42]}
+{"kind":"textbox","id":"sh/fepkzupw","slide":9,"text":"评价","textPreview":"评价","textChars":2,"textLines":1,"bbox":[927,521,82,30]}
+{"kind":"shape","id":"sh/4zidonyd","slide":9,"bbox":[1057,515,102,42]}
+{"kind":"textbox","id":"sh/xkf6dcbu","slide":9,"text":"智能体","textPreview":"智能体","textChars":3,"textLines":1,"bbox":[1067,521,82,30]}
+{"kind":"notes","id":"nt/rewdf0","slide":9,"text":""}
+{"kind":"slide","id":"sl/dvp6eh","slide":10,"title":"组合交付","textShapes":13}
+{"kind":"textbox","id":"sh/tcj6tova","slide":10,"text":"组合交付","textPreview":"组合交付","textChars":4,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/il0rqd4v","slide":10,"text":"平台能力可以按客户成熟度组合成多种交付形态","textPreview":"平台能力可以按客户成熟度组合成多种交付形态","textChars":21,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/b6xkf6dc","slide":10,"bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/0je9cvix","slide":10,"text":"10","textPreview":"10","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"shape","id":"sh/t47y1kre","slide":10,"bbox":[41,214,260,322]}
+{"kind":"textbox","id":"sh/idonyd0z","slide":10,"text":"Lucky","textPreview":"Lucky","textChars":5,"textLines":1,"bbox":[65,238,212,36]}
+{"kind":"textbox","id":"sh/byhgn29g","slide":10,"text":"独立智能体平台\n适合智能助理、账号订阅、模型能力调用等交付。","textPreview":"独立智能体平台 | 适合智能助理、账号订阅、模型能力调用等交付。","textChars":30,"textLines":2,"bbox":[65,286,212,230]}
+{"kind":"shape","id":"sh/0fepkzup","slide":10,"bbox":[341,214,260,322]}
+{"kind":"textbox","id":"sh/p0bi9s36","slide":10,"text":"Lucky + 资料库","textPreview":"Lucky + 资料库","textChars":11,"textLines":1,"bbox":[365,238,212,36]}
+{"kind":"textbox","id":"sh/x0nuxc3y","slide":10,"text":"形成私域知识服务\n适合知识库问答、智能资料库、机构知识助手。","textPreview":"形成私域知识服务 | 适合知识库问答、智能资料库、机构知识助手。","textChars":30,"textLines":2,"bbox":[365,286,212,230]}
+{"kind":"shape","id":"sh/4fu18jqh","slide":10,"bbox":[641,214,260,322]}
+{"kind":"textbox","id":"sh/fu18jqh0","slide":10,"text":"Lucky + 资料库 + 空间","textPreview":"Lucky + 资料库 + 空间","textChars":16,"textLines":1,"bbox":[665,238,212,36]}
+{"kind":"textbox","id":"sh/m94fu18j","slide":10,"text":"形成 AI 原生业务平台\n承载培训、教研、教学和项目协作过程。","textPreview":"形成 AI 原生业务平台 | 承载培训、教研、教学和项目协作过程。","textChars":31,"textLines":2,"bbox":[665,286,212,230]}
+{"kind":"shape","id":"sh/xobm58z2","slide":10,"bbox":[941,214,260,322]}
+{"kind":"textbox","id":"sh/83itgfml","slide":10,"text":"再叠加场景模板","textPreview":"再叠加场景模板","textChars":7,"textLines":1,"bbox":[965,238,212,36]}
+{"kind":"textbox","id":"sh/fil0rqd4","slide":10,"text":"生成多种垂直方案\n面向工作室、工作坊、校本研修、区域教师发展等业务。","textPreview":"生成多种垂直方案 | 面向工作室、工作坊、校本研修、区域教师发展等业务。","textChars":34,"textLines":2,"bbox":[965,286,212,230]}
+{"kind":"textbox","id":"sh/qxs72x4n","slide":10,"text":"这些组合都可以支持相应的商业模式交付。","textPreview":"这些组合都可以支持相应的商业模式交付。","textChars":19,"textLines":1,"bbox":[41,580,780,38]}
+{"kind":"textbox","id":"sh/xkf6dcbu","slide":10,"text":"从工具平台到业务平台，再到场景解决方案，交付深度逐级增加。","textPreview":"从工具平台到业务平台，再到场景解决方案，交付深度逐级增加。","textChars":29,"textLines":1,"bbox":[657,584,540,34]}
+{"kind":"notes","id":"nt/dvp6eh","slide":10,"text":""}
+{"kind":"slide","id":"sl/adztoa","slide":11,"title":"产品化交付","textShapes":10}
+{"kind":"textbox","id":"sh/nyd0z610","slide":11,"text":"产品化交付","textPreview":"产品化交付","textChars":5,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/cj6tovah","slide":11,"text":"解决方案、套餐和租户把平台能力转化为可销售的交付体系","textPreview":"解决方案、套餐和租户把平台能力转化为可销售的交付体系","textChars":26,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/54zidony","slide":11,"bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/upwb2hwf","slide":11,"text":"11","textPreview":"11","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"shape","id":"sh/nap4r65w","slide":11,"bbox":[41,214,340,332]}
+{"kind":"textbox","id":"sh/cvixczed","slide":11,"text":"解决方案","textPreview":"解决方案","textChars":4,"textLines":1,"bbox":[65,238,292,36]}
+{"kind":"textbox","id":"sh/5gbq1ory","slide":11,"text":"面向教师培训、教研共同体、校本研修、课堂教学支持等业务，封装场景、流程、资料、角色和智能体能力。","textPreview":"面向教师培训、教研共同体、校本研修、课堂教学支持等业务，封装场景、流程、资料、角色和智能体能力。","textChars":48,"textLines":1,"bbox":[65,286,292,240]}
+{"kind":"shape","id":"sh/u18jqh0f","slide":11,"bbox":[470,214,340,332]}
+{"kind":"textbox","id":"sh/jm1cfa9w","slide":11,"text":"套餐","textPreview":"套餐","textChars":2,"textLines":1,"bbox":[494,238,292,36]}
+{"kind":"textbox","id":"sh/b6xkf6dc","slide":11,"text":"把功能、容量、用户规模、空间数量、智能体能力、数据分析和服务等级组合为标准化售卖形态。","textPreview":"把功能、容量、用户规模、空间数量、智能体能力、数据分析和服务等级组合为标准化售卖形态。","textChars":43,"textLines":1,"bbox":[494,286,292,240]}
+{"kind":"shape","id":"sh/il0rqd4v","slide":11,"bbox":[899,214,340,332]}
+{"kind":"textbox","id":"sh/tcj6tova","slide":11,"text":"租户","textPreview":"租户","textChars":2,"textLines":1,"bbox":[923,238,292,36]}
+{"kind":"textbox","id":"sh/0rqd4vmt","slide":11,"text":"面向教育局、学校、培训机构或项目单位建立独立运营单元，实现数据隔离、权限独立和统一运维。","textPreview":"面向教育局、学校、培训机构或项目单位建立独立运营单元，实现数据隔离、权限独立和统一运维。","textChars":44,"textLines":1,"bbox":[923,286,292,240]}
+{"kind":"textbox","id":"sh/byhgn29g","slide":11,"text":"解决方案定义业务价值，套餐定义付费组合，租户承载客户运营。","textPreview":"解决方案定义业务价值，套餐定义付费组合，租户承载客户运营。","textChars":29,"textLines":1,"bbox":[41,588,850,36]}
+{"kind":"notes","id":"nt/adztoa","slide":11,"text":""}
+{"kind":"slide","id":"sl/d3gen8","slide":12,"title":"章节目录","textShapes":20}
+{"kind":"textbox","id":"sh/7adsji5s","slide":12,"text":"章节目录","textPreview":"章节目录","textChars":4,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/wval87ed","slide":12,"text":"章节目录：03 商业模式与渠道","textPreview":"章节目录：03 商业模式与渠道","textChars":15,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/pg3ex0nu","slide":12,"bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/e1w7mp0b","slide":12,"text":"12","textPreview":"12","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"textbox","id":"sh/7mp0bi9s","slide":12,"text":"当前位置","textPreview":"当前位置","textChars":4,"textLines":1,"bbox":[41,176,160,30]}
+{"kind":"shape","id":"sh/w7mp0bi9","slide":12,"bbox":[82,208,1115,58]}
+{"kind":"textbox","id":"sh/psfil0rq","slide":12,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[112,221,70,30]}
+{"kind":"textbox","id":"sh/ed8bat47","slide":12,"text":"平台定位与价值","textPreview":"平台定位与价值","textChars":7,"textLines":1,"bbox":[212,221,300,30]}
+{"kind":"textbox","id":"sh/7u54zido","slide":12,"text":"说明通答为什么是 AI 原生业务底座，以及平台建设初衷和核心价值。","textPreview":"说明通答为什么是 AI 原生业务底座，以及平台建设初衷和核心价值。","textChars":33,"textLines":1,"bbox":[540,223,610,28]}
+{"kind":"shape","id":"sh/3q5o7qpg","slide":12,"bbox":[82,284,1115,58]}
+{"kind":"textbox","id":"sh/e9cvixcz","slide":12,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[112,297,70,30]}
+{"kind":"textbox","id":"sh/lwval87e","slide":12,"text":"架构与交付体系","textPreview":"架构与交付体系","textChars":7,"textLines":1,"bbox":[212,297,300,30]}
+{"kind":"textbox","id":"sh/wb2hwfyx","slide":12,"text":"展开 Lucky、资料库、空间、场景模板，以及组合交付、套餐和租户。","textPreview":"展开 Lucky、资料库、空间、场景模板，以及组合交付、套餐和租户。","textChars":34,"textLines":1,"bbox":[540,299,610,28]}
+{"kind":"shape","id":"sh/3itgfmlk","slide":12,"bbox":[82,360,1115,58]}
+{"kind":"textbox","id":"sh/ex0nuxc3","slide":12,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[112,373,70,30]}
+{"kind":"textbox","id":"sh/loj2t83i","slide":12,"text":"商业模式与渠道","textPreview":"商业模式与渠道","textChars":7,"textLines":1,"bbox":[212,373,300,30]}
+{"kind":"textbox","id":"sh/w3m94fu1","slide":12,"text":"说明平台、服务、资源、Token 算力和运营商渠道如何形成收入变量。","textPreview":"说明平台、服务、资源、Token 算力和运营商渠道如何形成收入变量。","textChars":34,"textLines":1,"bbox":[540,375,610,28]}
+{"kind":"shape","id":"sh/3ex0nuxc","slide":12,"bbox":[82,436,1115,58]}
+{"kind":"textbox","id":"sh/at47y1kr","slide":12,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[112,449,70,30]}
+{"kind":"textbox","id":"sh/ixczed8v","slide":12,"text":"标杆案例与场景深化","textPreview":"标杆案例与场景深化","textChars":9,"textLines":1,"bbox":[212,449,300,30]}
+{"kind":"textbox","id":"sh/bi9s36hc","slide":12,"text":"用宁波大学科学技术学院工作坊验证交付，并明确两大场景完善方向。","textPreview":"用宁波大学科学技术学院工作坊验证交付，并明确两大场景完善方向。","textChars":31,"textLines":1,"bbox":[540,451,610,28]}
+{"kind":"shape","id":"sh/032lszqt","slide":12,"bbox":[82,512,1115,58]}
+{"kind":"textbox","id":"sh/tovahoza","slide":12,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[112,525,70,30]}
+{"kind":"textbox","id":"sh/i9s36hcr","slide":12,"text":"生态、愿景与开发模式","textPreview":"生态、愿景与开发模式","textChars":10,"textLines":1,"bbox":[212,525,300,30]}
+{"kind":"textbox","id":"sh/bulwval8","slide":12,"text":"收束研习社、平台闭环、教师全场景愿景和 AI 驱动开发模式创新。","textPreview":"收束研习社、平台闭环、教师全场景愿景和 AI 驱动开发模式创新。","textChars":32,"textLines":1,"bbox":[540,527,610,28]}
+{"kind":"shape","id":"sh/0fepkzup","slide":12,"bbox":[82,610,1115,44]}
+{"kind":"textbox","id":"sh/p0bi9s36","slide":12,"text":"本节重点：把 AI 算力消耗转化为可计量、可运营、可合作的商业空间。","textPreview":"本节重点：把 AI 算力消耗转化为可计量、可运营、可合作的商业空间。","textChars":34,"textLines":1,"bbox":[112,620,1055,24]}
+{"kind":"notes","id":"nt/d3gen8","slide":12,"text":""}
+{"kind":"slide","id":"sl/rflhcx","slide":13,"title":"商业模式","textShapes":12}
+{"kind":"textbox","id":"sh/vu9knih4","slide":13,"text":"商业模式","textPreview":"商业模式","textChars":4,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/kf6dcbul","slide":13,"text":"平台、服务、资源和算力是商业付费模式的四类变量","textPreview":"平台、服务、资源和算力是商业付费模式的四类变量","textChars":23,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/d0z61032","slide":13,"bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/2lszqtcj","slide":13,"text":"13","textPreview":"13","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"shape","id":"sh/v6psfil0","slide":13,"bbox":[41,216,260,206]}
+{"kind":"textbox","id":"sh/knih4byh","slide":13,"text":"平台","textPreview":"平台","textChars":2,"textLines":1,"bbox":[65,240,212,36]}
+{"kind":"textbox","id":"sh/d8bat47y","slide":13,"text":"账号、租户、空间、功能模块、场景模板。","textPreview":"账号、租户、空间、功能模块、场景模板。","textChars":19,"textLines":1,"bbox":[65,288,212,114]}
+{"kind":"shape","id":"sh/6psfil0r","slide":13,"bbox":[341,216,260,206]}
+{"kind":"textbox","id":"sh/val87ed8","slide":13,"text":"服务","textPreview":"服务","textChars":2,"textLines":1,"bbox":[365,240,212,36]}
+{"kind":"textbox","id":"sh/judg7ads","slide":13,"text":"方案设计、场景配置、培训辅导、运营支持、数据分析。","textPreview":"方案设计、场景配置、培训辅导、运营支持、数据分析。","textChars":25,"textLines":1,"bbox":[365,288,212,114]}
+{"kind":"shape","id":"sh/u9knih4b","slide":13,"bbox":[641,216,260,206]}
+{"kind":"textbox","id":"sh/1032lszq","slide":13,"text":"资源","textPreview":"资源","textChars":2,"textLines":1,"bbox":[665,240,212,36]}
+{"kind":"textbox","id":"sh/cfa9w3m9","slide":13,"text":"课程资源、案例资源、专题包、培训资源、教研资源。","textPreview":"课程资源、案例资源、专题包、培训资源、教研资源。","textChars":24,"textLines":1,"bbox":[665,288,212,114]}
+{"kind":"shape","id":"sh/jm1cfa9w","slide":13,"bbox":[941,216,260,206]}
+{"kind":"textbox","id":"sh/u18jqh0f","slide":13,"text":"算力","textPreview":"算力","textChars":2,"textLines":1,"bbox":[965,240,212,36]}
+{"kind":"textbox","id":"sh/1orytsvu","slide":13,"text":"以 Token 为核心，计量模型调用和 AI 能力消耗。","textPreview":"以 Token 为核心，计量模型调用和 AI 能力消耗。","textChars":28,"textLines":1,"bbox":[965,288,212,114]}
+{"kind":"shape","id":"sh/c7u54zid","slide":13,"bbox":[41,500,1197,80]}
+{"kind":"textbox","id":"sh/nap4r65w","slide":13,"text":"商业设计可以采用“部分免费 + 部分付费”的组合策略：通答 AI 原生底座和应用场景，让 Token 付费模式成立，并可被套餐、租户和场景方案承接为收入变量。","textPreview":"商业设计可以采用“部分免费 + 部分付费”的组合策略：通答 AI 原生底座和应用场景，让 Token 付费模式成立，并可被套餐、租户和场景方案承接为收入变量。","textChars":79,"textLines":1,"bbox":[72,514,1135,54]}
+{"kind":"notes","id":"nt/rflhcx","slide":13,"text":""}
+{"kind":"slide","id":"sl/8di28c","slide":14,"title":"Token 算力","textShapes":14}
+{"kind":"textbox","id":"sh/k3q5o7qp","slide":14,"text":"Token 算力","textPreview":"Token 算力","textChars":8,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/vixczed8","slide":14,"text":"Token 模式把 AI 算力从技术消耗变成可运营的商业资源","textPreview":"Token 模式把 AI 算力从技术消耗变成可运营的商业资源","textChars":30,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/2x4nap4r","slide":14,"bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/dcbulwva","slide":14,"text":"14","textPreview":"14","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"shape","id":"sh/kre1w7mp","slide":14,"bbox":[61,246,170,64]}
+{"kind":"textbox","id":"sh/val87ed8","slide":14,"text":"AI 调用","textPreview":"AI 调用","textChars":5,"textLines":1,"bbox":[71,252,150,52]}
+{"kind":"shape","id":"sh/6psfil0r","slide":14,"bbox":[258,260,74,36]}
+{"kind":"shape","id":"sh/d8bat47y","slide":14,"bbox":[360,246,190,64]}
+{"kind":"textbox","id":"sh/knih4byh","slide":14,"text":"Token 消耗","textPreview":"Token 消耗","textChars":8,"textLines":1,"bbox":[370,252,170,52]}
+{"kind":"shape","id":"sh/uxc3ylc7","slide":14,"bbox":[578,260,74,36]}
+{"kind":"shape","id":"sh/ji5snelo","slide":14,"bbox":[680,246,190,64]}
+{"kind":"textbox","id":"sh/c3ylc7u5","slide":14,"text":"模型统计","textPreview":"模型统计","textChars":4,"textLines":1,"bbox":[690,252,170,52]}
+{"kind":"shape","id":"sh/1kre1w7m","slide":14,"bbox":[898,260,74,36]}
+{"kind":"shape","id":"sh/ulwval87","slide":14,"bbox":[1000,246,190,64]}
+{"kind":"textbox","id":"sh/j6tovaho","slide":14,"text":"算力付费","textPreview":"算力付费","textChars":4,"textLines":1,"bbox":[1010,252,170,52]}
+{"kind":"textbox","id":"sh/crmhk3q5","slide":14,"text":"通答通过模型统计模块提供技术支撑，把 AI 调用、Token 消耗和业务维度连接起来，为计量、成本核算、套餐设计、用量预警、客户对账和商业定价提供基础。","textPreview":"通答通过模型统计模块提供技术支撑，把 AI 调用、Token 消耗和业务维度连接起来，为计量、成本核算、套餐设计、用量预警、客户对账和商业定价提供基础。","textChars":76,"textLines":1,"bbox":[110,372,1060,92]}
+{"kind":"shape","id":"sh/1cfa9w3m","slide":14,"bbox":[250,516,105,42]}
+{"kind":"textbox","id":"sh/qh0fepkz","slide":14,"text":"租户","textPreview":"租户","textChars":2,"textLines":1,"bbox":[260,522,85,30]}
+{"kind":"shape","id":"sh/j2t83itg","slide":14,"bbox":[410,516,105,42]}
+{"kind":"textbox","id":"sh/bq1oryts","slide":14,"text":"用户","textPreview":"用户","textChars":2,"textLines":1,"bbox":[420,522,85,30]}
+{"kind":"shape","id":"sh/m58z25kb","slide":14,"bbox":[570,516,105,42]}
+{"kind":"textbox","id":"sh/twra5gbq","slide":14,"text":"空间","textPreview":"空间","textChars":2,"textLines":1,"bbox":[580,522,85,30]}
+{"kind":"shape","id":"sh/4byhgn29","slide":14,"bbox":[730,516,105,42]}
+{"kind":"textbox","id":"sh/b2hwfyxo","slide":14,"text":"智能体","textPreview":"智能体","textChars":3,"textLines":1,"bbox":[740,522,85,30]}
+{"kind":"shape","id":"sh/mhk3q5o7","slide":14,"bbox":[890,516,105,42]}
+{"kind":"textbox","id":"sh/t83itgfm","slide":14,"text":"场景","textPreview":"场景","textChars":2,"textLines":1,"bbox":[900,522,85,30]}
+{"kind":"textbox","id":"sh/4nap4r65","slide":14,"text":"统计维度覆盖租户、用户、空间、智能体和场景，确保算力付费有记录、有归属、可核算、可结算。","textPreview":"统计维度覆盖租户、用户、空间、智能体和场景，确保算力付费有记录、有归属、可核算、可结算。","textChars":44,"textLines":1,"bbox":[272,574,740,32]}
+{"kind":"notes","id":"nt/8di28c","slide":14,"text":""}
+{"kind":"slide","id":"sl/61o9e8","slide":15,"title":"渠道模式","textShapes":12}
+{"kind":"textbox","id":"sh/mhk3q5o7","slide":15,"text":"渠道模式","textPreview":"渠道模式","textChars":4,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/t83itgfm","slide":15,"text":"运营商渠道可以把教育 AI 场景转化为持续算力收入","textPreview":"运营商渠道可以把教育 AI 场景转化为持续算力收入","textChars":25,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/4nap4r65","slide":15,"bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/bq1oryts","slide":15,"text":"15","textPreview":"15","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"shape","id":"sh/m58z25kb","slide":15,"bbox":[41,230,280,250]}
+{"kind":"textbox","id":"sh/twra5gbq","slide":15,"text":"通答","textPreview":"通答","textChars":2,"textLines":1,"bbox":[65,254,232,36]}
+{"kind":"textbox","id":"sh/4byhgn29","slide":15,"text":"提供 AI 原生平台、教育场景、运营服务和解决方案。","textPreview":"提供 AI 原生平台、教育场景、运营服务和解决方案。","textChars":26,"textLines":1,"bbox":[65,302,232,158]}
+{"kind":"shape","id":"sh/bm58z25k","slide":15,"bbox":[354,330,82,42]}
+{"kind":"shape","id":"sh/m1cfa9w3","slide":15,"bbox":[470,230,280,250]}
+{"kind":"textbox","id":"sh/cfa9w3m9","slide":15,"text":"运营商","textPreview":"运营商","textChars":3,"textLines":1,"bbox":[494,254,232,36]}
+{"kind":"textbox","id":"sh/1032lszq","slide":15,"text":"提供算力、云网、宽带客户关系和区域学校覆盖。","textPreview":"提供算力、云网、宽带客户关系和区域学校覆盖。","textChars":22,"textLines":1,"bbox":[494,302,232,158]}
+{"kind":"shape","id":"sh/u9knih4b","slide":15,"bbox":[784,330,82,42]}
+{"kind":"shape","id":"sh/judg7ads","slide":15,"bbox":[900,230,280,250]}
+{"kind":"textbox","id":"sh/c7u54zid","slide":15,"text":"区域学校","textPreview":"区域学校","textChars":4,"textLines":1,"bbox":[924,254,232,36]}
+{"kind":"textbox","id":"sh/1orytsvu","slide":15,"text":"把 AI 算力作为宽带和教育信息化服务的补充，采购路径更容易操作。","textPreview":"把 AI 算力作为宽带和教育信息化服务的补充，采购路径更容易操作。","textChars":33,"textLines":1,"bbox":[924,302,232,158]}
+{"kind":"textbox","id":"sh/u18jqh0f","slide":15,"text":"合作逻辑","textPreview":"合作逻辑","textChars":4,"textLines":1,"bbox":[41,537,132,30]}
+{"kind":"textbox","id":"sh/jm1cfa9w","slide":15,"text":"通答向运营商收取平台费和服务费；运营商利用渠道优势向最终学校用户收取算力费用。","textPreview":"通答向运营商收取平台费和服务费；运营商利用渠道优势向最终学校用户收取算力费用。","textChars":39,"textLines":1,"bbox":[182,533,828,42]}
+{"kind":"textbox","id":"sh/cvixczed","slide":15,"text":"适用于福州电信等区域合作试点。","textPreview":"适用于福州电信等区域合作试点。","textChars":15,"textLines":1,"bbox":[1002,536,236,34]}
+{"kind":"notes","id":"nt/61o9e8","slide":15,"text":""}
+{"kind":"slide","id":"sl/k85sq3","slide":16,"title":"章节目录","textShapes":20}
+{"kind":"textbox","id":"sh/val87ed8","slide":16,"text":"章节目录","textPreview":"章节目录","textChars":4,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/kre1w7mp","slide":16,"text":"章节目录：04 标杆案例与场景深化","textPreview":"章节目录：04 标杆案例与场景深化","textChars":17,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/dcbulwva","slide":16,"bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/2x4nap4r","slide":16,"text":"16","textPreview":"16","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"textbox","id":"sh/vixczed8","slide":16,"text":"当前位置","textPreview":"当前位置","textChars":4,"textLines":1,"bbox":[41,176,160,30]}
+{"kind":"shape","id":"sh/k3q5o7qp","slide":16,"bbox":[82,208,1115,58]}
+{"kind":"textbox","id":"sh/donyd0z6","slide":16,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[112,221,70,30]}
+{"kind":"textbox","id":"sh/29gr2p8n","slide":16,"text":"平台定位与价值","textPreview":"平台定位与价值","textChars":7,"textLines":1,"bbox":[212,221,300,30]}
+{"kind":"textbox","id":"sh/vu9knih4","slide":16,"text":"说明通答为什么是 AI 原生业务底座，以及平台建设初衷和核心价值。","textPreview":"说明通答为什么是 AI 原生业务底座，以及平台建设初衷和核心价值。","textChars":33,"textLines":1,"bbox":[540,223,610,28]}
+{"kind":"shape","id":"sh/3ylc7u54","slide":16,"bbox":[82,284,1115,58]}
+{"kind":"textbox","id":"sh/adsji5sn","slide":16,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[112,297,70,30]}
+{"kind":"textbox","id":"sh/h4byhgn2","slide":16,"text":"架构与交付体系","textPreview":"架构与交付体系","textChars":7,"textLines":1,"bbox":[212,297,300,30]}
+{"kind":"textbox","id":"sh/sji5snel","slide":16,"text":"展开 Lucky、资料库、空间、场景模板，以及组合交付、套餐和租户。","textPreview":"展开 Lucky、资料库、空间、场景模板，以及组合交付、套餐和租户。","textChars":34,"textLines":1,"bbox":[540,299,610,28]}
+{"kind":"shape","id":"sh/3m94fu18","slide":16,"bbox":[82,360,1115,58]}
+{"kind":"textbox","id":"sh/a5gbq1or","slide":16,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[112,373,70,30]}
+{"kind":"textbox","id":"sh/lszqtcj6","slide":16,"text":"商业模式与渠道","textPreview":"商业模式与渠道","textChars":7,"textLines":1,"bbox":[212,373,300,30]}
+{"kind":"textbox","id":"sh/s72x4nap","slide":16,"text":"说明平台、服务、资源、Token 算力和运营商渠道如何形成收入变量。","textPreview":"说明平台、服务、资源、Token 算力和运营商渠道如何形成收入变量。","textChars":34,"textLines":1,"bbox":[540,375,610,28]}
+{"kind":"shape","id":"sh/zidonyd0","slide":16,"bbox":[82,436,1115,58]}
+{"kind":"textbox","id":"sh/a1gvy90j","slide":16,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[112,449,70,30]}
+{"kind":"textbox","id":"sh/ylc7u54z","slide":16,"text":"标杆案例与场景深化","textPreview":"标杆案例与场景深化","textChars":9,"textLines":1,"bbox":[212,449,300,30]}
+{"kind":"textbox","id":"sh/r65wjudg","slide":16,"text":"用宁波大学科学技术学院工作坊验证交付，并明确两大场景完善方向。","textPreview":"用宁波大学科学技术学院工作坊验证交付，并明确两大场景完善方向。","textChars":31,"textLines":1,"bbox":[540,451,610,28]}
+{"kind":"shape","id":"sh/gr2p8nqx","slide":16,"bbox":[82,512,1115,58]}
+{"kind":"textbox","id":"sh/9cvixcze","slide":16,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[112,525,70,30]}
+{"kind":"textbox","id":"sh/yxobm58z","slide":16,"text":"生态、愿景与开发模式","textPreview":"生态、愿景与开发模式","textChars":10,"textLines":1,"bbox":[212,525,300,30]}
+{"kind":"textbox","id":"sh/nih4byhg","slide":16,"text":"收束研习社、平台闭环、教师全场景愿景和 AI 驱动开发模式创新。","textPreview":"收束研习社、平台闭环、教师全场景愿景和 AI 驱动开发模式创新。","textChars":32,"textLines":1,"bbox":[540,527,610,28]}
+{"kind":"shape","id":"sh/g3ex0nux","slide":16,"bbox":[82,610,1115,44]}
+{"kind":"textbox","id":"sh/5o7qpg3e","slide":16,"text":"本节重点：用真实培训案例说明平台可落地，再沉淀为通识教学和培训实训两类标准场景。","textPreview":"本节重点：用真实培训案例说明平台可落地，再沉淀为通识教学和培训实训两类标准场景。","textChars":40,"textLines":1,"bbox":[112,620,1055,24]}
+{"kind":"notes","id":"nt/k85sq3","slide":16,"text":""}
+{"kind":"slide","id":"sl/iu16on","slide":17,"title":"标杆案例","textShapes":13}
+{"kind":"textbox","id":"sh/2hwfyxob","slide":17,"text":"标杆案例","textPreview":"标杆案例","textChars":4,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/94fu18jq","slide":17,"text":"宁波大学科学技术学院工作坊验证了平台的实训交付能力","textPreview":"宁波大学科学技术学院工作坊验证了平台的实训交付能力","textChars":25,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/kjm1cfa9","slide":17,"bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/ra5gbq1o","slide":17,"text":"17","textPreview":"17","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"textbox","id":"sh/2p8nqxs7","slide":17,"text":"AI 赋能中层干部管理工作坊","textPreview":"AI 赋能中层干部管理工作坊","textChars":14,"textLines":1,"bbox":[41,206,520,44]}
+{"kind":"textbox","id":"sh/9gr2p8nq","slide":17,"text":"基于通答空间实训模式、Lucky 智能体平台和资料库，对学院中层干部开展 AI 能力培训。通答平台既是本次实训授课平台载体，也是实训内容平台。","textPreview":"基于通答空间实训模式、Lucky 智能体平台和资料库，对学院中层干部开展 AI 能力培训。通答平台既是本次实训授课平台载体，也是实训内容平台。","textChars":71,"textLines":1,"bbox":[41,270,520,118]}
+{"kind":"textbox","id":"sh/gvy90je9","slide":17,"text":"实训课件由 Lucky 辅助生成，学员操作在通答平台内完成，形成内容生成、平台授课、现场实操、反馈沉淀的闭环。","textPreview":"实训课件由 Lucky 辅助生成，学员操作在通答平台内完成，形成内容生成、平台授课、现场实操、反馈沉淀的闭环。","textChars":55,"textLines":1,"bbox":[41,420,520,92]}
+{"kind":"shape","id":"sh/re1w7mp0","slide":17,"bbox":[650,214,540,82]}
+{"kind":"textbox","id":"sh/2t83itgf","slide":17,"text":"交付组合","textPreview":"交付组合","textChars":4,"textLines":1,"bbox":[680,235,150,34]}
+{"kind":"textbox","id":"sh/sneloj2t","slide":17,"text":"空间（实训模式） + Lucky 智能体平台 + 资料库","textPreview":"空间（实训模式） + Lucky 智能体平台 + 资料库","textChars":28,"textLines":1,"bbox":[830,235,326,34]}
+{"kind":"shape","id":"sh/l87ed8ba","slide":17,"bbox":[650,336,252,148]}
+{"kind":"textbox","id":"sh/ahoza1gv","slide":17,"text":"平台载体","textPreview":"平台载体","textChars":4,"textLines":1,"bbox":[674,360,204,36]}
+{"kind":"textbox","id":"sh/32lszqtc","slide":17,"text":"培训组织、实训流程和现场操作统一在空间中开展。","textPreview":"培训组织、实训流程和现场操作统一在空间中开展。","textChars":23,"textLines":1,"bbox":[674,408,204,56]}
+{"kind":"shape","id":"sh/szqtcj6t","slide":17,"bbox":[938,336,252,148]}
+{"kind":"textbox","id":"sh/lkjm1cfa","slide":17,"text":"内容平台","textPreview":"内容平台","textChars":4,"textLines":1,"bbox":[962,360,204,36]}
+{"kind":"textbox","id":"sh/at47y1kr","slide":17,"text":"课件、任务材料和实训内容由 Lucky 辅助生成。","textPreview":"课件、任务材料和实训内容由 Lucky 辅助生成。","textChars":25,"textLines":1,"bbox":[962,408,204,56]}
+{"kind":"shape","id":"sh/3ex0nuxc","slide":17,"bbox":[650,522,540,76]}
+{"kind":"textbox","id":"sh/w3m94fu1","slide":17,"text":"市场和学员反馈较好，可作为高校干部 AI 培训和管理能力提升场景的标杆案例。","textPreview":"市场和学员反馈较好，可作为高校干部 AI 培训和管理能力提升场景的标杆案例。","textChars":38,"textLines":1,"bbox":[680,541,480,38]}
+{"kind":"notes","id":"nt/iu16on","slide":17,"text":""}
+{"kind":"slide","id":"sl/by5003","slide":18,"title":"工作坊成果清单","textShapes":11}
+{"kind":"textbox","id":"sh/18jqh0fe","slide":18,"text":"工作坊成果清单","textPreview":"工作坊成果清单","textChars":7,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/qh0fepkz","slide":18,"text":"学员智能体成果集中体现招生咨询、课堂构建和课件制作三类需求","textPreview":"学员智能体成果集中体现招生咨询、课堂构建和课件制作三类需求","textChars":29,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/j2t83itg","slide":18,"bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/8bat47y1","slide":18,"text":"18","textPreview":"18","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"textbox","id":"sh/1w7mp0bi","slide":18,"text":"宁波大学科学技术学院工作坊｜学员创建智能体成果","textPreview":"宁波大学科学技术学院工作坊｜学员创建智能体成果","textChars":23,"textLines":1,"bbox":[41,190,740,34]}
+{"kind":"shape","id":"sh/q5o7qpg3","slide":18,"bbox":[41,246,360,250]}
+{"kind":"textbox","id":"sh/jqh0fepk","slide":18,"text":"招生招考类 · 36 个","textPreview":"招生招考类 · 36 个","textChars":12,"textLines":1,"bbox":[65,270,312,36]}
+{"kind":"textbox","id":"sh/c3ylc7u5","slide":18,"text":"代表智能体：招生百晓生、招生指南针、招考解码器、宁大科院招生助手、招生咨询导航、招生智囊、招生百事通、科院一点通等\n\n验证需求：咨询、导航、答疑、简章解读等高频服务","textPreview":"代表智能体：招生百晓生、招生指南针、招考解码器、宁大科院招生助手、招生咨询导航、招生智囊、招生百事通、科院一点通等 |  | 验证需求：咨询、导航、答疑、简章解读等高频服务","textChars":82,"textLines":3,"bbox":[65,318,312,158]}
+{"kind":"shape","id":"sh/1kre1w7m","slide":18,"bbox":[460,246,360,250]}
+{"kind":"textbox","id":"sh/5o7qpg3e","slide":18,"text":"课堂场景构建类 · 12 个","textPreview":"课堂场景构建类 · 12 个","textChars":14,"textLines":1,"bbox":[484,270,312,36]}
+{"kind":"textbox","id":"sh/g3ex0nux","slide":18,"text":"代表智能体：课堂场景构建师、课堂场景设计师、课堂构建师、虚拟课堂构建师、课堂创意生成器、课件互动生成器等\n\n验证需求：课堂活动、互动设计和场景搭建","textPreview":"代表智能体：课堂场景构建师、课堂场景设计师、课堂构建师、虚拟课堂构建师、课堂创意生成器、课件互动生成器等 |  | 验证需求：课堂活动、互动设计和场景搭建","textChars":73,"textLines":3,"bbox":[484,318,312,158]}
+{"kind":"shape","id":"sh/nih4byhg","slide":18,"bbox":[879,246,360,250]}
+{"kind":"textbox","id":"sh/yxobm58z","slide":18,"text":"课件制作工坊类 · 16 个","textPreview":"课件制作工坊类 · 16 个","textChars":14,"textLines":1,"bbox":[903,270,312,36]}
+{"kind":"textbox","id":"sh/9cvixcze","slide":18,"text":"代表智能体：课件编织者、课件创制工坊、课件魔方、课件智创师、课件生成师、课件互动工坊、课件交互设计师等\n\n验证需求：内容生产、课件生成和交互设计","textPreview":"代表智能体：课件编织者、课件创制工坊、课件魔方、课件智创师、课件生成师、课件互动工坊、课件交互设计师等 |  | 验证需求：内容生产、课件生成和交互设计","textChars":72,"textLines":3,"bbox":[903,318,312,158]}
+{"kind":"shape","id":"sh/gr2p8nqx","slide":18,"bbox":[41,558,1197,72]}
+{"kind":"textbox","id":"sh/r65wjudg","slide":18,"text":"三类成果说明：Lucky、资料库和空间可快速承载业务咨询、教学设计、课件生产和实训成果沉淀。","textPreview":"三类成果说明：Lucky、资料库和空间可快速承载业务咨询、教学设计、课件生产和实训成果沉淀。","textChars":46,"textLines":1,"bbox":[74,577,1130,34]}
+{"kind":"notes","id":"nt/by5003","slide":18,"text":""}
+{"kind":"slide","id":"sl/177s3i","slide":19,"title":"场景现状","textShapes":9}
+{"kind":"textbox","id":"sh/gvy90je9","slide":19,"text":"场景现状","textPreview":"场景现状","textChars":4,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/ra5gbq1o","slide":19,"text":"当前重点完善 AI 通识教学和培训实训两大场景","textPreview":"当前重点完善 AI 通识教学和培训实训两大场景","textChars":23,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/2p8nqxs7","slide":19,"bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/94fu18jq","slide":19,"text":"19","textPreview":"19","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"textbox","id":"sh/kjm1cfa9","slide":19,"text":"场景现状","textPreview":"场景现状","textChars":4,"textLines":1,"bbox":[41,198,180,32]}
+{"kind":"shape","id":"sh/r2p8nqxs","slide":19,"bbox":[41,248,560,206]}
+{"kind":"textbox","id":"sh/2hwfyxob","slide":19,"text":"AI 通识教学 + 市场对接","textPreview":"AI 通识教学 + 市场对接","textChars":14,"textLines":1,"bbox":[65,272,512,36]}
+{"kind":"textbox","id":"sh/9w3m94fu","slide":19,"text":"面向学校、区域和机构客户的人工智能素养提升需求，承接通识课程、智能体体验、教学案例和场景实践，作为平台进入客户的切入口。","textPreview":"面向学校、区域和机构客户的人工智能素养提升需求，承接通识课程、智能体体验、教学案例和场景实践，作为平台进入客户的切入口。","textChars":60,"textLines":1,"bbox":[65,320,512,114]}
+{"kind":"shape","id":"sh/kb6xkf6d","slide":19,"bbox":[678,248,560,206]}
+{"kind":"textbox","id":"sh/2p8nqxs7","slide":19,"text":"培训场景：线下实训 + 智能体平台","textPreview":"培训场景：线下实训 + 智能体平台","textChars":17,"textLines":1,"bbox":[702,272,512,36]}
+{"kind":"textbox","id":"sh/ra5gbq1o","slide":19,"text":"宁波大学科学技术学院工作坊已完成线下验证，平台承载实训授课、课件生成、智能体创建、操作练习和成果沉淀。","textPreview":"宁波大学科学技术学院工作坊已完成线下验证，平台承载实训授课、课件生成、智能体创建、操作练习和成果沉淀。","textChars":51,"textLines":1,"bbox":[702,320,512,114]}
+{"kind":"shape","id":"sh/gvy90je9","slide":19,"bbox":[41,518,1197,86]}
+{"kind":"textbox","id":"sh/9gr2p8nq","slide":19,"text":"下一步从场景验证进入产品化完善，把两大场景沉淀为标准方案、空间模板和商业化套件。","textPreview":"下一步从场景验证进入产品化完善，把两大场景沉淀为标准方案、空间模板和商业化套件。","textChars":40,"textLines":1,"bbox":[72,540,1135,40]}
+{"kind":"notes","id":"nt/177s3i","slide":19,"text":""}
+{"kind":"slide","id":"sl/7wne8b","slide":20,"title":"后续方向","textShapes":15}
+{"kind":"textbox","id":"sh/tgfmlkjm","slide":20,"text":"后续方向","textPreview":"后续方向","textChars":4,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/mp0bi9s3","slide":20,"text":"后续方向：把两大场景做深，并形成可销售的商业化套件","textPreview":"后续方向：把两大场景做深，并形成可销售的商业化套件","textChars":25,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/bat47y1k","slide":20,"bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/47y1kre1","slide":20,"text":"20","textPreview":"20","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"textbox","id":"sh/tsvu9kni","slide":20,"text":"两大场景深化","textPreview":"两大场景深化","textChars":6,"textLines":1,"bbox":[41,196,220,30]}
+{"kind":"shape","id":"sh/m1cfa9w3","slide":20,"bbox":[41,244,560,250]}
+{"kind":"textbox","id":"sh/bm58z25k","slide":20,"text":"AI 通识教学平台场景","textPreview":"AI 通识教学平台场景","textChars":11,"textLines":1,"bbox":[65,268,512,36]}
+{"kind":"textbox","id":"sh/4byhgn29","slide":20,"text":"面向学校、区域和机构客户，建设 AI 通识课程、案例资源、学习任务和智能体体验。\n资料库沉淀课程与案例，空间承载班级、项目和任务，Lucky 提供问答、辅导、生成和实践支持。\n形成课堂教学、校本培训、区域推广和市场对接的标准场景。","textPreview":"面向学校、区域和机构客户，建设 AI 通识课程、案例资源、学习任务和智能体体验。 | 资料库沉淀课程与案例，空间承载班级、项目和任务，Lucky 提供问答、辅导、生成和实践支持。 | 形成课堂教学、校本培训、区域推广和市场对接的标准场景。","textChars":115,"textLines":3,"bbox":[65,316,512,158]}
+{"kind":"shape","id":"sh/twra5gbq","slide":20,"bbox":[678,244,560,250]}
+{"kind":"textbox","id":"sh/1cfa9w3m","slide":20,"text":"培训场景：线上/线下培训 + 线上/线下实训\n智能体底座","textPreview":"培训场景：线上/线下培训 + 线上/线下实训 | 智能体底座","textChars":28,"textLines":2,"bbox":[702,264,512,60]}
+{"kind":"textbox","id":"sh/crmhk3q5","slide":20,"text":"围绕干部培训、教师培训和工作坊，形成线上/线下培训、线上/线下实训一体化交付。\n线上承载课程学习、资料分发、任务提交和过程跟踪；线下承载集中授课、实操演练和成果点评。\n智能体底座提供课件生成、助教答疑、任务辅导、智能体创建、成果评价和案例复用。","textPreview":"围绕干部培训、教师培训和工作坊，形成线上/线下培训、线上/线下实训一体化交付。 | 线上承载课程学习、资料分发、任务提交和过程跟踪；线下承载集中授课、实操演练和成果点评。 | 智能体底座提供课件生成、助教答疑、任务辅导、智能体创建、成果评价和案例复用。","textChars":122,"textLines":3,"bbox":[702,336,512,128]}
+{"kind":"shape","id":"sh/j6tovaho","slide":20,"bbox":[41,534,1197,82]}
+{"kind":"textbox","id":"sh/ulwval87","slide":20,"text":"商业化套件完善","textPreview":"商业化套件完善","textChars":7,"textLines":1,"bbox":[73,554,210,30]}
+{"kind":"textbox","id":"sh/1kre1w7m","slide":20,"text":"围绕两大场景形成“解决方案 + 套餐 + 资源包 + 场景模板 + Token算力”的交付套件，完善基础平台包、通识教学包、培训实训包、运营服务包和算力包。","textPreview":"围绕两大场景形成“解决方案 + 套餐 + 资源包 + 场景模板 + Token算力”的交付套件，完善基础平台包、通识教学包、培训实训包、运营服务包和算力包。","textChars":78,"textLines":1,"bbox":[294,546,890,48]}
+{"kind":"shape","id":"sh/c3ylc7u5","slide":20,"bbox":[139,631,150,36]}
+{"kind":"textbox","id":"sh/ji5snelo","slide":20,"text":"基础平台包","textPreview":"基础平台包","textChars":5,"textLines":1,"bbox":[149,637,130,24]}
+{"kind":"shape","id":"sh/uxc3ylc7","slide":20,"bbox":[341,631,150,36]}
+{"kind":"textbox","id":"sh/1w7mp0bi","slide":20,"text":"通识教学包","textPreview":"通识教学包","textChars":5,"textLines":1,"bbox":[351,637,130,24]}
+{"kind":"shape","id":"sh/8bat47y1","slide":20,"bbox":[543,631,150,36]}
+{"kind":"textbox","id":"sh/o7qpg3ex","slide":20,"text":"培训实训包","textPreview":"培训实训包","textChars":5,"textLines":1,"bbox":[553,637,130,24]}
+{"kind":"shape","id":"sh/dsji5sne","slide":20,"bbox":[745,631,150,36]}
+{"kind":"textbox","id":"sh/61032lsz","slide":20,"text":"运营服务包","textPreview":"运营服务包","textChars":5,"textLines":1,"bbox":[755,637,130,24]}
+{"kind":"shape","id":"sh/vmtwra5g","slide":20,"bbox":[947,631,150,36]}
+{"kind":"textbox","id":"sh/oj2t83it","slide":20,"text":"Token 算力包","textPreview":"Token 算力包","textChars":9,"textLines":1,"bbox":[957,637,130,24]}
+{"kind":"notes","id":"nt/7wne8b","slide":20,"text":""}
+{"kind":"slide","id":"sl/87cc91","slide":21,"title":"章节目录","textShapes":20}
+{"kind":"textbox","id":"sh/9cvixcze","slide":21,"text":"章节目录","textPreview":"章节目录","textChars":4,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/ylc7u54z","slide":21,"text":"章节目录：05 生态、愿景与开发模式","textPreview":"章节目录：05 生态、愿景与开发模式","textChars":18,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/r65wjudg","slide":21,"bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/g3ex0nux","slide":21,"text":"21","textPreview":"21","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"textbox","id":"sh/5o7qpg3e","slide":21,"text":"当前位置","textPreview":"当前位置","textChars":4,"textLines":1,"bbox":[41,176,160,30]}
+{"kind":"shape","id":"sh/yxobm58z","slide":21,"bbox":[82,208,1115,58]}
+{"kind":"textbox","id":"sh/nih4byhg","slide":21,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[112,221,70,30]}
+{"kind":"textbox","id":"sh/g7adsji5","slide":21,"text":"平台定位与价值","textPreview":"平台定位与价值","textChars":7,"textLines":1,"bbox":[212,221,300,30]}
+{"kind":"textbox","id":"sh/9s36hcrm","slide":21,"text":"说明通答为什么是 AI 原生业务底座，以及平台建设初衷和核心价值。","textPreview":"说明通答为什么是 AI 原生业务底座，以及平台建设初衷和核心价值。","textChars":33,"textLines":1,"bbox":[540,223,610,28]}
+{"kind":"shape","id":"sh/d8v6psfi","slide":21,"bbox":[82,284,1115,58]}
+{"kind":"textbox","id":"sh/onyd0z61","slide":21,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[112,297,70,30]}
+{"kind":"textbox","id":"sh/z25kb6xk","slide":21,"text":"架构与交付体系","textPreview":"架构与交付体系","textChars":7,"textLines":1,"bbox":[212,297,300,30]}
+{"kind":"textbox","id":"sh/6hcrmhk3","slide":21,"text":"展开 Lucky、资料库、空间、场景模板，以及组合交付、套餐和租户。","textPreview":"展开 Lucky、资料库、空间、场景模板，以及组合交付、套餐和租户。","textChars":34,"textLines":1,"bbox":[540,299,610,28]}
+{"kind":"shape","id":"sh/dg7adsji","slide":21,"bbox":[82,360,1115,58]}
+{"kind":"textbox","id":"sh/ovahoza1","slide":21,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[112,373,70,30]}
+{"kind":"textbox","id":"sh/vahoza1g","slide":21,"text":"商业模式与渠道","textPreview":"商业模式与渠道","textChars":7,"textLines":1,"bbox":[212,373,300,30]}
+{"kind":"textbox","id":"sh/6tovahoz","slide":21,"text":"说明平台、服务、资源、Token 算力和运营商渠道如何形成收入变量。","textPreview":"说明平台、服务、资源、Token 算力和运营商渠道如何形成收入变量。","textChars":34,"textLines":1,"bbox":[540,375,610,28]}
+{"kind":"shape","id":"sh/dsji5sne","slide":21,"bbox":[82,436,1115,58]}
+{"kind":"textbox","id":"sh/o7qpg3ex","slide":21,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[112,449,70,30]}
+{"kind":"textbox","id":"sh/kjm1cfa9","slide":21,"text":"标杆案例与场景深化","textPreview":"标杆案例与场景深化","textChars":9,"textLines":1,"bbox":[212,449,300,30]}
+{"kind":"textbox","id":"sh/94fu18jq","slide":21,"text":"用宁波大学科学技术学院工作坊验证交付，并明确两大场景完善方向。","textPreview":"用宁波大学科学技术学院工作坊验证交付，并明确两大场景完善方向。","textChars":31,"textLines":1,"bbox":[540,451,610,28]}
+{"kind":"shape","id":"sh/2hwfyxob","slide":21,"bbox":[82,512,1115,58]}
+{"kind":"textbox","id":"sh/r2p8nqxs","slide":21,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[112,525,70,30]}
+{"kind":"textbox","id":"sh/gvy90je9","slide":21,"text":"生态、愿景与开发模式","textPreview":"生态、愿景与开发模式","textChars":10,"textLines":1,"bbox":[212,525,300,30]}
+{"kind":"textbox","id":"sh/9gr2p8nq","slide":21,"text":"收束研习社、平台闭环、教师全场景愿景和 AI 驱动开发模式创新。","textPreview":"收束研习社、平台闭环、教师全场景愿景和 AI 驱动开发模式创新。","textChars":32,"textLines":1,"bbox":[540,527,610,28]}
+{"kind":"shape","id":"sh/2p8nqxs7","slide":21,"bbox":[82,610,1115,44]}
+{"kind":"textbox","id":"sh/ra5gbq1o","slide":21,"text":"本节重点：从业务闭环延伸到长期增长空间，并说明通答内部如何用 AI 提升研发迭代速度。","textPreview":"本节重点：从业务闭环延伸到长期增长空间，并说明通答内部如何用 AI 提升研发迭代速度。","textChars":43,"textLines":1,"bbox":[112,620,1055,24]}
+{"kind":"notes","id":"nt/87cc91","slide":21,"text":""}
+{"kind":"slide","id":"sl/aum1nd","slide":22,"title":"生态运营","textShapes":14}
+{"kind":"textbox","id":"sh/4byhgn29","slide":22,"text":"生态运营","textPreview":"生态运营","textChars":4,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/bq1oryts","slide":22,"text":"研习社承担平台推广、案例沉淀和内容共创的社区角色","textPreview":"研习社承担平台推广、案例沉淀和内容共创的社区角色","textChars":24,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/m58z25kb","slide":22,"bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/t83itgfm","slide":22,"text":"22","textPreview":"22","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"shape","id":"sh/4nap4r65","slide":22,"bbox":[58,222,500,330]}
+{"kind":"textbox","id":"sh/b2hwfyxo","slide":22,"text":"研习社","textPreview":"研习社","textChars":3,"textLines":1,"bbox":[96,262,420,54]}
+{"kind":"textbox","id":"sh/mhk3q5o7","slide":22,"text":"面向用户、机构和业务伙伴的内容交流社区，也是平台推广、最佳实践传播和生态运营阵地。","textPreview":"面向用户、机构和业务伙伴的内容交流社区，也是平台推广、最佳实践传播和生态运营阵地。","textChars":41,"textLines":1,"bbox":[96,342,420,86]}
+{"kind":"textbox","id":"sh/tgfmlkjm","slide":22,"text":"UGC + AIGC","textPreview":"UGC + AIGC","textChars":10,"textLines":1,"bbox":[96,472,420,42]}
+{"kind":"shape","id":"sh/4vmtwra5","slide":22,"bbox":[652,207,250,138]}
+{"kind":"textbox","id":"sh/i5sneloj","slide":22,"text":"最佳实践","textPreview":"最佳实践","textChars":4,"textLines":1,"bbox":[676,231,202,36]}
+{"kind":"textbox","id":"sh/7qpg3ex0","slide":22,"text":"沉淀教师培训、教研和教学应用中的优秀做法。","textPreview":"沉淀教师培训、教研和教学应用中的优秀做法。","textChars":21,"textLines":1,"bbox":[676,279,202,46]}
+{"kind":"shape","id":"sh/0bi9s36h","slide":22,"bbox":[964,207,250,138]}
+{"kind":"textbox","id":"sh/pwb2hwfy","slide":22,"text":"案例展示","textPreview":"案例展示","textChars":4,"textLines":1,"bbox":[988,231,202,36]}
+{"kind":"textbox","id":"sh/ed8v6psf","slide":22,"text":"形成可传播的标杆案例、项目成果和应用样板。","textPreview":"形成可传播的标杆案例、项目成果和应用样板。","textChars":21,"textLines":1,"bbox":[988,279,202,46]}
+{"kind":"shape","id":"sh/7y1kre1w","slide":22,"bbox":[652,410,250,138]}
+{"kind":"textbox","id":"sh/wjudg7ad","slide":22,"text":"主题交流","textPreview":"主题交流","textChars":4,"textLines":1,"bbox":[676,434,202,36]}
+{"kind":"textbox","id":"sh/p4r65wju","slide":22,"text":"围绕新场景、新功能、新方案组织讨论和活动。","textPreview":"围绕新场景、新功能、新方案组织讨论和活动。","textChars":21,"textLines":1,"bbox":[676,482,202,46]}
+{"kind":"shape","id":"sh/ih4byhgn","slide":22,"bbox":[964,410,250,138]}
+{"kind":"textbox","id":"sh/72x4nap4","slide":22,"text":"资源共创","textPreview":"资源共创","textChars":4,"textLines":1,"bbox":[988,434,202,36]}
+{"kind":"textbox","id":"sh/ji5snelo","slide":22,"text":"用户贡献一线内容，AI 辅助整理、提炼和传播。","textPreview":"用户贡献一线内容，AI 辅助整理、提炼和传播。","textChars":23,"textLines":1,"bbox":[988,482,202,46]}
+{"kind":"notes","id":"nt/aum1nd","slide":22,"text":""}
+{"kind":"slide","id":"sl/afd7ci","slide":23,"title":"总结","textShapes":11}
+{"kind":"textbox","id":"sh/8bat47y1","slide":23,"text":"总结","textPreview":"总结","textChars":2,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/jqh0fepk","slide":23,"text":"通答平台最终形成“平台能力 + 场景落地 + 算力商业化”的闭环","textPreview":"通答平台最终形成“平台能力 + 场景落地 + 算力商业化”的闭环","textChars":32,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/q5o7qpg3","slide":23,"bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/18jqh0fe","slide":23,"text":"23","textPreview":"23","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"shape","id":"sh/8nqxs72x","slide":23,"bbox":[41,214,340,250]}
+{"kind":"textbox","id":"sh/j2t83itg","slide":23,"text":"平台能力产品化","textPreview":"平台能力产品化","textChars":7,"textLines":1,"bbox":[65,238,292,36]}
+{"kind":"textbox","id":"sh/qh0fepkz","slide":23,"text":"Lucky、资料库、空间、场景模板形成可组合平台能力。","textPreview":"Lucky、资料库、空间、场景模板形成可组合平台能力。","textChars":27,"textLines":1,"bbox":[65,286,292,158]}
+{"kind":"shape","id":"sh/1cfa9w3m","slide":23,"bbox":[470,214,340,250]}
+{"kind":"textbox","id":"sh/crmhk3q5","slide":23,"text":"业务场景垂直化","textPreview":"业务场景垂直化","textChars":7,"textLines":1,"bbox":[494,238,292,36]}
+{"kind":"textbox","id":"sh/2t83itgf","slide":23,"text":"围绕教师培训、教研、教学、干部培训、工作室、工作坊复制解决方案。","textPreview":"围绕教师培训、教研、教学、干部培训、工作室、工作坊复制解决方案。","textChars":32,"textLines":1,"bbox":[494,286,292,158]}
+{"kind":"shape","id":"sh/re1w7mp0","slide":23,"bbox":[899,214,340,250]}
+{"kind":"textbox","id":"sh/kzupwb2h","slide":23,"text":"算力渠道商业化","textPreview":"算力渠道商业化","textChars":7,"textLines":1,"bbox":[923,238,292,36]}
+{"kind":"textbox","id":"sh/9knih4by","slide":23,"text":"通过 Token 计量、模型统计和运营商渠道形成持续收入。","textPreview":"通过 Token 计量、模型统计和运营商渠道形成持续收入。","textChars":29,"textLines":1,"bbox":[923,286,292,158]}
+{"kind":"textbox","id":"sh/25kb6xkf","slide":23,"text":"建议下一步","textPreview":"建议下一步","textChars":5,"textLines":1,"bbox":[41,532,190,32]}
+{"kind":"textbox","id":"sh/rqd4vmtw","slide":23,"text":"围绕平台价值验证和宁波大学科学技术学院工作坊等标杆案例，形成解决方案套餐；完善 Token 计量与模型统计；推进运营商试点；启动研习社内容运营。","textPreview":"围绕平台价值验证和宁波大学科学技术学院工作坊等标杆案例，形成解决方案套餐；完善 Token 计量与模型统计；推进运营商试点；启动研习社内容运营。","textChars":72,"textLines":1,"bbox":[232,516,930,70]}
+{"kind":"notes","id":"nt/afd7ci","slide":23,"text":""}
+{"kind":"slide","id":"sl/sm72p6","slide":24,"title":"平台愿景","textShapes":16}
+{"kind":"textbox","id":"sh/je9cvixc","slide":24,"text":"平台愿景","textPreview":"平台愿景","textChars":4,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/8z25kb6x","slide":24,"text":"平台愿景：面向教师全场景，覆盖更多场景数据，形成持续增购","textPreview":"平台愿景：面向教师全场景，覆盖更多场景数据，形成持续增购","textChars":28,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/1gvy90je","slide":24,"bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/q1orytsv","slide":24,"text":"24","textPreview":"24","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"textbox","id":"sh/fmlkjm1c","slide":24,"text":"长期愿景","textPreview":"长期愿景","textChars":4,"textLines":1,"bbox":[41,196,180,30]}
+{"kind":"shape","id":"sh/87ed8bat","slide":24,"bbox":[41,248,260,230]}
+{"kind":"textbox","id":"sh/xs72x4na","slide":24,"text":"教师全场景","textPreview":"教师全场景","textChars":5,"textLines":1,"bbox":[65,272,212,36]}
+{"kind":"textbox","id":"sh/qd4vmtwr","slide":24,"text":"覆盖教师培训、教研、教学、工作坊、工作室、AI 通识学习和实训等业务场景，让平台成为教师发展和业务开展的统一入口。","textPreview":"覆盖教师培训、教研、教学、工作坊、工作室、AI 通识学习和实训等业务场景，让平台成为教师发展和业务开展的统一入口。","textChars":57,"textLines":1,"bbox":[65,320,212,138]}
+{"kind":"shape","id":"sh/fyxobm58","slide":24,"bbox":[341,248,260,230]}
+{"kind":"textbox","id":"sh/7mp0bi9s","slide":24,"text":"覆盖更多场景数据","textPreview":"覆盖更多场景数据","textChars":8,"textLines":1,"bbox":[365,272,212,36]}
+{"kind":"textbox","id":"sh/e1w7mp0b","slide":24,"text":"覆盖教学、教研、培训学习、实训操作、资料使用、内容生成、智能体交互和成果沉淀等数据，形成统一的数据资产。","textPreview":"覆盖教学、教研、培训学习、实训操作、资料使用、内容生成、智能体交互和成果沉淀等数据，形成统一的数据资产。","textChars":52,"textLines":1,"bbox":[365,320,212,138]}
+{"kind":"shape","id":"sh/psfil0rq","slide":24,"bbox":[641,248,260,230]}
+{"kind":"textbox","id":"sh/w7mp0bi9","slide":24,"text":"教师全域档案","textPreview":"教师全域档案","textChars":6,"textLines":1,"bbox":[665,272,212,36]}
+{"kind":"textbox","id":"sh/7adsji5s","slide":24,"text":"从单次培训记录升级为教师成长档案，支撑教师画像、发展建议、资源推荐和组织管理。","textPreview":"从单次培训记录升级为教师成长档案，支撑教师画像、发展建议、资源推荐和组织管理。","textChars":39,"textLines":1,"bbox":[665,320,212,138]}
+{"kind":"shape","id":"sh/epkzupwb","slide":24,"bbox":[941,248,260,230]}
+{"kind":"textbox","id":"sh/pg3ex0nu","slide":24,"text":"持续增购","textPreview":"持续增购","textChars":4,"textLines":1,"bbox":[965,272,212,36]}
+{"kind":"textbox","id":"sh/wval87ed","slide":24,"text":"每个新增场景都复用资料库、空间、智能体和档案数据，推动客户从单点采购走向场景持续增购。","textPreview":"每个新增场景都复用资料库、空间、智能体和档案数据，推动客户从单点采购走向场景持续增购。","textChars":43,"textLines":1,"bbox":[965,320,212,138]}
+{"kind":"shape","id":"sh/36hcrmhk","slide":24,"bbox":[41,548,1197,90]}
+{"kind":"textbox","id":"sh/eloj2t83","slide":24,"text":"通答平台的长期价值，是让不同业务场景不再孤立，而是在同一个 AI 原生底座上互相增益。","textPreview":"通答平台的长期价值，是让不同业务场景不再孤立，而是在同一个 AI 原生底座上互相增益。","textChars":43,"textLines":1,"bbox":[72,568,775,48]}
+{"kind":"textbox","id":"sh/mp0bi9s3","slide":24,"text":"1+1>2","textPreview":"1+1>2","textChars":5,"textLines":1,"bbox":[884,566,130,34]}
+{"kind":"textbox","id":"sh/bat47y1k","slide":24,"text":"面向场景持续增购","textPreview":"面向场景持续增购","textChars":8,"textLines":1,"bbox":[998,566,222,34]}
+{"kind":"textbox","id":"sh/4vmtwra5","slide":24,"text":"客户价值和商业收入空间同步放大。","textPreview":"客户价值和商业收入空间同步放大。","textChars":16,"textLines":1,"bbox":[884,604,312,22]}
+{"kind":"notes","id":"nt/sm72p6","slide":24,"text":""}
+{"kind":"slide","id":"sl/koscuu","slide":25,"title":"开发模式创新","textShapes":11}
+{"kind":"textbox","id":"sh/gbq1oryt","slide":25,"text":"开发模式创新","textPreview":"开发模式创新","textChars":6,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/nuxc3ylc","slide":25,"text":"通答开发模式创新：拥抱 AI 时代的快速迭代","textPreview":"通答开发模式创新：拥抱 AI 时代的快速迭代","textChars":22,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/y90je9cv","slide":25,"bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/58z25kb6","slide":25,"text":"25","textPreview":"25","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"textbox","id":"sh/gn29gr2p","slide":25,"text":"开发新模式","textPreview":"开发新模式","textChars":5,"textLines":1,"bbox":[41,196,180,30]}
+{"kind":"textbox","id":"sh/n29gr2p8","slide":25,"text":"在 AI 时代，速度即竞争力。","textPreview":"在 AI 时代，速度即竞争力。","textChars":15,"textLines":1,"bbox":[41,244,500,48]}
+{"kind":"textbox","id":"sh/yhgn29gr","slide":25,"text":"通答以 AI 原生底座和抽象业务模型为基础，\n把需求、设计、代码、联调、测试和部署纳入同一条 AI 辅助链路。","textPreview":"通答以 AI 原生底座和抽象业务模型为基础， | 把需求、设计、代码、联调、测试和部署纳入同一条 AI 辅助链路。","textChars":55,"textLines":2,"bbox":[41,326,600,110]}
+{"kind":"textbox","id":"sh/5kb6xkf6","slide":25,"text":"这不是单纯提升代码生成效率，而是重塑从业务需求到产品功能上线的研发协作方式。","textPreview":"这不是单纯提升代码生成效率，而是重塑从业务需求到产品功能上线的研发协作方式。","textChars":38,"textLines":1,"bbox":[41,470,600,70]}
+{"kind":"shape","id":"sh/czed8v6p","slide":25,"bbox":[730,222,420,270]}
+{"kind":"textbox","id":"sh/2hwfyxob","slide":25,"text":"快速上线","textPreview":"快速上线","textChars":4,"textLines":1,"bbox":[790,268,300,42]}
+{"kind":"textbox","id":"sh/r2p8nqxs","slide":25,"text":"快速试错","textPreview":"快速试错","textChars":4,"textLines":1,"bbox":[790,336,300,42]}
+{"kind":"textbox","id":"sh/kjm1cfa9","slide":25,"text":"快速迭代","textPreview":"快速迭代","textChars":4,"textLines":1,"bbox":[790,404,300,42]}
+{"kind":"shape","id":"sh/94fu18jq","slide":25,"bbox":[41,590,1197,54]}
+{"kind":"textbox","id":"sh/2p8nqxs7","slide":25,"text":"目标：让业务需求更快被理解、被表达、被验证，并更快转化为可上线、可复用、可持续演进的平台能力。","textPreview":"目标：让业务需求更快被理解、被表达、被验证，并更快转化为可上线、可复用、可持续演进的平台能力。","textChars":47,"textLines":1,"bbox":[70,604,1138,26]}
+{"kind":"notes","id":"nt/koscuu","slide":25,"text":""}
+{"kind":"slide","id":"sl/hd6g3v","slide":26,"title":"开发模式创新","textShapes":22}
+{"kind":"textbox","id":"sh/obm58z25","slide":26,"text":"开发模式创新","textPreview":"开发模式创新","textChars":6,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/zqtcj6to","slide":26,"text":"AI 驱动的全链路开发流程把需求到上线压缩成快速闭环","textPreview":"AI 驱动的全链路开发流程把需求到上线压缩成快速闭环","textChars":26,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/65wjudg7","slide":26,"bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/hk3q5o7q","slide":26,"text":"26","textPreview":"26","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"textbox","id":"sh/oza1gvy9","slide":26,"text":"全链路流程","textPreview":"全链路流程","textChars":5,"textLines":1,"bbox":[41,196,180,30]}
+{"kind":"textbox","id":"sh/zed8v6ps","slide":26,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[58,230,58,28]}
+{"kind":"textbox","id":"sh/6xkf6dcb","slide":26,"text":"AI 驱动需求","textPreview":"AI 驱动需求","textChars":7,"textLines":1,"bbox":[132,224,410,30]}
+{"kind":"textbox","id":"sh/hcrmhk3q","slide":26,"text":"自然语言描述需求，AI 理解并形成结构化方案。","textPreview":"自然语言描述需求，AI 理解并形成结构化方案。","textChars":23,"textLines":1,"bbox":[132,258,450,26]}
+{"kind":"textbox","id":"sh/orytsvu9","slide":26,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[58,308,58,28]}
+{"kind":"textbox","id":"sh/yxobm58z","slide":26,"text":"AI 驱动原型与前端代码","textPreview":"AI 驱动原型与前端代码","textChars":12,"textLines":1,"bbox":[132,302,410,30]}
+{"kind":"textbox","id":"sh/nih4byhg","slide":26,"text":"自动生成页面原型和前端可用代码。","textPreview":"自动生成页面原型和前端可用代码。","textChars":16,"textLines":1,"bbox":[132,336,450,26]}
+{"kind":"textbox","id":"sh/g3ex0nux","slide":26,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[58,386,58,28]}
+{"kind":"textbox","id":"sh/5o7qpg3e","slide":26,"text":"AI 驱动后端设计与代码","textPreview":"AI 驱动后端设计与代码","textChars":12,"textLines":1,"bbox":[132,380,410,30]}
+{"kind":"textbox","id":"sh/ylc7u54z","slide":26,"text":"生成后端架构设计方案和后端代码。","textPreview":"生成后端架构设计方案和后端代码。","textChars":16,"textLines":1,"bbox":[132,414,450,26]}
+{"kind":"textbox","id":"sh/r65wjudg","slide":26,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[58,464,58,28]}
+{"kind":"textbox","id":"sh/gr2p8nqx","slide":26,"text":"AI 驱动前后端联调","textPreview":"AI 驱动前后端联调","textChars":10,"textLines":1,"bbox":[132,458,410,30]}
+{"kind":"textbox","id":"sh/9cvixcze","slide":26,"text":"辅助接口对接与联调测试，确保数据流转。","textPreview":"辅助接口对接与联调测试，确保数据流转。","textChars":19,"textLines":1,"bbox":[132,492,450,26]}
+{"kind":"textbox","id":"sh/yd0z6103","slide":26,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[58,542,58,28]}
+{"kind":"textbox","id":"sh/rytsvu9k","slide":26,"text":"AI 驱动集成测试","textPreview":"AI 驱动集成测试","textChars":9,"textLines":1,"bbox":[132,536,410,30]}
+{"kind":"textbox","id":"sh/za1gvy90","slide":26,"text":"自动生成用例，执行集成测试并保障稳定。","textPreview":"自动生成用例，执行集成测试并保障稳定。","textChars":19,"textLines":1,"bbox":[132,570,450,26]}
+{"kind":"shape","id":"sh/ap4r65wj","slide":26,"bbox":[688,218,520,354]}
+{"kind":"textbox","id":"sh/hgn29gr2","slide":26,"text":"打破边界，敏捷协同，价值共创","textPreview":"打破边界，敏捷协同，价值共创","textChars":14,"textLines":1,"bbox":[730,258,438,38]}
+{"kind":"textbox","id":"sh/svu9knih","slide":26,"text":"研发提前介入：团队参与产品需求设计阶段\n提升综合能力：强化需求分析与理解能力\n实现并行工作：需求、设计与开发同步推进\n打破线性束缚：减少传递损耗，提升效率\n全域能力探索：借助 AI 打破产研能力边界","textPreview":"研发提前介入：团队参与产品需求设计阶段 | 提升综合能力：强化需求分析与理解能力 | 实现并行工作：需求、设计与开发同步推进 | 打破线性束缚：减少传递损耗，提升效率 | 全域能力探索：借助 AI 打破产研能力边界","textChars":99,"textLines":5,"bbox":[742,334,412,176]}
+{"kind":"textbox","id":"sh/zidonyd0","slide":26,"text":"价值：把传统串行研发变成 AI 辅助下的并行协同，让业务反馈更快进入产品迭代。","textPreview":"价值：把传统串行研发变成 AI 辅助下的并行协同，让业务反馈更快进入产品迭代。","textChars":39,"textLines":1,"bbox":[88,606,1104,30]}
+{"kind":"notes","id":"nt/hd6g3v","slide":26,"text":""}
+{"kind":"slide","id":"sl/l9i8ju","slide":27,"title":"开发模式创新","textShapes":10}
+{"kind":"textbox","id":"sh/vy90je9c","slide":27,"text":"开发模式创新","textPreview":"开发模式创新","textChars":6,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/oj2t83it","slide":27,"text":"产品开发模式探索：稳态、配置、定开三层协同","textPreview":"产品开发模式探索：稳态、配置、定开三层协同","textChars":21,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/d4vmtwra","slide":27,"bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/61032lsz","slide":27,"text":"27","textPreview":"27","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"textbox","id":"sh/vmtwra5g","slide":27,"text":"三层协同","textPreview":"三层协同","textChars":4,"textLines":1,"bbox":[41,192,180,30]}
+{"kind":"shape","id":"sh/o7qpg3ex","slide":27,"bbox":[83,230,1114,104]}
+{"kind":"textbox","id":"sh/dsji5sne","slide":27,"text":"前台 AI 定制开发层：AI Vibe Coding","textPreview":"前台 AI 定制开发层：AI Vibe Coding","textChars":26,"textLines":1,"bbox":[142,252,640,34]}
+{"kind":"textbox","id":"sh/6tovahoz","slide":27,"text":"基于稳态层能力，通过 AI 驱动快速生成前台代码，敏捷响应市场变化与用户个性化需求。","textPreview":"基于稳态层能力，通过 AI 驱动快速生成前台代码，敏捷响应市场变化与用户个性化需求。","textChars":42,"textLines":1,"bbox":[142,296,940,28]}
+{"kind":"shape","id":"sh/vahoza1g","slide":27,"bbox":[622,348,36,42]}
+{"kind":"shape","id":"sh/7qpg3ex0","slide":27,"bbox":[83,402,1114,104]}
+{"kind":"textbox","id":"sh/i5sneloj","slide":27,"text":"配置层：解决方案与场景模板","textPreview":"配置层：解决方案与场景模板","textChars":13,"textLines":1,"bbox":[142,424,560,34]}
+{"kind":"textbox","id":"sh/pwb2hwfy","slide":27,"text":"基于稳态层能力快速组合行业方案，提供丰富空间模板和场景模板，支持一键绑定和快速交付。","textPreview":"基于稳态层能力快速组合行业方案，提供丰富空间模板和场景模板，支持一键绑定和快速交付。","textChars":42,"textLines":1,"bbox":[142,468,940,28]}
+{"kind":"shape","id":"sh/0bi9s36h","slide":27,"bbox":[622,520,36,42]}
+{"kind":"shape","id":"sh/7y1kre1w","slide":27,"bbox":[83,574,1114,72]}
+{"kind":"textbox","id":"sh/ed8v6psf","slide":27,"text":"稳态层：AI 原生产品底座","textPreview":"稳态层：AI 原生产品底座","textChars":13,"textLines":1,"bbox":[142,588,520,30]}
+{"kind":"textbox","id":"sh/p4r65wju","slide":27,"text":"提供稳定、可靠、安全的底层能力支撑，通过开放接口为上层应用提供强大基础。","textPreview":"提供稳定、可靠、安全的底层能力支撑，通过开放接口为上层应用提供强大基础。","textChars":36,"textLines":1,"bbox":[142,622,940,20]}
+{"kind":"notes","id":"nt/l9i8ju","slide":27,"text":""}
+{"kind":"slide","id":"sl/k14fxc","slide":28,"title":"开发模式创新","textShapes":16}
+{"kind":"textbox","id":"sh/judg7ads","slide":28,"text":"开发模式创新","textPreview":"开发模式创新","textChars":6,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/cfa9w3m9","slide":28,"text":"3 个月实践验证：AI + 敏捷流程带来至少 6 倍提效","textPreview":"3 个月实践验证：AI + 敏捷流程带来至少 6 倍提效","textChars":28,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/1032lszq","slide":28,"bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/u18jqh0f","slide":28,"text":"28","textPreview":"28","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"textbox","id":"sh/jm1cfa9w","slide":28,"text":"成效验证","textPreview":"成效验证","textChars":4,"textLines":1,"bbox":[41,196,180,30]}
+{"kind":"shape","id":"sh/c7u54zid","slide":28,"bbox":[41,240,430,330]}
+{"kind":"textbox","id":"sh/1orytsvu","slide":28,"text":"3 个月","textPreview":"3 个月","textChars":4,"textLines":1,"bbox":[82,286,350,54]}
+{"kind":"textbox","id":"sh/upwb2hwf","slide":28,"text":"至少","textPreview":"至少","textChars":2,"textLines":1,"bbox":[122,366,110,38]}
+{"kind":"textbox","id":"sh/nap4r65w","slide":28,"text":"6 倍","textPreview":"6 倍","textChars":3,"textLines":1,"bbox":[214,340,150,92]}
+{"kind":"textbox","id":"sh/7u54zido","slide":28,"text":"研发效率提升","textPreview":"研发效率提升","textChars":6,"textLines":1,"bbox":[108,444,296,42]}
+{"kind":"textbox","id":"sh/ed8bat47","slide":28,"text":"AI + 敏捷流程加持，速度、质量、协作同步提升。","textPreview":"AI + 敏捷流程加持，速度、质量、协作同步提升。","textChars":25,"textLines":1,"bbox":[86,502,338,34]}
+{"kind":"shape","id":"sh/l0rqd4vm","slide":28,"bbox":[535,230,322,140]}
+{"kind":"textbox","id":"sh/wfyxobm5","slide":28,"text":"需求到上线更快闭环","textPreview":"需求到上线更快闭环","textChars":9,"textLines":1,"bbox":[559,254,274,36]}
+{"kind":"textbox","id":"sh/36hcrmhk","slide":28,"text":"AI 辅助需求理解、方案生成、代码生成、联调测试和上线验证，让业务反馈更快进入产品迭代。","textPreview":"AI 辅助需求理解、方案生成、代码生成、联调测试和上线验证，让业务反馈更快进入产品迭代。","textChars":44,"textLines":1,"bbox":[559,302,274,48]}
+{"kind":"shape","id":"sh/eloj2t83","slide":28,"bbox":[895,230,322,140]}
+{"kind":"textbox","id":"sh/lc7u54zi","slide":28,"text":"产研协同从串行变并行","textPreview":"产研协同从串行变并行","textChars":10,"textLines":1,"bbox":[919,254,274,36]}
+{"kind":"textbox","id":"sh/wra5gbq1","slide":28,"text":"产品、研发、设计和测试更早参与同一条交付链路，减少等待和传递损耗。","textPreview":"产品、研发、设计和测试更早参与同一条交付链路，减少等待和传递损耗。","textChars":33,"textLines":1,"bbox":[919,302,274,48]}
+{"kind":"shape","id":"sh/7adsji5s","slide":28,"bbox":[535,410,682,140]}
+{"kind":"textbox","id":"sh/epkzupwb","slide":28,"text":"具备产研全域能力","textPreview":"具备产研全域能力","textChars":8,"textLines":1,"bbox":[559,434,634,36]}
+{"kind":"textbox","id":"sh/m1cfa9w3","slide":28,"text":"团队能力从单点开发扩展到需求理解、产品设计、技术实现、测试验证和迭代运营。","textPreview":"团队能力从单点开发扩展到需求理解、产品设计、技术实现、测试验证和迭代运营。","textChars":37,"textLines":1,"bbox":[559,482,634,48]}
+{"kind":"shape","id":"sh/bm58z25k","slide":28,"bbox":[41,604,1197,52]}
+{"kind":"textbox","id":"sh/47y1kre1","slide":28,"text":"这 3 个月的实践说明，通答的开发模式创新不是工具替换，而是用 AI + 敏捷流程重构产研协作方式，让团队同时获得速度、质量和全域能力。","textPreview":"这 3 个月的实践说明，通答的开发模式创新不是工具替换，而是用 AI + 敏捷流程重构产研协作方式，让团队同时获得速度、质量和全域能力。","textChars":68,"textLines":1,"bbox":[74,617,1130,26]}
+{"kind":"notes","id":"nt/k14fxc","slide":28,"text":""}

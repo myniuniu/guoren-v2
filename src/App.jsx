@@ -35,6 +35,7 @@ import {
   LayoutOutlined,
   TagsOutlined,
   FileTextOutlined,
+  GiftOutlined,
   PushpinFilled,
   PushpinOutlined,
   ReadOutlined,
@@ -47,6 +48,7 @@ import {
   QrcodeOutlined,
   RightOutlined,
   UserAddOutlined,
+  TrophyOutlined,
 } from '@ant-design/icons';
 import TopicDetail from './TopicDetail';
 import LeaveWorkflow from './workflow/LeaveWorkflow';
@@ -91,6 +93,8 @@ import TeacherPortraitModule from './teacherPortrait/TeacherPortraitModule';
 import ResourceRecommendationModule from './resourceRecommendation/ResourceRecommendationModule';
 import LuckyModule from './lucky/LuckyModule';
 import TasksModule from './tasks/TasksModule';
+import PointsUserModule from './points/PointsUserModule';
+import PointsAdminModule from './points/PointsAdminModule';
 import SceneCreateModal from './scene/SceneCreateModal';
 import {
   getSceneStoreChangeEventName,
@@ -319,6 +323,8 @@ const iconBarAccentColorMap = Object.freeze({
   'certificate-issue': '#ef4444',
   archive: '#f97316',
   'study-club': '#dc2626',
+  'points-user': '#0f766e',
+  'points-admin': '#7c3aed',
   lucky: '#eab308',
   lab: '#8b5cf6',
   tasks: '#2563eb',
@@ -386,6 +392,7 @@ const baseIconBarItems = [
   { key: 'certificate-issue', icon: <SendOutlined />, label: '证书发放' },
   { key: 'archive', icon: <FolderOutlined />, label: '档案提交' },
   { key: 'study-club', icon: <RocketOutlined />, label: '研习社' },
+  { key: 'points-admin', icon: <GiftOutlined />, label: '积分管理' },
   { key: 'lucky', icon: <ThunderboltOutlined />, label: 'lucky' },
   { key: 'lab', icon: <ExperimentOutlined />, label: '实验室' },
   { key: 'tasks', icon: <AppstoreOutlined />, label: '任务' },
@@ -1209,6 +1216,12 @@ function App() {
     message.info(`${label}暂未接入`);
   }, []);
 
+  const openMyPointsPage = useCallback(() => {
+    setAccountMenuOpen(false);
+    setActiveIconKey('account-points');
+    setCurrentPage('points-user');
+  }, []);
+
   const openAgentQuotaPage = (tab = 'plans') => {
     setActiveIconKey('agent-quota');
     setAgentQuotaEntryTab(tab);
@@ -1393,6 +1406,10 @@ function App() {
       setCurrentPage('archive');
     } else if (key === 'study-club') {
       setCurrentPage('study-club');
+    } else if (key === 'points-user') {
+      setCurrentPage('points-user');
+    } else if (key === 'points-admin') {
+      setCurrentPage('points-admin');
     } else if (key === 'learning-analytics') {
       setCurrentPage('learning-analytics');
     } else if (key === 'agent-quota') {
@@ -1454,6 +1471,8 @@ function App() {
       currentPage === 'course-studio' ||
       currentPage === 'archive' ||
       currentPage === 'study-club' ||
+      currentPage === 'points-user' ||
+      currentPage === 'points-admin' ||
       currentPage === 'lucky' ||
       currentPage === 'lucky-backend' ||
       currentPage === 'learning-analytics' ||
@@ -1518,6 +1537,64 @@ function App() {
       >
         输入你的个性签名...
       </button>
+
+      <div
+        className="account-points-card"
+        role="button"
+        tabIndex={0}
+        onClick={openMyPointsPage}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            openMyPointsPage();
+          }
+        }}
+      >
+        <div className="account-points-top">
+          <span className="account-points-badge">
+            <TrophyOutlined />
+            L3 共创者
+          </span>
+          <span className="account-points-note">果仁积分</span>
+        </div>
+        <div className="account-points-main">
+          <div>
+            <div className="account-points-value">245</div>
+            <div className="account-points-caption">可用积分</div>
+          </div>
+          <div className="account-points-mini-stats">
+            <span>待审核 2</span>
+            <span>可兑换 4</span>
+          </div>
+        </div>
+        <div className="account-points-progress">
+          <span style={{ width: '61%' }} />
+        </div>
+        <div className="account-points-meta">距 L4 布道者还差 155 分</div>
+        <div className="account-points-actions">
+          <button
+            type="button"
+            className="account-points-primary"
+            onClick={(event) => {
+              event.stopPropagation();
+              openMyPointsPage();
+            }}
+          >
+            查看我的积分
+          </button>
+          <button
+            type="button"
+            className="account-points-secondary"
+            onClick={(event) => {
+              event.stopPropagation();
+              openMyPointsPage();
+            }}
+          >
+            去兑换
+            <RightOutlined />
+          </button>
+        </div>
+      </div>
 
       <div className="account-menu-section">
         <button type="button" className="account-menu-row" onClick={() => handleAccountMenuPlaceholder('我的个人名片')}>
@@ -1690,6 +1767,10 @@ function App() {
         <ArchiveModule />
       ) : currentPage === 'study-club' ? (
         <StudyClubModule />
+      ) : currentPage === 'points-user' ? (
+        <PointsUserModule />
+      ) : currentPage === 'points-admin' ? (
+        <PointsAdminModule />
       ) : currentPage === 'lucky' ? (
         <LuckyModule key="lucky-workspace" mode="workspace" />
       ) : currentPage === 'lucky-backend' ? (

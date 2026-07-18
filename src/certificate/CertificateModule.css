@@ -43,3 +43,157 @@
   color: #cbd5e1;
   font-size: 22px;
 }
+
+.cm-ops-panel {
+  margin-bottom: 16px;
+}
+
+.ci-ops-panel {
+  margin: 16px 16px 0;
+}
+
+.cert-ops-panel {
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+}
+
+.cert-ops-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.cert-ops-heading {
+  min-width: 0;
+}
+
+.cert-ops-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #111827;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.cert-ops-title .anticon {
+  color: #7c3aed;
+}
+
+.cert-ops-subtitle {
+  margin-top: 8px;
+  max-width: 960px;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.cert-ops-tags {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 0 0 auto;
+}
+
+.cert-ops-flow {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.cert-ops-flow-node {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #e6edf6;
+  background: #fbfdff;
+}
+
+.cert-ops-flow-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #1f2937;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cert-ops-flow-title .anticon {
+  color: #1677ff;
+}
+
+.cert-ops-flow-desc {
+  margin-top: 8px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.cert-ops-scenario-grid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.cert-ops-scenario {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #edf1f7;
+  background: #ffffff;
+}
+
+.cert-ops-scenario-icon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #0f766e;
+  background: #ecfdf5;
+  font-size: 16px;
+}
+
+.cert-ops-scenario-body {
+  min-width: 0;
+}
+
+.cert-ops-scenario-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: #172033;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cert-ops-scenario-desc {
+  margin-top: 6px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+@media (max-width: 960px) {
+  .cert-ops-header {
+    flex-direction: column;
+  }
+
+  .cert-ops-tags {
+    justify-content: flex-start;
+  }
+
+  .cert-ops-flow {
+    grid-template-columns: 1fr;
+  }
+}
