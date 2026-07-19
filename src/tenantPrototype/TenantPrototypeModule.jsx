@@ -20,10 +20,12 @@ import {
   CopyOutlined,
   DeleteOutlined,
   EditOutlined,
+  GlobalOutlined,
   LoginOutlined,
   MobileOutlined,
   PlusOutlined,
   SearchOutlined,
+  SafetyCertificateOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
 import {
@@ -60,8 +62,27 @@ const SERVICE_STATUS_OPTIONS = [
   { value: 'PAUSED', label: '已暂停', color: 'error' },
 ];
 
+const DOMAIN_STATUS_OPTIONS = [
+  { value: 'PENDING', label: '待验证', color: 'warning' },
+  { value: 'VERIFIED', label: '已验证', color: 'success' },
+  { value: 'FAILED', label: '验证失败', color: 'error' },
+];
+
+const DOMAIN_SSL_STATUS_OPTIONS = [
+  { value: 'PENDING', label: '待签发', color: 'warning' },
+  { value: 'ISSUED', label: '已签发', color: 'success' },
+  { value: 'EXPIRED', label: '已过期', color: 'error' },
+];
+
+const DOMAIN_USAGE_OPTIONS = [
+  { value: 'LOGIN', label: '登录入口' },
+  { value: 'PORTAL', label: '门户首页' },
+  { value: 'API', label: '开放接口' },
+];
+
 const MODULE_CONFIG_ITEMS = [
   { key: 'login', title: '登录页面', desc: '入口样式、登录方式、租户选择', icon: <LoginOutlined />, active: true },
+  { key: 'domain', title: '自定义域名', desc: '域名绑定、校验记录、HTTPS', icon: <GlobalOutlined />, active: true },
   { key: 'space', title: '空间模块', desc: '空间创建、成员加入、场景入口', icon: <BankOutlined /> },
   { key: 'resource', title: '资料库模块', desc: '容量、解析、上传限制', icon: <SettingOutlined /> },
   { key: 'message', title: '消息模块', desc: '通知策略、保留周期', icon: <MobileOutlined /> },
@@ -148,6 +169,34 @@ function getInheritedLoginConfigFromPackage(packageId, tenantName = '') {
   return getLoginConfigFromSolutionNames(packageItem.solutionNames);
 }
 
+function createDomainRecord(tenantCode, overrides = {}) {
+  const normalizedCode = String(tenantCode || 'tenant').toLowerCase().replace(/[^a-z0-9-]+/g, '-');
+  const domain = overrides.domain || `${normalizedCode}.example.com`;
+  return {
+    id: `domain-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+    domain,
+    usage: 'LOGIN',
+    status: 'PENDING',
+    sslStatus: 'PENDING',
+    cnameTarget: `${normalizedCode}.tenant.guoren.ai`,
+    verifyType: 'TXT',
+    verifyName: `_gr_verify.${domain}`,
+    verifyValue: `gr-site-verification=${normalizedCode}`,
+    remark: '',
+    ...overrides,
+  };
+}
+
+function createDomainConfig(tenantCode, overrides = {}) {
+  return {
+    enabled: true,
+    forceHttps: true,
+    domains: [],
+    ...overrides,
+    domains: (overrides.domains || []).map((item) => createDomainRecord(tenantCode, item)),
+  };
+}
+
 const INITIAL_TENANTS = [
   {
     id: 'tenant-east-edu',
@@ -168,6 +217,20 @@ const INITIAL_TENANTS = [
     updatedAt: '2026-07-11 16:20',
     loginConfigSource: getInheritedLoginConfigFromPackage('pkg-pro').sourceSolutionName,
     loginConfig: getInheritedLoginConfigFromPackage('pkg-pro').loginConfig,
+    domainConfig: createDomainConfig('TENANT-EAST-EDU', {
+      domains: [
+        {
+          id: 'domain-east-login',
+          domain: 'ai.huadong-edu.example.cn',
+          status: 'VERIFIED',
+          sslStatus: 'ISSUED',
+          cnameTarget: 'tenant-east-edu.tenant.guoren.ai',
+          verifyName: '_gr_verify.ai.huadong-edu.example.cn',
+          verifyValue: 'gr-site-verification=tenant-east-edu',
+          remark: '集团统一登录入口',
+        },
+      ],
+    }),
   },
   {
     id: 'tenant-river-school',
@@ -188,6 +251,7 @@ const INITIAL_TENANTS = [
     updatedAt: '2026-07-10 09:45',
     loginConfigSource: getInheritedLoginConfigFromPackage('pkg-standard').sourceSolutionName,
     loginConfig: getInheritedLoginConfigFromPackage('pkg-standard').loginConfig,
+    domainConfig: createDomainConfig('TENANT-RIVER-SCHOOL'),
   },
   {
     id: 'tenant-north-lab',
@@ -209,6 +273,9 @@ const INITIAL_TENANTS = [
     loginConfigSource: '',
     loginConfig: createLoginConfig({
       platformName: '北辰创新中心智能培训平台',
+    }),
+    domainConfig: createDomainConfig('TENANT-NORTH-LAB', {
+      enabled: false,
     }),
   },
 ];
@@ -243,6 +310,7 @@ function TenantPrototypeModule() {
   const [statusFilter, setStatusFilter] = useState(undefined);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeTenantId, setActiveTenantId] = useState(null);
+  const [activeTenantConfigKey, setActiveTenantConfigKey] = useState('login');
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [createDraft, setCreateDraft] = useState({
     name: '',
@@ -290,6 +358,7 @@ function TenantPrototypeModule() {
 
   const openTenant = (record) => {
     setActiveTenantId(record.id);
+    setActiveTenantConfigKey('login');
     setDrawerOpen(true);
   };
 
@@ -318,6 +387,7 @@ function TenantPrototypeModule() {
       updatedAt: nowText(),
       loginConfigSource: inheritedLogin.sourceSolutionName,
       loginConfig: inheritedLogin.loginConfig,
+      domainConfig: createDomainConfig(createDraft.code.trim() || createDraft.name.trim()),
     };
     setTenants((prev) => [nextTenant, ...prev]);
     setCreateModalOpen(false);
@@ -338,6 +408,13 @@ function TenantPrototypeModule() {
       serviceStatus: record.packageId ? 'TRIAL' : 'PENDING',
       updatedAt: nowText(),
       loginConfig: createLoginConfig(record.loginConfig),
+      domainConfig: {
+        ...(record.domainConfig || createDomainConfig(record.code)),
+        domains: (record.domainConfig?.domains || []).map((item) => ({
+          ...item,
+          id: `${item.id}-copy-${copyIndex}`,
+        })),
+      },
     };
     setTenants((prev) => [copied, ...prev]);
     message.success('已复制为新租户');
@@ -519,6 +596,74 @@ function TenantPrototypeModule() {
     });
   };
 
+  const updateDomainConfig = (patch) => {
+    if (!activeTenant) return;
+    updateTenant(activeTenant.id, (tenant) => ({
+      domainConfig: {
+        ...createDomainConfig(tenant.code),
+        ...(tenant.domainConfig || {}),
+        ...patch,
+      },
+    }));
+  };
+
+  const updateDomainRecord = (domainId, patch) => {
+    if (!activeTenant) return;
+    const domainConfig = {
+      ...createDomainConfig(activeTenant.code),
+      ...(activeTenant.domainConfig || {}),
+    };
+    updateDomainConfig({
+      domains: domainConfig.domains.map((item) => (item.id === domainId ? { ...item, ...patch } : item)),
+    });
+  };
+
+  const handleAddDomain = () => {
+    if (!activeTenant) return;
+    const domainConfig = {
+      ...createDomainConfig(activeTenant.code),
+      ...(activeTenant.domainConfig || {}),
+    };
+    updateDomainConfig({
+      enabled: true,
+      domains: [
+        ...domainConfig.domains,
+        createDomainRecord(activeTenant.code, {
+          domain: '',
+          cnameTarget: `${String(activeTenant.code || activeTenant.id).toLowerCase()}.tenant.guoren.ai`,
+          verifyName: '_gr_verify',
+          verifyValue: `gr-site-verification=${String(activeTenant.code || activeTenant.id).toLowerCase()}`,
+        }),
+      ],
+    });
+  };
+
+  const handleDeleteDomain = (domainId) => {
+    if (!activeTenant) return;
+    const domainConfig = activeTenant.domainConfig || createDomainConfig(activeTenant.code);
+    updateDomainConfig({
+      domains: domainConfig.domains.filter((item) => item.id !== domainId),
+    });
+  };
+
+  const handleVerifyDomain = (domainId) => {
+    updateDomainRecord(domainId, {
+      status: 'VERIFIED',
+      sslStatus: 'ISSUED',
+    });
+    message.success('域名校验已通过，HTTPS 证书已签发（原型）');
+  };
+
+  const handleCopyDomainText = async (text) => {
+    if (!text) return;
+    try {
+      await navigator.clipboard?.writeText(text);
+      message.success('已复制');
+    } catch {
+      message.info(text);
+    }
+  };
+
   const renderLoginConfigPreview = (loginConfig) => {
     const enabledMethods = LOGIN_METHOD_OPTIONS.filter((item) => loginConfig.loginMethods[item.value]);
     const defaultMethodLabel = LOGIN_METHOD_OPTIONS.find((item) => item.value === loginConfig.defaultMethod)?.label || enabledMethods[0]?.label;
@@ -559,10 +704,16 @@ function TenantPrototypeModule() {
   const renderTenantConfig = () => {
     if (!activeTenant) return null;
     const loginConfig = createLoginConfig(activeTenant.loginConfig);
+    const domainConfig = {
+      ...createDomainConfig(activeTenant.code),
+      ...(activeTenant.domainConfig || {}),
+    };
     const methodSelectOptions = LOGIN_METHOD_OPTIONS.map((item) => ({
       ...item,
       disabled: !loginConfig.loginMethods[item.value],
     }));
+    const activeConfigItem = MODULE_CONFIG_ITEMS.find((item) => item.key === activeTenantConfigKey) || MODULE_CONFIG_ITEMS[0];
+    const implementedConfigKeys = new Set(['login', 'domain']);
 
     return (
       <div className="tenant-config-layout">
@@ -571,14 +722,19 @@ function TenantPrototypeModule() {
             <button
               key={item.key}
               type="button"
-              className={`tenant-module-config-item ${item.active ? 'is-active' : ''}`}
+              className={`tenant-module-config-item ${activeTenantConfigKey === item.key ? 'is-active' : ''}`}
+              onClick={() => setActiveTenantConfigKey(item.key)}
             >
               <span className="tenant-module-config-icon">{item.icon}</span>
               <span>
                 <strong>{item.title}</strong>
                 <small>{item.desc}</small>
               </span>
-              {!item.active ? <Tag>待配置</Tag> : <Tag color="blue">当前</Tag>}
+              {activeTenantConfigKey === item.key
+                ? <Tag color="blue">当前</Tag>
+                : implementedConfigKeys.has(item.key)
+                  ? <Tag color="success">已配置</Tag>
+                  : <Tag>待配置</Tag>}
             </button>
           ))}
         </aside>
@@ -586,8 +742,8 @@ function TenantPrototypeModule() {
         <div className="tenant-config-content">
           <div className="tenant-config-title-row">
             <div>
-              <div className="tenant-block-title">登录页面配置</div>
-              <p>默认从套餐关联的解决方案继承，当前租户可在这里继续覆盖登录页文案、视觉模板和登录能力。</p>
+              <div className="tenant-block-title">{activeConfigItem.title}配置</div>
+              <p>{activeConfigItem.desc}。解决方案提供默认值，租户可继续覆盖。</p>
             </div>
             <Space wrap>
               {activeTenant.loginConfigSource ? <Tag color="blue">初始继承自：{activeTenant.loginConfigSource}</Tag> : null}
@@ -595,6 +751,116 @@ function TenantPrototypeModule() {
             </Space>
           </div>
 
+          {activeTenantConfigKey === 'domain' ? (
+          <div className="tenant-domain-config-card">
+            <div className="tenant-domain-config-head">
+              <div>
+                <div className="tenant-config-card-title">自定义域名</div>
+                <p>为租户配置独立访问域名，可用于登录入口、门户首页或开放接口。</p>
+              </div>
+              <Space wrap>
+                <span className="tenant-domain-switch-label">启用域名</span>
+                <Switch checked={domainConfig.enabled} onChange={(checked) => updateDomainConfig({ enabled: checked })} />
+                <Button size="small" type="primary" icon={<PlusOutlined />} onClick={handleAddDomain}>
+                  添加域名
+                </Button>
+              </Space>
+            </div>
+
+            <div className="tenant-domain-options">
+              <div className="tenant-domain-option-row">
+                <div>
+                  <strong>强制 HTTPS</strong>
+                  <span>域名验证通过后自动使用 HTTPS 访问。</span>
+                </div>
+                <Switch checked={domainConfig.forceHttps} onChange={(checked) => updateDomainConfig({ forceHttps: checked })} />
+              </div>
+              <div className="tenant-domain-option-row">
+                <div>
+                  <strong>默认 CNAME 目标</strong>
+                  <span>{`${String(activeTenant.code || activeTenant.id).toLowerCase()}.tenant.guoren.ai`}</span>
+                </div>
+                <Button size="small" icon={<CopyOutlined />} onClick={() => handleCopyDomainText(`${String(activeTenant.code || activeTenant.id).toLowerCase()}.tenant.guoren.ai`)}>
+                  复制
+                </Button>
+              </div>
+            </div>
+
+            {domainConfig.domains.length ? (
+              <div className="tenant-domain-list">
+                {domainConfig.domains.map((domainItem) => (
+                  <div key={domainItem.id} className="tenant-domain-row">
+                    <div className="tenant-domain-main">
+                      <label>
+                        <span>域名</span>
+                        <Input
+                          value={domainItem.domain}
+                          placeholder="例如 ai.example.com"
+                          onChange={(event) => {
+                            const nextDomain = event.target.value.trim();
+                            updateDomainRecord(domainItem.id, {
+                              domain: nextDomain,
+                              verifyName: nextDomain ? `_gr_verify.${nextDomain}` : '_gr_verify',
+                            });
+                          }}
+                        />
+                      </label>
+                      <label>
+                        <span>用途</span>
+                        <Select
+                          value={domainItem.usage}
+                          options={DOMAIN_USAGE_OPTIONS}
+                          onChange={(value) => updateDomainRecord(domainItem.id, { usage: value })}
+                        />
+                      </label>
+                      <div className="tenant-domain-status">
+                        {renderStatusTag(DOMAIN_STATUS_OPTIONS, domainItem.status)}
+                        {renderStatusTag(DOMAIN_SSL_STATUS_OPTIONS, domainItem.sslStatus)}
+                      </div>
+                      <Space>
+                        <Button
+                          size="small"
+                          icon={<SafetyCertificateOutlined />}
+                          onClick={() => handleVerifyDomain(domainItem.id)}
+                          disabled={!domainItem.domain}
+                        >
+                          模拟验证
+                        </Button>
+                        <Popconfirm title="确定删除该域名吗？" onConfirm={() => handleDeleteDomain(domainItem.id)}>
+                          <Button size="small" danger icon={<DeleteOutlined />} />
+                        </Popconfirm>
+                      </Space>
+                    </div>
+                    <div className="tenant-domain-records">
+                      <div className="tenant-domain-record">
+                        <span>CNAME 指向</span>
+                        <code>{domainItem.cnameTarget}</code>
+                        <Button size="small" type="link" onClick={() => handleCopyDomainText(domainItem.cnameTarget)}>复制</Button>
+                      </div>
+                      <div className="tenant-domain-record">
+                        <span>TXT 校验</span>
+                        <code>{domainItem.verifyName}</code>
+                        <code>{domainItem.verifyValue}</code>
+                        <Button size="small" type="link" onClick={() => handleCopyDomainText(`${domainItem.verifyName} ${domainItem.verifyValue}`)}>复制</Button>
+                      </div>
+                      {domainItem.remark ? <div className="tenant-domain-remark">{domainItem.remark}</div> : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="tenant-domain-empty">
+                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无自定义域名">
+                  <Button type="primary" icon={<PlusOutlined />} onClick={handleAddDomain}>
+                    添加第一个域名
+                  </Button>
+                </Empty>
+              </div>
+            )}
+          </div>
+          ) : null}
+
+          {activeTenantConfigKey === 'login' ? (
           <div className="tenant-login-config-grid">
             <div className="tenant-config-card">
               <div className="tenant-config-card-title">页面文案</div>
@@ -697,6 +963,17 @@ function TenantPrototypeModule() {
               {renderLoginConfigPreview(loginConfig)}
             </div>
           </div>
+          ) : null}
+
+          {!implementedConfigKeys.has(activeTenantConfigKey) ? (
+            <div className="tenant-config-placeholder">
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description={`${activeConfigItem.title}配置暂未实现`}
+              />
+              <div>这里将承载该模块的租户级配置项，左侧切换不会再展示其他模块配置。</div>
+            </div>
+          ) : null}
         </div>
       </div>
     );

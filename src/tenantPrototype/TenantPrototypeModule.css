@@ -275,12 +275,21 @@
   border-radius: 8px;
   background: #fff;
   text-align: left;
-  cursor: default;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
 .tenant-module-config-item.is-active {
   border-color: #bfdbfe;
   background: linear-gradient(135deg, #eff6ff 0%, #fff 100%);
+}
+
+.tenant-module-config-item:hover {
+  border-color: #bfdbfe;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.08);
 }
 
 .tenant-module-config-icon {
@@ -342,6 +351,177 @@
   display: grid;
   grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
   gap: 14px;
+}
+
+.tenant-domain-config-card {
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.tenant-domain-config-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.tenant-domain-config-head p {
+  margin: -7px 0 0;
+  color: #667085;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.tenant-domain-switch-label {
+  color: #344054;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tenant-domain-options {
+  display: grid;
+  grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.tenant-domain-option-row {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #edf0f5;
+  border-radius: 8px;
+  background: #fbfcfe;
+}
+
+.tenant-domain-option-row strong,
+.tenant-domain-option-row span {
+  display: block;
+}
+
+.tenant-domain-option-row strong {
+  color: #182033;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.tenant-domain-option-row span {
+  margin-top: 3px;
+  color: #667085;
+  font-size: 12px;
+  line-height: 16px;
+  word-break: break-all;
+}
+
+.tenant-domain-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.tenant-domain-row {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.tenant-domain-main {
+  display: grid;
+  grid-template-columns: minmax(190px, 1fr) 140px auto auto;
+  gap: 12px;
+  align-items: end;
+  padding: 12px;
+}
+
+.tenant-domain-main label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.tenant-domain-main label > span {
+  color: #344054;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tenant-domain-status {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tenant-domain-records {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px 12px;
+  border-top: 1px solid #eef2f7;
+  background: #fbfcfe;
+}
+
+.tenant-domain-record {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  color: #667085;
+  font-size: 12px;
+}
+
+.tenant-domain-record:first-child {
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+}
+
+.tenant-domain-record code {
+  overflow: hidden;
+  padding: 5px 7px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #fff;
+  color: #182033;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tenant-domain-remark {
+  color: #667085;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.tenant-domain-empty {
+  margin-top: 14px;
+  padding: 18px;
+  border: 1px dashed #d7deea;
+  border-radius: 8px;
+  background: #fbfcfe;
+}
+
+.tenant-config-placeholder {
+  min-height: 360px;
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  padding: 42px;
+  border: 1px dashed #d7deea;
+  border-radius: 8px;
+  background: #fff;
+  color: #667085;
+  font-size: 13px;
+  text-align: center;
 }
 
 .tenant-config-card {
@@ -600,7 +780,11 @@
     grid-template-columns: 1fr;
   }
 
-  .tenant-login-config-grid {
+  .tenant-login-config-grid,
+  .tenant-domain-options,
+  .tenant-domain-main,
+  .tenant-domain-record,
+  .tenant-domain-record:first-child {
     grid-template-columns: 1fr;
   }
 
