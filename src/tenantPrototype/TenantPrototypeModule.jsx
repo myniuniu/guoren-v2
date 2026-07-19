@@ -9,6 +9,7 @@ import {
   Popconfirm,
   Select,
   Space,
+  Switch,
   Table,
   Tabs,
   Tag,
@@ -19,9 +20,19 @@ import {
   CopyOutlined,
   DeleteOutlined,
   EditOutlined,
+  LoginOutlined,
+  MobileOutlined,
   PlusOutlined,
   SearchOutlined,
+  SettingOutlined,
 } from '@ant-design/icons';
+import {
+  LOGIN_ACCENT_OPTIONS,
+  LOGIN_METHOD_OPTIONS,
+  LOGIN_TEMPLATE_OPTIONS,
+  createLoginConfig,
+  getLoginConfigFromSolutionNames,
+} from '../shared/loginPageConfig';
 import './TenantPrototypeModule.css';
 
 const { TextArea } = Input;
@@ -47,6 +58,13 @@ const SERVICE_STATUS_OPTIONS = [
   { value: 'PENDING', label: '待开通', color: 'default' },
   { value: 'EXPIRED', label: '已到期', color: 'warning' },
   { value: 'PAUSED', label: '已暂停', color: 'error' },
+];
+
+const MODULE_CONFIG_ITEMS = [
+  { key: 'login', title: '登录页面', desc: '入口样式、登录方式、租户选择', icon: <LoginOutlined />, active: true },
+  { key: 'space', title: '空间模块', desc: '空间创建、成员加入、场景入口', icon: <BankOutlined /> },
+  { key: 'resource', title: '资料库模块', desc: '容量、解析、上传限制', icon: <SettingOutlined /> },
+  { key: 'message', title: '消息模块', desc: '通知策略、保留周期', icon: <MobileOutlined /> },
 ];
 
 const PACKAGE_CATALOG = [
@@ -117,6 +135,19 @@ const PACKAGE_CATALOG = [
   },
 ];
 
+function getInheritedLoginConfigFromPackage(packageId, tenantName = '') {
+  const packageItem = PACKAGE_CATALOG.find((item) => item.id === packageId);
+  if (!packageItem) {
+    return {
+      sourceSolutionName: '',
+      loginConfig: createLoginConfig(tenantName ? {
+        platformName: `${tenantName}智能教学平台`,
+      } : {}),
+    };
+  }
+  return getLoginConfigFromSolutionNames(packageItem.solutionNames);
+}
+
 const INITIAL_TENANTS = [
   {
     id: 'tenant-east-edu',
@@ -135,6 +166,8 @@ const INITIAL_TENANTS = [
     successOwner: '李婧',
     remark: '区域教研与教师培训联合项目。',
     updatedAt: '2026-07-11 16:20',
+    loginConfigSource: getInheritedLoginConfigFromPackage('pkg-pro').sourceSolutionName,
+    loginConfig: getInheritedLoginConfigFromPackage('pkg-pro').loginConfig,
   },
   {
     id: 'tenant-river-school',
@@ -153,6 +186,8 @@ const INITIAL_TENANTS = [
     successOwner: '王南',
     remark: '试点教师数字素养提升项目。',
     updatedAt: '2026-07-10 09:45',
+    loginConfigSource: getInheritedLoginConfigFromPackage('pkg-standard').sourceSolutionName,
+    loginConfig: getInheritedLoginConfigFromPackage('pkg-standard').loginConfig,
   },
   {
     id: 'tenant-north-lab',
@@ -171,6 +206,10 @@ const INITIAL_TENANTS = [
     successOwner: '未分配',
     remark: '待确认正式服务范围。',
     updatedAt: '2026-07-08 14:12',
+    loginConfigSource: '',
+    loginConfig: createLoginConfig({
+      platformName: '北辰创新中心智能培训平台',
+    }),
   },
 ];
 
@@ -259,6 +298,7 @@ function TenantPrototypeModule() {
       message.warning('请输入租户名称');
       return;
     }
+    const inheritedLogin = getInheritedLoginConfigFromPackage(createDraft.packageId, createDraft.name.trim());
     const nextTenant = {
       id: `tenant-${Date.now()}`,
       name: createDraft.name.trim(),
@@ -276,6 +316,8 @@ function TenantPrototypeModule() {
       successOwner: '',
       remark: '',
       updatedAt: nowText(),
+      loginConfigSource: inheritedLogin.sourceSolutionName,
+      loginConfig: inheritedLogin.loginConfig,
     };
     setTenants((prev) => [nextTenant, ...prev]);
     setCreateModalOpen(false);
@@ -295,6 +337,7 @@ function TenantPrototypeModule() {
       status: 'TRIAL',
       serviceStatus: record.packageId ? 'TRIAL' : 'PENDING',
       updatedAt: nowText(),
+      loginConfig: createLoginConfig(record.loginConfig),
     };
     setTenants((prev) => [copied, ...prev]);
     message.success('已复制为新租户');
@@ -444,6 +487,221 @@ function TenantPrototypeModule() {
     );
   };
 
+  const updateLoginConfig = (patch) => {
+    if (!activeTenant) return;
+    updateTenant(activeTenant.id, (tenant) => ({
+      loginConfig: createLoginConfig({
+        ...(tenant.loginConfig || {}),
+        ...patch,
+      }),
+    }));
+  };
+
+  const updateLoginMethod = (methodKey, enabled) => {
+    if (!activeTenant) return;
+    const loginConfig = createLoginConfig(activeTenant.loginConfig);
+    const nextMethods = {
+      ...loginConfig.loginMethods,
+      [methodKey]: enabled,
+    };
+    if (!nextMethods.account && !nextMethods.phone) {
+      message.warning('至少保留一种登录方式');
+      return;
+    }
+
+    const nextDefaultMethod = nextMethods[loginConfig.defaultMethod]
+      ? loginConfig.defaultMethod
+      : LOGIN_METHOD_OPTIONS.find((item) => nextMethods[item.value])?.value || 'phone';
+
+    updateLoginConfig({
+      loginMethods: nextMethods,
+      defaultMethod: nextDefaultMethod,
+    });
+  };
+
+  const renderLoginConfigPreview = (loginConfig) => {
+    const enabledMethods = LOGIN_METHOD_OPTIONS.filter((item) => loginConfig.loginMethods[item.value]);
+    const defaultMethodLabel = LOGIN_METHOD_OPTIONS.find((item) => item.value === loginConfig.defaultMethod)?.label || enabledMethods[0]?.label;
+
+    return (
+      <div className={`tenant-login-preview tenant-login-preview-${loginConfig.template}`} style={{ '--tenant-preview-accent': loginConfig.accentColor }}>
+        <div className="tenant-login-preview-hero">
+          <div>
+            <strong>{loginConfig.heroTitle}</strong>
+            <span>{loginConfig.heroSubtitle}</span>
+          </div>
+          <div className="tenant-login-preview-orbit">AI</div>
+        </div>
+        <div className="tenant-login-preview-panel">
+          <div className="tenant-login-preview-welcome">{loginConfig.welcomeText}</div>
+          <div className="tenant-login-preview-title">{loginConfig.platformName}</div>
+          <div className="tenant-login-preview-tabs">
+            {enabledMethods.map((item) => (
+              <span key={item.value} className={item.value === loginConfig.defaultMethod ? 'is-active' : ''}>
+                {item.label}
+              </span>
+            ))}
+          </div>
+          <div className="tenant-login-preview-input" />
+          <div className="tenant-login-preview-input is-short" />
+          <div className="tenant-login-preview-button">立即登录</div>
+          <div className="tenant-login-preview-flags">
+            {defaultMethodLabel ? <Tag color="blue">默认：{defaultMethodLabel}</Tag> : null}
+            {loginConfig.captchaEnabled ? <Tag>验证码</Tag> : null}
+            {loginConfig.agreementRequired ? <Tag>协议确认</Tag> : null}
+            {loginConfig.tenantSelectEnabled ? <Tag color="purple">登录后选企业</Tag> : null}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderTenantConfig = () => {
+    if (!activeTenant) return null;
+    const loginConfig = createLoginConfig(activeTenant.loginConfig);
+    const methodSelectOptions = LOGIN_METHOD_OPTIONS.map((item) => ({
+      ...item,
+      disabled: !loginConfig.loginMethods[item.value],
+    }));
+
+    return (
+      <div className="tenant-config-layout">
+        <aside className="tenant-module-config-list">
+          {MODULE_CONFIG_ITEMS.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              className={`tenant-module-config-item ${item.active ? 'is-active' : ''}`}
+            >
+              <span className="tenant-module-config-icon">{item.icon}</span>
+              <span>
+                <strong>{item.title}</strong>
+                <small>{item.desc}</small>
+              </span>
+              {!item.active ? <Tag>待配置</Tag> : <Tag color="blue">当前</Tag>}
+            </button>
+          ))}
+        </aside>
+
+        <div className="tenant-config-content">
+          <div className="tenant-config-title-row">
+            <div>
+              <div className="tenant-block-title">登录页面配置</div>
+              <p>默认从套餐关联的解决方案继承，当前租户可在这里继续覆盖登录页文案、视觉模板和登录能力。</p>
+            </div>
+            <Space wrap>
+              {activeTenant.loginConfigSource ? <Tag color="blue">初始继承自：{activeTenant.loginConfigSource}</Tag> : null}
+              <Tag color="purple">{activeTenant.name}</Tag>
+            </Space>
+          </div>
+
+          <div className="tenant-login-config-grid">
+            <div className="tenant-config-card">
+              <div className="tenant-config-card-title">页面文案</div>
+              <div className="tenant-form-grid tenant-config-inner-grid">
+                <label>
+                  <span>欢迎语</span>
+                  <Input value={loginConfig.welcomeText} onChange={(event) => updateLoginConfig({ welcomeText: event.target.value })} />
+                </label>
+                <label>
+                  <span>平台名称</span>
+                  <Input value={loginConfig.platformName} onChange={(event) => updateLoginConfig({ platformName: event.target.value })} />
+                </label>
+                <label>
+                  <span>左侧主标题</span>
+                  <Input value={loginConfig.heroTitle} onChange={(event) => updateLoginConfig({ heroTitle: event.target.value })} />
+                </label>
+                <label>
+                  <span>左侧副标题</span>
+                  <Input value={loginConfig.heroSubtitle} onChange={(event) => updateLoginConfig({ heroSubtitle: event.target.value })} />
+                </label>
+              </div>
+            </div>
+
+            <div className="tenant-config-card">
+              <div className="tenant-config-card-title">登录功能</div>
+              <div className="tenant-config-toggle-list">
+                <div className="tenant-config-toggle-row">
+                  <div>
+                    <strong>账号密码登录</strong>
+                    <span>支持账号/邮箱 + 密码 + 图形验证码</span>
+                  </div>
+                  <Switch checked={loginConfig.loginMethods.account} onChange={(checked) => updateLoginMethod('account', checked)} />
+                </div>
+                <div className="tenant-config-toggle-row">
+                  <div>
+                    <strong>手机号登录</strong>
+                    <span>支持手机号 + 短信验证码</span>
+                  </div>
+                  <Switch checked={loginConfig.loginMethods.phone} onChange={(checked) => updateLoginMethod('phone', checked)} />
+                </div>
+                <div className="tenant-config-toggle-row">
+                  <div>
+                    <strong>图形验证码</strong>
+                    <span>账号密码登录时展示图形验证码</span>
+                  </div>
+                  <Switch checked={loginConfig.captchaEnabled} onChange={(checked) => updateLoginConfig({ captchaEnabled: checked })} />
+                </div>
+                <div className="tenant-config-toggle-row">
+                  <div>
+                    <strong>登录协议确认</strong>
+                    <span>要求用户勾选用户协议与隐私政策</span>
+                  </div>
+                  <Switch checked={loginConfig.agreementRequired} onChange={(checked) => updateLoginConfig({ agreementRequired: checked })} />
+                </div>
+                <div className="tenant-config-toggle-row">
+                  <div>
+                    <strong>登录后选择企业</strong>
+                    <span>验证通过后先进入企业/组织选择页</span>
+                  </div>
+                  <Switch checked={loginConfig.tenantSelectEnabled} onChange={(checked) => updateLoginConfig({ tenantSelectEnabled: checked })} />
+                </div>
+                <label className="tenant-config-default-method">
+                  <span>默认登录方式</span>
+                  <Select value={loginConfig.defaultMethod} options={methodSelectOptions} onChange={(value) => updateLoginConfig({ defaultMethod: value })} />
+                </label>
+              </div>
+            </div>
+
+            <div className="tenant-config-card">
+              <div className="tenant-config-card-title">视觉模板</div>
+              <div className="tenant-form-grid tenant-config-inner-grid">
+                <label>
+                  <span>页面模板</span>
+                  <Select value={loginConfig.template} options={LOGIN_TEMPLATE_OPTIONS} onChange={(value) => updateLoginConfig({ template: value })} />
+                </label>
+                <label>
+                  <span>品牌主色</span>
+                  <Select
+                    value={loginConfig.accentColor}
+                    onChange={(value) => updateLoginConfig({ accentColor: value })}
+                    options={LOGIN_ACCENT_OPTIONS.map((item) => ({
+                      value: item.value,
+                      label: (
+                        <span className="tenant-color-option">
+                          <i style={{ background: item.value }} />
+                          {item.label}
+                        </span>
+                      ),
+                    }))}
+                  />
+                </label>
+              </div>
+              <div className="tenant-config-note">
+                租户初始值来自套餐绑定的解决方案；修改后以租户级配置为准，后续可由登录页按租户域名或租户编码读取。
+              </div>
+            </div>
+
+            <div className="tenant-config-card tenant-config-preview-card">
+              <div className="tenant-config-card-title">登录页预览</div>
+              {renderLoginConfigPreview(loginConfig)}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderDrawer = () => {
     if (!activeTenant) return null;
 
@@ -543,10 +801,18 @@ function TenantPrototypeModule() {
                         value={activeTenant.packageId}
                         options={packageOptions}
                         placeholder="未开通套餐"
-                        onChange={(value) => updateTenant(activeTenant.id, {
-                          packageId: value || null,
-                          serviceStatus: value ? activeTenant.serviceStatus === 'PENDING' ? 'ACTIVE' : activeTenant.serviceStatus : 'PENDING',
-                        })}
+                        onChange={(value) => {
+                          const inheritedLogin = getInheritedLoginConfigFromPackage(value || null, activeTenant.name);
+                          updateTenant(activeTenant.id, {
+                            packageId: value || null,
+                            serviceStatus: value ? activeTenant.serviceStatus === 'PENDING' ? 'ACTIVE' : activeTenant.serviceStatus : 'PENDING',
+                            loginConfigSource: inheritedLogin.sourceSolutionName,
+                            loginConfig: inheritedLogin.loginConfig,
+                          });
+                          if (value) {
+                            message.success('已按套餐关联解决方案初始化登录页配置，可在配置页签继续修改');
+                          }
+                        }}
                       />
                     </label>
                     <label>
@@ -575,6 +841,15 @@ function TenantPrototypeModule() {
               children: (
                 <div className="tenant-section">
                   {renderPackageSummary(activePackage)}
+                </div>
+              ),
+            },
+            {
+              key: 'config',
+              label: '配置',
+              children: (
+                <div className="tenant-section tenant-config-section">
+                  {renderTenantConfig()}
                 </div>
               ),
             },

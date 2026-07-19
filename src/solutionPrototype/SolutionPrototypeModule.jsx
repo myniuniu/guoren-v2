@@ -40,6 +40,7 @@ import {
   EditOutlined,
   EyeOutlined,
   FileTextOutlined,
+  LoginOutlined,
   MessageOutlined,
   PlusOutlined,
   RocketOutlined,
@@ -50,6 +51,14 @@ import {
   ToolOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
+import {
+  LOGIN_ACCENT_OPTIONS,
+  LOGIN_METHOD_OPTIONS,
+  LOGIN_TEMPLATE_OPTIONS,
+  createLoginConfig,
+  getSolutionLoginConfig,
+  saveSolutionLoginConfig,
+} from '../shared/loginPageConfig';
 import 'reactflow/dist/style.css';
 import './SolutionPrototypeModule.css';
 
@@ -929,6 +938,7 @@ function buildInitialSolutions() {
       updatedAt: '2026-07-10 16:20',
       enabledCapabilities: ['space_operation', 'lucky_agent', 'resource_deposit', 'calendar_schedule', 'message_touch', 'task_management', 'seminar_operation', 'survey_feedback', 'certificate_issue'],
       modules: trainingModules,
+      loginConfig: getSolutionLoginConfig('教师数字素养提升培训方案'),
     },
     {
       id: 'sol-research-hub',
@@ -945,6 +955,7 @@ function buildInitialSolutions() {
       updatedAt: '2026-07-08 09:45',
       enabledCapabilities: ['space_operation', 'resource_deposit', 'knowledge_navigation', 'calendar_schedule', 'message_touch', 'task_management'],
       modules: researchModules,
+      loginConfig: getSolutionLoginConfig('区域教研共创解决方案'),
     },
   ];
 }
@@ -1508,6 +1519,9 @@ function SolutionPrototypeModule() {
       updatedAt: nowText(),
       enabledCapabilities: [],
       modules: [],
+      loginConfig: createLoginConfig({
+        platformName: `${values.name}平台`,
+      }),
     };
     setSolutions((prev) => [next, ...prev]);
     setCreateModalOpen(false);
@@ -1535,6 +1549,7 @@ function SolutionPrototypeModule() {
       status: 'DRAFT',
       version: 'v1.0',
       updatedAt: nowText(),
+      loginConfig: createLoginConfig(solution.loginConfig),
       modules: solution.modules.map((item, index) => ({
         ...item,
         id: `${item.id}-copy-${copyIndex}-${index}`,
@@ -1550,6 +1565,37 @@ function SolutionPrototypeModule() {
   const handleChangeSelectedField = (field, value) => {
     if (!selectedSolution) return;
     updateSolution(selectedSolution.id, { [field]: value });
+  };
+
+  const handleChangeSolutionLoginConfig = (patch) => {
+    if (!selectedSolution) return;
+    const nextLoginConfig = createLoginConfig({
+      ...(selectedSolution.loginConfig || {}),
+      ...patch,
+    });
+    updateSolution(selectedSolution.id, { loginConfig: nextLoginConfig });
+    saveSolutionLoginConfig(selectedSolution.name, nextLoginConfig);
+  };
+
+  const handleChangeSolutionLoginMethod = (methodKey, enabled) => {
+    if (!selectedSolution) return;
+    const loginConfig = createLoginConfig(selectedSolution.loginConfig);
+    const nextMethods = {
+      ...loginConfig.loginMethods,
+      [methodKey]: enabled,
+    };
+    if (!nextMethods.account && !nextMethods.phone) {
+      message.warning('至少保留一种登录方式');
+      return;
+    }
+    const nextDefaultMethod = nextMethods[loginConfig.defaultMethod]
+      ? loginConfig.defaultMethod
+      : LOGIN_METHOD_OPTIONS.find((item) => nextMethods[item.value])?.value || 'phone';
+
+    handleChangeSolutionLoginConfig({
+      loginMethods: nextMethods,
+      defaultMethod: nextDefaultMethod,
+    });
   };
 
   const handleAddModule = (moduleDef) => {
@@ -1761,6 +1807,166 @@ function SolutionPrototypeModule() {
     );
   };
 
+  const renderSolutionLoginPreview = (loginConfig) => {
+    const enabledMethods = LOGIN_METHOD_OPTIONS.filter((item) => loginConfig.loginMethods[item.value]);
+    return (
+      <div className={`sp-login-preview sp-login-preview-${loginConfig.template}`} style={{ '--sp-login-accent': loginConfig.accentColor }}>
+        <div className="sp-login-preview-hero">
+          <div className="sp-login-preview-ai">AI</div>
+          <strong>{loginConfig.heroTitle}</strong>
+          <span>{loginConfig.heroSubtitle}</span>
+        </div>
+        <div className="sp-login-preview-panel">
+          <div className="sp-login-preview-welcome">{loginConfig.welcomeText}</div>
+          <div className="sp-login-preview-platform">{loginConfig.platformName}</div>
+          <div className="sp-login-preview-tabs">
+            {enabledMethods.map((item) => (
+              <span key={item.value} className={item.value === loginConfig.defaultMethod ? 'is-active' : ''}>
+                {item.label}
+              </span>
+            ))}
+          </div>
+          <div className="sp-login-preview-input" />
+          <div className="sp-login-preview-input is-short" />
+          <div className="sp-login-preview-submit">立即登录</div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderSolutionLoginConfig = () => {
+    if (!selectedSolution) return null;
+    const loginConfig = createLoginConfig(selectedSolution.loginConfig);
+    const methodSelectOptions = LOGIN_METHOD_OPTIONS.map((item) => ({
+      ...item,
+      disabled: !loginConfig.loginMethods[item.value],
+    }));
+
+    return (
+      <div className="sp-login-config-layout">
+        <div className="sp-section sp-login-config-main">
+          <div className="sp-section-toolbar">
+            <div>
+              <div className="sp-section-title">登录页默认配置</div>
+              <div className="sp-section-subtitle">
+                套餐绑定该解决方案后，租户会以这里的配置初始化登录页；租户管理中仍可继续覆盖。
+              </div>
+            </div>
+            <Tag color="blue">方案默认值</Tag>
+          </div>
+
+          <div className="sp-login-config-grid">
+            <div className="sp-login-config-card">
+              <div className="sp-login-config-card-title">页面文案</div>
+              <div className="sp-form-grid">
+                <label>
+                  <span>欢迎语</span>
+                  <Input value={loginConfig.welcomeText} onChange={(event) => handleChangeSolutionLoginConfig({ welcomeText: event.target.value })} />
+                </label>
+                <label>
+                  <span>平台名称</span>
+                  <Input value={loginConfig.platformName} onChange={(event) => handleChangeSolutionLoginConfig({ platformName: event.target.value })} />
+                </label>
+                <label>
+                  <span>左侧主标题</span>
+                  <Input value={loginConfig.heroTitle} onChange={(event) => handleChangeSolutionLoginConfig({ heroTitle: event.target.value })} />
+                </label>
+                <label>
+                  <span>左侧副标题</span>
+                  <Input value={loginConfig.heroSubtitle} onChange={(event) => handleChangeSolutionLoginConfig({ heroSubtitle: event.target.value })} />
+                </label>
+              </div>
+            </div>
+
+            <div className="sp-login-config-card">
+              <div className="sp-login-config-card-title">登录能力</div>
+              <div className="sp-login-toggle-list">
+                <div className="sp-login-toggle-row">
+                  <div>
+                    <strong>账号密码登录</strong>
+                    <span>账号/邮箱 + 密码，可叠加图形验证码。</span>
+                  </div>
+                  <Switch checked={loginConfig.loginMethods.account} onChange={(checked) => handleChangeSolutionLoginMethod('account', checked)} />
+                </div>
+                <div className="sp-login-toggle-row">
+                  <div>
+                    <strong>手机号登录</strong>
+                    <span>手机号 + 短信验证码。</span>
+                  </div>
+                  <Switch checked={loginConfig.loginMethods.phone} onChange={(checked) => handleChangeSolutionLoginMethod('phone', checked)} />
+                </div>
+                <div className="sp-login-toggle-row">
+                  <div>
+                    <strong>图形验证码</strong>
+                    <span>账号密码登录下展示图形验证码。</span>
+                  </div>
+                  <Switch checked={loginConfig.captchaEnabled} onChange={(checked) => handleChangeSolutionLoginConfig({ captchaEnabled: checked })} />
+                </div>
+                <div className="sp-login-toggle-row">
+                  <div>
+                    <strong>协议确认</strong>
+                    <span>登录前要求勾选协议和隐私政策。</span>
+                  </div>
+                  <Switch checked={loginConfig.agreementRequired} onChange={(checked) => handleChangeSolutionLoginConfig({ agreementRequired: checked })} />
+                </div>
+                <div className="sp-login-toggle-row">
+                  <div>
+                    <strong>登录后选择企业</strong>
+                    <span>验证通过后先进入租户/组织选择页。</span>
+                  </div>
+                  <Switch checked={loginConfig.tenantSelectEnabled} onChange={(checked) => handleChangeSolutionLoginConfig({ tenantSelectEnabled: checked })} />
+                </div>
+              </div>
+            </div>
+
+            <div className="sp-login-config-card">
+              <div className="sp-login-config-card-title">视觉与默认方式</div>
+              <div className="sp-form-grid">
+                <label>
+                  <span>页面模板</span>
+                  <Select value={loginConfig.template} options={LOGIN_TEMPLATE_OPTIONS} onChange={(value) => handleChangeSolutionLoginConfig({ template: value })} />
+                </label>
+                <label>
+                  <span>品牌主色</span>
+                  <Select
+                    value={loginConfig.accentColor}
+                    onChange={(value) => handleChangeSolutionLoginConfig({ accentColor: value })}
+                    options={LOGIN_ACCENT_OPTIONS.map((item) => ({
+                      value: item.value,
+                      label: (
+                        <span className="sp-login-color-option">
+                          <i style={{ background: item.value }} />
+                          {item.label}
+                        </span>
+                      ),
+                    }))}
+                  />
+                </label>
+                <label className="sp-form-span">
+                  <span>默认登录方式</span>
+                  <Select value={loginConfig.defaultMethod} options={methodSelectOptions} onChange={(value) => handleChangeSolutionLoginConfig({ defaultMethod: value })} />
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="sp-section sp-login-config-preview-section">
+          <div className="sp-section-title">登录页预览</div>
+          <div className="sp-section-subtitle">用于表达方案默认登录体验，租户初始化后可独立调整。</div>
+          {renderSolutionLoginPreview(loginConfig)}
+          <div className="sp-login-config-tags">
+            {loginConfig.loginMethods.account ? <Tag>账号密码</Tag> : null}
+            {loginConfig.loginMethods.phone ? <Tag>手机号</Tag> : null}
+            {loginConfig.captchaEnabled ? <Tag>图形验证码</Tag> : null}
+            {loginConfig.agreementRequired ? <Tag>协议确认</Tag> : null}
+            {loginConfig.tenantSelectEnabled ? <Tag color="purple">登录后选企业</Tag> : null}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const solutionColumns = [
     {
       title: '方案名称',
@@ -1935,6 +2141,16 @@ function SolutionPrototypeModule() {
             </div>
           </div>
         ),
+      },
+      {
+        key: 'login-config',
+        label: (
+          <Space size={6}>
+            <LoginOutlined />
+            登录页配置
+          </Space>
+        ),
+        children: renderSolutionLoginConfig(),
       },
       {
         key: 'module-capability',

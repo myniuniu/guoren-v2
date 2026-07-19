@@ -37,7 +37,7 @@ const CERTIFICATE_SCENARIOS = [
     title: '最佳实践',
     icon: <TrophyOutlined />,
     tag: '沉淀',
-    desc: '优秀案例进入资料区、资历库或研习社后，形成最佳实践贡献凭证。',
+    desc: '优秀案例进入资料区、资料库或研习社后，形成最佳实践贡献凭证。',
   },
   {
     key: 'redeem',

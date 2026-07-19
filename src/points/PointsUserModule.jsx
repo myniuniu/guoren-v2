@@ -139,7 +139,7 @@ const INITIAL_DETAILS = [
     time: '07-14 09:12',
     action: '最佳实践案例被收录',
     type: 'practice',
-    source: '资历库',
+    source: '资料库',
     points: 60,
     status: 'credited',
     reviewer: '运营负责人',
@@ -734,7 +734,7 @@ export default function PointsUserModule() {
               <span className="points-summary-icon"><BookOutlined /></span>
             </div>
             <div className="points-summary-value">5</div>
-            <div className="points-summary-hint">精选内容已进入资料区、资历库或研习社。</div>
+            <div className="points-summary-hint">精选内容已进入资料区、资料库或研习社。</div>
           </Card>
         </div>
 

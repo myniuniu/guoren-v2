@@ -1,0 +1,252 @@
+.tenant-select-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background:
+    radial-gradient(circle at 20% 8%, rgba(255, 255, 255, 0.86) 0, rgba(255, 255, 255, 0) 34%),
+    radial-gradient(circle at 86% 76%, rgba(255, 255, 255, 0.72) 0, rgba(255, 255, 255, 0) 34%),
+    linear-gradient(135deg, #f0f2f6 0%, #f7f4f6 100%);
+  color: #20242e;
+  overflow: auto;
+}
+
+.tenant-select-card {
+  width: 560px;
+  min-height: 564px;
+  padding: 50px 50px 38px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow:
+    0 24px 60px rgba(31, 35, 48, 0.12),
+    0 1px 0 rgba(255, 255, 255, 0.9) inset;
+}
+
+.tenant-back-button {
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #20242e;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tenant-back-button:hover {
+  color: #2563eb;
+}
+
+.tenant-select-heading {
+  margin-top: 28px;
+}
+
+.tenant-select-heading h1 {
+  margin: 0;
+  color: #20242e;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.22;
+}
+
+.tenant-select-heading p {
+  max-width: 440px;
+  margin: 8px 0 0;
+  color: #5d6472;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.tenant-select-heading strong {
+  margin-right: 6px;
+  color: #20242e;
+  font-weight: 800;
+}
+
+.tenant-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 38px;
+}
+
+.tenant-row {
+  width: 100%;
+  height: 72px;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 22px;
+  align-items: center;
+  gap: 16px;
+  padding: 0 18px;
+  border: 1px solid #e2e5eb;
+  border-radius: 10px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.tenant-row:hover,
+.tenant-row:focus-visible {
+  border-color: rgba(37, 99, 235, 0.56);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.1);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.tenant-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.tenant-logo-blue {
+  background: linear-gradient(135deg, #4f8cff 0%, #316ef5 100%);
+}
+
+.tenant-logo-cyan {
+  background: linear-gradient(135deg, #22c7ee 0%, #0ea5e9 100%);
+}
+
+.tenant-logo-purple {
+  background: linear-gradient(135deg, #8b5cf6 0%, #6d5dfc 100%);
+}
+
+.tenant-logo-green {
+  background: linear-gradient(135deg, #34d399 0%, #0f9f74 100%);
+}
+
+.tenant-logo-orange {
+  background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
+}
+
+.tenant-logo-feishu {
+  position: relative;
+  background: transparent;
+}
+
+.tenant-logo-feishu::before,
+.tenant-logo-feishu::after,
+.tenant-logo-feishu span::before,
+.tenant-logo-feishu span::after {
+  content: '';
+  position: absolute;
+  border-radius: 999px;
+}
+
+.tenant-logo-feishu::before {
+  left: 5px;
+  top: 25px;
+  width: 34px;
+  height: 12px;
+  background: #2f7cff;
+  transform: rotate(32deg);
+}
+
+.tenant-logo-feishu::after {
+  left: 5px;
+  top: 13px;
+  width: 34px;
+  height: 12px;
+  background: #0f6ff0;
+  transform: rotate(-32deg);
+}
+
+.tenant-logo-feishu span::before {
+  right: 5px;
+  top: 6px;
+  width: 18px;
+  height: 12px;
+  background: #8bb8ff;
+  transform: rotate(-25deg);
+}
+
+.tenant-logo-feishu span::after {
+  left: 4px;
+  bottom: 6px;
+  width: 19px;
+  height: 12px;
+  background: #9cc2ff;
+  transform: rotate(-20deg);
+}
+
+.tenant-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.tenant-name {
+  min-width: 0;
+  overflow: hidden;
+  color: #20242e;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.18;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tenant-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.tenant-verified {
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 7px;
+  border-radius: 5px;
+  background: #d7f5ec;
+  color: #087f68;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tenant-verified .anticon {
+  font-size: 12px;
+}
+
+.tenant-row-arrow {
+  color: #98a1ad;
+  font-size: 22px;
+}
+
+.tenant-more-button {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 28px auto 0;
+  border: 0;
+  background: transparent;
+  color: #1763ff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tenant-more-button:hover {
+  color: #0f4ed6;
+}

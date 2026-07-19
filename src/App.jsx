@@ -456,7 +456,7 @@ function renderAccountSwitchAvatar(account) {
   );
 }
 
-function App() {
+function App({ onLogout }) {
   const [selectedKeys, setSelectedKeys] = useState(['home']);
   const [activeIconKey, setActiveIconKey] = useState(() => getInitialActiveIconKey());
   const [currentPage, setCurrentPage] = useState(() => getInitialHashRoute().page || 'home'); // 'home', 'detail', or 'workflow'
@@ -1216,6 +1216,12 @@ function App() {
     message.info(`${label}暂未接入`);
   }, []);
 
+  const handleLogout = useCallback(() => {
+    setAccountMenuOpen(false);
+    setAccountSwitchModalOpen(false);
+    onLogout?.();
+  }, [onLogout]);
+
   const openMyPointsPage = useCallback(() => {
     setAccountMenuOpen(false);
     setActiveIconKey('account-points');
@@ -1620,7 +1626,7 @@ function App() {
           <span>设置</span>
           <SettingOutlined />
         </button>
-        <button type="button" className="account-menu-row" onClick={() => handleAccountMenuPlaceholder('退出登录')}>
+        <button type="button" className="account-menu-row" onClick={handleLogout}>
           <span>退出登录</span>
           <LogoutOutlined />
         </button>

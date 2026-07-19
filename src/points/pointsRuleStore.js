@@ -35,7 +35,7 @@ export const POINT_EVENT_CATALOG = [
   {
     eventName: 'knowledge.faq.created',
     eventLabel: 'FAQ 补充',
-    sourceModule: '资历库',
+    sourceModule: '资料库',
     category: 'feedback',
     defaultPoints: 15,
     defaultTaskTitle: '补充一条高频问题 FAQ',
@@ -65,7 +65,7 @@ export const POINT_EVENT_CATALOG = [
   {
     eventName: 'practice.case.collected',
     eventLabel: '最佳实践收录',
-    sourceModule: '资历库',
+    sourceModule: '资料库',
     category: 'practice',
     defaultPoints: 60,
     defaultTaskTitle: '提交果仁最佳实践案例',

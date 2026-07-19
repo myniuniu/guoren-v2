@@ -100,7 +100,7 @@ const INITIAL_REVIEWS = [
     action: 'FAQ 补充：如何找回空间资料',
     category: 'feedback',
     points: 15,
-    source: '资历库',
+    source: '资料库',
     submittedAt: '昨天 16:28',
     status: 'pending',
     evidence: '已按 FAQ 模板补充步骤、适用范围和注意事项。',
@@ -141,10 +141,10 @@ const INITIAL_REWARDS = [
 ];
 
 const INITIAL_LEDGER = [
-  { id: 'ledger-001', user: '张洪磊', action: '最佳实践案例被收录', category: 'practice', points: 60, source: '资历库', operator: '运营负责人', status: '已入账', time: '昨天 10:25' },
+  { id: 'ledger-001', user: '张洪磊', action: '最佳实践案例被收录', category: 'practice', points: 60, source: '资料库', operator: '运营负责人', status: '已入账', time: '昨天 10:25' },
   { id: 'ledger-002', user: '徐子安', action: '提交 UGC 分享主题', category: 'ugc', points: 40, source: 'UGC 贡献专区', operator: '待审核', status: '待审核', time: '今天 09:42' },
   { id: 'ledger-003', user: '杨金钰', action: '内测有效反馈', category: 'beta', points: 30, source: '系统内测', operator: '待审核', status: '待审核', time: '今天 11:10' },
-  { id: 'ledger-004', user: '赵敏', action: 'FAQ 补充', category: 'feedback', points: 15, source: '资历库', operator: '待审核', status: '待审核', time: '昨天 16:28' },
+  { id: 'ledger-004', user: '赵敏', action: 'FAQ 补充', category: 'feedback', points: 15, source: '资料库', operator: '待审核', status: '待审核', time: '昨天 16:28' },
   { id: 'ledger-005', user: '王子瑜', action: '重复问题反馈', category: 'feedback', points: 0, source: '问题反馈区', operator: '运营负责人', status: '已驳回', time: '07-15 18:32' },
   { id: 'ledger-006', user: '陈佳', action: '果仁课程学习完成', category: 'learning', points: 20, source: '研习社', operator: '系统模拟', status: '已入账', time: '07-14 09:10' },
   { id: 'ledger-007', user: '张洪磊', action: '月度积分校准', category: 'feedback', points: 5, source: '积分管理', operator: '积分管理员', status: '人工调整', time: '07-12 15:36' },
@@ -969,7 +969,7 @@ export default function PointsAdminModule() {
               <span className="points-summary-icon"><BarChartOutlined /></span>
             </div>
             <div className="points-summary-value">18</div>
-            <div className="points-summary-hint">已沉淀到资料区、资历库或研习社课程。</div>
+            <div className="points-summary-hint">已沉淀到资料区、资料库或研习社课程。</div>
           </Card>
           <Card className="points-summary-card">
             <div className="points-summary-top">
