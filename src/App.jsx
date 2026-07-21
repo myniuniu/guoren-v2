@@ -1605,7 +1605,7 @@ function App({ onLogout }) {
           <QrcodeOutlined />
         </button>
         <button type="button" className="account-menu-row" onClick={handleOpenAccountSwitchModal}>
-          <span>登录更多账号</span>
+          <span>切换其他组织</span>
         </button>
       </div>
 

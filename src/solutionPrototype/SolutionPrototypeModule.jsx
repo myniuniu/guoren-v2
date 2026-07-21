@@ -92,6 +92,7 @@ const TAG_OPTIONS = ['AI', '培训', '协作', '证书', '资源沉淀', '知识
 const PACKAGE_RESOURCE_NOTE_MAP = {
   SPACE: '空间数量上限、是否支持自定义创建场景等空间资源边界已迁移到套餐管理中定义。',
   RESOURCE_LIBRARY: '可用资源类型、单文件上传上限、资料库容量和 AI 解析次数等资料库资源边界已迁移到套餐管理中定义。',
+  OFFICE_DOCUMENT: 'Office 文档权限在方案中定义能力上限，套餐管理中只能保持或降级配置。',
   CALENDAR: '可建日历数量、外部日历同步和提醒发送额度等日程资源边界已迁移到套餐管理中定义。',
   MESSAGE: '可用消息通道、月消息发送量和消息保留天数等消息资源边界已迁移到套餐管理中定义。',
   TASKS: '可建任务数量、任务提醒频率和任务附件容量等任务资源边界已迁移到套餐管理中定义。',
@@ -296,6 +297,40 @@ const MODULE_CATALOG = [
         defaultValue: ['学科', '年级', '资源类型'],
         options: ['学科', '年级', '资源类型', '培训阶段', '成果类型', '适用角色'],
         description: '初始化资料库时预置的标签组。',
+      },
+    ],
+  },
+  {
+    key: 'OFFICE_DOCUMENT',
+    name: 'Office 文档模块',
+    code: 'OFFICE_DOCUMENT',
+    icon: 'office',
+    category: '文档协作',
+    systemMenuKey: 'office-documents',
+    defaultMenuOrder: 25,
+    description: '提供 Office 文档在线查看和协同编辑入口，权限边界由套餐权益控制。',
+    capabilityKeys: ['office_document'],
+    navLabel: 'Office 文档',
+    deliveryItems: ['Office 文档入口', '文档权限模式', '在线查看和编辑能力'],
+    configTemplates: [
+      {
+        key: 'document_enabled',
+        label: '文档开关',
+        type: 'BOOLEAN',
+        required: true,
+        defaultValue: true,
+        description: '是否在方案内启用 Office 文档能力。',
+      },
+    ],
+    dataAuthTemplates: [
+      {
+        key: 'default_permission',
+        label: '默认权限模式',
+        type: 'SELECT',
+        required: true,
+        defaultValue: '可编辑',
+        options: ['只读', '可编辑'],
+        description: '方案默认的 Office 文档访问模式，最终权限以套餐权益为准。',
       },
     ],
   },
@@ -917,9 +952,9 @@ function createModuleAssignment(moduleDef, sortNo) {
 
 function buildInitialSolutions() {
   const findModule = (key) => MODULE_CATALOG.find((item) => item.key === key);
-  const trainingModules = ['SPACE', 'RESOURCE_LIBRARY', 'LUCKY', 'CALENDAR', 'MESSAGE', 'TASKS', 'SEMINAR', 'SURVEY', 'CERTIFICATE']
+  const trainingModules = ['SPACE', 'RESOURCE_LIBRARY', 'OFFICE_DOCUMENT', 'LUCKY', 'CALENDAR', 'MESSAGE', 'TASKS', 'SEMINAR', 'SURVEY', 'CERTIFICATE']
     .map((key, index) => createModuleAssignment(findModule(key), index + 1));
-  const researchModules = ['SPACE', 'RESOURCE_LIBRARY', 'KNOWLEDGE_SPACE', 'CALENDAR', 'MESSAGE', 'TASKS']
+  const researchModules = ['SPACE', 'RESOURCE_LIBRARY', 'OFFICE_DOCUMENT', 'KNOWLEDGE_SPACE', 'CALENDAR', 'MESSAGE', 'TASKS']
     .map((key, index) => createModuleAssignment(findModule(key), index + 1));
 
   return [
@@ -936,7 +971,7 @@ function buildInitialSolutions() {
       tags: ['AI', '培训', '证书', '日程协同', '任务协同', '资源沉淀'],
       description: '面向教师数字素养提升项目，提供空间、资料、日程、任务、研讨、反馈与证书发放的一体化运营方案。',
       updatedAt: '2026-07-10 16:20',
-      enabledCapabilities: ['space_operation', 'lucky_agent', 'resource_deposit', 'calendar_schedule', 'message_touch', 'task_management', 'seminar_operation', 'survey_feedback', 'certificate_issue'],
+      enabledCapabilities: ['space_operation', 'lucky_agent', 'resource_deposit', 'office_document', 'calendar_schedule', 'message_touch', 'task_management', 'seminar_operation', 'survey_feedback', 'certificate_issue'],
       modules: trainingModules,
       loginConfig: getSolutionLoginConfig('教师数字素养提升培训方案'),
     },
@@ -953,7 +988,7 @@ function buildInitialSolutions() {
       tags: ['协作', '知识管理', '日程协同', '任务协同', '资源沉淀'],
       description: '用于跨校教研议题共创、资料沉淀、知识空间建设、日程任务协同和过程消息触达。',
       updatedAt: '2026-07-08 09:45',
-      enabledCapabilities: ['space_operation', 'resource_deposit', 'knowledge_navigation', 'calendar_schedule', 'message_touch', 'task_management'],
+      enabledCapabilities: ['space_operation', 'resource_deposit', 'office_document', 'knowledge_navigation', 'calendar_schedule', 'message_touch', 'task_management'],
       modules: researchModules,
       loginConfig: getSolutionLoginConfig('区域教研共创解决方案'),
     },
@@ -975,6 +1010,7 @@ function ModuleIcon({ type }) {
     space: <AppstoreOutlined />,
     lucky: <ThunderboltOutlined />,
     library: <DatabaseOutlined />,
+    office: <FileTextOutlined />,
     knowledge: <ClusterOutlined />,
     calendar: <CalendarOutlined />,
     message: <MessageOutlined />,

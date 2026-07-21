@@ -45,6 +45,11 @@ const BILLING_CYCLE_OPTIONS = [
 ];
 
 const ENTITLEMENT_CYCLE_OPTIONS = ['日', '周', '月', '年'];
+const OFFICE_DOCUMENT_PERMISSION_OPTIONS = ['只读', '可编辑'];
+const OFFICE_DOCUMENT_PERMISSION_LEVEL = {
+  只读: 0,
+  可编辑: 1,
+};
 
 const SOLUTION_OPTIONS = [
   {
@@ -52,30 +57,34 @@ const SOLUTION_OPTIONS = [
     name: '教师数字素养提升培训方案',
     code: 'SOL-TRAINING-AI',
     scenario: '组织培训',
-    modules: ['SPACE', 'RESOURCE_LIBRARY', 'LUCKY', 'MESSAGE', 'SEMINAR', 'SURVEY', 'CERTIFICATE'],
+    modules: ['SPACE', 'RESOURCE_LIBRARY', 'OFFICE_DOCUMENT', 'LUCKY', 'MESSAGE', 'SEMINAR', 'SURVEY', 'CERTIFICATE'],
     requiredModules: ['SPACE', 'RESOURCE_LIBRARY'],
+    officeDocumentPermission: '可编辑',
   },
   {
     id: 'sol-research-hub',
     name: '区域教研共创解决方案',
     code: 'SOL-RESEARCH-HUB',
     scenario: '教研共创',
-    modules: ['SPACE', 'RESOURCE_LIBRARY', 'KNOWLEDGE_SPACE', 'MESSAGE'],
+    modules: ['SPACE', 'RESOURCE_LIBRARY', 'OFFICE_DOCUMENT', 'KNOWLEDGE_SPACE', 'MESSAGE'],
     requiredModules: ['SPACE', 'RESOURCE_LIBRARY'],
+    officeDocumentPermission: '可编辑',
   },
   {
     id: 'sol-course-studio',
     name: 'AI 课程创作中心方案',
     code: 'SOL-COURSE-STUDIO',
     scenario: '课程创作',
-    modules: ['SPACE', 'RESOURCE_LIBRARY', 'LUCKY', 'KNOWLEDGE_SPACE', 'MESSAGE'],
+    modules: ['SPACE', 'RESOURCE_LIBRARY', 'OFFICE_DOCUMENT', 'LUCKY', 'KNOWLEDGE_SPACE', 'MESSAGE'],
     requiredModules: ['SPACE', 'RESOURCE_LIBRARY', 'LUCKY'],
+    officeDocumentPermission: '可编辑',
   },
 ];
 
 const MODULES = [
   { key: 'SPACE', name: '空间模块', category: '基础承载' },
   { key: 'RESOURCE_LIBRARY', name: '资料库模块', category: '内容资产' },
+  { key: 'OFFICE_DOCUMENT', name: 'Office 文档模块', category: '文档协作' },
   { key: 'LUCKY', name: 'Lucky 模块', category: 'AI 能力' },
   { key: 'KNOWLEDGE_SPACE', name: '知识空间模块', category: '知识组织' },
   { key: 'MESSAGE', name: '消息模块', category: '运营触达' },
@@ -111,6 +120,15 @@ const MODULE_RESOURCE_LIMIT_DEFS = {
       label: '可用资源类型',
       type: 'MULTI_SELECT',
       options: ['文档', '图片', '视频', '音频', '链接', '压缩包'],
+    },
+  ],
+  OFFICE_DOCUMENT: [
+    {
+      key: 'documentPermission',
+      label: '文档权限',
+      type: 'SELECT',
+      options: OFFICE_DOCUMENT_PERMISSION_OPTIONS,
+      required: true,
     },
   ],
   KNOWLEDGE_SPACE: [
@@ -186,6 +204,7 @@ const MODULE_RESOURCE_LIMIT_PRESETS = {
     SPACE: { maxSpaces: 30, membersPerSpace: 80, templateCount: 3, allowCustomSceneCreation: false },
     LUCKY: { skillLimit: 8, agentLimit: 3, monthlyCalls: 10000, resourceAccessScope: ['组织资料库', '空间资料'] },
     RESOURCE_LIBRARY: { capacityGb: 200, singleFileMb: 500, monthlyAiParse: 1000, resourceTypes: ['文档', '图片', '视频', '链接'] },
+    OFFICE_DOCUMENT: { documentPermission: '只读' },
     KNOWLEDGE_SPACE: { spaceCount: 5, graphBindingCount: 2, roleCount: 4 },
     MESSAGE: { monthlyMessages: 20000, retentionDays: 180, channels: ['站内信', '系统通知', '邮件'] },
     SEMINAR: { sessionCycle: '月', monthlySessions: 12, usageHoursCycle: '月', monthlyUsageHours: 24, returnVisitRecordingCycle: '月', returnVisitRecordingHours: 12, participantLimit: 200, registrationLimit: 300 },
@@ -196,6 +215,7 @@ const MODULE_RESOURCE_LIMIT_PRESETS = {
     SPACE: { maxSpaces: 120, membersPerSpace: 300, templateCount: 8, allowCustomSceneCreation: true },
     LUCKY: { skillLimit: 30, agentLimit: 12, monthlyCalls: 80000, resourceAccessScope: ['组织资料库', '空间资料', '知识空间'] },
     RESOURCE_LIBRARY: { capacityGb: 1000, singleFileMb: 1024, monthlyAiParse: 8000, resourceTypes: ['文档', '图片', '视频', '音频', '链接'] },
+    OFFICE_DOCUMENT: { documentPermission: '可编辑' },
     KNOWLEDGE_SPACE: { spaceCount: 30, graphBindingCount: 12, roleCount: 8 },
     MESSAGE: { monthlyMessages: 120000, retentionDays: 365, channels: ['站内信', '系统通知', '短信', '邮件', 'Lucky 推送'] },
     SEMINAR: { sessionCycle: '月', monthlySessions: 60, usageHoursCycle: '月', monthlyUsageHours: 120, returnVisitRecordingCycle: '月', returnVisitRecordingHours: 60, participantLimit: 800, registrationLimit: 1200 },
@@ -206,6 +226,7 @@ const MODULE_RESOURCE_LIMIT_PRESETS = {
     SPACE: { maxSpaces: 500, membersPerSpace: 1000, templateCount: 20, allowCustomSceneCreation: true },
     LUCKY: { skillLimit: 120, agentLimit: 50, monthlyCalls: 500000, resourceAccessScope: ['组织资料库', '空间资料', '知识空间', '公开资源'] },
     RESOURCE_LIBRARY: { capacityGb: 5000, singleFileMb: 2048, monthlyAiParse: 50000, resourceTypes: ['文档', '图片', '视频', '音频', '链接', '压缩包'] },
+    OFFICE_DOCUMENT: { documentPermission: '可编辑' },
     KNOWLEDGE_SPACE: { spaceCount: 120, graphBindingCount: 60, roleCount: 16 },
     MESSAGE: { monthlyMessages: 800000, retentionDays: 1095, channels: ['站内信', '系统通知', '短信', '邮件', 'Lucky 推送'] },
     SEMINAR: { sessionCycle: '月', monthlySessions: 240, usageHoursCycle: '月', monthlyUsageHours: 480, returnVisitRecordingCycle: '月', returnVisitRecordingHours: 240, participantLimit: 3000, registrationLimit: 5000 },
@@ -302,6 +323,47 @@ function getRequiredModuleUnion(solutionIds) {
   return [...moduleSet];
 }
 
+function getOfficeDocumentPermissionLimit(solutionIds) {
+  const selectedPermissions = SOLUTION_OPTIONS
+    .filter((item) => solutionIds.includes(item.id) && item.modules.includes('OFFICE_DOCUMENT'))
+    .map((item) => item.officeDocumentPermission || '只读');
+  if (!selectedPermissions.length) return null;
+  return selectedPermissions.reduce((limit, permission) => (
+    OFFICE_DOCUMENT_PERMISSION_LEVEL[permission] < OFFICE_DOCUMENT_PERMISSION_LEVEL[limit] ? permission : limit
+  ), '可编辑');
+}
+
+function getOfficeDocumentPermissionOptions(solutionIds) {
+  const limit = getOfficeDocumentPermissionLimit(solutionIds);
+  if (!limit) return OFFICE_DOCUMENT_PERMISSION_OPTIONS;
+  return OFFICE_DOCUMENT_PERMISSION_OPTIONS.filter(
+    (permission) => OFFICE_DOCUMENT_PERMISSION_LEVEL[permission] <= OFFICE_DOCUMENT_PERMISSION_LEVEL[limit],
+  );
+}
+
+function clampOfficeDocumentPermission(permission, solutionIds) {
+  const limit = getOfficeDocumentPermissionLimit(solutionIds);
+  if (!limit) return permission || '只读';
+  const target = permission || limit;
+  return OFFICE_DOCUMENT_PERMISSION_LEVEL[target] <= OFFICE_DOCUMENT_PERMISSION_LEVEL[limit] ? target : limit;
+}
+
+function applyModuleResourceLimitCaps(moduleResourceLimits, solutionIds) {
+  if (!moduleResourceLimits?.OFFICE_DOCUMENT) return moduleResourceLimits;
+  const nextPermission = clampOfficeDocumentPermission(
+    moduleResourceLimits.OFFICE_DOCUMENT.documentPermission,
+    solutionIds,
+  );
+  if (nextPermission === moduleResourceLimits.OFFICE_DOCUMENT.documentPermission) return moduleResourceLimits;
+  return {
+    ...moduleResourceLimits,
+    OFFICE_DOCUMENT: {
+      ...moduleResourceLimits.OFFICE_DOCUMENT,
+      documentPermission: nextPermission,
+    },
+  };
+}
+
 function getModuleName(moduleKey) {
   return MODULES.find((item) => item.key === moduleKey)?.name || moduleKey;
 }
@@ -339,6 +401,10 @@ function buildPackage(templateKey, override = {}) {
   const template = PACKAGE_TEMPLATES[templateKey];
   const solutionIds = override.solutionIds || template.solutionIds;
   const moduleKeys = getSolutionModuleUnion(solutionIds);
+  const moduleResourceLimits = applyModuleResourceLimitCaps(
+    normalizeModuleResourceLimits(templateKey, moduleKeys, override.moduleResourceLimits),
+    solutionIds,
+  );
   return {
     id: override.id || `pkg-${templateKey}`,
     ...template,
@@ -346,7 +412,7 @@ function buildPackage(templateKey, override = {}) {
     templateKey,
     solutionIds,
     enabledModuleKeys: override.enabledModuleKeys || moduleKeys,
-    moduleResourceLimits: normalizeModuleResourceLimits(templateKey, moduleKeys, override.moduleResourceLimits),
+    moduleResourceLimits,
     updatedAt: override.updatedAt || nowText(),
   };
 }
@@ -508,10 +574,13 @@ function PackagePrototypeModule() {
     updatePackage(activePackage.id, {
       solutionIds,
       enabledModuleKeys: moduleKeys,
-      moduleResourceLimits: normalizeModuleResourceLimits(
-        activePackage.templateKey,
-        moduleKeys,
-        activePackage.moduleResourceLimits,
+      moduleResourceLimits: applyModuleResourceLimitCaps(
+        normalizeModuleResourceLimits(
+          activePackage.templateKey,
+          moduleKeys,
+          activePackage.moduleResourceLimits,
+        ),
+        solutionIds,
       ),
     });
   };
@@ -523,7 +592,9 @@ function PackagePrototypeModule() {
         ...item.moduleResourceLimits,
         [moduleKey]: {
           ...(item.moduleResourceLimits?.[moduleKey] || {}),
-          [fieldKey]: value,
+          [fieldKey]: moduleKey === 'OFFICE_DOCUMENT' && fieldKey === 'documentPermission'
+            ? clampOfficeDocumentPermission(value, item.solutionIds)
+            : value,
         },
       },
     }));
@@ -624,6 +695,13 @@ function PackagePrototypeModule() {
     const currentModuleLimits = {
       ...getDefaultModuleResourceLimits(activePackage.templateKey, currentModuleKey),
       ...(activePackage.moduleResourceLimits?.[currentModuleKey] || {}),
+    };
+    const officeDocumentPermissionLimit = getOfficeDocumentPermissionLimit(activePackage.solutionIds);
+    const getSelectOptions = (field) => {
+      if (currentModuleKey === 'OFFICE_DOCUMENT' && field.key === 'documentPermission') {
+        return getOfficeDocumentPermissionOptions(activePackage.solutionIds).map((option) => ({ value: option, label: option }));
+      }
+      return (field.options || []).map((option) => ({ value: option, label: option }));
     };
 
     return (
@@ -882,12 +960,21 @@ function PackagePrototypeModule() {
                                     />
                                   ) : null}
                                   {field.type === 'SELECT' ? (
-                                    <Select
-                                      disabled={!isCurrentEnabledModule}
-                                      value={currentModuleLimits[field.key]}
-                                      options={(field.options || []).map((option) => ({ value: option, label: option }))}
-                                      onChange={(value) => updateModuleResourceLimit(currentModuleKey, field.key, value)}
-                                    />
+                                    <>
+                                      <Select
+                                        disabled={!isCurrentEnabledModule}
+                                        value={
+                                          currentModuleKey === 'OFFICE_DOCUMENT' && field.key === 'documentPermission'
+                                            ? clampOfficeDocumentPermission(currentModuleLimits[field.key], activePackage.solutionIds)
+                                            : currentModuleLimits[field.key]
+                                        }
+                                        options={getSelectOptions(field)}
+                                        onChange={(value) => updateModuleResourceLimit(currentModuleKey, field.key, value)}
+                                      />
+                                      {currentModuleKey === 'OFFICE_DOCUMENT' && field.key === 'documentPermission' && officeDocumentPermissionLimit ? (
+                                        <small className="pkg-field-tip">方案上限：{officeDocumentPermissionLimit}，套餐只可降级。</small>
+                                      ) : null}
+                                    </>
                                   ) : null}
                                   {field.type === 'BOOLEAN' ? (
                                     <Switch
