@@ -473,8 +473,7 @@
   line-height: 20px;
 }
 
-.account-switch-list,
-.account-switch-action-list {
+.account-switch-list {
   border: 1px solid #edf0f4;
   border-radius: 6px;
   overflow: hidden;
@@ -484,12 +483,7 @@
   margin-top: 6px;
 }
 
-.account-switch-action-list {
-  margin-top: 10px;
-}
-
-.account-switch-row,
-.account-switch-action-row {
+.account-switch-row {
   width: 100%;
   min-height: 54px;
   display: flex;
@@ -503,18 +497,15 @@
   cursor: pointer;
 }
 
-.account-switch-row + .account-switch-row,
-.account-switch-action-row + .account-switch-action-row {
+.account-switch-row + .account-switch-row {
   border-top: 1px solid transparent;
 }
 
-.account-switch-row:hover,
-.account-switch-action-row:hover {
+.account-switch-row:hover {
   background: #f4f4f5;
 }
 
-.account-switch-avatar,
-.account-switch-action-icon {
+.account-switch-avatar {
   width: 32px;
   height: 32px;
   flex: 0 0 32px;
@@ -620,21 +611,6 @@
   flex: 0 0 auto;
   color: #8a94a6;
   font-size: 16px;
-}
-
-.account-switch-action-row {
-  min-height: 44px;
-}
-
-.account-switch-action-icon {
-  background: #f3f4f6;
-  color: #4b5563;
-  font-size: 16px;
-}
-
-.account-switch-action-title {
-  min-width: 0;
-  flex: 1;
 }
 
 .icon-bar-list {

@@ -38,10 +38,13 @@ const STATUS_OPTIONS = [
 ];
 
 const BILLING_CYCLE_OPTIONS = [
+  { value: 'DAY', label: '日' },
+  { value: 'WEEK', label: '周' },
   { value: 'MONTH', label: '月' },
-  { value: 'QUARTER', label: '季度' },
   { value: 'YEAR', label: '年' },
 ];
+
+const ENTITLEMENT_CYCLE_OPTIONS = ['日', '周', '月', '年'];
 
 const SOLUTION_OPTIONS = [
   {
@@ -126,7 +129,33 @@ const MODULE_RESOURCE_LIMIT_DEFS = {
     },
   ],
   SEMINAR: [
-    { key: 'monthlySessions', label: '月研讨会场次', type: 'NUMBER', required: true },
+    {
+      key: 'sessionsQuota',
+      label: '研讨会场次',
+      type: 'CYCLE_NUMBER',
+      valueKey: 'monthlySessions',
+      cycleKey: 'sessionCycle',
+      options: ENTITLEMENT_CYCLE_OPTIONS,
+      required: true,
+    },
+    {
+      key: 'usageHoursQuota',
+      label: '使用时长(小时)',
+      type: 'CYCLE_NUMBER',
+      valueKey: 'monthlyUsageHours',
+      cycleKey: 'usageHoursCycle',
+      options: ENTITLEMENT_CYCLE_OPTIONS,
+      required: true,
+    },
+    {
+      key: 'returnVisitRecordingQuota',
+      label: '回访录制上限(小时)',
+      type: 'CYCLE_NUMBER',
+      valueKey: 'returnVisitRecordingHours',
+      cycleKey: 'returnVisitRecordingCycle',
+      options: ENTITLEMENT_CYCLE_OPTIONS,
+      required: true,
+    },
     { key: 'participantLimit', label: '单场人数上限', type: 'NUMBER', required: true },
     { key: 'registrationLimit', label: '报名人数上限', type: 'NUMBER', required: true },
   ],
@@ -159,7 +188,7 @@ const MODULE_RESOURCE_LIMIT_PRESETS = {
     RESOURCE_LIBRARY: { capacityGb: 200, singleFileMb: 500, monthlyAiParse: 1000, resourceTypes: ['文档', '图片', '视频', '链接'] },
     KNOWLEDGE_SPACE: { spaceCount: 5, graphBindingCount: 2, roleCount: 4 },
     MESSAGE: { monthlyMessages: 20000, retentionDays: 180, channels: ['站内信', '系统通知', '邮件'] },
-    SEMINAR: { monthlySessions: 12, participantLimit: 200, registrationLimit: 300 },
+    SEMINAR: { sessionCycle: '月', monthlySessions: 12, usageHoursCycle: '月', monthlyUsageHours: 24, returnVisitRecordingCycle: '月', returnVisitRecordingHours: 12, participantLimit: 200, registrationLimit: 300 },
     SURVEY: { monthlySurveys: 20, monthlyResponses: 5000, questionTypes: ['单选', '多选', '填空', '评分'] },
     CERTIFICATE: { templateCount: 5, monthlyIssues: 3000, exportFormats: ['PDF', 'PNG'] },
   },
@@ -169,7 +198,7 @@ const MODULE_RESOURCE_LIMIT_PRESETS = {
     RESOURCE_LIBRARY: { capacityGb: 1000, singleFileMb: 1024, monthlyAiParse: 8000, resourceTypes: ['文档', '图片', '视频', '音频', '链接'] },
     KNOWLEDGE_SPACE: { spaceCount: 30, graphBindingCount: 12, roleCount: 8 },
     MESSAGE: { monthlyMessages: 120000, retentionDays: 365, channels: ['站内信', '系统通知', '短信', '邮件', 'Lucky 推送'] },
-    SEMINAR: { monthlySessions: 60, participantLimit: 800, registrationLimit: 1200 },
+    SEMINAR: { sessionCycle: '月', monthlySessions: 60, usageHoursCycle: '月', monthlyUsageHours: 120, returnVisitRecordingCycle: '月', returnVisitRecordingHours: 60, participantLimit: 800, registrationLimit: 1200 },
     SURVEY: { monthlySurveys: 120, monthlyResponses: 50000, questionTypes: ['单选', '多选', '填空', '评分', '矩阵'] },
     CERTIFICATE: { templateCount: 20, monthlyIssues: 20000, exportFormats: ['PDF', 'PNG', 'Excel 名单'] },
   },
@@ -179,7 +208,7 @@ const MODULE_RESOURCE_LIMIT_PRESETS = {
     RESOURCE_LIBRARY: { capacityGb: 5000, singleFileMb: 2048, monthlyAiParse: 50000, resourceTypes: ['文档', '图片', '视频', '音频', '链接', '压缩包'] },
     KNOWLEDGE_SPACE: { spaceCount: 120, graphBindingCount: 60, roleCount: 16 },
     MESSAGE: { monthlyMessages: 800000, retentionDays: 1095, channels: ['站内信', '系统通知', '短信', '邮件', 'Lucky 推送'] },
-    SEMINAR: { monthlySessions: 240, participantLimit: 3000, registrationLimit: 5000 },
+    SEMINAR: { sessionCycle: '月', monthlySessions: 240, usageHoursCycle: '月', monthlyUsageHours: 480, returnVisitRecordingCycle: '月', returnVisitRecordingHours: 240, participantLimit: 3000, registrationLimit: 5000 },
     SURVEY: { monthlySurveys: 500, monthlyResponses: 300000, questionTypes: ['单选', '多选', '填空', '评分', '矩阵', '文件上传'] },
     CERTIFICATE: { templateCount: 80, monthlyIssues: 200000, exportFormats: ['PDF', 'PNG', 'Excel 名单', 'ZIP 批量包'] },
   },
@@ -214,7 +243,7 @@ const PACKAGE_TEMPLATES = {
     status: 'ACTIVE',
     version: 'v1.0',
     price: 49800,
-    billingCycle: 'QUARTER',
+    billingCycle: 'YEAR',
     solutionIds: ['sol-training-camp', 'sol-research-hub'],
     userLimit: 800,
     adminLimit: 20,
@@ -346,7 +375,10 @@ function getRequiredResourceWarnings(packageItem, requiredModuleKeys) {
     if (!packageItem.enabledModuleKeys.includes(moduleKey)) return [];
     const limits = packageItem.moduleResourceLimits?.[moduleKey] || {};
     return (MODULE_RESOURCE_LIMIT_DEFS[moduleKey] || [])
-      .filter((field) => field.type === 'NUMBER' && field.required && Number(limits[field.key] || 0) <= 0)
+      .filter((field) => {
+        const valueKey = field.type === 'CYCLE_NUMBER' ? field.valueKey : field.key;
+        return ['NUMBER', 'CYCLE_NUMBER'].includes(field.type) && field.required && Number(limits[valueKey] || 0) <= 0;
+      })
       .map((field) => `${getModuleName(moduleKey)}-${field.label}`);
   });
 }
@@ -824,11 +856,35 @@ function PackagePrototypeModule() {
                                       onChange={(value) => updateModuleResourceLimit(currentModuleKey, field.key, value || 0)}
                                     />
                                   ) : null}
+                                  {field.type === 'CYCLE_NUMBER' ? (
+                                    <div className="pkg-cycle-number-field">
+                                      <InputNumber
+                                        min={0}
+                                        disabled={!isCurrentEnabledModule}
+                                        value={currentModuleLimits[field.valueKey] ?? 0}
+                                        onChange={(value) => updateModuleResourceLimit(currentModuleKey, field.valueKey, value || 0)}
+                                      />
+                                      <Select
+                                        disabled={!isCurrentEnabledModule}
+                                        value={currentModuleLimits[field.cycleKey] || field.options?.[0]}
+                                        options={(field.options || []).map((option) => ({ value: option, label: option }))}
+                                        onChange={(value) => updateModuleResourceLimit(currentModuleKey, field.cycleKey, value)}
+                                      />
+                                    </div>
+                                  ) : null}
                                   {field.type === 'MULTI_SELECT' ? (
                                     <Select
                                       mode="multiple"
                                       disabled={!isCurrentEnabledModule}
                                       value={currentModuleLimits[field.key] || []}
+                                      options={(field.options || []).map((option) => ({ value: option, label: option }))}
+                                      onChange={(value) => updateModuleResourceLimit(currentModuleKey, field.key, value)}
+                                    />
+                                  ) : null}
+                                  {field.type === 'SELECT' ? (
+                                    <Select
+                                      disabled={!isCurrentEnabledModule}
+                                      value={currentModuleLimits[field.key]}
                                       options={(field.options || []).map((option) => ({ value: option, label: option }))}
                                       onChange={(value) => updateModuleResourceLimit(currentModuleKey, field.key, value)}
                                     />

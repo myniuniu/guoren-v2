@@ -47,7 +47,6 @@ import {
   LogoutOutlined,
   QrcodeOutlined,
   RightOutlined,
-  UserAddOutlined,
   TrophyOutlined,
 } from '@ant-design/icons';
 import TopicDetail from './TopicDetail';
@@ -432,11 +431,6 @@ const accountSwitchItems = [
   { key: 'guoren', title: '国人通教育科技有限公司', subtitle: '张洪磊', avatar: '国', tone: 'blue' },
   { key: 'meituan', title: '美团外卖', subtitle: 'xbb', avatar: '美', tone: 'blue', status: '未认证' },
   { key: 'developer', title: '飞书开发者体验企业', subtitle: '张洪磊', tone: 'feishu-wave', verified: true },
-];
-
-const accountSwitchActionItems = [
-  { key: 'join', title: '加入已有企业', icon: <UserAddOutlined /> },
-  { key: 'create', title: '创建新账号', icon: <UserOutlined /> },
 ];
 
 function renderAccountSwitchAvatar(account) {
@@ -2128,20 +2122,6 @@ function App({ onLogout }) {
             ))}
           </div>
 
-          <div className="account-switch-action-list">
-            {accountSwitchActionItems.map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                className="account-switch-action-row"
-                onClick={() => handleAccountMenuPlaceholder(item.title)}
-              >
-                <span className="account-switch-action-icon">{item.icon}</span>
-                <span className="account-switch-action-title">{item.title}</span>
-                <RightOutlined className="account-switch-arrow" />
-              </button>
-            ))}
-          </div>
         </div>
       </Modal>
 
