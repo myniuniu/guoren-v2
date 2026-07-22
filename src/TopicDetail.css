@@ -3508,11 +3508,11 @@
 .topic-ai-composer {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 10px;
   position: relative;
-  padding: 24px 28px 16px;
+  padding: 20px 24px 14px;
   border: 1px solid rgba(224, 228, 235, 0.92);
-  border-radius: 34px;
+  border-radius: 28px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(248, 249, 251, 0.88) 100%);
   box-shadow:
@@ -3538,6 +3538,109 @@
 
 .topic-ai-composer-input::placeholder {
   color: #b3b8c3;
+}
+
+.topic-ai-suggestion-shell {
+  position: relative;
+  min-width: 0;
+  height: 32px;
+}
+
+.topic-ai-suggestion-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 32px;
+  min-width: 0;
+  padding: 0 10px;
+  border: 1px solid rgba(224, 228, 235, 0.86);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #667085;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.topic-ai-suggestion-trigger:hover,
+.topic-ai-suggestion-trigger.is-open {
+  border-color: rgba(190, 204, 226, 0.96);
+  background: rgba(248, 250, 252, 0.94);
+}
+
+.topic-ai-suggestion-title {
+  flex: 0 0 auto;
+  color: #475467;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.topic-ai-suggestion-preview {
+  min-width: 0;
+  overflow: hidden;
+  color: #9aa3b2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topic-ai-suggestion-caret {
+  flex: 0 0 auto;
+  margin-left: auto;
+  color: #98a2b3;
+  font-size: 10px;
+  transition: transform 0.18s ease;
+}
+
+.topic-ai-suggestion-trigger.is-open .topic-ai-suggestion-caret {
+  transform: rotate(180deg);
+}
+
+.topic-ai-suggestion-panel {
+  position: absolute;
+  z-index: 6;
+  bottom: calc(100% + 8px);
+  left: 0;
+  width: min(100%, 680px);
+  max-height: min(280px, 42vh);
+  padding: 6px;
+  overflow-y: auto;
+  border: 1px solid rgba(218, 223, 232, 0.96);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(249, 250, 252, 0.96) 100%);
+  box-shadow:
+    0 18px 36px rgba(148, 163, 184, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.94);
+}
+
+.topic-ai-suggestion-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 34px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #344054;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+}
+
+.topic-ai-suggestion-item:hover {
+  background: rgba(59, 130, 246, 0.08);
+  color: #1d4ed8;
+}
+
+.topic-ai-suggestion-item span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .topic-ai-composer-toolbar {
@@ -6193,6 +6296,10 @@
     font-size: 16px;
   }
 
+  .topic-ai-suggestion-panel {
+    width: 100%;
+  }
+
   .topic-ai-floating-panel {
     width: min(100%, 760px);
     padding: 18px;
@@ -6267,6 +6374,17 @@
 
   .topic-practice-empty {
     transform: none;
+  }
+
+  .topic-ai-suggestion-trigger {
+    gap: 6px;
+    padding: 0 8px;
+  }
+
+  .topic-ai-suggestion-title {
+    max-width: 104px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .topic-home-course-grid {

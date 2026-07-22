@@ -57,7 +57,7 @@ const SOLUTION_OPTIONS = [
     name: '教师数字素养提升培训方案',
     code: 'SOL-TRAINING-AI',
     scenario: '组织培训',
-    modules: ['SPACE', 'RESOURCE_LIBRARY', 'OFFICE_DOCUMENT', 'LUCKY', 'MESSAGE', 'SEMINAR', 'SURVEY', 'CERTIFICATE'],
+    modules: ['SPACE', 'RESOURCE_LIBRARY', 'OFFICE_DOCUMENT', 'VIDEO_PLAYBACK', 'LUCKY', 'MESSAGE', 'SEMINAR', 'SURVEY', 'CERTIFICATE'],
     requiredModules: ['SPACE', 'RESOURCE_LIBRARY'],
     officeDocumentPermission: '可编辑',
   },
@@ -66,7 +66,7 @@ const SOLUTION_OPTIONS = [
     name: '区域教研共创解决方案',
     code: 'SOL-RESEARCH-HUB',
     scenario: '教研共创',
-    modules: ['SPACE', 'RESOURCE_LIBRARY', 'OFFICE_DOCUMENT', 'KNOWLEDGE_SPACE', 'MESSAGE'],
+    modules: ['SPACE', 'RESOURCE_LIBRARY', 'OFFICE_DOCUMENT', 'VIDEO_PLAYBACK', 'KNOWLEDGE_SPACE', 'MESSAGE'],
     requiredModules: ['SPACE', 'RESOURCE_LIBRARY'],
     officeDocumentPermission: '可编辑',
   },
@@ -75,7 +75,7 @@ const SOLUTION_OPTIONS = [
     name: 'AI 课程创作中心方案',
     code: 'SOL-COURSE-STUDIO',
     scenario: '课程创作',
-    modules: ['SPACE', 'RESOURCE_LIBRARY', 'OFFICE_DOCUMENT', 'LUCKY', 'KNOWLEDGE_SPACE', 'MESSAGE'],
+    modules: ['SPACE', 'RESOURCE_LIBRARY', 'OFFICE_DOCUMENT', 'VIDEO_PLAYBACK', 'LUCKY', 'KNOWLEDGE_SPACE', 'MESSAGE'],
     requiredModules: ['SPACE', 'RESOURCE_LIBRARY', 'LUCKY'],
     officeDocumentPermission: '可编辑',
   },
@@ -85,6 +85,7 @@ const MODULES = [
   { key: 'SPACE', name: '空间模块', category: '基础承载' },
   { key: 'RESOURCE_LIBRARY', name: '资料库模块', category: '内容资产' },
   { key: 'OFFICE_DOCUMENT', name: 'Office 文档模块', category: '文档协作' },
+  { key: 'VIDEO_PLAYBACK', name: '视频播放模块', category: '媒体服务' },
   { key: 'LUCKY', name: 'Lucky 模块', category: 'AI 能力' },
   { key: 'KNOWLEDGE_SPACE', name: '知识空间模块', category: '知识组织' },
   { key: 'MESSAGE', name: '消息模块', category: '运营触达' },
@@ -130,6 +131,34 @@ const MODULE_RESOURCE_LIMIT_DEFS = {
       options: OFFICE_DOCUMENT_PERMISSION_OPTIONS,
       required: true,
     },
+  ],
+  VIDEO_PLAYBACK: [
+    {
+      key: 'maxResolution',
+      label: '最高播放分辨率',
+      type: 'SELECT',
+      options: ['480P', '720P', '1080P', '2K', '4K'],
+      required: true,
+    },
+    {
+      key: 'playbackHoursQuota',
+      label: '播放时长(小时)',
+      type: 'CYCLE_NUMBER',
+      valueKey: 'playbackHours',
+      cycleKey: 'playbackHoursCycle',
+      options: ENTITLEMENT_CYCLE_OPTIONS,
+      required: true,
+    },
+    { key: 'concurrentViewers', label: '并发播放人数', type: 'NUMBER', required: true },
+    { key: 'singleStreamBandwidthMbps', label: '单路带宽(Mbps)', type: 'NUMBER', required: true },
+    {
+      key: 'supportedFormats',
+      label: '支持视频格式',
+      type: 'MULTI_SELECT',
+      options: ['MP4', 'HLS', 'MOV', 'WebM', 'AVI'],
+    },
+    { key: 'allowTranscoding', label: '支持转码', type: 'BOOLEAN' },
+    { key: 'enablePlaybackWatermark', label: '播放水印', type: 'BOOLEAN' },
   ],
   KNOWLEDGE_SPACE: [
     { key: 'spaceCount', label: '知识空间数量', type: 'NUMBER', required: true },
@@ -205,6 +234,7 @@ const MODULE_RESOURCE_LIMIT_PRESETS = {
     LUCKY: { skillLimit: 8, agentLimit: 3, monthlyCalls: 10000, resourceAccessScope: ['组织资料库', '空间资料'] },
     RESOURCE_LIBRARY: { capacityGb: 200, singleFileMb: 500, monthlyAiParse: 1000, resourceTypes: ['文档', '图片', '视频', '链接'] },
     OFFICE_DOCUMENT: { documentPermission: '只读' },
+    VIDEO_PLAYBACK: { maxResolution: '720P', playbackHoursCycle: '月', playbackHours: 500, concurrentViewers: 200, singleStreamBandwidthMbps: 4, supportedFormats: ['MP4', 'HLS'], allowTranscoding: false, enablePlaybackWatermark: true },
     KNOWLEDGE_SPACE: { spaceCount: 5, graphBindingCount: 2, roleCount: 4 },
     MESSAGE: { monthlyMessages: 20000, retentionDays: 180, channels: ['站内信', '系统通知', '邮件'] },
     SEMINAR: { sessionCycle: '月', monthlySessions: 12, usageHoursCycle: '月', monthlyUsageHours: 24, returnVisitRecordingCycle: '月', returnVisitRecordingHours: 12, participantLimit: 200, registrationLimit: 300 },
@@ -216,6 +246,7 @@ const MODULE_RESOURCE_LIMIT_PRESETS = {
     LUCKY: { skillLimit: 30, agentLimit: 12, monthlyCalls: 80000, resourceAccessScope: ['组织资料库', '空间资料', '知识空间'] },
     RESOURCE_LIBRARY: { capacityGb: 1000, singleFileMb: 1024, monthlyAiParse: 8000, resourceTypes: ['文档', '图片', '视频', '音频', '链接'] },
     OFFICE_DOCUMENT: { documentPermission: '可编辑' },
+    VIDEO_PLAYBACK: { maxResolution: '1080P', playbackHoursCycle: '月', playbackHours: 5000, concurrentViewers: 1000, singleStreamBandwidthMbps: 8, supportedFormats: ['MP4', 'HLS', 'MOV', 'WebM'], allowTranscoding: true, enablePlaybackWatermark: true },
     KNOWLEDGE_SPACE: { spaceCount: 30, graphBindingCount: 12, roleCount: 8 },
     MESSAGE: { monthlyMessages: 120000, retentionDays: 365, channels: ['站内信', '系统通知', '短信', '邮件', 'Lucky 推送'] },
     SEMINAR: { sessionCycle: '月', monthlySessions: 60, usageHoursCycle: '月', monthlyUsageHours: 120, returnVisitRecordingCycle: '月', returnVisitRecordingHours: 60, participantLimit: 800, registrationLimit: 1200 },
@@ -227,6 +258,7 @@ const MODULE_RESOURCE_LIMIT_PRESETS = {
     LUCKY: { skillLimit: 120, agentLimit: 50, monthlyCalls: 500000, resourceAccessScope: ['组织资料库', '空间资料', '知识空间', '公开资源'] },
     RESOURCE_LIBRARY: { capacityGb: 5000, singleFileMb: 2048, monthlyAiParse: 50000, resourceTypes: ['文档', '图片', '视频', '音频', '链接', '压缩包'] },
     OFFICE_DOCUMENT: { documentPermission: '可编辑' },
+    VIDEO_PLAYBACK: { maxResolution: '4K', playbackHoursCycle: '月', playbackHours: 30000, concurrentViewers: 5000, singleStreamBandwidthMbps: 25, supportedFormats: ['MP4', 'HLS', 'MOV', 'WebM', 'AVI'], allowTranscoding: true, enablePlaybackWatermark: true },
     KNOWLEDGE_SPACE: { spaceCount: 120, graphBindingCount: 60, roleCount: 16 },
     MESSAGE: { monthlyMessages: 800000, retentionDays: 1095, channels: ['站内信', '系统通知', '短信', '邮件', 'Lucky 推送'] },
     SEMINAR: { sessionCycle: '月', monthlySessions: 240, usageHoursCycle: '月', monthlyUsageHours: 480, returnVisitRecordingCycle: '月', returnVisitRecordingHours: 240, participantLimit: 3000, registrationLimit: 5000 },
@@ -366,6 +398,10 @@ function applyModuleResourceLimitCaps(moduleResourceLimits, solutionIds) {
 
 function getModuleName(moduleKey) {
   return MODULES.find((item) => item.key === moduleKey)?.name || moduleKey;
+}
+
+function getModuleListDisplayName(moduleKey) {
+  return getModuleName(moduleKey).replace(/\s*模块$/, '');
 }
 
 function getDefaultModuleResourceLimits(templateKey, moduleKey) {
@@ -900,7 +936,7 @@ function PackagePrototypeModule() {
                                   onChange={(event) => togglePackageModule(moduleKey, event.target.checked)}
                                 />
                                 <div className="pkg-module-list-copy">
-                                  <div className="pkg-module-name">{moduleDef?.name || moduleKey}</div>
+                                  <div className="pkg-module-name">{getModuleListDisplayName(moduleKey)}</div>
                                   <div className="pkg-module-category">{moduleDef?.category || '-'}</div>
                                 </div>
                                 {isRequiredModule ? <Tag color="blue">方案必选</Tag> : null}

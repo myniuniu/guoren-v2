@@ -38,6 +38,7 @@ import {
   PaperClipOutlined,
   PlayCircleOutlined,
   PlusOutlined,
+  QuestionCircleOutlined,
   RightOutlined,
   SearchOutlined,
   SendOutlined,
@@ -204,6 +205,87 @@ const SCENE_HOME_TASK_TITLE_MAP = Object.freeze({
   COMMUNITY: '频道任务',
   CUSTOM: '任务进度',
 });
+const AI_SUGGESTION_FIELD_KEYS = Object.freeze([
+  'aiSuggestedQuestions',
+  'suggestedQuestions',
+  'questionSuggestions',
+  'recommendedQuestions',
+  'recommendedPrompts',
+  'aiQuestions',
+  'aiSuggestions',
+  'suggestions',
+]);
+const AI_DEFAULT_SUGGESTION_TEMPLATES = Object.freeze([
+  (scopeLabel) => `请基于「${scopeLabel}」生成课程结构和课时安排`,
+  (scopeLabel) => `请整理「${scopeLabel}」的核心知识点与教学活动建议`,
+  (scopeLabel) => `请把「${scopeLabel}」转成可直接授课的教案大纲`,
+]);
+
+function normalizeAiSuggestionText(item) {
+  if (typeof item === 'string') return item.trim();
+  if (!item || typeof item !== 'object') return '';
+
+  return [
+    item.question,
+    item.prompt,
+    item.text,
+    item.title,
+    item.label,
+    item.content,
+    item.description,
+  ].find((value) => typeof value === 'string' && value.trim())?.trim() || '';
+}
+
+function normalizeAiSuggestionList(value) {
+  if (Array.isArray(value)) {
+    return value.map(normalizeAiSuggestionText).filter(Boolean);
+  }
+  if (typeof value === 'string') {
+    return value
+      .split(/\n+/)
+      .map((item) => item.replace(/^[-*\d.、\s]+/, '').trim())
+      .filter(Boolean);
+  }
+  if (value && typeof value === 'object') {
+    return [
+      ...normalizeAiSuggestionList(value.items),
+      ...normalizeAiSuggestionList(value.questions),
+      normalizeAiSuggestionText(value),
+    ].filter(Boolean);
+  }
+  return [];
+}
+
+function collectAiSuggestionTexts(source) {
+  if (!source || typeof source !== 'object') return [];
+  return AI_SUGGESTION_FIELD_KEYS.flatMap((key) => normalizeAiSuggestionList(source[key]));
+}
+
+function buildAiSuggestedQuestions({ currentVersion, previewItem, selectedFolder, scopeLabel }) {
+  const sources = [
+    previewItem,
+    previewItem?.meta,
+    previewItem?.meta?.detail,
+    selectedFolder,
+    selectedFolder?.meta,
+    selectedFolder?.meta?.detail,
+    currentVersion,
+    currentVersion?.ai,
+    currentVersion?.composer,
+  ];
+  const seen = new Set();
+  const questions = [];
+
+  sources.flatMap(collectAiSuggestionTexts).forEach((question) => {
+    if (seen.has(question)) return;
+    seen.add(question);
+    questions.push(question);
+  });
+
+  if (questions.length > 0) return questions.slice(0, 5);
+
+  return AI_DEFAULT_SUGGESTION_TEMPLATES.map((createQuestion) => createQuestion(scopeLabel || '当前资料'));
+}
 
 function isLiveToolConfig(tool = {}) {
   const haystack = `${tool?.key || ''} ${tool?.name || ''} ${tool?.description || ''}`.toLowerCase();
@@ -950,6 +1032,7 @@ function TopicDetail({
   const [aiLibraryCollapsed, setAiLibraryCollapsed] = useState(false);
   const [aiFloatingPanelOffset, setAiFloatingPanelOffset] = useState(0);
   const [aiVisibleSkillCount, setAiVisibleSkillCount] = useState(4);
+  const [aiSuggestionOpen, setAiSuggestionOpen] = useState(false);
   const detailBodyRef = useRef(null);
   const detailTabsRef = useRef(null);
   const detailTabRefs = useRef(new Map());
@@ -965,6 +1048,7 @@ function TopicDetail({
   const dragPayloadRef = useRef(null);
   const aiComposerRef = useRef(null);
   const aiPromptInputRef = useRef(null);
+  const aiSuggestionRef = useRef(null);
   const aiComposerToolbarRef = useRef(null);
   const aiFloatingPanelRef = useRef(null);
   const aiToolbarAnchorRefs = useRef(new Map());
@@ -1048,6 +1132,7 @@ function TopicDetail({
     setAiInternetSearchEnabled(true);
     setAiPromptValue('');
     setAiLibraryCollapsed(false);
+    setAiSuggestionOpen(false);
     setSelectedPracticeLabKey(PRACTICE_LAB_OPTIONS[0]?.value || null);
     setResourcePanelView(loadTopicPanelView(topicStorageScopeKey));
     courseStudioDefaultKnowledgeViewAppliedRef.current = false;
@@ -1365,6 +1450,16 @@ function TopicDetail({
   const fileCount = resources.filter((r) => !r.isFolder).length;
   const currentListItems = selectedFolder ? folderChildren : rootItems;
   const currentListParentKey = selectedFolderKey || null;
+  const aiSuggestionScopeLabel = previewItem?.name || selectedFolder?.name || resourceRootTitle || topicTitle || '当前资料';
+  const aiSuggestedQuestions = useMemo(() => (
+    buildAiSuggestedQuestions({
+      currentVersion,
+      previewItem,
+      selectedFolder,
+      scopeLabel: aiSuggestionScopeLabel,
+    })
+  ), [aiSuggestionScopeLabel, currentVersion, previewItem, selectedFolder]);
+  const shouldShowAiSuggestions = aiPromptValue.trim().length === 0 && aiSuggestedQuestions.length > 0;
   const canAddResourceAtParent = useCallback((parentKey) => {
     if (!canEditDisplayedResources) return false;
     return allowRootResources || (parentKey ?? null) !== null;
@@ -1538,7 +1633,24 @@ function TopicDetail({
     setAiVisibleSkillCount(Math.max(1, nextVisibleCount));
   }, [aiSelectedSkill, aiVisibleSkills]);
 
+  const handleAiPromptChange = useCallback((event) => {
+    const nextValue = event.target.value;
+    setAiPromptValue(nextValue);
+    if (nextValue.trim()) setAiSuggestionOpen(false);
+  }, []);
+
+  const handleApplyAiSuggestion = useCallback((question) => {
+    setAiPromptValue(question);
+    setAiSuggestionOpen(false);
+    if (typeof window !== 'undefined') {
+      window.requestAnimationFrame(() => {
+        aiPromptInputRef.current?.focus();
+      });
+    }
+  }, []);
+
   const toggleAiPanel = useCallback((panelKey) => {
+    setAiSuggestionOpen(false);
     setAiActivePanel((prev) => (prev === panelKey ? 'course' : panelKey));
   }, []);
 
@@ -2722,6 +2834,28 @@ function TopicDetail({
     observer.observe(aiComposerSkillsRef.current);
     return () => observer.disconnect();
   }, [updateAiVisibleSkillCount]);
+
+  useEffect(() => {
+    if (!aiSuggestionOpen) return undefined;
+
+    const handlePointerDown = (event) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (aiSuggestionRef.current?.contains(target)) return;
+      setAiSuggestionOpen(false);
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') setAiSuggestionOpen(false);
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [aiSuggestionOpen]);
 
   useEffect(() => {
     if (!hasAiFloatingPanel) return undefined;
@@ -5962,9 +6096,45 @@ function TopicDetail({
                           className="topic-ai-composer-input"
                           placeholder="请描述课程主题、适用年级、课程结构与额外要求"
                           value={aiPromptValue}
-                          onChange={(event) => setAiPromptValue(event.target.value)}
+                          onChange={handleAiPromptChange}
                           rows={1}
                         />
+                        {shouldShowAiSuggestions ? (
+                          <div className="topic-ai-suggestion-shell" ref={aiSuggestionRef}>
+                            <button
+                              type="button"
+                              className={`topic-ai-suggestion-trigger ${aiSuggestionOpen ? 'is-open' : ''}`}
+                              aria-expanded={aiSuggestionOpen ? 'true' : 'false'}
+                              aria-controls="topic-ai-suggestion-panel"
+                              onClick={() => setAiSuggestionOpen((prev) => !prev)}
+                            >
+                              <QuestionCircleOutlined />
+                              <span className="topic-ai-suggestion-title">推荐问题 · {aiSuggestedQuestions.length}</span>
+                              <span className="topic-ai-suggestion-preview">{aiSuggestedQuestions[0]}</span>
+                              <CaretDownOutlined className="topic-ai-suggestion-caret" />
+                            </button>
+                            {aiSuggestionOpen ? (
+                              <div
+                                id="topic-ai-suggestion-panel"
+                                className="topic-ai-suggestion-panel"
+                                role="menu"
+                              >
+                                {aiSuggestedQuestions.map((question) => (
+                                  <button
+                                    key={question}
+                                    type="button"
+                                    className="topic-ai-suggestion-item"
+                                    title={question}
+                                    role="menuitem"
+                                    onClick={() => handleApplyAiSuggestion(question)}
+                                  >
+                                    <span>{question}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            ) : null}
+                          </div>
+                        ) : null}
                         <div className="topic-ai-composer-toolbar" ref={aiComposerToolbarRef}>
                           {hasAiFloatingPanel ? (
                             <div

@@ -18,7 +18,7 @@ import {
   ClusterOutlined,
   CaretDownOutlined, MoreOutlined, CaretRightOutlined,
   FileTextOutlined, FilePdfOutlined, FileImageOutlined,
-  PlayCircleOutlined, SoundOutlined, TagsOutlined,
+  SoundOutlined, TagsOutlined,
   FileExcelOutlined, FileWordOutlined, FilePptOutlined,
   StarOutlined, StarFilled,
   CheckSquareOutlined, SelectOutlined, MinusSquareOutlined,
@@ -31,7 +31,6 @@ import {
   addTagToItem, removeTagFromItem, toggleTagQuickAccess,
   getLibraryList, getLibraryId, getOrganizations, getTagGroups, setCurrentScope, setCurrentOrg, markItemOpened,
 } from './resourceLibStore';
-import { findResourceAssociationRule, inferResourceSourceKey } from '../shared/resourceRecordAssociations';
 import { getFileTypeLabel, renderFileIcon } from './resourceIcons.jsx';
 import {
   createCollection as createKnowledgeGraphCollection,
@@ -107,13 +106,21 @@ const RESOURCE_LIB_HELP_TIPS = [
   '支持对文件、文件夹和空白区域使用鼠标右键操作。',
   '悬停行内按钮可快速添加资料或打开更多操作。',
 ];
+const PREVIEW_MEDIA_FILE_TYPES = new Set(['video', 'audio']);
+const PREVIEW_PROCESSING_STATUSES = new Set([
+  'pending',
+  'processing',
+  'parsing',
+  'uploading',
+  'uploaded',
+  'waiting',
+  'queued',
+  'transcoding',
+  'converting',
+  'preparing',
+]);
+const PREVIEW_FAILED_STATUSES = new Set(['failed', 'fail', 'error', 'errored']);
 const FINDER_LIQUID_MENU_OVERLAY_CLASS = 'finder-liquid-glass-menu';
-const RESOURCE_SOURCE_LABELS = {
-  teaching: '教学数据',
-  study: '培训研修数据',
-  research: '教研数据',
-  archive: '档案数据',
-};
 const KNOWLEDGE_GRAPH_POINT_TYPE_LABEL_MAP = Object.fromEntries(
   KNOWLEDGE_POINT_TYPE_OPTIONS.map((item) => [item.value, item.label]),
 );
@@ -121,6 +128,18 @@ const KNOWLEDGE_GRAPH_RELATION_TYPE_LABEL_MAP = Object.fromEntries(
   RELATION_TYPE_OPTIONS.map((item) => [item.value, item.label]),
 );
 const getActionErrorMessage = (error, fallback) => error?.message || fallback;
+const getPreviewMediaLoadKey = (item) => `${item?.key || item?.name || 'resource'}::${item?.url || ''}`;
+
+function getResourcePreviewStatus(item) {
+  const status = item?.previewStatus
+    || item?.transcodeStatus
+    || item?.transcodingStatus
+    || item?.mediaStatus
+    || item?.resourceStatus
+    || item?.processingStatus
+    || item?.parseStatus;
+  return String(status || '').trim().toLowerCase();
+}
 
 const isEditableTarget = (target) => (
   target instanceof HTMLElement
@@ -350,6 +369,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
   // 分栏视图状态：各层打开的文件夹 key 路径
   const [columnPath, setColumnPath] = useState([null]); // [null, folderKey1, folderKey2, ...]
   const [columnSelectedItem, setColumnSelectedItem] = useState(null); // 分栏视图中选中的文件
+  const [previewMediaErrors, setPreviewMediaErrors] = useState({});
   const pendingCapabilityModelEditKeyRef = useRef(null);
   // 侧栏宽度拖拽
   const [sidebarWidth, setSidebarWidth] = useState(216);
@@ -2872,10 +2892,6 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
     if (!selectedItemKey) return null;
     return list.find((r) => r.key === selectedItemKey) || null;
   }, [selectedItemKey, list]);
-  const previewItemAssociationRule = useMemo(
-    () => (previewItem && !previewItem.isFolder ? findResourceAssociationRule(previewItem) : null),
-    [previewItem],
-  );
   const previewKnowledgeGraphData = useMemo(
     () => (previewItem?.fileType === 'knowledgeGraph' ? buildKnowledgeGraphPreviewData(previewItem) : null),
     [buildKnowledgeGraphPreviewData, previewItem],
@@ -3035,12 +3051,6 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
     if (!resolvedColumnSelectedItem?.isFolder) return 0;
     return list.filter((item) => item.parentKey === resolvedColumnSelectedItem.key).length;
   }, [list, resolvedColumnSelectedItem]);
-  const columnSelectedItemAssociationRule = useMemo(
-    () => (resolvedColumnSelectedItem && !resolvedColumnSelectedItem.isFolder
-      ? findResourceAssociationRule(resolvedColumnSelectedItem)
-      : null),
-    [resolvedColumnSelectedItem],
-  );
   const columnSelectedKnowledgeGraphData = useMemo(
     () => (resolvedColumnSelectedItem?.fileType === 'knowledgeGraph'
       ? buildKnowledgeGraphPreviewData(resolvedColumnSelectedItem)
@@ -3682,43 +3692,6 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
     label: renderSelectionModeMenuLabel(mouseMultiSelectMode),
   });
 
-  const renderResourceAssociationBlock = useCallback((item, associationRule) => {
-    if (!item || item.isFolder || !associationRule) return null;
-    const sourceKey = inferResourceSourceKey(item);
-    return (
-      <div className="finder-preview-association-card">
-        <div className="finder-preview-association-head">
-          <strong>档案关联建议</strong>
-          <span>{RESOURCE_SOURCE_LABELS[sourceKey] || sourceKey}</span>
-        </div>
-        <div className="finder-preview-association-type">
-          该资料将以“{associationRule.recordTag}”纳入我的档案映射。
-        </div>
-        {associationRule.dimensionNames?.length ? (
-          <div className="finder-preview-association-row">
-            <span>能力类</span>
-            <div className="finder-preview-association-tags">
-              {associationRule.dimensionNames.map((name) => (
-                <span key={name} className="finder-preview-association-chip">{name}</span>
-              ))}
-            </div>
-          </div>
-        ) : null}
-        {associationRule.itemNames?.length ? (
-          <div className="finder-preview-association-row">
-            <span>能力项</span>
-            <div className="finder-preview-association-tags">
-              {associationRule.itemNames.map((name) => (
-                <span key={name} className="finder-preview-association-chip is-accent">{name}</span>
-              ))}
-            </div>
-          </div>
-        ) : null}
-        <div className="finder-preview-association-note">{associationRule.matchNote}</div>
-      </div>
-    );
-  }, []);
-
   const renderKnowledgeGraphPreviewBlock = useCallback((previewData, fallbackName, itemKey) => {
     if (!previewData) {
       return (
@@ -4135,6 +4108,97 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
       )}
     </div>
   );
+
+  const markPreviewMediaError = useCallback((item) => {
+    const loadKey = getPreviewMediaLoadKey(item);
+    setPreviewMediaErrors((prev) => (
+      prev[loadKey] ? prev : { ...prev, [loadKey]: true }
+    ));
+  }, []);
+
+  const retryPreviewMedia = useCallback((item) => {
+    const loadKey = getPreviewMediaLoadKey(item);
+    setPreviewMediaErrors((prev) => {
+      if (!prev[loadKey]) return prev;
+      const next = { ...prev };
+      delete next[loadKey];
+      return next;
+    });
+  }, []);
+
+  const getPreviewUnavailableState = useCallback((item) => {
+    if (!item || item.isFolder || !PREVIEW_MEDIA_FILE_TYPES.has(item.fileType)) return null;
+
+    const status = getResourcePreviewStatus(item);
+    const hasLoadError = !!previewMediaErrors[getPreviewMediaLoadKey(item)];
+    const hasPreviewUrl = !!item.url;
+
+    if (PREVIEW_FAILED_STATUSES.has(status) || hasLoadError) {
+      return {
+        icon: renderFileIcon(item.fileType, { fontSize: 56 }),
+        title: '资源暂时无法预览',
+        description: '文件可能还在转码，或预览地址暂时不可用。请稍后再试。',
+        actionLabel: hasPreviewUrl ? '重新尝试' : '',
+      };
+    }
+
+    if (!hasPreviewUrl || PREVIEW_PROCESSING_STATUSES.has(status)) {
+      return {
+        icon: <ClockCircleOutlined />,
+        title: item.fileType === 'video' ? '视频正在准备中' : '音频正在准备中',
+        description: '后台正在处理该资源，完成后这里会显示预览内容。',
+        actionLabel: '',
+      };
+    }
+
+    return null;
+  }, [previewMediaErrors]);
+
+  const renderPreviewUnavailableBlock = useCallback((item, state) => (
+    <div className="finder-preview-unavailable">
+      <div className="finder-preview-unavailable-icon">{state.icon}</div>
+      <div className="finder-preview-unavailable-title">{state.title}</div>
+      <div className="finder-preview-unavailable-desc">{state.description}</div>
+      {state.actionLabel ? (
+        <Button size="small" className="finder-preview-unavailable-action" onClick={() => retryPreviewMedia(item)}>
+          {state.actionLabel}
+        </Button>
+      ) : null}
+    </div>
+  ), [retryPreviewMedia]);
+
+  const renderMediaPreviewBlock = useCallback((item) => {
+    const unavailableState = getPreviewUnavailableState(item);
+    if (unavailableState) {
+      return renderPreviewUnavailableBlock(item, unavailableState);
+    }
+
+    if (item.fileType === 'video') {
+      return (
+        <video
+          key={getPreviewMediaLoadKey(item)}
+          src={item.url}
+          controls
+          className="finder-preview-video"
+          onError={() => markPreviewMediaError(item)}
+        />
+      );
+    }
+
+    return (
+      <div className="finder-preview-placeholder">
+        <SoundOutlined style={{ fontSize: 80, color: '#af52de' }} />
+        <div>音频文件</div>
+        <audio
+          key={getPreviewMediaLoadKey(item)}
+          src={item.url}
+          controls
+          className="finder-preview-audio"
+          onError={() => markPreviewMediaError(item)}
+        />
+      </div>
+    );
+  }, [getPreviewUnavailableState, markPreviewMediaError, renderPreviewUnavailableBlock]);
 
   const handleToolbarMenuAction = ({ key, domEvent }) => {
     domEvent?.stopPropagation();
@@ -5052,25 +5116,14 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
                           ? <img src={resolvedColumnSelectedItem.url} alt={resolvedColumnSelectedItem.name} className="finder-preview-image" />
                           : resolvedColumnSelectedItem.fileType === 'pdf' && resolvedColumnSelectedItem.url
                           ? <iframe src={resolvedColumnSelectedItem.url} className="finder-preview-iframe" title="PDF 预览" />
-                          : resolvedColumnSelectedItem.fileType === 'video' && resolvedColumnSelectedItem.url
-                          ? <video src={resolvedColumnSelectedItem.url} controls className="finder-preview-video" />
+                          : PREVIEW_MEDIA_FILE_TYPES.has(resolvedColumnSelectedItem.fileType)
+                          ? renderMediaPreviewBlock(resolvedColumnSelectedItem)
                           : <div className="finder-preview-placeholder">
                               {renderFileIcon(resolvedColumnSelectedItem.fileType, { fontSize: 80 })}
                               <div>{resolvedColumnSelectedItem.name}</div>
                             </div>
                         }
                       </div>
-                        {!resolvedColumnSelectedItem.isFolder && resolvedColumnSelectedItem.fileType !== 'capabilityModel' ? (
-                          <div className="finder-preview-footer">
-                            <div className="finder-preview-name">{resolvedColumnSelectedItem.name}</div>
-                            <div className="finder-preview-meta-row">
-                            <span>{getFileTypeLabel(resolvedColumnSelectedItem.fileType)}</span>
-                            {resolvedColumnSelectedItem.size && <span>{(resolvedColumnSelectedItem.size / 1024).toFixed(1)} KB</span>}
-                            {resolvedColumnSelectedItem.lastEdit && <span>{resolvedColumnSelectedItem.lastEdit}</span>}
-                          </div>
-                          {renderResourceAssociationBlock(resolvedColumnSelectedItem, columnSelectedItemAssociationRule)}
-                        </div>
-                      ) : null}
                     </div>
                   ) : (
                     renderPreviewEmptyState()
@@ -5352,15 +5405,9 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
                             ? <iframe src={previewItem.url} className="finder-preview-iframe" title="PDF 预览" />
                             : <div className="finder-preview-placeholder"><FilePdfOutlined style={{ fontSize: 80, color: '#ff3b30' }} /><div>PDF 文档</div></div>
                         ) : previewItem.fileType === 'video' ? (
-                          previewItem.url
-                            ? <video src={previewItem.url} controls className="finder-preview-video" />
-                            : <div className="finder-preview-placeholder"><PlayCircleOutlined style={{ fontSize: 80, color: '#007aff' }} /><div>视频文件</div></div>
+                          renderMediaPreviewBlock(previewItem)
                         ) : previewItem.fileType === 'audio' ? (
-                          <div className="finder-preview-placeholder">
-                            <SoundOutlined style={{ fontSize: 80, color: '#af52de' }} />
-                            <div>音频文件</div>
-                            {previewItem.url && <audio src={previewItem.url} controls style={{ marginTop: 16, width: '80%' }} />}
-                          </div>
+                          renderMediaPreviewBlock(previewItem)
                         ) : previewItem.fileType === 'pptx' ? (
                           <div className="finder-preview-placeholder"><FilePptOutlined style={{ fontSize: 80, color: '#ff9500' }} /><div>PPT 演示文稿</div></div>
                         ) : previewItem.fileType === 'xlsx' ? (
@@ -5371,17 +5418,6 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
                           <div className="finder-preview-placeholder"><FileTextOutlined style={{ fontSize: 80, color: '#8e8e93' }} /><div>文件预览</div></div>
                         )}
                       </div>
-                      {!previewItem.isFolder && previewItem.fileType !== 'capabilityModel' ? (
-                        <div className="finder-preview-footer">
-                          <div className="finder-preview-name">{previewItem.name}</div>
-                          <div className="finder-preview-meta-row">
-                            <span>{getFileTypeLabel(previewItem.fileType)}</span>
-                            {previewItem.size && <span>{(previewItem.size / 1024).toFixed(1)} KB</span>}
-                            {previewItem.lastEdit && <span>{previewItem.lastEdit}</span>}
-                          </div>
-                          {renderResourceAssociationBlock(previewItem, previewItemAssociationRule)}
-                        </div>
-                      ) : null}
                     </div>
                   ) : (
                     renderPreviewEmptyState()
