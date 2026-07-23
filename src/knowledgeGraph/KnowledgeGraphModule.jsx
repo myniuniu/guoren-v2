@@ -94,7 +94,7 @@ const EDGE_LINE_STYLE_OPTIONS = [
   { label: '虚线', value: 'dashed' },
   { label: '点线', value: 'dotted' },
 ];
-const EDGE_COLOR_PRESETS = ['#1f1f24', '#e03131', '#2f9e44', '#1971c2', '#f08c00', '#7c3aed'];
+const EDGE_COLOR_PRESETS = ['#2f6df6', '#20c6d7', '#34c38f', '#9b6cff', '#ffad38', '#7f93b4'];
 const EDGE_WIDTH_PRESETS = [1.6, 2.8, 4.2];
 const EDGE_PATH_STYLE_OPTIONS = [
   { value: 'straight', label: '直线' },
@@ -894,7 +894,7 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
         summary: selectedPoint.summary,
         type: selectedPoint.type,
         tags: (selectedPoint.tags || []).join(', '),
-        color: selectedPoint.meta?.color || '#4667d6',
+        color: selectedPoint.meta?.color || '#2f6df6',
       });
     }
   }, [pointEditorForm, selectedPoint, selection]);
@@ -904,7 +904,7 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
       stageEditorForm.setFieldsValue({
         name: selectedStage.name,
         description: selectedStage.description,
-        color: selectedStage.color || '#4667d6',
+        color: selectedStage.color || '#2f6df6',
         layoutColumns: Number(selectedStage.layoutColumns || 1),
       });
     }
@@ -916,7 +916,7 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
         label: selectedRelation.label,
         relationType: selectedRelation.relationType,
         weight: selectedRelation.weight,
-        strokeColor: selectedRelation.strokeColor || '#a78bfa',
+        strokeColor: selectedRelation.strokeColor || '#9b6cff',
         strokeWidth: Number(selectedRelation.strokeWidth || 1.8),
         lineStyle: selectedRelation.lineStyle || 'solid',
         pathStyle: selectedRelation.pathStyle || 'smoothstep',
@@ -1027,7 +1027,7 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
     sectionForm.setFieldsValue({
       title: record?.title || record?.name || '',
       description: record?.description || '',
-      color: record?.color || '#4667d6',
+      color: record?.color || '#2f6df6',
     });
   };
 

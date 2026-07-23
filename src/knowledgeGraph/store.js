@@ -1,5 +1,27 @@
 const STORAGE_KEY = 'gr.knowledge-graph.v1';
 const STORE_CHANGE_EVENT = 'gr:knowledge-graph-change';
+const KNOWLEDGE_GRAPH_VISUAL_THEME_VERSION = 2;
+const KNOWLEDGE_GRAPH_THEME_PALETTE = Object.freeze([
+  '#2f6df6',
+  '#20c6d7',
+  '#34c38f',
+  '#9b6cff',
+  '#ffad38',
+]);
+const KNOWLEDGE_GRAPH_POINT_TYPE_COLORS = Object.freeze({
+  TOPIC: '#2f6df6',
+  CONCEPT: '#20c6d7',
+  SKILL: '#34c38f',
+  CASE: '#9b6cff',
+  RESOURCE: '#ffad38',
+});
+const KNOWLEDGE_GRAPH_RELATION_COLORS = Object.freeze({
+  CONTAINS: '#20c6d7',
+  PRECEDES: '#2f6df6',
+  RELATED: '#9b6cff',
+  CASE_OF: '#ffad38',
+  APPLIES_TO: '#34c38f',
+});
 
 export const KNOWLEDGE_POINT_TYPE_OPTIONS = [
   { value: 'TOPIC', label: '主题' },
@@ -33,8 +55,8 @@ const STAGE_EDGE_SEMANTIC_META = Object.freeze({
     label: '前置',
     description: '目标分区建立在源分区之后，表示课程或学习路径上的先后依赖。',
     appearance: {
-      strokeColor: '#60a5fa',
-      strokeWidth: 2,
+      strokeColor: '#2f6df6',
+      strokeWidth: 2.4,
       lineStyle: 'solid',
       pathStyle: 'smoothstep',
       markerType: 'arrowclosed',
@@ -47,8 +69,8 @@ const STAGE_EDGE_SEMANTIC_META = Object.freeze({
     label: '包含',
     description: '源分区对目标分区形成结构归属，表示上层主题包含下层模块。',
     appearance: {
-      strokeColor: '#2bb7c6',
-      strokeWidth: 2,
+      strokeColor: '#20c6d7',
+      strokeWidth: 2.4,
       lineStyle: 'solid',
       pathStyle: 'smoothstep',
       markerType: 'arrow',
@@ -61,8 +83,8 @@ const STAGE_EDGE_SEMANTIC_META = Object.freeze({
     label: '支撑',
     description: '源分区为目标分区提供背景、工具或能力支撑。',
     appearance: {
-      strokeColor: '#8b5cf6',
-      strokeWidth: 2,
+      strokeColor: '#9b6cff',
+      strokeWidth: 2.2,
       lineStyle: 'dashed',
       pathStyle: 'smoothstep',
       markerType: 'arrow',
@@ -75,7 +97,7 @@ const STAGE_EDGE_SEMANTIC_META = Object.freeze({
     label: '并行',
     description: '两个分区并列推进或协同展开，没有严格先后顺序。',
     appearance: {
-      strokeColor: '#94a3b8',
+      strokeColor: '#34c38f',
       strokeWidth: 2,
       lineStyle: 'dotted',
       pathStyle: 'smoothstep',
@@ -116,6 +138,23 @@ function trimText(value) {
 function sanitizeTags(value) {
   const source = Array.isArray(value) ? value : String(value || '').split(',');
   return Array.from(new Set(source.map((item) => trimText(item)).filter(Boolean)));
+}
+
+function getThemePaletteColor(index = 0) {
+  const normalizedIndex = Math.max(0, Number(index || 0));
+  return KNOWLEDGE_GRAPH_THEME_PALETTE[normalizedIndex % KNOWLEDGE_GRAPH_THEME_PALETTE.length];
+}
+
+function getStageThemeColor(index = 0) {
+  return getThemePaletteColor(index);
+}
+
+function getPointThemeColor(type = 'TOPIC', fallbackIndex = 0) {
+  return KNOWLEDGE_GRAPH_POINT_TYPE_COLORS[type] || getThemePaletteColor(fallbackIndex);
+}
+
+function getRelationThemeColor(type = 'RELATED', fallbackIndex = 0) {
+  return KNOWLEDGE_GRAPH_RELATION_COLORS[type] || getThemePaletteColor(fallbackIndex + 2);
 }
 
 function sanitizeEdgeLineStyle(value, fallback = 'solid') {
@@ -170,8 +209,8 @@ function normalizeRelationAppearance(relation = {}) {
   const relationType = relation.relationType || 'RELATED';
   const fallbackAnimated = relationType === 'PRECEDES';
   return {
-    strokeColor: sanitizeEdgeStrokeColor(relation.strokeColor, '#a78bfa'),
-    strokeWidth: sanitizeEdgeStrokeWidth(relation.strokeWidth, 1.8),
+    strokeColor: sanitizeEdgeStrokeColor(relation.strokeColor, getRelationThemeColor(relationType)),
+    strokeWidth: sanitizeEdgeStrokeWidth(relation.strokeWidth, 2),
     lineStyle: sanitizeEdgeLineStyle(relation.lineStyle, 'solid'),
     pathStyle: sanitizeEdgePathStyle(relation.pathStyle, 'smoothstep'),
     markerType: sanitizeEdgeMarkerType(relation.markerType, 'arrowclosed'),
@@ -185,7 +224,7 @@ function normalizeStageEdgeAppearance(edge = {}) {
   const semanticMeta = getStageEdgeSemanticMeta(edge.semanticType);
   if (semanticMeta) {
     return {
-      strokeColor: sanitizeEdgeStrokeColor(semanticMeta.appearance.strokeColor, '#60a5fa'),
+      strokeColor: sanitizeEdgeStrokeColor(semanticMeta.appearance.strokeColor, getThemePaletteColor(0)),
       strokeWidth: sanitizeEdgeStrokeWidth(semanticMeta.appearance.strokeWidth, 2),
       lineStyle: sanitizeEdgeLineStyle(semanticMeta.appearance.lineStyle, 'solid'),
       pathStyle: sanitizeEdgePathStyle(semanticMeta.appearance.pathStyle, 'smoothstep'),
@@ -196,7 +235,7 @@ function normalizeStageEdgeAppearance(edge = {}) {
     };
   }
   return {
-    strokeColor: sanitizeEdgeStrokeColor(edge.strokeColor, '#60a5fa'),
+    strokeColor: sanitizeEdgeStrokeColor(edge.strokeColor, getThemePaletteColor(0)),
     strokeWidth: sanitizeEdgeStrokeWidth(edge.strokeWidth, 2),
     lineStyle: sanitizeEdgeLineStyle(edge.lineStyle, 'solid'),
     pathStyle: sanitizeEdgePathStyle(edge.pathStyle, 'smoothstep'),
@@ -244,10 +283,10 @@ function sanitizeStageLayoutColumns(value) {
 
 function createDefaultSections() {
   return [
-    buildSection(createId('kg_section'), '顶层概览', '#2f7e79', '呈现总主题、总目标或关键主线。', 1),
-    buildSection(createId('kg_section'), '核心模块', '#4667d6', '按能力域或知识模块拆分主体内容。', 2),
-    buildSection(createId('kg_section'), '实践与应用', '#8a58d6', '放置项目、案例、创作与任务型知识点。', 3),
-    buildSection(createId('kg_section'), '规则与评估', '#da7f44', '放置边界、安全、评价与治理相关知识点。', 4),
+    buildSection(createId('kg_section'), '顶层概览', getStageThemeColor(0), '呈现总主题、总目标或关键主线。', 1),
+    buildSection(createId('kg_section'), '核心模块', getStageThemeColor(1), '按能力域或知识模块拆分主体内容。', 2),
+    buildSection(createId('kg_section'), '实践与应用', getStageThemeColor(2), '放置项目、案例、创作与任务型知识点。', 3),
+    buildSection(createId('kg_section'), '规则与评估', getStageThemeColor(3), '放置边界、安全、评价与治理相关知识点。', 4),
   ];
 }
 
@@ -310,7 +349,7 @@ function buildStructuredViewFromLegacy(layout, pointsForGraph = []) {
   const stages = legacySections.map((section, index) => buildStructuredStage(
     section.id,
     trimText(section.title) || trimText(section.name) || `分区 ${index + 1}`,
-    section.color || '#4667d6',
+    section.color || getStageThemeColor(index),
     trimText(section.description),
     Number(section.sortNo || index + 1),
   ));
@@ -372,7 +411,7 @@ function normalizeStructuredView(layout, pointsForGraph = []) {
       ...buildStructuredStage(
         stage.id || createId('kg_stage'),
         trimText(stage.name) || trimText(stage.title) || `分区 ${index + 1}`,
-        stage.color || '#4667d6',
+        stage.color || getStageThemeColor(index),
         trimText(stage.description),
         Number(stage.sortNo || index + 1),
       ),
@@ -481,10 +520,10 @@ function buildStarterState() {
   const pointEthicsId = createId('kg_point');
 
   const sections = [
-    buildSection(sectionOverviewId, '顶层概览', '#2f7e79', '围绕课程目标和总体认识展开。', 1),
-    buildSection(sectionCoreId, '核心能力', '#4667d6', '承载关键概念与主干技术。', 2),
-    buildSection(sectionPracticeId, '创作与实践', '#8a58d6', '承载应用、项目与成果表达。', 3),
-    buildSection(sectionSafetyId, '规则与责任', '#da7f44', '承载边界、伦理和风险治理。', 4),
+    buildSection(sectionOverviewId, '顶层概览', getStageThemeColor(0), '围绕课程目标和总体认识展开。', 1),
+    buildSection(sectionCoreId, '核心能力', getStageThemeColor(1), '承载关键概念与主干技术。', 2),
+    buildSection(sectionPracticeId, '创作与实践', getStageThemeColor(2), '承载应用、项目与成果表达。', 3),
+    buildSection(sectionSafetyId, '规则与责任', getStageThemeColor(3), '承载边界、伦理和风险治理。', 4),
   ];
 
   const points = [
@@ -496,7 +535,7 @@ function buildStarterState() {
       type: 'CONCEPT',
       tags: ['入门', '总览'],
       resourceBindings: [],
-      meta: { color: '#2f7e79' },
+      meta: { color: getStageThemeColor(0) },
       createdAt,
       updatedAt: createdAt,
     },
@@ -508,7 +547,7 @@ function buildStarterState() {
       type: 'TOPIC',
       tags: ['视觉', '语音'],
       resourceBindings: [],
-      meta: { color: '#4667d6' },
+      meta: { color: getStageThemeColor(1) },
       createdAt,
       updatedAt: createdAt,
     },
@@ -520,7 +559,7 @@ function buildStarterState() {
       type: 'TOPIC',
       tags: ['NLP', '大模型'],
       resourceBindings: [],
-      meta: { color: '#55a26f' },
+      meta: { color: getStageThemeColor(1) },
       createdAt,
       updatedAt: createdAt,
     },
@@ -532,7 +571,7 @@ function buildStarterState() {
       type: 'SKILL',
       tags: ['AIGC', '创作'],
       resourceBindings: [],
-      meta: { color: '#8a58d6' },
+      meta: { color: getStageThemeColor(2) },
       createdAt,
       updatedAt: createdAt,
     },
@@ -544,7 +583,7 @@ function buildStarterState() {
       type: 'TOPIC',
       tags: ['安全', '伦理'],
       resourceBindings: [],
-      meta: { color: '#da7f44' },
+      meta: { color: getStageThemeColor(3) },
       createdAt,
       updatedAt: createdAt,
     },
@@ -640,10 +679,10 @@ function buildStarterState() {
 
   const structuredView = {
     stages: [
-      buildStructuredStage(sectionOverviewId, '顶层概览', '#2f7e79', '围绕课程目标和总体认识展开。', 1),
-      buildStructuredStage(sectionCoreId, '核心能力', '#4667d6', '承载关键概念与主干技术。', 2),
-      buildStructuredStage(sectionPracticeId, '创作与实践', '#8a58d6', '承载应用、项目与成果表达。', 3),
-      buildStructuredStage(sectionSafetyId, '规则与责任', '#da7f44', '承载边界、伦理和风险治理。', 4),
+      buildStructuredStage(sectionOverviewId, '顶层概览', getStageThemeColor(0), '围绕课程目标和总体认识展开。', 1),
+      buildStructuredStage(sectionCoreId, '核心能力', getStageThemeColor(1), '承载关键概念与主干技术。', 2),
+      buildStructuredStage(sectionPracticeId, '创作与实践', getStageThemeColor(2), '承载应用、项目与成果表达。', 3),
+      buildStructuredStage(sectionSafetyId, '规则与责任', getStageThemeColor(3), '承载边界、伦理和风险治理。', 4),
     ],
     pointPlacements: {
       [pointOverviewId]: { pointId: pointOverviewId, stageId: sectionOverviewId, order: 1 },
@@ -676,6 +715,7 @@ function buildStarterState() {
 
   return {
     version: 1,
+    visualThemeVersion: KNOWLEDGE_GRAPH_VISUAL_THEME_VERSION,
     collections: [
       {
         id: collectionId,
@@ -733,7 +773,84 @@ function ensureSectionCardConsistency(state, graphId) {
   };
 }
 
+function applyStructuredVisualTheme(structuredView = {}, points = [], relations = []) {
+  const stages = Array.isArray(structuredView.stages) ? structuredView.stages : [];
+  const pointPlacements = structuredView.pointPlacements || {};
+  const stageColorById = new Map();
+  const pointStageColorById = new Map();
+
+  stages.forEach((stage, index) => {
+    const nextColor = getStageThemeColor(index);
+    stage.color = nextColor;
+    stageColorById.set(stage.id, nextColor);
+  });
+
+  Object.values(pointPlacements).forEach((placement) => {
+    const stageColor = stageColorById.get(placement.stageId);
+    if (stageColor && placement.pointId) {
+      pointStageColorById.set(placement.pointId, stageColor);
+    }
+  });
+
+  points.forEach((point, index) => {
+    point.meta = point.meta && typeof point.meta === 'object' ? point.meta : {};
+    point.meta.color = pointStageColorById.get(point.id) || getPointThemeColor(point.type, index);
+  });
+
+  relations.forEach((relation, index) => {
+    relation.strokeColor = getRelationThemeColor(relation.relationType, index);
+  });
+
+  if (Array.isArray(structuredView.stageEdges)) {
+    structuredView.stageEdges.forEach((edge, index) => {
+      if (!edge.semanticType) {
+        edge.strokeColor = getThemePaletteColor(index);
+      }
+    });
+  }
+}
+
+function applyKnowledgeGraphVisualTheme(state) {
+  const pointsByGraph = new Map();
+  const relationsByGraph = new Map();
+
+  state.points.forEach((point) => {
+    if (!pointsByGraph.has(point.graphId)) pointsByGraph.set(point.graphId, []);
+    pointsByGraph.get(point.graphId).push(point);
+  });
+  state.relations.forEach((relation) => {
+    if (!relationsByGraph.has(relation.graphId)) relationsByGraph.set(relation.graphId, []);
+    relationsByGraph.get(relation.graphId).push(relation);
+  });
+
+  state.graphs.forEach((graph) => {
+    const layout = state.layouts[graph.id];
+    if (!layout?.structuredView) return;
+    applyStructuredVisualTheme(
+      layout.structuredView,
+      pointsByGraph.get(graph.id) || [],
+      relationsByGraph.get(graph.id) || [],
+    );
+    layout.curriculumView = buildLegacyCurriculumViewFromStructured(layout.structuredView);
+  });
+
+  state.aiDrafts.forEach((draft) => {
+    const structuredView = draft.generatedLayout?.structuredView;
+    if (!structuredView) return;
+    applyStructuredVisualTheme(
+      structuredView,
+      draft.generatedNodes || [],
+      draft.generatedRelations || [],
+    );
+    draft.generatedLayout.curriculumView = buildLegacyCurriculumViewFromStructured(structuredView);
+  });
+}
+
 function normalizeState(state) {
+  const storedVisualThemeVersion = Number(state.visualThemeVersion);
+  const visualThemeVersion = Number.isFinite(storedVisualThemeVersion) ? storedVisualThemeVersion : 0;
+  const shouldMigrateVisualTheme = visualThemeVersion < KNOWLEDGE_GRAPH_VISUAL_THEME_VERSION;
+
   state.collections = Array.isArray(state.collections) ? state.collections : [];
   state.graphs = Array.isArray(state.graphs) ? state.graphs : [];
   state.points = Array.isArray(state.points) ? state.points : [];
@@ -837,24 +954,39 @@ function normalizeState(state) {
       };
     });
 
+  if (shouldMigrateVisualTheme) {
+    applyKnowledgeGraphVisualTheme(state);
+    state.visualThemeVersion = KNOWLEDGE_GRAPH_VISUAL_THEME_VERSION;
+  } else {
+    state.visualThemeVersion = visualThemeVersion;
+  }
+
   return state;
 }
 
 function readStore() {
   if (typeof window === 'undefined') {
-    return buildStarterState();
+    return normalizeState(buildStarterState());
   }
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      const seeded = buildStarterState();
+      const seeded = normalizeState(buildStarterState());
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
       return seeded;
     }
-    return normalizeState(JSON.parse(raw));
+    const parsed = JSON.parse(raw);
+    const storedVisualThemeVersion = Number(parsed?.visualThemeVersion);
+    const needsVisualThemeMigration = !Number.isFinite(storedVisualThemeVersion)
+      || storedVisualThemeVersion < KNOWLEDGE_GRAPH_VISUAL_THEME_VERSION;
+    const normalized = normalizeState(parsed);
+    if (needsVisualThemeMigration) {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+    }
+    return normalized;
   } catch (error) {
     console.warn('[knowledge-graph-store] failed to read storage', error);
-    const fallback = buildStarterState();
+    const fallback = normalizeState(buildStarterState());
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(fallback));
     } catch {
@@ -932,7 +1064,7 @@ function createPointRecord(graphId, payload = {}) {
     tags: sanitizeTags(payload.tags),
     resourceBindings: Array.isArray(payload.resourceBindings) ? payload.resourceBindings.map(createResourceBindingSnapshot) : [],
     meta: {
-      color: payload.meta?.color || '#4667d6',
+      color: payload.meta?.color || getPointThemeColor(payload.type || 'TOPIC'),
       note: trimText(payload.meta?.note),
     },
     createdAt,
@@ -1008,10 +1140,10 @@ function createCollectionRecord(payload = {}, sortNo = 1) {
 
 function buildDraftLayout(nodes) {
   const sections = [
-    buildStructuredStage(createId('kg_stage'), '总览与定义', '#2f7e79', '用于呈现课程主题、目标与主概念。', 1),
-    buildStructuredStage(createId('kg_stage'), '核心主题', '#4667d6', '用于承载主要知识模块。', 2),
-    buildStructuredStage(createId('kg_stage'), '应用与作品', '#8a58d6', '用于承载案例、项目与产出。', 3),
-    buildStructuredStage(createId('kg_stage'), '规范与评估', '#da7f44', '用于承载风险、边界与评价方式。', 4),
+    buildStructuredStage(createId('kg_stage'), '总览与定义', getStageThemeColor(0), '用于呈现课程主题、目标与主概念。', 1),
+    buildStructuredStage(createId('kg_stage'), '核心主题', getStageThemeColor(1), '用于承载主要知识模块。', 2),
+    buildStructuredStage(createId('kg_stage'), '应用与作品', getStageThemeColor(2), '用于承载案例、项目与产出。', 3),
+    buildStructuredStage(createId('kg_stage'), '规范与评估', getStageThemeColor(3), '用于承载风险、边界与评价方式。', 4),
   ];
   const cards = {};
   const positions = {};
@@ -1268,11 +1400,18 @@ export function createPoint(graphId, payload = {}) {
   return commit((state) => {
     const graph = state.graphs.find((item) => item.id === graphId);
     if (!graph) return;
-    const point = createPointRecord(graphId, payload);
-    state.points.push(point);
     const layout = ensureGraphLayout(state, graphId);
-    layout.graphView.positions[point.id] = fallbackPosition(state.points.filter((item) => item.graphId === graphId).length - 1);
     const targetStageId = payload.stageId || payload.sectionId || layout.structuredView.stages[0]?.id;
+    const targetStage = layout.structuredView.stages.find((stage) => stage.id === targetStageId) || null;
+    const point = createPointRecord(graphId, {
+      ...payload,
+      meta: {
+        ...(payload.meta || {}),
+        color: payload.meta?.color || targetStage?.color || getPointThemeColor(payload.type),
+      },
+    });
+    state.points.push(point);
+    layout.graphView.positions[point.id] = fallbackPosition(state.points.filter((item) => item.graphId === graphId).length - 1);
     const currentStageCount = Object.values(layout.structuredView.pointPlacements || {})
       .filter((placement) => placement.stageId === targetStageId).length;
     layout.structuredView.pointPlacements[point.id] = {
@@ -1350,7 +1489,7 @@ export function updateRelation(graphId, relationId, patch = {}) {
     if (typeof patch.label !== 'undefined') relation.label = trimText(patch.label) || RELATION_LABEL_MAP[relation.relationType] || relation.label;
     if (typeof patch.weight !== 'undefined') relation.weight = Math.max(1, Number(patch.weight || relation.weight));
     if (typeof patch.strokeColor !== 'undefined') {
-      relation.strokeColor = sanitizeEdgeStrokeColor(patch.strokeColor, relation.strokeColor || '#a78bfa');
+      relation.strokeColor = sanitizeEdgeStrokeColor(patch.strokeColor, relation.strokeColor || getRelationThemeColor(relation.relationType));
     }
     if (typeof patch.strokeWidth !== 'undefined') {
       relation.strokeWidth = sanitizeEdgeStrokeWidth(patch.strokeWidth, relation.strokeWidth || 1.8);
@@ -1411,11 +1550,11 @@ export function createStructuredStage(graphId, payload = {}) {
     const layout = ensureGraphLayout(state, graphId);
     layout.structuredView.stages.push({
       ...buildStructuredStage(
-      createId('kg_stage'),
-      trimText(payload.name || payload.title) || `分区 ${layout.structuredView.stages.length + 1}`,
-      payload.color || '#4667d6',
-      trimText(payload.description),
-      layout.structuredView.stages.length + 1,
+        createId('kg_stage'),
+        trimText(payload.name || payload.title) || `分区 ${layout.structuredView.stages.length + 1}`,
+        payload.color || getStageThemeColor(layout.structuredView.stages.length),
+        trimText(payload.description),
+        layout.structuredView.stages.length + 1,
       ),
       layoutColumns: sanitizeStageLayoutColumns(payload.layoutColumns),
     });
@@ -1584,7 +1723,7 @@ export function updateStructuredStageEdge(graphId, edgeId, patch = {}) {
       Object.assign(edge, normalizeStageEdgeAppearance(edge));
     } else {
       if (typeof patch.strokeColor !== 'undefined') {
-        edge.strokeColor = sanitizeEdgeStrokeColor(patch.strokeColor, edge.strokeColor || '#60a5fa');
+        edge.strokeColor = sanitizeEdgeStrokeColor(patch.strokeColor, edge.strokeColor || getThemePaletteColor(0));
       }
       if (typeof patch.strokeWidth !== 'undefined') {
         edge.strokeWidth = sanitizeEdgeStrokeWidth(patch.strokeWidth, edge.strokeWidth || 2);
@@ -1658,35 +1797,35 @@ export function generateGraphDraft(graphId, input = {}) {
         summary: [audience && `面向${audience}`, goal && `目标：${goal}`].filter(Boolean).join('；') || `围绕 ${theme} 构建课程全景认知。`,
         type: 'CONCEPT',
         tags: [theme, 'AI 草稿'],
-        meta: { color: '#2f7e79' },
+        meta: { color: getStageThemeColor(0) },
       }),
       createPointRecord(graphId, {
         title: `${theme}核心概念`,
         summary: `梳理 ${theme} 的主干概念、关键术语和核心结构。`,
         type: 'TOPIC',
         tags: ['核心概念'],
-        meta: { color: '#4667d6' },
+        meta: { color: getStageThemeColor(1) },
       }),
       createPointRecord(graphId, {
         title: `${theme}典型能力`,
         summary: `聚焦 ${theme} 在课堂中需要掌握的关键能力与操作方法。`,
         type: 'SKILL',
         tags: ['能力'],
-        meta: { color: '#4667d6' },
+        meta: { color: getStageThemeColor(1) },
       }),
       createPointRecord(graphId, {
         title: `${theme}应用实践`,
         summary: stylePrompt ? `按“${stylePrompt}”风格组织项目、任务和产出。` : `围绕 ${theme} 设计任务、案例与成果表达。`,
         type: 'CASE',
         tags: ['实践'],
-        meta: { color: '#8a58d6' },
+        meta: { color: getStageThemeColor(2) },
       }),
       createPointRecord(graphId, {
         title: `${theme}边界与规范`,
         summary: `明确使用边界、风险控制与评价要求，确保图谱可落地。`,
         type: 'TOPIC',
         tags: ['规范', '治理'],
-        meta: { color: '#da7f44' },
+        meta: { color: getStageThemeColor(3) },
       }),
     ];
 
@@ -1696,7 +1835,7 @@ export function generateGraphDraft(graphId, input = {}) {
         summary: `从资料库资料《${title}》提取的主题建议，可进一步整理为知识点。`,
         type: index % 2 === 0 ? 'RESOURCE' : 'CASE',
         tags: ['资料库输入'],
-        meta: { color: index % 2 === 0 ? '#5b8def' : '#8a58d6' },
+        meta: { color: getPointThemeColor(index % 2 === 0 ? 'RESOURCE' : 'CASE', index + 4) },
       }));
     });
 

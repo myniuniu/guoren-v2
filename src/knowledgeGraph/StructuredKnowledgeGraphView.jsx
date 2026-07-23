@@ -354,7 +354,7 @@ function StageNode({ data, selected }) {
     <div
       className={`kg-structured-stage ${selected ? 'is-selected' : ''}`}
       style={{
-        '--kg-stage-accent': data.color || '#4667d6',
+        '--kg-stage-accent': data.color || '#2f6df6',
         height: data.height,
       }}
     >
@@ -462,14 +462,14 @@ function PointNode({ data, selected }) {
   return (
     <div
       className={`kg-structured-point ${selected ? 'is-selected' : ''}`}
-      style={{ '--kg-point-accent': data.color || '#4667d6' }}
+      style={{ '--kg-point-accent': data.color || '#2f6df6' }}
       onDragOver={data.readOnly ? undefined : (event) => event.preventDefault()}
       onDrop={data.readOnly ? undefined : handleDrop}
     >
       <div className="kg-structured-point-head">
         <div className="kg-structured-point-title-wrap">
           <div className="kg-structured-point-title">{data.label}</div>
-          <Tag color="blue">{data.typeLabel}</Tag>
+          <Tag className="kg-structured-point-type-tag">{data.typeLabel}</Tag>
         </div>
         {data.readOnly ? null : (
           <div className="kg-structured-point-actions nodrag nopan" onMouseDown={stop} onClick={stop}>
@@ -893,7 +893,7 @@ function StructuredKnowledgeGraphView({
           pointId: point.id,
           label: point.title,
           summary: point.summary,
-          color: point.meta?.color || '#4667d6',
+          color: point.meta?.color || '#2f6df6',
           typeLabel: pointTypeLabelMap[point.type] || point.type,
           tagCount: point.tags?.length || 0,
           bindingCount: point.resourceBindings?.length || 0,
@@ -953,8 +953,8 @@ function StructuredKnowledgeGraphView({
         targetHandle: edge.targetHandle || 'stage-target-left',
         label: isHighlighted ? hoverLabel : undefined,
         type: edge.pathStyle || 'smoothstep',
-        markerStart: getEdgeMarker(edge.startMarker, edge.strokeColor || '#60a5fa'),
-        markerEnd: getEdgeMarker(edge.markerType, edge.strokeColor || '#60a5fa'),
+        markerStart: getEdgeMarker(edge.startMarker, edge.strokeColor || '#2f6df6'),
+        markerEnd: getEdgeMarker(edge.markerType, edge.strokeColor || '#2f6df6'),
         labelShowBg: isHighlighted,
         labelBgPadding: [8, 4],
         labelBgBorderRadius: 999,
@@ -963,13 +963,13 @@ function StructuredKnowledgeGraphView({
           stroke: 'rgba(148, 163, 184, 0.18)',
         },
         labelStyle: {
-          fill: edge.strokeColor || '#60a5fa',
+          fill: edge.strokeColor || '#2f6df6',
           fontSize: 12,
           fontWeight: 600,
           opacity: Number(edge.opacity ?? 100) / 100,
         },
         style: {
-          stroke: edge.strokeColor || '#60a5fa',
+          stroke: edge.strokeColor || '#2f6df6',
           strokeWidth: (edge.strokeWidth || 2) + (selection?.type === 'stage-edge' && selection.id === edge.id ? 0.8 : 0),
           strokeDasharray: getEdgeDashArray(edge.lineStyle),
           opacity: Number(edge.opacity ?? 100) / 100,
@@ -1285,9 +1285,15 @@ function StructuredKnowledgeGraphView({
               onInit={setRfInstance}
               proOptions={{ hideAttribution: true }}
             >
-              <Background color="#d4dbe6" gap={20} />
+              <Background color="#eef2f7" gap={24} size={1} />
               <Controls />
-              <MiniMap pannable zoomable />
+              <MiniMap
+                pannable
+                zoomable
+                maskColor="rgba(248, 250, 252, 0.72)"
+                nodeColor={(node) => node.data?.color || '#2f6df6'}
+                nodeStrokeColor="rgba(255, 255, 255, 0.88)"
+              />
             </ReactFlow>
           )}
         </div>

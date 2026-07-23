@@ -5,9 +5,7 @@
   height: 100vh;
   display: grid;
   grid-template-columns: 320px 1fr;
-  background:
-    radial-gradient(circle at top left, rgba(205, 224, 231, 0.56) 0%, rgba(205, 224, 231, 0) 28%),
-    linear-gradient(180deg, #f6f8fb 0%, #eef2f6 100%);
+  background: #fff;
   color: #172033;
 }
 
@@ -18,9 +16,7 @@
 .kg-module-embedded {
   height: 100%;
   min-height: 0;
-  background:
-    radial-gradient(circle at top left, rgba(205, 224, 231, 0.28) 0%, rgba(205, 224, 231, 0) 26%),
-    linear-gradient(180deg, #f6f8fb 0%, #eef2f6 100%);
+  background: #fff;
 }
 
 .kg-sidebar {
@@ -144,6 +140,7 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  background: #fff;
 }
 
 .kg-list-page {
@@ -426,6 +423,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) 4px 360px;
   position: relative;
+  background: #fff;
 }
 
 .kg-editor-layout.is-preview {
@@ -1201,9 +1199,9 @@
 
 .kg-edge-color-swatch.is-active {
   box-shadow:
-    0 0 0 3px rgba(99, 102, 241, 0.16),
+    0 0 0 3px rgba(47, 109, 246, 0.16),
     inset 0 0 0 1px rgba(255, 255, 255, 0.38);
-  border-color: #6366f1;
+  border-color: #2f6df6;
 }
 
 .kg-edge-color-picker {
@@ -1528,9 +1526,11 @@
   display: flex;
   flex-direction: column;
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.05);
+  background: #fff;
+  border: 1px solid rgba(226, 232, 240, 0.82);
+  box-shadow:
+    0 14px 32px rgba(31, 45, 85, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
   overflow: hidden;
 }
 
@@ -1624,12 +1624,12 @@
   max-width: min(320px, calc(100% - 40px));
   padding: 8px 14px;
   border-radius: 999px;
-  border: 1px solid rgba(70, 103, 214, 0.18);
+  border: 1px solid rgba(47, 109, 246, 0.18);
   background: rgba(255, 255, 255, 0.98);
   box-shadow:
     0 12px 24px rgba(31, 45, 85, 0.12),
     0 2px 8px rgba(31, 45, 85, 0.08);
-  color: #4767c8;
+  color: #2f6df6;
   font-size: 12px;
   font-weight: 600;
   line-height: 1.35;
@@ -1647,8 +1647,8 @@
   top: -6px;
   width: 12px;
   height: 12px;
-  border-left: 1px solid rgba(70, 103, 214, 0.18);
-  border-top: 1px solid rgba(70, 103, 214, 0.18);
+  border-left: 1px solid rgba(47, 109, 246, 0.18);
+  border-top: 1px solid rgba(47, 109, 246, 0.18);
   background: rgba(255, 255, 255, 0.98);
   transform: rotate(45deg);
 }
@@ -1679,7 +1679,7 @@
 }
 
 .kg-resource-drawer-icon {
-  color: #4667d6;
+  color: #2f6df6;
   font-size: 18px;
 }
 
@@ -1732,9 +1732,39 @@
   height: 100%;
   overflow: hidden;
   position: relative;
-  background:
-    radial-gradient(circle at top left, rgba(205, 224, 231, 0.28) 0%, rgba(205, 224, 231, 0) 26%),
-    linear-gradient(180deg, rgba(247, 249, 252, 0.9) 0%, rgba(241, 245, 249, 0.88) 100%);
+  background: #fff;
+}
+
+.kg-structured-canvas .react-flow__background {
+  opacity: 0.72;
+}
+
+.kg-structured-canvas .react-flow__controls {
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 14px 28px rgba(31, 45, 85, 0.1);
+}
+
+.kg-structured-canvas .react-flow__controls-button {
+  border-bottom-color: rgba(148, 163, 184, 0.16);
+  background: rgba(255, 255, 255, 0.9);
+  color: #365273;
+}
+
+.kg-structured-canvas .react-flow__minimap {
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 8px 18px rgba(31, 45, 85, 0.08);
+}
+
+.kg-structured-canvas .react-flow__edge-path {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 2px 4px rgba(31, 45, 85, 0.05));
 }
 
 .kg-structured-canvas-overlay {
@@ -1773,10 +1803,12 @@
   width: 100%;
   height: 100%;
   border-radius: 26px;
-  border: 1px solid color-mix(in srgb, var(--kg-stage-accent) 20%, rgba(15, 23, 42, 0.08));
+  border: 1px solid color-mix(in srgb, var(--kg-stage-accent) 22%, rgba(198, 238, 247, 0.78));
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.96) 100%);
-  box-shadow: 0 22px 48px rgba(15, 23, 42, 0.08);
+    linear-gradient(135deg, color-mix(in srgb, var(--kg-stage-accent) 11%, rgba(235, 250, 253, 0.94)) 0%, rgba(241, 252, 255, 0.9) 100%);
+  box-shadow:
+    0 8px 18px rgba(31, 45, 85, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.62);
   overflow: hidden;
   position: relative;
   cursor: grab;
@@ -1791,17 +1823,20 @@
 .kg-structured-stage::before {
   content: '';
   position: absolute;
-  left: 18px;
-  right: 18px;
+  left: 20px;
+  right: 20px;
   top: 18px;
-  height: 4px;
+  height: 3px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--kg-stage-accent) 88%, white 12%);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--kg-stage-accent) 94%, white 6%) 0%, color-mix(in srgb, var(--kg-stage-accent) 20%, transparent) 100%);
+  opacity: 0.9;
 }
 
 .kg-structured-stage.is-selected {
-  box-shadow: 0 24px 52px color-mix(in srgb, var(--kg-stage-accent) 18%, rgba(15, 23, 42, 0.08));
-  border-color: color-mix(in srgb, var(--kg-stage-accent) 34%, rgba(15, 23, 42, 0.08));
+  box-shadow:
+    0 10px 22px color-mix(in srgb, var(--kg-stage-accent) 14%, rgba(31, 45, 85, 0.08)),
+    inset 0 0 0 1px color-mix(in srgb, var(--kg-stage-accent) 26%, rgba(255, 255, 255, 0.72));
+  border-color: color-mix(in srgb, var(--kg-stage-accent) 34%, rgba(255, 255, 255, 0.76));
 }
 
 .react-flow__node-kgStage.dragging .kg-structured-stage,
@@ -1810,10 +1845,10 @@
 }
 
 .react-flow__node-kgStage.dragging .kg-structured-stage {
-  filter: saturate(1.04);
+  filter: saturate(1.03) brightness(1.01);
   box-shadow:
-    0 32px 72px color-mix(in srgb, var(--kg-stage-accent) 16%, rgba(15, 23, 42, 0.14)),
-    0 14px 28px rgba(15, 23, 42, 0.12);
+    0 16px 34px color-mix(in srgb, var(--kg-stage-accent) 12%, rgba(31, 45, 85, 0.1)),
+    0 8px 16px rgba(31, 45, 85, 0.08);
 }
 
 .react-flow__node-kgStage.dragging .kg-structured-stage::after {
@@ -1844,24 +1879,27 @@
 }
 
 .kg-structured-stage-pill {
-  width: 10px;
-  min-width: 10px;
-  height: 42px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--kg-stage-accent) 90%, white 10%);
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--kg-stage-accent) 92%, white 8%);
+  box-shadow:
+    0 4px 10px color-mix(in srgb, var(--kg-stage-accent) 20%, rgba(31, 45, 85, 0.08)),
+    inset 0 1px 0 rgba(255, 255, 255, 0.32);
 }
 
 .kg-structured-stage-title {
   font-size: 15px;
   font-weight: 700;
-  color: #172033;
+  color: #1a2940;
 }
 
 .kg-structured-stage-description {
   margin-top: 4px;
   font-size: 12px;
   line-height: 1.6;
-  color: #667085;
+  color: #6a7890;
 }
 
 .kg-structured-stage-actions {
@@ -1878,7 +1916,7 @@
   padding: 0 18px 12px;
   display: flex;
   gap: 12px;
-  color: #667085;
+  color: #718198;
   font-size: 12px;
 }
 
@@ -1889,8 +1927,8 @@
 .kg-structured-stage-empty {
   border-radius: 16px;
   min-height: 148px;
-  border: 1px dashed rgba(70, 103, 214, 0.24);
-  background: rgba(70, 103, 214, 0.04);
+  border: 1px dashed color-mix(in srgb, var(--kg-stage-accent) 24%, rgba(148, 163, 184, 0.16));
+  background: color-mix(in srgb, var(--kg-stage-accent) 7%, rgba(255, 255, 255, 0.72));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1922,7 +1960,8 @@
   width: 10px;
   height: 10px;
   border: 2px solid #fff;
-  background: #4667d6;
+  background: var(--kg-stage-accent, var(--kg-point-accent, #2f6df6));
+  box-shadow: 0 6px 12px rgba(31, 45, 85, 0.16);
 }
 
 .kg-structured-handle.is-source.is-top,
@@ -1987,10 +2026,12 @@
 
 .kg-structured-point {
   border-radius: 20px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid color-mix(in srgb, var(--kg-point-accent) 22%, rgba(198, 238, 247, 0.82));
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(246, 248, 252, 0.97) 100%);
-  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.08);
+    linear-gradient(135deg, color-mix(in srgb, var(--kg-point-accent) 6%, rgba(239, 251, 254, 0.96)) 0%, rgba(244, 253, 255, 0.9) 100%);
+  box-shadow:
+    0 4px 10px rgba(31, 45, 85, 0.035),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
   padding: 14px 14px 12px;
   position: relative;
   height: 196px;
@@ -2013,19 +2054,22 @@
   bottom: 12px;
   width: 4px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--kg-point-accent) 88%, white 12%);
+  background: color-mix(in srgb, var(--kg-point-accent) 86%, white 14%);
+  box-shadow: none;
 }
 
 .kg-structured-point.is-selected {
-  border-color: color-mix(in srgb, var(--kg-point-accent) 32%, rgba(15, 23, 42, 0.08));
-  box-shadow: 0 20px 38px color-mix(in srgb, var(--kg-point-accent) 16%, rgba(15, 23, 42, 0.08));
+  border-color: color-mix(in srgb, var(--kg-point-accent) 42%, rgba(198, 238, 247, 0.7));
+  box-shadow:
+    0 6px 14px color-mix(in srgb, var(--kg-point-accent) 10%, rgba(31, 45, 85, 0.06)),
+    inset 0 0 0 1px color-mix(in srgb, var(--kg-point-accent) 26%, rgba(255, 255, 255, 0.66));
 }
 
 .react-flow__node-kgPoint.dragging .kg-structured-point {
-  filter: saturate(1.05);
+  filter: saturate(1.03) brightness(1.01);
   box-shadow:
-    0 26px 54px color-mix(in srgb, var(--kg-point-accent) 18%, rgba(15, 23, 42, 0.14)),
-    0 12px 24px rgba(15, 23, 42, 0.1);
+    0 10px 22px color-mix(in srgb, var(--kg-point-accent) 12%, rgba(31, 45, 85, 0.1)),
+    0 6px 12px rgba(31, 45, 85, 0.06);
 }
 
 .react-flow__node-kgPoint.dragging .kg-structured-point::after {
@@ -2062,8 +2106,21 @@
 .kg-structured-point-title {
   font-size: 14px;
   font-weight: 700;
-  color: #172033;
+  color: #1a2940;
   line-height: 1.4;
+}
+
+.kg-structured-point-type-tag.ant-tag {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 6px;
+  margin-inline-end: 0;
+  border: 1px solid color-mix(in srgb, var(--kg-point-accent) 22%, rgba(255, 255, 255, 0.82));
+  color: color-mix(in srgb, var(--kg-point-accent) 80%, #1a2940 20%);
+  background: color-mix(in srgb, var(--kg-point-accent) 10%, rgba(255, 255, 255, 0.8));
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
 }
 
 .kg-structured-point-actions {
@@ -2074,7 +2131,7 @@
 
 .kg-structured-point-summary {
   margin-top: 8px;
-  color: #475467;
+  color: #536178;
   font-size: 12px;
   line-height: 1.6;
   display: -webkit-box;
@@ -2089,7 +2146,7 @@
   justify-content: space-between;
   gap: 12px;
   font-size: 11px;
-  color: #667085;
+  color: #718198;
 }
 
 .kg-structured-point-binding {
@@ -2107,8 +2164,8 @@
   padding: 4px 10px;
   font-size: 11px;
   border: none;
-  color: #2953d1;
-  background: rgba(70, 103, 214, 0.1);
+  color: color-mix(in srgb, var(--kg-point-accent) 78%, #1a2940 22%);
+  background: color-mix(in srgb, var(--kg-point-accent) 10%, rgba(255, 255, 255, 0.76));
   cursor: default;
 }
 
@@ -2118,8 +2175,8 @@
 }
 
 .kg-structured-point-binding-item.is-previewable:hover {
-  background: rgba(70, 103, 214, 0.16);
-  color: #1d4ed8;
+  background: color-mix(in srgb, var(--kg-point-accent) 16%, rgba(255, 255, 255, 0.82));
+  color: color-mix(in srgb, var(--kg-point-accent) 88%, #1a2940 12%);
   transform: translateY(-1px);
 }
 
@@ -2278,5 +2335,67 @@
 
   .kg-fill-feature-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 720px) {
+  .kg-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px 14px 10px;
+  }
+
+  .kg-toolbar-copy {
+    width: 100%;
+  }
+
+  .kg-toolbar-title-row {
+    align-items: flex-start;
+  }
+
+  .kg-toolbar-title {
+    font-size: 22px;
+    line-height: 1.22;
+    overflow-wrap: anywhere;
+  }
+
+  .kg-toolbar-subtitle {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .kg-toolbar-action-clusters {
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .kg-toolbar-action-group {
+    width: 100%;
+    justify-content: flex-start;
+    border-radius: 14px;
+  }
+
+  .kg-toolbar-action-group-linkage::after {
+    display: none;
+  }
+
+  .kg-draft-alert,
+  .kg-stats-row,
+  .kg-content {
+    margin-left: 14px;
+    margin-right: 14px;
+  }
+
+  .kg-content {
+    padding-bottom: 16px;
+  }
+
+  .kg-structured-shell {
+    border-radius: 18px;
+  }
+
+  .kg-resource-drawer-floating {
+    min-width: min(320px, calc(100% - 24px));
   }
 }
