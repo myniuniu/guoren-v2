@@ -1442,6 +1442,31 @@ export function updatePoint(graphId, pointId, patch = {}) {
   });
 }
 
+export function updateStructuredStagePointColors(graphId, stageId, color) {
+  return commit((state) => {
+    const graph = state.graphs.find((item) => item.id === graphId);
+    if (!graph || !stageId) return;
+    const layout = ensureGraphLayout(state, graphId);
+    const pointIds = new Set(
+      Object.values(layout.structuredView.pointPlacements || {})
+        .filter((placement) => placement.stageId === stageId)
+        .map((placement) => placement.pointId),
+    );
+    if (!pointIds.size) return;
+    const nextColor = sanitizeEdgeStrokeColor(color, getPointThemeColor('TOPIC'));
+    const updatedAt = nowText();
+    state.points.forEach((point) => {
+      if (point.graphId !== graphId || !pointIds.has(point.id)) return;
+      point.meta = {
+        ...(point.meta || {}),
+        color: nextColor,
+      };
+      point.updatedAt = updatedAt;
+    });
+    graph.updatedAt = updatedAt;
+  });
+}
+
 export function removePoint(graphId, pointId) {
   return commit((state) => {
     state.points = state.points.filter((point) => !(point.graphId === graphId && point.id === pointId));

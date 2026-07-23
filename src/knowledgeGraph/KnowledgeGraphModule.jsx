@@ -3,6 +3,7 @@ import {
   Alert,
   Button,
   Card,
+  Checkbox,
   Drawer,
   Empty,
   Form,
@@ -79,6 +80,7 @@ import {
   updateRelation,
   updateStructuredStage,
   updateStructuredStageEdge,
+  updateStructuredStagePointColors,
   updateStructuredStagePosition,
   moveStructuredPoint,
   generateGraphDraft,
@@ -895,6 +897,7 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
         type: selectedPoint.type,
         tags: (selectedPoint.tags || []).join(', '),
         color: selectedPoint.meta?.color || '#2f6df6',
+        applyColorToStage: false,
       });
     }
   }, [pointEditorForm, selectedPoint, selection]);
@@ -965,6 +968,15 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
     });
     return grouped;
   }, [currentPoints, structuredPlacements, structuredStages]);
+
+  const selectedPointPlacement = useMemo(
+    () => (selectedPoint ? structuredPlacements[selectedPoint.id] || null : null),
+    [selectedPoint, structuredPlacements],
+  );
+  const selectedPointStage = useMemo(
+    () => (selectedPointPlacement ? structuredStages.find((stage) => stage.id === selectedPointPlacement.stageId) || null : null),
+    [selectedPointPlacement, structuredStages],
+  );
 
   const openCollectionModal = (mode, record = null) => {
     setCollectionModalState({ open: true, mode, record });
@@ -1155,7 +1167,11 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
         tags: values.tags,
         meta: { color: values.color },
       });
-      refreshAndMessage('知识点已保存');
+      const shouldApplyColorToStage = Boolean(values.applyColorToStage && selectedPointPlacement?.stageId);
+      if (shouldApplyColorToStage) {
+        updateStructuredStagePointColors(selectedGraphId, selectedPointPlacement.stageId, values.color);
+      }
+      refreshAndMessage(shouldApplyColorToStage ? '知识点已保存，分区内知识点颜色已同步' : '知识点已保存');
       return true;
     } catch {
       // validation handled by antd
@@ -1388,14 +1404,6 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
     setSnapshot(loadKnowledgeGraphStore());
   };
 
-  const selectedPointPlacement = useMemo(
-    () => (selectedPoint ? structuredPlacements[selectedPoint.id] || null : null),
-    [selectedPoint, structuredPlacements],
-  );
-  const selectedPointStage = useMemo(
-    () => (selectedPointPlacement ? structuredStages.find((stage) => stage.id === selectedPointPlacement.stageId) || null : null),
-    [selectedPointPlacement, structuredStages],
-  );
   const selectedPointRelations = useMemo(
     () => (selectedPoint
       ? currentRelations.filter((relation) => relation.sourceId === selectedPoint.id || relation.targetId === selectedPoint.id)
@@ -1751,6 +1759,16 @@ const KnowledgeGraphModule = forwardRef(function KnowledgeGraphModule({
             </Form.Item>
             <Form.Item label="节点颜色" name="color">
               <input type="color" className="kg-color-input" />
+            </Form.Item>
+            <Form.Item
+              name="applyColorToStage"
+              valuePropName="checked"
+              className="kg-point-color-scope"
+              extra={selectedPointStage
+                ? `当前分区：${selectedPointStage.name}，共 ${(pointsByStage[selectedPointStage.id] || []).length} 个知识点`
+                : '当前知识点未归属分区，无法批量同步颜色'}
+            >
+              <Checkbox disabled={!selectedPointStage}>对当前分区所有知识点生效</Checkbox>
             </Form.Item>
             <Space className="kg-inspector-actions">
               <Button type="primary" onClick={handleSavePointEditor}>保存知识点</Button>

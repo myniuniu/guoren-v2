@@ -1161,6 +1161,22 @@
   background: #fff;
 }
 
+.kg-point-color-scope {
+  margin-top: -8px;
+}
+
+.kg-point-color-scope .ant-checkbox-wrapper {
+  color: #365273;
+  font-size: 13px;
+}
+
+.kg-point-color-scope .ant-form-item-extra {
+  margin-top: 4px;
+  color: #7f93b4;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
 .kg-edge-style-editor {
   display: flex;
   flex-direction: column;
