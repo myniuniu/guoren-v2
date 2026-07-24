@@ -2341,7 +2341,7 @@ export default function CapabilityModelModule({
     </div>
   );
 
-  const moduleTitle = isIndustryRolesModule ? '行业岗位' : '能力模型';
+  const moduleTitle = isIndustryRolesModule ? '岗位序列' : '能力模型';
   const moduleSubtitle = isIndustryRolesModule
     ? '维护行业、能力序列与岗位基础数据，为能力模型提供配置来源'
     : '构建覆盖基础教育、职业教育、高等教育等场景的能力模型框架与模板';
@@ -2372,7 +2372,7 @@ export default function CapabilityModelModule({
             onChange={setActiveTab}
             items={[
               { key: 'models', label: '模型库', children: modelTabContent },
-              { key: 'resources', label: '行业岗位', children: resourceTabContent },
+              { key: 'resources', label: '岗位序列', children: resourceTabContent },
             ]}
           />
         ) : moduleBodyContent}

@@ -412,7 +412,7 @@ const baseIconBarItems = [
   { key: 'teacher-evaluation-schemes', icon: <FileTextOutlined />, label: '评价方案' },
   { key: 'teacher-evaluation', icon: <AuditOutlined />, label: '教师评价' },
   { key: 'capability-model', icon: <AppstoreOutlined />, label: '能力模型' },
-  { key: 'industry-roles', icon: <BranchesOutlined />, label: '行业岗位' },
+  { key: 'industry-roles', icon: <BranchesOutlined />, label: '岗位序列' },
   { key: 'solution-management', icon: <AppstoreOutlined />, label: '解决方案' },
   { key: 'package-management', icon: <TagsOutlined />, label: '套餐管理' },
   { key: 'tenant-management', icon: <BankOutlined />, label: '租户管理' },
