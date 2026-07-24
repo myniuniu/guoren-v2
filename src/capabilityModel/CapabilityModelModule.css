@@ -310,6 +310,22 @@
   gap: 16px;
 }
 
+.cap-model-resource-tabs {
+  min-width: 0;
+}
+
+.cap-model-resource-tabs > .ant-tabs-nav {
+  margin: 0 0 12px;
+}
+
+.cap-model-resource-tabs > .ant-tabs-content-holder {
+  min-width: 0;
+}
+
+.cap-model-resource-drawer .ant-drawer-body {
+  background: #fff;
+}
+
 .cap-model-rule-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

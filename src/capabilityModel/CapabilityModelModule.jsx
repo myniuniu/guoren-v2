@@ -2135,183 +2135,209 @@ export default function CapabilityModelModule({
 
   const resourceTabContent = (
     <div className="cap-model-resource-layout">
-      <div className="sys-table-card">
-        <div className="sys-table-toolbar">
-          <div className="sys-table-toolbar-left">
-            <span className="cap-model-table-title">行业管理</span>
-            <Tag>{filteredIndustries.length}</Tag>
-          </div>
-          <div className="sys-table-toolbar-right">
-            <Input
-              value={industryKeyword}
-              onChange={(event) => setIndustryKeyword(event.target.value)}
-              placeholder="行业名称 / 编码"
-              allowClear
-              style={{ width: 220 }}
-            />
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => openIndustryModal(null)}>新增行业</Button>
-          </div>
-        </div>
-        <Table
-          rowKey="id"
-          loading={loading}
-          columns={industryColumns}
-          dataSource={filteredIndustries}
-          pagination={{ pageSize: 6, showSizeChanger: false }}
-        />
-      </div>
-
-      <div className="sys-table-card">
-        <div className="sys-table-toolbar">
-          <div className="sys-table-toolbar-left">
-            <span className="cap-model-table-title">能力序列</span>
-            <Tag>{filteredSequences.length}</Tag>
-          </div>
-          <div className="sys-table-toolbar-right">
-            <Input
-              value={sequenceKeyword}
-              onChange={(event) => setSequenceKeyword(event.target.value)}
-              placeholder="序列名称 / 编码"
-              allowClear
-              style={{ width: 220 }}
-            />
-            <Select
-              value={sequenceIndustryFilter}
-              onChange={setSequenceIndustryFilter}
-              placeholder="筛选行业"
-              allowClear
-              style={{ width: 180 }}
-              options={industryOptions}
-            />
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => openSequenceModal(null, sequenceIndustryFilter)}>新增序列</Button>
-          </div>
-        </div>
-        <Table
-          rowKey="id"
-          loading={loading}
-          columns={sequenceColumns}
-          dataSource={filteredSequences}
-          pagination={{ pageSize: 6, showSizeChanger: false }}
-          scroll={{ x: 1180 }}
-        />
-      </div>
-
-      <div className="sys-table-card">
-        <div className="sys-table-toolbar">
-          <div className="sys-table-toolbar-left">
-            <span className="cap-model-table-title">岗位管理</span>
-            <Tag>{filteredRoles.length}</Tag>
-          </div>
-          <div className="sys-table-toolbar-right">
-            <Input
-              value={roleKeyword}
-              onChange={(event) => setRoleKeyword(event.target.value)}
-              placeholder="岗位名称 / 编码"
-              allowClear
-              style={{ width: 220 }}
-            />
-            <Select
-              value={roleIndustryFilter}
-              onChange={setRoleIndustryFilter}
-              placeholder="筛选行业"
-              allowClear
-              style={{ width: 180 }}
-              options={industryOptions}
-            />
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => openRoleModal(null, roleIndustryFilter)}>新增岗位</Button>
-          </div>
-        </div>
-        <Table
-          rowKey="id"
-          loading={loading}
-          columns={roleColumns}
-          dataSource={filteredRoles}
-          pagination={{ pageSize: 8, showSizeChanger: false }}
-          scroll={{ x: 1080 }}
-        />
-      </div>
-
-      <div className="sys-table-card cap-model-rule-card">
-        <div className="sys-table-toolbar">
-          <div className="sys-table-toolbar-left">
-            <span className="cap-model-table-title">证据规则</span>
-            <Tag>{filteredEvidenceTypes.length + filteredReviewSubjects.length}</Tag>
-          </div>
-          <div className="sys-table-toolbar-right">
-            <Input
-              value={ruleKeyword}
-              onChange={(event) => setRuleKeyword(event.target.value)}
-              placeholder="名称 / 编码 / 岗位"
-              allowClear
-              style={{ width: 220 }}
-            />
-            <Select
-              value={ruleIndustryFilter}
-              onChange={(value) => {
-                setRuleIndustryFilter(value);
-                const selectedRole = roles.find((item) => item.id === ruleRoleFilter);
-                if (value && selectedRole?.industryId !== value) {
-                  setRuleRoleFilter(undefined);
-                }
-              }}
-              placeholder="筛选行业"
-              allowClear
-              style={{ width: 180 }}
-              options={industryOptions}
-            />
-            <Select
-              value={ruleRoleFilter}
-              onChange={setRuleRoleFilter}
-              placeholder="筛选岗位"
-              allowClear
-              style={{ width: 220 }}
-              options={filteredRuleRoleOptions}
-            />
-          </div>
-        </div>
-
-        <div className="cap-model-rule-grid">
-          <div className="cap-model-rule-table-panel">
-            <div className="cap-model-rule-table-head">
-              <div>
-                <span className="cap-model-table-title">证据类型</span>
-                <Tag>{filteredEvidenceTypes.length}</Tag>
+      <Tabs
+        className="cap-model-resource-tabs"
+        items={[
+          {
+            key: 'industries',
+            label: '行业管理',
+            children: (
+              <div className="sys-table-card">
+                <div className="sys-table-toolbar">
+                  <div className="sys-table-toolbar-left">
+                    <span className="cap-model-table-title">行业管理</span>
+                    <Tag>{filteredIndustries.length}</Tag>
+                  </div>
+                  <div className="sys-table-toolbar-right">
+                    <Input
+                      value={industryKeyword}
+                      onChange={(event) => setIndustryKeyword(event.target.value)}
+                      placeholder="行业名称 / 编码"
+                      allowClear
+                      style={{ width: 220 }}
+                    />
+                    <Button type="primary" icon={<PlusOutlined />} onClick={() => openIndustryModal(null)}>新增行业</Button>
+                  </div>
+                </div>
+                <Table
+                  rowKey="id"
+                  loading={loading}
+                  columns={industryColumns}
+                  dataSource={filteredIndustries}
+                  pagination={{ pageSize: 6, showSizeChanger: false }}
+                />
               </div>
-              <Button type="primary" icon={<PlusOutlined />} onClick={() => openRuleModal('evidenceType', null, ruleRoleFilter)}>
-                新增证据类型
-              </Button>
-            </div>
-            <Table
-              rowKey="id"
-              loading={loading}
-              columns={evidenceTypeColumns}
-              dataSource={filteredEvidenceTypes}
-              pagination={{ pageSize: 6, showSizeChanger: false }}
-              scroll={{ x: 820 }}
-            />
-          </div>
-
-          <div className="cap-model-rule-table-panel">
-            <div className="cap-model-rule-table-head">
-              <div>
-                <span className="cap-model-table-title">评价主体</span>
-                <Tag>{filteredReviewSubjects.length}</Tag>
+            ),
+          },
+          {
+            key: 'sequences',
+            label: '能力序列',
+            children: (
+              <div className="sys-table-card">
+                <div className="sys-table-toolbar">
+                  <div className="sys-table-toolbar-left">
+                    <span className="cap-model-table-title">能力序列</span>
+                    <Tag>{filteredSequences.length}</Tag>
+                  </div>
+                  <div className="sys-table-toolbar-right">
+                    <Input
+                      value={sequenceKeyword}
+                      onChange={(event) => setSequenceKeyword(event.target.value)}
+                      placeholder="序列名称 / 编码"
+                      allowClear
+                      style={{ width: 220 }}
+                    />
+                    <Select
+                      value={sequenceIndustryFilter}
+                      onChange={setSequenceIndustryFilter}
+                      placeholder="筛选行业"
+                      allowClear
+                      style={{ width: 180 }}
+                      options={industryOptions}
+                    />
+                    <Button type="primary" icon={<PlusOutlined />} onClick={() => openSequenceModal(null, sequenceIndustryFilter)}>新增序列</Button>
+                  </div>
+                </div>
+                <Table
+                  rowKey="id"
+                  loading={loading}
+                  columns={sequenceColumns}
+                  dataSource={filteredSequences}
+                  pagination={{ pageSize: 6, showSizeChanger: false }}
+                  scroll={{ x: 1180 }}
+                />
               </div>
-              <Button type="primary" icon={<PlusOutlined />} onClick={() => openRuleModal('reviewSubject', null, ruleRoleFilter)}>
-                新增评价主体
-              </Button>
-            </div>
-            <Table
-              rowKey="id"
-              loading={loading}
-              columns={reviewSubjectColumns}
-              dataSource={filteredReviewSubjects}
-              pagination={{ pageSize: 6, showSizeChanger: false }}
-              scroll={{ x: 820 }}
-            />
-          </div>
-        </div>
-      </div>
+            ),
+          },
+          {
+            key: 'roles',
+            label: '岗位管理',
+            children: (
+              <div className="sys-table-card">
+                <div className="sys-table-toolbar">
+                  <div className="sys-table-toolbar-left">
+                    <span className="cap-model-table-title">岗位管理</span>
+                    <Tag>{filteredRoles.length}</Tag>
+                  </div>
+                  <div className="sys-table-toolbar-right">
+                    <Input
+                      value={roleKeyword}
+                      onChange={(event) => setRoleKeyword(event.target.value)}
+                      placeholder="岗位名称 / 编码"
+                      allowClear
+                      style={{ width: 220 }}
+                    />
+                    <Select
+                      value={roleIndustryFilter}
+                      onChange={setRoleIndustryFilter}
+                      placeholder="筛选行业"
+                      allowClear
+                      style={{ width: 180 }}
+                      options={industryOptions}
+                    />
+                    <Button type="primary" icon={<PlusOutlined />} onClick={() => openRoleModal(null, roleIndustryFilter)}>新增岗位</Button>
+                  </div>
+                </div>
+                <Table
+                  rowKey="id"
+                  loading={loading}
+                  columns={roleColumns}
+                  dataSource={filteredRoles}
+                  pagination={{ pageSize: 8, showSizeChanger: false }}
+                  scroll={{ x: 1080 }}
+                />
+              </div>
+            ),
+          },
+          {
+            key: 'rules',
+            label: '证据规则',
+            children: (
+              <div className="sys-table-card cap-model-rule-card">
+                <div className="sys-table-toolbar">
+                  <div className="sys-table-toolbar-left">
+                    <span className="cap-model-table-title">证据规则</span>
+                    <Tag>{filteredEvidenceTypes.length + filteredReviewSubjects.length}</Tag>
+                  </div>
+                  <div className="sys-table-toolbar-right">
+                    <Input
+                      value={ruleKeyword}
+                      onChange={(event) => setRuleKeyword(event.target.value)}
+                      placeholder="名称 / 编码 / 岗位"
+                      allowClear
+                      style={{ width: 220 }}
+                    />
+                    <Select
+                      value={ruleIndustryFilter}
+                      onChange={(value) => {
+                        setRuleIndustryFilter(value);
+                        const selectedRole = roles.find((item) => item.id === ruleRoleFilter);
+                        if (value && selectedRole?.industryId !== value) {
+                          setRuleRoleFilter(undefined);
+                        }
+                      }}
+                      placeholder="筛选行业"
+                      allowClear
+                      style={{ width: 180 }}
+                      options={industryOptions}
+                    />
+                    <Select
+                      value={ruleRoleFilter}
+                      onChange={setRuleRoleFilter}
+                      placeholder="筛选岗位"
+                      allowClear
+                      style={{ width: 220 }}
+                      options={filteredRuleRoleOptions}
+                    />
+                  </div>
+                </div>
+
+                <div className="cap-model-rule-grid">
+                  <div className="cap-model-rule-table-panel">
+                    <div className="cap-model-rule-table-head">
+                      <div>
+                        <span className="cap-model-table-title">证据类型</span>
+                        <Tag>{filteredEvidenceTypes.length}</Tag>
+                      </div>
+                      <Button type="primary" icon={<PlusOutlined />} onClick={() => openRuleModal('evidenceType', null, ruleRoleFilter)}>
+                        新增证据类型
+                      </Button>
+                    </div>
+                    <Table
+                      rowKey="id"
+                      loading={loading}
+                      columns={evidenceTypeColumns}
+                      dataSource={filteredEvidenceTypes}
+                      pagination={{ pageSize: 6, showSizeChanger: false }}
+                      scroll={{ x: 820 }}
+                    />
+                  </div>
+
+                  <div className="cap-model-rule-table-panel">
+                    <div className="cap-model-rule-table-head">
+                      <div>
+                        <span className="cap-model-table-title">评价主体</span>
+                        <Tag>{filteredReviewSubjects.length}</Tag>
+                      </div>
+                      <Button type="primary" icon={<PlusOutlined />} onClick={() => openRuleModal('reviewSubject', null, ruleRoleFilter)}>
+                        新增评价主体
+                      </Button>
+                    </div>
+                    <Table
+                      rowKey="id"
+                      loading={loading}
+                      columns={reviewSubjectColumns}
+                      dataSource={filteredReviewSubjects}
+                      pagination={{ pageSize: 6, showSizeChanger: false }}
+                      scroll={{ x: 820 }}
+                    />
+                  </div>
+                </div>
+              </div>
+            ),
+          },
+        ]}
+      />
     </div>
   );
 
@@ -2544,15 +2570,29 @@ export default function CapabilityModelModule({
         />
       </Modal>
 
-      <Modal
+      <Drawer
         open={industryModalOpen}
         title={industryEditing ? '编辑行业' : '新增行业'}
-        onCancel={() => {
+        onClose={() => {
           setIndustryModalOpen(false);
           setIndustryEditing(null);
         }}
-        onOk={handleSaveIndustry}
+        width={520}
+        placement="right"
+        className="cap-model-drawer cap-model-resource-drawer"
         destroyOnClose
+        extra={(
+          <Space>
+            <Button onClick={() => {
+              setIndustryModalOpen(false);
+              setIndustryEditing(null);
+            }}
+            >
+              取消
+            </Button>
+            <Button type="primary" icon={<SaveOutlined />} onClick={handleSaveIndustry}>保存</Button>
+          </Space>
+        )}
       >
         <Form form={industryForm} layout="vertical" initialValues={createIndustryDraft()}>
           <Form.Item label="行业名称" name="name" rules={[{ required: true, message: '请输入行业名称' }]}>
@@ -2571,17 +2611,31 @@ export default function CapabilityModelModule({
             <TextArea rows={3} placeholder="说明该行业覆盖的典型岗位和适用边界" />
           </Form.Item>
         </Form>
-      </Modal>
+      </Drawer>
 
-      <Modal
+      <Drawer
         open={sequenceModalOpen}
         title={sequenceEditing ? '编辑能力序列' : '新增能力序列'}
-        onCancel={() => {
+        onClose={() => {
           setSequenceModalOpen(false);
           setSequenceEditing(null);
         }}
-        onOk={handleSaveSequence}
+        width={720}
+        placement="right"
+        className="cap-model-drawer cap-model-resource-drawer"
         destroyOnClose
+        extra={(
+          <Space>
+            <Button onClick={() => {
+              setSequenceModalOpen(false);
+              setSequenceEditing(null);
+            }}
+            >
+              取消
+            </Button>
+            <Button type="primary" icon={<SaveOutlined />} onClick={handleSaveSequence}>保存</Button>
+          </Space>
+        )}
       >
         <Form form={sequenceForm} layout="vertical" initialValues={createSequenceDraft()}>
           <Form.Item label="所属行业" name="industryId" rules={[{ required: true, message: '请选择所属行业' }]}>
@@ -2661,17 +2715,31 @@ export default function CapabilityModelModule({
             )}
           </Form.List>
         </Form>
-      </Modal>
+      </Drawer>
 
-      <Modal
+      <Drawer
         open={roleModalOpen}
         title={roleEditing ? '编辑岗位' : '新增岗位'}
-        onCancel={() => {
+        onClose={() => {
           setRoleModalOpen(false);
           setRoleEditing(null);
         }}
-        onOk={handleSaveRole}
+        width={560}
+        placement="right"
+        className="cap-model-drawer cap-model-resource-drawer"
         destroyOnClose
+        extra={(
+          <Space>
+            <Button onClick={() => {
+              setRoleModalOpen(false);
+              setRoleEditing(null);
+            }}
+            >
+              取消
+            </Button>
+            <Button type="primary" icon={<SaveOutlined />} onClick={handleSaveRole}>保存</Button>
+          </Space>
+        )}
       >
         <Form form={roleForm} layout="vertical" initialValues={createRoleDraft()}>
           <Form.Item label="所属行业" name="industryId" rules={[{ required: true, message: '请选择所属行业' }]}>
@@ -2696,17 +2764,31 @@ export default function CapabilityModelModule({
             <TextArea rows={3} placeholder="说明该岗位的适用层级、职责范围或使用建议" />
           </Form.Item>
         </Form>
-      </Modal>
+      </Drawer>
 
-      <Modal
+      <Drawer
         open={ruleModalOpen}
         title={`${ruleEditing ? '编辑' : '新增'}${ruleModalType === 'evidenceType' ? '证据类型' : '评价主体'}`}
-        onCancel={() => {
+        onClose={() => {
           setRuleModalOpen(false);
           setRuleEditing(null);
         }}
-        onOk={handleSaveRule}
+        width={560}
+        placement="right"
+        className="cap-model-drawer cap-model-resource-drawer"
         destroyOnClose
+        extra={(
+          <Space>
+            <Button onClick={() => {
+              setRuleModalOpen(false);
+              setRuleEditing(null);
+            }}
+            >
+              取消
+            </Button>
+            <Button type="primary" icon={<SaveOutlined />} onClick={handleSaveRule}>保存</Button>
+          </Space>
+        )}
       >
         <Form form={ruleForm} layout="vertical" initialValues={createRuleDraft()}>
           <Form.Item label="所属行业" name="industryId" rules={[{ required: true, message: '请选择所属行业' }]}>
@@ -2753,7 +2835,7 @@ export default function CapabilityModelModule({
             <TextArea rows={3} placeholder="说明该规则项适用的材料来源、使用边界或复核职责" />
           </Form.Item>
         </Form>
-      </Modal>
+      </Drawer>
     </div>
   );
 }
