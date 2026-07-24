@@ -175,6 +175,21 @@ function createSequenceDraft(industryId) {
   };
 }
 
+function createRuleDraft(roleId, roles = [], sequences = [], industryId) {
+  const role = roles.find((item) => item.id === roleId);
+  const sequence = sequences.find((item) => item.id === role?.sequenceId);
+  return {
+    industryId: role?.industryId || sequence?.industryId || industryId || undefined,
+    roleId: role?.id || undefined,
+    sequenceId: role?.sequenceId || undefined,
+    name: '',
+    code: '',
+    description: '',
+    status: 'ACTIVE',
+    sortNo: 1,
+  };
+}
+
 function cloneDraft(data) {
   return JSON.parse(JSON.stringify(data));
 }
@@ -229,6 +244,37 @@ function makeImportedModelCode(baseCode = '') {
   return normalized.endsWith('_IMPORT') ? normalized : `${normalized}_IMPORT`;
 }
 
+function buildSequenceRuleImportResolver(sequenceId, rules = [], fallbackOptions = []) {
+  const map = new Map();
+  fallbackOptions.forEach((option) => {
+    map.set(option.value, option.value);
+    map.set(option.label, option.value);
+  });
+  (Array.isArray(rules) ? rules : [])
+    .filter((item) => !sequenceId || item.sequenceId === sequenceId)
+    .forEach((item) => {
+      if (item.code) map.set(item.code, item.code);
+      if (item.name) map.set(item.name, item.code);
+    });
+  return (value) => map.get(value) || value;
+}
+
+function mapRuleValues(values, resolveValue) {
+  return (Array.isArray(values) ? values : [])
+    .map((entry) => resolveValue(String(entry || '').trim()))
+    .filter(Boolean);
+}
+
+function buildSequenceRuleOptions(rules = [], sequenceId) {
+  return (Array.isArray(rules) ? rules : [])
+    .filter((item) => item.sequenceId === sequenceId && item.status === 'ACTIVE')
+    .sort((left, right) => (left.sortNo || 0) - (right.sortNo || 0))
+    .map((item) => ({
+      value: item.code,
+      label: item.name,
+    }));
+}
+
 function resolveImportScope(meta, industries, roles, sequences) {
   const industry = industries.find((item) => item.name === meta.industryName);
   if (!industry) {
@@ -256,7 +302,7 @@ function resolveImportScope(meta, industries, roles, sequences) {
   };
 }
 
-function parseCapabilityModelMarkdown(text, industries, roles, sequences, fileName = '') {
+function parseCapabilityModelMarkdown(text, industries, roles, sequences, evidenceTypes, reviewSubjects, fileName = '') {
   const lines = String(text || '').replace(/\r/g, '').split('\n');
   const meta = {};
   const dimensions = [];
@@ -457,6 +503,18 @@ function parseCapabilityModelMarkdown(text, industries, roles, sequences, fileNa
     sequenceName: meta['能力序列'],
     roleLevelName: meta['序列等级'],
   }, industries, roles, sequences);
+  const importRole = roles.find((item) => item.id === scope.roleId);
+  const importSequenceId = importRole?.sequenceId || '';
+  const resolveEvidenceType = buildSequenceRuleImportResolver(
+    importSequenceId,
+    evidenceTypes,
+    CAPABILITY_ITEM_EVIDENCE_TYPE_OPTIONS,
+  );
+  const resolveReviewSubject = buildSequenceRuleImportResolver(
+    importSequenceId,
+    reviewSubjects,
+    CAPABILITY_ITEM_REVIEW_ROLE_OPTIONS,
+  );
 
   return createCapabilityModelDraft({
     name: modelName,
@@ -472,23 +530,19 @@ function parseCapabilityModelMarkdown(text, industries, roles, sequences, fileNa
       ...dimension,
       items: (dimension.items || []).map((item) => ({
         ...item,
-        evidenceTypes: (item.evidenceTypes || []).map((entry) => (
-          CAPABILITY_ITEM_EVIDENCE_TYPE_OPTIONS.find((option) => option.label === entry)?.value || entry
-        )),
+        evidenceTypes: mapRuleValues(item.evidenceTypes, resolveEvidenceType),
         levelDescriptors: levelScheme.levels.map((level, index) => ({
           levelKey: level.key,
           text: item.levelDescriptors?.[index]?.text || '',
         })),
-        requiredReviewRoles: (item.requiredReviewRoles || []).map((entry) => (
-          CAPABILITY_ITEM_REVIEW_ROLE_OPTIONS.find((option) => option.label === entry)?.value || entry
-        )),
+        requiredReviewRoles: mapRuleValues(item.requiredReviewRoles, resolveReviewSubject),
         aiAssistMode: CAPABILITY_ITEM_AI_ASSIST_MODE_OPTIONS.find((option) => option.label === item.aiAssistMode)?.value || item.aiAssistMode,
       })),
     })),
   });
 }
 
-function parseCapabilityModelJson(text, industries, roles, sequences, fileName = '') {
+function parseCapabilityModelJson(text, industries, roles, sequences, evidenceTypes, reviewSubjects, fileName = '') {
   let parsed;
   try {
     parsed = JSON.parse(text);
@@ -515,6 +569,26 @@ function parseCapabilityModelJson(text, industries, roles, sequences, fileName =
       roleLevelName: payload.roleLevelName,
     }, industries, roles, sequences);
   }
+  const importRole = roles.find((item) => item.id === scope.roleId);
+  const importSequenceId = importRole?.sequenceId || '';
+  const resolveEvidenceType = buildSequenceRuleImportResolver(
+    importSequenceId,
+    evidenceTypes,
+    CAPABILITY_ITEM_EVIDENCE_TYPE_OPTIONS,
+  );
+  const resolveReviewSubject = buildSequenceRuleImportResolver(
+    importSequenceId,
+    reviewSubjects,
+    CAPABILITY_ITEM_REVIEW_ROLE_OPTIONS,
+  );
+  const mappedDimensions = (payload.dimensions || []).map((dimension) => ({
+    ...dimension,
+    items: (dimension.items || []).map((item) => ({
+      ...item,
+      evidenceTypes: mapRuleValues(item.evidenceTypes, resolveEvidenceType),
+      requiredReviewRoles: mapRuleValues(item.requiredReviewRoles, resolveReviewSubject),
+    })),
+  }));
 
   return createCapabilityModelDraft({
     ...payload,
@@ -525,15 +599,16 @@ function parseCapabilityModelJson(text, industries, roles, sequences, fileName =
     roleId: scope.roleId,
     roleLevelId: scope.roleLevelId,
     status: 'DRAFT',
+    dimensions: mappedDimensions,
   });
 }
 
-function parseImportedCapabilityFile(text, fileName, industries, roles, sequences) {
+function parseImportedCapabilityFile(text, fileName, industries, roles, sequences, evidenceTypes, reviewSubjects) {
   const lowerName = String(fileName || '').toLowerCase();
   if (lowerName.endsWith('.json')) {
-    return parseCapabilityModelJson(text, industries, roles, sequences, fileName);
+    return parseCapabilityModelJson(text, industries, roles, sequences, evidenceTypes, reviewSubjects, fileName);
   }
-  return parseCapabilityModelMarkdown(text, industries, roles, sequences, fileName);
+  return parseCapabilityModelMarkdown(text, industries, roles, sequences, evidenceTypes, reviewSubjects, fileName);
 }
 
 export default function CapabilityModelModule({
@@ -550,12 +625,17 @@ export default function CapabilityModelModule({
   const [sequences, setSequences] = useState([]);
   const [roles, setRoles] = useState([]);
   const [models, setModels] = useState([]);
+  const [evidenceTypes, setEvidenceTypes] = useState([]);
+  const [reviewSubjects, setReviewSubjects] = useState([]);
 
   const [industryKeyword, setIndustryKeyword] = useState('');
   const [sequenceKeyword, setSequenceKeyword] = useState('');
   const [sequenceIndustryFilter, setSequenceIndustryFilter] = useState(undefined);
   const [roleKeyword, setRoleKeyword] = useState('');
   const [roleIndustryFilter, setRoleIndustryFilter] = useState(undefined);
+  const [ruleKeyword, setRuleKeyword] = useState('');
+  const [ruleIndustryFilter, setRuleIndustryFilter] = useState(undefined);
+  const [ruleRoleFilter, setRuleRoleFilter] = useState(undefined);
 
   const [modelDrawerOpen, setModelDrawerOpen] = useState(false);
   const [modelDrawerMode, setModelDrawerMode] = useState('create');
@@ -576,15 +656,22 @@ export default function CapabilityModelModule({
   const [sequenceEditing, setSequenceEditing] = useState(null);
   const [roleModalOpen, setRoleModalOpen] = useState(false);
   const [roleEditing, setRoleEditing] = useState(null);
+  const [ruleModalOpen, setRuleModalOpen] = useState(false);
+  const [ruleModalType, setRuleModalType] = useState('evidenceType');
+  const [ruleEditing, setRuleEditing] = useState(null);
 
   const [industryForm] = Form.useForm();
   const [sequenceForm] = Form.useForm();
   const [roleForm] = Form.useForm();
+  const [ruleForm] = Form.useForm();
   const [modelBaseForm] = Form.useForm();
 
   const watchedIndustryId = Form.useWatch('industryId', modelBaseForm);
   const watchedRoleId = Form.useWatch('roleId', modelBaseForm);
   const watchedRoleIndustryId = Form.useWatch('industryId', roleForm);
+  const watchedRuleIndustryId = Form.useWatch('industryId', ruleForm);
+  const watchedRuleRoleId = Form.useWatch('roleId', ruleForm);
+  const watchedRuleSequenceId = Form.useWatch('sequenceId', ruleForm);
   const handledEntryRequestRef = useRef(null);
 
   const replaceStandaloneHash = useCallback((modelId, mode = 'preview') => {
@@ -658,6 +745,29 @@ export default function CapabilityModelModule({
   }, [roleForm, roleModalOpen, sequences, watchedRoleIndustryId]);
 
   useEffect(() => {
+    if (!ruleModalOpen) return;
+    const currentRoleId = ruleForm.getFieldValue('roleId');
+    if (!currentRoleId || !watchedRuleIndustryId) return;
+    const currentRole = roles.find((item) => item.id === currentRoleId);
+    if (currentRole?.industryId !== watchedRuleIndustryId) {
+      ruleForm.setFieldsValue({
+        roleId: undefined,
+        sequenceId: undefined,
+      });
+    }
+  }, [roles, ruleForm, ruleModalOpen, watchedRuleIndustryId]);
+
+  useEffect(() => {
+    if (!ruleModalOpen || !watchedRuleRoleId) return;
+    const role = roles.find((item) => item.id === watchedRuleRoleId);
+    if (!role) return;
+    ruleForm.setFieldsValue({
+      industryId: role.industryId || undefined,
+      sequenceId: role.sequenceId || undefined,
+    });
+  }, [roles, ruleForm, ruleModalOpen, watchedRuleRoleId]);
+
+  useEffect(() => {
     if (!modelDrawerOpen || modelDrawerMode === 'preview') return;
     const dimensions = modelDraft?.dimensions || [];
     const frameId = window.requestAnimationFrame(() => {
@@ -684,16 +794,20 @@ export default function CapabilityModelModule({
     if (withLoading) setLoading(true);
     try {
       await capabilityModelApi.seed();
-      const [nextIndustries, nextSequences, nextRoles, nextModels] = await Promise.all([
+      const [nextIndustries, nextSequences, nextRoles, nextModels, nextEvidenceTypes, nextReviewSubjects] = await Promise.all([
         capabilityModelApi.listIndustries(),
         capabilityModelApi.listSequences(),
         capabilityModelApi.listRoles(),
         capabilityModelApi.listModels(),
+        capabilityModelApi.listEvidenceTypes(),
+        capabilityModelApi.listReviewSubjects(),
       ]);
       setIndustries(sortBySortNo(nextIndustries));
       setSequences(nextSequences);
       setRoles(nextRoles);
       setModels(nextModels);
+      setEvidenceTypes(nextEvidenceTypes);
+      setReviewSubjects(nextReviewSubjects);
     } catch (error) {
       message.error(getErrorMessage(error, '加载能力模型数据失败'));
     } finally {
@@ -736,6 +850,19 @@ export default function CapabilityModelModule({
     sequenceId: item.sequenceId,
   })), [roles]);
 
+  const ruleRoleOptions = useMemo(() => roles.map((role) => {
+    const industry = industries.find((item) => item.id === role.industryId);
+    const sequence = sequences.find((item) => item.id === role.sequenceId);
+    return {
+      value: role.id,
+      label: `${role.name} / ${sequence?.name || '未绑定序列'}`,
+      industryId: role.industryId,
+      sequenceId: role.sequenceId,
+      status: role.status,
+      searchText: `${role.name} ${role.code} ${industry?.name || ''} ${sequence?.name || ''}`,
+    };
+  }), [industries, roles, sequences]);
+
   const activeRoleOptions = useMemo(() => (
     roleOptions.filter((item) => item.status === 'ACTIVE' && (!watchedIndustryId || item.industryId === watchedIndustryId))
   ), [roleOptions, watchedIndustryId]);
@@ -748,6 +875,29 @@ export default function CapabilityModelModule({
       label: level.name,
     }));
   }, [roles, sequences, watchedRoleId]);
+
+  const activeRuleRoleOptions = useMemo(() => (
+    ruleRoleOptions.filter((item) => !watchedRuleIndustryId || item.industryId === watchedRuleIndustryId)
+  ), [ruleRoleOptions, watchedRuleIndustryId]);
+
+  const filteredRuleRoleOptions = useMemo(() => (
+    ruleRoleOptions.filter((item) => !ruleIndustryFilter || item.industryId === ruleIndustryFilter)
+  ), [ruleIndustryFilter, ruleRoleOptions]);
+
+  const modelRuleSequenceId = useMemo(() => {
+    const role = roles.find((item) => item.id === (watchedRoleId || modelDraft?.roleId));
+    return role?.sequenceId || '';
+  }, [modelDraft?.roleId, roles, watchedRoleId]);
+
+  const activeEvidenceTypeOptions = useMemo(
+    () => buildSequenceRuleOptions(evidenceTypes, modelRuleSequenceId),
+    [evidenceTypes, modelRuleSequenceId],
+  );
+
+  const activeReviewSubjectOptions = useMemo(
+    () => buildSequenceRuleOptions(reviewSubjects, modelRuleSequenceId),
+    [modelRuleSequenceId, reviewSubjects],
+  );
 
   const filteredIndustries = useMemo(() => {
     const keyword = industryKeyword.trim().toLowerCase();
@@ -778,6 +928,41 @@ export default function CapabilityModelModule({
       return `${item.name} ${item.code} ${item.description || ''} ${industryName} ${sequenceName}`.toLowerCase().includes(keyword);
     });
   }, [industries, roleIndustryFilter, roleKeyword, roles, sequences]);
+
+  const filterSequenceRules = useCallback((rules) => {
+    const keyword = ruleKeyword.trim().toLowerCase();
+    const selectedRole = roles.find((role) => role.id === ruleRoleFilter);
+    return rules.filter((item) => {
+      const sequence = sequences.find((sequenceItem) => sequenceItem.id === item.sequenceId);
+      const industry = industries.find((industryItem) => industryItem.id === sequence?.industryId);
+      const boundRoles = roles.filter((role) => role.sequenceId === item.sequenceId);
+      const roleNames = boundRoles.map((role) => role.name).join(' ');
+      if (ruleIndustryFilter && sequence?.industryId !== ruleIndustryFilter) return false;
+      if (ruleRoleFilter && item.sequenceId !== selectedRole?.sequenceId) return false;
+      if (!keyword) return true;
+      return `${item.name} ${item.code} ${item.description || ''} ${roleNames} ${sequence?.name || ''} ${industry?.name || ''}`.toLowerCase().includes(keyword);
+    });
+  }, [industries, roles, ruleIndustryFilter, ruleKeyword, ruleRoleFilter, sequences]);
+
+  const filteredEvidenceTypes = useMemo(
+    () => filterSequenceRules(evidenceTypes),
+    [evidenceTypes, filterSequenceRules],
+  );
+
+  const filteredReviewSubjects = useMemo(
+    () => filterSequenceRules(reviewSubjects),
+    [filterSequenceRules, reviewSubjects],
+  );
+
+  const watchedRuleRole = useMemo(
+    () => roles.find((item) => item.id === watchedRuleRoleId),
+    [roles, watchedRuleRoleId],
+  );
+
+  const ruleModalSequence = useMemo(
+    () => sequences.find((item) => item.id === (watchedRuleRole?.sequenceId || watchedRuleSequenceId)),
+    [sequences, watchedRuleRole?.sequenceId, watchedRuleSequenceId],
+  );
 
   const importableLibraryModels = useMemo(() => {
     const keyword = importKeyword.trim().toLowerCase();
@@ -920,7 +1105,7 @@ export default function CapabilityModelModule({
   async function handleImportFile(file) {
     try {
       const text = await file.text();
-      const draft = parseImportedCapabilityFile(text, file.name, industries, roles, sequences);
+      const draft = parseImportedCapabilityFile(text, file.name, industries, roles, sequences, evidenceTypes, reviewSubjects);
       setUploadedImportDraft(draft);
       setUploadedImportName(file.name);
       message.success(`已解析文件：${file.name}`);
@@ -1162,6 +1347,11 @@ export default function CapabilityModelModule({
                 roleOptions={activeRoleOptions}
                 roleLevelOptions={activeRoleLevelOptions}
                 watchedRoleId={watchedRoleId}
+                ruleSequenceId={modelRuleSequenceId}
+                evidenceTypes={evidenceTypes}
+                reviewSubjects={reviewSubjects}
+                evidenceTypeOptions={activeEvidenceTypeOptions}
+                reviewSubjectOptions={activeReviewSubjectOptions}
                 activeDimension={activeDimension}
                 activeDimensionIndex={activeDimensionIndex}
                 activeItem={activeItem}
@@ -1188,6 +1378,8 @@ export default function CapabilityModelModule({
                 industries={industries}
                 roles={roles}
                 sequences={sequences}
+                evidenceTypes={evidenceTypes}
+                reviewSubjects={reviewSubjects}
                 showHero={false}
               />
             )}
@@ -1282,6 +1474,25 @@ export default function CapabilityModelModule({
     setRoleModalOpen(true);
   }
 
+  function openRuleModal(type, record, roleId) {
+    const matchedRole = record
+      ? roles.find((item) => item.sequenceId === record.sequenceId)
+      : roles.find((item) => item.id === roleId);
+    const matchedSequence = sequences.find((item) => item.id === (record?.sequenceId || matchedRole?.sequenceId));
+    const draft = record
+      ? {
+          ...record,
+          industryId: matchedRole?.industryId || matchedSequence?.industryId,
+          roleId: matchedRole?.id,
+          sequenceId: record.sequenceId,
+        }
+      : createRuleDraft(roleId, roles, sequences, ruleIndustryFilter);
+    setRuleModalType(type);
+    setRuleEditing(record || null);
+    ruleForm.setFieldsValue(draft);
+    setRuleModalOpen(true);
+  }
+
   async function handleSaveIndustry() {
     try {
       const values = await industryForm.validateFields();
@@ -1333,6 +1544,38 @@ export default function CapabilityModelModule({
     }
   }
 
+  async function handleSaveRule() {
+    try {
+      const values = await ruleForm.validateFields();
+      const { industryId, roleId, ...payload } = values;
+      const role = roles.find((item) => item.id === roleId);
+      const sequenceId = role?.sequenceId || payload.sequenceId;
+      if (!sequenceId) {
+        throw new Error('请选择适用岗位');
+      }
+      if (ruleModalType === 'evidenceType') {
+        await capabilityModelApi.saveEvidenceType({
+          ...ruleEditing,
+          ...payload,
+          sequenceId,
+        });
+      } else {
+        await capabilityModelApi.saveReviewSubject({
+          ...ruleEditing,
+          ...payload,
+          sequenceId,
+        });
+      }
+      setRuleModalOpen(false);
+      setRuleEditing(null);
+      await loadAllData(false);
+      message.success(ruleEditing ? '证据规则已更新' : '证据规则已创建');
+    } catch (error) {
+      if (error?.errorFields) return;
+      message.error(getErrorMessage(error, '保存证据规则失败'));
+    }
+  }
+
   async function handleRemoveIndustry(record) {
     try {
       await capabilityModelApi.removeIndustry(record.id);
@@ -1360,6 +1603,20 @@ export default function CapabilityModelModule({
       message.success('岗位已删除');
     } catch (error) {
       message.error(getErrorMessage(error, '删除岗位失败'));
+    }
+  }
+
+  async function handleRemoveRule(type, record) {
+    try {
+      if (type === 'evidenceType') {
+        await capabilityModelApi.removeEvidenceType(record.id);
+      } else {
+        await capabilityModelApi.removeReviewSubject(record.id);
+      }
+      await loadAllData(false);
+      message.success('证据规则已删除');
+    } catch (error) {
+      message.error(getErrorMessage(error, '删除证据规则失败'));
     }
   }
 
@@ -1414,7 +1671,7 @@ export default function CapabilityModelModule({
   function addDimension(parentDimensionId = null) {
     const parentEntry = getCapabilityDimensionEntry(modelDraft.dimensions, parentDimensionId);
     if (parentDimensionId && (!parentEntry || parentEntry.level >= MAX_CAPABILITY_DIMENSION_LEVEL)) {
-      message.warning('能力类最多支持 3 个层级');
+      message.warning(`能力类最多支持 ${MAX_CAPABILITY_DIMENSION_LEVEL} 个层级`);
       return;
     }
     const insertIndex = getCapabilityDimensionInsertIndex(modelDraft.dimensions, parentEntry?.dimension?.id || null);
@@ -1460,8 +1717,10 @@ export default function CapabilityModelModule({
     });
   }
 
-  function addItem(dimensionIndex) {
+  function addItem(dimensionIndex, parentItemId = null) {
+    const normalizedParentItemId = parentItemId || null;
     const nextItem = createEmptyCapabilityItem(modelDraft.levelScheme, {
+      parentItemId: normalizedParentItemId,
       sortNo: (modelDraft.dimensions[dimensionIndex]?.items?.length || 0) + 1,
     });
     const dimensionId = modelDraft.dimensions[dimensionIndex]?.id;
@@ -1480,8 +1739,20 @@ export default function CapabilityModelModule({
   function removeItem(dimensionIndex, itemIndex) {
     updateModelDraftState((draft) => {
       const dimension = draft.dimensions[dimensionIndex];
+      const targetItemId = dimension.items?.[itemIndex]?.id;
+      const removedItemIds = new Set(targetItemId ? [targetItemId] : []);
+      let changed = true;
+      while (changed) {
+        changed = false;
+        (dimension.items || []).forEach((item) => {
+          if (item.parentItemId && removedItemIds.has(item.parentItemId) && !removedItemIds.has(item.id)) {
+            removedItemIds.add(item.id);
+            changed = true;
+          }
+        });
+      }
       dimension.items = dimension.items
-        .filter((_, currentIndex) => currentIndex !== itemIndex)
+        .filter((item, currentIndex) => currentIndex !== itemIndex && !removedItemIds.has(item.id))
         .map((item, currentIndex) => ({ ...item, sortNo: currentIndex + 1 }));
       return draft;
     });
@@ -1782,6 +2053,65 @@ export default function CapabilityModelModule({
     },
   ];
 
+  const createRuleColumns = (type) => [
+    { title: '名称', dataIndex: 'name', key: 'name', width: 140 },
+    { title: '编码', dataIndex: 'code', key: 'code', width: 150 },
+    {
+      title: '适用岗位 / 主序列',
+      dataIndex: 'sequenceId',
+      key: 'sequenceId',
+      width: 240,
+      render: (value) => {
+        const sequence = sequences.find((item) => item.id === value);
+        const industry = industries.find((item) => item.id === sequence?.industryId);
+        const boundRoles = roles.filter((item) => item.sequenceId === value);
+        const roleNames = boundRoles.length ? boundRoles.map((item) => item.name).join('、') : '未绑定岗位';
+        return (
+          <div className="cap-model-name-cell">
+            <div className="cap-model-name">{roleNames}</div>
+            <div className="cap-model-name-sub">{sequence ? `${industry?.name || '-'} / ${sequence.name}` : '-'}</div>
+          </div>
+        );
+      },
+    },
+    {
+      title: '说明',
+      dataIndex: 'description',
+      key: 'description',
+      render: (value) => <span className="cap-model-table-desc">{value || '-'}</span>,
+    },
+    {
+      title: '状态',
+      dataIndex: 'status',
+      key: 'status',
+      width: 90,
+      render: (value) => renderStatusTag(value),
+    },
+    {
+      title: '操作',
+      key: 'actions',
+      width: 150,
+      render: (_, record) => (
+        <Space size={4}>
+          <Button size="small" type="text" icon={<EditOutlined />} onClick={() => openRuleModal(type, record)}>编辑</Button>
+          <Popconfirm
+            title={type === 'evidenceType' ? '删除证据类型' : '删除评价主体'}
+            description={`确定删除“${record.name}”吗？已被模型引用时不能删除。`}
+            okText="删除"
+            okButtonProps={{ danger: true }}
+            cancelText="取消"
+            onConfirm={() => handleRemoveRule(type, record)}
+          >
+            <Button size="small" type="text" danger icon={<DeleteOutlined />}>删除</Button>
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
+
+  const evidenceTypeColumns = createRuleColumns('evidenceType');
+  const reviewSubjectColumns = createRuleColumns('reviewSubject');
+
   const modelTabContent = (
     <div className="cap-model-page">
       <div className="sys-table-card">
@@ -1900,6 +2230,88 @@ export default function CapabilityModelModule({
           scroll={{ x: 1080 }}
         />
       </div>
+
+      <div className="sys-table-card cap-model-rule-card">
+        <div className="sys-table-toolbar">
+          <div className="sys-table-toolbar-left">
+            <span className="cap-model-table-title">证据规则</span>
+            <Tag>{filteredEvidenceTypes.length + filteredReviewSubjects.length}</Tag>
+          </div>
+          <div className="sys-table-toolbar-right">
+            <Input
+              value={ruleKeyword}
+              onChange={(event) => setRuleKeyword(event.target.value)}
+              placeholder="名称 / 编码 / 岗位"
+              allowClear
+              style={{ width: 220 }}
+            />
+            <Select
+              value={ruleIndustryFilter}
+              onChange={(value) => {
+                setRuleIndustryFilter(value);
+                const selectedRole = roles.find((item) => item.id === ruleRoleFilter);
+                if (value && selectedRole?.industryId !== value) {
+                  setRuleRoleFilter(undefined);
+                }
+              }}
+              placeholder="筛选行业"
+              allowClear
+              style={{ width: 180 }}
+              options={industryOptions}
+            />
+            <Select
+              value={ruleRoleFilter}
+              onChange={setRuleRoleFilter}
+              placeholder="筛选岗位"
+              allowClear
+              style={{ width: 220 }}
+              options={filteredRuleRoleOptions}
+            />
+          </div>
+        </div>
+
+        <div className="cap-model-rule-grid">
+          <div className="cap-model-rule-table-panel">
+            <div className="cap-model-rule-table-head">
+              <div>
+                <span className="cap-model-table-title">证据类型</span>
+                <Tag>{filteredEvidenceTypes.length}</Tag>
+              </div>
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => openRuleModal('evidenceType', null, ruleRoleFilter)}>
+                新增证据类型
+              </Button>
+            </div>
+            <Table
+              rowKey="id"
+              loading={loading}
+              columns={evidenceTypeColumns}
+              dataSource={filteredEvidenceTypes}
+              pagination={{ pageSize: 6, showSizeChanger: false }}
+              scroll={{ x: 820 }}
+            />
+          </div>
+
+          <div className="cap-model-rule-table-panel">
+            <div className="cap-model-rule-table-head">
+              <div>
+                <span className="cap-model-table-title">评价主体</span>
+                <Tag>{filteredReviewSubjects.length}</Tag>
+              </div>
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => openRuleModal('reviewSubject', null, ruleRoleFilter)}>
+                新增评价主体
+              </Button>
+            </div>
+            <Table
+              rowKey="id"
+              loading={loading}
+              columns={reviewSubjectColumns}
+              dataSource={filteredReviewSubjects}
+              pagination={{ pageSize: 6, showSizeChanger: false }}
+              scroll={{ x: 820 }}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 
@@ -1962,7 +2374,14 @@ export default function CapabilityModelModule({
         )}
       >
         {modelDrawerMode === 'preview' ? (
-          <CapabilityModelPreview model={modelDraft} industries={industries} roles={roles} sequences={sequences} />
+          <CapabilityModelPreview
+            model={modelDraft}
+            industries={industries}
+            roles={roles}
+            sequences={sequences}
+            evidenceTypes={evidenceTypes}
+            reviewSubjects={reviewSubjects}
+          />
         ) : (
           <CapabilityModelEditorPanel
             modelDraft={modelDraft}
@@ -1971,6 +2390,11 @@ export default function CapabilityModelModule({
             roleOptions={activeRoleOptions}
             roleLevelOptions={activeRoleLevelOptions}
             watchedRoleId={watchedRoleId}
+            ruleSequenceId={modelRuleSequenceId}
+            evidenceTypes={evidenceTypes}
+            reviewSubjects={reviewSubjects}
+            evidenceTypeOptions={activeEvidenceTypeOptions}
+            reviewSubjectOptions={activeReviewSubjectOptions}
             activeDimension={activeDimension}
             activeDimensionIndex={activeDimensionIndex}
             activeItem={activeItem}
@@ -2270,6 +2694,63 @@ export default function CapabilityModelModule({
           </Form.Item>
           <Form.Item label="说明" name="description">
             <TextArea rows={3} placeholder="说明该岗位的适用层级、职责范围或使用建议" />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        open={ruleModalOpen}
+        title={`${ruleEditing ? '编辑' : '新增'}${ruleModalType === 'evidenceType' ? '证据类型' : '评价主体'}`}
+        onCancel={() => {
+          setRuleModalOpen(false);
+          setRuleEditing(null);
+        }}
+        onOk={handleSaveRule}
+        destroyOnClose
+      >
+        <Form form={ruleForm} layout="vertical" initialValues={createRuleDraft()}>
+          <Form.Item label="所属行业" name="industryId" rules={[{ required: true, message: '请选择所属行业' }]}>
+            <Select options={activeIndustryOptions} placeholder="选择行业" />
+          </Form.Item>
+          <Form.Item label="适用岗位" name="roleId" rules={[{ required: true, message: '请选择适用岗位' }]}>
+            <Select
+              options={activeRuleRoleOptions}
+              placeholder="选择适用岗位"
+              showSearch
+              optionFilterProp="label"
+            />
+          </Form.Item>
+          <Form.Item name="sequenceId" hidden>
+            <Input />
+          </Form.Item>
+          <Form.Item label="主能力序列">
+            <Input
+              value={ruleModalSequence?.name || '选择岗位后自动带出'}
+              readOnly
+            />
+          </Form.Item>
+          <Form.Item
+            label={ruleModalType === 'evidenceType' ? '证据类型名称' : '评价主体名称'}
+            name="name"
+            rules={[{ required: true, message: ruleModalType === 'evidenceType' ? '请输入证据类型名称' : '请输入评价主体名称' }]}
+          >
+            <Input placeholder={ruleModalType === 'evidenceType' ? '例如：课堂录像/回看' : '例如：教研组长'} />
+          </Form.Item>
+          <Form.Item
+            label={ruleModalType === 'evidenceType' ? '证据类型编码' : '评价主体编码'}
+            name="code"
+            rules={[{ required: true, message: ruleModalType === 'evidenceType' ? '请输入证据类型编码' : '请输入评价主体编码' }]}
+          >
+            <Input placeholder={ruleModalType === 'evidenceType' ? '例如：CLASS_VIDEO' : '例如：GROUP_LEADER'} />
+          </Form.Item>
+          <Form.Item label="状态" name="status" rules={[{ required: true, message: '请选择状态' }]}>
+            <Select options={ROLE_STATUS_OPTIONS} />
+          </Form.Item>
+          <Form.Item label="排序号" name="sortNo">
+            <InputNumber min={1} style={{ width: '100%' }} />
+          </Form.Item>
+          <Form.Item label="说明" name="description">
+            <TextArea rows={3} placeholder="说明该规则项适用的材料来源、使用边界或复核职责" />
           </Form.Item>
         </Form>
       </Modal>

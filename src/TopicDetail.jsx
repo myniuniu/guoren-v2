@@ -1006,6 +1006,8 @@ function TopicDetail({
     models: [],
     roles: [],
     sequences: [],
+    evidenceTypes: [],
+    reviewSubjects: [],
   });
   const [activeCapabilityRequestId, setActiveCapabilityRequestId] = useState(null);
   const [activeCapabilityPreviewSourceKey, setActiveCapabilityPreviewSourceKey] = useState(null);
@@ -3333,12 +3335,14 @@ function TopicDetail({
 
   async function loadCapabilityModelCatalog() {
     await capabilityModelApi.seed();
-    const [models, roles, sequences] = await Promise.all([
+    const [models, roles, sequences, evidenceTypes, reviewSubjects] = await Promise.all([
       capabilityModelApi.listModels(),
       capabilityModelApi.listRoles(),
       capabilityModelApi.listSequences(),
+      capabilityModelApi.listEvidenceTypes(),
+      capabilityModelApi.listReviewSubjects(),
     ]);
-    const nextCatalog = { models, roles, sequences };
+    const nextCatalog = { models, roles, sequences, evidenceTypes, reviewSubjects };
     setCapabilityModelCatalog(nextCatalog);
     return nextCatalog;
   }
@@ -4924,6 +4928,8 @@ function TopicDetail({
                 industries={[]}
                 roles={capabilityModelCatalog.roles}
                 sequences={capabilityModelCatalog.sequences}
+                evidenceTypes={capabilityModelCatalog.evidenceTypes}
+                reviewSubjects={capabilityModelCatalog.reviewSubjects}
                 showHero={false}
                 allowCopyMarkdown={false}
               />

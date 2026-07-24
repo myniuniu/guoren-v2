@@ -38,6 +38,7 @@ import {
   getCapabilityFrameworkTreeEntries,
   getTotalCapabilityItems,
   isCapabilityFrameworkConfigNode,
+  MAX_CAPABILITY_DIMENSION_LEVEL,
 } from './shared';
 import {
   getRoleLevel,
@@ -47,21 +48,57 @@ import './CapabilityModelModule.css';
 
 const { TextArea } = Input;
 
-const EVIDENCE_TYPE_LABEL_MAP = Object.fromEntries(
+const DEFAULT_EVIDENCE_TYPE_LABEL_MAP = Object.fromEntries(
   CAPABILITY_ITEM_EVIDENCE_TYPE_OPTIONS.map((item) => [item.value, item.label]),
 );
-const REVIEW_ROLE_LABEL_MAP = Object.fromEntries(
+const DEFAULT_REVIEW_ROLE_LABEL_MAP = Object.fromEntries(
   CAPABILITY_ITEM_REVIEW_ROLE_OPTIONS.map((item) => [item.value, item.label]),
 );
 const AI_ASSIST_MODE_LABEL_MAP = Object.fromEntries(
   CAPABILITY_ITEM_AI_ASSIST_MODE_OPTIONS.map((item) => [item.value, item.label]),
 );
 
+function buildSequenceRuleLabelMap(rules = [], sequenceId, fallbackMap = {}) {
+  const labelMap = { ...fallbackMap };
+  (Array.isArray(rules) ? rules : [])
+    .filter((item) => !sequenceId || item.sequenceId === sequenceId)
+    .forEach((item) => {
+      const value = item.code ?? item.value;
+      const label = item.name ?? item.label;
+      if (value && label) labelMap[value] = label;
+    });
+  return labelMap;
+}
+
+function normalizeRuleSelectOptions(options = []) {
+  return (Array.isArray(options) ? options : [])
+    .map((item) => ({
+      value: item.value ?? item.code,
+      label: item.label ?? item.name,
+      disabled: Boolean(item.disabled),
+    }))
+    .filter((item) => item.value && item.label);
+}
+
+function mergeSelectedRuleOptions(options = [], selectedValues = [], labelMap = {}) {
+  const normalizedOptions = normalizeRuleSelectOptions(options);
+  const optionValues = new Set(normalizedOptions.map((item) => item.value));
+  const historicalOptions = (Array.isArray(selectedValues) ? selectedValues : [])
+    .filter((value) => value && !optionValues.has(value))
+    .map((value) => ({
+      value,
+      label: labelMap[value] || value,
+    }));
+  return [...normalizedOptions, ...historicalOptions];
+}
+
 function CapabilityModelPreviewContent({
   model,
   industries,
   roles,
   sequences,
+  evidenceTypes = [],
+  reviewSubjects = [],
   embedded = false,
   allowCopyMarkdown = true,
   showHero = true,
@@ -100,8 +137,10 @@ function CapabilityModelPreviewContent({
   const role = roles.find((item) => item.id === model.roleId);
   const sequence = getSequenceForRole(role, sequences);
   const roleLevelName = getRoleLevel(role, model.roleLevelId, sequences)?.name || '-';
-  const markdownText = buildCapabilityModelMarkdown(model, industries, roles, sequences);
+  const markdownText = buildCapabilityModelMarkdown(model, industries, roles, sequences, evidenceTypes, reviewSubjects);
   const totalCapabilityItems = getTotalCapabilityItems(model);
+  const evidenceTypeLabelMap = buildSequenceRuleLabelMap(evidenceTypes, sequence?.id, DEFAULT_EVIDENCE_TYPE_LABEL_MAP);
+  const reviewSubjectLabelMap = buildSequenceRuleLabelMap(reviewSubjects, sequence?.id, DEFAULT_REVIEW_ROLE_LABEL_MAP);
 
   const handleTogglePreviewNode = (nodeKey) => {
     setCollapsedPreviewNodeKeys((current) => {
@@ -126,7 +165,13 @@ function CapabilityModelPreviewContent({
 
   const getPreviewNodeMeta = (node) => {
     if (!node) return '';
-    if (node.nodeType === 'item') return `能力配置 · ${node.orderText}`;
+    if (node.nodeType === 'item') {
+      const itemTypeText = node.canEditRules ? '能力配置' : '能力结构';
+      return [
+        `${itemTypeText} · ${node.orderText}`,
+        node.itemChildCount ? `${node.itemChildCount} 个下级能力` : '',
+      ].filter(Boolean).join(' · ');
+    }
     const childrenText = [
       node.dimensionChildCount ? `${node.dimensionChildCount} 个下级分类` : '',
       node.itemCount ? `${node.itemCount} 个能力配置` : '',
@@ -192,20 +237,23 @@ function CapabilityModelPreviewContent({
 
     const selectedItem = selectedPreviewNode.item || null;
     const isConfigNode = isCapabilityFrameworkConfigNode(selectedPreviewNode);
+    const isItemNode = selectedPreviewNode.nodeType === 'item';
+    const previewNodeTypeLabel = isConfigNode ? '能力配置' : (isItemNode ? '能力结构' : '能力分类');
+    const previewNodeStatusLabel = isConfigNode ? '可配置' : (isItemNode ? '结构节点' : `第 ${selectedPreviewNode.level} 层`);
 
     return (
       <div className="cap-model-preview-detail-card">
         <div className="cap-model-preview-detail-head">
           <div>
             <div className="cap-model-framework-stage-kicker">
-              {isConfigNode ? '能力配置' : '能力分类'}
+              {previewNodeTypeLabel}
             </div>
             <div className="cap-model-framework-stage-title">{getPreviewNodeTitle(selectedPreviewNode)}</div>
             <div className="cap-model-section-desc">{getPreviewNodeDescription(selectedPreviewNode)}</div>
           </div>
           <Space size={8} wrap>
             <Tag color="blue">{selectedPreviewNode.orderText}</Tag>
-            <Tag>{isConfigNode ? '可配置' : `第 ${selectedPreviewNode.level} 层`}</Tag>
+            <Tag>{previewNodeStatusLabel}</Tag>
           </Space>
         </div>
 
@@ -226,8 +274,8 @@ function CapabilityModelPreviewContent({
                 <div className="cap-model-item-title">规则</div>
               </div>
               <div className="cap-model-preview-readonly-grid">
-                {renderReadonlyItem('证据类型', formatLabelList(selectedItem.evidenceTypes, EVIDENCE_TYPE_LABEL_MAP))}
-                {renderReadonlyItem('评价主体', formatLabelList(selectedItem.requiredReviewRoles, REVIEW_ROLE_LABEL_MAP))}
+                {renderReadonlyItem('证据类型', formatLabelList(selectedItem.evidenceTypes, evidenceTypeLabelMap))}
+                {renderReadonlyItem('评价主体', formatLabelList(selectedItem.requiredReviewRoles, reviewSubjectLabelMap))}
                 {renderReadonlyItem('最低证据数', selectedItem.requiredEvidenceCount || 1)}
                 {renderReadonlyItem('AI辅助策略', AI_ASSIST_MODE_LABEL_MAP[selectedItem.aiAssistMode] || selectedItem.aiAssistMode || '未配置')}
                 {renderReadonlyItem('成长档案专用', selectedItem.isGrowthOnly ? '是' : '否')}
@@ -259,8 +307,14 @@ function CapabilityModelPreviewContent({
             </div>
             <div className="cap-model-preview-readonly-grid">
               {renderReadonlyItem('层级', `第 ${selectedPreviewNode.level} 层`)}
-              {renderReadonlyItem('下级分类', `${selectedPreviewNode.dimensionChildCount || 0} 个`)}
-              {renderReadonlyItem('能力配置', `${selectedPreviewNode.itemCount || 0} 个`)}
+              {isItemNode ? (
+                renderReadonlyItem('下级能力', `${selectedPreviewNode.itemChildCount || 0} 个`)
+              ) : (
+                <>
+                  {renderReadonlyItem('下级分类', `${selectedPreviewNode.dimensionChildCount || 0} 个`)}
+                  {renderReadonlyItem('能力配置', `${selectedPreviewNode.itemCount || 0} 个`)}
+                </>
+              )}
               {renderReadonlyItem('序号', selectedPreviewNode.orderText)}
             </div>
           </div>
@@ -364,6 +418,11 @@ export function CapabilityModelEditorPanel({
   roleOptions,
   roleLevelOptions,
   watchedRoleId,
+  ruleSequenceId,
+  evidenceTypes = [],
+  reviewSubjects = [],
+  evidenceTypeOptions = [],
+  reviewSubjectOptions = [],
   activeDimension,
   activeDimensionIndex,
   activeItem,
@@ -410,6 +469,14 @@ export function CapabilityModelEditorPanel({
   const totalDimensions = dimensionEntries.length;
   const selectedDimensionItemCount = selectedDimension?.items?.length || 0;
   const selectedNodeIsConfig = isCapabilityFrameworkConfigNode(selectedFrameworkNode);
+  const selectedNodeIsItem = selectedFrameworkNode?.nodeType === 'item';
+  const selectedNodeTypeLabel = selectedNodeIsConfig ? '能力配置' : (selectedNodeIsItem ? '能力结构' : '能力分类');
+  const selectedNodeStatusLabel = selectedNodeIsConfig ? '可配置' : (selectedNodeIsItem ? '结构节点' : `第 ${selectedFrameworkNode?.level || 1} 层`);
+  const selectedRuleSequenceId = ruleSequenceId || roleOptions.find((item) => item.value === (watchedRoleId || modelDraft.roleId))?.sequenceId || '';
+  const evidenceTypeLabelMap = buildSequenceRuleLabelMap(evidenceTypes, selectedRuleSequenceId, DEFAULT_EVIDENCE_TYPE_LABEL_MAP);
+  const reviewSubjectLabelMap = buildSequenceRuleLabelMap(reviewSubjects, selectedRuleSequenceId, DEFAULT_REVIEW_ROLE_LABEL_MAP);
+  const selectedEvidenceTypeOptions = mergeSelectedRuleOptions(evidenceTypeOptions, selectedItem?.evidenceTypes, evidenceTypeLabelMap);
+  const selectedReviewSubjectOptions = mergeSelectedRuleOptions(reviewSubjectOptions, selectedItem?.requiredReviewRoles, reviewSubjectLabelMap);
   const visibleFrameworkNodes = frameworkTreeEntries.filter((node) => (
     node.ancestorKeys.every((key) => !collapsedFrameworkNodeKeys.has(key))
   ));
@@ -478,10 +545,21 @@ export function CapabilityModelEditorPanel({
     onAddDimension(parentDimensionId);
   };
 
-  const handleAddItemForDimension = (dimensionIndex) => {
+  const handleAddItemForDimension = (dimensionIndex, parentItemId = null) => {
     if (dimensionIndex == null || dimensionIndex < 0) return;
     pendingSelectNewFrameworkNodeRef.current = true;
-    onAddItem(dimensionIndex);
+    onAddItem(dimensionIndex, parentItemId || null);
+  };
+
+  const handleAddChildItemForNode = (node) => {
+    if (!node?.item?.id || node.dimensionIndex == null || node.dimensionIndex < 0 || !node.canAddItem) return;
+    setCollapsedFrameworkNodeKeys((current) => {
+      if (!current.has(node.key)) return current;
+      const next = new Set(current);
+      next.delete(node.key);
+      return next;
+    });
+    handleAddItemForDimension(node.dimensionIndex, node.item.id);
   };
 
   const handleRemoveDimensionWithFallback = (dimensionEntry) => {
@@ -506,7 +584,20 @@ export function CapabilityModelEditorPanel({
 
   const handleRemoveItemWithFallback = (dimensionIndex, itemIndex) => {
     const items = modelDraft.dimensions[dimensionIndex]?.items || [];
-    const fallbackItem = items[itemIndex + 1] || items[itemIndex - 1] || null;
+    const targetItemId = items[itemIndex]?.id;
+    const removedItemIds = new Set(targetItemId ? [targetItemId] : []);
+    let changed = true;
+    while (changed) {
+      changed = false;
+      items.forEach((item) => {
+        if (item.parentItemId && removedItemIds.has(item.parentItemId) && !removedItemIds.has(item.id)) {
+          removedItemIds.add(item.id);
+          changed = true;
+        }
+      });
+    }
+    const remainingItems = items.filter((item) => !removedItemIds.has(item.id));
+    const fallbackItem = remainingItems[itemIndex] || remainingItems[itemIndex - 1] || null;
     const dimension = modelDraft.dimensions[dimensionIndex];
 
     onRemoveItem(dimensionIndex, itemIndex);
@@ -562,7 +653,13 @@ export function CapabilityModelEditorPanel({
 
   const getFrameworkNodeMeta = (node) => {
     if (!node) return '';
-    if (node.nodeType === 'item') return `能力配置 · ${node.orderText}`;
+    if (node.nodeType === 'item') {
+      const itemTypeText = node.canEditRules ? '能力配置' : '能力结构';
+      return [
+        `${itemTypeText} · ${node.orderText}`,
+        node.itemChildCount ? `${node.itemChildCount} 个下级能力` : '',
+      ].filter(Boolean).join(' · ');
+    }
     const childrenText = [
       node.dimensionChildCount ? `${node.dimensionChildCount} 个下级分类` : '',
       node.itemCount ? `${node.itemCount} 个能力配置` : '',
@@ -578,6 +675,20 @@ export function CapabilityModelEditorPanel({
       : (node.dimensionIndex >= 0 && totalDimensions > 1);
     const menuItems = node.nodeType === 'item'
       ? [
+          {
+            key: 'add-child-item',
+            icon: <PlusOutlined />,
+            label: '新增下级能力',
+            disabled: !node.canAddItem,
+            onClick: () => handleAddChildItemForNode(node),
+          },
+          {
+            key: 'add-sibling-item',
+            icon: <FileTextOutlined />,
+            label: '新增同级能力',
+            disabled: node.dimensionIndex < 0,
+            onClick: () => handleAddItemForDimension(node.dimensionIndex, node.item?.parentItemId || null),
+          },
           {
             key: 'delete',
             icon: <DeleteOutlined />,
@@ -598,7 +709,7 @@ export function CapabilityModelEditorPanel({
           {
             key: 'add-item',
             icon: <FileTextOutlined />,
-            label: '新增能力配置',
+            label: '新增能力',
             disabled: !node.canAddItem,
             onClick: () => handleAddItemForDimension(node.dimensionIndex),
           },
@@ -647,6 +758,17 @@ export function CapabilityModelEditorPanel({
               className="cap-model-framework-tree-action"
               title="新增下级分类"
               onClick={() => handleAddDimensionAndReturn(node.dimension.id)}
+            >
+              <PlusOutlined />
+            </button>
+          ) : null}
+          {node.nodeType === 'item' ? (
+            <button
+              type="button"
+              className="cap-model-framework-tree-action"
+              title="新增下级能力"
+              disabled={!node.canAddItem}
+              onClick={() => handleAddChildItemForNode(node)}
             >
               <PlusOutlined />
             </button>
@@ -704,14 +826,24 @@ export function CapabilityModelEditorPanel({
                   <div className="cap-model-framework-config-head">
                     <div className="cap-model-framework-config-title-wrap">
                       <div className="cap-model-framework-stage-kicker">
-                        {selectedNodeIsConfig ? '能力配置' : '能力分类'}
+                        {selectedNodeTypeLabel}
                       </div>
                       <div className="cap-model-framework-stage-title">{getFrameworkNodeTitle(selectedFrameworkNode)}</div>
                       <div className="cap-model-section-desc">{getFrameworkNodeDescription(selectedFrameworkNode)}</div>
                     </div>
                     <Space size={8} wrap>
                       <Tag color="blue">{selectedFrameworkNode.orderText}</Tag>
-                      <Tag>{selectedNodeIsConfig ? '可配置' : `第 ${selectedFrameworkNode.level} 层`}</Tag>
+                      <Tag>{selectedNodeStatusLabel}</Tag>
+                      {selectedNodeIsItem ? (
+                        <Button
+                          size="small"
+                          icon={<PlusOutlined />}
+                          disabled={!selectedFrameworkNode.canAddItem}
+                          onClick={() => handleAddChildItemForNode(selectedFrameworkNode)}
+                        >
+                          新增下级能力
+                        </Button>
+                      ) : null}
                       <Button
                         size="small"
                         danger
@@ -773,7 +905,7 @@ export function CapabilityModelEditorPanel({
                               mode="multiple"
                               value={selectedItem.evidenceTypes || []}
                               onChange={(values) => onUpdateItemStringListField(selectedDimensionIndex, selectedItemIndex, 'evidenceTypes', values)}
-                              options={CAPABILITY_ITEM_EVIDENCE_TYPE_OPTIONS}
+                              options={selectedEvidenceTypeOptions}
                               placeholder="选择该能力允许使用的证据类型"
                             />
                           </div>
@@ -783,7 +915,7 @@ export function CapabilityModelEditorPanel({
                               mode="multiple"
                               value={selectedItem.requiredReviewRoles || []}
                               onChange={(values) => onUpdateItemStringListField(selectedDimensionIndex, selectedItemIndex, 'requiredReviewRoles', values)}
-                              options={CAPABILITY_ITEM_REVIEW_ROLE_OPTIONS}
+                              options={selectedReviewSubjectOptions}
                               placeholder="选择该能力的复核主体"
                             />
                           </div>
@@ -866,45 +998,86 @@ export function CapabilityModelEditorPanel({
                           <div>
                             <div className="cap-model-field-label">能力名称</div>
                             <Input
-                              value={selectedDimension?.name}
-                              onChange={(event) => onUpdateDimensionField(selectedDimensionIndex, 'name', event.target.value)}
-                              placeholder="例如：教学设计"
+                              value={selectedNodeIsItem ? selectedItem?.name : selectedDimension?.name}
+                              onChange={(event) => {
+                                if (selectedNodeIsItem) {
+                                  onUpdateItemField(selectedDimensionIndex, selectedItemIndex, 'name', event.target.value);
+                                  return;
+                                }
+                                onUpdateDimensionField(selectedDimensionIndex, 'name', event.target.value);
+                              }}
+                              placeholder={selectedNodeIsItem ? '例如：目标与学情对齐' : '例如：教学设计'}
                             />
                           </div>
                           <div>
                             <div className="cap-model-field-label">能力说明</div>
                             <Input
-                              value={selectedDimension?.description}
-                              onChange={(event) => onUpdateDimensionField(selectedDimensionIndex, 'description', event.target.value)}
-                              placeholder="说明该能力分类聚焦的核心范围"
+                              value={selectedNodeIsItem ? selectedItem?.description : selectedDimension?.description}
+                              onChange={(event) => {
+                                if (selectedNodeIsItem) {
+                                  onUpdateItemField(selectedDimensionIndex, selectedItemIndex, 'description', event.target.value);
+                                  return;
+                                }
+                                onUpdateDimensionField(selectedDimensionIndex, 'description', event.target.value);
+                              }}
+                              placeholder={selectedNodeIsItem ? '说明该能力关注的行为表现' : '说明该能力分类聚焦的核心范围'}
                             />
                           </div>
                         </div>
                       </div>
                       <div className="cap-model-framework-node-tools">
-                        <div className="cap-model-framework-node-tool-card">
-                          <div className="cap-model-framework-node-tool-title">下级分类</div>
-                          <div className="cap-model-section-desc">继续拆分能力结构，最多支持 3 层。</div>
-                          <Button
-                            icon={<PlusOutlined />}
-                            disabled={!selectedFrameworkNode.canAddChildDimension}
-                            onClick={() => handleAddDimensionAndReturn(selectedDimension.id)}
-                          >
-                            新增下级分类
-                          </Button>
-                        </div>
-                        <div className="cap-model-framework-node-tool-card">
-                          <div className="cap-model-framework-node-tool-title">能力配置</div>
-                          <div className="cap-model-section-desc">为当前分类补充可评价的能力配置。</div>
-                          <Button
-                            type="primary"
-                            icon={<PlusOutlined />}
-                            disabled={!selectedFrameworkNode.canAddItem}
-                            onClick={() => handleAddItemForDimension(selectedDimensionIndex)}
-                          >
-                            新增能力配置
-                          </Button>
-                        </div>
+                        {selectedNodeIsItem ? (
+                          <>
+                            <div className="cap-model-framework-node-tool-card">
+                              <div className="cap-model-framework-node-tool-title">下级能力</div>
+                              <div className="cap-model-section-desc">继续拆分当前能力；有下级后，规则仅配置到叶子能力。</div>
+                              <Button
+                                type="primary"
+                                icon={<PlusOutlined />}
+                                disabled={!selectedFrameworkNode.canAddItem}
+                                onClick={() => handleAddChildItemForNode(selectedFrameworkNode)}
+                              >
+                                新增下级能力
+                              </Button>
+                            </div>
+                            <div className="cap-model-framework-node-tool-card">
+                              <div className="cap-model-framework-node-tool-title">同级能力</div>
+                              <div className="cap-model-section-desc">在当前父级下继续补充同一层级的能力。</div>
+                              <Button
+                                icon={<PlusOutlined />}
+                                onClick={() => handleAddItemForDimension(selectedDimensionIndex, selectedItem?.parentItemId || null)}
+                              >
+                                新增同级能力
+                              </Button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="cap-model-framework-node-tool-card">
+                              <div className="cap-model-framework-node-tool-title">下级分类</div>
+                              <div className="cap-model-section-desc">继续拆分能力结构，最多支持 {MAX_CAPABILITY_DIMENSION_LEVEL} 层。</div>
+                              <Button
+                                icon={<PlusOutlined />}
+                                disabled={!selectedFrameworkNode.canAddChildDimension}
+                                onClick={() => handleAddDimensionAndReturn(selectedDimension.id)}
+                              >
+                                新增下级分类
+                              </Button>
+                            </div>
+                            <div className="cap-model-framework-node-tool-card">
+                              <div className="cap-model-framework-node-tool-title">能力配置</div>
+                              <div className="cap-model-section-desc">为当前分类补充可评价的叶子能力。</div>
+                              <Button
+                                type="primary"
+                                icon={<PlusOutlined />}
+                                disabled={!selectedFrameworkNode.canAddItem}
+                                onClick={() => handleAddItemForDimension(selectedDimensionIndex)}
+                              >
+                                新增能力
+                              </Button>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
                   )}

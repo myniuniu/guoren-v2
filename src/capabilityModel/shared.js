@@ -11,10 +11,10 @@ import {
   getSequenceForRole,
 } from '../shared/profileEvidence';
 
-const EVIDENCE_TYPE_LABEL_MAP = Object.fromEntries(
+const DEFAULT_EVIDENCE_TYPE_LABEL_MAP = Object.fromEntries(
   CAPABILITY_ITEM_EVIDENCE_TYPE_OPTIONS.map((item) => [item.value, item.label]),
 );
-const REVIEW_ROLE_LABEL_MAP = Object.fromEntries(
+const DEFAULT_REVIEW_ROLE_LABEL_MAP = Object.fromEntries(
   CAPABILITY_ITEM_REVIEW_ROLE_OPTIONS.map((item) => [item.value, item.label]),
 );
 const AI_ASSIST_MODE_LABEL_MAP = Object.fromEntries(
@@ -24,7 +24,7 @@ const STATUS_LABEL_MAP = Object.fromEntries(
   CAPABILITY_MODEL_STATUS_OPTIONS.map((item) => [item.value, item.label]),
 );
 
-export const MAX_CAPABILITY_DIMENSION_LEVEL = 3;
+export const MAX_CAPABILITY_DIMENSION_LEVEL = 4;
 
 export function getCapabilityModelStatusMeta(model) {
   if (!model) {
@@ -127,10 +127,27 @@ export function getCapabilityFrameworkTreeEntries(modelOrDimensions = []) {
     const { dimension, index, level, orderText } = dimensionEntry;
     const childDimensions = entriesByParent.get(dimension.id) || [];
     const items = Array.isArray(dimension.items) ? dimension.items : [];
+    const itemIds = new Set(items.map((item) => item.id).filter(Boolean));
+    const itemEntriesByParent = new Map();
+    items.forEach((item, itemIndex) => {
+      const parentItemId = item.parentItemId && itemIds.has(item.parentItemId) && item.parentItemId !== item.id
+        ? item.parentItemId
+        : null;
+      const list = itemEntriesByParent.get(parentItemId) || [];
+      list.push({ item, itemIndex, parentItemId });
+      itemEntriesByParent.set(parentItemId, list);
+    });
+    itemEntriesByParent.forEach((list) => {
+      list.sort((left, right) => (
+        Number(left.item?.sortNo || left.itemIndex + 1) - Number(right.item?.sortNo || right.itemIndex + 1)
+      ));
+    });
+    const rootItemEntries = itemEntriesByParent.get(null) || [];
     const isMaxLevel = level >= MAX_CAPABILITY_DIMENSION_LEVEL;
     const absorbedItem = isMaxLevel ? (items[0] || null) : null;
+    const absorbedItemChildCount = absorbedItem ? ((itemEntriesByParent.get(absorbedItem.id) || []).length) : 0;
     const dimensionKey = createCapabilityDimensionNodeKey(dimension.id);
-    const childCount = childDimensions.length + (isMaxLevel ? 0 : items.length);
+    const childCount = childDimensions.length + (isMaxLevel ? 0 : rootItemEntries.length);
     const node = {
       key: dimensionKey,
       nodeType: 'dimension',
@@ -144,11 +161,12 @@ export function getCapabilityFrameworkTreeEntries(modelOrDimensions = []) {
       orderText,
       childCount,
       dimensionChildCount: childDimensions.length,
-      itemCount: items.length,
+      itemCount: rootItemEntries.length,
       hasChildren: childCount > 0,
       canAddChildDimension: level < MAX_CAPABILITY_DIMENSION_LEVEL,
       canAddItem: level < MAX_CAPABILITY_DIMENSION_LEVEL,
-      canEditRules: Boolean(absorbedItem),
+      itemChildCount: absorbedItemChildCount,
+      canEditRules: Boolean(absorbedItem) && absorbedItemChildCount === 0,
     };
     result.push(node);
 
@@ -156,26 +174,48 @@ export function getCapabilityFrameworkTreeEntries(modelOrDimensions = []) {
 
     const nextAncestors = [...ancestorKeys, dimensionKey];
     childDimensions.forEach((childEntry) => visitDimension(childEntry, nextAncestors));
-    items.forEach((item, itemIndex) => {
+    const visitItem = (itemEntry, itemLevel, itemOrderText, itemAncestorKeys = []) => {
+      const { item, itemIndex, parentItemId } = itemEntry;
+      const itemKey = createCapabilityItemNodeKey(dimension.id, item.id);
+      const childItemEntries = itemEntriesByParent.get(item.id) || [];
+      const childItems = itemLevel >= MAX_CAPABILITY_DIMENSION_LEVEL ? [] : childItemEntries;
       result.push({
-        key: createCapabilityItemNodeKey(dimension.id, item.id),
+        key: itemKey,
         nodeType: 'item',
         dimension,
         dimensionIndex: index,
         item,
         itemIndex,
-        level: Math.min(MAX_CAPABILITY_DIMENSION_LEVEL, level + 1),
-        parentKey: dimensionKey,
-        ancestorKeys: nextAncestors,
-        orderText: `${orderText}.${childDimensions.length + itemIndex + 1}`,
-        childCount: 0,
+        level: itemLevel,
+        parentKey: parentItemId ? createCapabilityItemNodeKey(dimension.id, parentItemId) : dimensionKey,
+        ancestorKeys: itemAncestorKeys,
+        orderText: itemOrderText,
+        childCount: childItems.length,
         dimensionChildCount: 0,
-        itemCount: 0,
-        hasChildren: false,
+        itemCount: childItems.length,
+        itemChildCount: childItems.length,
+        hasChildren: childItems.length > 0,
         canAddChildDimension: false,
-        canAddItem: false,
-        canEditRules: true,
+        canAddItem: itemLevel < MAX_CAPABILITY_DIMENSION_LEVEL,
+        canEditRules: childItems.length === 0,
       });
+      childItems.forEach((childItemEntry, childIndex) => {
+        visitItem(
+          childItemEntry,
+          Math.min(MAX_CAPABILITY_DIMENSION_LEVEL, itemLevel + 1),
+          `${itemOrderText}.${childIndex + 1}`,
+          [...itemAncestorKeys, itemKey],
+        );
+      });
+    };
+
+    rootItemEntries.forEach((itemEntry, itemIndex) => {
+      visitItem(
+        itemEntry,
+        Math.min(MAX_CAPABILITY_DIMENSION_LEVEL, level + 1),
+        `${orderText}.${childDimensions.length + itemIndex + 1}`,
+        nextAncestors,
+      );
     });
   };
 
@@ -310,12 +350,27 @@ function escapeMarkdownText(value) {
     .replace(/\n/g, '<br />');
 }
 
-export function buildCapabilityModelMarkdown(model, industries, roles, sequences) {
+function buildSequenceRuleLabelMap(rules = [], sequenceId, fallbackMap = {}) {
+  const labelMap = { ...fallbackMap };
+  (Array.isArray(rules) ? rules : [])
+    .filter((item) => !sequenceId || item.sequenceId === sequenceId)
+    .forEach((item) => {
+      const value = item.code ?? item.value;
+      const label = item.name ?? item.label;
+      if (value && label) labelMap[value] = label;
+    });
+  return labelMap;
+}
+
+export function buildCapabilityModelMarkdown(model, industries, roles, sequences, evidenceTypes = [], reviewSubjects = []) {
   const industryName = industries.find((item) => item.id === model.industryId)?.name || '-';
   const role = roles.find((item) => item.id === model.roleId);
   const sequence = getSequenceForRole(role, sequences);
   const roleLevelName = getRoleLevel(role, model.roleLevelId, sequences)?.name || '-';
   const statusText = STATUS_LABEL_MAP[model.status] || model.status || '-';
+  const frameworkNodes = getCapabilityFrameworkTreeEntries(model);
+  const evidenceTypeLabelMap = buildSequenceRuleLabelMap(evidenceTypes, sequence?.id, DEFAULT_EVIDENCE_TYPE_LABEL_MAP);
+  const reviewSubjectLabelMap = buildSequenceRuleLabelMap(reviewSubjects, sequence?.id, DEFAULT_REVIEW_ROLE_LABEL_MAP);
   const lines = [
     `# ${model.name || '未命名能力模型'}`,
     '',
@@ -336,20 +391,31 @@ export function buildCapabilityModelMarkdown(model, industries, roles, sequences
   ];
 
   getCapabilityDimensionEntries(model.dimensions).forEach(({ dimension, level, orderText }) => {
+    const itemNodes = frameworkNodes.filter((node) => (
+      node.nodeType === 'item' && node.dimension?.id === dimension.id
+    ));
     lines.push(`${'#'.repeat(Math.min(6, level + 1))} ${orderText}. ${dimension.name || '未命名能力类'}`);
     lines.push('');
     lines.push(`- 能力类说明：${dimension.description || '未填写能力类说明'}`);
     lines.push(`- 能力类层级：${level}`);
-    lines.push(`- 能力项数量：${dimension.items?.length || 0}`);
+    lines.push(`- 能力项数量：${itemNodes.length}`);
     lines.push('');
 
-    (dimension.items || []).forEach((item, itemIndex) => {
-      lines.push(`${'#'.repeat(Math.min(6, level + 2))} ${orderText}.${itemIndex + 1} ${item.name || '未命名能力项'}`);
+    itemNodes.forEach((node) => {
+      const item = node.item || {};
+      lines.push(`${'#'.repeat(Math.min(6, node.level + 1))} ${node.orderText} ${item.name || '未命名能力项'}`);
       lines.push('');
       lines.push(`- 能力项说明：${item.description || '未填写能力项说明'}`);
-      lines.push(`- 证据类型：${item.evidenceTypes?.length ? item.evidenceTypes.map((entry) => EVIDENCE_TYPE_LABEL_MAP[entry] || entry).join('、') : '-'}`);
+      lines.push(`- 能力项层级：${node.level}`);
+      if (!node.canEditRules) {
+        lines.push(`- 下级能力数量：${node.itemChildCount || 0}`);
+        lines.push('- 评价规则：请在叶子能力配置');
+        lines.push('');
+        return;
+      }
+      lines.push(`- 证据类型：${item.evidenceTypes?.length ? item.evidenceTypes.map((entry) => evidenceTypeLabelMap[entry] || entry).join('、') : '-'}`);
       lines.push(`- 最低证据数：${item.requiredEvidenceCount || 1}`);
-      lines.push(`- 评价主体：${item.requiredReviewRoles?.length ? item.requiredReviewRoles.map((entry) => REVIEW_ROLE_LABEL_MAP[entry] || entry).join('、') : '-'}`);
+      lines.push(`- 评价主体：${item.requiredReviewRoles?.length ? item.requiredReviewRoles.map((entry) => reviewSubjectLabelMap[entry] || entry).join('、') : '-'}`);
       lines.push(`- 成长档案专用：${item.isGrowthOnly ? '是' : '否'}`);
       lines.push(`- AI辅助策略：${AI_ASSIST_MODE_LABEL_MAP[item.aiAssistMode] || item.aiAssistMode || '-'}`);
       if (item.evidenceExamples?.length) {

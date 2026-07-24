@@ -248,12 +248,16 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
     roles: [],
     sequences: [],
     models: [],
+    evidenceTypes: [],
+    reviewSubjects: [],
   });
   const capabilityModelCatalogRef = useRef({
     industries: [],
     roles: [],
     sequences: [],
     models: [],
+    evidenceTypes: [],
+    reviewSubjects: [],
   });
   const [activeCapabilityRequestId, setActiveCapabilityRequestId] = useState(null);
   const [activeCapabilityPreviewSourceKey, setActiveCapabilityPreviewSourceKey] = useState(null);
@@ -841,13 +845,15 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
 
   const loadCapabilityModelCatalog = useCallback(async () => {
     await capabilityModelApi.seed();
-    const [industries, roles, sequences, models] = await Promise.all([
+    const [industries, roles, sequences, models, evidenceTypes, reviewSubjects] = await Promise.all([
       capabilityModelApi.listIndustries(),
       capabilityModelApi.listRoles(),
       capabilityModelApi.listSequences(),
       capabilityModelApi.listModels(),
+      capabilityModelApi.listEvidenceTypes(),
+      capabilityModelApi.listReviewSubjects(),
     ]);
-    const nextCatalog = { industries, roles, sequences, models };
+    const nextCatalog = { industries, roles, sequences, models, evidenceTypes, reviewSubjects };
     capabilityModelCatalogRef.current = nextCatalog;
     setCapabilityModelCatalog(nextCatalog);
     return nextCatalog;
@@ -1224,6 +1230,22 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
       label: level.name,
     }));
   }, [capabilityModelCatalog.sequences, capabilityRoleMap, watchedCapabilityRoleId]);
+  const activeCapabilityModelRuleSequenceId = useMemo(() => {
+    const role = capabilityRoleMap.get(watchedCapabilityRoleId || capabilityModelEditorDraft?.roleId) || null;
+    return role?.sequenceId || '';
+  }, [capabilityModelEditorDraft?.roleId, capabilityRoleMap, watchedCapabilityRoleId]);
+  const activeCapabilityModelEvidenceTypeOptions = useMemo(() => (
+    (capabilityModelCatalog.evidenceTypes || [])
+      .filter((item) => item.sequenceId === activeCapabilityModelRuleSequenceId && item.status === 'ACTIVE')
+      .sort((left, right) => (left.sortNo || 0) - (right.sortNo || 0))
+      .map((item) => ({ value: item.code, label: item.name }))
+  ), [activeCapabilityModelRuleSequenceId, capabilityModelCatalog.evidenceTypes]);
+  const activeCapabilityModelReviewSubjectOptions = useMemo(() => (
+    (capabilityModelCatalog.reviewSubjects || [])
+      .filter((item) => item.sequenceId === activeCapabilityModelRuleSequenceId && item.status === 'ACTIVE')
+      .sort((left, right) => (left.sortNo || 0) - (right.sortNo || 0))
+      .map((item) => ({ value: item.code, label: item.name }))
+  ), [activeCapabilityModelRuleSequenceId, capabilityModelCatalog.reviewSubjects]);
   const createCapabilityModelRoleOptions = useMemo(() => (
     capabilityModelRoleOptions.filter((item) => item.status === 'ACTIVE' && item.hasLevels)
   ), [capabilityModelRoleOptions]);
@@ -3511,6 +3533,11 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
               roleOptions={activeCapabilityModelRoleOptions}
               roleLevelOptions={activeCapabilityModelRoleLevelOptions}
               watchedRoleId={watchedCapabilityRoleId}
+              ruleSequenceId={activeCapabilityModelRuleSequenceId}
+              evidenceTypes={capabilityModelCatalog.evidenceTypes}
+              reviewSubjects={capabilityModelCatalog.reviewSubjects}
+              evidenceTypeOptions={activeCapabilityModelEvidenceTypeOptions}
+              reviewSubjectOptions={activeCapabilityModelReviewSubjectOptions}
               activeDimension={capabilityModelActiveDimension}
               activeDimensionIndex={capabilityModelActiveDimensionIndex}
               activeItem={capabilityModelActiveItem}
@@ -3595,6 +3622,8 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
           industries={capabilityModelCatalog.industries}
           roles={capabilityModelCatalog.roles}
           sequences={capabilityModelCatalog.sequences}
+          evidenceTypes={capabilityModelCatalog.evidenceTypes}
+          reviewSubjects={capabilityModelCatalog.reviewSubjects}
           showHero={false}
           allowCopyMarkdown={false}
         />
@@ -3602,8 +3631,11 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
     );
   }, [
     activeCapabilityModelIndustryOptions,
+    activeCapabilityModelEvidenceTypeOptions,
     activeCapabilityModelRoleLevelOptions,
     activeCapabilityModelRoleOptions,
+    activeCapabilityModelReviewSubjectOptions,
+    activeCapabilityModelRuleSequenceId,
     activeCapabilityModelSourceKey,
     activeCapabilityRequestId,
     capabilityModelActiveDimension,
@@ -3613,6 +3645,8 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
     capabilityModelCatalog.industries,
     capabilityModelCatalog.roles,
     capabilityModelCatalog.sequences,
+    capabilityModelCatalog.evidenceTypes,
+    capabilityModelCatalog.reviewSubjects,
     capabilityModelEditorDraft,
     capabilityModelForm,
     capabilityModelPreviewMode,

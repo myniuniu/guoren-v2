@@ -2,10 +2,12 @@ const INDUSTRY_STORAGE_KEY = 'gr.capability-model.industries.v3';
 const SEQUENCE_STORAGE_KEY = 'gr.capability-model.sequences.v3';
 const ROLE_STORAGE_KEY = 'gr.capability-model.roles.v3';
 const MODEL_STORAGE_KEY = 'gr.capability-model.models.v3';
-const SEED_KEY = 'gr.capability-model.seeded.v5';
-const LEGACY_SEED_KEY = 'gr.capability-model.seeded.v3';
+const EVIDENCE_TYPE_STORAGE_KEY = 'gr.capability-model.evidence-types.v1';
+const REVIEW_SUBJECT_STORAGE_KEY = 'gr.capability-model.review-subjects.v1';
+const SEED_KEY = 'gr.capability-model.seeded.v6';
+const LEGACY_SEED_KEYS = ['gr.capability-model.seeded.v5', 'gr.capability-model.seeded.v3'];
 const STORE_CHANGE_EVENT = 'gr:capability-model-change';
-const MAX_CAPABILITY_DIMENSION_LEVEL = 3;
+const MAX_CAPABILITY_DIMENSION_LEVEL = 4;
 
 export const INDUSTRY_STATUS_OPTIONS = [
   { value: 'ACTIVE', label: '启用' },
@@ -85,15 +87,9 @@ function normalizeStringArray(value, allowedValues = []) {
 
 function buildCapabilityItemDefaults(overrides = {}) {
   return {
-    evidenceTypes: normalizeStringArray(
-      overrides.evidenceTypes,
-      CAPABILITY_ITEM_EVIDENCE_TYPE_OPTIONS.map((item) => item.value),
-    ),
+    evidenceTypes: normalizeStringArray(overrides.evidenceTypes),
     requiredEvidenceCount: Math.max(1, Number(overrides.requiredEvidenceCount || 1)),
-    requiredReviewRoles: normalizeStringArray(
-      overrides.requiredReviewRoles,
-      CAPABILITY_ITEM_REVIEW_ROLE_OPTIONS.map((item) => item.value),
-    ),
+    requiredReviewRoles: normalizeStringArray(overrides.requiredReviewRoles),
     isGrowthOnly: Boolean(overrides.isGrowthOnly),
     aiAssistMode: trimText(overrides.aiAssistMode) || 'SUGGEST_ONLY',
   };
@@ -122,11 +118,19 @@ function writeList(storageKey, list) {
   window.localStorage.setItem(storageKey, JSON.stringify(list));
 }
 
-function writeAll({ industries, sequences, roles, models }) {
+function writeAll({ industries, sequences, roles, models, evidenceTypes, reviewSubjects }) {
   writeList(INDUSTRY_STORAGE_KEY, industries);
   writeList(SEQUENCE_STORAGE_KEY, sequences);
   writeList(ROLE_STORAGE_KEY, roles);
   writeList(MODEL_STORAGE_KEY, models);
+  writeList(
+    EVIDENCE_TYPE_STORAGE_KEY,
+    Array.isArray(evidenceTypes) ? evidenceTypes : readList(EVIDENCE_TYPE_STORAGE_KEY),
+  );
+  writeList(
+    REVIEW_SUBJECT_STORAGE_KEY,
+    Array.isArray(reviewSubjects) ? reviewSubjects : readList(REVIEW_SUBJECT_STORAGE_KEY),
+  );
   emitChange();
 }
 
@@ -136,6 +140,8 @@ function readAll() {
     sequences: readList(SEQUENCE_STORAGE_KEY),
     roles: readList(ROLE_STORAGE_KEY),
     models: readList(MODEL_STORAGE_KEY).map((item) => normalizeModel(item)),
+    evidenceTypes: readList(EVIDENCE_TYPE_STORAGE_KEY).map((item, index) => normalizeEvidenceType(item, index)),
+    reviewSubjects: readList(REVIEW_SUBJECT_STORAGE_KEY).map((item, index) => normalizeReviewSubject(item, index)),
   };
 }
 
@@ -219,6 +225,7 @@ export function createEmptyCapabilityItem(levelScheme, overrides = {}) {
   const scheme = normalizeLevelScheme(levelScheme);
   return {
     id: overrides.id || createId('cap_item'),
+    parentItemId: trimText(overrides.parentItemId) || null,
     name: overrides.name || '',
     description: overrides.description || '',
     sortNo: overrides.sortNo ?? 1,
@@ -292,6 +299,7 @@ function normalizeItem(item, levelScheme, index) {
   }));
   return {
     id: item?.id || createId('cap_item'),
+    parentItemId: trimText(item?.parentItemId) || null,
     name: trimText(item?.name),
     description: trimText(item?.description),
     sortNo: index + 1,
@@ -305,6 +313,7 @@ function normalizeDimension(dimension, levelScheme, index) {
   const items = (Array.isArray(dimension?.items) ? dimension.items : [])
     .map((item, itemIndex) => normalizeItem(item, levelScheme, itemIndex))
     .filter((item) => item.name);
+  const itemIds = new Set(items.map((item) => item.id));
   return {
     id: dimension?.id || createId('cap_dim'),
     parentId: dimension?.parentId || null,
@@ -312,7 +321,12 @@ function normalizeDimension(dimension, levelScheme, index) {
     name: trimText(dimension?.name),
     description: trimText(dimension?.description),
     sortNo: index + 1,
-    items,
+    items: items.map((item) => ({
+      ...item,
+      parentItemId: item.parentItemId && itemIds.has(item.parentItemId) && item.parentItemId !== item.id
+        ? item.parentItemId
+        : null,
+    })),
   };
 }
 
@@ -419,6 +433,132 @@ function normalizeRole(role, index) {
     status: role?.status || 'ACTIVE',
     sortNo: Number(role?.sortNo || index + 1),
   };
+}
+
+function createSequenceRuleId(prefix, sequenceId, code, index) {
+  const normalizedCode = trimText(code)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  return `${prefix}_${sequenceId || 'sequence'}_${normalizedCode || index + 1}`;
+}
+
+function normalizeSequenceRuleEntry(entry, index, prefix) {
+  const code = trimText(entry?.code ?? entry?.value);
+  const sequenceId = trimText(entry?.sequenceId);
+  return {
+    id: entry?.id || createSequenceRuleId(prefix, sequenceId, code, index),
+    sequenceId,
+    code,
+    name: trimText(entry?.name ?? entry?.label),
+    description: trimText(entry?.description),
+    status: entry?.status || 'ACTIVE',
+    sortNo: Number(entry?.sortNo || index + 1),
+  };
+}
+
+function normalizeEvidenceType(entry, index) {
+  return normalizeSequenceRuleEntry(entry, index, 'evidence_type');
+}
+
+function normalizeReviewSubject(entry, index) {
+  return normalizeSequenceRuleEntry(entry, index, 'review_subject');
+}
+
+function createDefaultEvidenceTypesForSequence(sequenceId) {
+  return CAPABILITY_ITEM_EVIDENCE_TYPE_OPTIONS.map((item, index) => normalizeEvidenceType({
+    id: createSequenceRuleId('evidence_type', sequenceId, item.value, index),
+    sequenceId,
+    code: item.value,
+    name: item.label,
+    status: 'ACTIVE',
+    sortNo: index + 1,
+  }, index));
+}
+
+function createDefaultReviewSubjectsForSequence(sequenceId) {
+  return CAPABILITY_ITEM_REVIEW_ROLE_OPTIONS.map((item, index) => normalizeReviewSubject({
+    id: createSequenceRuleId('review_subject', sequenceId, item.value, index),
+    sequenceId,
+    code: item.value,
+    name: item.label,
+    status: 'ACTIVE',
+    sortNo: index + 1,
+  }, index));
+}
+
+function createDefaultRuleCatalogsForSequences(sequences = []) {
+  return {
+    evidenceTypes: sequences.flatMap((sequence) => createDefaultEvidenceTypesForSequence(sequence.id)),
+    reviewSubjects: sequences.flatMap((sequence) => createDefaultReviewSubjectsForSequence(sequence.id)),
+  };
+}
+
+function ensureDefaultRulesForSequences(data) {
+  const next = clone({
+    ...data,
+    evidenceTypes: Array.isArray(data?.evidenceTypes) ? data.evidenceTypes : [],
+    reviewSubjects: Array.isArray(data?.reviewSubjects) ? data.reviewSubjects : [],
+  });
+  let changed = false;
+
+  const appendMissingRules = (list, sequenceId, defaults) => {
+    const existingCodes = new Set(
+      list
+        .filter((item) => item.sequenceId === sequenceId)
+        .map((item) => item.code)
+        .filter(Boolean),
+    );
+    defaults.forEach((item) => {
+      if (existingCodes.has(item.code)) return;
+      list.push(item);
+      existingCodes.add(item.code);
+      changed = true;
+    });
+  };
+
+  (next.sequences || []).forEach((sequence) => {
+    appendMissingRules(next.evidenceTypes, sequence.id, createDefaultEvidenceTypesForSequence(sequence.id));
+    appendMissingRules(next.reviewSubjects, sequence.id, createDefaultReviewSubjectsForSequence(sequence.id));
+  });
+
+  next.evidenceTypes = next.evidenceTypes.map((item, index) => normalizeEvidenceType(item, index));
+  next.reviewSubjects = next.reviewSubjects.map((item, index) => normalizeReviewSubject(item, index));
+
+  return { data: next, changed };
+}
+
+function sortSequenceRuleEntries(list = []) {
+  return [...list].sort((left, right) => {
+    if ((left.sequenceId || '') !== (right.sequenceId || '')) {
+      return String(left.sequenceId || '').localeCompare(String(right.sequenceId || ''));
+    }
+    return (left.sortNo || 0) - (right.sortNo || 0);
+  });
+}
+
+function ensureUniqueSequenceRuleCode(list, normalized, label) {
+  const duplicated = list.find((item) => (
+    item.sequenceId === normalized.sequenceId
+    && item.code === normalized.code
+    && item.id !== normalized.id
+  ));
+  if (duplicated) {
+    throw new Error(`同一能力序列下的${label}编码不能重复`);
+  }
+}
+
+function isSequenceRuleReferenced(rule, models, roles, fieldName) {
+  if (!rule?.sequenceId || !rule?.code) return false;
+  return models.some((model) => {
+    const role = roles.find((item) => item.id === model.roleId);
+    if (role?.sequenceId !== rule.sequenceId) return false;
+    return (model.dimensions || []).some((dimension) => (
+      (dimension.items || []).some((item) => (
+        Array.isArray(item?.[fieldName]) && item[fieldName].includes(rule.code)
+      ))
+    ));
+  });
 }
 
 function ensureModelValid(model) {
@@ -1259,7 +1399,9 @@ function seedPayload() {
     normalizeModel(makeServiceModel(levelScheme, 'sequence_service_growth_l3', '客服专家能力模型', 'SERVICE_AGENT_EXPERT', '适用于客服专家阶段，强调服务机制优化、经验沉淀和质量改进。', ['客服', '专家'])),
   ];
 
-  return { industries, sequences, roles, models };
+  const { evidenceTypes, reviewSubjects } = createDefaultRuleCatalogsForSequences(sequences);
+
+  return { industries, sequences, roles, models, evidenceTypes, reviewSubjects };
 }
 
 function mergeIndustryTemplate(list, template, index) {
@@ -1396,24 +1538,29 @@ function migrateToEducationSegments(data) {
   return next;
 }
 
+function clearLegacySeedKeys() {
+  LEGACY_SEED_KEYS.forEach((key) => window.localStorage.removeItem(key));
+}
+
 export async function seedCapabilityModelData() {
   if (typeof window === 'undefined') return;
   if (window.localStorage.getItem(SEED_KEY)) return;
   const current = readAll();
   const hasExistingData = current.industries.length || current.sequences.length || current.roles.length || current.models.length;
   if (hasExistingData) {
-    const migrated = migrateToEducationSegments(current);
-    if (migrated) {
-      writeAll(migrated);
+    const migrated = migrateToEducationSegments(current) || current;
+    const withRules = ensureDefaultRulesForSequences(migrated);
+    if (migrated !== current || withRules.changed) {
+      writeAll(withRules.data);
     }
     window.localStorage.setItem(SEED_KEY, '1');
-    window.localStorage.removeItem(LEGACY_SEED_KEY);
+    clearLegacySeedKeys();
     return;
   }
   const payload = seedPayload();
   writeAll(payload);
   window.localStorage.setItem(SEED_KEY, '1');
-  window.localStorage.removeItem(LEGACY_SEED_KEY);
+  clearLegacySeedKeys();
 }
 
 export async function listIndustries() {
@@ -1439,6 +1586,14 @@ export async function listRoles() {
       }
       return (left.sortNo || 0) - (right.sortNo || 0);
     });
+}
+
+export async function listEvidenceTypes() {
+  return sortSequenceRuleEntries(readList(EVIDENCE_TYPE_STORAGE_KEY).map((item, index) => normalizeEvidenceType(item, index)));
+}
+
+export async function listReviewSubjects() {
+  return sortSequenceRuleEntries(readList(REVIEW_SUBJECT_STORAGE_KEY).map((item, index) => normalizeReviewSubject(item, index)));
 }
 
 export async function listCapabilityModels() {
@@ -1488,7 +1643,7 @@ export async function removeIndustry(id) {
 }
 
 export async function saveSequence(sequence) {
-  const { industries, sequences, roles, models } = readAll();
+  const { industries, sequences, roles, models, evidenceTypes, reviewSubjects } = readAll();
   const normalized = normalizeSequence(sequence, sequences.length);
   ensureRequired(normalized.name, '序列名称');
   ensureRequired(normalized.code, '序列编码');
@@ -1524,20 +1679,29 @@ export async function saveSequence(sequence) {
     }
   }
 
-  const nextSequences = sequences.some((item) => item.id === normalized.id)
+  const sequenceExists = sequences.some((item) => item.id === normalized.id);
+  const nextSequences = sequenceExists
     ? sequences.map((item) => (item.id === normalized.id ? { ...item, ...normalized } : item))
     : [...sequences, normalized];
+  const nextEvidenceTypes = sequenceExists
+    ? evidenceTypes
+    : [...evidenceTypes, ...createDefaultEvidenceTypesForSequence(normalized.id)];
+  const nextReviewSubjects = sequenceExists
+    ? reviewSubjects
+    : [...reviewSubjects, ...createDefaultReviewSubjectsForSequence(normalized.id)];
   writeAll({
     industries,
     sequences: nextSequences,
     roles,
     models,
+    evidenceTypes: nextEvidenceTypes,
+    reviewSubjects: nextReviewSubjects,
   });
   return clone(normalized);
 }
 
 export async function removeSequence(id) {
-  const { industries, sequences, roles, models } = readAll();
+  const { industries, sequences, roles, models, evidenceTypes, reviewSubjects } = readAll();
   if (roles.some((item) => item.sequenceId === id)) {
     throw new Error('该能力序列已被岗位引用，无法删除');
   }
@@ -1551,6 +1715,90 @@ export async function removeSequence(id) {
     sequences: sequences.filter((item) => item.id !== id),
     roles,
     models,
+    evidenceTypes: evidenceTypes.filter((item) => item.sequenceId !== id),
+    reviewSubjects: reviewSubjects.filter((item) => item.sequenceId !== id),
+  });
+}
+
+export async function saveEvidenceType(evidenceType) {
+  const { industries, sequences, roles, models, evidenceTypes, reviewSubjects } = readAll();
+  const normalized = normalizeEvidenceType(evidenceType, evidenceTypes.length);
+  ensureRequired(normalized.sequenceId, '所属序列');
+  ensureRequired(normalized.name, '证据类型名称');
+  ensureRequired(normalized.code, '证据类型编码');
+  if (!sequences.some((item) => item.id === normalized.sequenceId)) {
+    throw new Error('所属能力序列不存在');
+  }
+  ensureUniqueSequenceRuleCode(evidenceTypes, normalized, '证据类型');
+  const nextEvidenceTypes = evidenceTypes.some((item) => item.id === normalized.id)
+    ? evidenceTypes.map((item) => (item.id === normalized.id ? { ...item, ...normalized } : item))
+    : [...evidenceTypes, normalized];
+  writeAll({
+    industries,
+    sequences,
+    roles,
+    models,
+    evidenceTypes: nextEvidenceTypes,
+    reviewSubjects,
+  });
+  return clone(normalized);
+}
+
+export async function removeEvidenceType(id) {
+  const { industries, sequences, roles, models, evidenceTypes, reviewSubjects } = readAll();
+  const target = evidenceTypes.find((item) => item.id === id);
+  if (!target) return;
+  if (isSequenceRuleReferenced(target, models, roles, 'evidenceTypes')) {
+    throw new Error('该证据类型已被能力模型引用，无法删除，可改为停用');
+  }
+  writeAll({
+    industries,
+    sequences,
+    roles,
+    models,
+    evidenceTypes: evidenceTypes.filter((item) => item.id !== id),
+    reviewSubjects,
+  });
+}
+
+export async function saveReviewSubject(reviewSubject) {
+  const { industries, sequences, roles, models, evidenceTypes, reviewSubjects } = readAll();
+  const normalized = normalizeReviewSubject(reviewSubject, reviewSubjects.length);
+  ensureRequired(normalized.sequenceId, '所属序列');
+  ensureRequired(normalized.name, '评价主体名称');
+  ensureRequired(normalized.code, '评价主体编码');
+  if (!sequences.some((item) => item.id === normalized.sequenceId)) {
+    throw new Error('所属能力序列不存在');
+  }
+  ensureUniqueSequenceRuleCode(reviewSubjects, normalized, '评价主体');
+  const nextReviewSubjects = reviewSubjects.some((item) => item.id === normalized.id)
+    ? reviewSubjects.map((item) => (item.id === normalized.id ? { ...item, ...normalized } : item))
+    : [...reviewSubjects, normalized];
+  writeAll({
+    industries,
+    sequences,
+    roles,
+    models,
+    evidenceTypes,
+    reviewSubjects: nextReviewSubjects,
+  });
+  return clone(normalized);
+}
+
+export async function removeReviewSubject(id) {
+  const { industries, sequences, roles, models, evidenceTypes, reviewSubjects } = readAll();
+  const target = reviewSubjects.find((item) => item.id === id);
+  if (!target) return;
+  if (isSequenceRuleReferenced(target, models, roles, 'requiredReviewRoles')) {
+    throw new Error('该评价主体已被能力模型引用，无法删除，可改为停用');
+  }
+  writeAll({
+    industries,
+    sequences,
+    roles,
+    models,
+    evidenceTypes,
+    reviewSubjects: reviewSubjects.filter((item) => item.id !== id),
   });
 }
 
