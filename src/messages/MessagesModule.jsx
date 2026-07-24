@@ -2294,7 +2294,7 @@ function MessagesModule({
                     <div className="messages-thread-header-main">
                       <div className="messages-thread-title-row">
                         <Avatar
-                          size={38}
+                          size={32}
                           src={selectedConversation.avatarImage || undefined}
                           style={getAvatarStyle(selectedConversation.avatarColor)}
                         >
@@ -2323,7 +2323,7 @@ function MessagesModule({
                   <div className="messages-thread-header-main">
                     <div className="messages-thread-title-row">
                       <Avatar
-                        size={38}
+                        size={32}
                         src={selectedConversation.avatarImage || undefined}
                         style={getAvatarStyle(selectedConversation.avatarColor)}
                       >
