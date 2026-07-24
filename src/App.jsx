@@ -11,6 +11,7 @@ import {
   ThunderboltOutlined,
   RobotOutlined,
   BarChartOutlined,
+  BranchesOutlined,
   CloudOutlined,
   BookOutlined,
   AuditOutlined,
@@ -342,6 +343,7 @@ const iconBarAccentColorMap = Object.freeze({
   'teacher-evaluation-schemes': '#8b5cf6',
   'teacher-evaluation': '#ef4444',
   'capability-model': '#0f766e',
+  'industry-roles': '#0891b2',
   'solution-management': '#4f46e5',
   'package-management': '#7c3aed',
   'tenant-management': '#0f766e',
@@ -410,6 +412,7 @@ const baseIconBarItems = [
   { key: 'teacher-evaluation-schemes', icon: <FileTextOutlined />, label: '评价方案' },
   { key: 'teacher-evaluation', icon: <AuditOutlined />, label: '教师评价' },
   { key: 'capability-model', icon: <AppstoreOutlined />, label: '能力模型' },
+  { key: 'industry-roles', icon: <BranchesOutlined />, label: '行业岗位' },
   { key: 'solution-management', icon: <AppstoreOutlined />, label: '解决方案' },
   { key: 'package-management', icon: <TagsOutlined />, label: '套餐管理' },
   { key: 'tenant-management', icon: <BankOutlined />, label: '租户管理' },
@@ -1441,6 +1444,8 @@ function App({ onLogout }) {
       setCurrentPage('teacher-evaluation');
     } else if (key === 'capability-model') {
       setCurrentPage('capability-model');
+    } else if (key === 'industry-roles') {
+      setCurrentPage('industry-roles');
     } else if (key === 'solution-management') {
       setCurrentPage('solution-management');
     } else if (key === 'package-management') {
@@ -1490,6 +1495,7 @@ function App({ onLogout }) {
       currentPage === 'teacher-evaluation-schemes' ||
       currentPage === 'teacher-evaluation' ||
       currentPage === 'capability-model' ||
+      currentPage === 'industry-roles' ||
       currentPage === 'solution-management' ||
       currentPage === 'package-management' ||
       currentPage === 'tenant-management' ||
@@ -1808,7 +1814,9 @@ function App({ onLogout }) {
       ) : currentPage === 'teacher-evaluation' ? (
         <TeacherEvaluationModule initialContext={teacherEvaluationEntryContext} onNavigateToMyProfile={openMyProfilePage} />
       ) : currentPage === 'capability-model' ? (
-        <CapabilityModelModule />
+        <CapabilityModelModule key="capability-model-module" />
+      ) : currentPage === 'industry-roles' ? (
+        <CapabilityModelModule key="industry-roles-module" mode="industryRoles" />
       ) : currentPage === 'solution-management' ? (
         <SolutionPrototypeModule />
       ) : currentPage === 'package-management' ? (

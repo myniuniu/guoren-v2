@@ -541,8 +541,10 @@ export default function CapabilityModelModule({
   entryModelId = null,
   entryMode = 'preview',
   entryRequestId = null,
+  mode = 'models',
 }) {
-  const [activeTab, setActiveTab] = useState('models');
+  const isIndustryRolesModule = mode === 'industryRoles';
+  const [activeTab, setActiveTab] = useState(isIndustryRolesModule ? 'resources' : 'models');
   const [loading, setLoading] = useState(true);
   const [industries, setIndustries] = useState([]);
   const [sequences, setSequences] = useState([]);
@@ -1901,29 +1903,41 @@ export default function CapabilityModelModule({
     </div>
   );
 
+  const moduleTitle = isIndustryRolesModule ? '行业岗位' : '能力模型';
+  const moduleSubtitle = isIndustryRolesModule
+    ? '维护行业、能力序列与岗位基础数据，为能力模型提供配置来源'
+    : '构建覆盖基础教育、职业教育、高等教育等场景的能力模型框架与模板';
+  const moduleBodyContent = isIndustryRolesModule ? resourceTabContent : modelTabContent;
+
   return (
-    <div className="sys-module capability-model-module">
+    <div className={`sys-module capability-model-module ${isIndustryRolesModule ? 'cap-model-industry-role-module' : ''}`}>
       <div className="sys-module-header">
         <div>
-          <span className="sys-module-header-title">能力模型</span>
-          <span className="sys-module-header-subtitle">构建覆盖基础教育、职业教育、高等教育等场景的能力模型框架与模板</span>
+          <span className="sys-module-header-title">{moduleTitle}</span>
+          <span className="sys-module-header-subtitle">{moduleSubtitle}</span>
         </div>
         <Space>
           <Button icon={<ReloadOutlined />} onClick={() => loadAllData(false)}>刷新数据</Button>
-          <Button icon={<ImportOutlined />} onClick={openImportModal}>导入模型</Button>
-          <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModel}>新建模型</Button>
+          {!isIndustryRolesModule ? (
+            <>
+              <Button icon={<ImportOutlined />} onClick={openImportModal}>导入模型</Button>
+              <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModel}>新建模型</Button>
+            </>
+          ) : null}
         </Space>
       </div>
 
       <div className="sys-module-body">
-        <Tabs
-          activeKey={activeTab}
-          onChange={setActiveTab}
-          items={[
-            { key: 'models', label: '模型库', children: modelTabContent },
-            { key: 'resources', label: '行业岗位', children: resourceTabContent },
-          ]}
-        />
+        {mode === 'all' ? (
+          <Tabs
+            activeKey={activeTab}
+            onChange={setActiveTab}
+            items={[
+              { key: 'models', label: '模型库', children: modelTabContent },
+              { key: 'resources', label: '行业岗位', children: resourceTabContent },
+            ]}
+          />
+        ) : moduleBodyContent}
       </div>
 
       <Drawer
