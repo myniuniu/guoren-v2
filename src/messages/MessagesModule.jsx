@@ -639,7 +639,7 @@ function MessagesModule({
   onUnreadCountChange,
 }) {
   const [conversations, setConversations] = useState(() => getInitialConversations(initialConversationId));
-  const [selectedId, setSelectedId] = useState(initialConversationId || 'topic-genai');
+  const [selectedId, setSelectedId] = useState(initialConversationId || null);
   const [drafts, setDrafts] = useState({});
   const [expandedTopicPosts, setExpandedTopicPosts] = useState({});
   const [activeTopicThread, setActiveTopicThread] = useState(null);
@@ -672,8 +672,9 @@ function MessagesModule({
     startWidth: DEFAULT_SIDEBAR_WIDTH,
   });
 
-  const selectedConversation =
-    conversations.find((item) => item.id === selectedId) || conversations[0] || null;
+  const selectedConversation = selectedId
+    ? conversations.find((item) => item.id === selectedId) || null
+    : null;
   const selectedMeta = selectedConversation ? TYPE_META[selectedConversation.type] : null;
   const activeConversationId = selectedConversation?.id || '';
   const activeTopicThreadPost = selectedConversation?.type === 'topic'
@@ -2280,9 +2281,10 @@ function MessagesModule({
         onKeyDown={handleSidebarResizeKeyDown}
       />
 
-      <section className="messages-content">
-        {selectedConversation ? (
-          <div className="messages-thread-panel">
+      <section className={`messages-content ${selectedConversation ? 'has-conversation' : 'is-empty'}`}>
+        <div className={`messages-thread-panel ${selectedConversation ? 'has-conversation' : 'is-empty'}`}>
+          {selectedConversation ? (
+            <>
             {selectedConversation.type === 'topic' ? (
               activeTopicThreadPost ? (
                 renderTopicThreadDetail(activeTopicThreadPost)
@@ -2468,12 +2470,13 @@ function MessagesModule({
                 </div>
               </div>
             </footer>
-          </div>
-        ) : (
-          <div className="messages-thread-empty">
-            <Empty description="请选择左侧会话" />
-          </div>
-        )}
+            </>
+          ) : (
+            <div className="messages-thread-empty">
+              <Empty description="请选择左侧会话" />
+            </div>
+          )}
+        </div>
       </section>
       {groupCreateModal}
       {groupAvatarModal}
