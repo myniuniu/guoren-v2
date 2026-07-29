@@ -7,6 +7,7 @@ import {
   Input,
   Modal,
   Popconfirm,
+  Progress,
   Select,
   Space,
   Switch,
@@ -16,17 +17,28 @@ import {
   message,
 } from 'antd';
 import {
+  AppstoreOutlined,
+  ArrowLeftOutlined,
   BankOutlined,
+  CalendarOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  ClusterOutlined,
   CopyOutlined,
+  DatabaseOutlined,
   DeleteOutlined,
   EditOutlined,
+  FileTextOutlined,
   GlobalOutlined,
   LoginOutlined,
   MobileOutlined,
   PlusOutlined,
+  RocketOutlined,
   SearchOutlined,
   SafetyCertificateOutlined,
   SettingOutlined,
+  TeamOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons';
 import {
   LOGIN_ACCENT_OPTIONS,
@@ -35,6 +47,7 @@ import {
   createLoginConfig,
   getLoginConfigFromSolutionNames,
 } from '../shared/loginPageConfig';
+import { SOLUTION_SHOWROOM_ROOMS } from '../solutionShowroom/showroomData';
 import './TenantPrototypeModule.css';
 
 const { TextArea } = Input;
@@ -155,6 +168,50 @@ const PACKAGE_CATALOG = [
       'Office 文档模块：可编辑',
       '知识空间模块：知识空间 120，图谱绑定 60',
       '证书模块：模板 80，月发放 200,000',
+    ],
+  },
+  {
+    id: 'pkg-creator',
+    name: '创作中心版套餐',
+    code: 'PKG-CREATOR',
+    price: 68000,
+    cycle: '季度',
+    version: 'v1.0',
+    solutionNames: ['AI 课程创作中心方案'],
+    userLimit: 300,
+    adminLimit: 12,
+    departmentLimit: 24,
+    spaceLimit: 80,
+    storageLimitGb: 2000,
+    moduleNames: ['课程创作模块', '资料库模块', 'Office 文档模块', 'Lucky 模块', '知识空间模块', '任务模块'],
+    resourceSummary: [
+      '课程创作模块：项目 80，课时生成 2,000，发布包 200',
+      '资料库模块：容量 2000GB，AI 解析 20,000 次/月',
+      'Lucky 模块：技能 50，智能体 20，月调用 180,000',
+      'Office 文档模块：可编辑，支持审校协同',
+      '知识空间模块：知识空间 60，图谱绑定 30',
+    ],
+  },
+  {
+    id: 'pkg-enterprise-growth',
+    name: '企业增长版套餐',
+    code: 'PKG-GROWTH',
+    price: 96000,
+    cycle: '年',
+    version: 'v1.0',
+    solutionNames: ['企业 AI 内训增长方案'],
+    userLimit: 1800,
+    adminLimit: 40,
+    departmentLimit: 120,
+    spaceLimit: 260,
+    storageLimitGb: 3000,
+    moduleNames: ['空间模块', 'Lucky 模块', '能力模型模块', '任务模块', '积分模块', '资料库模块', '教师评价模块'],
+    resourceSummary: [
+      '空间模块：最大空间 260，单空间成员 600，支持自定义创建场景',
+      'Lucky 模块：技能 80，智能体 30，月调用 260,000',
+      '能力模型模块：岗位模型 80，能力指标 2,000',
+      '任务模块：任务包 500，提醒策略 20',
+      '积分模块：积分规则 60，兑换权益 200',
     ],
   },
 ];
@@ -281,6 +338,74 @@ const INITIAL_TENANTS = [
       enabled: false,
     }),
   },
+  {
+    id: 'tenant-course-studio',
+    name: '南山课程创新工坊',
+    code: 'TENANT-COURSE-STUDIO',
+    status: 'ACTIVE',
+    type: 'ENTERPRISE',
+    industry: '教育科技',
+    region: '深圳',
+    contactName: '赵可',
+    contactPhone: '137-0000-8812',
+    packageId: 'pkg-creator',
+    serviceStart: '2026-03-01',
+    serviceEnd: '2027-02-28',
+    serviceStatus: 'ACTIVE',
+    successOwner: '赵可',
+    remark: 'AI 课程创作中心方案样板租户。',
+    updatedAt: '2026-07-12 11:08',
+    loginConfigSource: getInheritedLoginConfigFromPackage('pkg-creator').sourceSolutionName,
+    loginConfig: getInheritedLoginConfigFromPackage('pkg-creator').loginConfig,
+    domainConfig: createDomainConfig('TENANT-COURSE-STUDIO', {
+      domains: [
+        {
+          id: 'domain-course-studio-login',
+          domain: 'course-studio.demo.guoren.ai',
+          status: 'VERIFIED',
+          sslStatus: 'ISSUED',
+          cnameTarget: 'tenant-course-studio.tenant.guoren.ai',
+          verifyName: '_gr_verify.course-studio.demo.guoren.ai',
+          verifyValue: 'gr-site-verification=tenant-course-studio',
+          remark: '课程创作样板入口',
+        },
+      ],
+    }),
+  },
+  {
+    id: 'tenant-enterprise-growth',
+    name: '星河制造学习中心',
+    code: 'TENANT-ENTERPRISE-GROWTH',
+    status: 'ACTIVE',
+    type: 'ENTERPRISE',
+    industry: '先进制造',
+    region: '苏州',
+    contactName: '刘航',
+    contactPhone: '136-0000-6621',
+    packageId: 'pkg-enterprise-growth',
+    serviceStart: '2026-04-15',
+    serviceEnd: '2027-04-14',
+    serviceStatus: 'ACTIVE',
+    successOwner: '周明',
+    remark: '企业 AI 内训增长方案行业样板租户。',
+    updatedAt: '2026-07-13 15:36',
+    loginConfigSource: getInheritedLoginConfigFromPackage('pkg-enterprise-growth').sourceSolutionName,
+    loginConfig: getInheritedLoginConfigFromPackage('pkg-enterprise-growth').loginConfig,
+    domainConfig: createDomainConfig('TENANT-ENTERPRISE-GROWTH', {
+      domains: [
+        {
+          id: 'domain-growth-login',
+          domain: 'growth.demo.guoren.ai',
+          status: 'VERIFIED',
+          sslStatus: 'ISSUED',
+          cnameTarget: 'tenant-enterprise-growth.tenant.guoren.ai',
+          verifyName: '_gr_verify.growth.demo.guoren.ai',
+          verifyValue: 'gr-site-verification=tenant-enterprise-growth',
+          remark: '企业内训样板入口',
+        },
+      ],
+    }),
+  },
 ];
 
 function nowText() {
@@ -307,7 +432,19 @@ function getPackageById(packageId) {
   return PACKAGE_CATALOG.find((item) => item.id === packageId) || null;
 }
 
-function TenantPrototypeModule() {
+function getShowroomModuleIcon(moduleName) {
+  if (moduleName.includes('Lucky') || moduleName.includes('AI')) return <ThunderboltOutlined />;
+  if (moduleName.includes('资料')) return <DatabaseOutlined />;
+  if (moduleName.includes('知识')) return <ClusterOutlined />;
+  if (moduleName.includes('日程')) return <CalendarOutlined />;
+  if (moduleName.includes('任务')) return <CheckCircleOutlined />;
+  if (moduleName.includes('证书') || moduleName.includes('评价')) return <SafetyCertificateOutlined />;
+  if (moduleName.includes('课程') || moduleName.includes('Office')) return <FileTextOutlined />;
+  if (moduleName.includes('研讨') || moduleName.includes('积分')) return <TeamOutlined />;
+  return <AppstoreOutlined />;
+}
+
+function TenantPrototypeModule({ showroomEntry = null, onBackToShowroom }) {
   const [tenants, setTenants] = useState(INITIAL_TENANTS);
   const [keyword, setKeyword] = useState('');
   const [statusFilter, setStatusFilter] = useState(undefined);
@@ -332,6 +469,16 @@ function TenantPrototypeModule() {
     () => getPackageById(activeTenant?.packageId),
     [activeTenant],
   );
+
+  const activeShowroom = useMemo(() => {
+    if (!showroomEntry) return null;
+    return SOLUTION_SHOWROOM_ROOMS.find((item) => item.id === showroomEntry.id) || showroomEntry;
+  }, [showroomEntry]);
+
+  const showroomTenant = useMemo(() => {
+    if (!activeShowroom?.tenantId) return null;
+    return tenants.find((item) => item.id === activeShowroom.tenantId) || null;
+  }, [activeShowroom, tenants]);
 
   const filteredTenants = useMemo(() => {
     const normalized = keyword.trim().toLowerCase();
@@ -989,9 +1136,8 @@ function TenantPrototypeModule() {
       <Drawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        width="min(1080px, 96vw)"
+        size="min(1080px, 96vw)"
         title={null}
-        destroyOnClose={false}
       >
         <div className="tenant-drawer-head">
           <div className="tenant-drawer-title-wrap">
@@ -1139,6 +1285,229 @@ function TenantPrototypeModule() {
     );
   };
 
+  const openShowroomTenantConfig = () => {
+    if (!showroomTenant) {
+      message.warning('未找到关联租户');
+      return;
+    }
+    setActiveTenantId(showroomTenant.id);
+    setActiveTenantConfigKey('login');
+    setDrawerOpen(true);
+  };
+
+  const renderShowroomTenantPage = () => {
+    const tenant = showroomTenant || {};
+    const packageItem = getPackageById(tenant.packageId || activeShowroom.packageId);
+    const loginConfig = createLoginConfig({
+      ...(activeShowroom.loginConfig || {}),
+      ...(tenant.loginConfig || {}),
+    });
+    const domainConfig = tenant.code
+      ? {
+          ...createDomainConfig(tenant.code),
+          ...(tenant.domainConfig || {}),
+        }
+      : null;
+    const primaryDomain = domainConfig?.domains?.[0]?.domain || activeShowroom.domain;
+    const tenantDisplayName = tenant.name || activeShowroom.tenantName;
+    const tenantDisplayCode = tenant.code || activeShowroom.tenantCode;
+    const servicePeriod = tenant.serviceStart && tenant.serviceEnd
+      ? `${tenant.serviceStart} 至 ${tenant.serviceEnd}`
+      : '样板服务周期';
+
+    return (
+      <div className="tenant-prototype-module tenant-showroom-page" style={{ '--tenant-showroom-accent': activeShowroom.accent }}>
+        <div className="tenant-showroom-header">
+          <div className="tenant-showroom-head-actions">
+            <Button icon={<ArrowLeftOutlined />} onClick={onBackToShowroom}>
+              返回门户
+            </Button>
+            <Button type="primary" icon={<SettingOutlined />} onClick={openShowroomTenantConfig} disabled={!showroomTenant}>
+              租户配置
+            </Button>
+          </div>
+
+          <div className="tenant-showroom-title-block">
+            <div className="tenant-showroom-eyebrow">
+              <RocketOutlined />
+              <span>{activeShowroom.stage}</span>
+            </div>
+            <h1>{tenantDisplayName}</h1>
+            <p>{activeShowroom.description}</p>
+            <Space wrap className="tenant-showroom-tags">
+              <Tag color="blue">{activeShowroom.solutionName}</Tag>
+              <Tag>{activeShowroom.scenario}</Tag>
+              <Tag>{activeShowroom.region} · {activeShowroom.industry}</Tag>
+              {renderStatusTag(TENANT_STATUS_OPTIONS, tenant.status || 'ACTIVE')}
+            </Space>
+          </div>
+
+          <div className="tenant-showroom-identity">
+            <div>
+              <span>租户编码</span>
+              <strong>{tenantDisplayCode}</strong>
+            </div>
+            <div>
+              <span>访问域名</span>
+              <strong title={primaryDomain}>{primaryDomain}</strong>
+            </div>
+            <div>
+              <span>客户成功</span>
+              <strong>{tenant.successOwner || activeShowroom.owner}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div className="tenant-showroom-summary">
+          {activeShowroom.tenantKpis.map((item) => (
+            <div key={item.label} className="tenant-showroom-kpi">
+              <span>{item.label}</span>
+              <strong>{item.value}</strong>
+              <small>{item.trend}</small>
+            </div>
+          ))}
+        </div>
+
+        <div className="tenant-showroom-layout">
+          <section className="tenant-showroom-panel tenant-showroom-panel-main">
+            <div className="tenant-showroom-panel-head">
+              <div>
+                <span>解决方案承载</span>
+                <h2>{activeShowroom.signal}</h2>
+              </div>
+              <Tag color="purple">{packageItem?.name || activeShowroom.packageName}</Tag>
+            </div>
+
+            <div className="tenant-showroom-module-grid">
+              {activeShowroom.modules.map((moduleName) => (
+                <div key={moduleName} className="tenant-showroom-module">
+                  <span className="tenant-showroom-module-icon">{getShowroomModuleIcon(moduleName)}</span>
+                  <strong>{moduleName}</strong>
+                  <small>已纳入样板租户</small>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <aside className="tenant-showroom-panel tenant-showroom-side">
+            <div className="tenant-showroom-panel-head">
+              <div>
+                <span>服务权益</span>
+                <h2>{packageItem?.code || activeShowroom.packageCode}</h2>
+              </div>
+            </div>
+            <div className="tenant-showroom-quota-list">
+              <div>
+                <span>服务周期</span>
+                <strong>{servicePeriod}</strong>
+              </div>
+              <div>
+                <span>成员上限</span>
+                <strong>{packageItem?.userLimit || '-'}</strong>
+              </div>
+              <div>
+                <span>空间上限</span>
+                <strong>{packageItem?.spaceLimit || '-'}</strong>
+              </div>
+              <div>
+                <span>存储上限</span>
+                <strong>{packageItem ? `${packageItem.storageLimitGb} GB` : '-'}</strong>
+              </div>
+            </div>
+          </aside>
+
+          <section className="tenant-showroom-panel">
+            <div className="tenant-showroom-panel-head">
+              <div>
+                <span>运营流程</span>
+                <h2>{activeShowroom.scenario}落地路径</h2>
+              </div>
+            </div>
+            <div className="tenant-showroom-flow">
+              {activeShowroom.workflow.map((step, index) => (
+                <div key={step} className="tenant-showroom-flow-step">
+                  <span>{String(index + 1).padStart(2, '0')}</span>
+                  <strong>{step}</strong>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="tenant-showroom-panel tenant-showroom-ops">
+            <div className="tenant-showroom-panel-head">
+              <div>
+                <span>运营待办</span>
+                <h2>当前租户信号</h2>
+              </div>
+              <ClockCircleOutlined />
+            </div>
+            <div className="tenant-showroom-operation-list">
+              {activeShowroom.operations.map((item) => (
+                <div key={item.label}>
+                  <span>{item.label}</span>
+                  <strong>{item.value}</strong>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="tenant-showroom-panel tenant-showroom-login-panel">
+            <div className="tenant-showroom-panel-head">
+              <div>
+                <span>入口体验</span>
+                <h2>{loginConfig.platformName}</h2>
+              </div>
+              <LoginOutlined />
+            </div>
+            <div className="tenant-showroom-login-preview" style={{ '--tenant-showroom-accent': loginConfig.accentColor || activeShowroom.accent }}>
+              <div>
+                <span>{loginConfig.welcomeText}</span>
+                <strong>{loginConfig.heroTitle}</strong>
+                <small>{loginConfig.heroSubtitle}</small>
+              </div>
+              <div className="tenant-showroom-login-box">
+                <span>{loginConfig.defaultMethod === 'account' ? '账号密码登录' : '手机号登录'}</span>
+                <i />
+                <i className="is-short" />
+                <b>立即登录</b>
+              </div>
+            </div>
+          </section>
+
+          <section className="tenant-showroom-panel tenant-showroom-health">
+            <div className="tenant-showroom-panel-head">
+              <div>
+                <span>样板健康度</span>
+                <h2>交付状态</h2>
+              </div>
+              <CheckCircleOutlined />
+            </div>
+            <div className="tenant-showroom-health-list">
+              <div>
+                <span>方案开通度</span>
+                <Progress percent={96} showInfo={false} strokeColor={activeShowroom.accent} />
+              </div>
+              <div>
+                <span>运营活跃度</span>
+                <Progress percent={88} showInfo={false} strokeColor="#0f766e" />
+              </div>
+              <div>
+                <span>资源沉淀度</span>
+                <Progress percent={92} showInfo={false} strokeColor="#f97316" />
+              </div>
+            </div>
+          </section>
+        </div>
+
+        {renderDrawer()}
+      </div>
+    );
+  };
+
+  if (activeShowroom) {
+    return renderShowroomTenantPage();
+  }
+
   return (
     <div className="tenant-prototype-module">
       <div className="tenant-page-header">
@@ -1223,7 +1592,7 @@ function TenantPrototypeModule() {
         onOk={handleCreateTenant}
         okText="创建"
         width={760}
-        destroyOnClose
+        destroyOnHidden
       >
         <div className="tenant-create-grid">
           <label>
