@@ -1,0 +1,1044 @@
+{"kind":"deck","id":"pr/3u6l7b","name":"Deck"}
+{"kind":"layout","layoutId":"/ppt/slideMasters/slideMaster1.xml","name":"","type":"master"}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout1.xml","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/y90nupkv","slide":1,"title":"培训平台建设方案","textShapes":6}
+{"kind":"textbox","id":"sh/wn6dc7eh","slide":1,"name":"cover-title","text":"培训平台建设方案","textPreview":"培训平台建设方案","textChars":8,"textLines":1,"bbox":[58,92,690,82]}
+{"kind":"textbox","id":"sh/k3yl0zql","slide":1,"name":"cover-body","text":"第一部分讲培训平台如何组织培训、评估、档案和推荐；第二部分讲果仁 AI 原生底座如何通过 Lucky智能体、资料库、空间、场景模板和模型统计为系统赋能。","textPreview":"第一部分讲培训平台如何组织培训、评估、档案和推荐；第二部分讲果仁 AI 原生底座如何通过 Lucky智能体、资料库、空间、场景模板和模型统计为系统赋能。","textChars":76,"textLines":1,"bbox":[64,225,700,120]}
+{"kind":"shape","id":"sh/7qp4be9c","slide":1,"name":"right-panel","bbox":[864,82,374,501]}
+{"kind":"textbox","id":"sh/65g3298r","slide":1,"name":"part1","text":"Part 01\n培训平台本体","textPreview":"Part 01 | 培训平台本体","textChars":14,"textLines":2,"bbox":[902,138,294,94]}
+{"kind":"shape","id":"sh/ts7md4r2","slide":1,"name":"rail-line","bbox":[902,284,286,2]}
+{"kind":"textbox","id":"sh/sryl4zqx","slide":1,"name":"part2","text":"Part 02\nAI 原生底座赋能","textPreview":"Part 02 | AI 原生底座赋能","textChars":17,"textLines":2,"bbox":[902,335,294,110]}
+{"kind":"textbox","id":"sh/fu94fe98","slide":1,"name":"tag","text":"从业务闭环到智能底座","textPreview":"从业务闭环到智能底座","textChars":10,"textLines":1,"bbox":[902,510,294,34]}
+{"kind":"textbox","id":"sh/utg3698n","slide":1,"name":"global-page","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"notes","id":"nt/y90nupkv","slide":1,"text":""}
+{"kind":"slide","id":"sl/hwbqtkby","slide":2,"title":"培训平台整体建设方案","textShapes":18}
+{"kind":"textbox","id":"sh/9072xkry","slide":2,"name":"title","text":"培训平台整体建设方案","textPreview":"培训平台整体建设方案","textChars":10,"textLines":1,"bbox":[42,88,1040,66]}
+{"kind":"shape","id":"sh/ozy1ofad","slide":2,"name":"rule","bbox":[42,164.47,1196,1.5]}
+{"kind":"shape","id":"sh/b29kza94","slide":2,"name":"left","bbox":[84,228,500,158]}
+{"kind":"textbox","id":"sh/a10jqpsj","slide":2,"name":"label1","text":"第一部分","textPreview":"第一部分","textChars":4,"textLines":1,"bbox":[120,256,160,26]}
+{"kind":"textbox","id":"sh/x4r21kru","slide":2,"name":"head1","text":"培训平台建设方案","textPreview":"培训平台建设方案","textChars":8,"textLines":1,"bbox":[120,290,428,34]}
+{"kind":"textbox","id":"sh/w3i1sfa9","slide":2,"name":"body1","text":"说明平台的业务闭环、子系统职责、核心模块、数据流转、建设阶段和预期成效。","textPreview":"说明平台的业务闭环、子系统职责、核心模块、数据流转、建设阶段和预期成效。","textChars":36,"textLines":1,"bbox":[120,336,428,42]}
+{"kind":"shape","id":"sh/r65knqtk","slide":2,"name":"right","bbox":[696,228,500,158]}
+{"kind":"textbox","id":"sh/q5wjelsz","slide":2,"name":"label2","text":"第二部分","textPreview":"第二部分","textChars":4,"textLines":1,"bbox":[732,256,160,26]}
+{"kind":"textbox","id":"sh/ove9o7yd","slide":2,"name":"head2","text":"AI 原生底座赋能方案","textPreview":"AI 原生底座赋能方案","textChars":11,"textLines":1,"bbox":[732,290,428,34]}
+{"kind":"textbox","id":"sh/9wnqhczy","slide":2,"name":"body2","text":"说明 AI 原生底座如何横向赋能培训信息、研修活动、培训评估、教师档案和用户推荐。","textPreview":"说明 AI 原生底座如何横向赋能培训信息、研修活动、培训评估、教师档案和用户推荐。","textChars":41,"textLines":1,"bbox":[732,336,428,42]}
+{"kind":"textbox","id":"sh/nu58f2hs","slide":2,"name":"global-page","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"shape","id":"sh/wjy9sry9","slide":2,"name":"agenda-card-3","bbox":[84,430,500,158]}
+{"kind":"textbox","id":"sh/xk7qlczu","slide":2,"name":"agenda-label-3","text":"第三部分","textPreview":"第三部分","textChars":4,"textLines":1,"bbox":[120,458,160,26]}
+{"kind":"textbox","id":"sh/ahwrqhgj","slide":2,"name":"agenda-head-3","text":"基于 AI 原生底座开发模式的特点","textPreview":"基于 AI 原生底座开发模式的特点","textChars":17,"textLines":1,"bbox":[120,492,428,34]}
+{"kind":"textbox","id":"sh/bip8jmho","slide":2,"name":"agenda-body-3","text":"说明快速迭代、三层协同和实践验证，呈现 AI 原生开发模式的交付优势。","textPreview":"说明快速迭代、三层协同和实践验证，呈现 AI 原生开发模式的交付优势。","textChars":35,"textLines":1,"bbox":[120,538,428,42]}
+{"kind":"shape","id":"sh/cnupgny5","slide":2,"name":"agenda-card-4","bbox":[696,430,500,158]}
+{"kind":"textbox","id":"sh/do3q9szq","slide":2,"name":"agenda-label-4","text":"第四部分","textPreview":"第四部分","textChars":4,"textLines":1,"bbox":[732,458,160,26]}
+{"kind":"textbox","id":"sh/t8byxkn2","slide":2,"name":"agenda-head-4","text":"平台关系与产品化判断","textPreview":"平台关系与产品化判断","textChars":10,"textLines":1,"bbox":[732,492,428,34]}
+{"kind":"textbox","id":"sh/s72xofmh","slide":2,"name":"agenda-body-4","text":"说明三个平台关系、底座构建逻辑，以及 AI 时代产品矩阵快速迭代的核心判断。","textPreview":"说明三个平台关系、底座构建逻辑，以及 AI 时代产品矩阵快速迭代的核心判断。","textChars":38,"textLines":1,"bbox":[732,538,428,42]}
+{"kind":"shape","id":"sh/76twva5c","slide":2,"name":"agenda-page-pill-1","bbox":[472,254,76,28]}
+{"kind":"textbox","id":"sh/65kfmpor","slide":2,"name":"agenda-page-text-1","text":"P03-P15","textPreview":"P03-P15","textChars":7,"textLines":1,"bbox":[482,259,56,18]}
+{"kind":"shape","id":"sh/hcvy14ne","slide":2,"name":"agenda-page-pill-2","bbox":[1084,254,76,28]}
+{"kind":"textbox","id":"sh/gbmxszmt","slide":2,"name":"agenda-page-text-2","text":"P16-P27","textPreview":"P16-P27","textChars":7,"textLines":1,"bbox":[1094,259,56,18]}
+{"kind":"shape","id":"sh/fadgzu58","slide":2,"name":"agenda-page-pill-3","bbox":[472,456,76,28]}
+{"kind":"textbox","id":"sh/u94fqp4n","slide":2,"name":"agenda-page-text-3","text":"P28-P31","textPreview":"P28-P31","textChars":7,"textLines":1,"bbox":[482,461,56,18]}
+{"kind":"shape","id":"sh/p0vy54na","slide":2,"name":"agenda-page-pill-4","bbox":[1084,456,76,28]}
+{"kind":"textbox","id":"sh/4zmxwzmp","slide":2,"name":"agenda-page-text-4","text":"P32-P34","textPreview":"P32-P34","textChars":7,"textLines":1,"bbox":[1094,461,56,18]}
+{"kind":"notes","id":"nt/hwbqtkby","slide":2,"text":""}
+{"kind":"slide","id":"sl/ofy9wn61","slide":3,"title":"Part 01","textShapes":5}
+{"kind":"textbox","id":"sh/pcjqtg36","slide":3,"name":"part","text":"Part 01","textPreview":"Part 01","textChars":7,"textLines":1,"bbox":[58,82,300,42]}
+{"kind":"textbox","id":"sh/cza94vmx","slide":3,"name":"section-title","text":"培训平台建设方案","textPreview":"培训平台建设方案","textChars":8,"textLines":1,"bbox":[58,178,850,82]}
+{"kind":"textbox","id":"sh/d0jax03i","slide":3,"name":"section-subtitle","text":"围绕培训组织、研修活动、培训评估、教师档案和用户推荐，形成一体化业务闭环。","textPreview":"围绕培训组织、研修活动、培训评估、教师档案和用户推荐，形成一体化业务闭环。","textChars":37,"textLines":1,"bbox":[62,310,943.8,82]}
+{"kind":"shape","id":"sh/298ryl4v","slide":3,"name":"section-line","bbox":[62,486,630,2]}
+{"kind":"textbox","id":"sh/3ah8rqlg","slide":3,"name":"keywords","text":"培训信息 / 研修活动 / 培训评估 / 教师档案 / 用户推荐","textPreview":"培训信息 / 研修活动 / 培训评估 / 教师档案 / 用户推荐","textChars":32,"textLines":1,"bbox":[62,524,780,34]}
+{"kind":"textbox","id":"sh/obq90bml","slide":3,"name":"global-page","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"notes","id":"nt/ofy9wn61","slide":3,"text":""}
+{"kind":"slide","id":"sl/jyx0ra1s","slide":4,"title":"培训业务需要从活动组织升级为持续发展服务","textShapes":13}
+{"kind":"textbox","id":"sh/1cj2d8b6","slide":4,"name":"slide-title","text":"培训业务需要从活动组织升级为持续发展服务","textPreview":"培训业务需要从活动组织升级为持续发展服务","textChars":20,"textLines":1,"bbox":[42,78,1110,72]}
+{"kind":"shape","id":"sh/0ba143al","slide":4,"name":"title-rule","bbox":[42,158,1196,1.2]}
+{"kind":"textbox","id":"sh/rm1k7yt4","slide":4,"name":"lead","text":"传统培训管理以报名、签到、学习统计为主，难以完整呈现教师的参与表现、成果质量和后续发展需求。培训平台要把一次性活动转化为可追踪、可评价、可沉淀、可推荐的业务闭环。","textPreview":"传统培训管理以报名、签到、学习统计为主，难以完整呈现教师的参与表现、成果质量和后续发展需求。培训平台要把一次性活动转化为可追踪、可评价、可沉淀、可推荐的业务闭环。","textChars":81,"textLines":1,"bbox":[46,190,1140,78]}
+{"kind":"shape","id":"sh/ql8jytsj","slide":4,"name":"card-过程难追踪","bbox":[42,320,360,176]}
+{"kind":"shape","id":"sh/doj29oba","slide":4,"name":"num-01","bbox":[64,342,34,34]}
+{"kind":"textbox","id":"sh/sna103ap","slide":4,"name":"num-text-01","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[64,346,34,24]}
+{"kind":"textbox","id":"sh/3ihk3et8","slide":4,"name":"card-title-过程难追踪","text":"过程难追踪","textPreview":"过程难追踪","textChars":5,"textLines":1,"bbox":[112,342,268,34]}
+{"kind":"textbox","id":"sh/ih8ju9sn","slide":4,"name":"card-body-过程难追踪","text":"线上线下活动分散，学习、互动、任务和成果数据缺少统一归集。","textPreview":"线上线下活动分散，学习、互动、任务和成果数据缺少统一归集。","textChars":29,"textLines":1,"bbox":[112,386,268,90]}
+{"kind":"shape","id":"sh/kbm987y5","slide":4,"name":"card-评价难统一","bbox":[460,320,360,176]}
+{"kind":"shape","id":"sh/5cva1cfq","slide":4,"name":"num-02","bbox":[482,342,34,34]}
+{"kind":"textbox","id":"sh/i94r6xgz","slide":4,"name":"num-text-02","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[482,346,34,24]}
+{"kind":"textbox","id":"sh/jadsz2xk","slide":4,"name":"card-title-评价难统一","text":"评价难统一","textPreview":"评价难统一","textChars":5,"textLines":1,"bbox":[530,342,268,34]}
+{"kind":"textbox","id":"sh/w72947yt","slide":4,"name":"card-body-评价难统一","text":"不同项目评价口径不一致，过程表现和成果质量难以综合呈现。","textPreview":"不同项目评价口径不一致，过程表现和成果质量难以综合呈现。","textChars":28,"textLines":1,"bbox":[530,386,268,90]}
+{"kind":"shape","id":"sh/x8vaxsfe","slide":4,"name":"card-发展难延续","bbox":[878,320,360,176]}
+{"kind":"shape","id":"sh/a5kr2xg3","slide":4,"name":"num-03","bbox":[900,342,34,34]}
+{"kind":"textbox","id":"sh/v6tsv2xo","slide":4,"name":"num-text-03","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[900,346,34,24]}
+{"kind":"textbox","id":"sh/g36tgryd","slide":4,"name":"card-title-发展难延续","text":"发展难延续","textPreview":"发展难延续","textChars":5,"textLines":1,"bbox":[948,342,268,34]}
+{"kind":"textbox","id":"sh/h4fa9wfy","slide":4,"name":"card-body-发展难延续","text":"培训结束后缺少档案沉淀和个性化推荐，后续改进路径不清晰。","textPreview":"培训结束后缺少档案沉淀和个性化推荐，后续改进路径不清晰。","textChars":28,"textLines":1,"bbox":[948,386,268,90]}
+{"kind":"textbox","id":"sh/p0batw72","slide":4,"name":"bottom","text":"建设方向：统一平台入口 + 全过程数据 + 评价模型 + 教师档案 + 精准推荐","textPreview":"建设方向：统一平台入口 + 全过程数据 + 评价模型 + 教师档案 + 精准推荐","textChars":40,"textLines":1,"bbox":[50,566,1140,46]}
+{"kind":"textbox","id":"sh/oz29krqh","slide":4,"name":"page","text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"notes","id":"nt/jyx0ra1s","slide":4,"text":""}
+{"kind":"slide","id":"sl/i107q5of","slide":5,"title":"六个目标共同支撑培训平台的一体化能力","textShapes":20}
+{"kind":"textbox","id":"sh/dgbulwnm","slide":5,"name":"slide-title","text":"六个目标共同支撑培训平台的一体化能力","textPreview":"六个目标共同支撑培训平台的一体化能力","textChars":18,"textLines":1,"bbox":[42,78,1110,72]}
+{"kind":"shape","id":"sh/cf2tcr61","slide":5,"name":"title-rule","bbox":[42,158,1196,1.2]}
+{"kind":"shape","id":"sh/z2tcnm5s","slide":5,"name":"card-统一培训入口","bbox":[42,202,360,150]}
+{"kind":"shape","id":"sh/yhkbe1o7","slide":5,"name":"num-01","bbox":[64,224,34,34]}
+{"kind":"textbox","id":"sh/l4bupwny","slide":5,"name":"num-text-01","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[64,228,34,24]}
+{"kind":"textbox","id":"sh/032tgr6d","slide":5,"name":"card-title-统一培训入口","text":"统一培训入口","textPreview":"统一培训入口","textChars":6,"textLines":1,"bbox":[112,224,268,34]}
+{"kind":"textbox","id":"sh/n6dcr65o","slide":5,"name":"card-body-统一培训入口","text":"项目、课程、报名、审核、计划和人员组织集中管理。","textPreview":"项目、课程、报名、审核、计划和人员组织集中管理。","textChars":24,"textLines":1,"bbox":[112,268,268,64]}
+{"kind":"shape","id":"sh/m5kbi1oj","slide":5,"name":"card-贯通研修场景","bbox":[452,202,360,150]}
+{"kind":"shape","id":"sh/w32dkbuh","slide":5,"name":"num-02","bbox":[474,224,34,34]}
+{"kind":"textbox","id":"sh/x4vedgvm","slide":5,"name":"num-text-02","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[474,228,34,24]}
+{"kind":"textbox","id":"sh/ahkvi1cb","slide":5,"name":"card-title-贯通研修场景","text":"贯通研训场景\n（研训一体化）","textPreview":"贯通研训场景 | （研训一体化）","textChars":14,"textLines":2,"bbox":[522,222,300,62]}
+{"kind":"textbox","id":"sh/v2twb6dw","slide":5,"name":"card-body-贯通研修场景","text":"覆盖线上学习、线下工作坊、任务活动、课题研究和成果共创。","textPreview":"覆盖线上学习、线下工作坊、任务活动、课题研究和成果共创。","textChars":28,"textLines":1,"bbox":[488.8,291.93,300,52]}
+{"kind":"shape","id":"sh/k7mxovud","slide":5,"name":"card-建立评价模型","bbox":[862,202,360,150]}
+{"kind":"shape","id":"sh/58vehgvy","slide":5,"name":"num-03","bbox":[884,224,34,34]}
+{"kind":"textbox","id":"sh/i54fmlc7","slide":5,"name":"num-text-03","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[884,228,34,24]}
+{"kind":"textbox","id":"sh/j6dwfqds","slide":5,"name":"card-title-建立评价模型","text":"建立评价模型","textPreview":"建立评价模型","textChars":6,"textLines":1,"bbox":[932,224,268,34]}
+{"kind":"textbox","id":"sh/sb6xsvu9","slide":5,"name":"card-body-建立评价模型","text":"围绕参与度、完成度、学习表现、成果质量和专家评价形成综合评价。","textPreview":"围绕参与度、完成度、学习表现、成果质量和专家评价形成综合评价。","textChars":31,"textLines":1,"bbox":[932,268,268,64]}
+{"kind":"shape","id":"sh/tcfel0vu","slide":5,"name":"card-沉淀教师档案","bbox":[42,394,360,150]}
+{"kind":"shape","id":"sh/hgrmpwj2","slide":5,"name":"num-04","bbox":[64,416,34,34]}
+{"kind":"textbox","id":"sh/gfi5grih","slide":5,"name":"num-text-04","text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[64,420,34,24]}
+{"kind":"textbox","id":"sh/fe94nm1w","slide":5,"name":"card-title-沉淀教师档案","text":"沉淀教师档案","textPreview":"沉淀教师档案","textChars":6,"textLines":1,"bbox":[112,416,268,34]}
+{"kind":"textbox","id":"sh/ud0ne10b","slide":5,"name":"card-body-沉淀教师档案","text":"自动归集与手动上传培训记录、学习过程、成果材料、评价结果和成长轨迹。","textPreview":"自动归集与手动上传培训记录、学习过程、成果材料、评价结果和成长轨迹。","textChars":34,"textLines":1,"bbox":[112,458,292,76]}
+{"kind":"shape","id":"sh/pkr6tgjy","slide":5,"name":"card-支持个性推荐","bbox":[452,394,360,150]}
+{"kind":"shape","id":"sh/4ji5kbid","slide":5,"name":"num-05","bbox":[474,416,34,34]}
+{"kind":"textbox","id":"sh/3i94r61s","slide":5,"name":"num-text-05","text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[474,420,34,24]}
+{"kind":"textbox","id":"sh/2h0ni107","slide":5,"name":"card-title-支持个性推荐","text":"支持个性推荐","textPreview":"支持个性推荐","textChars":6,"textLines":1,"bbox":[522,416,268,34]}
+{"kind":"textbox","id":"sh/5o7mhcju","slide":5,"name":"card-body-支持个性推荐","text":"基于教师画像和评价结果推荐课程、活动、资源和发展路径。","textPreview":"基于教师画像和评价结果推荐课程、活动、资源和发展路径。","textChars":27,"textLines":1,"bbox":[522,460,268,64]}
+{"kind":"shape","id":"sh/kny587i9","slide":5,"name":"card-服务管理决策","bbox":[862,394,360,150]}
+{"kind":"shape","id":"sh/atcjidg7","slide":5,"name":"num-06","bbox":[884,416,34,34]}
+{"kind":"textbox","id":"sh/vu5kbihc","slide":5,"name":"num-text-06","text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[884,420,34,24]}
+{"kind":"textbox","id":"sh/wve1knyx","slide":5,"name":"card-title-服务管理决策","text":"服务管理决策","textPreview":"服务管理决策","textChars":6,"textLines":1,"bbox":[932,416,268,34]}
+{"kind":"textbox","id":"sh/xwn2dszi","slide":5,"name":"card-body-服务管理决策","text":"为管理部门、学校、培训机构和教师个人提供数据支撑。","textPreview":"为管理部门、学校、培训机构和教师个人提供数据支撑。","textChars":25,"textLines":1,"bbox":[932,460,268,64]}
+{"kind":"textbox","id":"sh/ihw3mxg3","slide":5,"name":"page","text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"notes","id":"nt/i107q5of","slide":5,"text":""}
+{"kind":"slide","id":"sl/x8f69ofe","slide":6,"title":"总体架构以子系统承载业务，以核心模块提供平台能力","textShapes":28}
+{"kind":"textbox","id":"sh/yhg7epsj","slide":6,"name":"slide-title","text":"总体架构以子系统承载业务，以核心模块提供平台能力","textPreview":"总体架构以子系统承载业务，以核心模块提供平台能力","textChars":24,"textLines":1,"bbox":[42,78,1110,72]}
+{"kind":"shape","id":"sh/zi98nu94","slide":6,"name":"title-rule","bbox":[42,158,1196,1.2]}
+{"kind":"textbox","id":"sh/87ipkzal","slide":6,"name":"sys-label","text":"子系统层","textPreview":"子系统层","textChars":4,"textLines":1,"bbox":[27.67,216.4,120,34]}
+{"kind":"textbox","id":"sh/98rqt4r6","slide":6,"name":"mod-label","text":"核心模块层","textPreview":"核心模块层","textChars":5,"textLines":1,"bbox":[10,464,140,34]}
+{"kind":"shape","id":"sh/ml07i9sv","slide":6,"name":"box-培训信息管理","bbox":[190,184,164,118]}
+{"kind":"textbox","id":"sh/7m98ru9g","slide":6,"name":"box-title-培训信息管理","text":"培训信息管理","textPreview":"培训信息管理","textChars":6,"textLines":1,"bbox":[201.53,201.27,144.73,30]}
+{"kind":"textbox","id":"sh/oryp8fah","slide":6,"name":"box-body-培训信息管理","text":"项目/课程/报名/计划","textPreview":"项目/课程/报名/计划","textChars":11,"textLines":1,"bbox":[208,252.07,128,33.93]}
+{"kind":"shape","id":"sh/w32twb6l","slide":6,"name":"box-研修活动","bbox":[392,184,164,118]}
+{"kind":"textbox","id":"sh/v2tcn650","slide":6,"name":"box-title-研修活动","text":"研修活动","textPreview":"研修活动","textChars":4,"textLines":1,"bbox":[425.07,202,128,30]}
+{"kind":"textbox","id":"sh/u1kbu1ov","slide":6,"name":"box-body-研修活动","text":"线上/线下/任务/成果","textPreview":"线上/线下/任务/成果","textChars":11,"textLines":1,"bbox":[400.67,240,144.73,46]}
+{"kind":"shape","id":"sh/j6dcr65c","slide":6,"name":"box-培训评估","bbox":[594,184,164,118]}
+{"kind":"textbox","id":"sh/i54bylor","slide":6,"name":"box-title-培训评估","text":"培训评估","textPreview":"培训评估","textChars":4,"textLines":1,"bbox":[624.87,202,128,30]}
+{"kind":"textbox","id":"sh/twfux0ne","slide":6,"name":"box-body-培训评估","text":"模型/数据/分析/报告","textPreview":"模型/数据/分析/报告","textChars":11,"textLines":1,"bbox":[605.6,240,144.73,46]}
+{"kind":"shape","id":"sh/dcnm98zm","slide":6,"name":"box-教师档案","bbox":[796,184,164,118]}
+{"kind":"textbox","id":"sh/qpwnet0b","slide":6,"name":"box-title-教师档案","text":"教师档案","textPreview":"教师档案","textChars":4,"textLines":1,"bbox":[814,202,128,30]}
+{"kind":"textbox","id":"sh/bq547yhw","slide":6,"name":"box-body-教师档案","text":"记录/结果/成果/轨迹","textPreview":"记录/结果/成果/轨迹","textChars":11,"textLines":1,"bbox":[814,240,128,46]}
+{"kind":"shape","id":"sh/ydgnit07","slide":6,"name":"box-用户推荐","bbox":[998,184,164,118]}
+{"kind":"textbox","id":"sh/zep4byhs","slide":6,"name":"box-title-用户推荐","text":"用户推荐","textPreview":"用户推荐","textChars":4,"textLines":1,"bbox":[1016,202,128,30]}
+{"kind":"textbox","id":"sh/gju58ji9","slide":6,"name":"box-body-用户推荐","text":"画像/课程/活动/路径","textPreview":"画像/课程/活动/路径","textChars":11,"textLines":1,"bbox":[1016,240,128,46]}
+{"kind":"shape","id":"sh/1k3mhozu","slide":6,"name":"box-网络研修","bbox":[150,424,140,110]}
+{"kind":"textbox","id":"sh/jet8nm1c","slide":6,"name":"box-title-网络研修","text":"网络研修","textPreview":"网络研修","textChars":4,"textLines":1,"bbox":[168,442,104,30]}
+{"kind":"textbox","id":"sh/idk7ehkr","slide":6,"name":"box-body-网络研修","text":"训研一体","textPreview":"训研一体","textChars":4,"textLines":1,"bbox":[168,480,104,38]}
+{"kind":"shape","id":"sh/50bqpcj2","slide":6,"name":"box-评价模型","bbox":[326,424,140,110]}
+{"kind":"textbox","id":"sh/4f2pgr2h","slide":6,"name":"box-title-评价模型","text":"评价模型","textPreview":"评价模型","textChars":4,"textLines":1,"bbox":[344,442,104,30]}
+{"kind":"textbox","id":"sh/va98j210","slide":6,"name":"box-body-评价模型","text":"指标规则","textPreview":"指标规则","textChars":4,"textLines":1,"bbox":[344,480,104,38]}
+{"kind":"shape","id":"sh/u907axkf","slide":6,"name":"box-数据归集","bbox":[502,424,140,110]}
+{"kind":"textbox","id":"sh/hcrqlcj6","slide":6,"name":"box-title-数据归集","text":"数据归集","textPreview":"数据归集","textChars":4,"textLines":1,"bbox":[520,442,104,30]}
+{"kind":"textbox","id":"sh/wbipc72l","slide":6,"name":"box-body-数据归集","text":"时间窗口","textPreview":"时间窗口","textChars":4,"textLines":1,"bbox":[520,480,104,38]}
+{"kind":"shape","id":"sh/7698f214","slide":6,"name":"box-评估分析","bbox":[678,424,140,110]}
+{"kind":"textbox","id":"sh/m5076xkj","slide":6,"name":"box-title-评估分析","text":"评估分析","textPreview":"评估分析","textChars":4,"textLines":1,"bbox":[696,442,104,30]}
+{"kind":"textbox","id":"sh/2dkbalg3","slide":6,"name":"box-body-评估分析","text":"综合评价","textPreview":"综合评价","textChars":4,"textLines":1,"bbox":[696,480,104,38]}
+{"kind":"shape","id":"sh/netcjqxo","slide":6,"name":"box-档案沉淀","bbox":[854,424,140,110]}
+{"kind":"textbox","id":"sh/of2tcvy9","slide":6,"name":"box-title-档案沉淀","text":"档案沉淀","textPreview":"档案沉淀","textChars":4,"textLines":1,"bbox":[872,442,104,30]}
+{"kind":"textbox","id":"sh/pgbul0fu","slide":6,"name":"box-body-档案沉淀","text":"画像更新","textPreview":"画像更新","textChars":4,"textLines":1,"bbox":[872,480,104,38]}
+{"kind":"shape","id":"sh/ep0b6lg7","slide":6,"name":"box-推荐服务","bbox":[1030,424,140,110]}
+{"kind":"textbox","id":"sh/fq9cfqxc","slide":6,"name":"box-title-推荐服务","text":"推荐服务","textPreview":"推荐服务","textChars":4,"textLines":1,"bbox":[1048,442,104,30]}
+{"kind":"textbox","id":"sh/0r2t8vyx","slide":6,"name":"box-body-推荐服务","text":"精准推送","textPreview":"精准推送","textChars":4,"textLines":1,"bbox":[1048,480,104,38]}
+{"kind":"textbox","id":"sh/1sbuh0fi","slide":6,"name":"flow","text":"业务流：培训信息管理 → 研修活动组织 → 数据归集 → 培训评估 → 档案沉淀 → 用户推荐","textPreview":"业务流：培训信息管理 → 研修活动组织 → 数据归集 → 培训评估 → 档案沉淀 → 用户推荐","textChars":47,"textLines":1,"bbox":[72,584,1070,30]}
+{"kind":"textbox","id":"sh/ql0b21gv","slide":6,"name":"page","text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"shape","id":"sh/pc76hkr2","slide":6,"name":"右箭头 8","bbox":[360.27,229.4,29,22.67]}
+{"kind":"shape","id":"sh/9gfeh4zy","slide":6,"name":"右箭头 49","bbox":[564.33,231.27,29,22.67]}
+{"kind":"shape","id":"sh/8f6x8jid","slide":6,"name":"右箭头 50","bbox":[760.93,232,29,22.67]}
+{"kind":"shape","id":"sh/7exwfehs","slide":6,"name":"右箭头 51","bbox":[965,231.27,29,22.67]}
+{"kind":"textbox","id":"sh/mdof6907","slide":6,"name":"subsystem-composition-note","text":"组合原则：各子系统可独立成体系，也可按业务链条可插拔、可组装、可配置为解决方案。","textPreview":"组合原则：各子系统可独立成体系，也可按业务链条可插拔、可组装、可配置为解决方案。","textChars":40,"textLines":1,"bbox":[110,622,1000,30]}
+{"kind":"notes","id":"nt/x8f69ofe","slide":6,"text":""}
+{"kind":"slide","id":"sl/gnmp4jqx","slide":7,"title":"平台闭环让培训结果回到下一轮精准供给","textShapes":16}
+{"kind":"textbox","id":"sh/cb2tkvap","slide":7,"name":"slide-title","text":"平台闭环让培训结果回到下一轮精准供给","textPreview":"平台闭环让培训结果回到下一轮精准供给","textChars":18,"textLines":1,"bbox":[42,78,1110,72]}
+{"kind":"shape","id":"sh/dcbud0ra","slide":7,"name":"title-rule","bbox":[42.73,139.6,1196,1.2]}
+{"kind":"shape","id":"sh/ydkbm5sv","slide":7,"name":"loop-0","bbox":[540,159,200,96]}
+{"kind":"textbox","id":"sh/zedcfa9g","slide":7,"name":"loop-title-0","text":"培训信息管理","textPreview":"培训信息管理","textChars":6,"textLines":1,"bbox":[554,175,172,26]}
+{"kind":"textbox","id":"sh/kzmdova1","slide":7,"name":"loop-body-0","text":"项目、课程、对象、周期","textPreview":"项目、课程、对象、周期","textChars":11,"textLines":1,"bbox":[554,209,172,30]}
+{"kind":"shape","id":"sh/l0vuh0rm","slide":7,"name":"loop-1","bbox":[851.77,246.5,200,96]}
+{"kind":"textbox","id":"sh/eh0ba1sr","slide":7,"name":"loop-title-1","text":"研修活动组织","textPreview":"研修活动组织","textChars":6,"textLines":1,"bbox":[865.77,262.5,172,26]}
+{"kind":"textbox","id":"sh/fi9c369c","slide":7,"name":"loop-body-1","text":"学习、任务、协作、成果","textPreview":"学习、任务、协作、成果","textChars":11,"textLines":1,"bbox":[865.77,296.5,172,30]}
+{"kind":"shape","id":"sh/baxkjqlk","slide":7,"name":"loop-2","bbox":[851.77,421.5,200,96]}
+{"kind":"textbox","id":"sh/a9ojq5kz","slide":7,"name":"loop-title-2","text":"数据归集","textPreview":"数据归集","textChars":4,"textLines":1,"bbox":[865.77,437.5,172,26]}
+{"kind":"textbox","id":"sh/xcz2l03q","slide":7,"name":"loop-body-2","text":"过程数据、成果数据、评价数据","textPreview":"过程数据、成果数据、评价数据","textChars":14,"textLines":1,"bbox":[865.77,471.5,172,30]}
+{"kind":"shape","id":"sh/cbq1sv25","slide":7,"name":"loop-3","bbox":[540,509,200,96]}
+{"kind":"textbox","id":"sh/n6x0fqlo","slide":7,"name":"loop-title-3","text":"培训评估","textPreview":"培训评估","textChars":4,"textLines":1,"bbox":[554,525,172,26]}
+{"kind":"textbox","id":"sh/25ojml43","slide":7,"name":"loop-body-3","text":"系统初评、专家复核、报告输出","textPreview":"系统初评、专家复核、报告输出","textChars":14,"textLines":1,"bbox":[554,559,172,30]}
+{"kind":"shape","id":"sh/p8fih03e","slide":7,"name":"loop-4","bbox":[228.23,421.5,200,96]}
+{"kind":"textbox","id":"sh/o761ov2t","slide":7,"name":"loop-title-4","text":"档案沉淀","textPreview":"档案沉淀","textChars":4,"textLines":1,"bbox":[242.23,437.5,172,26]}
+{"kind":"textbox","id":"sh/f2d0b6lc","slide":7,"name":"loop-body-4","text":"记录、结果、成果、轨迹","textPreview":"记录、结果、成果、轨迹","textChars":11,"textLines":1,"bbox":[242.23,471.5,172,30]}
+{"kind":"shape","id":"sh/eh4jil4r","slide":7,"name":"loop-5","bbox":[228.23,246.5,200,96]}
+{"kind":"textbox","id":"sh/id4ju1oz","slide":7,"name":"loop-title-5","text":"用户推荐","textPreview":"用户推荐","textChars":4,"textLines":1,"bbox":[242.23,262.5,172,26]}
+{"kind":"textbox","id":"sh/jedkn654","slide":7,"name":"loop-body-5","text":"课程、活动、资源、路径","textPreview":"课程、活动、资源、路径","textChars":11,"textLines":1,"bbox":[242.23,296.5,172,30]}
+{"kind":"shape","id":"sh/4fm1wb6p","slide":7,"name":"center","bbox":[540,305,200,150]}
+{"kind":"textbox","id":"sh/50v2pgna","slide":7,"name":"center-text","text":"持续\n发展服务","textPreview":"持续 | 发展服务","textChars":7,"textLines":2,"bbox":[570,342,140,70]}
+{"kind":"textbox","id":"sh/q143ylov","slide":7,"name":"bottom","text":"关键价值：评价发现问题，推荐推动改进，培训继续提升。","textPreview":"关键价值：评价发现问题，推荐推动改进，培训继续提升。","textChars":26,"textLines":1,"bbox":[140,639.73,1000,40]}
+{"kind":"textbox","id":"sh/r2dkrq5g","slide":7,"name":"page","text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"shape","id":"sh/d4f2t0nm","slide":7,"name":"下箭头 26","bbox":[934.8,360,45.4,52.93]}
+{"kind":"shape","id":"sh/2x8nqp83","slide":7,"name":"圆角右箭头 32","bbox":[758.2,522.73,207.67,65.87]}
+{"kind":"shape","id":"sh/a18nup8z","slide":7,"name":"圆角右箭头 36","bbox":[388.6,445.13,60.4,207.73]}
+{"kind":"shape","id":"sh/kra50jqh","slide":7,"name":"下箭头 38","bbox":[303.2,349.2,45.4,65.67]}
+{"kind":"shape","id":"sh/wneps3ap","slide":7,"name":"圆角右箭头 39","bbox":[309.4,180.27,213.2,65.87]}
+{"kind":"shape","id":"sh/honq18ru","slide":7,"name":"圆角右箭头 40","bbox":[839.6,106,63.67,213.2]}
+{"kind":"notes","id":"nt/gnmp4jqx","slide":7,"text":""}
+{"kind":"slide","id":"sl/fu1gfa1s","slide":8,"title":"子系统既可自成体系，也可组装为生态价值链","textShapes":18}
+{"kind":"textbox","id":"sh/18byd4zy","slide":8,"name":"slide-title","text":"子系统既可自成体系，也可组装为生态价值链","textPreview":"子系统既可自成体系，也可组装为生态价值链","textChars":20,"textLines":1,"bbox":[42,78,1110,72]}
+{"kind":"shape","id":"sh/g72x4zyd","slide":8,"name":"title-rule","bbox":[42,158,1196,1.2]}
+{"kind":"shape","id":"sh/ri9g7uhw","slide":8,"name":"step-01","bbox":[64,226,202,260]}
+{"kind":"textbox","id":"sh/6h0fypgb","slide":8,"name":"step-label-01","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[82,242,60,24]}
+{"kind":"textbox","id":"sh/tkby9kzm","slide":8,"name":"step-title-01","text":"培训信息管理子系统","textPreview":"培训信息管理子系统","textChars":9,"textLines":1,"bbox":[73,274,180.87,30]}
+{"kind":"textbox","id":"sh/sjix0zy1","slide":8,"name":"step-body-01","text":"统一项目、课程、报名、审核、人员和培训计划，提供平台基础业务入口。","textPreview":"统一项目、课程、报名、审核、人员和培训计划，提供平台基础业务入口。","textChars":33,"textLines":1,"bbox":[82,314,166,156]}
+{"kind":"shape","id":"sh/je9g3ahk","slide":8,"name":"step-02","bbox":[300,226,202,260]}
+{"kind":"textbox","id":"sh/id0fu50z","slide":8,"name":"step-label-02","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[318,242,60,24]}
+{"kind":"textbox","id":"sh/o7ydoret","slide":8,"name":"step-title-02","text":"研修活动子系统","textPreview":"研修活动子系统","textChars":7,"textLines":1,"bbox":[318,274,166,30]}
+{"kind":"textbox","id":"sh/98rehwve","slide":8,"name":"step-body-02","text":"承载线上、线下和混合式培训活动，记录学习、互动、任务和成果过程。","textPreview":"承载线上、线下和混合式培训活动，记录学习、互动、任务和成果过程。","textChars":32,"textLines":1,"bbox":[318,314,166,156]}
+{"kind":"shape","id":"sh/m5gvmhwn","slide":8,"name":"step-03","bbox":[536,226,202,260]}
+{"kind":"textbox","id":"sh/n6pwfmd8","slide":8,"name":"step-label-03","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[554,242,60,24]}
+{"kind":"textbox","id":"sh/0jydkreh","slide":8,"name":"step-title-03","text":"培训评估子系统","textPreview":"培训评估子系统","textChars":7,"textLines":1,"bbox":[554,274,166,30]}
+{"kind":"textbox","id":"sh/1k7edwv2","slide":8,"name":"step-body-03","text":"基于评价模型和过程数据，形成个人、班级、项目和区域层面的评价结果。","textPreview":"基于评价模型和过程数据，形成个人、班级、项目和区域层面的评价结果。","textChars":33,"textLines":1,"bbox":[554,314,166,156]}
+{"kind":"shape","id":"sh/ehgvihwr","slide":8,"name":"step-04","bbox":[772,226,202,260]}
+{"kind":"textbox","id":"sh/zipwbmdc","slide":8,"name":"step-label-04","text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[790,242,60,24]}
+{"kind":"textbox","id":"sh/kfixwbe1","slide":8,"name":"step-title-04","text":"教师档案子系统","textPreview":"教师档案子系统","textChars":7,"textLines":1,"bbox":[790,274,166,30]}
+{"kind":"textbox","id":"sh/lgbepgvm","slide":8,"name":"step-body-04","text":"沉淀培训记录、评价结果、成果材料、学时证书和成长轨迹。","textPreview":"沉淀培训记录、评价结果、成果材料、学时证书和成长轨迹。","textChars":27,"textLines":1,"bbox":[790,314,166,156]}
+{"kind":"shape","id":"sh/tw7e9gnq","slide":8,"name":"step-05","bbox":[1008,226,202,260]}
+{"kind":"textbox","id":"sh/svydgb65","slide":8,"name":"step-label-05","text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1026,242,60,24]}
+{"kind":"textbox","id":"sh/7u5w765k","slide":8,"name":"step-title-05","text":"用户推荐子系统","textPreview":"用户推荐子系统","textChars":7,"textLines":1,"bbox":[1026,274,166,30]}
+{"kind":"textbox","id":"sh/6twve1oz","slide":8,"name":"step-body-05","text":"基于教师画像和评估结果，推荐课程、活动、资源和发展路径。","textPreview":"基于教师画像和评估结果，推荐课程、活动、资源和发展路径。","textChars":28,"textLines":1,"bbox":[1026,314,166,156]}
+{"kind":"textbox","id":"sh/5sne5wne","slide":8,"name":"note","text":"按场景选择子系统和模块，可插拔、可组装、可配置为教师发展、AI 教学、智能体等解决方案。","textPreview":"按场景选择子系统和模块，可插拔、可组装、可配置为教师发展、AI 教学、智能体等解决方案。","textChars":44,"textLines":1,"bbox":[92,548,1060,36]}
+{"kind":"textbox","id":"sh/kredcr6t","slide":8,"name":"page","text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"notes","id":"nt/fu1gfa1s","slide":8,"text":""}
+{"kind":"slide","id":"sl/udsvah03","slide":9,"title":"培训信息管理系统 -- 统一沉淀组织培训基础数据","textShapes":15}
+{"kind":"textbox","id":"sh/1cfmhgne","slide":9,"name":"slide-title","text":"培训信息管理系统 -- 统一沉淀组织培训基础数据","textPreview":"培训信息管理系统 -- 统一沉淀组织培训基础数据","textChars":24,"textLines":1,"bbox":[42,78,1110,72]}
+{"kind":"shape","id":"sh/0b65obm9","slide":9,"name":"title-rule","bbox":[42,158,1196,0]}
+{"kind":"shape","id":"sh/nex4jq5k","slide":9,"name":"training-info-system","bbox":[142,212,720,320]}
+{"kind":"shape","id":"sh/mdonql4z","slide":9,"name":"system-badge","bbox":[178,238,40,40]}
+{"kind":"textbox","id":"sh/9gzml0nq","slide":9,"name":"system-badge-text","text":"A","textPreview":"A","textChars":1,"textLines":1,"bbox":[178,244,40,28]}
+{"kind":"textbox","id":"sh/ofq5svm5","slide":9,"name":"system-title","text":"培训信息管理系统","textPreview":"培训信息管理系统","textChars":8,"textLines":1,"bbox":[236,232,500,48]}
+{"kind":"shape","id":"sh/bih4na5w","slide":9,"name":"module-enroll","bbox":[210,297.67,238,104]}
+{"kind":"textbox","id":"sh/ah8nu54b","slide":9,"name":"module-enroll-title","text":"招生","textPreview":"招生","textChars":2,"textLines":1,"bbox":[228,315,202,30]}
+{"kind":"textbox","id":"sh/oza1gfyh","slide":9,"name":"module-enroll-body","text":"报名、审核、\n对象组织","textPreview":"报名、审核、 | 对象组织","textChars":11,"textLines":2,"bbox":[236,356.53,194,34]}
+{"kind":"shape","id":"sh/p0ji9kf2","slide":9,"name":"module-fee","bbox":[510,300,238,104]}
+{"kind":"textbox","id":"sh/2xsjepgb","slide":9,"name":"module-fee-title","text":"费用管理","textPreview":"费用管理","textChars":4,"textLines":1,"bbox":[528,318,202,30]}
+{"kind":"textbox","id":"sh/3y107axw","slide":9,"name":"module-fee-body","text":"收费、结算、\n费用台账","textPreview":"收费、结算、 | 费用台账","textChars":11,"textLines":2,"bbox":[534.13,356.47,194,34]}
+{"kind":"shape","id":"sh/cnu1kzyd","slide":9,"name":"module-project","bbox":[209.47,414,245.13,104]}
+{"kind":"textbox","id":"sh/do3id4fy","slide":9,"name":"module-project-title","text":"项目管理","textPreview":"项目管理","textChars":4,"textLines":1,"bbox":[228,429.73,202,30]}
+{"kind":"textbox","id":"sh/qlcjipgn","slide":9,"name":"module-project-body","text":"项目、课程、\n计划周期","textPreview":"项目、课程、 | 计划周期","textChars":11,"textLines":2,"bbox":[231.73,473.4,194,34]}
+{"kind":"shape","id":"sh/bml0buxs","slide":9,"name":"module-more","bbox":[510,412.93,238,104]}
+{"kind":"textbox","id":"sh/0ru1ozyp","slide":9,"name":"module-more-title","text":"…","textPreview":"…","textChars":1,"textLines":1,"bbox":[528,430.93,202,30]}
+{"kind":"shape","id":"sh/lsn2h4fa","slide":9,"name":"module-more-body","bbox":[532,498,194,34]}
+{"kind":"shape","id":"sh/98ji147e","slide":9,"name":"data-output-arrow","bbox":[888,356,90,26]}
+{"kind":"textbox","id":"sh/87a18zqt","slide":9,"name":"data-output-label","text":"基础数据输出","textPreview":"基础数据输出","textChars":6,"textLines":1,"bbox":[888,318,94,24]}
+{"kind":"shape","id":"sh/76h0zup8","slide":9,"name":"downstream-panel","bbox":[1004,292,198,156]}
+{"kind":"textbox","id":"sh/ml8j6p8n","slide":9,"name":"downstream-title","text":"进入研修活动","textPreview":"进入研修活动","textChars":6,"textLines":1,"bbox":[1022,320,162,32]}
+{"kind":"textbox","id":"sh/hcji5o7a","slide":9,"name":"downstream-body","text":"项目、课程、对象、周期\n成为活动组织和过程归集的统一口径","textPreview":"项目、课程、对象、周期 | 成为活动组织和过程归集的统一口径","textChars":28,"textLines":2,"bbox":[1024,370,158,46]}
+{"kind":"shape","id":"sh/wba1cjqp","slide":9,"name":"bottom-note-band","bbox":[112,584,1056,46]}
+{"kind":"textbox","id":"sh/va103ep4","slide":9,"name":"bottom-note","text":"关键价值：先把招生、费用、项目和权限等基础信息标准化，再支撑后续研修活动组织、数据归集和培训评估。","textPreview":"关键价值：先把招生、费用、项目和权限等基础信息标准化，再支撑后续研修活动组织、数据归集和培训评估。","textChars":49,"textLines":1,"bbox":[136,594,1008,26]}
+{"kind":"textbox","id":"sh/u9sja98z","slide":9,"name":"page","text":"09","textPreview":"09","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"notes","id":"nt/udsvah03","slide":9,"text":""}
+{"kind":"slide","id":"sl/m90b6t0r","slide":10,"title":"研修活动系统 -- 支撑线下实训与网络研修一体化","textShapes":14}
+{"kind":"textbox","id":"sh/xc3mho32","slide":10,"name":"slide-title","text":"研修活动系统 -- 支撑线下实训与网络研修一体化","textPreview":"研修活动系统 -- 支撑线下实训与网络研修一体化","textChars":24,"textLines":1,"bbox":[42,78,1110,72]}
+{"kind":"shape","id":"sh/cbu58j2h","slide":10,"name":"title-rule","bbox":[42,158,1196,0]}
+{"kind":"shape","id":"sh/zelojyl8","slide":10,"name":"online-research-panel","bbox":[202,214,860,378]}
+{"kind":"textbox","id":"sh/ydcnatkn","slide":10,"name":"online-research-title","text":"网络研修【研训一体化】","textPreview":"网络研修【研训一体化】","textChars":11,"textLines":1,"bbox":[242,250,780,36]}
+{"kind":"shape","id":"sh/l036l83y","slide":10,"name":"train-column","bbox":[392,322,140,184]}
+{"kind":"textbox","id":"sh/kzu5c32t","slide":10,"name":"train-title","text":"训","textPreview":"训","textChars":1,"textLines":1,"bbox":[408,340,108,36]}
+{"kind":"shape","id":"sh/725onyl4","slide":10,"name":"train-rule","bbox":[392,388,140,0]}
+{"kind":"shape","id":"sh/m1cnetkj","slide":10,"name":"train-pill-1","bbox":[416,410,92,34]}
+{"kind":"textbox","id":"sh/s7yt4b21","slide":10,"name":"train-pill-1-text","text":"组织培训","textPreview":"组织培训","textChars":4,"textLines":1,"bbox":[423,414,78,26]}
+{"kind":"shape","id":"sh/d87uxg3m","slide":10,"name":"train-pill-2","bbox":[416,454,92,34]}
+{"kind":"textbox","id":"sh/q5gb21kb","slide":10,"name":"train-pill-2-text","text":"实训","textPreview":"实训","textChars":2,"textLines":1,"bbox":[423,458,78,26]}
+{"kind":"shape","id":"sh/r6pcv6lw","slide":10,"name":"research-column","bbox":[568,322,320.4,184]}
+{"kind":"textbox","id":"sh/0bit8b2d","slide":10,"name":"research-title","text":"研","textPreview":"研","textChars":1,"textLines":1,"bbox":[586,340,324,36]}
+{"kind":"shape","id":"sh/1cru1g3y","slide":10,"name":"research-rule","bbox":[568,388,320,0]}
+{"kind":"shape","id":"sh/e9gb61k7","slide":10,"name":"research-pill-集体备课","bbox":[588,410,90,34]}
+{"kind":"textbox","id":"sh/fapcz6ls","slide":10,"name":"research-pill-集体备课-text","text":"集体备课","textPreview":"集体备课","textChars":4,"textLines":1,"bbox":[595,414,76,26]}
+{"kind":"shape","id":"sh/ozitcv29","slide":10,"name":"research-pill-课例研讨","bbox":[678,410,90,34]}
+{"kind":"textbox","id":"sh/p0ru503u","slide":10,"name":"research-pill-课例研讨-text","text":"课例研讨","textPreview":"课例研讨","textChars":4,"textLines":1,"bbox":[685,414,76,26]}
+{"kind":"shape","id":"sh/xwnupgvy","slide":10,"name":"research-pill-课题研究","bbox":[768,410,90,34]}
+{"kind":"textbox","id":"sh/wvetgbud","slide":10,"name":"research-pill-课题研究-text","text":"课题研究","textPreview":"课题研究","textChars":4,"textLines":1,"bbox":[775,414,76,26]}
+{"kind":"shape","id":"sh/bu5cnqd8","slide":10,"name":"research-pill-课堂反思","bbox":[588,454,90,34]}
+{"kind":"textbox","id":"sh/atwbelcn","slide":10,"name":"research-pill-课堂反思-text","text":"课堂反思","textPreview":"课堂反思","textChars":4,"textLines":1,"bbox":[595,458,76,26]}
+{"kind":"shape","id":"sh/lk7ut0va","slide":10,"name":"research-pill-教学问题攻关","bbox":[678,454,90,34]}
+{"kind":"textbox","id":"sh/kjytkvup","slide":10,"name":"research-pill-教学问题攻关-text","text":"教学问题攻关","textPreview":"教学问题攻关","textChars":6,"textLines":1,"bbox":[685,458,76,26]}
+{"kind":"shape","id":"sh/jypcrqd4","slide":10,"name":"research-pill-...","bbox":[768,454,90,34]}
+{"kind":"textbox","id":"sh/yxgbilcj","slide":10,"name":"research-pill-...-text","text":"...","textPreview":"...","textChars":3,"textLines":1,"bbox":[775,458,76,26]}
+{"kind":"shape","id":"sh/1o3ahwvq","slide":10,"name":"bottom-note-band","bbox":[112,612,1056,46]}
+{"kind":"textbox","id":"sh/0nut8rul","slide":10,"name":"bottom-note","text":"关键价值：研修活动从活动承载走向训研一体化，把学习、任务、协同、研究和成果沉淀到统一过程。","textPreview":"关键价值：研修活动从活动承载走向训研一体化，把学习、任务、协同、研究和成果沉淀到统一过程。","textChars":45,"textLines":1,"bbox":[136,622,1008,26]}
+{"kind":"textbox","id":"sh/q9srixs3","slide":10,"name":"page","text":"10","textPreview":"10","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"notes","id":"nt/m90b6t0r","slide":10,"text":""}
+{"kind":"slide","id":"sl/jetc3ut0","slide":11,"title":"培训评估系统 -- 把过程数据转化为可解释结果","textShapes":14}
+{"kind":"textbox","id":"sh/xcryxg7y","slide":11,"name":"slide-title","text":"培训评估系统 -- 把过程数据转化为可解释结果","textPreview":"培训评估系统 -- 把过程数据转化为可解释结果","textChars":23,"textLines":1,"bbox":[42,78,1110,72]}
+{"kind":"shape","id":"sh/wbih4b6d","slide":11,"name":"title-rule","bbox":[42,158,1196,1.2]}
+{"kind":"shape","id":"sh/n69grmpw","slide":11,"name":"card-评价模型","bbox":[80,226,330,250]}
+{"kind":"shape","id":"sh/250zy18b","slide":11,"name":"num-01","bbox":[102,248,34,34]}
+{"kind":"textbox","id":"sh/98rytw72","slide":11,"name":"num-text-01","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[102,252,34,24]}
+{"kind":"textbox","id":"sh/o7ih0r6h","slide":11,"name":"card-title-评价模型","text":"评价模型","textPreview":"评价模型","textChars":4,"textLines":1,"bbox":[150,248,238,34]}
+{"kind":"textbox","id":"sh/72t03qp0","slide":11,"name":"card-body-评价模型","text":"维度、指标、权重、等级标准、评价主体和模型版本。","textPreview":"维度、指标、权重、等级标准、评价主体和模型版本。","textChars":24,"textLines":1,"bbox":[150,292,238,164]}
+{"kind":"shape","id":"sh/61kzalof","slide":11,"name":"card-数据归集","bbox":[480,226,330,250]}
+{"kind":"shape","id":"sh/ofqtgnyt","slide":11,"name":"num-02","bbox":[502,248,34,34]}
+{"kind":"textbox","id":"sh/9gza9sze","slide":11,"name":"num-text-02","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[502,252,34,24]}
+{"kind":"textbox","id":"sh/mdobedg3","slide":11,"name":"card-title-数据归集","text":"数据归集","textPreview":"数据归集","textChars":4,"textLines":1,"bbox":[550,248,238,34]}
+{"kind":"textbox","id":"sh/nehs7iho","slide":11,"name":"card-body-数据归集","text":"基础数据、过程数据、成果数据、评价数据和时间窗口。","textPreview":"基础数据、过程数据、成果数据、评价数据和时间窗口。","textChars":25,"textLines":1,"bbox":[550,292,238,164]}
+{"kind":"shape","id":"sh/0b6tc3yx","slide":11,"name":"card-评估分析","bbox":[880,226,330,250]}
+{"kind":"shape","id":"sh/1cfa58zi","slide":11,"name":"num-03","bbox":[902,248,34,34]}
+{"kind":"textbox","id":"sh/epobatgr","slide":11,"name":"num-text-03","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[902,252,34,24]}
+{"kind":"textbox","id":"sh/zaxs3yhc","slide":11,"name":"card-title-评估分析","text":"评估分析","textPreview":"评估分析","textChars":4,"textLines":1,"bbox":[950,248,238,34]}
+{"kind":"textbox","id":"sh/cn6t83y1","slide":11,"name":"card-body-评估分析","text":"个人评估、班级评估、项目评估、趋势分析和报告输出。","textPreview":"个人评估、班级评估、项目评估、趋势分析和报告输出。","textChars":25,"textLines":1,"bbox":[950,292,238,164]}
+{"kind":"textbox","id":"sh/tsnip0ny","slide":11,"name":"page","text":"11","textPreview":"11","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"shape","id":"sh/7650nq5s","slide":11,"name":"eval-desc-panel","bbox":[132,512,1010,96]}
+{"kind":"shape","id":"sh/65wzelo7","slide":11,"name":"eval-desc-badge","bbox":[168,535,126,50]}
+{"kind":"textbox","id":"sh/l43ilgn2","slide":11,"name":"eval-desc-badge-text","text":"评估","textPreview":"评估","textChars":2,"textLines":1,"bbox":[168,542,126,36]}
+{"kind":"shape","id":"sh/k3uhcb6h","slide":11,"name":"eval-desc-join","bbox":[294,558,58,4]}
+{"kind":"shape","id":"sh/j2lgjq5w","slide":11,"name":"eval-desc-bracket","bbox":[342,526,34,68]}
+{"kind":"textbox","id":"sh/y1czalob","slide":11,"name":"eval-desc-row-process","text":"过程评估：签到、互动、任务、问卷、课堂行为/研讨行为分析","textPreview":"过程评估：签到、互动、任务、问卷、课堂行为/研讨行为分析","textChars":28,"textLines":1,"bbox":[396,526,710,32]}
+{"kind":"textbox","id":"sh/p07ixkn6","slide":11,"name":"eval-desc-row-result","text":"结果评估：成果质量、专家评审、满意度、能力达成、学时学分/证书。","textPreview":"结果评估：成果质量、专家评审、满意度、能力达成、学时学分/证书。","textChars":32,"textLines":1,"bbox":[396,570,710,32]}
+{"kind":"notes","id":"nt/jetc3ut0","slide":11,"text":""}
+{"kind":"slide","id":"sl/8f2psfyx","slide":12,"title":"教师档案与岗位序列能力发展挂钩","textShapes":23}
+{"kind":"textbox","id":"sh/1gbm9s3a","slide":12,"name":"slide-title","text":"教师档案与岗位序列能力发展挂钩","textPreview":"教师档案与岗位序列能力发展挂钩","textChars":15,"textLines":1,"bbox":[42,78,1110,72]}
+{"kind":"shape","id":"sh/0f2lgnmp","slide":12,"name":"title-rule","bbox":[42,158,1196,1.2]}
+{"kind":"textbox","id":"sh/alwbitsn","slide":12,"name":"page","text":"12","textPreview":"12","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"shape","id":"sh/wnetkjat","slide":12,"name":"jobseq-arrow-archive-to-model","bbox":[330,364,78,18]}
+{"kind":"shape","id":"sh/xonutobe","slide":12,"name":"jobseq-arrow-model-to-path","bbox":[908,364,58,18]}
+{"kind":"shape","id":"sh/mhcbe9sr","slide":12,"name":"jobseq-archive-panel","bbox":[64,226,260,292]}
+{"kind":"textbox","id":"sh/nilsnetc","slide":12,"name":"jobseq-archive-title","text":"教师档案\n证据池","textPreview":"教师档案 | 证据池","textChars":8,"textLines":2,"bbox":[96,250,196,68]}
+{"kind":"shape","id":"sh/ojutgjah","slide":12,"name":"jobseq-archive-pill-1","bbox":[104,330,180,32]}
+{"kind":"textbox","id":"sh/9k3apob2","slide":12,"name":"jobseq-archive-pill-1-text","text":"培训记录","textPreview":"培训记录","textChars":4,"textLines":1,"bbox":[110,334,168,24]}
+{"kind":"shape","id":"sh/6dgbqdsv","slide":12,"name":"jobseq-archive-pill-2","bbox":[104,374,180,32]}
+{"kind":"textbox","id":"sh/7epczitg","slide":12,"name":"jobseq-archive-pill-2-text","text":"评价结果","textPreview":"评价结果","textChars":4,"textLines":1,"bbox":[110,378,168,24]}
+{"kind":"shape","id":"sh/r6l8vaxw","slide":12,"name":"jobseq-archive-pill-3","bbox":[104,418,180,32]}
+{"kind":"textbox","id":"sh/q5c7m5wb","slide":12,"name":"jobseq-archive-pill-3-text","text":"成果材料","textPreview":"成果材料","textChars":4,"textLines":1,"bbox":[110,422,168,24]}
+{"kind":"shape","id":"sh/d8nqxkf2","slide":12,"name":"jobseq-archive-pill-4","bbox":[104,462,180,32]}
+{"kind":"textbox","id":"sh/s7epofeh","slide":12,"name":"jobseq-archive-pill-4-text","text":"成长轨迹","textPreview":"成长轨迹","textChars":4,"textLines":1,"bbox":[110,466,168,24]}
+{"kind":"shape","id":"sh/j2lorqxk","slide":12,"name":"jobseq-model-panel","bbox":[408,214,500,324]}
+{"kind":"textbox","id":"sh/i1c7i5wf","slide":12,"name":"jobseq-model-title","text":"岗位序列能力模型","textPreview":"岗位序列能力模型","textChars":8,"textLines":1,"bbox":[440,236,436,34]}
+{"kind":"textbox","id":"sh/5436t0fq","slide":12,"name":"jobseq-model-subtitle","text":"按不同发展阶段配置能力指标与达成标准","textPreview":"按不同发展阶段配置能力指标与达成标准","textChars":18,"textLines":1,"bbox":[452,274,412,28]}
+{"kind":"shape","id":"sh/43upkve5","slide":12,"name":"jobseq-stage-1","bbox":[438,318,78,42]}
+{"kind":"textbox","id":"sh/nyp83ud4","slide":12,"name":"jobseq-stage-1-text","text":"初任","textPreview":"初任","textChars":2,"textLines":1,"bbox":[444,322,66,34]}
+{"kind":"shape","id":"sh/2xw7upwj","slide":12,"name":"jobseq-stage-2","bbox":[524,318,78,42]}
+{"kind":"textbox","id":"sh/kjq5oru1","slide":12,"name":"jobseq-stage-2-text","text":"胜任","textPreview":"胜任","textChars":2,"textLines":1,"bbox":[530,322,66,34]}
+{"kind":"shape","id":"sh/lkzmhwvm","slide":12,"name":"jobseq-stage-3","bbox":[610,318,78,42]}
+{"kind":"textbox","id":"sh/yh8nmhcv","slide":12,"name":"jobseq-stage-3-text","text":"骨干","textPreview":"骨干","textChars":2,"textLines":1,"bbox":[616,322,66,34]}
+{"kind":"shape","id":"sh/zih4fmdg","slide":12,"name":"jobseq-stage-4","bbox":[696,318,84,42]}
+{"kind":"textbox","id":"sh/87q5srux","slide":12,"name":"jobseq-stage-4-text","text":"带头","textPreview":"带头","textChars":2,"textLines":1,"bbox":[702,322,72,34]}
+{"kind":"shape","id":"sh/98jmlwvi","slide":12,"name":"jobseq-stage-5","bbox":[789.53,318,78,42]}
+{"kind":"textbox","id":"sh/ml8nq1c7","slide":12,"name":"jobseq-stage-5-text","text":"专家","textPreview":"专家","textChars":2,"textLines":1,"bbox":[788,322,66,34]}
+{"kind":"textbox","id":"sh/7mh4j6dc","slide":12,"name":"jobseq-model-arrow-hint","text":"岗位序列进阶","textPreview":"岗位序列进阶","textChars":6,"textLines":1,"bbox":[596,386,128,20]}
+{"kind":"shape","id":"sh/wba5wbu9","slide":12,"name":"jobseq-model-progress-line","bbox":[470,378,372,3]}
+{"kind":"shape","id":"sh/hcjmpgbu","slide":12,"name":"jobseq-model-progress-head","bbox":[836,370,18,18]}
+{"kind":"shape","id":"sh/5sfm9g3y","slide":12,"name":"jobseq-diagnosis-box","bbox":[462,404,392,98]}
+{"kind":"textbox","id":"sh/4765gbmd","slide":12,"name":"jobseq-diagnosis-title","text":"能力诊断与差距识别","textPreview":"能力诊断与差距识别","textChars":9,"textLines":1,"bbox":[486,418,344,30]}
+{"kind":"textbox","id":"sh/36x476ls","slide":12,"name":"jobseq-diagnosis-body","text":"达成度 / 优势项 / 待提升项 / 当前岗位阶段","textPreview":"达成度 / 优势项 / 待提升项 / 当前岗位阶段","textChars":25,"textLines":1,"bbox":[486,456,344,28]}
+{"kind":"shape","id":"sh/i5o3e147","slide":12,"name":"jobseq-path-panel","bbox":[966,226,252,292]}
+{"kind":"textbox","id":"sh/dwzmdg3u","slide":12,"name":"jobseq-path-title","text":"发展路径\n与供给","textPreview":"发展路径 | 与供给","textChars":8,"textLines":2,"bbox":[996,250,192,68]}
+{"kind":"shape","id":"sh/cvq5kbm9","slide":12,"name":"jobseq-path-pill-1","bbox":[1004,330,176,32]}
+{"kind":"textbox","id":"sh/ruh4b6lo","slide":12,"name":"jobseq-path-pill-1-text","text":"课程研修","textPreview":"课程研修","textChars":4,"textLines":1,"bbox":[1010,334,164,24]}
+{"kind":"shape","id":"sh/qtonil4j","slide":12,"name":"jobseq-path-pill-2","bbox":[1004,374,176,32]}
+{"kind":"textbox","id":"sh/t0vm1wnq","slide":12,"name":"jobseq-path-pill-2-text","text":"岗位任务","textPreview":"岗位任务","textChars":4,"textLines":1,"bbox":[1010,378,164,24]}
+{"kind":"shape","id":"sh/8zml8rm5","slide":12,"name":"jobseq-path-pill-3","bbox":[1004,418,176,32]}
+{"kind":"textbox","id":"sh/y5kjixk3","slide":12,"name":"jobseq-path-pill-3-text","text":"教研实践","textPreview":"教研实践","textChars":4,"textLines":1,"bbox":[1010,422,164,24]}
+{"kind":"shape","id":"sh/j6tkbil8","slide":12,"name":"jobseq-path-pill-4","bbox":[1004,462,176,32]}
+{"kind":"textbox","id":"sh/k721kn2t","slide":12,"name":"jobseq-path-pill-4-text","text":"成果认证","textPreview":"成果认证","textChars":4,"textLines":1,"bbox":[1010,466,164,24]}
+{"kind":"shape","id":"sh/l8b2dsje","slide":12,"name":"jobseq-feedback-panel","bbox":[150,566,980,46]}
+{"kind":"textbox","id":"sh/69kjmxkz","slide":12,"name":"jobseq-feedback-text","text":"结果回写档案，更新能力等级与岗位阶段；下一轮培训按岗位序列精准供给。","textPreview":"结果回写档案，更新能力等级与岗位阶段；下一轮培训按岗位序列精准供给。","textChars":34,"textLines":1,"bbox":[226,574,866,30]}
+{"kind":"shape","id":"sh/7atkf21k","slide":12,"name":"jobseq-feedback-left-arrow","bbox":[168,578,46,22]}
+{"kind":"notes","id":"nt/8f2psfyx","slide":12,"text":""}
+{"kind":"slide","id":"sl/hgzapcr6","slide":13,"title":"六个核心模块提供可复用的平台能力","textShapes":14}
+{"kind":"textbox","id":"sh/q50nydsj","slide":13,"name":"slide-title","text":"六个核心模块提供可复用的平台能力","textPreview":"六个核心模块提供可复用的平台能力","textChars":16,"textLines":1,"bbox":[42,78,1110,72]}
+{"kind":"shape","id":"sh/bq9orito","slide":13,"name":"title-rule","bbox":[42,158,1196,1.2]}
+{"kind":"shape","id":"sh/o3i5w3ad","slide":13,"name":"box-网络研修模块","bbox":[64,210,330,140]}
+{"kind":"textbox","id":"sh/p4r6p8by","slide":13,"name":"box-title-网络研修模块","text":"网络研修模块","textPreview":"网络研修模块","textChars":6,"textLines":1,"bbox":[82,228,294,30]}
+{"kind":"textbox","id":"sh/21gnuts7","slide":13,"name":"box-body-网络研修模块","text":"训研一体化\n在线学习、任务实践、协同研究、成果共创","textPreview":"训研一体化 | 在线学习、任务实践、协同研究、成果共创","textChars":25,"textLines":2,"bbox":[82,266,294,68]}
+{"kind":"shape","id":"sh/32ponyts","slide":13,"name":"box-评价模型模块","bbox":[464,210,330,140]}
+{"kind":"textbox","id":"sh/gzy5s3a1","slide":13,"name":"box-title-评价模型模块","text":"评价模型模块","textPreview":"评价模型模块","textChars":6,"textLines":1,"bbox":[482,228,294,30]}
+{"kind":"textbox","id":"sh/1076lobm","slide":13,"name":"box-body-评价模型模块","text":"统一评价标准\n评价维度、指标体系、权重规则、等级标准","textPreview":"统一评价标准 | 评价维度、指标体系、权重规则、等级标准","textChars":26,"textLines":2,"bbox":[482,266,294,68]}
+{"kind":"shape","id":"sh/hcfy9k3u","slide":13,"name":"box-数据归集模块","bbox":[864,210,330,140]}
+{"kind":"textbox","id":"sh/gb6x0zm9","slide":13,"name":"box-title-数据归集模块","text":"数据归集模块","textPreview":"数据归集模块","textChars":6,"textLines":1,"bbox":[882,228,294,30]}
+{"kind":"textbox","id":"sh/vaxg7ulo","slide":13,"name":"box-body-数据归集模块","text":"全过程留痕\n时间窗口、过程数据、成果数据、评价数据","textPreview":"全过程留痕 | 时间窗口、过程数据、成果数据、评价数据","textChars":25,"textLines":2,"bbox":[882,266,294,68]}
+{"kind":"shape","id":"sh/u9ofyp43","slide":13,"name":"box-评估分析模块","bbox":[64,394,330,140]}
+{"kind":"textbox","id":"sh/t8fy5k3i","slide":13,"name":"box-title-评估分析模块","text":"评估分析模块","textPreview":"评估分析模块","textChars":6,"textLines":1,"bbox":[82,412,294,30]}
+{"kind":"textbox","id":"sh/876xwfmx","slide":13,"name":"box-body-评估分析模块","text":"质量分析输出\n综合评价、趋势分析、报表统计、结果反馈","textPreview":"质量分析输出 | 综合评价、趋势分析、报表统计、结果反馈","textChars":26,"textLines":2,"bbox":[82,450,294,68]}
+{"kind":"shape","id":"sh/7mdg3als","slide":13,"name":"box-档案沉淀模块","bbox":[464,394,330,140]}
+{"kind":"textbox","id":"sh/6l4fu547","slide":13,"name":"box-title-档案沉淀模块","text":"档案沉淀模块","textPreview":"档案沉淀模块","textChars":6,"textLines":1,"bbox":[482,412,294,30]}
+{"kind":"textbox","id":"sh/lkvy103m","slide":13,"name":"box-body-档案沉淀模块","text":"成长资产沉淀\n记录归档、证据归集、成果沉淀、画像更新","textPreview":"成长资产沉淀 | 记录归档、证据归集、成果沉淀、画像更新","textChars":26,"textLines":2,"bbox":[482,450,294,68]}
+{"kind":"shape","id":"sh/kjmxsfm1","slide":13,"name":"box-推荐服务模块","bbox":[864,394,330,140]}
+{"kind":"textbox","id":"sh/cnqh8fux","slide":13,"name":"box-title-推荐服务模块","text":"推荐服务模块","textPreview":"推荐服务模块","textChars":6,"textLines":1,"bbox":[882,412,294,30]}
+{"kind":"textbox","id":"sh/xozyhkbi","slide":13,"name":"box-body-推荐服务模块","text":"精准发展服务\n能力诊断、内容推荐、路径推荐、精准推送","textPreview":"精准发展服务 | 能力诊断、内容推荐、路径推荐、精准推送","textChars":26,"textLines":2,"bbox":[882,450,294,68]}
+{"kind":"textbox","id":"sh/q18f65cr","slide":13,"name":"page","text":"13","textPreview":"13","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"notes","id":"nt/hgzapcr6","slide":13,"text":""}
+{"kind":"slide","id":"sl/6lsnupw7","slide":14,"title":"数据流转贯穿项目创建到推荐服务的完整链路","textShapes":28}
+{"kind":"textbox","id":"sh/xc7eds76","slide":14,"name":"slide-title","text":"数据流转贯穿项目创建到推荐服务的完整链路","textPreview":"数据流转贯穿项目创建到推荐服务的完整链路","textChars":20,"textLines":1,"bbox":[42,78,1110,72]}
+{"kind":"shape","id":"sh/wbydknq1","slide":14,"name":"title-rule","bbox":[42,158,1196,1.2]}
+{"kind":"textbox","id":"sh/jepwf2pc","slide":14,"name":"chain-a","text":"业务实施链路","textPreview":"业务实施链路","textChars":6,"textLines":1,"bbox":[68,206,180,30]}
+{"kind":"textbox","id":"sh/idgvmx8r","slide":14,"name":"chain-b","text":"评价沉淀链路","textPreview":"评价沉淀链路","textChars":6,"textLines":1,"bbox":[68,410,180,30]}
+{"kind":"shape","id":"sh/5grehs7i","slide":14,"name":"data-top-0","bbox":[70,252,178,88]}
+{"kind":"textbox","id":"sh/kfidonqx","slide":14,"name":"data-top-num-0","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[84,266,38,24]}
+{"kind":"textbox","id":"sh/zi5c3y98","slide":14,"name":"data-top-title-0","text":"项目创建","textPreview":"项目创建","textChars":4,"textLines":1,"bbox":[90,294,138,28]}
+{"kind":"shape","id":"sh/ra1knul0","slide":14,"name":"connector-line","bbox":[250,296,46,0]}
+{"kind":"shape","id":"sh/x4ni9ofy","slide":14,"name":"data-top-1","bbox":[308,252,178,88]}
+{"kind":"textbox","id":"sh/a1wze9g7","slide":14,"name":"data-top-num-1","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[322,266,38,24]}
+{"kind":"textbox","id":"sh/b2507exs","slide":14,"name":"data-top-title-1","text":"报名审核","textPreview":"报名审核","textChars":4,"textLines":1,"bbox":[328,294,138,28]}
+{"kind":"shape","id":"sh/b654zel4","slide":14,"name":"connector-line","bbox":[488,296,46,0]}
+{"kind":"shape","id":"sh/y5wjitgj","slide":14,"name":"data-top-2","bbox":[546,252,178,88]}
+{"kind":"textbox","id":"sh/z650byxo","slide":14,"name":"data-top-num-2","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[560,266,38,24]}
+{"kind":"textbox","id":"sh/0buh8zy5","slide":14,"name":"data-top-title-2","text":"研修实施","textPreview":"研修实施","textChars":4,"textLines":1,"bbox":[566,294,138,28]}
+{"kind":"shape","id":"sh/mpozilkb","slide":14,"name":"connector-line","bbox":[726,296,46,0]}
+{"kind":"shape","id":"sh/grmxwvqt","slide":14,"name":"data-top-3","bbox":[784,252,178,88]}
+{"kind":"textbox","id":"sh/fqdg3q98","slide":14,"name":"data-top-num-3","text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[798,266,38,24]}
+{"kind":"textbox","id":"sh/up4fal83","slide":14,"name":"data-top-title-3","text":"过程采集","textPreview":"过程采集","textChars":4,"textLines":1,"bbox":[804,294,138,28]}
+{"kind":"shape","id":"sh/udozmlk7","slide":14,"name":"connector-line","bbox":[964,296,46,0]}
+{"kind":"shape","id":"sh/3udg7q9k","slide":14,"name":"data-top-4","bbox":[1022,252,178,88]}
+{"kind":"textbox","id":"sh/2t4fyl8z","slide":14,"name":"data-top-num-4","text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1036,266,38,24]}
+{"kind":"textbox","id":"sh/d0fydk7m","slide":14,"name":"data-top-title-4","text":"成果归集","textPreview":"成果归集","textChars":4,"textLines":1,"bbox":[1042,294,138,28]}
+{"kind":"shape","id":"sh/tobqpg72","slide":14,"name":"connector-line","bbox":[640,361.53,0,44]}
+{"kind":"shape","id":"sh/atg3idk7","slide":14,"name":"arrow-head","bbox":[628,395.53,24,20]}
+{"kind":"textbox","id":"sh/bup4rils","slide":14,"name":"handoff","text":"进入评价链路","textPreview":"进入评价链路","textChars":6,"textLines":1,"bbox":[609.73,375.13,240,28]}
+{"kind":"shape","id":"sh/cvylkn2d","slide":14,"name":"data-bottom-0","bbox":[70,456,178,88]}
+{"kind":"textbox","id":"sh/xw7mts3y","slide":14,"name":"data-bottom-num-0","text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[84,470,38,24]}
+{"kind":"textbox","id":"sh/yxgnmxkj","slide":14,"name":"data-bottom-title-0","text":"系统初评","textPreview":"系统初评","textChars":4,"textLines":1,"bbox":[90,492,138,26]}
+{"kind":"shape","id":"sh/fqd8r6ps","slide":14,"name":"connector-line","bbox":[250,500,46,0]}
+{"kind":"shape","id":"sh/lkrmhsju","slide":14,"name":"data-bottom-1","bbox":[308,456,178,88]}
+{"kind":"textbox","id":"sh/6l0nqxkf","slide":14,"name":"data-bottom-num-1","text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[322,470,38,24]}
+{"kind":"textbox","id":"sh/7m94j210","slide":14,"name":"data-bottom-title-1","text":"专家复核","textPreview":"专家复核","textChars":4,"textLines":1,"bbox":[328,492,138,26]}
+{"kind":"shape","id":"sh/m1gnyxor","slide":14,"name":"connector-line","bbox":[488,500,46,0]}
+{"kind":"shape","id":"sh/h4nm5sba","slide":14,"name":"data-bottom-2","bbox":[546,456,178,88]}
+{"kind":"textbox","id":"sh/gjelc7up","slide":14,"name":"data-bottom-num-2","text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[560,470,38,24]}
+{"kind":"textbox","id":"sh/365472tg","slide":14,"name":"data-bottom-title-2","text":"综合分析","textPreview":"综合分析","textChars":4,"textLines":1,"bbox":[566,498,138,28]}
+{"kind":"shape","id":"sh/a50n2xo3","slide":14,"name":"connector-line","bbox":[726,500,46,0]}
+{"kind":"shape","id":"sh/47y5g7u1","slide":14,"name":"data-bottom-3","bbox":[784,456,178,88]}
+{"kind":"textbox","id":"sh/jal4vidw","slide":14,"name":"data-bottom-num-3","text":"09","textPreview":"09","textChars":2,"textLines":1,"bbox":[798,470,38,24]}
+{"kind":"textbox","id":"sh/i9c32dcr","slide":14,"name":"data-bottom-title-3","text":"档案沉淀","textPreview":"档案沉淀","textChars":4,"textLines":1,"bbox":[804,498,138,28]}
+{"kind":"shape","id":"sh/q9wnqtoz","slide":14,"name":"connector-line","bbox":[964,500,46,0]}
+{"kind":"shape","id":"sh/mt8ja9sj","slide":14,"name":"data-bottom-4","bbox":[1022,456,178,88]}
+{"kind":"textbox","id":"sh/neh03eto","slide":14,"name":"data-bottom-num-4","text":"10","textPreview":"10","textChars":2,"textLines":1,"bbox":[1036,470,38,24]}
+{"kind":"textbox","id":"sh/0rq18zad","slide":14,"name":"data-bottom-title-4","text":"画像推荐","textPreview":"画像推荐","textChars":4,"textLines":1,"bbox":[1042,498,138,28]}
+{"kind":"textbox","id":"sh/1szi14by","slide":14,"name":"note","text":"重点：系统先按模型生成初评，专家基于证据复核确认，再进入综合分析和档案沉淀，保证评价可追溯。","textPreview":"重点：系统先按模型生成初评，专家基于证据复核确认，再进入综合分析和档案沉淀，保证评价可追溯。","textChars":46,"textLines":1,"bbox":[118,612,1040,36]}
+{"kind":"textbox","id":"sh/ep8j6ps7","slide":14,"name":"page","text":"14","textPreview":"14","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"shape","id":"sh/1w3i14fq","slide":14,"name":"arrow","bbox":[285.13,284.2,22.67,23.07]}
+{"kind":"shape","id":"sh/ehwvat8n","slide":14,"name":"arrow","bbox":[523.13,284.2,22.67,23.07]}
+{"kind":"shape","id":"sh/kre1k3y9","slide":14,"name":"arrow","bbox":[761.13,284.2,22.67,23.07]}
+{"kind":"shape","id":"sh/pwvy90rq","slide":14,"name":"arrow","bbox":[1003.07,284.2,22.67,23.07]}
+{"kind":"shape","id":"sh/cz6h4fq1","slide":14,"name":"arrow","bbox":[285.13,488.33,22.67,23.07]}
+{"kind":"shape","id":"sh/jyp4fil4","slide":14,"name":"arrow","bbox":[526.8,488.33,22.67,23.07]}
+{"kind":"shape","id":"sh/fi5432t4","slide":14,"name":"arrow","bbox":[761.13,488.33,22.67,23.07]}
+{"kind":"shape","id":"sh/25w3excv","slide":14,"name":"arrow","bbox":[999.13,488.33,22.67,23.07]}
+{"kind":"textbox","id":"sh/f25kz6hk","slide":14,"name":"data-bottom-desc-0","text":"按指标自动生成初评","textPreview":"按指标自动生成初评","textChars":9,"textLines":1,"bbox":[86,520,146,20]}
+{"kind":"textbox","id":"sh/e1wjq10z","slide":14,"name":"data-bottom-desc-1","text":"基于证据复核确认","textPreview":"基于证据复核确认","textChars":8,"textLines":1,"bbox":[324,520,146,20]}
+{"kind":"notes","id":"nt/6lsnupw7","slide":14,"text":""}
+{"kind":"slide","id":"sl/vaxsvy10","slide":15,"title":"分阶段建设，先形成业务闭环，再持续优化","textShapes":13}
+{"kind":"textbox","id":"sh/547mhg3m","slide":15,"name":"slide-title","text":"分阶段建设，先形成业务闭环，再持续优化","textPreview":"分阶段建设，先形成业务闭环，再持续优化","textChars":19,"textLines":1,"bbox":[42,78,1110,72]}
+{"kind":"shape","id":"sh/k3y5ov21","slide":15,"name":"title-rule","bbox":[42,158,1196,1.2]}
+{"kind":"shape","id":"sh/y1cvy1gv","slide":15,"name":"connector-line","bbox":[70,342,222,0]}
+{"kind":"shape","id":"sh/65gnqlk7","slide":15,"name":"phase-dot-0","bbox":[64,334,18,18]}
+{"kind":"textbox","id":"sh/t87ml0ji","slide":15,"name":"phase-label-0","text":"第一阶段","textPreview":"第一阶段","textChars":4,"textLines":1,"bbox":[60,288,130,28]}
+{"kind":"textbox","id":"sh/s7y5sv2x","slide":15,"name":"phase-title-0","text":"基础平台与培训管理","textPreview":"基础平台与培训管理","textChars":9,"textLines":1,"bbox":[60,374,180,70]}
+{"kind":"shape","id":"sh/adsvuhgj","slide":15,"name":"connector-line","bbox":[302,342,222,0]}
+{"kind":"textbox","id":"sh/wrm9kvep","slide":15,"name":"phase-label-1","text":"第二阶段","textPreview":"第二阶段","textChars":4,"textLines":1,"bbox":[292,288,130,28]}
+{"kind":"textbox","id":"sh/hsvat0fa","slide":15,"name":"phase-title-1","text":"研修活动与网络研修","textPreview":"研修活动与网络研修","textChars":9,"textLines":1,"bbox":[292,374,180,70]}
+{"kind":"shape","id":"sh/x03epwfa","slide":15,"name":"connector-line","bbox":[534,342,222,0]}
+{"kind":"shape","id":"sh/vqdsrqx4","slide":15,"name":"phase-dot-2","bbox":[292,333.93,18,18]}
+{"kind":"textbox","id":"sh/4vm9ovel","slide":15,"name":"phase-label-2","text":"第三阶段","textPreview":"第三阶段","textChars":4,"textLines":1,"bbox":[524,288,130,28]}
+{"kind":"textbox","id":"sh/5wvax0f6","slide":15,"name":"phase-title-2","text":"数据归集与培训评估","textPreview":"数据归集与培训评估","textChars":9,"textLines":1,"bbox":[524,374,180,70]}
+{"kind":"shape","id":"sh/e1cr2dk3","slide":15,"name":"connector-line","bbox":[766,342,222,0]}
+{"kind":"shape","id":"sh/judsvqxg","slide":15,"name":"phase-dot-3","bbox":[760,334,18,18]}
+{"kind":"textbox","id":"sh/0z29cbyh","slide":15,"name":"phase-label-3","text":"第四阶段","textPreview":"第四阶段","textChars":4,"textLines":1,"bbox":[756,288,130,28]}
+{"kind":"textbox","id":"sh/l0bqlgf2","slide":15,"name":"phase-title-3","text":"教师档案与推荐服务","textPreview":"教师档案与推荐服务","textChars":9,"textLines":1,"bbox":[756,374,180,70]}
+{"kind":"shape","id":"sh/6xsrydk7","slide":15,"name":"connector-line","bbox":[998,342,222,0]}
+{"kind":"shape","id":"sh/gjax03m9","slide":15,"name":"phase-dot-4","bbox":[992,334,18,18]}
+{"kind":"textbox","id":"sh/fi1grylo","slide":15,"name":"phase-label-4","text":"第五阶段","textPreview":"第五阶段","textChars":4,"textLines":1,"bbox":[988,288,130,28]}
+{"kind":"textbox","id":"sh/ehsfyt43","slide":15,"name":"phase-title-4","text":"试点运行与持续优化","textPreview":"试点运行与持续优化","textChars":9,"textLines":1,"bbox":[988,374,180,70]}
+{"kind":"shape","id":"sh/p8jyx83q","slide":15,"name":"outcomes","bbox":[90,508,1100,84]}
+{"kind":"textbox","id":"sh/o7ah4nm5","slide":15,"name":"outcomes-text","text":"预期成效：培训管理统一、过程透明、评价科学、档案完整、推荐精准、决策有据。","textPreview":"预期成效：培训管理统一、过程透明、评价科学、档案完整、推荐精准、决策有据。","textChars":37,"textLines":1,"bbox":[128,534,1020,34]}
+{"kind":"textbox","id":"sh/361gvilk","slide":15,"name":"page","text":"15","textPreview":"15","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"shape","id":"sh/76p4jqls","slide":15,"name":"phase-dot-2","bbox":[524.27,334.4,18,18]}
+{"kind":"notes","id":"nt/vaxsvy10","slide":15,"text":""}
+{"kind":"slide","id":"sl/gny5sjyp","slide":16,"title":"Part 02","textShapes":5}
+{"kind":"textbox","id":"sh/lwbyxwra","slide":16,"name":"part","text":"Part 02","textPreview":"Part 02","textChars":7,"textLines":1,"bbox":[58,82,300,42]}
+{"kind":"textbox","id":"sh/8z2h8bq1","slide":16,"name":"section-title","text":"AI 原生底座赋能方案","textPreview":"AI 原生底座赋能方案","textChars":11,"textLines":1,"bbox":[58,178,850,82]}
+{"kind":"textbox","id":"sh/9kby1g7m","slide":16,"name":"section-subtitle","text":"以AI 原生底座为横向能力层，让培训平台天然具备智能体、知识资产、空间协同和算力运营能力。","textPreview":"以AI 原生底座为横向能力层，让培训平台天然具备智能体、知识资产、空间协同和算力运营能力。","textChars":45,"textLines":1,"bbox":[62,310,820,82]}
+{"kind":"shape","id":"sh/ytkf2h8j","slide":16,"name":"section-line","bbox":[62,486,630,2]}
+{"kind":"textbox","id":"sh/zutgvm94","slide":16,"name":"keywords","text":"Lucky / 资料库 / 空间 / 场景模板 / 模型统计","textPreview":"Lucky / 资料库 / 空间 / 场景模板 / 模型统计","textChars":30,"textLines":1,"bbox":[62,524,780,34]}
+{"kind":"textbox","id":"sh/kv2h4rqp","slide":16,"name":"global-page","text":"16","textPreview":"16","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"notes","id":"nt/gny5sjyp","slide":16,"text":""}
+{"kind":"slide","id":"sl/14bup87q","slide":17,"title":"AI 原生底座让业务模块天然具备智能能力","textShapes":18}
+{"kind":"textbox","id":"sh/1c7e50ni","slide":17,"name":"title","text":"AI 原生底座让业务模块天然具备智能能力","textPreview":"AI 原生底座让业务模块天然具备智能能力","textChars":20,"textLines":1,"bbox":[42,82,1100,70]}
+{"kind":"shape","id":"sh/gbedwfmx","slide":17,"name":"rule","bbox":[42,176,1196,0]}
+{"kind":"shape","id":"sh/rm5czq50","slide":17,"name":"judgement-band","bbox":[78,208,1124,64]}
+{"kind":"textbox","id":"sh/6lwvql4v","slide":17,"name":"judgement-label","text":"核心判断","textPreview":"核心判断","textChars":4,"textLines":1,"bbox":[104,226,112,28]}
+{"kind":"textbox","id":"sh/t8ne10n6","slide":17,"name":"judgement-text","text":"培训平台不是传统系统加 AI，而是让 AI 作为资料沉淀、空间协同、角色赋能、流程推进、内容生成、评价分析和推荐服务的默认能力。","textPreview":"培训平台不是传统系统加 AI，而是让 AI 作为资料沉淀、空间协同、角色赋能、流程推进、内容生成、评价分析和推荐服务的默认能力。","textChars":64,"textLines":1,"bbox":[232,218,920,42]}
+{"kind":"shape","id":"sh/snedsvml","slide":17,"name":"flow-arrow-1","bbox":[314.87,338,48,24]}
+{"kind":"shape","id":"sh/jilcvq54","slide":17,"name":"flow-arrow-2","bbox":[602.53,337.33,48,24]}
+{"kind":"shape","id":"sh/ihcvml4j","slide":17,"name":"flow-arrow-3","bbox":[894.4,337.33,48,24]}
+{"kind":"shape","id":"sh/4by9or6l","slide":17,"name":"flow-business","bbox":[78,318,230,64]}
+{"kind":"textbox","id":"sh/pc7qhwn6","slide":17,"name":"flow-business-text","text":"业务模块","textPreview":"业务模块","textChars":4,"textLines":1,"bbox":[90,326,206,48]}
+{"kind":"shape","id":"sh/29grm1of","slide":17,"name":"flow-ai","bbox":[367,318,230,64]}
+{"kind":"textbox","id":"sh/3ap8fm50","slide":17,"name":"flow-ai-text","text":"AI 能力","textPreview":"AI 能力","textChars":5,"textLines":1,"bbox":[379,326,206,48]}
+{"kind":"shape","id":"sh/gnepkr69","slide":17,"name":"flow-agent-exp","bbox":[656,318,230,64]}
+{"kind":"textbox","id":"sh/honqdwnu","slide":17,"name":"flow-agent-exp-text","text":"智能体 + 体验","textPreview":"智能体 + 体验","textChars":8,"textLines":1,"bbox":[668,326,206,48]}
+{"kind":"shape","id":"sh/ulw7ihoj","slide":17,"name":"flow-landing","bbox":[945,318,230,64]}
+{"kind":"textbox","id":"sh/fm58bm54","slide":17,"name":"flow-landing-text","text":"业务场景落地","textPreview":"业务场景落地","textChars":6,"textLines":1,"bbox":[957,326,206,48]}
+{"kind":"shape","id":"sh/0ji9wb6t","slide":17,"name":"card-knowledge","bbox":[78,438,350,145]}
+{"kind":"shape","id":"sh/14rqpgne","slide":17,"name":"card-knowledge-badge","bbox":[100,460,38,38]}
+{"kind":"textbox","id":"sh/90nq9gfi","slide":17,"name":"card-knowledge-badge-text","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[100,466,38,24]}
+{"kind":"textbox","id":"sh/8ze9gbyx","slide":17,"name":"card-knowledge-title","text":"资料库","textPreview":"资料库","textChars":3,"textLines":1,"bbox":[154,460,250,38]}
+{"kind":"textbox","id":"sh/ny5876xc","slide":17,"name":"card-knowledge-body","text":"业务资料沉淀为知识资产，支撑搜索、问答、生成和应用。","textPreview":"业务资料沉淀为知识资产，支撑搜索、问答、生成和应用。","textChars":26,"textLines":1,"bbox":[104,510,298,62]}
+{"kind":"shape","id":"sh/mxw7e1gr","slide":17,"name":"card-space","bbox":[465,438,350,145]}
+{"kind":"shape","id":"sh/lwnq5gf6","slide":17,"name":"card-space-badge","bbox":[487,460,38,38]}
+{"kind":"textbox","id":"sh/0vepcbyl","slide":17,"name":"card-space-badge-text","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[487,466,38,24]}
+{"kind":"textbox","id":"sh/zul836xg","slide":17,"name":"card-space-title","text":"空间","textPreview":"空间","textChars":2,"textLines":1,"bbox":[541,460,250,38]}
+{"kind":"textbox","id":"sh/ytc7a1gv","slide":17,"name":"card-space-body","text":"业务过程进入空间，承载成员、任务、流程、协同和成果。","textPreview":"业务过程进入空间，承载成员、任务、流程、协同和成果。","textChars":26,"textLines":1,"bbox":[491,510,298,62]}
+{"kind":"shape","id":"sh/d83q1wfa","slide":17,"name":"card-agent","bbox":[852,438,350,145]}
+{"kind":"shape","id":"sh/c7up8ryp","slide":17,"name":"card-agent-badge","bbox":[874,460,38,38]}
+{"kind":"textbox","id":"sh/2dsn2xwn","slide":17,"name":"card-agent-badge-text","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[874,466,38,24]}
+{"kind":"textbox","id":"sh/3e1ob2d8","slide":17,"name":"card-agent-title","text":"智能体","textPreview":"智能体","textChars":3,"textLines":1,"bbox":[928,460,250,38]}
+{"kind":"textbox","id":"sh/oza547ed","slide":17,"name":"card-agent-body","text":"不同角色获得智能体助手，辅助沟通、决策、分析和业务推进。","textPreview":"不同角色获得智能体助手，辅助沟通、决策、分析和业务推进。","textChars":28,"textLines":1,"bbox":[878,510,298,62]}
+{"kind":"shape","id":"sh/p0j6dcvy","slide":17,"name":"bottom-note-band","bbox":[130,618,1020,38]}
+{"kind":"textbox","id":"sh/e98nydwb","slide":17,"name":"bottom-note","text":"扩展新业务时，直接复用「资料库 + 空间 + 智能体」的平台底座，减少重复建设。","textPreview":"扩展新业务时，直接复用「资料库 + 空间 + 智能体」的平台底座，减少重复建设。","textChars":40,"textLines":1,"bbox":[150,625,980,24]}
+{"kind":"textbox","id":"sh/fah47idw","slide":17,"name":"page","text":"17","textPreview":"17","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"notes","id":"nt/14bup87q","slide":17,"text":""}
+{"kind":"slide","id":"sl/y5wne50z","slide":18,"title":"AI 原生底座由六类平台能力组成","textShapes":20}
+{"kind":"textbox","id":"sh/wrelszu9","slide":18,"name":"title","text":"AI 原生底座由六类平台能力组成","textPreview":"AI 原生底座由六类平台能力组成","textChars":16,"textLines":1,"bbox":[42,82,1150,78]}
+{"kind":"shape","id":"sh/hsn2l4bu","slide":18,"name":"rule","bbox":[42,172,1196,1.5]}
+{"kind":"shape","id":"sh/itw3upcf","slide":18,"name":"card-Lucky 智能体","bbox":[58,214,350,145]}
+{"kind":"shape","id":"sh/je5knut0","slide":18,"name":"badge-01","bbox":[78,234,34,34]}
+{"kind":"textbox","id":"sh/4felwzu5","slide":18,"name":"badge-text-01","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[78,239,34,22]}
+{"kind":"textbox","id":"sh/5gnmp4bq","slide":18,"name":"card-head-Lucky 智能体","text":"Lucky 智能体","textPreview":"Lucky 智能体","textChars":9,"textLines":1,"bbox":[126,236,258,34]}
+{"kind":"textbox","id":"sh/6hw3y9sb","slide":18,"name":"card-body-Lucky 智能体","text":"面向不同角色提供问答、生成、分析、任务辅助和流程推进能力。","textPreview":"面向不同角色提供问答、生成、分析、任务辅助和流程推进能力。","textChars":29,"textLines":1,"bbox":[126,280,258,61]}
+{"kind":"shape","id":"sh/rip4retw","slide":18,"name":"card-资料库","bbox":[463,214,350,145]}
+{"kind":"shape","id":"sh/fapkr6pw","slide":18,"name":"badge-02","bbox":[483,234,34,34]}
+{"kind":"textbox","id":"sh/upg3i18r","slide":18,"name":"badge-text-02","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[483,239,34,22]}
+{"kind":"textbox","id":"sh/1cr2tg72","slide":18,"name":"card-head-资料库","text":"资料库","textPreview":"资料库","textChars":3,"textLines":1,"bbox":[531,236,258,34]}
+{"kind":"textbox","id":"sh/gbylkbqh","slide":18,"name":"card-body-资料库","text":"沉淀课程、案例、制度、成果、评价材料，形成可检索、可问答、可生成的知识资产。","textPreview":"沉淀课程、案例、制度、成果、评价材料，形成可检索、可问答、可生成的知识资产。","textChars":38,"textLines":1,"bbox":[531,280,258,61]}
+{"kind":"shape","id":"sh/7mpknmp0","slide":18,"name":"card-空间","bbox":[868,214,350,145]}
+{"kind":"shape","id":"sh/6lg3e18f","slide":18,"name":"badge-03","bbox":[888,234,34,34]}
+{"kind":"textbox","id":"sh/to72pw76","slide":18,"name":"badge-text-03","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[888,239,34,22]}
+{"kind":"textbox","id":"sh/snylgrql","slide":18,"name":"card-head-空间","text":"空间","textPreview":"空间","textChars":2,"textLines":1,"bbox":[936,236,258,34]}
+{"kind":"textbox","id":"sh/bi94zqp4","slide":18,"name":"card-body-空间","text":"承载成员、权限、任务、流程、协同、工具和成果，是培训业务过程的统一载体。","textPreview":"承载成员、权限、任务、流程、协同、工具和成果，是培训业务过程的统一载体。","textChars":36,"textLines":1,"bbox":[936,280,258,61]}
+{"kind":"shape","id":"sh/qh03ql8j","slide":18,"name":"card-场景模板","bbox":[58,402,350,145]}
+{"kind":"shape","id":"sh/md4nipsr","slide":18,"name":"badge-04","bbox":[78,422,34,34]}
+{"kind":"textbox","id":"sh/nedoru9c","slide":18,"name":"badge-text-04","text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[78,427,34,22]}
+{"kind":"textbox","id":"sh/8zm5kzax","slide":18,"name":"card-head-场景模板","text":"场景模板","textPreview":"场景模板","textChars":4,"textLines":1,"bbox":[126,424,258,34]}
+{"kind":"textbox","id":"sh/90v6t4ri","slide":18,"name":"card-body-场景模板","text":"把培训项目、工作坊、校本研修、AI 通识教学等场景预配置为可复制空间。","textPreview":"把培训项目、工作坊、校本研修、AI 通识教学等场景预配置为可复制空间。","textChars":35,"textLines":1,"bbox":[126,468,258,61]}
+{"kind":"shape","id":"sh/a14nm9s3","slide":18,"name":"card-模型与 Token 统计","bbox":[463,402,350,145]}
+{"kind":"shape","id":"sh/v2xovu9o","slide":18,"name":"badge-05","bbox":[483,422,34,34]}
+{"kind":"textbox","id":"sh/w36poza9","slide":18,"name":"badge-text-05","text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[483,427,34,22]}
+{"kind":"textbox","id":"sh/x4f6x4re","slide":18,"name":"card-head-模型与 Token 统计","text":"模型与 Token 统计","textPreview":"模型与 Token 统计","textChars":12,"textLines":1,"bbox":[531,424,258,34]}
+{"kind":"textbox","id":"sh/q5kna5sz","slide":18,"name":"card-body-模型与 Token 统计","text":"计量 AI 调用、Token 消耗和业务归属，支撑成本核算、用量预警和套餐设计。","textPreview":"计量 AI 调用、Token 消耗和业务归属，支撑成本核算、用量预警和套餐设计。","textChars":40,"textLines":1,"bbox":[531,468,258,61]}
+{"kind":"shape","id":"sh/b6toja94","slide":18,"name":"card-租户与套餐","bbox":[868,402,350,145]}
+{"kind":"shape","id":"sh/t0zqp8bm","slide":18,"name":"badge-06","bbox":[888,422,34,34]}
+{"kind":"textbox","id":"sh/szq9g3uh","slide":18,"name":"badge-text-06","text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[888,427,34,22]}
+{"kind":"textbox","id":"sh/7yh8nytw","slide":18,"name":"card-head-租户与套餐","text":"租户、套餐、解决方案","textPreview":"租户、套餐、解决方案","textChars":10,"textLines":1,"bbox":[936,424,258,34]}
+{"kind":"textbox","id":"sh/6x8retcb","slide":18,"name":"card-body-租户与套餐","text":"支持教育局、学校、培训机构独立运营，按方案、资源、服务和算力组合交付。","textPreview":"支持教育局、学校、培训机构独立运营，按方案、资源、服务和算力组合交付。","textChars":35,"textLines":1,"bbox":[936,468,258,61]}
+{"kind":"textbox","id":"sh/h4jqtsby","slide":18,"name":"page","text":"18","textPreview":"18","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"notes","id":"nt/y5wne50z","slide":18,"text":""}
+{"kind":"slide","id":"sl/nid43ytk","slide":19,"title":"总体架构：AI 原生底座横向赋能全部培训子系统","textShapes":15}
+{"kind":"textbox","id":"sh/9gb6xgbi","slide":19,"name":"title","text":"总体架构：AI 原生底座横向赋能全部培训子系统","textPreview":"总体架构：AI 原生底座横向赋能全部培训子系统","textChars":23,"textLines":1,"bbox":[42,82,1150,78]}
+{"kind":"shape","id":"sh/8v2pobax","slide":19,"name":"rule","bbox":[42,172,1196,1.5]}
+{"kind":"shape","id":"sh/vitozqt8","slide":19,"name":"sub-0","bbox":[78,212,186,105]}
+{"kind":"textbox","id":"sh/ahk7qls3","slide":19,"name":"sub-text-0","text":"培训信息管理","textPreview":"培训信息管理","textChars":6,"textLines":1,"bbox":[92,242,158,34]}
+{"kind":"shape","id":"sh/xkbq10be","slide":19,"name":"sub-1","bbox":[310,212,186,105]}
+{"kind":"textbox","id":"sh/wj2psvat","slide":19,"name":"sub-text-1","text":"研修活动","textPreview":"研修活动","textChars":4,"textLines":1,"bbox":[324,242,158,34]}
+{"kind":"shape","id":"sh/jmd83atk","slide":19,"name":"sub-2","bbox":[542,212,186,105]}
+{"kind":"textbox","id":"sh/il47u5sz","slide":19,"name":"sub-text-2","text":"培训评估","textPreview":"培训评估","textChars":4,"textLines":1,"bbox":[556,242,158,34]}
+{"kind":"shape","id":"sh/cri1gnql","slide":19,"name":"sub-3","bbox":[774,212,186,105]}
+{"kind":"textbox","id":"sh/dsri9sr6","slide":19,"name":"sub-text-3","text":"教师档案","textPreview":"教师档案","textChars":4,"textLines":1,"bbox":[788,242,158,34]}
+{"kind":"shape","id":"sh/qpgjex8f","slide":19,"name":"sub-4","bbox":[1006,212,186,105]}
+{"kind":"textbox","id":"sh/rqp07290","slide":19,"name":"sub-text-4","text":"用户推荐","textPreview":"用户推荐","textChars":4,"textLines":1,"bbox":[1020,242,158,34]}
+{"kind":"shape","id":"sh/0vi1k7qx","slide":19,"name":"ai-base","bbox":[78,420,1110,145]}
+{"kind":"textbox","id":"sh/1gridcr2","slide":19,"name":"base-title","text":" AI 原生底座","textPreview":"AI 原生底座","textChars":8,"textLines":1,"bbox":[108,446,250,34]}
+{"kind":"shape","id":"sh/et0jix8r","slide":19,"name":"pill-Lucky 智能体","bbox":[382,447,110,36]}
+{"kind":"textbox","id":"sh/zu90b29c","slide":19,"name":"pill-text-Lucky 智能体","text":"Lucky 智能体","textPreview":"Lucky 智能体","textChars":9,"textLines":1,"bbox":[390,453,94,26]}
+{"kind":"shape","id":"sh/oj21o7qt","slide":19,"name":"pill-资料库","bbox":[508,447,110,36]}
+{"kind":"textbox","id":"sh/9kb2hcre","slide":19,"name":"pill-text-资料库","text":"资料库","textPreview":"资料库","textChars":3,"textLines":1,"bbox":[516,453,94,26]}
+{"kind":"shape","id":"sh/x07i1cji","slide":19,"name":"pill-空间","bbox":[634,447,110,36]}
+{"kind":"textbox","id":"sh/wfy1s7ix","slide":19,"name":"pill-text-空间","text":"空间","textPreview":"空间","textChars":2,"textLines":1,"bbox":[642,453,94,26]}
+{"kind":"shape","id":"sh/vep0z21c","slide":19,"name":"pill-场景模板","bbox":[760,447,110,36]}
+{"kind":"textbox","id":"sh/adgjqx0r","slide":19,"name":"pill-text-场景模板","text":"场景模板","textPreview":"场景模板","textChars":4,"textLines":1,"bbox":[768,453,94,26]}
+{"kind":"shape","id":"sh/54ri5wje","slide":19,"name":"pill-模型统计","bbox":[886,447,110,36]}
+{"kind":"textbox","id":"sh/k3y1wri9","slide":19,"name":"pill-text-模型统计","text":"大模型治理","textPreview":"大模型治理","textChars":5,"textLines":1,"bbox":[894,453,94,26]}
+{"kind":"shape","id":"sh/j2p03m1o","slide":19,"name":"pill-租户/套餐","bbox":[1012,447,144.47,36]}
+{"kind":"textbox","id":"sh/i1gjuh03","slide":19,"name":"pill-text-租户/套餐","text":"租户/套餐/解决方案","textPreview":"租户/套餐/解决方案","textChars":10,"textLines":1,"bbox":[1020,453,130.67,26]}
+{"kind":"textbox","id":"sh/l8nitsja","slide":19,"name":"base-note","text":"底座能力不是单点功能，而是为每个培训业务模块提供默认智能能力、知识资产能力和数据运营能力。","textPreview":"底座能力不是单点功能，而是为每个培训业务模块提供默认智能能力、知识资产能力和数据运营能力。","textChars":45,"textLines":1,"bbox":[108,512,1000,32]}
+{"kind":"shape","id":"sh/07ehknip","slide":19,"name":"line","bbox":[171,329,2,81]}
+{"kind":"shape","id":"sh/qdsfutgn","slide":19,"name":"arrow","bbox":[162,322,18,14]}
+{"kind":"shape","id":"sh/belg3yh8","slide":19,"name":"line","bbox":[403,329,2,81]}
+{"kind":"shape","id":"sh/cfuxw3yt","slide":19,"name":"arrow","bbox":[394,322,18,14]}
+{"kind":"shape","id":"sh/dg3y58zy","slide":19,"name":"line","bbox":[635,329,2,81]}
+{"kind":"shape","id":"sh/yhcfydgj","slide":19,"name":"arrow","bbox":[626,322,18,14]}
+{"kind":"shape","id":"sh/zilg7yh4","slide":19,"name":"line","bbox":[867,329,2,81]}
+{"kind":"shape","id":"sh/0jux03yp","slide":19,"name":"arrow","bbox":[858,322,18,14]}
+{"kind":"shape","id":"sh/lk3y98za","slide":19,"name":"line","bbox":[1099,329,2,81]}
+{"kind":"shape","id":"sh/ul8fm9gf","slide":19,"name":"arrow","bbox":[1090,322,18,14]}
+{"kind":"textbox","id":"sh/fm1wveh0","slide":19,"name":"page","text":"19","textPreview":"19","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"notes","id":"nt/nid43ytk","slide":19,"text":""}
+{"kind":"slide","id":"sl/zyxsni5k","slide":20,"title":"赋能“培训信息管理”：AI 辅助项目、报名、审核和费用治理","textShapes":12}
+{"kind":"textbox","id":"sh/qpwjmh8n","slide":20,"name":"title","text":"赋能“培训信息管理”：AI 辅助项目、报名、审核和费用治理","textPreview":"赋能“培训信息管理”：AI 辅助项目、报名、审核和费用治理","textChars":29,"textLines":1,"bbox":[42,82,1150,78]}
+{"kind":"shape","id":"sh/rq50vmp8","slide":20,"name":"rule","bbox":[42,172,1196,1.5]}
+{"kind":"shape","id":"sh/4nu1krqh","slide":20,"name":"card-项目方案生成","bbox":[60,222,350,154]}
+{"kind":"shape","id":"sh/po3itc72","slide":20,"name":"badge-01","bbox":[80,242,34,34]}
+{"kind":"textbox","id":"sh/2lczih8r","slide":20,"name":"badge-text-01","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[80,247,34,22]}
+{"kind":"textbox","id":"sh/3ml0rmpw","slide":20,"name":"card-head-项目方案生成","text":"项目与课程计划","textPreview":"项目与课程计划","textChars":7,"textLines":1,"bbox":[128,244,258,34]}
+{"kind":"textbox","id":"sh/gjuhg7ql","slide":20,"name":"card-body-项目方案生成","text":"基于培训目标、对象、周期和课程资源，辅助生成项目方案、课程计划、日程安排和班级设置。","textPreview":"基于培训目标、对象、周期和课程资源，辅助生成项目方案、课程计划、日程安排和班级设置。","textChars":42,"textLines":1,"bbox":[128,288,258,70]}
+{"kind":"shape","id":"sh/hk3ipcr6","slide":20,"name":"card-资源自动编目","bbox":[465,222,350,154]}
+{"kind":"shape","id":"sh/dkfmp4zy","slide":20,"name":"badge-02","bbox":[485,242,34,34]}
+{"kind":"textbox","id":"sh/cj65wzyd","slide":20,"name":"badge-text-02","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[485,247,34,22]}
+{"kind":"textbox","id":"sh/rid4nuhs","slide":20,"name":"card-head-资源自动编目","text":"报名审核与组织","textPreview":"报名审核与组织","textChars":7,"textLines":1,"bbox":[533,244,258,34]}
+{"kind":"textbox","id":"sh/qh4nupg7","slide":20,"name":"card-body-资源自动编目","text":"根据报名条件、名额规则和人员数据，辅助生成招生通知、审核意见、名单校验和分班建议。","textPreview":"根据报名条件、名额规则和人员数据，辅助生成招生通知、审核意见、名单校验和分班建议。","textChars":41,"textLines":1,"bbox":[533,288,258,70]}
+{"kind":"shape","id":"sh/pwvmlkzm","slide":20,"name":"card-运营助手","bbox":[870,222,350,154]}
+{"kind":"shape","id":"sh/4vm5sfy1","slide":20,"name":"badge-03","bbox":[890,242,34,34]}
+{"kind":"textbox","id":"sh/3ud4juhg","slide":20,"name":"badge-text-03","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[890,247,34,22]}
+{"kind":"textbox","id":"sh/2t4nqpgb","slide":20,"name":"card-head-运营助手","text":"费用与台账治理","textPreview":"费用与台账治理","textChars":7,"textLines":1,"bbox":[938,244,258,34]}
+{"kind":"textbox","id":"sh/hsvmhkzq","slide":20,"name":"card-body-运营助手","text":"围绕费用标准、缴费状态、项目进度和通知任务，自动汇总台账、发现异常并生成统计报表。","textPreview":"围绕费用标准、缴费状态、项目进度和通知任务，自动汇总台账、发现异常并生成统计报表。","textChars":41,"textLines":1,"bbox":[938,288,258,70]}
+{"kind":"shape","id":"sh/grm5ofy5","slide":20,"name":"flow","bbox":[71.13,486,1117.67,70]}
+{"kind":"textbox","id":"sh/8b654f61","slide":20,"name":"flow-text","text":"输入：培训目标 / 对象名单 / 课程资源 / 报名条件 / 费用规则  →  AI 信息编排与校验  →  输出：项目计划 / 招生通知 / 审核名单 / 费用台账 / 统计报表","textPreview":"输入：培训目标 / 对象名单 / 课程资源 / 报名条件 / 费用规则  →  AI 信息编排与校验  →  输出：项目计划 / 招生通知 / 审核名单 / 费用台账 / 统计报表","textChars":90,"textLines":1,"bbox":[141.07,507,996.07,30]}
+{"kind":"textbox","id":"sh/tcz6dk7m","slide":20,"name":"page","text":"20","textPreview":"20","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"notes","id":"nt/zyxsni5k","slide":20,"text":""}
+{"kind":"slide","id":"sl/m1wvqtk3","slide":21,"title":"赋能“研修活动”：空间承载过程，智能体陪伴学习与实训","textShapes":15}
+{"kind":"textbox","id":"sh/1gbmxs7a","slide":21,"name":"title","text":"赋能“研修活动”：空间承载过程，智能体陪伴学习与实训","textPreview":"赋能“研修活动”：空间承载过程，智能体陪伴学习与实训","textChars":26,"textLines":1,"bbox":[42,82,1150,78]}
+{"kind":"shape","id":"sh/0f2lon6p","slide":21,"name":"rule","bbox":[42,172,1196,1.5]}
+{"kind":"shape","id":"sh/ra9kryp8","slide":21,"name":"step-0","bbox":[74,240,235,210]}
+{"kind":"textbox","id":"sh/qp03yt8n","slide":21,"name":"step-num-0","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[96,260,50,24]}
+{"kind":"textbox","id":"sh/dcb2t87y","slide":21,"name":"step-head-0","text":"线上学习","textPreview":"线上学习","textChars":4,"textLines":1,"bbox":[96,304,190,34]}
+{"kind":"textbox","id":"sh/sb2lk36t","slide":21,"name":"step-body-0","text":"资料问答、课程导学、知识点解释、学习提醒。","textPreview":"资料问答、课程导学、知识点解释、学习提醒。","textChars":21,"textLines":1,"bbox":[98,362,186,62]}
+{"kind":"shape","id":"sh/b6d432pc","slide":21,"name":"step-1","bbox":[372,240,235,210]}
+{"kind":"textbox","id":"sh/al43uxor","slide":21,"name":"step-num-1","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[394,260,50,24]}
+{"kind":"textbox","id":"sh/4jax4nqd","slide":21,"name":"step-head-1","text":"线下工作坊","textPreview":"线下工作坊","textChars":5,"textLines":1,"bbox":[394,304,190,34]}
+{"kind":"textbox","id":"sh/5kjydsri","slide":21,"name":"step-body-1","text":"任务分发、实操指导、现场问题答疑、成果点评记录。","textPreview":"任务分发、实操指导、现场问题答疑、成果点评记录。","textChars":24,"textLines":1,"bbox":[396,362,186,62]}
+{"kind":"shape","id":"sh/ixsf2d87","slide":21,"name":"step-2","bbox":[670,240,235,210]}
+{"kind":"textbox","id":"sh/jy1gbi9s","slide":21,"name":"step-num-2","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[692,260,50,24]}
+{"kind":"textbox","id":"sh/wvax03q1","slide":21,"name":"step-head-2","text":"协同研修","textPreview":"协同研修","textChars":4,"textLines":1,"bbox":[692,304,190,34]}
+{"kind":"textbox","id":"sh/hwjy98rm","slide":21,"name":"step-body-2","text":"小组讨论总结、案例共创、课例打磨、研究资料整理。","textPreview":"小组讨论总结、案例共创、课例打磨、研究资料整理。","textChars":24,"textLines":1,"bbox":[694,362,186,62]}
+{"kind":"shape","id":"sh/utsfyt8v","slide":21,"name":"step-3","bbox":[968,240,235,210]}
+{"kind":"textbox","id":"sh/vu1w7y9g","slide":21,"name":"step-num-3","text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[990,260,50,24]}
+{"kind":"textbox","id":"sh/8rqxw3q5","slide":21,"name":"step-head-3","text":"成果沉淀","textPreview":"成果沉淀","textChars":4,"textLines":1,"bbox":[990,304,190,34]}
+{"kind":"textbox","id":"sh/9sze58rq","slide":21,"name":"step-body-3","text":"作业摘要、成果标签、优秀案例推荐和复用。","textPreview":"作业摘要、成果标签、优秀案例推荐和复用。","textChars":20,"textLines":1,"bbox":[992,362,186,62]}
+{"kind":"textbox","id":"sh/porutkje","slide":21,"name":"note","text":"关键变化：培训空间不只是页面容器，而是成员、任务、资料、智能体、成果和评价数据的统一业务现场。","textPreview":"关键变化：培训空间不只是页面容器，而是成员、任务、资料、智能体、成果和评价数据的统一业务现场。","textChars":47,"textLines":1,"bbox":[112,548,1050,40]}
+{"kind":"textbox","id":"sh/onid0f2t","slide":21,"name":"page","text":"21","textPreview":"21","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"notes","id":"nt/m1wvqtk3","slide":21,"text":""}
+{"kind":"slide","id":"sl/5onypobq","slide":22,"title":"赋能“培训评估”：AI + 大数据辅助","textShapes":15}
+{"kind":"textbox","id":"sh/6987itcr","slide":22,"name":"title","text":"赋能“培训评估”：AI + 大数据辅助","textPreview":"赋能“培训评估”：AI + 大数据辅助","textChars":19,"textLines":1,"bbox":[42,82,1150,78]}
+{"kind":"shape","id":"sh/7a18rydc","slide":22,"name":"rule","bbox":[42,172,1196,1.5]}
+{"kind":"textbox","id":"sh/jq90ru1s","slide":22,"name":"page","text":"22","textPreview":"22","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"shape","id":"sh/xoripkj2","slide":22,"name":"eval-data-panel","bbox":[76,218,246.93,295.53]}
+{"kind":"shape","id":"sh/al0zepkb","slide":22,"name":"eval-data-badge","bbox":[104,238,190,38]}
+{"kind":"textbox","id":"sh/bm9gnu1w","slide":22,"name":"eval-data-badge-text","text":"大数据（埋点）","textPreview":"大数据（埋点）","textChars":7,"textLines":1,"bbox":[112,244,174,26]}
+{"kind":"shape","id":"sh/ozyhcf25","slide":22,"name":"eval-data-pill-1","bbox":[106,294,188,34]}
+{"kind":"textbox","id":"sh/907ylkjq","slide":22,"name":"eval-data-pill-1-text","text":"签到 / 互动","textPreview":"签到 / 互动","textChars":7,"textLines":1,"bbox":[114,298,172,26]}
+{"kind":"shape","id":"sh/rup0va5s","slide":22,"name":"eval-data-pill-2","bbox":[106,336,188,34]}
+{"kind":"textbox","id":"sh/qtwz2547","slide":22,"name":"eval-data-pill-2-text","text":"任务 / 问卷","textPreview":"任务 / 问卷","textChars":7,"textLines":1,"bbox":[114,340,172,26]}
+{"kind":"shape","id":"sh/dw7ixkni","slide":22,"name":"eval-data-pill-3","bbox":[106,378,188,34]}
+{"kind":"textbox","id":"sh/cvy14fmx","slide":22,"name":"eval-data-pill-3-text","text":"课堂/研讨行为","textPreview":"课堂/研讨行为","textChars":7,"textLines":1,"bbox":[114,382,172,26]}
+{"kind":"shape","id":"sh/zyp0za5o","slide":22,"name":"eval-data-pill-4","bbox":[106,420,188,34]}
+{"kind":"textbox","id":"sh/exgj6p43","slide":22,"name":"eval-data-pill-4-text","text":"成果材料","textPreview":"成果材料","textChars":4,"textLines":1,"bbox":[114,424,172,26]}
+{"kind":"shape","id":"sh/1k7i1knu","slide":22,"name":"eval-data-pill-5","bbox":[106,462,188,34]}
+{"kind":"textbox","id":"sh/0jy18fm9","slide":22,"name":"eval-data-pill-5-text","text":"专家意见 / 规则","textPreview":"专家意见 / 规则","textChars":9,"textLines":1,"bbox":[114,466,172,26]}
+{"kind":"shape","id":"sh/nm903u5k","slide":22,"name":"eval-arrow-data-to-ai","bbox":[340,345,122,22]}
+{"kind":"textbox","id":"sh/ml0jap4f","slide":22,"name":"eval-arrow-label-1","text":"过程留痕","textPreview":"过程留痕","textChars":4,"textLines":1,"bbox":[346,316,108,24]}
+{"kind":"shape","id":"sh/65836tcb","slide":22,"name":"eval-ai-oval","bbox":[474,232,344,220]}
+{"kind":"textbox","id":"sh/7qhkzytw","slide":22,"name":"eval-ai-title","text":"AI + 大数据\n评估辅助","textPreview":"AI + 大数据 | 评估辅助","textChars":13,"textLines":2,"bbox":[522,282,248,66]}
+{"kind":"textbox","id":"sh/8rql83uh","slide":22,"name":"eval-ai-body","text":"埋点分析 / 证据归集\n指标匹配 / 报告草稿 / 风险提示","textPreview":"埋点分析 / 证据归集 | 指标匹配 / 报告草稿 / 风险提示","textChars":30,"textLines":2,"bbox":[524,352,244,58]}
+{"kind":"shape","id":"sh/tsz218b2","slide":22,"name":"eval-arrow-ai-to-human","bbox":[842,345,120,22]}
+{"kind":"textbox","id":"sh/ut83adcn","slide":22,"name":"eval-arrow-label-2","text":"建议生成","textPreview":"建议生成","textChars":4,"textLines":1,"bbox":[848,316,108,24]}
+{"kind":"shape","id":"sh/vuhk3it8","slide":22,"name":"eval-human-panel","bbox":[986,238,244,206]}
+{"kind":"textbox","id":"sh/gvqlcnud","slide":22,"name":"eval-human-title","text":"人工确认","textPreview":"人工确认","textChars":4,"textLines":1,"bbox":[1014,266,188,38]}
+{"kind":"textbox","id":"sh/hwz258by","slide":22,"name":"eval-human-body","text":"人工复核评分、等级、评语和结论。\nAI 仅提供辅助建议。","textPreview":"人工复核评分、等级、评语和结论。 | AI 仅提供辅助建议。","textChars":28,"textLines":2,"bbox":[1014,318,188,86]}
+{"kind":"textbox","id":"sh/ax4jy9c3","slide":22,"name":"eval-bottom","text":"边界原则：埋点数据用于过程证据，AI 只做整理与建议；最终评分、等级和结论由人工确认。","textPreview":"边界原则：埋点数据用于过程证据，AI 只做整理与建议；最终评分、等级和结论由人工确认。","textChars":43,"textLines":1,"bbox":[96,546,1088,42]}
+{"kind":"notes","id":"nt/5onypobq","slide":22,"text":""}
+{"kind":"slide","id":"sl/c7uhcr6t","slide":23,"title":"赋能“教师档案与用户推荐”：让培训结果进入下一轮发展服务","textShapes":14}
+{"kind":"textbox","id":"sh/90vqdczq","slide":23,"name":"title","text":"赋能“教师档案与用户推荐”：让培训结果进入下一轮发展服务","textPreview":"赋能“教师档案与用户推荐”：让培训结果进入下一轮发展服务","textChars":28,"textLines":1,"bbox":[42,82,1150,78]}
+{"kind":"shape","id":"sh/8zm9k7y5","slide":23,"name":"rule","bbox":[42,172,1196,1.5]}
+{"kind":"shape","id":"sh/v2d8fmhw","slide":23,"name":"archive","bbox":[66,230,298.33,271.8]}
+{"kind":"textbox","id":"sh/a14rmhgb","slide":23,"name":"archive-title","text":"教师档案","textPreview":"教师档案","textChars":4,"textLines":1,"bbox":[96,262,240,34]}
+{"kind":"shape","id":"sh/xovqhcz2","slide":23,"name":"pill-培训记录","bbox":[112,324,210,30]}
+{"kind":"textbox","id":"sh/w3m9o7yh","slide":23,"name":"pill-text-培训记录","text":"培训记录","textPreview":"培训记录","textChars":4,"textLines":1,"bbox":[120,330,194,20]}
+{"kind":"shape","id":"sh/jqd8jmhs","slide":23,"name":"pill-成果材料","bbox":[112,366,210,30]}
+{"kind":"textbox","id":"sh/ip4rqhgn","slide":23,"name":"pill-text-成果材料","text":"成果材料","textPreview":"成果材料","textChars":4,"textLines":1,"bbox":[120,372,194,20]}
+{"kind":"shape","id":"sh/sby90zm1","slide":23,"name":"pill-评价结果","bbox":[112,408,210,30]}
+{"kind":"textbox","id":"sh/tc7at436","slide":23,"name":"pill-text-评价结果","text":"评价结果","textPreview":"评价结果","textChars":4,"textLines":1,"bbox":[120,414,194,20]}
+{"kind":"shape","id":"sh/69gry94v","slide":23,"name":"pill-成长轨迹","bbox":[112,450,210,30]}
+{"kind":"textbox","id":"sh/rapsrelg","slide":23,"name":"pill-text-成长轨迹","text":"成长轨迹","textPreview":"成长轨迹","textChars":4,"textLines":1,"bbox":[120,456,194,20]}
+{"kind":"shape","id":"sh/0fi94jmx","slide":23,"name":"line","bbox":[396,360,128,3]}
+{"kind":"shape","id":"sh/edgr294r","slide":23,"name":"portrait","bbox":[540,250,210,210]}
+{"kind":"textbox","id":"sh/fepsvelc","slide":23,"name":"portrait-text","text":"画像与\n能力诊断","textPreview":"画像与 | 能力诊断","textChars":8,"textLines":2,"bbox":[580,312,130,70]}
+{"kind":"shape","id":"sh/oji9832t","slide":23,"name":"line","bbox":[776,360,128,3]}
+{"kind":"shape","id":"sh/p4ra1o3e","slide":23,"name":"arrow","bbox":[894.27,349.53,22.67,23.07]}
+{"kind":"shape","id":"sh/x0nalovi","slide":23,"name":"recommend","bbox":[930,230,290.2,273.33]}
+{"kind":"textbox","id":"sh/wze9cjud","slide":23,"name":"rec-title","text":"推荐服务","textPreview":"推荐服务","textChars":4,"textLines":1,"bbox":[964,262,218,34]}
+{"kind":"shape","id":"sh/by58jeds","slide":23,"name":"pill-课程推荐","bbox":[972,324,202,30]}
+{"kind":"textbox","id":"sh/axwratc7","slide":23,"name":"pill-text-课程推荐","text":"课程推荐","textPreview":"课程推荐","textChars":4,"textLines":1,"bbox":[980,330,186,20]}
+{"kind":"shape","id":"sh/l47ap8vu","slide":23,"name":"pill-活动推荐","bbox":[972,366,202,30]}
+{"kind":"textbox","id":"sh/k3y9g3u9","slide":23,"name":"pill-text-活动推荐","text":"活动推荐","textPreview":"活动推荐","textChars":4,"textLines":1,"bbox":[980,372,186,20]}
+{"kind":"shape","id":"sh/j2psnydo","slide":23,"name":"pill-资源推荐","bbox":[972,408,202,30]}
+{"kind":"textbox","id":"sh/y1gretc3","slide":23,"name":"pill-text-资源推荐","text":"资源推荐","textPreview":"资源推荐","textChars":4,"textLines":1,"bbox":[980,414,186,20]}
+{"kind":"shape","id":"sh/183qd4vq","slide":23,"name":"pill-路径推荐","bbox":[972,450,202,30]}
+{"kind":"textbox","id":"sh/07u94ze5","slide":23,"name":"pill-text-路径推荐","text":"路径推荐","textPreview":"路径推荐","textChars":4,"textLines":1,"bbox":[980,456,186,20]}
+{"kind":"textbox","id":"sh/qds7e5sn","slide":23,"name":"note","text":"AI 原生底座把“评价发现问题”转化为“推荐推动改进”，形成持续培训闭环。","textPreview":"AI 原生底座把“评价发现问题”转化为“推荐推动改进”，形成持续培训闭环。","textChars":37,"textLines":1,"bbox":[142,558,1000,36]}
+{"kind":"textbox","id":"sh/re1onat8","slide":23,"name":"page","text":"23","textPreview":"23","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"shape","id":"sh/d0j6pkbe","slide":23,"name":"arrow","bbox":[511.67,349.8,22.67,23.07]}
+{"kind":"notes","id":"nt/c7uhcr6t","slide":23,"text":""}
+{"kind":"slide","id":"sl/7qto7e10","slide":24,"title":"智能体矩阵覆盖培训平台中的所有角色","textShapes":17}
+{"kind":"textbox","id":"sh/1sfqxsv6","slide":24,"name":"title","text":"智能体矩阵覆盖培训平台中的所有角色","textPreview":"智能体矩阵覆盖培训平台中的所有角色","textChars":17,"textLines":1,"bbox":[42,82,1150,78]}
+{"kind":"shape","id":"sh/0r6p4nul","slide":24,"name":"rule","bbox":[42,172,1196,1.5]}
+{"kind":"shape","id":"sh/nux8zidc","slide":24,"name":"card-教师智能助理","bbox":[64,236,202,235]}
+{"kind":"shape","id":"sh/2to76dcr","slide":24,"name":"badge-01","bbox":[84,256,34,34]}
+{"kind":"textbox","id":"sh/9wzq1svi","slide":24,"name":"badge-text-01","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[84,261,34,22]}
+{"kind":"textbox","id":"sh/ov6p8nux","slide":24,"name":"card-head-教师智能助理","text":"教师智能助理","textPreview":"教师智能助理","textChars":6,"textLines":1,"bbox":[132,258,122.53,34]}
+{"kind":"textbox","id":"sh/3ydonyd8","slide":24,"name":"card-body-教师智能助理","text":"课程导学、任务辅导、成果生成、成长建议。","textPreview":"课程导学、任务辅导、成果生成、成长建议。","textChars":20,"textLines":1,"bbox":[92.6,317.8,149.4,135.2]}
+{"kind":"shape","id":"sh/ix47utcn","slide":24,"name":"card-专家评审助理","bbox":[300,236,202,235]}
+{"kind":"shape","id":"sh/8veh8ril","slide":24,"name":"badge-02","bbox":[320,256,34,34]}
+{"kind":"textbox","id":"sh/9wni1wjq","slide":24,"name":"badge-text-02","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[320,261,34,22]}
+{"kind":"textbox","id":"sh/mtwz6h0f","slide":24,"name":"card-head-专家评审助理","text":"专家评审助理","textPreview":"专家评审助理","textChars":6,"textLines":1,"bbox":[363.33,258,128.4,34]}
+{"kind":"textbox","id":"sh/nu50zm10","slide":24,"name":"card-body-专家评审助理","text":"材料预读、证据摘要、评语草稿、复核提示。","textPreview":"材料预读、证据摘要、评语草稿、复核提示。","textChars":20,"textLines":1,"bbox":[321.33,313.87,164.53,139.13]}
+{"kind":"shape","id":"sh/wzyhcrih","slide":24,"name":"card-培训运营助理","bbox":[536,236,202,235]}
+{"kind":"shape","id":"sh/x07i5wj2","slide":24,"name":"badge-03","bbox":[556,256,34,34]}
+{"kind":"textbox","id":"sh/axgza10b","slide":24,"name":"badge-text-03","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[556,261,34,22]}
+{"kind":"textbox","id":"sh/vyp03m1w","slide":24,"name":"card-head-培训运营助理","text":"培训运营助理","textPreview":"培训运营助理","textChars":6,"textLines":1,"bbox":[600.53,261,121.8,34]}
+{"kind":"textbox","id":"sh/c3uh07id","slide":24,"name":"card-body-培训运营助理","text":"通知生成、进度提醒、数据汇总、问题答复。","textPreview":"通知生成、进度提醒、数据汇总、问题答复。","textChars":20,"textLines":1,"bbox":[558.87,317.8,159.87,135.2]}
+{"kind":"shape","id":"sh/d43itcjy","slide":24,"name":"card-项目负责人助理","bbox":[772,236,202,235]}
+{"kind":"shape","id":"sh/t8v6h47a","slide":24,"name":"badge-04","bbox":[792,256,34,34]}
+{"kind":"textbox","id":"sh/s72p8z6p","slide":24,"name":"badge-text-04","text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[792,261,34,22]}
+{"kind":"textbox","id":"sh/rmtofup4","slide":24,"name":"card-head-项目负责人助理","text":"项目负责人助理","textPreview":"项目负责人助理","textChars":7,"textLines":1,"bbox":[837.4,261.73,120.13,34]}
+{"kind":"textbox","id":"sh/6lk76poz","slide":24,"name":"card-body-项目负责人助理","text":"方案编排、活动排期、质量跟踪、报告生成。","textPreview":"方案编排、活动排期、质量跟踪、报告生成。","textChars":20,"textLines":1,"bbox":[783.6,317.73,182.07,140.33]}
+{"kind":"shape","id":"sh/1cv6l47m","slide":24,"name":"card-学校/区域管理助理","bbox":[1008,236,202,235]}
+{"kind":"shape","id":"sh/gbmpcz61","slide":24,"name":"badge-05","bbox":[1028,256,34,34]}
+{"kind":"textbox","id":"sh/fadojepg","slide":24,"name":"badge-text-05","text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1028,261,34,22]}
+{"kind":"textbox","id":"sh/e947a9ov","slide":24,"name":"card-head-学校/区域管理助理","text":"学校/区域管理助理","textPreview":"学校/区域管理助理","textChars":9,"textLines":1,"bbox":[1072.6,261.73,126.33,34]}
+{"kind":"textbox","id":"sh/pgf6po7i","slide":24,"name":"card-body-学校/区域管理助理","text":"项目监测、群体分析、资源调度、决策摘要。","textPreview":"项目监测、群体分析、资源调度、决策摘要。","textChars":20,"textLines":1,"bbox":[1035.27,313.87,150.73,139.13]}
+{"kind":"textbox","id":"sh/mlg3al4f","slide":24,"name":"page","text":"24","textPreview":"24","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"notes","id":"nt/7qto7e10","slide":24,"text":""}
+{"kind":"slide","id":"sl/69wfm9o7","slide":25,"title":"数据与知识闭环让每次培训都沉淀为平台资产","textShapes":10}
+{"kind":"textbox","id":"sh/xg7axgf2","slide":25,"name":"title","text":"数据与知识闭环让每次培训都沉淀为平台资产","textPreview":"数据与知识闭环让每次培训都沉淀为平台资产","textChars":20,"textLines":1,"bbox":[42,82,1150,78]}
+{"kind":"shape","id":"sh/cfyt4beh","slide":25,"name":"rule","bbox":[42,172,1196,1.5]}
+{"kind":"shape","id":"sh/napsr6x0","slide":25,"name":"node-0","bbox":[82,300,145,86]}
+{"kind":"textbox","id":"sh/29wby1wf","slide":25,"name":"node-text-0","text":"培训资料","textPreview":"培训资料","textChars":4,"textLines":1,"bbox":[94,328,121,28]}
+{"kind":"shape","id":"sh/pc7atgf6","slide":25,"name":"line","bbox":[230,343,36,2]}
+{"kind":"shape","id":"sh/fm5snmx4","slide":25,"name":"node-1","bbox":[272,300,145,86]}
+{"kind":"textbox","id":"sh/elwbu1wj","slide":25,"name":"node-text-1","text":"知识资产","textPreview":"知识资产","textChars":4,"textLines":1,"bbox":[284,328,121,28]}
+{"kind":"shape","id":"sh/wza9cbqp","slide":25,"name":"line","bbox":[420,343,36,2]}
+{"kind":"shape","id":"sh/uxsra18j","slide":25,"name":"node-2","bbox":[462,300,140.73,86]}
+{"kind":"textbox","id":"sh/vy1sj694","slide":25,"name":"node-text-2","text":"空间过程","textPreview":"空间过程","textChars":4,"textLines":1,"bbox":[474,328,121,28]}
+{"kind":"shape","id":"sh/8ba98bqt","slide":25,"name":"line","bbox":[602.47,343,36,2]}
+{"kind":"shape","id":"sh/m98r618n","slide":25,"name":"node-3","bbox":[652,300,145,86]}
+{"kind":"textbox","id":"sh/7a1sf698","slide":25,"name":"node-text-3","text":"评价证据","textPreview":"评价证据","textChars":4,"textLines":1,"bbox":[664,328,121,28]}
+{"kind":"shape","id":"sh/s7utkvqx","slide":25,"name":"line","bbox":[800,343,36,2]}
+{"kind":"shape","id":"sh/1czihwva","slide":25,"name":"node-4","bbox":[849.53,300,145,86]}
+{"kind":"textbox","id":"sh/gbq1obep","slide":25,"name":"node-text-4","text":"教师档案","textPreview":"教师档案","textChars":4,"textLines":1,"bbox":[861.53,328,121,28]}
+{"kind":"shape","id":"sh/fax0f6d4","slide":25,"name":"line","bbox":[997.53,343,36,2]}
+{"kind":"shape","id":"sh/t8fidwfe","slide":25,"name":"node-5","bbox":[1047.07,300,145,86]}
+{"kind":"textbox","id":"sh/s761kret","slide":25,"name":"node-text-5","text":"智能推荐","textPreview":"智能推荐","textChars":4,"textLines":1,"bbox":[1059.07,328,121,28]}
+{"kind":"textbox","id":"sh/6lojihwn","slide":25,"name":"loop-text","text":"下一轮培训复用资料、空间模板、评价模型和教师画像，平台越用越懂业务。","textPreview":"下一轮培训复用资料、空间模板、评价模型和教师画像，平台越用越懂业务。","textChars":34,"textLines":1,"bbox":[250,515,780,30]}
+{"kind":"textbox","id":"sh/5kfi9cf2","slide":25,"name":"top-note","text":"核心机制：业务资料进入资料库，活动过程进入空间，评价结果进入档案，推荐结果回到新一轮培训。","textPreview":"核心机制：业务资料进入资料库，活动过程进入空间，评价结果进入档案，推荐结果回到新一轮培训。","textChars":45,"textLines":1,"bbox":[106,216,1068,36]}
+{"kind":"textbox","id":"sh/4j61g7eh","slide":25,"name":"page","text":"25","textPreview":"25","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"shape","id":"sh/vqtgjid0","slide":25,"name":"arrow","bbox":[251.13,332.73,22.67,23.07]}
+{"kind":"shape","id":"sh/wr2xsnul","slide":25,"name":"arrow","bbox":[441.13,333.33,22.67,23.07]}
+{"kind":"shape","id":"sh/hcvylsb6","slide":25,"name":"arrow","bbox":[629.2,332.73,22.67,23.07]}
+{"kind":"shape","id":"sh/mlkfmdcj","slide":25,"name":"arrow","bbox":[830.2,333,22.67,23.07]}
+{"kind":"shape","id":"sh/7mtgfido","slide":25,"name":"arrow","bbox":[1023.67,332.73,22.67,23.07]}
+{"kind":"notes","id":"nt/69wfm9o7","slide":25,"text":""}
+{"kind":"slide","id":"sl/l0bepsfm","slide":26,"title":"建设路线：先建底座，再做培训场景闭环","textShapes":15}
+{"kind":"textbox","id":"sh/uhk36lk7","slide":26,"name":"title","text":"建设路线：先建底座，再做培训场景闭环","textPreview":"建设路线：先建底座，再做培训场景闭环","textChars":18,"textLines":1,"bbox":[42,82,1150,78]}
+{"kind":"shape","id":"sh/vitkzqlc","slide":26,"name":"rule","bbox":[42,172,1196,1.5]}
+{"kind":"shape","id":"sh/8fil4b21","slide":26,"name":"line","bbox":[88,330,264,2]}
+{"kind":"shape","id":"sh/tgr2xg3m","slide":26,"name":"dot-0","bbox":[357,319.2,22,22]}
+{"kind":"textbox","id":"sh/md0321kv","slide":26,"name":"phase-label-0","text":"第一阶段","textPreview":"第一阶段","textChars":4,"textLines":1,"bbox":[72,268,150,28]}
+{"kind":"textbox","id":"sh/7e9kv6lg","slide":26,"name":"phase-head-0","text":"AI 原生底座接入","textPreview":"AI 原生底座接入","textChars":9,"textLines":1,"bbox":[72,368,235,34]}
+{"kind":"textbox","id":"sh/kbil0r2p","slide":26,"name":"phase-body-0","text":"接入 Lucky、资料库、空间、租户、模型统计和基础权限。","textPreview":"接入 Lucky、资料库、空间、租户、模型统计和基础权限。","textChars":29,"textLines":1,"bbox":[72,414,235,80]}
+{"kind":"shape","id":"sh/lcr2tw3a","slide":26,"name":"line","bbox":[384,330,264,2]}
+{"kind":"shape","id":"sh/lsja143i","slide":26,"name":"dot-1","bbox":[64.33,319.2,22,22]}
+{"kind":"textbox","id":"sh/krat8z2x","slide":26,"name":"phase-label-1","text":"第二阶段","textPreview":"第二阶段","textChars":4,"textLines":1,"bbox":[368,268,150,28]}
+{"kind":"textbox","id":"sh/z61szulc","slide":26,"name":"phase-head-1","text":"培训场景模板","textPreview":"培训场景模板","textChars":6,"textLines":1,"bbox":[368,368,235,34]}
+{"kind":"textbox","id":"sh/y5sr69kr","slide":26,"name":"phase-body-1","text":"沉淀培训项目、工作坊、网络研修、AI 实训等标准空间模板。","textPreview":"沉淀培训项目、工作坊、网络研修、AI 实训等标准空间模板。","textChars":29,"textLines":1,"bbox":[368,414,235,80]}
+{"kind":"shape","id":"sh/x4jax436","slide":26,"name":"line","bbox":[680,330,264,2]}
+{"kind":"shape","id":"sh/c3a94z21","slide":26,"name":"dot-2","bbox":[670,320,22,22]}
+{"kind":"textbox","id":"sh/b21svulg","slide":26,"name":"phase-label-2","text":"第三阶段","textPreview":"第三阶段","textChars":4,"textLines":1,"bbox":[664,268,150,28]}
+{"kind":"textbox","id":"sh/a18r2pkv","slide":26,"name":"phase-head-2","text":"评估与档案闭环","textPreview":"评估与档案闭环","textChars":7,"textLines":1,"bbox":[664,368,235,34]}
+{"kind":"textbox","id":"sh/p0zatk3a","slide":26,"name":"phase-body-2","text":"完成数据归集、评价模型、报告生成、档案沉淀和画像更新。","textPreview":"完成数据归集、评价模型、报告生成、档案沉淀和画像更新。","textChars":27,"textLines":1,"bbox":[664,414,235,80]}
+{"kind":"shape","id":"sh/ozq90f2p","slide":26,"name":"line","bbox":[976,330,264,2]}
+{"kind":"shape","id":"sh/0ve1wjex","slide":26,"name":"dot-3","bbox":[966,320,22,22]}
+{"kind":"textbox","id":"sh/1wn25ofi","slide":26,"name":"phase-label-3","text":"第四阶段","textPreview":"第四阶段","textChars":4,"textLines":1,"bbox":[960,268,150,28]}
+{"kind":"textbox","id":"sh/etwju9wr","slide":26,"name":"phase-head-3","text":"推荐与运营服务","textPreview":"推荐与运营服务","textChars":7,"textLines":1,"bbox":[960,368,235,34]}
+{"kind":"textbox","id":"sh/fu5k3exc","slide":26,"name":"phase-body-3","text":"上线课程、活动、资源、路径推荐，并形成运营看板和触达机制。","textPreview":"上线课程、活动、资源、路径推荐，并形成运营看板和触达机制。","textChars":29,"textLines":1,"bbox":[960,414,235,80]}
+{"kind":"shape","id":"sh/sru1szel","slide":26,"name":"bottom","bbox":[100,558,1080,62]}
+{"kind":"textbox","id":"sh/ds3i14f6","slide":26,"name":"bottom-text","text":"建设原则：培训业务先跑通，AI 能力逐步嵌入；先形成可用闭环，再沉淀可复制模板。","textPreview":"建设原则：培训业务先跑通，AI 能力逐步嵌入；先形成可用闭环，再沉淀可复制模板。","textChars":40,"textLines":1,"bbox":[130,576,1020,28]}
+{"kind":"textbox","id":"sh/qpcjq9wv","slide":26,"name":"page","text":"26","textPreview":"26","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"notes","id":"nt/l0bepsfm","slide":26,"text":""}
+{"kind":"slide","id":"sl/4vyxknqp","slide":27,"title":"交付形态：方案、资源、服务和算力共同形成平台价值","textShapes":19}
+{"kind":"textbox","id":"sh/kn694nmx","slide":27,"name":"title","text":"交付形态：方案、资源、服务和算力共同形成平台价值","textPreview":"交付形态：方案、资源、服务和算力共同形成平台价值","textChars":24,"textLines":1,"bbox":[42,82,1150,78]}
+{"kind":"shape","id":"sh/lofadsni","slide":27,"name":"rule","bbox":[42,172,1196,1.5]}
+{"kind":"shape","id":"sh/mpor6x43","slide":27,"name":"card-解决方案","bbox":[84,224,230,230]}
+{"kind":"shape","id":"sh/7qxsfi5o","slide":27,"name":"badge-01","bbox":[106,244,34,34]}
+{"kind":"textbox","id":"sh/8r698nm9","slide":27,"name":"badge-text-01","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[106,249,34,22]}
+{"kind":"textbox","id":"sh/9sfahsnu","slide":27,"name":"card-head-解决方案","text":"解决方案","textPreview":"解决方案","textChars":4,"textLines":1,"bbox":[141.07,244,132,32]}
+{"kind":"textbox","id":"sh/utobax4f","slide":27,"name":"card-body-解决方案","text":"通答教学平台、\n通答智能体平台、\n中小学服务平台、\n教师发展平台、\n智慧继教、\n教师（/教学）档案袋","textPreview":"通答教学平台、 | 通答智能体平台、 | 中小学服务平台、 | 教师发展平台、 | 智慧继教、 | 教师（/教学）档案袋","textChars":50,"textLines":6,"bbox":[106,304,186,134]}
+{"kind":"shape","id":"sh/bq5gr298","slide":27,"name":"card-资源包","bbox":[372,224,230,230]}
+{"kind":"shape","id":"sh/apwfix8n","slide":27,"name":"badge-03","bbox":[394,244,34,34]}
+{"kind":"textbox","id":"sh/xsnytcry","slide":27,"name":"badge-text-03","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[394,249,34,22]}
+{"kind":"textbox","id":"sh/wrexk7qt","slide":27,"name":"card-head-资源包","text":"资源包","textPreview":"资源包","textChars":3,"textLines":1,"bbox":[440.47,246,132,40]}
+{"kind":"textbox","id":"sh/vmpg3m9c","slide":27,"name":"card-body-资源包","text":"沉淀课程、案例、任务单、测验、成果模板和优秀案例。","textPreview":"沉淀课程、案例、任务单、测验、成果模板和优秀案例。","textChars":25,"textLines":1,"bbox":[394,304,186,128]}
+{"kind":"shape","id":"sh/ulgzuh8r","slide":27,"name":"card-运营服务","bbox":[660,224,230,230]}
+{"kind":"shape","id":"sh/qhkj2lsz","slide":27,"name":"badge-04","bbox":[682,244,34,34]}
+{"kind":"textbox","id":"sh/rit0vqtk","slide":27,"name":"badge-text-04","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[682,249,34,22]}
+{"kind":"textbox","id":"sh/sj214va5","slide":27,"name":"card-head-运营服务","text":"运营服务","textPreview":"运营服务","textChars":4,"textLines":1,"bbox":[736,246,132,40]}
+{"kind":"textbox","id":"sh/dkb2x0bq","slide":27,"name":"card-body-运营服务","text":"提供场景配置、培训辅导、数据分析、报告输出和持续优化。","textPreview":"提供场景配置、培训辅导、数据分析、报告输出和持续优化。","textChars":27,"textLines":1,"bbox":[682,304,186,128]}
+{"kind":"shape","id":"sh/elkj65sb","slide":27,"name":"card-Token 算力","bbox":[948,224,230,230]}
+{"kind":"shape","id":"sh/fmdkzatw","slide":27,"name":"badge-05","bbox":[970,244,34,34]}
+{"kind":"textbox","id":"sh/0nm18fa1","slide":27,"name":"badge-text-05","text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[970,249,34,22]}
+{"kind":"textbox","id":"sh/1ov210bm","slide":27,"name":"card-head-Token 算力","text":"Token 算力","textPreview":"Token 算力","textChars":8,"textLines":1,"bbox":[1024,246,132,40]}
+{"kind":"textbox","id":"sh/up0ju1sr","slide":27,"name":"card-body-Token 算力","text":"以模型统计计量 AI 调用和算力消耗，支撑套餐、预警和结算。","textPreview":"以模型统计计量 AI 调用和算力消耗，支撑套餐、预警和结算。","textChars":30,"textLines":1,"bbox":[970,304,186,128]}
+{"kind":"textbox","id":"sh/x4fmt4vu","slide":27,"name":"page","text":"27","textPreview":"27","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"textbox","id":"sh/bix4red4","slide":27,"name":"card-subhead-解决方案-产品","text":"【产品线】","textPreview":"【产品线】","textChars":5,"textLines":1,"bbox":[141.07,276,132,24]}
+{"kind":"shape","id":"sh/aho3y9cj","slide":27,"name":"commercial-card","bbox":[84,498,540,124]}
+{"kind":"textbox","id":"sh/j6h4ved0","slide":27,"name":"commercial-title","text":"多元商业模式支撑","textPreview":"多元商业模式支撑","textChars":8,"textLines":1,"bbox":[164,516,420,30]}
+{"kind":"textbox","id":"sh/y58329cf","slide":27,"name":"commercial-body","text":"支持 SaaS 订阅、项目制交付和私有化部署，\n适配不同客户的付费习惯与安全合规要求。","textPreview":"支持 SaaS 订阅、项目制交付和私有化部署， | 适配不同客户的付费习惯与安全合规要求。","textChars":43,"textLines":2,"bbox":[164,548,420,58]}
+{"kind":"shape","id":"sh/1cvmlkvm","slide":27,"name":"value-depth-card","bbox":[656,498,540,124]}
+{"kind":"textbox","id":"sh/5836tsfa","slide":27,"name":"value-depth-title","text":"价值与深度逐级递进","textPreview":"价值与深度逐级递进","textChars":9,"textLines":1,"bbox":[736,516,420,30]}
+{"kind":"textbox","id":"sh/i5c7yxwz","slide":27,"name":"value-depth-body","text":"从工具平台到业务支撑平台，再到场景化解决方案，\n伴随客户成熟度提升实现价值共创。","textPreview":"从工具平台到业务支撑平台，再到场景化解决方案， | 伴随客户成熟度提升实现价值共创。","textChars":40,"textLines":2,"bbox":[736,548,420,58]}
+{"kind":"image","id":"im/ozyl4rip","slide":27,"name":"Picture 22","bbox":[125.93,514.53,32,32]}
+{"kind":"image","id":"im/b294z6hg","slide":27,"name":"Picture 25","bbox":[704,514.47,32,32]}
+{"kind":"notes","id":"nt/4vyxknqp","slide":27,"text":""}
+{"kind":"slide","id":"sl/3mdove10","slide":28,"title":"附录：基于AI 原生底座开发模式的优势与特点","textShapes":12}
+{"kind":"textbox","id":"sh/q9cz6xkv","slide":28,"name":"title","text":"附录：基于AI 原生底座开发模式的优势与特点","textPreview":"附录：基于AI 原生底座开发模式的优势与特点","textChars":22,"textLines":1,"bbox":[42.73,65.13,1150,78]}
+{"kind":"shape","id":"sh/ralgf21g","slide":28,"name":"rule","bbox":[42.73,143.13,1196,0]}
+{"kind":"shape","id":"sh/0zehcr2x","slide":28,"name":"lead-band","bbox":[78,218,1124,56]}
+{"kind":"textbox","id":"sh/10nylwji","slide":28,"name":"lead-text","text":"本小节聚焦 AI 原生底座带来的开发模式变化：更快迭代、更强复用、更可验证。","textPreview":"本小节聚焦 AI 原生底座带来的开发模式变化：更快迭代、更强复用、更可验证。","textChars":38,"textLines":1,"bbox":[112,232,1056,28]}
+{"kind":"shape","id":"sh/exwzahkr","slide":28,"name":"toc-card-1","bbox":[90,292,342,210]}
+{"kind":"shape","id":"sh/zy5gjm1c","slide":28,"name":"toc-badge-1","bbox":[114,318,42,42]}
+{"kind":"textbox","id":"sh/o3ehgr29","slide":28,"name":"toc-badge-1-text","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[114,324,42,30]}
+{"kind":"textbox","id":"sh/947ipwje","slide":28,"name":"toc-title-1","text":"快速迭代","textPreview":"快速迭代","textChars":4,"textLines":1,"bbox":[174,314,220,38]}
+{"kind":"textbox","id":"sh/lg3690fq","slide":28,"name":"toc-body-1","text":"从需求到上线形成 AI + 敏捷闭环，缩短试错和交付周期。","textPreview":"从需求到上线形成 AI + 敏捷闭环，缩短试错和交付周期。","textChars":29,"textLines":1,"bbox":[120,376,282,62]}
+{"kind":"shape","id":"sh/tk36dkf2","slide":28,"name":"toc-card-2","bbox":[470,292,342,210]}
+{"kind":"shape","id":"sh/8ju5kfeh","slide":28,"name":"toc-badge-2","bbox":[494,318,42,42]}
+{"kind":"textbox","id":"sh/7ilobaxw","slide":28,"name":"toc-badge-2-text","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[494,324,42,30]}
+{"kind":"textbox","id":"sh/6hcni5wb","slide":28,"name":"toc-title-2","text":"三层协同","textPreview":"三层协同","textChars":4,"textLines":1,"bbox":[554,314,220,38]}
+{"kind":"textbox","id":"sh/9ojm1gfi","slide":28,"name":"toc-body-2","text":"稳态底座、配置层和前台定开分工协作，支撑复用和灵活响应。","textPreview":"稳态底座、配置层和前台定开分工协作，支撑复用和灵活响应。","textChars":28,"textLines":1,"bbox":[500,376,282,62]}
+{"kind":"shape","id":"sh/ehwf2p8z","slide":28,"name":"toc-card-3","bbox":[850,292,342,210]}
+{"kind":"shape","id":"sh/zi5wba9k","slide":28,"name":"toc-badge-3","bbox":[874,318,42,42]}
+{"kind":"textbox","id":"sh/o7yx8zqh","slide":28,"name":"toc-badge-3-text","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[874,324,42,30]}
+{"kind":"textbox","id":"sh/987eh4rm","slide":28,"name":"toc-title-3","text":"实践验证","textPreview":"实践验证","textChars":4,"textLines":1,"bbox":[934,314,220,38]}
+{"kind":"textbox","id":"sh/m5wf6p8b","slide":28,"name":"toc-body-3","text":"用3个月实践验证效率、质量和产研能力的系统提升。","textPreview":"用3个月实践验证效率、质量和产研能力的系统提升。","textChars":24,"textLines":1,"bbox":[880,376,282,62]}
+{"kind":"textbox","id":"sh/65kz2tsf","slide":28,"name":"page","text":"28","textPreview":"28","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"shape","id":"sh/ytsne5wf","slide":28,"name":"toc-arrow-1","bbox":[428.27,388,42,26]}
+{"kind":"shape","id":"sh/1knedkrq","slide":28,"name":"toc-arrow-2","bbox":[812.93,388,36.2,26]}
+{"kind":"notes","id":"nt/3mdove10","slide":28,"text":""}
+{"kind":"slide","id":"sl/i5o3q10v","slide":29,"title":"开发新模式：拥抱 AI 时代的快速迭代","textShapes":17}
+{"kind":"textbox","id":"sh/tk36hwby","slide":29,"name":"title","text":"开发新模式：拥抱 AI 时代的快速迭代","textPreview":"开发新模式：拥抱 AI 时代的快速迭代","textChars":19,"textLines":1,"bbox":[42,82,1150,78]}
+{"kind":"shape","id":"sh/8jup8rad","slide":29,"name":"rule","bbox":[42,172,1196,0]}
+{"kind":"textbox","id":"sh/vmlojmto","slide":29,"name":"page","text":"29","textPreview":"29","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"shape","id":"sh/ulc7a1s3","slide":29,"name":"lead-band","bbox":[78,216,1124,132]}
+{"kind":"textbox","id":"sh/h8n6lwbu","slide":29,"name":"lead-label","text":"核心价值","textPreview":"核心价值","textChars":4,"textLines":1,"bbox":[110,246,130,32]}
+{"kind":"textbox","id":"sh/g7upcra9","slide":29,"name":"lead-copy","text":"在 AI 时代，速度即竞争力。\nAI 原生开发模式把产品底座、业务模型和开发流程统一起来，\n让需求、设计、代码、测试和部署形成快速闭环。","textPreview":"在 AI 时代，速度即竞争力。 | AI 原生开发模式把产品底座、业务模型和开发流程统一起来， | 让需求、设计、代码、测试和部署形成快速闭环。","textChars":68,"textLines":3,"bbox":[258,228,870,88]}
+{"kind":"shape","id":"sh/bq1o72tk","slide":29,"name":"step-card-1","bbox":[78,414,230,138]}
+{"kind":"shape","id":"sh/apsnyxcz","slide":29,"name":"step-card-1-badge","bbox":[100,436,38,38]}
+{"kind":"textbox","id":"sh/kf2tw7a1","slide":29,"name":"step-card-1-badge-text","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[100,442,38,26]}
+{"kind":"textbox","id":"sh/5gbupcrm","slide":29,"name":"step-card-1-title","text":"业务抽象","textPreview":"业务抽象","textChars":4,"textLines":1,"bbox":[154,436,130,36]}
+{"kind":"textbox","id":"sh/idkbuxsv","slide":29,"name":"step-card-1-body","text":"用统一模型\n表达业务需求","textPreview":"用统一模型 | 表达业务需求","textChars":12,"textLines":2,"bbox":[104,490,178,46]}
+{"kind":"shape","id":"sh/jetc329g","slide":29,"name":"step-arrow-1","bbox":[326,474,42,22]}
+{"kind":"shape","id":"sh/s32t07ax","slide":29,"name":"step-card-2","bbox":[368,414,230,138]}
+{"kind":"shape","id":"sh/t4butcri","slide":29,"name":"step-card-2-badge","bbox":[390,436,38,38]}
+{"kind":"textbox","id":"sh/6hkbyhs7","slide":29,"name":"step-card-2-badge-text","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[390,442,38,26]}
+{"kind":"textbox","id":"sh/7itcr29s","slide":29,"name":"step-card-2-title","text":"AI 生成","textPreview":"AI 生成","textChars":5,"textLines":1,"bbox":[444,436,130,36]}
+{"kind":"textbox","id":"sh/87itonat","slide":29,"name":"step-card-2-body","text":"辅助方案、页面、\n代码和测试生成","textPreview":"辅助方案、页面、 | 代码和测试生成","textChars":16,"textLines":2,"bbox":[394,490,178,46]}
+{"kind":"shape","id":"sh/98ruxsre","slide":29,"name":"step-arrow-2","bbox":[616,474,42,22]}
+{"kind":"shape","id":"sh/p4jal432","slide":29,"name":"step-card-3","bbox":[658,414,230,138]}
+{"kind":"shape","id":"sh/o3a9sj2h","slide":29,"name":"step-card-3-badge","bbox":[680,436,38,38]}
+{"kind":"textbox","id":"sh/n21sjelc","slide":29,"name":"step-card-3-badge-text","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[680,442,38,26]}
+{"kind":"textbox","id":"sh/218rq9kr","slide":29,"name":"step-card-3-title","text":"快速验证","textPreview":"快速验证","textChars":4,"textLines":1,"bbox":[734,436,130,36]}
+{"kind":"textbox","id":"sh/x8japo3e","slide":29,"name":"step-card-3-body","text":"快速上线、试错、\n反馈和迭代","textPreview":"快速上线、试错、 | 反馈和迭代","textChars":14,"textLines":2,"bbox":[684,490,178,46]}
+{"kind":"shape","id":"sh/c7a9wj2t","slide":29,"name":"step-arrow-3","bbox":[906,474,42,22]}
+{"kind":"shape","id":"sh/b61snel8","slide":29,"name":"step-card-4","bbox":[948,414,230,138]}
+{"kind":"shape","id":"sh/a5sru9kn","slide":29,"name":"step-card-4-badge","bbox":[970,436,38,38]}
+{"kind":"textbox","id":"sh/lw3ato3a","slide":29,"name":"step-card-4-badge-text","text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[970,442,38,26]}
+{"kind":"textbox","id":"sh/kbu9032p","slide":29,"name":"step-card-4-title","text":"能力沉淀","textPreview":"能力沉淀","textChars":4,"textLines":1,"bbox":[1024,436,130,36]}
+{"kind":"textbox","id":"sh/i54fy1wb","slide":29,"name":"step-card-4-body","text":"沉淀为可复用的\n产品能力","textPreview":"沉淀为可复用的 | 产品能力","textChars":12,"textLines":2,"bbox":[974,490,178,46]}
+{"kind":"shape","id":"sh/j6dg76xg","slide":29,"name":"bottom-note-band","bbox":[130,608,1020,42]}
+{"kind":"textbox","id":"sh/k7mx0be1","slide":29,"name":"bottom-note","text":"关键变化：AI 不只参与单点工具，而是进入从需求到上线的完整产研链路。","textPreview":"关键变化：AI 不只参与单点工具，而是进入从需求到上线的完整产研链路。","textChars":35,"textLines":1,"bbox":[150,616,980,26]}
+{"kind":"notes","id":"nt/i5o3q10v","slide":29,"text":""}
+{"kind":"slide","id":"sl/wnqh07ex","slide":30,"title":"产品开发模式探索：稳态、配置、定开三层协同","textShapes":12}
+{"kind":"textbox","id":"sh/po72d8nm","slide":30,"name":"title","text":"产品开发模式探索：稳态、配置、定开三层协同","textPreview":"产品开发模式探索：稳态、配置、定开三层协同","textChars":21,"textLines":1,"bbox":[42,82,1150,78]}
+{"kind":"shape","id":"sh/o3yl4361","slide":30,"name":"rule","bbox":[42,172,1196,0]}
+{"kind":"textbox","id":"sh/bqpkfy5s","slide":30,"name":"page","text":"30","textPreview":"30","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"shape","id":"sh/apg36do7","slide":30,"name":"layer-1","bbox":[96,214,1088,104]}
+{"kind":"shape","id":"sh/xsr2h8ni","slide":30,"name":"layer-1-badge","bbox":[124,245,42,42]}
+{"kind":"textbox","id":"sh/cril836d","slide":30,"name":"layer-1-badge-text","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[124,251,42,30]}
+{"kind":"textbox","id":"sh/ru5k3ep8","slide":30,"name":"layer-1-title","text":"前台 AI 定制开发层：AI Vibe Coding","textPreview":"前台 AI 定制开发层：AI Vibe Coding","textChars":26,"textLines":1,"bbox":[186,238,720,32]}
+{"kind":"textbox","id":"sh/6twju9o3","slide":30,"name":"layer-1-body","text":"基于稳态能力，使用 AI 辅助生成前台代码与页面，快速响应个性化需求。","textPreview":"基于稳态能力，使用 AI 辅助生成前台代码与页面，快速响应个性化需求。","textChars":35,"textLines":1,"bbox":[186,274,910,30]}
+{"kind":"shape","id":"sh/p8ze14zi","slide":30,"name":"layer-2","bbox":[96,344,1088,104]}
+{"kind":"shape","id":"sh/2l8f6p0r","slide":30,"name":"layer-2-badge","bbox":[124,375,42,42]}
+{"kind":"textbox","id":"sh/3mhwzu1c","slide":30,"name":"layer-2-badge-text","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[124,381,42,30]}
+{"kind":"textbox","id":"sh/cbaxczit","slide":30,"name":"layer-2-title","text":"配置层：解决方案与场景模板","textPreview":"配置层：解决方案与场景模板","textChars":13,"textLines":1,"bbox":[186,368,720,32]}
+{"kind":"textbox","id":"sh/dcje54ze","slide":30,"name":"layer-2-body","text":"解决方案按产品能力组合；场景模板来自空间模块，支持项目、工作坊、校本研修和 AI 教学快速绑定。","textPreview":"解决方案按产品能力组合；场景模板来自空间模块，支持项目、工作坊、校本研修和 AI 教学快速绑定。","textChars":48,"textLines":1,"bbox":[186,404,910,30]}
+{"kind":"shape","id":"sh/ba1w3uh8","slide":30,"name":"layer-3","bbox":[96,474,1088,104]}
+{"kind":"shape","id":"sh/sf6d0fip","slide":30,"name":"layer-3-badge","bbox":[124,505,42,42]}
+{"kind":"textbox","id":"sh/tgfetkja","slide":30,"name":"layer-3-badge-text","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[124,511,42,30]}
+{"kind":"textbox","id":"sh/907mhc7m","slide":30,"name":"layer-3-title","text":"稳态层：AI 原生产品底座","textPreview":"稳态层：AI 原生产品底座","textChars":13,"textLines":1,"bbox":[186,498,720,32]}
+{"kind":"textbox","id":"sh/8zel8761","slide":30,"name":"layer-3-body","text":"沉淀资料库、空间、智能体、模型统计与开放接口，形成安全可靠的长期底座。","textPreview":"沉淀资料库、空间、智能体、模型统计与开放接口，形成安全可靠的长期底座。","textChars":35,"textLines":1,"bbox":[186,534,910,30]}
+{"kind":"shape","id":"sh/7y5kf2pw","slide":30,"name":"bottom-note-band","bbox":[130,618,1020,38]}
+{"kind":"textbox","id":"sh/mxw36xob","slide":30,"name":"bottom-note","text":"开发逻辑：稳态底座保持可靠，配置层负责复用组合，前台定开层面向变化快速响应。","textPreview":"开发逻辑：稳态底座保持可靠，配置层负责复用组合，前台定开层面向变化快速响应。","textChars":38,"textLines":1,"bbox":[150,625,980,24]}
+{"kind":"shape","id":"sh/q9sfap03","slide":30,"name":"layer-arrow-2","bbox":[618,456,36,22]}
+{"kind":"shape","id":"sh/w3ylc76d","slide":30,"name":"layer-arrow-2","bbox":[617.87,318.67,36,22]}
+{"kind":"notes","id":"nt/wnqh07ex","slide":30,"text":""}
+{"kind":"slide","id":"sl/lcn6tkb6","slide":31,"title":"3个月实践验证：AI + 敏捷流程带来至少6倍提效","textShapes":15}
+{"kind":"textbox","id":"sh/dgja98fe","slide":31,"name":"title","text":"3个月实践验证：AI + 敏捷流程带来至少6倍提效","textPreview":"3个月实践验证：AI + 敏捷流程带来至少6倍提效","textChars":25,"textLines":1,"bbox":[42,82,1150,78]}
+{"kind":"shape","id":"sh/cfa903yt","slide":31,"name":"rule","bbox":[42,172,1196,0]}
+{"kind":"textbox","id":"sh/zilsbyx4","slide":31,"name":"page","text":"31","textPreview":"31","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"shape","id":"sh/ehsr2dgz","slide":31,"name":"metric-card","bbox":[78,222,300,232]}
+{"kind":"textbox","id":"sh/1k3ad8fa","slide":31,"name":"metric-title","text":"3个月","textPreview":"3个月","textChars":3,"textLines":1,"bbox":[110,252,236,44]}
+{"kind":"textbox","id":"sh/0jut43yp","slide":31,"name":"metric-value","text":"至少6倍","textPreview":"至少6倍","textChars":4,"textLines":1,"bbox":[110,316,236,54]}
+{"kind":"textbox","id":"sh/fmhszex0","slide":31,"name":"metric-body","text":"研发效率综合提升\n速度、质量和协作同步提升","textPreview":"研发效率综合提升 | 速度、质量和协作同步提升","textChars":21,"textLines":2,"bbox":[110,390,236,42]}
+{"kind":"shape","id":"sh/ul8rq9gf","slide":31,"name":"benefit-card-1","bbox":[418,222,254,232]}
+{"kind":"shape","id":"sh/4vm5g7al","slide":31,"name":"benefit-card-1-badge","bbox":[440,244,38,38]}
+{"kind":"textbox","id":"sh/5wvmpcr6","slide":31,"name":"benefit-card-1-badge-text","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[440,250,38,26]}
+{"kind":"textbox","id":"sh/it4nexsf","slide":31,"name":"benefit-card-1-title","text":"需求闭环提速","textPreview":"需求闭环提速","textChars":6,"textLines":1,"bbox":[494,244,154,36]}
+{"kind":"textbox","id":"sh/3ud4n290","slide":31,"name":"benefit-card-1-body","text":"AI辅助需求理解、\n方案整理、代码生成和测试验证，\n缩短上线周期。","textPreview":"AI辅助需求理解、 | 方案整理、代码生成和测试验证， | 缩短上线周期。","textChars":33,"textLines":3,"bbox":[444,298,202,140]}
+{"kind":"shape","id":"sh/sz65k7ah","slide":31,"name":"benefit-card-2","bbox":[704,222,254,232]}
+{"kind":"shape","id":"sh/d0fmtcr2","slide":31,"name":"benefit-card-2-badge","bbox":[726,244,38,38]}
+{"kind":"textbox","id":"sh/qx4nihsb","slide":31,"name":"benefit-card-2-badge-text","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[726,250,38,26]}
+{"kind":"textbox","id":"sh/ryd4rm9w","slide":31,"name":"benefit-card-2-title","text":"协同模式重构","textPreview":"协同模式重构","textChars":6,"textLines":1,"bbox":[780,244,154,36]}
+{"kind":"textbox","id":"sh/832l8nad","slide":31,"name":"benefit-card-2-body","text":"产品、设计、研发和测试从串行转向并行，人机协同贯穿全过程。","textPreview":"产品、设计、研发和测试从串行转向并行，人机协同贯穿全过程。","textChars":29,"textLines":1,"bbox":[730,298,202,140]}
+{"kind":"shape","id":"sh/t4bmhsry","slide":31,"name":"benefit-card-3","bbox":[990,222,254,232]}
+{"kind":"shape","id":"sh/9032l43m","slide":31,"name":"benefit-card-3-badge","bbox":[1012,244,38,38]}
+{"kind":"textbox","id":"sh/8zu1cj21","slide":31,"name":"benefit-card-3-badge-text","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1012,250,38,26]}
+{"kind":"textbox","id":"sh/nylkjelg","slide":31,"name":"benefit-card-3-title","text":"全域能力升级","textPreview":"全域能力升级","textChars":6,"textLines":1,"bbox":[1066,244,154,36]}
+{"kind":"textbox","id":"sh/mxcja9kv","slide":31,"name":"benefit-card-3-body","text":"团队从单一开发走向全域产研，覆盖洞察、规划、落地和运营迭代。","textPreview":"团队从单一开发走向全域产研，覆盖洞察、规划、落地和运营迭代。","textChars":30,"textLines":1,"bbox":[1016,298,202,140]}
+{"kind":"shape","id":"sh/xon2po3i","slide":31,"name":"proof-band","bbox":[78,512,1124,86]}
+{"kind":"textbox","id":"sh/wnulgj2d","slide":31,"name":"proof-text","text":"实践证明，开发模式创新不是简单工具替换，而是借助AI与敏捷流程重构产品研发体系，\n带来效率、质量和产研能力的系统提升。","textPreview":"实践证明，开发模式创新不是简单工具替换，而是借助AI与敏捷流程重构产品研发体系， | 带来效率、质量和产研能力的系统提升。","textChars":59,"textLines":2,"bbox":[112,524,1056,58]}
+{"kind":"notes","id":"nt/lcn6tkb6","slide":31,"text":""}
+{"kind":"slide","id":"sl/6l0j294r","slide":32,"title":"学习公社、通答、AI原生底座产品三者之间的关系","textShapes":21}
+{"kind":"textbox","id":"sh/kr61sfy1","slide":32,"name":"title","text":"学习公社、通答、AI原生底座产品三者之间的关系","textPreview":"学习公社、通答、AI原生底座产品三者之间的关系","textChars":23,"textLines":1,"bbox":[42,82,1150,58]}
+{"kind":"shape","id":"sh/lszilkfm","slide":32,"name":"rule","bbox":[42,172,1196,0]}
+{"kind":"shape","id":"sh/6t8jupg7","slide":32,"name":"relationship-panel","bbox":[70,210,734,352]}
+{"kind":"shape","id":"sh/7uh0nuxs","slide":32,"name":"tongda-relation-dot","bbox":[100,240,9,9]}
+{"kind":"textbox","id":"sh/8vq1wzyd","slide":32,"name":"tongda-relation-title","text":"和通答的关系","textPreview":"和通答的关系","textChars":6,"textLines":1,"bbox":[122,230,560,28]}
+{"kind":"shape","id":"sh/twzipkfy","slide":32,"name":"tongda-relation-1-dot","bbox":[132,286,8,8]}
+{"kind":"textbox","id":"sh/mx4zilg3","slide":32,"name":"tongda-relation-1-text","text":"AI 原生底座产品构建的部分产品，归为“通答”品牌。","textPreview":"AI 原生底座产品构建的部分产品，归为“通答”品牌。","textChars":26,"textLines":1,"bbox":[154,274,604,34]}
+{"kind":"shape","id":"sh/nyd0bqxo","slide":32,"name":"learning-relation-dot","bbox":[100,332,9,9]}
+{"kind":"textbox","id":"sh/ry94z29w","slide":32,"name":"learning-relation-title","text":"和学习公社的关系","textPreview":"和学习公社的关系","textChars":8,"textLines":1,"bbox":[122,322,560,28]}
+{"kind":"shape","id":"sh/qx0nqx8b","slide":32,"name":"difference-card","bbox":[106,366,318,154]}
+{"kind":"textbox","id":"sh/d0bm1c7m","slide":32,"name":"difference-title","text":"区别","textPreview":"区别","textChars":2,"textLines":1,"bbox":[132,383,120,26]}
+{"kind":"shape","id":"sh/szi5s7qh","slide":32,"name":"difference-1-dot","bbox":[136,434,6,6]}
+{"kind":"textbox","id":"sh/3a94vi9k","slide":32,"name":"difference-1-text","text":"学习公社承载培训项目","textPreview":"学习公社承载培训项目","textChars":10,"textLines":1,"bbox":[154,422,240,24]}
+{"kind":"shape","id":"sh/i903mx8z","slide":32,"name":"difference-2-dot","bbox":[136,472,6,6]}
+{"kind":"textbox","id":"sh/5crmxsrq","slide":32,"name":"difference-2-text","text":"AI 原生产品底座承载技术产品，\n是技术产品的底座","textPreview":"AI 原生产品底座承载技术产品， | 是技术产品的底座","textChars":25,"textLines":2,"bbox":[154,454,260,52]}
+{"kind":"shape","id":"sh/4bilonq5","slide":32,"name":"connection-card","bbox":[454,366,318,154]}
+{"kind":"textbox","id":"sh/v6p4ri9o","slide":32,"name":"connection-title","text":"联系","textPreview":"联系","textChars":2,"textLines":1,"bbox":[480,383,120,26]}
+{"kind":"shape","id":"sh/u5g3yd83","slide":32,"name":"connection-1-dot","bbox":[484,434,6,6]}
+{"kind":"textbox","id":"sh/y1gnadsv","slide":32,"name":"connection-1-text","text":"作为培训项目中“工作坊”环节的实训平台","textPreview":"作为培训项目中“工作坊”环节的实训平台","textChars":19,"textLines":1,"bbox":[502,422,250,42]}
+{"kind":"shape","id":"sh/j2p43itg","slide":32,"name":"connection-2-dot","bbox":[484,487,6,6]}
+{"kind":"textbox","id":"sh/k3y5cna1","slide":32,"name":"connection-2-text","text":"可以通过培训项目引流到技术产品","textPreview":"可以通过培训项目引流到技术产品","textChars":15,"textLines":1,"bbox":[502,475,250,28]}
+{"kind":"shape","id":"sh/l4765sbm","slide":32,"name":"appendix-panel","bbox":[836,210,374,352]}
+{"kind":"shape","id":"sh/65gneds7","slide":32,"name":"appendix-dot","bbox":[866,240,9,9]}
+{"kind":"textbox","id":"sh/76po7its","slide":32,"name":"appendix-title","text":"附录","textPreview":"附录","textChars":2,"textLines":1,"bbox":[888,230,250,28]}
+{"kind":"textbox","id":"sh/87y5gnax","slide":32,"name":"appendix-desc","text":"基于 AI 原生产品底座构建的产品线\n【计划/已经实施】","textPreview":"基于 AI 原生产品底座构建的产品线 | 【计划/已经实施】","textChars":28,"textLines":2,"bbox":[888,274,276,50]}
+{"kind":"shape","id":"sh/nmxsbax4","slide":32,"name":"summary-band","bbox":[70,594,1140,54]}
+{"kind":"textbox","id":"sh/8jatgzet","slide":32,"name":"summary-text","text":"一句话：学习公社承载培训项目并导入场景和用户；AI 原生产品底座承载技术产品并支撑实训平台；通答是其中部分产品对外呈现的品牌。","textPreview":"一句话：学习公社承载培训项目并导入场景和用户；AI 原生产品底座承载技术产品并支撑实训平台；通答是其中部分产品对外呈现的品牌。","textChars":63,"textLines":1,"bbox":[104,604,1072,32]}
+{"kind":"textbox","id":"sh/tkjup4fe","slide":32,"name":"page","text":"32","textPreview":"32","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"shape","id":"sh/3q54v2ls","slide":32,"name":"product-1-dot","bbox":[858,352,7,7]}
+{"kind":"shape","id":"sh/2pwn2xk7","slide":32,"name":"product-1-pill","bbox":[878,340,326,30]}
+{"kind":"textbox","id":"sh/psnmxs3y","slide":32,"name":"product-1-text","text":"通答：（人工智能通识）教学平台","textPreview":"通答：（人工智能通识）教学平台","textChars":15,"textLines":1,"bbox":[892,344,214,22]}
+{"kind":"shape","id":"sh/4re54n2d","slide":32,"name":"product-1-status","bbox":[1100,345,72,20]}
+{"kind":"textbox","id":"sh/ru5oz2l4","slide":32,"name":"product-1-status-text","text":"4.0上线","textPreview":"4.0上线","textChars":5,"textLines":1,"bbox":[1104,347,64,16]}
+{"kind":"shape","id":"sh/qtwn6xkj","slide":32,"name":"product-2-dot","bbox":[858,386,7,7]}
+{"kind":"shape","id":"sh/dg761c3u","slide":32,"name":"product-2-pill","bbox":[878,374,326,30]}
+{"kind":"textbox","id":"sh/cvy5s729","slide":32,"name":"product-2-text","text":"通答：智能体平台","textPreview":"通答：智能体平台","textChars":8,"textLines":1,"bbox":[892,378,292,22]}
+{"kind":"shape","id":"sh/7yl4nilk","slide":32,"name":"product-3-dot","bbox":[858,420,7,7]}
+{"kind":"shape","id":"sh/6xcnudkz","slide":32,"name":"product-3-pill","bbox":[878,408,326,30]}
+{"kind":"textbox","id":"sh/ad072l4n","slide":32,"name":"product-3-text","text":"中小学服务平台","textPreview":"中小学服务平台","textChars":7,"textLines":1,"bbox":[892,412,292,22]}
+{"kind":"shape","id":"sh/vet8vq58","slide":32,"name":"product-4-dot","bbox":[858,454,7,7]}
+{"kind":"shape","id":"sh/wf2p4bmt","slide":32,"name":"product-4-pill","bbox":[878,442,326,30]}
+{"kind":"textbox","id":"sh/xgbqxgne","slide":32,"name":"product-4-text","text":"教师发展平台","textPreview":"教师发展平台","textChars":6,"textLines":1,"bbox":[892,446,292,22]}
+{"kind":"shape","id":"sh/mp07y14r","slide":32,"name":"product-5-dot","bbox":[858,488,7,7]}
+{"kind":"shape","id":"sh/na98r65c","slide":32,"name":"product-5-pill","bbox":[878,476,326,30]}
+{"kind":"textbox","id":"sh/8bip0bmh","slide":32,"name":"product-5-text","text":"智慧继教","textPreview":"智慧继教","textChars":4,"textLines":1,"bbox":[892,480,292,22]}
+{"kind":"shape","id":"sh/9crqtgn2","slide":32,"name":"product-6-dot","bbox":[858,522,7,7]}
+{"kind":"shape","id":"sh/elg7u14f","slide":32,"name":"product-6-pill","bbox":[878,510,326,30]}
+{"kind":"textbox","id":"sh/zmp8nm50","slide":32,"name":"product-6-text","text":"教师（/教学）档案袋","textPreview":"教师（/教学）档案袋","textChars":10,"textLines":1,"bbox":[892,514,292,22]}
+{"kind":"notes","id":"nt/6l0j294r","slide":32,"text":""}
+{"kind":"slide","id":"sl/nax4b2dk","slide":33,"title":"为什么用 AI 原生产品底座构建技术产品？","textShapes":21}
+{"kind":"textbox","id":"sh/lk3m50nq","slide":33,"name":"title","text":"为什么用 AI 原生产品底座构建技术产品？","textPreview":"为什么用 AI 原生产品底座构建技术产品？","textChars":21,"textLines":1,"bbox":[42,82,1150,58]}
+{"kind":"textbox","id":"sh/0jalwfm5","slide":33,"name":"subtitle","text":"底座能力优先复用和装配，让应用更智能、开发更快、场景更广、部署更轻、运营可计量。","textPreview":"底座能力优先复用和装配，让应用更智能、开发更快、场景更广、部署更轻、运营可计量。","textChars":40,"textLines":1,"bbox":[42,147,1090,30]}
+{"kind":"shape","id":"sh/nml47a5w","slide":33,"name":"rule","bbox":[42,192,1196,0]}
+{"kind":"shape","id":"sh/mlc3y54b","slide":33,"name":"reason-1-card","bbox":[74,230,358,154]}
+{"kind":"shape","id":"sh/9o3m9knm","slide":33,"name":"reason-1-num-bg","bbox":[98,254,42,42]}
+{"kind":"textbox","id":"sh/8nul0fmh","slide":33,"name":"reason-1-num","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[98,260,42,25]}
+{"kind":"textbox","id":"sh/vql4bu5s","slide":33,"name":"reason-1-title","text":"应用智能","textPreview":"应用智能","textChars":4,"textLines":1,"bbox":[156,251,252,44]}
+{"kind":"shape","id":"sh/apc32p47","slide":33,"name":"reason-1-bullet-0","bbox":[158,316,8,8]}
+{"kind":"textbox","id":"sh/grad8zah","slide":33,"name":"reason-1-bullet-0-text","text":"AI 底层赋能业务","textPreview":"AI 底层赋能业务","textChars":9,"textLines":1,"bbox":[180,306,224,28]}
+{"kind":"shape","id":"sh/hsjuhkb2","slide":33,"name":"reason-2-card","bbox":[462,230,358,214]}
+{"kind":"shape","id":"sh/upsv6psb","slide":33,"name":"reason-2-num-bg","bbox":[486,254,42,42]}
+{"kind":"textbox","id":"sh/vq1cfutw","slide":33,"name":"reason-2-num","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[486,260,42,25]}
+{"kind":"textbox","id":"sh/4vadczad","slide":33,"name":"reason-2-title","text":"开发快","textPreview":"开发快","textChars":3,"textLines":1,"bbox":[544,251,252,44]}
+{"kind":"shape","id":"sh/5w3ul4by","slide":33,"name":"reason-2-bullet-0","bbox":[546,316,8,8]}
+{"kind":"textbox","id":"sh/itsvapsn","slide":33,"name":"reason-2-bullet-0-text","text":"更多原子组件开箱即用","textPreview":"更多原子组件开箱即用","textChars":10,"textLines":1,"bbox":[568,306,224,28]}
+{"kind":"shape","id":"sh/3u1cjut8","slide":33,"name":"reason-2-bullet-1","bbox":[546,350,8,8]}
+{"kind":"textbox","id":"sh/czudgjap","slide":33,"name":"reason-2-bullet-1-text","text":"三层架构支撑快速开发","textPreview":"三层架构支撑快速开发","textChars":10,"textLines":1,"bbox":[568,340,224,28]}
+{"kind":"shape","id":"sh/dk3ep4ba","slide":33,"name":"reason-2-bullet-2","bbox":[546,384,8,8]}
+{"kind":"textbox","id":"sh/lgzu94je","slide":33,"name":"reason-2-bullet-2-text","text":"原生 vibe coding","textPreview":"原生 vibe coding","textChars":14,"textLines":1,"bbox":[568,374,224,28]}
+{"kind":"shape","id":"sh/0fqd0z2t","slide":33,"name":"reason-3-card","bbox":[850,230,358,154]}
+{"kind":"shape","id":"sh/zehc7u18","slide":33,"name":"reason-3-num-bg","bbox":[874,254,42,42]}
+{"kind":"textbox","id":"sh/yd8vy9kn","slide":33,"name":"reason-3-num","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[874,260,42,25]}
+{"kind":"textbox","id":"sh/9kjudoja","slide":33,"name":"reason-3-title","text":"场景广泛","textPreview":"场景广泛","textChars":4,"textLines":1,"bbox":[932,251,252,44]}
+{"kind":"shape","id":"sh/8jad4j2p","slide":33,"name":"reason-3-bullet-0","bbox":[934,316,8,8]}
+{"kind":"textbox","id":"sh/nihcbe1k","slide":33,"name":"reason-3-bullet-0-text","text":"场景自由装配：研训一体化","textPreview":"场景自由装配：研训一体化","textChars":12,"textLines":1,"bbox":[956,306,224,28]}
+{"kind":"shape","id":"sh/mh8v29kz","slide":33,"name":"reason-4-card","bbox":[184,462,392,154]}
+{"kind":"shape","id":"sh/pofu1k36","slide":33,"name":"reason-4-num-bg","bbox":[208,486,42,42]}
+{"kind":"textbox","id":"sh/4n6tsf2l","slide":33,"name":"reason-4-num","text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[208,492,42,25]}
+{"kind":"textbox","id":"sh/uhkjm1w7","slide":33,"name":"reason-4-title","text":"部署轻量","textPreview":"部署轻量","textChars":4,"textLines":1,"bbox":[266,483,286,44]}
+{"kind":"shape","id":"sh/vit0f6ds","slide":33,"name":"reason-4-bullet-0","bbox":[268,548,8,8]}
+{"kind":"textbox","id":"sh/gj21ored","slide":33,"name":"reason-4-bullet-0-text","text":"部署效率高、部署成本低","textPreview":"部署效率高、部署成本低","textChars":11,"textLines":1,"bbox":[290,538,258,28]}
+{"kind":"shape","id":"sh/h4bihwvy","slide":33,"name":"reason-5-card","bbox":[704,462,392,154]}
+{"kind":"shape","id":"sh/i5kjq1w3","slide":33,"name":"reason-5-num-bg","bbox":[728,486,42,42]}
+{"kind":"textbox","id":"sh/36d0j6do","slide":33,"name":"reason-5-num","text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[728,492,42,25]}
+{"kind":"textbox","id":"sh/47m1sbe9","slide":33,"name":"reason-5-title","text":"支持 Token 商业模式的落地","textPreview":"支持 Token 商业模式的落地","textChars":16,"textLines":1,"bbox":[786,483,286,44]}
+{"kind":"shape","id":"sh/58v2lgvu","slide":33,"name":"reason-5-bullet-0","bbox":[788,548,8,8]}
+{"kind":"textbox","id":"sh/y90jehwz","slide":33,"name":"reason-5-bullet-0-text","text":"大模型治理","textPreview":"大模型治理","textChars":5,"textLines":1,"bbox":[810,538,258,28]}
+{"kind":"shape","id":"sh/ja9072xk","slide":33,"name":"judgement-band","bbox":[128,638,1024,42]}
+{"kind":"textbox","id":"sh/z61gbyp8","slide":33,"name":"judgement-text","text":"核心判断：AI 原生产品底座不是固定技术架构限制，而是按业务优先级复用、装配和持续演进的产品构建方式。","textPreview":"核心判断：AI 原生产品底座不是固定技术架构限制，而是按业务优先级复用、装配和持续演进的产品构建方式。","textChars":51,"textLines":1,"bbox":[154,646,972,26]}
+{"kind":"textbox","id":"sh/y5sz2ton","slide":33,"name":"page","text":"33","textPreview":"33","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"notes","id":"nt/nax4b2dk","slide":33,"text":""}
+{"kind":"slide","id":"sl/ofu103u5","slide":34,"title":"AI 时代，智能是刚需，速度即竞争力","textShapes":24}
+{"kind":"textbox","id":"sh/pwzm1kbm","slide":34,"name":"ai-era-title","text":"AI 时代，智能是刚需，速度即竞争力","textPreview":"AI 时代，智能是刚需，速度即竞争力","textChars":18,"textLines":1,"bbox":[42,82,1150,58]}
+{"kind":"textbox","id":"sh/ovq58fu1","slide":34,"name":"subtitle","text":"AI 原生产品底座 + AI 原生开发模式，是快速形成产品矩阵、试错验证和持续迭代的基础。","textPreview":"AI 原生产品底座 + AI 原生开发模式，是快速形成产品矩阵、试错验证和持续迭代的基础。","textChars":45,"textLines":1,"bbox":[42,146,1100,30]}
+{"kind":"shape","id":"sh/byh43utc","slide":34,"name":"rule","bbox":[42,192,1196,0]}
+{"kind":"shape","id":"sh/qx8napc7","slide":34,"name":"stage-1-card","bbox":[78,250,330,238]}
+{"kind":"shape","id":"sh/d0zm54bi","slide":34,"name":"stage-1-badge","bbox":[104,278,42,42]}
+{"kind":"textbox","id":"sh/czq5czux","slide":34,"name":"stage-1-badge-text","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[104,284,42,26]}
+{"kind":"textbox","id":"sh/z2147eto","slide":34,"name":"stage-1-title","text":"共同基础","textPreview":"共同基础","textChars":4,"textLines":1,"bbox":[162,276,214,32]}
+{"kind":"textbox","id":"sh/y18ne9c3","slide":34,"name":"stage-1-subtitle","text":"AI 原生产品底座 + AI 原生开发模式","textPreview":"AI 原生产品底座 + AI 原生开发模式","textChars":21,"textLines":1,"bbox":[162,314,214,40]}
+{"kind":"shape","id":"sh/0vidkfu5","slide":34,"name":"stage-1-bullet-0-dot","bbox":[162,384,6,6]}
+{"kind":"textbox","id":"sh/1wredkbq","slide":34,"name":"stage-1-bullet-0-text","text":"底层架构可复用","textPreview":"底层架构可复用","textChars":7,"textLines":1,"bbox":[184,372,214,28]}
+{"kind":"shape","id":"sh/e90vipcz","slide":34,"name":"stage-1-bullet-1-dot","bbox":[162,420,6,6]}
+{"kind":"textbox","id":"sh/za9wbutk","slide":34,"name":"stage-1-bullet-1-text","text":"原子组件可装配","textPreview":"原子组件可装配","textChars":7,"textLines":1,"bbox":[184,408,214,28]}
+{"kind":"shape","id":"sh/oz2dozu1","slide":34,"name":"stage-1-bullet-2-dot","bbox":[162,456,6,6]}
+{"kind":"textbox","id":"sh/90beh4bm","slide":34,"name":"stage-1-bullet-2-text","text":"能力沉淀可迁移","textPreview":"能力沉淀可迁移","textChars":7,"textLines":1,"bbox":[184,444,214,28]}
+{"kind":"shape","id":"sh/mxkvmpcb","slide":34,"name":"arrow-1","bbox":[425,352,54,28]}
+{"kind":"shape","id":"sh/nytwfutg","slide":34,"name":"stage-2-card","bbox":[475,250,330,238]}
+{"kind":"shape","id":"sh/w32xszud","slide":34,"name":"stage-2-badge","bbox":[501,278,42,42]}
+{"kind":"textbox","id":"sh/x4vel4by","slide":34,"name":"stage-2-badge-text","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[501,284,42,26]}
+{"kind":"textbox","id":"sh/l87mpkzq","slide":34,"name":"stage-2-title","text":"产品矩阵","textPreview":"产品矩阵","textChars":4,"textLines":1,"bbox":[559,276,214,32]}
+{"kind":"textbox","id":"sh/k7y5gfi5","slide":34,"name":"stage-2-subtitle","text":"面向不同垂直场景，快速包装成解决方案","textPreview":"面向不同垂直场景，快速包装成解决方案","textChars":18,"textLines":1,"bbox":[559,314,214,40]}
+{"kind":"shape","id":"sh/j6p4nahk","slide":34,"name":"stage-2-bullet-0-dot","bbox":[559,384,6,6]}
+{"kind":"textbox","id":"sh/y5wne50z","slide":34,"name":"stage-2-bullet-0-text","text":"通答教学平台 / 通答智能体平台","textPreview":"通答教学平台 / 通答智能体平台","textChars":16,"textLines":1,"bbox":[581,372,214,28]}
+{"kind":"shape","id":"sh/tc7mtkzm","slide":34,"name":"stage-2-bullet-1-dot","bbox":[559,420,6,6]}
+{"kind":"textbox","id":"sh/8by5kfi1","slide":34,"name":"stage-2-bullet-1-text","text":"中小学服务平台 / 教师发展平台","textPreview":"中小学服务平台 / 教师发展平台","textChars":16,"textLines":1,"bbox":[581,408,214,28]}
+{"kind":"shape","id":"sh/7ap4rahw","slide":34,"name":"stage-2-bullet-2-dot","bbox":[559,456,6,6]}
+{"kind":"textbox","id":"sh/69gni50b","slide":34,"name":"stage-2-bullet-2-text","text":"智慧继教 / 教师（/教学）档案袋","textPreview":"智慧继教 / 教师（/教学）档案袋","textChars":17,"textLines":1,"bbox":[581,444,214,28]}
+{"kind":"shape","id":"sh/9gnmh0zi","slide":34,"name":"arrow-2","bbox":[822,352,54,28]}
+{"kind":"shape","id":"sh/ofe58vix","slide":34,"name":"stage-3-card","bbox":[872,250,330,238]}
+{"kind":"shape","id":"sh/elsji1gv","slide":34,"name":"stage-3-badge","bbox":[898,278,42,42]}
+{"kind":"textbox","id":"sh/fmlkbmxg","slide":34,"name":"stage-3-badge-text","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[898,284,42,26]}
+{"kind":"textbox","id":"sh/0nu1kry1","slide":34,"name":"stage-3-title","text":"快速迭代","textPreview":"快速迭代","textChars":4,"textLines":1,"bbox":[956,276,214,32]}
+{"kind":"textbox","id":"sh/1o32dwf6","slide":34,"name":"stage-3-subtitle","text":"上线试错、验证反馈、持续优化","textPreview":"上线试错、验证反馈、持续优化","textChars":14,"textLines":1,"bbox":[956,314,214,40]}
+{"kind":"shape","id":"sh/mpcjm1gr","slide":34,"name":"stage-3-bullet-0-dot","bbox":[956,384,6,6]}
+{"kind":"textbox","id":"sh/nalkf6xc","slide":34,"name":"stage-3-bullet-0-text","text":"小步快跑验证","textPreview":"小步快跑验证","textChars":6,"textLines":1,"bbox":[978,372,214,28]}
+{"kind":"shape","id":"sh/obulobyx","slide":34,"name":"stage-3-bullet-1-dot","bbox":[956,420,6,6]}
+{"kind":"textbox","id":"sh/9c32hgfi","slide":34,"name":"stage-3-bullet-1-text","text":"成功能力复用","textPreview":"成功能力复用","textChars":6,"textLines":1,"bbox":[978,408,214,28]}
+{"kind":"shape","id":"sh/it8jahgn","slide":34,"name":"stage-3-bullet-2-dot","bbox":[956,456,6,6]}
+{"kind":"textbox","id":"sh/3ehk32x8","slide":34,"name":"stage-3-bullet-2-text","text":"产品形态持续扩展","textPreview":"产品形态持续扩展","textChars":8,"textLines":1,"bbox":[978,444,214,28]}
+{"kind":"shape","id":"sh/ja907y9w","slide":34,"name":"insight-band","bbox":[78,528,1124,88]}
+{"kind":"textbox","id":"sh/i90zet8b","slide":34,"name":"insight-title","text":"透过现象看本质：外部包装不同，底层根基相同","textPreview":"透过现象看本质：外部包装不同，底层根基相同","textChars":21,"textLines":1,"bbox":[110,544,520,30]}
+{"kind":"textbox","id":"sh/5cbi98r2","slide":34,"name":"insight-body","text":"各种产品形态层出不穷，看起来是不同领域的解决方案，本质上都在复用自己的底层技术架构、能力组件、数据资产和开发方法。","textPreview":"各种产品形态层出不穷，看起来是不同领域的解决方案，本质上都在复用自己的底层技术架构、能力组件、数据资产和开发方法。","textChars":57,"textLines":1,"bbox":[110,578,1010,26]}
+{"kind":"shape","id":"sh/kb2hg3qh","slide":34,"name":"bottom-judgement","bbox":[170,636,940,40]}
+{"kind":"textbox","id":"sh/7et0bi98","slide":34,"name":"bottom-judgement-text","text":"关键判断：竞争不只在单个产品，而在能否用同一套底座持续生成、验证和复制产品。","textPreview":"关键判断：竞争不只在单个产品，而在能否用同一套底座持续生成、验证和复制产品。","textChars":38,"textLines":1,"bbox":[196,644,888,24]}
+{"kind":"textbox","id":"sh/6dkzid8n","slide":34,"name":"page","text":"34","textPreview":"34","textChars":2,"textLines":1,"bbox":[1184,660,54,25]}
+{"kind":"notes","id":"nt/ofu103u5","slide":34,"text":""}

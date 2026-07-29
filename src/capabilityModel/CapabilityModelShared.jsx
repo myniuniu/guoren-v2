@@ -23,6 +23,7 @@ import {
   FileTextOutlined,
   MoreOutlined,
   PlusOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons';
 import {
   CAPABILITY_MODEL_STATUS_OPTIONS,
@@ -429,6 +430,8 @@ export function CapabilityModelEditorPanel({
   activeItemIndex,
   onLevelCountChange,
   onLevelLabelChange,
+  onRoleChange,
+  onSyncLevelSchemeFromSequence,
   onAddDimension,
   onSelectDimension,
   onAddItem,
@@ -1131,7 +1134,7 @@ export function CapabilityModelEditorPanel({
                 <Select options={industryOptions} placeholder="选择行业" />
               </Form.Item>
               <Form.Item label="所属岗位" name="roleId" rules={[{ required: true, message: '请选择所属岗位' }]}>
-                <Select options={roleOptions} placeholder="选择岗位" />
+                <Select options={roleOptions} placeholder="选择岗位" onChange={onRoleChange} />
               </Form.Item>
               <Form.Item label="序列等级" name="roleLevelId" rules={[{ required: true, message: '请选择序列等级' }]}>
                 <Select options={roleLevelOptions} placeholder="选择岗位主序列下的等级" disabled={!watchedRoleId} />
@@ -1150,11 +1153,22 @@ export function CapabilityModelEditorPanel({
       {showLevelSection ? (
         <div className={`cap-model-editor-section${isLayeredEditor ? ' is-linked' : ''}`}>
           <div className="cap-model-section-head">
-            <div>
-              <div className="cap-model-section-title">等级体系</div>
-              <div className="cap-model-section-desc">默认 4 级，可按单个模型调整等级数与各级名称。</div>
+              <div>
+                <div className="cap-model-section-title">等级体系</div>
+                <div className="cap-model-section-desc">
+                  {onSyncLevelSchemeFromSequence ? '从岗位序列初始化，可按单个模型调整等级数与各级名称。' : '可按单个模型调整等级数与各级名称。'}
+                </div>
+              </div>
+              {onSyncLevelSchemeFromSequence ? (
+                <Button
+                  icon={<ReloadOutlined />}
+                  onClick={onSyncLevelSchemeFromSequence}
+                  disabled={!watchedRoleId}
+                >
+                  从岗位序列同步
+                </Button>
+              ) : null}
             </div>
-          </div>
           <div className="cap-model-level-toolbar">
             <span>等级数</span>
             <InputNumber min={2} max={6} value={modelDraft.levelScheme.levels.length} onChange={onLevelCountChange} />

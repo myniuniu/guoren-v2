@@ -1,0 +1,399 @@
+{"kind":"deck","id":"pr/nlwfqt","name":"Deck"}
+{"kind":"layout","layoutId":"/ppt/slideMasters/slideMaster1.xml","name":"","type":"master"}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout1.xml","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/y90nupkv","slide":1,"title":"果仁培训产品蓝图","textShapes":6}
+{"kind":"textbox","id":"sh/547294r6","slide":1,"name":"矩形 1","text":"果仁培训产品蓝图\n三大子系统架构","textPreview":"果仁培训产品蓝图 | 三大子系统架构","textChars":16,"textLines":2,"bbox":[41,82,790,158]}
+{"kind":"textbox","id":"sh/k3yl0zql","slide":1,"name":"矩形 2","text":"AI 原生平台上的培训业务解决方案蓝图","textPreview":"AI 原生平台上的培训业务解决方案蓝图","textChars":19,"textLines":1,"bbox":[43,260,500,44]}
+{"kind":"textbox","id":"sh/7qp4be9c","slide":1,"name":"矩形 3","text":"果仁不重新定义培训、研修、评课、评估等业务，而是提供 AI 原生平台与 Lucky 智能体能力，让教发平台、智慧继教、行业服务等核心应用产品以解决方案形态生长出来。信息管理独立建设，空间承载活动过程，数据反哺效果运营。","textPreview":"果仁不重新定义培训、研修、评课、评估等业务，而是提供 AI 原生平台与 Lucky 智能体能力，让教发平台、智慧继教、行业服务等核心应用产品以解决方案形态生长出来。信息管理独立建设，空间承载活动过程，数据反哺效果运营。","textChars":109,"textLines":1,"bbox":[43,356,690,132]}
+{"kind":"shape","id":"sh/65g3298r","slide":1,"name":"矩形 4","bbox":[864,82,374,501]}
+{"kind":"textbox","id":"sh/ts7md4r2","slide":1,"name":"矩形 5","text":"AI 原生平台\n解决方案\n活动空间\n数据闭环","textPreview":"AI 原生平台 | 解决方案 | 活动空间 | 数据闭环","textChars":22,"textLines":4,"bbox":[900,128,305,238]}
+{"kind":"shape","id":"sh/sryl4zqx","slide":1,"name":"矩形 6","bbox":[900,409,286,2]}
+{"kind":"textbox","id":"sh/fu94fe98","slide":1,"name":"矩形 7","text":"产品生长在平台上\n空间承载活动","textPreview":"产品生长在平台上 | 空间承载活动","textChars":15,"textLines":2,"bbox":[900,442,286,86]}
+{"kind":"textbox","id":"sh/utg3698n","slide":1,"name":"矩形 8","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"notes","id":"nt/y90nupkv","slide":1,"text":""}
+{"kind":"slide","id":"sl/hwbqtkby","slide":2,"title":"目录","textShapes":16}
+{"kind":"textbox","id":"sh/ozy1ofad","slide":2,"name":"矩形 2","text":"目录","textPreview":"目录","textChars":2,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/b29kza94","slide":2,"name":"矩形 3","bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/a10jqpsj","slide":2,"name":"矩形 4","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"textbox","id":"sh/x4r21kru","slide":2,"name":"矩形 5","text":"汇报结构","textPreview":"汇报结构","textChars":4,"textLines":1,"bbox":[41,198,180,30]}
+{"kind":"shape","id":"sh/w3i1sfa9","slide":2,"name":"矩形 6","bbox":[41,246,360,122]}
+{"kind":"textbox","id":"sh/r65knqtk","slide":2,"name":"矩形 7","text":"01  产品定位与目标","textPreview":"01  产品定位与目标","textChars":11,"textLines":1,"bbox":[65,270,312,36]}
+{"kind":"textbox","id":"sh/q5wjelsz","slide":2,"name":"矩形 8","text":"为什么果仁关注 AI 原生业务模式，而不是改写业务定义。","textPreview":"为什么果仁关注 AI 原生业务模式，而不是改写业务定义。","textChars":28,"textLines":1,"bbox":[65,318,312,30]}
+{"kind":"shape","id":"sh/ove9o7yd","slide":2,"name":"矩形 9","bbox":[460,246,360,122]}
+{"kind":"textbox","id":"sh/9wnqhczy","slide":2,"name":"矩形 10","text":"02  总体架构与子系统","textPreview":"02  总体架构与子系统","textChars":12,"textLines":1,"bbox":[484,270,312,36]}
+{"kind":"textbox","id":"sh/mtwrmxg7","slide":2,"name":"矩形 11","text":"培训信息管理、培训过程运营、培训效果评估三大子系统。","textPreview":"培训信息管理、培训过程运营、培训效果评估三大子系统。","textChars":26,"textLines":1,"bbox":[484,318,312,30]}
+{"kind":"textbox","id":"sh/nu58f2hs","slide":2,"name":"矩形 12","text":"培训信息管理、培训过程运营、培训效果评估三大子系统边界。","textPreview":"培训信息管理、培训过程运营、培训效果评估三大子系统边界。","textChars":28,"textLines":1,"bbox":[879,246,360,122]}
+{"kind":"textbox","id":"sh/wjy9sry9","slide":2,"name":"矩形 13","text":"03  业务闭环与数据模型","textPreview":"03  业务闭环与数据模型","textChars":13,"textLines":1,"bbox":[903,270,312,36]}
+{"kind":"textbox","id":"sh/xk7qlczu","slide":2,"name":"矩形 14","text":"平台、解决方案、信息系统、活动空间和报告如何组成 AI 原生模式。","textPreview":"平台、解决方案、信息系统、活动空间和报告如何组成 AI 原生模式。","textChars":33,"textLines":1,"bbox":[903,318,312,30]}
+{"kind":"shape","id":"sh/ahwrqhgj","slide":2,"name":"矩形 15","bbox":[41,432,360,122]}
+{"kind":"textbox","id":"sh/bip8jmho","slide":2,"name":"矩形 16","text":"04  AI 原生能力","textPreview":"04  AI 原生能力","textChars":11,"textLines":1,"bbox":[65,456,312,36]}
+{"kind":"textbox","id":"sh/cnupgny5","slide":2,"name":"矩形 17","text":"信息建模助手、活动运营助手、纪要分析和报告生成。","textPreview":"信息建模助手、活动运营助手、纪要分析和报告生成。","textChars":24,"textLines":1,"bbox":[65,504,312,30]}
+{"kind":"shape","id":"sh/do3q9szq","slide":2,"name":"矩形 18","bbox":[460,432,360,122]}
+{"kind":"textbox","id":"sh/t8byxkn2","slide":2,"name":"矩形 19","text":"05  交付与演进路径","textPreview":"05  交付与演进路径","textChars":11,"textLines":1,"bbox":[484,456,312,36]}
+{"kind":"textbox","id":"sh/s72xofmh","slide":2,"name":"矩形 20","text":"解决方案、套餐、租户、空间模板和阶段路线图。","textPreview":"解决方案、套餐、租户、空间模板和阶段路线图。","textChars":22,"textLines":1,"bbox":[484,504,312,30]}
+{"kind":"shape","id":"sh/76twva5c","slide":2,"name":"矩形 21","bbox":[879,432,360,122]}
+{"kind":"textbox","id":"sh/65kfmpor","slide":2,"name":"矩形 22","text":"主线","textPreview":"主线","textChars":2,"textLines":1,"bbox":[903,456,312,32]}
+{"kind":"textbox","id":"sh/hcvy14ne","slide":2,"name":"矩形 23","text":"用果仁 AI 原生平台把培训业务升级为：独立信息管理、空间承载活动、解决方案生长、数据闭环运营。","textPreview":"用果仁 AI 原生平台把培训业务升级为：独立信息管理、空间承载活动、解决方案生长、数据闭环运营。","textChars":48,"textLines":1,"bbox":[903,504,312,36]}
+{"kind":"notes","id":"nt/hwbqtkby","slide":2,"text":""}
+{"kind":"slide","id":"sl/ofy9wn61","slide":3,"title":"产品定位","textShapes":14}
+{"kind":"textbox","id":"sh/cza94vmx","slide":3,"name":"矩形 1","text":"产品定位","textPreview":"产品定位","textChars":4,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/d0jax03i","slide":3,"name":"矩形 2","text":"果仁重新定义的是 AI 原生业务模式","textPreview":"果仁重新定义的是 AI 原生业务模式","textChars":18,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/298ryl4v","slide":3,"name":"矩形 3","bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/3ah8rqlg","slide":3,"name":"矩形 4","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"textbox","id":"sh/obq90bml","slide":3,"name":"矩形 5","text":"业务不被重写","textPreview":"业务不被重写","textChars":6,"textLines":1,"bbox":[41,204,220,34]}
+{"kind":"textbox","id":"sh/pcjqtg36","slide":3,"name":"矩形 6","text":"课程学习、研讨、评课、工作坊、网络研修、行业赋能等业务已有自己的规则；果仁把它们接入 AI 原生平台，以解决方案、活动空间、数据和智能体重新组织运行方式。","textPreview":"课程学习、研讨、评课、工作坊、网络研修、行业赋能等业务已有自己的规则；果仁把它们接入 AI 原生平台，以解决方案、活动空间、数据和智能体重新组织运行方式。","textChars":77,"textLines":1,"bbox":[41,250,525,132]}
+{"kind":"textbox","id":"sh/m5cra54z","slide":3,"name":"矩形 7","text":"平台目标：让业务从单次项目交付，升级为可配置、可运营、可沉淀、可复用的 AI 原生业务模式。","textPreview":"平台目标：让业务从单次项目交付，升级为可配置、可运营、可沉淀、可复用的 AI 原生业务模式。","textChars":46,"textLines":1,"bbox":[41,438,525,92]}
+{"kind":"shape","id":"sh/n6ls3alk","slide":3,"name":"矩形 8","bbox":[660,207,260,136]}
+{"kind":"textbox","id":"sh/n2l4fq98","slide":3,"name":"矩形 9","text":"平台底座","textPreview":"平台底座","textChars":4,"textLines":1,"bbox":[684,231,212,36]}
+{"kind":"textbox","id":"sh/m1c3mlsn","slide":3,"name":"矩形 10","text":"提供租户、账号、资料库、权限、数据、Lucky 和集成能力。","textPreview":"提供租户、账号、资料库、权限、数据、Lucky 和集成能力。","textChars":30,"textLines":1,"bbox":[684,279,212,44]}
+{"kind":"shape","id":"sh/943mhgre","slide":3,"name":"矩形 11","bbox":[978,207,260,136]}
+{"kind":"textbox","id":"sh/83ulovat","slide":3,"name":"矩形 12","text":"解决方案","textPreview":"解决方案","textChars":4,"textLines":1,"bbox":[1002,231,212,36]}
+{"kind":"textbox","id":"sh/v6l4jq94","slide":3,"name":"矩形 13","text":"教发平台、智慧继教、行业服务等核心应用产品在平台上生长。","textPreview":"教发平台、智慧继教、行业服务等核心应用产品在平台上生长。","textChars":28,"textLines":1,"bbox":[1002,279,212,44]}
+{"kind":"shape","id":"sh/a5c3ql8z","slide":3,"name":"矩形 14","bbox":[660,395,260,136]}
+{"kind":"textbox","id":"sh/x8nml0ra","slide":3,"name":"矩形 15","text":"活动空间","textPreview":"活动空间","textChars":4,"textLines":1,"bbox":[684,419,212,36]}
+{"kind":"textbox","id":"sh/w7ulsvqp","slide":3,"name":"矩形 16","text":"空间承载课程、研讨、评课、工作坊等活动过程。","textPreview":"空间承载课程、研讨、评课、工作坊等活动过程。","textChars":22,"textLines":1,"bbox":[684,467,212,44]}
+{"kind":"shape","id":"sh/ja54na9g","slide":3,"name":"矩形 17","bbox":[978,395,260,136]}
+{"kind":"textbox","id":"sh/i9w3u58v","slide":3,"name":"矩形 18","text":"模式迭代","textPreview":"模式迭代","textChars":4,"textLines":1,"bbox":[1002,419,212,36]}
+{"kind":"textbox","id":"sh/e10f2twf","slide":3,"name":"矩形 19","text":"评估报告反哺信息模型、空间模板、资源复用和下一轮运营。","textPreview":"评估报告反哺信息模型、空间模板、资源复用和下一轮运营。","textChars":27,"textLines":1,"bbox":[1002,467,212,44]}
+{"kind":"notes","id":"nt/ofy9wn61","slide":3,"text":""}
+{"kind":"slide","id":"sl/jyx0ra1s","slide":4,"title":"总体架构","textShapes":15}
+{"kind":"textbox","id":"sh/1cj2d8b6","slide":4,"name":"矩形 1","text":"总体架构","textPreview":"总体架构","textChars":4,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/0ba143al","slide":4,"name":"矩形 2","text":"核心应用产品生长在 AI 原生平台之上","textPreview":"核心应用产品生长在 AI 原生平台之上","textChars":19,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/rm1k7yt4","slide":4,"name":"矩形 3","bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/ql8jytsj","slide":4,"name":"矩形 4","text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"textbox","id":"sh/doj29oba","slide":4,"name":"矩形 5","text":"参考平台定位，果仁先建设可复用的 AI 原生底座能力，再面向教发、继教、党建、行业服务等场景形成解决方案；空间只承载活动过程，信息管理和评估作为独立子系统与空间协同。","textPreview":"参考平台定位，果仁先建设可复用的 AI 原生底座能力，再面向教发、继教、党建、行业服务等场景形成解决方案；空间只承载活动过程，信息管理和评估作为独立子系统与空间协同。","textChars":83,"textLines":1,"bbox":[72,208,1060,72]}
+{"kind":"shape","id":"sh/sna103ap","slide":4,"name":"矩形 6","bbox":[94,336,180,58]}
+{"kind":"textbox","id":"sh/3ihk3et8","slide":4,"name":"矩形 7","text":"应用场景","textPreview":"应用场景","textChars":4,"textLines":1,"bbox":[104,342,160,46]}
+{"kind":"shape","id":"sh/ih8ju9sn","slide":4,"name":"右箭头 8","bbox":[306,347,74,36]}
+{"kind":"shape","id":"sh/kbm987y5","slide":4,"name":"矩形 9","bbox":[412,336,160,58]}
+{"kind":"textbox","id":"sh/5cva1cfq","slide":4,"name":"矩形 10","text":"解决方案","textPreview":"解决方案","textChars":4,"textLines":1,"bbox":[422,342,140,46]}
+{"kind":"shape","id":"sh/i94r6xgz","slide":4,"name":"右箭头 11","bbox":[604,347,74,36]}
+{"kind":"shape","id":"sh/jadsz2xk","slide":4,"name":"矩形 12","bbox":[710,336,210,58]}
+{"kind":"textbox","id":"sh/w72947yt","slide":4,"name":"矩形 13","text":"活动空间","textPreview":"活动空间","textChars":4,"textLines":1,"bbox":[720,342,190,46]}
+{"kind":"shape","id":"sh/x8vaxsfe","slide":4,"name":"右箭头 14","bbox":[952,347,74,36]}
+{"kind":"shape","id":"sh/a5kr2xg3","slide":4,"name":"矩形 15","bbox":[1058,336,180,58]}
+{"kind":"textbox","id":"sh/v6tsv2xo","slide":4,"name":"矩形 16","text":"AI 原生平台","textPreview":"AI 原生平台","textChars":7,"textLines":1,"bbox":[1068,342,160,46]}
+{"kind":"shape","id":"sh/g36tgryd","slide":4,"name":"矩形 17","bbox":[41,470,340,112]}
+{"kind":"textbox","id":"sh/h4fa9wfy","slide":4,"name":"矩形 18","text":"信息管理","textPreview":"信息管理","textChars":4,"textLines":1,"bbox":[65,494,292,36]}
+{"kind":"textbox","id":"sh/p0batw72","slide":4,"name":"矩形 19","text":"独立管理项目、人员组织、资源规则、学分/证书、报名与台账，不在空间中开展。","textPreview":"独立管理项目、人员组织、资源规则、学分/证书、报名与台账，不在空间中开展。","textChars":37,"textLines":1,"bbox":[65,542,292,20]}
+{"kind":"shape","id":"sh/oz29krqh","slide":4,"name":"矩形 20","bbox":[470,470,340,112]}
+{"kind":"textbox","id":"sh/3ytsrmpw","slide":4,"name":"矩形 21","text":"活动空间","textPreview":"活动空间","textChars":4,"textLines":1,"bbox":[494,494,292,36]}
+{"kind":"textbox","id":"sh/2xkrih8b","slide":4,"name":"矩形 22","text":"承载研讨、评课、工作坊、课程学习、网络研修等活动现场。","textPreview":"承载研讨、评课、工作坊、课程学习、网络研修等活动现场。","textChars":27,"textLines":1,"bbox":[494,542,292,20]}
+{"kind":"shape","id":"sh/1wbapc7q","slide":4,"name":"矩形 23","bbox":[899,470,340,112]}
+{"kind":"textbox","id":"sh/gv29g7q5","slide":4,"name":"矩形 24","text":"Lucky","textPreview":"Lucky","textChars":5,"textLines":1,"bbox":[923,494,292,36]}
+{"kind":"textbox","id":"sh/fu9sn2p0","slide":4,"name":"矩形 25","text":"为信息建模、空间运营、纪要分析、评估报告提供助手能力。","textPreview":"为信息建模、空间运营、纪要分析、评估报告提供助手能力。","textChars":27,"textLines":1,"bbox":[923,542,292,20]}
+{"kind":"textbox","id":"sh/et0reh8f","slide":4,"name":"矩形 26","text":"底座能力通过解决方案进入业务：信息先被建模，活动再进入空间，数据最终回流评估。","textPreview":"底座能力通过解决方案进入业务：信息先被建模，活动再进入空间，数据最终回流评估。","textChars":39,"textLines":1,"bbox":[116,616,1048,32]}
+{"kind":"notes","id":"nt/jyx0ra1s","slide":4,"text":""}
+{"kind":"slide","id":"sl/i107q5of","slide":5,"title":"子系统架构","textShapes":14}
+{"kind":"textbox","id":"sh/dgbulwnm","slide":5,"name":"矩形 1","text":"子系统架构","textPreview":"子系统架构","textChars":5,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/cf2tcr61","slide":5,"name":"矩形 2","text":"三大子系统分工清楚：信息独立，活动进空间","textPreview":"三大子系统分工清楚：信息独立，活动进空间","textChars":20,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/z2tcnm5s","slide":5,"name":"矩形 3","bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/yhkbe1o7","slide":5,"name":"矩形 4","text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"shape","id":"sh/l4bupwny","slide":5,"name":"矩形 5","bbox":[66,238,260,290]}
+{"kind":"shape","id":"sh/032tgr6d","slide":5,"name":"矩形 6","bbox":[510,238,260,290]}
+{"kind":"shape","id":"sh/n6dcr65o","slide":5,"name":"矩形 7","bbox":[954,238,260,290]}
+{"kind":"textbox","id":"sh/m5kbi1oj","slide":5,"name":"矩形 8","text":"培训信息管理","textPreview":"培训信息管理","textChars":6,"textLines":1,"bbox":[90,270,212,38]}
+{"kind":"textbox","id":"sh/w32dkbuh","slide":5,"name":"矩形 9","text":"单独建设信息关系系统，用 AI 原生方式管理项目、人员、组织、资源、规则、学分、证书和台账。","textPreview":"单独建设信息关系系统，用 AI 原生方式管理项目、人员、组织、资源、规则、学分、证书和台账。","textChars":46,"textLines":1,"bbox":[91,334,210,112]}
+{"kind":"textbox","id":"sh/x4vedgvm","slide":5,"name":"矩形 10","text":"活动前","textPreview":"活动前","textChars":3,"textLines":1,"bbox":[108,468,176,32]}
+{"kind":"textbox","id":"sh/ahkvi1cb","slide":5,"name":"矩形 11","text":"培训过程运营","textPreview":"培训过程运营","textChars":6,"textLines":1,"bbox":[554,270,172,38]}
+{"kind":"textbox","id":"sh/v2twb6dw","slide":5,"name":"矩形 12","text":"空间承载课程、研讨、评课、工作坊、网络研修等活动现场，负责触达、参与、互动和证据。","textPreview":"空间承载课程、研讨、评课、工作坊、网络研修等活动现场，负责触达、参与、互动和证据。","textChars":41,"textLines":1,"bbox":[535,334,220,112]}
+{"kind":"textbox","id":"sh/k7mxovud","slide":5,"name":"矩形 13","text":"活动中","textPreview":"活动中","textChars":3,"textLines":1,"bbox":[552,468,176,32]}
+{"kind":"textbox","id":"sh/58vehgvy","slide":5,"name":"矩形 14","text":"培训效果评估","textPreview":"培训效果评估","textChars":6,"textLines":1,"bbox":[990,270,188,38]}
+{"kind":"textbox","id":"sh/i54fmlc7","slide":5,"name":"矩形 15","text":"整合信息台账与空间过程数据，生成个人证明、组织报告、改进建议和复用资产。","textPreview":"整合信息台账与空间过程数据，生成个人证明、组织报告、改进建议和复用资产。","textChars":36,"textLines":1,"bbox":[980,334,210,112]}
+{"kind":"textbox","id":"sh/j6dwfqds","slide":5,"name":"矩形 16","text":"活动后","textPreview":"活动后","textChars":3,"textLines":1,"bbox":[996,468,176,32]}
+{"kind":"shape","id":"sh/sb6xsvu9","slide":5,"name":"右箭头 17","bbox":[360,351,112,40]}
+{"kind":"shape","id":"sh/tcfel0vu","slide":5,"name":"右箭头 18","bbox":[804,351,112,40]}
+{"kind":"textbox","id":"sh/hgrmpwj2","slide":5,"name":"矩形 19","text":"信息发起活动","textPreview":"信息发起活动","textChars":6,"textLines":1,"bbox":[353,402,126,28]}
+{"kind":"textbox","id":"sh/gfi5grih","slide":5,"name":"矩形 20","text":"数据回流评估","textPreview":"数据回流评估","textChars":6,"textLines":1,"bbox":[797,402,126,28]}
+{"kind":"notes","id":"nt/i107q5of","slide":5,"text":""}
+{"kind":"slide","id":"sl/x8f69ofe","slide":6,"title":"培训信息管理","textShapes":12}
+{"kind":"textbox","id":"sh/yhg7epsj","slide":6,"name":"矩形 1","text":"培训信息管理","textPreview":"培训信息管理","textChars":6,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/zi98nu94","slide":6,"name":"矩形 2","text":"信息管理子系统独立管理培训信息关系","textPreview":"信息管理子系统独立管理培训信息关系","textChars":17,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/87ipkzal","slide":6,"name":"矩形 3","bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/98rqt4r6","slide":6,"name":"矩形 4","text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"shape","id":"sh/ml07i9sv","slide":6,"name":"矩形 5","bbox":[41,206,560,142]}
+{"kind":"textbox","id":"sh/7m98ru9g","slide":6,"name":"矩形 6","text":"培训信息台账","textPreview":"培训信息台账","textChars":6,"textLines":1,"bbox":[65,230,512,36]}
+{"kind":"textbox","id":"sh/oryp8fah","slide":6,"name":"矩形 7","text":"维护项目、活动类型、周期、负责人、经费、学分/证书、报名渠道和独立部署要求。","textPreview":"维护项目、活动类型、周期、负责人、经费、学分/证书、报名渠道和独立部署要求。","textChars":38,"textLines":1,"bbox":[65,278,512,50]}
+{"kind":"shape","id":"sh/pc76hkr2","slide":6,"name":"矩形 8","bbox":[678,206,560,142]}
+{"kind":"textbox","id":"sh/h4bupgn6","slide":6,"name":"矩形 9","text":"人员与组织关系","textPreview":"人员与组织关系","textChars":7,"textLines":1,"bbox":[702,230,512,36]}
+{"kind":"textbox","id":"sh/w32twb6l","slide":6,"name":"矩形 10","text":"管理组织成员、外部参与者、来源组织、讲师/专家、群组、身份标签和联系方式。","textPreview":"管理组织成员、外部参与者、来源组织、讲师/专家、群组、身份标签和联系方式。","textChars":37,"textLines":1,"bbox":[702,278,512,50]}
+{"kind":"shape","id":"sh/v2tcn650","slide":6,"name":"矩形 11","bbox":[41,386,560,142]}
+{"kind":"textbox","id":"sh/u1kbu1ov","slide":6,"name":"矩形 12","text":"资源与规则","textPreview":"资源与规则","textChars":5,"textLines":1,"bbox":[65,410,512,36]}
+{"kind":"textbox","id":"sh/5svutgni","slide":6,"name":"矩形 13","text":"管理课程、课件、案例、评课表、成果要求、准入、名额、权限和有效期。","textPreview":"管理课程、课件、案例、评课表、成果要求、准入、名额、权限和有效期。","textChars":33,"textLines":1,"bbox":[65,458,512,50]}
+{"kind":"shape","id":"sh/47mt0b6x","slide":6,"name":"矩形 14","bbox":[678,386,560,142]}
+{"kind":"textbox","id":"sh/j6dcr65c","slide":6,"name":"矩形 15","text":"与空间衔接","textPreview":"与空间衔接","textChars":5,"textLines":1,"bbox":[702,410,512,36]}
+{"kind":"textbox","id":"sh/i54bylor","slide":6,"name":"矩形 16","text":"当活动需要运营时，将活动、人员、资源、规则和智能体配置同步到对应空间。","textPreview":"当活动需要运营时，将活动、人员、资源、规则和智能体配置同步到对应空间。","textChars":35,"textLines":1,"bbox":[702,458,512,50]}
+{"kind":"shape","id":"sh/twfux0ne","slide":6,"name":"矩形 17","bbox":[41,575,1197,54]}
+{"kind":"textbox","id":"sh/svmt4v6t","slide":6,"name":"矩形 18","text":"输出：AI 原生培训信息关系图谱；空间只承载被发起的活动过程。","textPreview":"输出：AI 原生培训信息关系图谱；空间只承载被发起的活动过程。","textChars":31,"textLines":1,"bbox":[70,588,1138,28]}
+{"kind":"notes","id":"nt/x8f69ofe","slide":6,"text":""}
+{"kind":"slide","id":"sl/gnmp4jqx","slide":7,"title":"培训过程运营","textShapes":12}
+{"kind":"textbox","id":"sh/cb2tkvap","slide":7,"name":"矩形 1","text":"培训过程运营","textPreview":"培训过程运营","textChars":6,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/dcbud0ra","slide":7,"name":"矩形 2","text":"培训过程运营在空间开展，空间是活动载体","textPreview":"培训过程运营在空间开展，空间是活动载体","textChars":19,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/ydkbm5sv","slide":7,"name":"矩形 3","bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/zedcfa9g","slide":7,"name":"矩形 4","text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"shape","id":"sh/kzmdova1","slide":7,"name":"矩形 5","bbox":[41,206,560,142]}
+{"kind":"textbox","id":"sh/l0vuh0rm","slide":7,"name":"矩形 6","text":"活动空间","textPreview":"活动空间","textChars":4,"textLines":1,"bbox":[65,230,512,36]}
+{"kind":"textbox","id":"sh/eh0ba1sr","slide":7,"name":"矩形 7","text":"研习社、资料库、任务、问卷和账号体系进入空间，承载课程、研讨、评课、工作坊、网络研修等活动。","textPreview":"研习社、资料库、任务、问卷和账号体系进入空间，承载课程、研讨、评课、工作坊、网络研修等活动。","textChars":46,"textLines":1,"bbox":[65,278,512,50]}
+{"kind":"shape","id":"sh/fi9c369c","slide":7,"name":"矩形 8","bbox":[678,206,560,142]}
+{"kind":"textbox","id":"sh/baxkjqlk","slide":7,"name":"矩形 9","text":"过程参与","textPreview":"过程参与","textChars":4,"textLines":1,"bbox":[702,230,512,36]}
+{"kind":"textbox","id":"sh/a9ojq5kz","slide":7,"name":"矩形 10","text":"在空间内组织签到核验、发言互动、任务提交、资料授权、专家点评和阶段成果。","textPreview":"在空间内组织签到核验、发言互动、任务提交、资料授权、专家点评和阶段成果。","textChars":36,"textLines":1,"bbox":[702,278,512,50]}
+{"kind":"shape","id":"sh/xcz2l03q","slide":7,"name":"矩形 11","bbox":[41,386,560,142]}
+{"kind":"textbox","id":"sh/cbq1sv25","slide":7,"name":"矩形 12","text":"运营触达","textPreview":"运营触达","textChars":4,"textLines":1,"bbox":[65,410,512,36]}
+{"kind":"textbox","id":"sh/n6x0fqlo","slide":7,"name":"矩形 13","text":"消息与任务提醒参与者，支持报名审核结果承接、空间看板、风险名单和运营台账。","textPreview":"消息与任务提醒参与者，支持报名审核结果承接、空间看板、风险名单和运营台账。","textChars":37,"textLines":1,"bbox":[65,458,512,50]}
+{"kind":"shape","id":"sh/25ojml43","slide":7,"name":"矩形 14","bbox":[678,386,560,142]}
+{"kind":"textbox","id":"sh/p8fih03e","slide":7,"name":"矩形 15","text":"AI 陪伴","textPreview":"AI 陪伴","textChars":5,"textLines":1,"bbox":[702,410,512,36]}
+{"kind":"textbox","id":"sh/o761ov2t","slide":7,"name":"矩形 16","text":"活动助手在空间内答疑、生成纪要、分析评课、整理问卷和证明材料。","textPreview":"活动助手在空间内答疑、生成纪要、分析评课、整理问卷和证明材料。","textChars":31,"textLines":1,"bbox":[702,458,512,50]}
+{"kind":"shape","id":"sh/f2d0b6lc","slide":7,"name":"矩形 17","bbox":[41,575,1197,54]}
+{"kind":"textbox","id":"sh/eh4jil4r","slide":7,"name":"矩形 18","text":"边界：空间负责活动过程，不替代信息管理系统；活动所需人员、资源和规则从信息管理子系统进入空间。","textPreview":"边界：空间负责活动过程，不替代信息管理系统；活动所需人员、资源和规则从信息管理子系统进入空间。","textChars":47,"textLines":1,"bbox":[70,588,1138,28]}
+{"kind":"notes","id":"nt/gnmp4jqx","slide":7,"text":""}
+{"kind":"slide","id":"sl/fu1gfa1s","slide":8,"title":"培训效果评估","textShapes":16}
+{"kind":"textbox","id":"sh/18byd4zy","slide":8,"name":"矩形 1","text":"培训效果评估","textPreview":"培训效果评估","textChars":6,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/g72x4zyd","slide":8,"name":"矩形 2","text":"培训效果评估连接信息台账与活动证据","textPreview":"培训效果评估连接信息台账与活动证据","textChars":17,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/ri9g7uhw","slide":8,"name":"矩形 3","bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/6h0fypgb","slide":8,"name":"矩形 4","text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"textbox","id":"sh/tkby9kzm","slide":8,"name":"矩形 5","text":"评估框架","textPreview":"评估框架","textChars":4,"textLines":1,"bbox":[41,196,180,30]}
+{"kind":"shape","id":"sh/sjix0zy1","slide":8,"name":"矩形 6","bbox":[41,248,260,230]}
+{"kind":"textbox","id":"sh/je9g3ahk","slide":8,"name":"矩形 7","text":"反应层","textPreview":"反应层","textChars":3,"textLines":1,"bbox":[65,272,212,36]}
+{"kind":"textbox","id":"sh/id0fu50z","slide":8,"name":"矩形 8","text":"满意度、活动评价、讲师/专家评价、反馈问卷和问题建议。","textPreview":"满意度、活动评价、讲师/专家评价、反馈问卷和问题建议。","textChars":27,"textLines":1,"bbox":[65,320,212,138]}
+{"kind":"shape","id":"sh/o7ydoret","slide":8,"name":"矩形 9","bbox":[341,248,260,230]}
+{"kind":"textbox","id":"sh/98rehwve","slide":8,"name":"矩形 10","text":"学习层","textPreview":"学习层","textChars":3,"textLines":1,"bbox":[365,272,212,36]}
+{"kind":"textbox","id":"sh/m5gvmhwn","slide":8,"name":"矩形 11","text":"知识掌握、案例理解、任务完成、观点表达、能力达成和完成率。","textPreview":"知识掌握、案例理解、任务完成、观点表达、能力达成和完成率。","textChars":29,"textLines":1,"bbox":[365,320,212,138]}
+{"kind":"shape","id":"sh/n6pwfmd8","slide":8,"name":"矩形 12","bbox":[641,248,260,230]}
+{"kind":"textbox","id":"sh/0jydkreh","slide":8,"name":"矩形 13","text":"行为层","textPreview":"行为层","textChars":3,"textLines":1,"bbox":[665,272,212,36]}
+{"kind":"textbox","id":"sh/1k7edwv2","slide":8,"name":"矩形 14","text":"训后任务、场景应用、主管/客户评价、专家评审和同伴互评。","textPreview":"训后任务、场景应用、主管/客户评价、专家评审和同伴互评。","textChars":28,"textLines":1,"bbox":[665,320,212,138]}
+{"kind":"shape","id":"sh/ehgvihwr","slide":8,"name":"矩形 15","bbox":[941,248,260,230]}
+{"kind":"textbox","id":"sh/zipwbmdc","slide":8,"name":"矩形 16","text":"结果层","textPreview":"结果层","textChars":3,"textLines":1,"bbox":[965,272,212,36]}
+{"kind":"textbox","id":"sh/kfixwbe1","slide":8,"name":"矩形 17","text":"组织报告、空间复盘、转化线索、复训建议、业务改善和知识资产。","textPreview":"组织报告、空间复盘、转化线索、复训建议、业务改善和知识资产。","textChars":30,"textLines":1,"bbox":[965,320,212,138]}
+{"kind":"shape","id":"sh/lgbepgvm","slide":8,"name":"矩形 18","bbox":[41,548,1197,90]}
+{"kind":"textbox","id":"sh/tw7e9gnq","slide":8,"name":"矩形 19","text":"效果评估的价值，是把信息台账、空间记录和成果证据转化为个人证明、组织报告、改进建议、资源复用和模式迭代。","textPreview":"效果评估的价值，是把信息台账、空间记录和成果证据转化为个人证明、组织报告、改进建议、资源复用和模式迭代。","textChars":52,"textLines":1,"bbox":[72,568,775,48]}
+{"kind":"textbox","id":"sh/svydgb65","slide":8,"name":"矩形 20","text":"信息 + 空间","textPreview":"信息 + 空间","textChars":7,"textLines":1,"bbox":[884,566,130,34]}
+{"kind":"textbox","id":"sh/7u5w765k","slide":8,"name":"矩形 21","text":"形成个人、项目、组织、解决方案四类报告","textPreview":"形成个人、项目、组织、解决方案四类报告","textChars":19,"textLines":1,"bbox":[998,566,222,34]}
+{"kind":"textbox","id":"sh/6twve1oz","slide":8,"name":"矩形 22","text":"个人、空间、项目、组织/客户四类报告","textPreview":"个人、空间、项目、组织/客户四类报告","textChars":18,"textLines":1,"bbox":[884,604,312,22]}
+{"kind":"notes","id":"nt/fu1gfa1s","slide":8,"text":""}
+{"kind":"slide","id":"sl/udsvah03","slide":9,"title":"业务闭环","textShapes":18}
+{"kind":"textbox","id":"sh/1cfmhgne","slide":9,"name":"矩形 1","text":"业务闭环","textPreview":"业务闭环","textChars":4,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/0b65obm9","slide":9,"name":"矩形 2","text":"业务闭环从信息建模进入活动空间","textPreview":"业务闭环从信息建模进入活动空间","textChars":15,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/nex4jq5k","slide":9,"name":"矩形 3","bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/mdonql4z","slide":9,"name":"矩形 4","text":"09","textPreview":"09","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"shape","id":"sh/9gzml0nq","slide":9,"name":"矩形 5","bbox":[55,235,178,70]}
+{"kind":"textbox","id":"sh/ofq5svm5","slide":9,"name":"矩形 6","text":"需求识别","textPreview":"需求识别","textChars":4,"textLines":1,"bbox":[63,241,162,58]}
+{"kind":"shape","id":"sh/bih4na5w","slide":9,"name":"右箭头 7","bbox":[255,252,50,36]}
+{"kind":"shape","id":"sh/ah8nu54b","slide":9,"name":"矩形 8","bbox":[300,235,178,70]}
+{"kind":"textbox","id":"sh/oza1gfyh","slide":9,"name":"矩形 9","text":"信息建模","textPreview":"信息建模","textChars":4,"textLines":1,"bbox":[308,241,162,58]}
+{"kind":"shape","id":"sh/p0ji9kf2","slide":9,"name":"右箭头 10","bbox":[500,252,50,36]}
+{"kind":"shape","id":"sh/2xsjepgb","slide":9,"name":"矩形 11","bbox":[545,235,178,70]}
+{"kind":"textbox","id":"sh/3y107axw","slide":9,"name":"矩形 12","text":"发起空间","textPreview":"发起空间","textChars":4,"textLines":1,"bbox":[553,241,162,58]}
+{"kind":"shape","id":"sh/cnu1kzyd","slide":9,"name":"右箭头 13","bbox":[745,252,50,36]}
+{"kind":"shape","id":"sh/do3id4fy","slide":9,"name":"矩形 14","bbox":[790,235,178,70]}
+{"kind":"textbox","id":"sh/qlcjipgn","slide":9,"name":"矩形 15","text":"成果沉淀","textPreview":"成果沉淀","textChars":4,"textLines":1,"bbox":[798,241,162,58]}
+{"kind":"textbox","id":"sh/bml0buxs","slide":9,"name":"矩形 16","text":"活动前先在信息管理子系统建立项目、人员、组织、资源、规则、学分/证书和报名关系；需要过程运营时再发起活动空间。","textPreview":"活动前先在信息管理子系统建立项目、人员、组织、资源、规则、学分/证书和报名关系；需要过程运营时再发起活动空间。","textChars":55,"textLines":1,"bbox":[73,353,500,90]}
+{"kind":"textbox","id":"sh/0ru1ozyp","slide":9,"name":"矩形 17","text":"活动中在空间记录签到、互动、点评、任务、问卷、AI 使用和运营动作；活动后沉淀证明、报告、案例和改进建议。","textPreview":"活动中在空间记录签到、互动、点评、任务、问卷、AI 使用和运营动作；活动后沉淀证明、报告、案例和改进建议。","textChars":53,"textLines":1,"bbox":[707,353,500,90]}
+{"kind":"shape","id":"sh/lsn2h4fa","slide":9,"name":"矩形 18","bbox":[77,515,102,42]}
+{"kind":"textbox","id":"sh/98ji147e","slide":9,"name":"矩形 19","text":"信息台账","textPreview":"信息台账","textChars":4,"textLines":1,"bbox":[87,521,82,30]}
+{"kind":"shape","id":"sh/87a18zqt","slide":9,"name":"矩形 20","bbox":[217,515,102,42]}
+{"kind":"textbox","id":"sh/76h0zup8","slide":9,"name":"矩形 21","text":"活动空间","textPreview":"活动空间","textChars":4,"textLines":1,"bbox":[227,521,82,30]}
+{"kind":"shape","id":"sh/ml8j6p8n","slide":9,"name":"矩形 22","bbox":[357,515,102,42]}
+{"kind":"textbox","id":"sh/hcji5o7a","slide":9,"name":"矩形 23","text":"报名","textPreview":"报名","textChars":2,"textLines":1,"bbox":[367,521,82,30]}
+{"kind":"shape","id":"sh/wba1cjqp","slide":9,"name":"矩形 24","bbox":[497,515,102,42]}
+{"kind":"textbox","id":"sh/va103ep4","slide":9,"name":"矩形 25","text":"参与者","textPreview":"参与者","textChars":3,"textLines":1,"bbox":[507,521,82,30]}
+{"kind":"shape","id":"sh/u9sja98z","slide":9,"name":"矩形 26","bbox":[637,515,102,42]}
+{"kind":"textbox","id":"sh/xgzitk76","slide":9,"name":"矩形 27","text":"任务","textPreview":"任务","textChars":2,"textLines":1,"bbox":[647,521,82,30]}
+{"kind":"shape","id":"sh/cf6h0fql","slide":9,"name":"矩形 28","bbox":[777,515,102,42]}
+{"kind":"textbox","id":"sh/2l4faloj","slide":9,"name":"矩形 29","text":"评价","textPreview":"评价","textChars":2,"textLines":1,"bbox":[787,521,82,30]}
+{"kind":"shape","id":"sh/nmdg3q54","slide":9,"name":"矩形 30","bbox":[917,515,102,42]}
+{"kind":"textbox","id":"sh/onmxcv69","slide":9,"name":"矩形 31","text":"成果","textPreview":"成果","textChars":2,"textLines":1,"bbox":[927,521,82,30]}
+{"kind":"shape","id":"sh/pofy50nu","slide":9,"name":"矩形 32","bbox":[1057,515,102,42]}
+{"kind":"textbox","id":"sh/apofe5of","slide":9,"name":"矩形 33","text":"报告","textPreview":"报告","textChars":2,"textLines":1,"bbox":[1067,521,82,30]}
+{"kind":"shape","id":"sh/bqxg7q50","slide":9,"name":"流程箭头","bbox":[990,252,50,36]}
+{"kind":"shape","id":"sh/cr6xgv6l","slide":9,"name":"流程节点-效果改进","bbox":[1035,235,178,70]}
+{"kind":"textbox","id":"sh/xcfy90n6","slide":9,"name":"流程文本-效果改进","text":"效果改进","textPreview":"效果改进","textChars":4,"textLines":1,"bbox":[1043,241,162,58]}
+{"kind":"notes","id":"nt/udsvah03","slide":9,"text":""}
+{"kind":"slide","id":"sl/m90b6t0r","slide":10,"title":"核心对象","textShapes":13}
+{"kind":"textbox","id":"sh/xc3mho32","slide":10,"name":"矩形 1","text":"核心对象","textPreview":"核心对象","textChars":4,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/cbu58j2h","slide":10,"name":"矩形 2","text":"核心对象模型区分信息关系与活动空间","textPreview":"核心对象模型区分信息关系与活动空间","textChars":17,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/zelojyl8","slide":10,"name":"矩形 3","bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/ydcnatkn","slide":10,"name":"矩形 4","text":"10","textPreview":"10","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"shape","id":"sh/l036l83y","slide":10,"name":"矩形 5","bbox":[41,214,260,322]}
+{"kind":"textbox","id":"sh/kzu5c32t","slide":10,"name":"矩形 6","text":"Training Info Graph","textPreview":"Training Info Graph","textChars":19,"textLines":1,"bbox":[65,238,212,36]}
+{"kind":"textbox","id":"sh/725onyl4","slide":10,"name":"矩形 7","text":"培训信息关系 管理项目、人员、组织、资源、规则、学分/证书、报名和台账，独立于空间建设。","textPreview":"培训信息关系 管理项目、人员、组织、资源、规则、学分/证书、报名和台账，独立于空间建设。","textChars":44,"textLines":1,"bbox":[65,286,212,230]}
+{"kind":"shape","id":"sh/m1cnetkj","slide":10,"name":"矩形 8","bbox":[341,214,260,322]}
+{"kind":"textbox","id":"sh/s7yt4b21","slide":10,"name":"矩形 9","text":"Activity Space","textPreview":"Activity Space","textChars":14,"textLines":1,"bbox":[365,238,212,36]}
+{"kind":"textbox","id":"sh/d87uxg3m","slide":10,"name":"矩形 10","text":"活动空间 承载课程、研讨、评课、工作坊、网络研修等活动过程，接收信息配置。","textPreview":"活动空间 承载课程、研讨、评课、工作坊、网络研修等活动过程，接收信息配置。","textChars":37,"textLines":1,"bbox":[365,286,212,230]}
+{"kind":"shape","id":"sh/q5gb21kb","slide":10,"name":"矩形 11","bbox":[641,214,260,322]}
+{"kind":"textbox","id":"sh/r6pcv6lw","slide":10,"name":"矩形 12","text":"Participant Record","textPreview":"Participant Record","textChars":18,"textLines":1,"bbox":[665,238,212,36]}
+{"kind":"textbox","id":"sh/0bit8b2d","slide":10,"name":"矩形 13","text":"参与者记录 记录报名、签到、互动、任务、成果、AI 使用和身份/来源。","textPreview":"参与者记录 记录报名、签到、互动、任务、成果、AI 使用和身份/来源。","textChars":35,"textLines":1,"bbox":[665,286,212,230]}
+{"kind":"shape","id":"sh/1cru1g3y","slide":10,"name":"矩形 14","bbox":[941,214,260,322]}
+{"kind":"textbox","id":"sh/e9gb61k7","slide":10,"name":"矩形 15","text":"Evidence & Report","textPreview":"Evidence & Report","textChars":17,"textLines":1,"bbox":[965,238,212,36]}
+{"kind":"textbox","id":"sh/fapcz6ls","slide":10,"name":"矩形 16","text":"证明与报告\n按个人、活动、项目、来源组织生成证书/证明、效果报告和改进建议。","textPreview":"证明与报告 | 按个人、活动、项目、来源组织生成证书/证明、效果报告和改进建议。","textChars":38,"textLines":2,"bbox":[965,286,212,230]}
+{"kind":"textbox","id":"sh/ozitcv29","slide":10,"name":"矩形 17","text":"信息关系定义业务对象，活动空间承载过程。","textPreview":"信息关系定义业务对象，活动空间承载过程。","textChars":20,"textLines":1,"bbox":[41,580,780,38]}
+{"kind":"textbox","id":"sh/p0ru503u","slide":10,"name":"矩形 18","text":"评估报告同时消费信息台账和空间证据，支撑解决方案复制。","textPreview":"评估报告同时消费信息台账和空间证据，支撑解决方案复制。","textChars":27,"textLines":1,"bbox":[657,584,540,34]}
+{"kind":"notes","id":"nt/m90b6t0r","slide":10,"text":""}
+{"kind":"slide","id":"sl/jetc3ut0","slide":11,"title":"AI 原生能力","textShapes":12}
+{"kind":"textbox","id":"sh/xcryxg7y","slide":11,"name":"矩形 1","text":"AI 原生能力","textPreview":"AI 原生能力","textChars":7,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/wbih4b6d","slide":11,"name":"矩形 2","text":"Lucky 覆盖信息建模、空间运营和效果报告","textPreview":"Lucky 覆盖信息建模、空间运营和效果报告","textChars":22,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/n69grmpw","slide":11,"name":"矩形 3","bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/250zy18b","slide":11,"name":"矩形 4","text":"11","textPreview":"11","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"shape","id":"sh/98rytw72","slide":11,"name":"矩形 5","bbox":[41,216,260,206]}
+{"kind":"textbox","id":"sh/o7ih0r6h","slide":11,"name":"矩形 6","text":"信息建模助手","textPreview":"信息建模助手","textChars":6,"textLines":1,"bbox":[65,240,212,36]}
+{"kind":"textbox","id":"sh/72t03qp0","slide":11,"name":"矩形 7","text":"辅助生成项目结构、人员范围、资源规则、学分/证书、报名表单和活动发起建议。","textPreview":"辅助生成项目结构、人员范围、资源规则、学分/证书、报名表单和活动发起建议。","textChars":37,"textLines":1,"bbox":[65,288,212,114]}
+{"kind":"shape","id":"sh/61kzalof","slide":11,"name":"矩形 8","bbox":[341,216,260,206]}
+{"kind":"textbox","id":"sh/ofqtgnyt","slide":11,"name":"矩形 9","text":"空间运营助手","textPreview":"空间运营助手","textChars":6,"textLines":1,"bbox":[365,240,212,36]}
+{"kind":"textbox","id":"sh/9gza9sze","slide":11,"name":"矩形 10","text":"回答空间介绍、日程安排、资料权限、任务要求和证书获取问题。","textPreview":"回答空间介绍、日程安排、资料权限、任务要求和证书获取问题。","textChars":29,"textLines":1,"bbox":[365,288,212,114]}
+{"kind":"shape","id":"sh/mdobedg3","slide":11,"name":"矩形 11","bbox":[641,216,260,206]}
+{"kind":"textbox","id":"sh/nehs7iho","slide":11,"name":"矩形 12","text":"过程分析助手","textPreview":"过程分析助手","textChars":6,"textLines":1,"bbox":[665,240,212,36]}
+{"kind":"textbox","id":"sh/0b6tc3yx","slide":11,"name":"矩形 13","text":"整理空间中的研讨观点、评课意见、参与者互动和问卷反馈，识别低活跃风险。","textPreview":"整理空间中的研讨观点、评课意见、参与者互动和问卷反馈，识别低活跃风险。","textChars":35,"textLines":1,"bbox":[665,288,212,114]}
+{"kind":"shape","id":"sh/1cfa58zi","slide":11,"name":"矩形 14","bbox":[941,216,260,206]}
+{"kind":"textbox","id":"sh/epobatgr","slide":11,"name":"矩形 15","text":"报告生成助手","textPreview":"报告生成助手","textChars":6,"textLines":1,"bbox":[965,240,212,36]}
+{"kind":"textbox","id":"sh/zaxs3yhc","slide":11,"name":"矩形 16","text":"汇总信息台账、空间参与记录、成果材料、满意度和完成率，生成证明与组织报告。","textPreview":"汇总信息台账、空间参与记录、成果材料、满意度和完成率，生成证明与组织报告。","textChars":37,"textLines":1,"bbox":[965,288,212,114]}
+{"kind":"shape","id":"sh/cn6t83y1","slide":11,"name":"矩形 17","bbox":[41,500,1197,80]}
+{"kind":"textbox","id":"sh/dofa18z6","slide":11,"name":"矩形 18","text":"AI 输出作为业务模式运营建议稿进入人工确认；信息关系、活动评价、证书/证明、组织报告和数据结论保留人工审核。","textPreview":"AI 输出作为业务模式运营建议稿进入人工确认；信息关系、活动评价、证书/证明、组织报告和数据结论保留人工审核。","textChars":55,"textLines":1,"bbox":[72,514,1135,54]}
+{"kind":"notes","id":"nt/jetc3ut0","slide":11,"text":""}
+{"kind":"slide","id":"sl/8f2psfyx","slide":12,"title":"数据与分析","textShapes":14}
+{"kind":"textbox","id":"sh/1gbm9s3a","slide":12,"name":"矩形 1","text":"数据与分析","textPreview":"数据与分析","textChars":5,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/0f2lgnmp","slide":12,"name":"矩形 2","text":"数据分析从信息关系与空间过程两端取数","textPreview":"数据分析从信息关系与空间过程两端取数","textChars":18,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/ra943il8","slide":12,"name":"矩形 3","bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/q903ad4n","slide":12,"name":"矩形 4","text":"12","textPreview":"12","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"shape","id":"sh/dcbm583y","slide":12,"name":"矩形 5","bbox":[61,246,170,64]}
+{"kind":"textbox","id":"sh/sb2lcnmd","slide":12,"name":"矩形 6","text":"信息台账","textPreview":"信息台账","textChars":4,"textLines":1,"bbox":[71,252,150,52]}
+{"kind":"shape","id":"sh/b6d4f2lc","slide":12,"name":"右箭头 7","bbox":[258,260,74,36]}
+{"kind":"shape","id":"sh/a543mx4r","slide":12,"name":"矩形 8","bbox":[360,246,190,64]}
+{"kind":"textbox","id":"sh/wvupgz6t","slide":12,"name":"矩形 9","text":"空间记录","textPreview":"空间记录","textChars":4,"textLines":1,"bbox":[370,252,170,52]}
+{"kind":"shape","id":"sh/xw3q94ne","slide":12,"name":"右箭头 10","bbox":[578,260,74,36]}
+{"kind":"shape","id":"sh/atc7epon","slide":12,"name":"矩形 11","bbox":[680,246,190,64]}
+{"kind":"textbox","id":"sh/bulo7u58","slide":12,"name":"矩形 12","text":"效果报告","textPreview":"效果报告","textChars":4,"textLines":1,"bbox":[690,252,170,52]}
+{"kind":"shape","id":"sh/orapcf6h","slide":12,"name":"右箭头 13","bbox":[898,260,74,36]}
+{"kind":"shape","id":"sh/9sj65kn2","slide":12,"name":"矩形 14","bbox":[1000,246,190,64]}
+{"kind":"textbox","id":"sh/mps7a5or","slide":12,"name":"矩形 15","text":"改进行动","textPreview":"改进行动","textChars":4,"textLines":1,"bbox":[1010,252,170,52]}
+{"kind":"textbox","id":"sh/nq1o3a5w","slide":12,"name":"矩形 16","text":"既有业务的项目、人员、来源组织、资源、规则、报名等信息台账，与空间中的签到、互动、任务、成果、问卷和 AI 使用记录统一归集，形成运营数据资产。","textPreview":"既有业务的项目、人员、来源组织、资源、规则、报名等信息台账，与空间中的签到、互动、任务、成果、问卷和 AI 使用记录统一归集，形成运营数据资产。","textChars":72,"textLines":1,"bbox":[110,372,1060,92]}
+{"kind":"shape","id":"sh/0nap8f6l","slide":12,"name":"矩形 17","bbox":[250,516,105,42]}
+{"kind":"textbox","id":"sh/1oj61kn6","slide":12,"name":"矩形 18","text":"租户","textPreview":"租户","textChars":2,"textLines":1,"bbox":[260,522,85,30]}
+{"kind":"shape","id":"sh/hkbm5wzu","slide":12,"name":"矩形 19","bbox":[410,516,105,42]}
+{"kind":"textbox","id":"sh/gj25cry9","slide":12,"name":"矩形 20","text":"项目","textPreview":"项目","textChars":2,"textLines":1,"bbox":[420,522,85,30]}
+{"kind":"shape","id":"sh/fit436ho","slide":12,"name":"矩形 21","bbox":[570,516,105,42]}
+{"kind":"textbox","id":"sh/uh0na1g3","slide":12,"name":"矩形 22","text":"信息关系","textPreview":"信息关系","textChars":4,"textLines":1,"bbox":[580,522,85,30]}
+{"kind":"shape","id":"sh/tgrm1wzy","slide":12,"name":"矩形 23","bbox":[730,516,105,42]}
+{"kind":"textbox","id":"sh/sfi58ryd","slide":12,"name":"矩形 24","text":"活动空间","textPreview":"活动空间","textChars":4,"textLines":1,"bbox":[740,522,85,30]}
+{"kind":"shape","id":"sh/7u94zmhs","slide":12,"name":"矩形 25","bbox":[890,516,105,42]}
+{"kind":"textbox","id":"sh/6t0n6hg7","slide":12,"name":"矩形 26","text":"来源组织","textPreview":"来源组织","textChars":4,"textLines":1,"bbox":[900,522,85,30]}
+{"kind":"textbox","id":"sh/dcv6dgz2","slide":12,"name":"矩形 27","text":"指标覆盖报名转化、到场率、完成率、互动质量、成果质量、满意度、组织报告和解决方案复用价值。","textPreview":"指标覆盖报名转化、到场率、完成率、互动质量、成果质量、满意度、组织报告和解决方案复用价值。","textChars":45,"textLines":1,"bbox":[272,574,740,32]}
+{"kind":"notes","id":"nt/8f2psfyx","slide":12,"text":""}
+{"kind":"slide","id":"sl/hgzapcr6","slide":13,"title":"产品化交付","textShapes":10}
+{"kind":"textbox","id":"sh/q50nydsj","slide":13,"name":"矩形 1","text":"产品化交付","textPreview":"产品化交付","textChars":5,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/bq9orito","slide":13,"name":"矩形 2","text":"核心应用产品是平台上生长出的解决方案","textPreview":"核心应用产品是平台上生长出的解决方案","textChars":18,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/o3i5w3ad","slide":13,"name":"矩形 3","bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/p4r6p8by","slide":13,"name":"矩形 4","text":"13","textPreview":"13","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"shape","id":"sh/21gnuts7","slide":13,"name":"矩形 5","bbox":[41,214,340,332]}
+{"kind":"textbox","id":"sh/32ponyts","slide":13,"name":"矩形 6","text":"解决方案","textPreview":"解决方案","textChars":4,"textLines":1,"bbox":[65,238,292,36]}
+{"kind":"textbox","id":"sh/gzy5s3a1","slide":13,"name":"矩形 7","text":"面向教发平台、智慧继教、智慧党建、行业服务、AI 通识等产品线，组合信息管理、活动空间、评估和 Lucky 能力。","textPreview":"面向教发平台、智慧继教、智慧党建、行业服务、AI 通识等产品线，组合信息管理、活动空间、评估和 Lucky 能力。","textChars":57,"textLines":1,"bbox":[65,286,292,240]}
+{"kind":"shape","id":"sh/1076lobm","slide":13,"name":"矩形 8","bbox":[470,214,340,332]}
+{"kind":"textbox","id":"sh/hcfy9k3u","slide":13,"name":"矩形 9","text":"套餐","textPreview":"套餐","textChars":2,"textLines":1,"bbox":[494,238,292,36]}
+{"kind":"textbox","id":"sh/gb6x0zm9","slide":13,"name":"矩形 10","text":"定义参与者规模、空间数、活动数、资料容量、AI 调用、信息台账、报名审核、证书、报表和服务等级。","textPreview":"定义参与者规模、空间数、活动数、资料容量、AI 调用、信息台账、报名审核、证书、报表和服务等级。","textChars":48,"textLines":1,"bbox":[494,286,292,240]}
+{"kind":"shape","id":"sh/vaxg7ulo","slide":13,"name":"矩形 11","bbox":[899,214,340,332]}
+{"kind":"textbox","id":"sh/u9ofyp43","slide":13,"name":"矩形 12","text":"租户","textPreview":"租户","textChars":2,"textLines":1,"bbox":[923,238,292,36]}
+{"kind":"textbox","id":"sh/t8fy5k3i","slide":13,"name":"矩形 13","text":"承接客户主体、组织架构、信息数据、业务空间、外部来源组织、数据隔离、权限边界和服务周期。","textPreview":"承接客户主体、组织架构、信息数据、业务空间、外部来源组织、数据隔离、权限边界和服务周期。","textChars":44,"textLines":1,"bbox":[923,286,292,240]}
+{"kind":"textbox","id":"sh/876xwfmx","slide":13,"name":"矩形 14","text":"解决方案定义服务谁和解决什么；信息管理定义业务对象；空间定义活动如何运行。","textPreview":"解决方案定义服务谁和解决什么；信息管理定义业务对象；空间定义活动如何运行。","textChars":37,"textLines":1,"bbox":[41,588,850,36]}
+{"kind":"notes","id":"nt/hgzapcr6","slide":13,"text":""}
+{"kind":"slide","id":"sl/6lsnupw7","slide":14,"title":"场景包","textShapes":9}
+{"kind":"textbox","id":"sh/xc7eds76","slide":14,"name":"矩形 1","text":"场景包","textPreview":"场景包","textChars":3,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/wbydknq1","slide":14,"name":"矩形 2","text":"场景包沉淀的是解决方案模式与活动空间模板","textPreview":"场景包沉淀的是解决方案模式与活动空间模板","textChars":20,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/jepwf2pc","slide":14,"name":"矩形 3","bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/idgvmx8r","slide":14,"name":"矩形 4","text":"14","textPreview":"14","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"textbox","id":"sh/5grehs7i","slide":14,"name":"矩形 5","text":"典型场景","textPreview":"典型场景","textChars":4,"textLines":1,"bbox":[41,198,180,32]}
+{"kind":"shape","id":"sh/kfidonqx","slide":14,"name":"矩形 6","bbox":[41,248,560,206]}
+{"kind":"textbox","id":"sh/zi5c3y98","slide":14,"name":"矩形 7","text":"教育 / 教发场景","textPreview":"教育 / 教发场景","textChars":9,"textLines":1,"bbox":[65,272,512,36]}
+{"kind":"textbox","id":"sh/ehwvat8n","slide":14,"name":"矩形 8","text":"承接专题研讨、听评课、集体备课、公开课磨课、教师成长档案和跨校研修；信息独立管理，活动进入空间。","textPreview":"承接专题研讨、听评课、集体备课、公开课磨课、教师成长档案和跨校研修；信息独立管理，活动进入空间。","textChars":48,"textLines":1,"bbox":[65,320,512,114]}
+{"kind":"shape","id":"sh/c3e1gjyd","slide":14,"name":"矩形 9","bbox":[678,248,560,206]}
+{"kind":"textbox","id":"sh/x4ni9ofy","slide":14,"name":"矩形 10","text":"行业 / 组织赋能","textPreview":"行业 / 组织赋能","textChars":9,"textLines":1,"bbox":[702,272,512,36]}
+{"kind":"textbox","id":"sh/a1wze9g7","slide":14,"name":"矩形 11","text":"承接客户培训、伙伴赋能、认证活动、公开工作坊、复盘会、导师制和案例共创；以解决方案方式交付。","textPreview":"承接客户培训、伙伴赋能、认证活动、公开工作坊、复盘会、导师制和案例共创；以解决方案方式交付。","textChars":46,"textLines":1,"bbox":[702,320,512,114]}
+{"kind":"shape","id":"sh/b2507exs","slide":14,"name":"矩形 12","bbox":[41,518,1197,86]}
+{"kind":"textbox","id":"sh/kre1k3y9","slide":14,"name":"矩形 13","text":"场景包不重造场景：它沉淀信息模型、空间模板、智能体配置、评估指标和交付资产。","textPreview":"场景包不重造场景：它沉淀信息模型、空间模板、智能体配置、评估指标和交付资产。","textChars":38,"textLines":1,"bbox":[72,540,1135,40]}
+{"kind":"notes","id":"nt/6lsnupw7","slide":14,"text":""}
+{"kind":"slide","id":"sl/vaxsvy10","slide":15,"title":"实施路线","textShapes":22}
+{"kind":"textbox","id":"sh/547mhg3m","slide":15,"name":"矩形 1","text":"实施路线","textPreview":"实施路线","textChars":4,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/k3y5ov21","slide":15,"name":"矩形 2","text":"路线图先建信息底座，再复制空间化解决方案","textPreview":"路线图先建信息底座，再复制空间化解决方案","textChars":20,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/76p4jqls","slide":15,"name":"矩形 3","bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/65gnqlk7","slide":15,"name":"矩形 4","text":"15","textPreview":"15","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"textbox","id":"sh/t87ml0ji","slide":15,"name":"矩形 5","text":"路线图","textPreview":"路线图","textChars":3,"textLines":1,"bbox":[41,196,180,30]}
+{"kind":"textbox","id":"sh/s7y5sv2x","slide":15,"name":"矩形 6","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[58,230,58,28]}
+{"kind":"textbox","id":"sh/na5476l8","slide":15,"name":"矩形 7","text":"V1 信息管理闭环","textPreview":"V1 信息管理闭环","textChars":9,"textLines":1,"bbox":[132,224,410,30]}
+{"kind":"textbox","id":"sh/m9c3e1kn","slide":15,"name":"矩形 8","text":"项目、人员、组织、资源、规则、报名、学分/证书和台账。","textPreview":"项目、人员、组织、资源、规则、报名、学分/证书和台账。","textChars":27,"textLines":1,"bbox":[132,258,450,26]}
+{"kind":"textbox","id":"sh/wrm9kvep","slide":15,"name":"矩形 9","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[58,308,58,28]}
+{"kind":"textbox","id":"sh/hsvat0fa","slide":15,"name":"矩形 10","text":"V2 活动空间运营","textPreview":"V2 活动空间运营","textChars":9,"textLines":1,"bbox":[132,302,410,30]}
+{"kind":"textbox","id":"sh/upkrilwj","slide":15,"name":"矩形 11","text":"课程、研讨、评课、工作坊、网络研修活动进入空间，形成过程记录。","textPreview":"课程、研讨、评课、工作坊、网络研修活动进入空间，形成过程记录。","textChars":31,"textLines":1,"bbox":[132,336,450,26]}
+{"kind":"textbox","id":"sh/vqdsrqx4","slide":15,"name":"矩形 12","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[58,386,58,28]}
+{"kind":"textbox","id":"sh/4vm9ovel","slide":15,"name":"矩形 13","text":"V3 AI 原生增强","textPreview":"V3 AI 原生增强","textChars":10,"textLines":1,"bbox":[132,380,410,30]}
+{"kind":"textbox","id":"sh/5wvax0f6","slide":15,"name":"矩形 14","text":"信息建模、空间问答、资料问答、研讨纪要、评课分析和运营预警。","textPreview":"信息建模、空间问答、资料问答、研讨纪要、评课分析和运营预警。","textChars":30,"textLines":1,"bbox":[132,414,450,26]}
+{"kind":"textbox","id":"sh/it4rm5wv","slide":15,"name":"矩形 15","text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[58,464,58,28]}
+{"kind":"textbox","id":"sh/judsvqxg","slide":15,"name":"矩形 16","text":"V4 效果运营","textPreview":"V4 效果运营","textChars":7,"textLines":1,"bbox":[132,458,410,30]}
+{"kind":"textbox","id":"sh/0z29cbyh","slide":15,"name":"矩形 17","text":"个人证明、组织报告、改进建议、资源复用和评估驾驶舱。","textPreview":"个人证明、组织报告、改进建议、资源复用和评估驾驶舱。","textChars":26,"textLines":1,"bbox":[132,492,450,26]}
+{"kind":"textbox","id":"sh/l0bqlgf2","slide":15,"name":"矩形 18","text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[58,542,58,28]}
+{"kind":"textbox","id":"sh/1kjyt83e","slide":15,"name":"矩形 19","text":"V5 解决方案复制","textPreview":"V5 解决方案复制","textChars":9,"textLines":1,"bbox":[132,536,410,30]}
+{"kind":"textbox","id":"sh/gjax03m9","slide":15,"name":"矩形 20","text":"教发、继教、党建、行业服务等解决方案套餐化与渠道合作。","textPreview":"教发、继教、党建、行业服务等解决方案套餐化与渠道合作。","textChars":27,"textLines":1,"bbox":[132,570,450,26]}
+{"kind":"shape","id":"sh/fi1grylo","slide":15,"name":"矩形 21","bbox":[688,218,520,354]}
+{"kind":"textbox","id":"sh/ehsfyt43","slide":15,"name":"矩形 22","text":"实施重点","textPreview":"实施重点","textChars":4,"textLines":1,"bbox":[730,258,438,38]}
+{"kind":"textbox","id":"sh/p8jyx83q","slide":15,"name":"矩形 23","text":"先跑通一个标准业务：用信息管理子系统建立对象和规则，再把活动发起到空间，最后用评估报告反哺解决方案。\n每个阶段都保留人工审核、数据隔离、成本监控和账号有效期。","textPreview":"先跑通一个标准业务：用信息管理子系统建立对象和规则，再把活动发起到空间，最后用评估报告反哺解决方案。 | 每个阶段都保留人工审核、数据隔离、成本监控和账号有效期。","textChars":79,"textLines":2,"bbox":[742,334,412,176]}
+{"kind":"textbox","id":"sh/o7ah4nm5","slide":15,"name":"矩形 24","text":"价值：让培训与发展业务从项目制交付，升级为 AI 原生平台上的解决方案运营。","textPreview":"价值：让培训与发展业务从项目制交付，升级为 AI 原生平台上的解决方案运营。","textChars":38,"textLines":1,"bbox":[88,606,1104,30]}
+{"kind":"notes","id":"nt/vaxsvy10","slide":15,"text":""}
+{"kind":"slide","id":"sl/gny5sjyp","slide":16,"title":"商业化套件","textShapes":15}
+{"kind":"textbox","id":"sh/8z2h8bq1","slide":16,"name":"矩形 1","text":"商业化套件","textPreview":"商业化套件","textChars":5,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/9kby1g7m","slide":16,"name":"矩形 2","text":"商业化套件围绕平台、解决方案、空间和 AI 组合","textPreview":"商业化套件围绕平台、解决方案、空间和 AI 组合","textChars":24,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/ytkf2h8j","slide":16,"name":"矩形 3","bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/zutgvm94","slide":16,"name":"矩形 4","text":"16","textPreview":"16","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"textbox","id":"sh/kv2h4rqp","slide":16,"name":"矩形 5","text":"套件结构","textPreview":"套件结构","textChars":4,"textLines":1,"bbox":[41,196,220,30]}
+{"kind":"shape","id":"sh/lwbyxwra","slide":16,"name":"矩形 6","bbox":[41,244,560,250]}
+{"kind":"textbox","id":"sh/ip4zel83","slide":16,"name":"矩形 7","text":"基础平台包","textPreview":"基础平台包","textChars":5,"textLines":1,"bbox":[65,268,512,36]}
+{"kind":"textbox","id":"sh/3qdg7qpo","slide":16,"name":"矩形 8","text":"租户、组织、外部人员、信息管理、资料库、活动空间、研习社、任务、消息、问卷、证书和统计能力。","textPreview":"租户、组织、外部人员、信息管理、资料库、活动空间、研习社、任务、消息、问卷、证书和统计能力。","textChars":46,"textLines":1,"bbox":[65,316,512,158]}
+{"kind":"shape","id":"sh/fm1gzq5o","slide":16,"name":"矩形 9","bbox":[678,244,560,250]}
+{"kind":"textbox","id":"sh/e1sf65o3","slide":16,"name":"矩形 10","text":"解决方案包\n智能体底座","textPreview":"解决方案包 | 智能体底座","textChars":11,"textLines":2,"bbox":[702,264,512,60]}
+{"kind":"textbox","id":"sh/1ojy10ne","slide":16,"name":"矩形 11","text":"教发平台、智慧继教、智慧党建、行业服务等解决方案，内置信息模型、空间模板、评估指标和智能体。","textPreview":"教发平台、智慧继教、智慧党建、行业服务等解决方案，内置信息模型、空间模板、评估指标和智能体。","textChars":46,"textLines":1,"bbox":[702,336,512,128]}
+{"kind":"shape","id":"sh/gnax8v6t","slide":16,"name":"矩形 12","bbox":[41,534,1197,82]}
+{"kind":"textbox","id":"sh/nqlg3a5k","slide":16,"name":"矩形 13","text":"商业化组件","textPreview":"商业化组件","textChars":5,"textLines":1,"bbox":[73,554,210,30]}
+{"kind":"textbox","id":"sh/2pcfa5oz","slide":16,"name":"矩形 14","text":"以平台底座、解决方案、活动空间、资源包、运营服务和 Token 算力组合报价，支持试用、升级和增购。","textPreview":"以平台底座、解决方案、活动空间、资源包、运营服务和 Token 算力组合报价，支持试用、升级和增购。","textChars":50,"textLines":1,"bbox":[294,546,890,48]}
+{"kind":"shape","id":"sh/ps3y5knq","slide":16,"name":"矩形 15","bbox":[139,631,150,36]}
+{"kind":"textbox","id":"sh/oruhcf65","slide":16,"name":"矩形 16","text":"解决方案包","textPreview":"解决方案包","textChars":5,"textLines":1,"bbox":[149,637,130,24]}
+{"kind":"shape","id":"sh/bulg7u5g","slide":16,"name":"矩形 17","bbox":[341,631,150,36]}
+{"kind":"textbox","id":"sh/atczepob","slide":16,"name":"矩形 18","text":"资源包","textPreview":"资源包","textChars":3,"textLines":1,"bbox":[351,637,130,24]}
+{"kind":"shape","id":"sh/mpgj6t8j","slide":16,"name":"矩形 19","bbox":[543,631,150,36]}
+{"kind":"textbox","id":"sh/7qp0zepo","slide":16,"name":"矩形 20","text":"智能体包","textPreview":"智能体包","textChars":4,"textLines":1,"bbox":[553,637,130,24]}
+{"kind":"shape","id":"sh/8by18jq9","slide":16,"name":"矩形 21","bbox":[745,631,150,36]}
+{"kind":"textbox","id":"sh/9c7i1o7u","slide":16,"name":"矩形 22","text":"运营服务包","textPreview":"运营服务包","textChars":5,"textLines":1,"bbox":[755,637,130,24]}
+{"kind":"shape","id":"sh/ylwj2987","slide":16,"name":"矩形 23","bbox":[947,631,150,36]}
+{"kind":"textbox","id":"sh/zm50veps","slide":16,"name":"矩形 24","text":"Token 算力包","textPreview":"Token 算力包","textChars":9,"textLines":1,"bbox":[957,637,130,24]}
+{"kind":"notes","id":"nt/gny5sjyp","slide":16,"text":""}
+{"kind":"slide","id":"sl/14bup87q","slide":17,"title":"治理与边界","textShapes":12}
+{"kind":"textbox","id":"sh/1c7e50ni","slide":17,"name":"矩形 1","text":"治理与边界","textPreview":"治理与边界","textChars":5,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/gbedwfmx","slide":17,"name":"矩形 2","text":"治理边界同时覆盖信息、空间、身份和 AI","textPreview":"治理边界同时覆盖信息、空间、身份和 AI","textChars":20,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/rm5czq50","slide":17,"name":"矩形 3","bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/6lwvql4v","slide":17,"name":"矩形 4","text":"17","textPreview":"17","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"shape","id":"sh/t8ne10n6","slide":17,"name":"矩形 5","bbox":[41,206,560,142]}
+{"kind":"textbox","id":"sh/snedsvml","slide":17,"name":"矩形 6","text":"权限隔离","textPreview":"权限隔离","textChars":4,"textLines":1,"bbox":[65,230,512,36]}
+{"kind":"textbox","id":"sh/jilcvq54","slide":17,"name":"矩形 7","text":"按租户、项目、信息对象、空间、活动、角色、来源组织和资料范围控制访问，活动结束后回收临时权限。","textPreview":"按租户、项目、信息对象、空间、活动、角色、来源组织和资料范围控制访问，活动结束后回收临时权限。","textChars":47,"textLines":1,"bbox":[65,278,512,50]}
+{"kind":"shape","id":"sh/ihcvml4j","slide":17,"name":"矩形 8","bbox":[678,206,560,142]}
+{"kind":"textbox","id":"sh/4by9or6l","slide":17,"name":"矩形 9","text":"质量审核","textPreview":"质量审核","textChars":4,"textLines":1,"bbox":[702,230,512,36]}
+{"kind":"textbox","id":"sh/pc7qhwn6","slide":17,"name":"矩形 10","text":"AI 生成的信息结构、空间模式、报名问答、报告、证书/证明和评价建议均进入人工确认。","textPreview":"AI 生成的信息结构、空间模式、报名问答、报告、证书/证明和评价建议均进入人工确认。","textChars":42,"textLines":1,"bbox":[702,278,512,50]}
+{"kind":"shape","id":"sh/29grm1of","slide":17,"name":"矩形 11","bbox":[41,386,560,142]}
+{"kind":"textbox","id":"sh/3ap8fm50","slide":17,"name":"矩形 12","text":"成本治理","textPreview":"成本治理","textChars":4,"textLines":1,"bbox":[65,410,512,36]}
+{"kind":"textbox","id":"sh/gnepkr69","slide":17,"name":"矩形 13","text":"按租户、项目、解决方案、空间、活动、人数、智能体和模型统计 Token 消耗，支撑预警、对账和套餐设计。","textPreview":"按租户、项目、解决方案、空间、活动、人数、智能体和模型统计 Token 消耗，支撑预警、对账和套餐设计。","textChars":52,"textLines":1,"bbox":[65,458,512,50]}
+{"kind":"shape","id":"sh/honqdwnu","slide":17,"name":"矩形 14","bbox":[678,386,560,142]}
+{"kind":"textbox","id":"sh/ulw7ihoj","slide":17,"name":"矩形 15","text":"数据沉淀","textPreview":"数据沉淀","textChars":4,"textLines":1,"bbox":[702,410,512,36]}
+{"kind":"textbox","id":"sh/fm58bm54","slide":17,"name":"矩形 16","text":"信息台账、空间参与记录、成果、证书/证明和效果报告进入档案，跨组织报告脱敏输出。","textPreview":"信息台账、空间参与记录、成果、证书/证明和效果报告进入档案，跨组织报告脱敏输出。","textChars":40,"textLines":1,"bbox":[702,458,512,50]}
+{"kind":"shape","id":"sh/0ji9wb6t","slide":17,"name":"矩形 17","bbox":[41,575,1197,54]}
+{"kind":"textbox","id":"sh/14rqpgne","slide":17,"name":"矩形 18","text":"治理目标：信息关系可追溯，活动空间可管控，报告可脱敏，AI 使用和商业成本可计量。","textPreview":"治理目标：信息关系可追溯，活动空间可管控，报告可脱敏，AI 使用和商业成本可计量。","textChars":41,"textLines":1,"bbox":[70,588,1138,28]}
+{"kind":"notes","id":"nt/14bup87q","slide":17,"text":""}
+{"kind":"slide","id":"sl/y5wne50z","slide":18,"title":"总结","textShapes":11}
+{"kind":"textbox","id":"sh/wrelszu9","slide":18,"name":"矩形 1","text":"总结","textPreview":"总结","textChars":2,"textLines":1,"bbox":[41,36,300,26]}
+{"kind":"textbox","id":"sh/hsn2l4bu","slide":18,"name":"矩形 2","text":"平台底座 + 解决方案 + 活动空间 + 效果运营","textPreview":"平台底座 + 解决方案 + 活动空间 + 效果运营","textChars":25,"textLines":1,"bbox":[41,70,1197,76]}
+{"kind":"shape","id":"sh/itw3upcf","slide":18,"name":"矩形 3","bbox":[41,158,1197,1.5]}
+{"kind":"textbox","id":"sh/je5knut0","slide":18,"name":"矩形 4","text":"18","textPreview":"18","textChars":2,"textLines":1,"bbox":[1184,659,54,25]}
+{"kind":"shape","id":"sh/4felwzu5","slide":18,"name":"矩形 5","bbox":[41,214,340,250]}
+{"kind":"textbox","id":"sh/5gnmp4bq","slide":18,"name":"矩形 6","text":"平台底座","textPreview":"平台底座","textChars":4,"textLines":1,"bbox":[65,238,292,36]}
+{"kind":"textbox","id":"sh/6hw3y9sb","slide":18,"name":"矩形 7","text":"复用果仁租户、账号、信息管理、资料库、权限、Lucky、数据、任务、问卷、证书和统计能力。","textPreview":"复用果仁租户、账号、信息管理、资料库、权限、Lucky、数据、任务、问卷、证书和统计能力。","textChars":45,"textLines":1,"bbox":[65,286,292,158]}
+{"kind":"shape","id":"sh/rip4retw","slide":18,"name":"矩形 8","bbox":[470,214,340,250]}
+{"kind":"textbox","id":"sh/fapkr6pw","slide":18,"name":"矩形 9","text":"解决方案运行","textPreview":"解决方案运行","textChars":6,"textLines":1,"bbox":[494,238,292,36]}
+{"kind":"textbox","id":"sh/upg3i18r","slide":18,"name":"矩形 10","text":"核心应用产品以解决方案形态生长在 AI 原生平台上；空间负责承载课程、研讨、评课、工作坊等活动。","textPreview":"核心应用产品以解决方案形态生长在 AI 原生平台上；空间负责承载课程、研讨、评课、工作坊等活动。","textChars":48,"textLines":1,"bbox":[494,286,292,158]}
+{"kind":"shape","id":"sh/1cr2tg72","slide":18,"name":"矩形 11","bbox":[899,214,340,250]}
+{"kind":"textbox","id":"sh/gbylkbqh","slide":18,"name":"矩形 12","text":"效果运营","textPreview":"效果运营","textChars":4,"textLines":1,"bbox":[923,238,292,36]}
+{"kind":"textbox","id":"sh/7mpknmp0","slide":18,"name":"矩形 13","text":"用信息台账、空间证据和 AI 分析生成个人证明、组织报告、改进建议、资源复用和模式增长。","textPreview":"用信息台账、空间证据和 AI 分析生成个人证明、组织报告、改进建议、资源复用和模式增长。","textChars":44,"textLines":1,"bbox":[923,286,292,158]}
+{"kind":"textbox","id":"sh/6lg3e18f","slide":18,"name":"矩形 14","text":"建议下一步","textPreview":"建议下一步","textChars":5,"textLines":1,"bbox":[41,532,190,32]}
+{"kind":"textbox","id":"sh/to72pw76","slide":18,"name":"矩形 15","text":"建议以一个标准解决方案做 MVP：先建信息管理对象和规则，再发起活动空间跑通过程记录、证书/证明和组织报告，最后叠加智能体与驾驶舱。","textPreview":"建议以一个标准解决方案做 MVP：先建信息管理对象和规则，再发起活动空间跑通过程记录、证书/证明和组织报告，最后叠加智能体与驾驶舱。","textChars":66,"textLines":1,"bbox":[232,516,930,70]}
+{"kind":"notes","id":"nt/y5wne50z","slide":18,"text":""}

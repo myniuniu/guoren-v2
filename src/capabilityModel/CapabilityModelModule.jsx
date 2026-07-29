@@ -190,6 +190,29 @@ function createRuleDraft(roleId, roles = [], sequences = [], industryId) {
   };
 }
 
+function createLevelSchemeFromSequence(sequence) {
+  if (!sequence) return null;
+  const sequenceLevels = (Array.isArray(sequence.levels) ? sequence.levels : [])
+    .filter((level) => level?.name)
+    .sort((left, right) => Number(left.sortNo || 0) - Number(right.sortNo || 0));
+  const count = Math.max(2, Math.min(6, sequenceLevels.length || 4));
+  const fallback = createDefaultLevelScheme(count);
+  return {
+    count,
+    levels: fallback.levels.map((level, index) => ({
+      ...level,
+      label: sequenceLevels[index]?.name || level.label,
+    })),
+  };
+}
+
+function getLevelSchemeSignature(levelScheme) {
+  const levels = Array.isArray(levelScheme?.levels) ? levelScheme.levels : [];
+  return levels.map((level) => String(level?.label || '').trim()).join('|');
+}
+
+const DEFAULT_LEVEL_SCHEME_SIGNATURE = getLevelSchemeSignature(createDefaultLevelScheme());
+
 function cloneDraft(data) {
   return JSON.parse(JSON.stringify(data));
 }
@@ -673,6 +696,9 @@ export default function CapabilityModelModule({
   const watchedRuleRoleId = Form.useWatch('roleId', ruleForm);
   const watchedRuleSequenceId = Form.useWatch('sequenceId', ruleForm);
   const handledEntryRequestRef = useRef(null);
+  const modelBaseFormSyncKeyRef = useRef('');
+  const modelRoleSelectionRef = useRef(null);
+  const levelSchemeAutoSyncSignatureRef = useRef('');
 
   const replaceStandaloneHash = useCallback((modelId, mode = 'preview') => {
     if (!standalone || !modelId || typeof window === 'undefined') return;
@@ -702,7 +728,18 @@ export default function CapabilityModelModule({
   }, [entryRequestId, standalone]);
 
   useEffect(() => {
-    if (!modelDrawerOpen || !modelDraft) return;
+    if (!modelDrawerOpen || !modelDraft) {
+      modelBaseFormSyncKeyRef.current = '';
+      return;
+    }
+    const nextSyncKey = [
+      modelDrawerMode,
+      modelDraft.id || 'new',
+      modelDraft.createdAt || '',
+      modelDraft.updatedAt || '',
+    ].join(':');
+    if (modelBaseFormSyncKeyRef.current === nextSyncKey) return;
+    modelBaseFormSyncKeyRef.current = nextSyncKey;
     modelBaseForm.setFieldsValue({
       modelCode: modelDraft.modelCode,
       name: modelDraft.name,
@@ -712,7 +749,7 @@ export default function CapabilityModelModule({
       description: modelDraft.description,
       tags: modelDraft.tags || [],
     });
-  }, [modelDrawerOpen, modelDraft, modelBaseForm]);
+  }, [modelBaseForm, modelDrawerMode, modelDrawerOpen, modelDraft]);
 
   useEffect(() => {
     if (!modelDrawerOpen || modelDrawerMode === 'preview') return;
@@ -1005,6 +1042,9 @@ export default function CapabilityModelModule({
   }, [models, standaloneVersionAnchor]);
 
   function openCreateModel() {
+    modelBaseFormSyncKeyRef.current = '';
+    modelRoleSelectionRef.current = null;
+    levelSchemeAutoSyncSignatureRef.current = '';
     setModelDrawerMode('create');
     setModelDraft(createCapabilityModelDraft());
     setActiveDimensionId(undefined);
@@ -1022,6 +1062,9 @@ export default function CapabilityModelModule({
   }
 
   const openEditModel = useCallback((record) => {
+    modelBaseFormSyncKeyRef.current = '';
+    modelRoleSelectionRef.current = record?.roleId || null;
+    levelSchemeAutoSyncSignatureRef.current = '';
     if (standalone) {
       setStandaloneModelId(record.id);
       replaceStandaloneHash(record.id, 'edit');
@@ -1035,6 +1078,9 @@ export default function CapabilityModelModule({
   }, [replaceStandaloneHash, standalone, syncStandaloneEditSession]);
 
   const openPreviewModel = useCallback((record) => {
+    modelBaseFormSyncKeyRef.current = '';
+    modelRoleSelectionRef.current = record?.roleId || null;
+    levelSchemeAutoSyncSignatureRef.current = '';
     if (standalone) {
       setStandaloneModelId(record.id);
       replaceStandaloneHash(record.id, 'preview');
@@ -1091,6 +1137,9 @@ export default function CapabilityModelModule({
       const draft = await capabilityModelApi.duplicateModel(selectedImportModelId);
       setImportModalOpen(false);
       setModelDrawerMode('edit');
+      modelBaseFormSyncKeyRef.current = '';
+      modelRoleSelectionRef.current = draft?.roleId || null;
+      levelSchemeAutoSyncSignatureRef.current = '';
       setModelDraft(createCapabilityModelDraft(draft));
       setActiveDimensionId(undefined);
       setActiveItemId(undefined);
@@ -1124,6 +1173,9 @@ export default function CapabilityModelModule({
     }
     setImportModalOpen(false);
     setModelDrawerMode('create');
+    modelBaseFormSyncKeyRef.current = '';
+    modelRoleSelectionRef.current = uploadedImportDraft?.roleId || null;
+    levelSchemeAutoSyncSignatureRef.current = '';
     setModelDraft(createCapabilityModelDraft(uploadedImportDraft));
     setActiveDimensionId(undefined);
     setActiveItemId(undefined);
@@ -1358,6 +1410,8 @@ export default function CapabilityModelModule({
                 activeItemIndex={activeItemIndex}
                 onLevelCountChange={handleLevelCountChange}
                 onLevelLabelChange={handleLevelLabelChange}
+                onRoleChange={handleModelRoleChange}
+                onSyncLevelSchemeFromSequence={handleSyncLevelSchemeFromSequence}
                 onAddDimension={addDimension}
                 onSelectDimension={selectDimension}
                 onAddItem={addItem}
@@ -1624,6 +1678,83 @@ export default function CapabilityModelModule({
     setModelDraft((prev) => updater(cloneDraft(prev)));
   }
 
+  function applyLevelSchemeFromSequence(sequence, options = {}) {
+    const nextLevelScheme = createLevelSchemeFromSequence(sequence);
+    if (!nextLevelScheme) {
+      message.warning('当前岗位未绑定可同步的能力序列');
+      return false;
+    }
+    updateModelDraftState((draft) => {
+      draft.levelScheme = nextLevelScheme;
+      draft.dimensions = syncDimensionsToLevelScheme(draft.dimensions, nextLevelScheme);
+      return draft;
+    });
+    levelSchemeAutoSyncSignatureRef.current = getLevelSchemeSignature(nextLevelScheme);
+    if (options.successMessage) {
+      message.success(options.successMessage);
+    }
+    return true;
+  }
+
+  function getSequenceForSelectedModelRole(roleId) {
+    const role = roles.find((item) => item.id === roleId);
+    return getSequenceForRole(role, sequences);
+  }
+
+  function handleSyncLevelSchemeFromSequence() {
+    const roleId = modelBaseForm.getFieldValue('roleId') || watchedRoleId || modelDraft?.roleId;
+    const sequence = getSequenceForSelectedModelRole(roleId);
+    if (!roleId || !sequence) {
+      message.warning('请先选择所属岗位');
+      return;
+    }
+    applyLevelSchemeFromSequence(sequence, {
+      successMessage: '已从岗位序列同步等级体系',
+    });
+  }
+
+  function handleModelRoleChange(nextRoleId) {
+    modelBaseForm.setFieldValue('roleLevelId', undefined);
+    if (!nextRoleId) {
+      modelRoleSelectionRef.current = null;
+      levelSchemeAutoSyncSignatureRef.current = '';
+      return;
+    }
+
+    const sequence = getSequenceForSelectedModelRole(nextRoleId);
+    const nextLevelScheme = createLevelSchemeFromSequence(sequence);
+    if (!sequence || !nextLevelScheme) {
+      modelRoleSelectionRef.current = nextRoleId;
+      return;
+    }
+
+    const currentSignature = getLevelSchemeSignature(modelDraft?.levelScheme);
+    const isFirstCreateRoleSelection = (
+      modelDrawerMode === 'create'
+      && !modelRoleSelectionRef.current
+      && currentSignature === DEFAULT_LEVEL_SCHEME_SIGNATURE
+    );
+    const isAutoSyncedLevelScheme = (
+      Boolean(levelSchemeAutoSyncSignatureRef.current)
+      && currentSignature === levelSchemeAutoSyncSignatureRef.current
+    );
+
+    modelRoleSelectionRef.current = nextRoleId;
+
+    if (isFirstCreateRoleSelection || isAutoSyncedLevelScheme) {
+      applyLevelSchemeFromSequence(sequence);
+      return;
+    }
+
+    Modal.confirm({
+      title: '同步岗位序列等级？',
+      content: '是否用新岗位主能力序列的等级重置当前能力模型等级体系？当前能力结构会保留，等级描述会按新等级体系对齐。',
+      okText: '同步',
+      cancelText: '保留当前等级',
+      onOk: () => applyLevelSchemeFromSequence(sequence),
+    });
+  }
+
   function selectDimension(dimensionId) {
     const dimension = modelDraft.dimensions.find((item) => item.id === dimensionId);
     setActiveDimensionId(dimensionId);
@@ -1638,6 +1769,7 @@ export default function CapabilityModelModule({
   }
 
   function handleLevelCountChange(nextCount) {
+    levelSchemeAutoSyncSignatureRef.current = '';
     updateModelDraftState((draft) => {
       const fallback = createDefaultLevelScheme(nextCount);
       const nextLevelScheme = {
@@ -1654,6 +1786,7 @@ export default function CapabilityModelModule({
   }
 
   function handleLevelLabelChange(index, label) {
+    levelSchemeAutoSyncSignatureRef.current = '';
     updateModelDraftState((draft) => {
       const nextLevels = draft.levelScheme.levels.map((level, levelIndex) => (
         levelIndex === index ? { ...level, label } : level
@@ -2427,6 +2560,8 @@ export default function CapabilityModelModule({
             activeItemIndex={activeItemIndex}
             onLevelCountChange={handleLevelCountChange}
             onLevelLabelChange={handleLevelLabelChange}
+            onRoleChange={handleModelRoleChange}
+            onSyncLevelSchemeFromSequence={handleSyncLevelSchemeFromSequence}
             onAddDimension={addDimension}
             onSelectDimension={selectDimension}
             onAddItem={addItem}
