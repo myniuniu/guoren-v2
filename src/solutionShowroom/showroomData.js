@@ -280,3 +280,51 @@ export const SOLUTION_SHOWROOM_ROOMS = [
 export function getSolutionShowroomRoom(roomId) {
   return SOLUTION_SHOWROOM_ROOMS.find((item) => item.id === roomId) || null;
 }
+
+export const GUOREN_INTERNAL_PORTAL_ENTRY = {
+  id: 'guoren-exchange',
+  solutionName: '果仁交流',
+  solutionCode: 'INTERNAL-GUOREN-EXCHANGE',
+  tenantId: 'tenant-guoren-exchange',
+  tenantName: '果仁交流内部运营租户',
+  tenantCode: 'TENANT-GUOREN-EXCHANGE',
+  tenantType: '内部运营',
+  region: '北京',
+  industry: '公司内部运营',
+  packageId: 'pkg-pro',
+  packageName: '专业版套餐',
+  packageCode: 'PKG-PRO',
+  stage: '内部运营租户',
+  scenario: '社区运营',
+  owner: '果仁运营团队',
+  accent: '#0f766e',
+  tone: 'internal',
+  entryType: 'internal',
+  description: '用于公司内部果仁平台的交流、运营、内容发布和成员协作，不归入对外样板间。',
+  signal: '公司内部果仁平台运营入口',
+  domain: 'guoren-exchange.internal.guoren.ai',
+  modules: ['交流空间', '内容发布', '成员运营', '任务协同', '消息通知', '资料沉淀'],
+  metrics: [
+    { label: '运营栏目', value: '12' },
+    { label: '内部成员', value: '86' },
+    { label: '本周互动', value: '428' },
+  ],
+  tenantKpis: [
+    { label: '运营栏目', value: '12', trend: '内部' },
+    { label: '内部成员', value: '86', trend: '+6' },
+    { label: '本周互动', value: '428', trend: '+18%' },
+    { label: '待处理任务', value: '19', trend: '进行中' },
+  ],
+  workflow: ['栏目配置', '内容发布', '成员互动', '任务协同', '运营复盘', '资料沉淀'],
+  operations: [
+    { label: '待发布内容', value: '8 篇' },
+    { label: '待跟进讨论', value: '14 条' },
+    { label: '本周运营任务', value: '19 项' },
+  ],
+  loginConfig: {
+    platformName: '果仁交流',
+    heroTitle: '内部交流运营',
+    heroSubtitle: '面向公司内部的果仁平台运营入口',
+    accentColor: '#0f766e',
+  },
+};
