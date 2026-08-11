@@ -17,6 +17,7 @@ import {
   CaretDownOutlined,
   CaretRightOutlined,
   CheckCircleOutlined,
+  CheckSquareOutlined,
   CloseOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -963,6 +964,8 @@ function TopicDetail({
   const [expandedFolders, setExpandedFolders] = useState(new Set());
   const [selectedFolderKey, setSelectedFolderKey] = useState(null);
   const [selectedItemKey, setSelectedItemKey] = useState(null);
+  const [resourceMultiSelectMode, setResourceMultiSelectMode] = useState(false);
+  const [selectedResourceKeys, setSelectedResourceKeys] = useState([]);
   const [addResourceParentKey, setAddResourceParentKey] = useState(undefined);
   const [resourceImportOpen, setResourceImportOpen] = useState(false);
   const [resourceImportParentKey, setResourceImportParentKey] = useState(null);
@@ -1041,6 +1044,7 @@ function TopicDetail({
   const projectListRef = useRef(null);
   const projectItemNodeMapRef = useRef(new Map());
   const pendingResourceLocateKeyRef = useRef(null);
+  const lastMultiSelectedResourceKeyRef = useRef(null);
   const knowledgeGraphBindingItemRefs = useRef(new Map());
   const inlineRenameInputRef = useRef(null);
   const pendingRenameTimerRef = useRef(null);
@@ -1101,6 +1105,9 @@ function TopicDetail({
     setExpandedFolders(new Set());
     setSelectedFolderKey(null);
     setSelectedItemKey(null);
+    setResourceMultiSelectMode(false);
+    setSelectedResourceKeys([]);
+    lastMultiSelectedResourceKeyRef.current = null;
     markSelectedItemActivation(null);
     setAddResourceParentKey(undefined);
     setResourceImportOpen(false);
@@ -1452,6 +1459,46 @@ function TopicDetail({
   const fileCount = resources.filter((r) => !r.isFolder).length;
   const currentListItems = selectedFolder ? folderChildren : rootItems;
   const currentListParentKey = selectedFolderKey || null;
+  const resourceMap = useMemo(
+    () => new Map(resources.map((resource) => [resource.key, resource])),
+    [resources],
+  );
+  const selectedResourceKeySet = useMemo(
+    () => new Set(selectedResourceKeys),
+    [selectedResourceKeys],
+  );
+  const selectedResources = useMemo(
+    () => selectedResourceKeys.map((key) => resourceMap.get(key)).filter(Boolean),
+    [resourceMap, selectedResourceKeys],
+  );
+  const selectedResourceCount = selectedResources.length;
+  const visibleTreeItems = useMemo(() => {
+    const childrenByParent = new Map();
+    resources.forEach((resource) => {
+      const parentKey = resource.parentKey ?? null;
+      const children = childrenByParent.get(parentKey) || [];
+      children.push(resource);
+      childrenByParent.set(parentKey, children);
+    });
+
+    const visibleItems = [];
+    const appendChildren = (parentKey) => {
+      (childrenByParent.get(parentKey) || []).forEach((resource) => {
+        visibleItems.push(resource);
+        if (resource.isFolder && expandedFolders.has(resource.key)) {
+          appendChildren(resource.key);
+        }
+      });
+    };
+
+    appendChildren(null);
+    return visibleItems;
+  }, [expandedFolders, resources]);
+  const resourceMultiSelectAvailable = activeTab === 'knowledge'
+    && resourcePanelView === 'resources'
+    && !isLearnerProgressMode;
+  const isResourceMultiSelectMode = resourceMultiSelectAvailable && resourceMultiSelectMode;
+  const canBatchDeleteSelectedResources = canEditDisplayedResources && selectedResourceCount > 0;
   const aiSuggestionScopeLabel = previewItem?.name || selectedFolder?.name || resourceRootTitle || topicTitle || '当前资料';
   const aiSuggestedQuestions = useMemo(() => (
     buildAiSuggestedQuestions({
@@ -1842,6 +1889,12 @@ function TopicDetail({
       setSelectedItemKey(null);
       markSelectedItemActivation(null);
     }
+    if (selectedResourceKeys.some((key) => !resources.some((resource) => resource.key === key))) {
+      setSelectedResourceKeys((prev) => prev.filter((key) => resources.some((resource) => resource.key === key)));
+      if (!resources.some((resource) => resource.key === lastMultiSelectedResourceKeyRef.current)) {
+        lastMultiSelectedResourceKeyRef.current = null;
+      }
+    }
     if (contextMenuItemKey && !resources.some((resource) => resource.key === contextMenuItemKey)) {
       setContextMenuItemKey(null);
     }
@@ -1882,6 +1935,7 @@ function TopicDetail({
     resources,
     selectedFolderKey,
     selectedItemKey,
+    selectedResourceKeys,
   ]);
 
   useEffect(() => {
@@ -2629,7 +2683,7 @@ function TopicDetail({
   }, []);
 
   const updateProjectSelectionIndicator = useCallback(() => {
-    if (resourcePanelView !== 'resources' || !selectedItemKey) {
+    if (isResourceMultiSelectMode || resourcePanelView !== 'resources' || !selectedItemKey) {
       setProjectSelectionIndicator((prev) => (prev.visible ? EMPTY_PROJECT_SELECTION_INDICATOR : prev));
       return;
     }
@@ -2665,7 +2719,7 @@ function TopicDetail({
       }
       return nextIndicator;
     });
-  }, [resourcePanelView, selectedItemKey]);
+  }, [isResourceMultiSelectMode, resourcePanelView, selectedItemKey]);
 
   const updateTabIndicator = useCallback(() => {
     const container = detailTabsRef.current;
@@ -2713,6 +2767,7 @@ function TopicDetail({
     inlineRenameItemKey,
     leftPanelWidth,
     resourcePanelView,
+    isResourceMultiSelectMode,
     resources,
     selectedItemKey,
     updateProjectSelectionIndicator,
@@ -3823,18 +3878,154 @@ function TopicDetail({
     message.success(`已将「${resource.name}」归档到我的档案`);
   };
 
+  const collectResourceSubtreeKeys = (resourceKey) => {
+    const keys = new Set();
+    const collect = (key) => {
+      if (!key || keys.has(key)) return;
+      keys.add(key);
+      resources.forEach((resource) => {
+        if ((resource.parentKey ?? null) === key) collect(resource.key);
+      });
+    };
+    collect(resourceKey);
+    return keys;
+  };
+
+  const clearResourceMultiSelection = () => {
+    setSelectedResourceKeys([]);
+    lastMultiSelectedResourceKeyRef.current = null;
+  };
+
+  const handleToggleResourceMultiSelectMode = () => {
+    clearPendingRenameTrigger();
+    setContextMenuItemKey(null);
+    setBgMenuPos(null);
+    if (resourceMultiSelectMode) {
+      setResourceMultiSelectMode(false);
+      clearResourceMultiSelection();
+      return;
+    }
+    setResourceMultiSelectMode(true);
+  };
+
+  const setResourceSelectionForKeys = (keys) => {
+    const nextKeys = [...new Set(keys)].filter((key) => resourceMap.has(key));
+    setSelectedResourceKeys(nextKeys);
+    lastMultiSelectedResourceKeyRef.current = nextKeys.length ? nextKeys[nextKeys.length - 1] : null;
+  };
+
+  const toggleResourceSelection = (itemKey, checked = undefined, { rangeItems = null } = {}) => {
+    if (!itemKey || !resourceMap.has(itemKey)) return;
+    clearPendingRenameTrigger();
+    setContextMenuItemKey(null);
+    setBgMenuPos(null);
+    setResourceMultiSelectMode(true);
+
+    setSelectedResourceKeys((prev) => {
+      const next = new Set(prev);
+      if (rangeItems?.length && lastMultiSelectedResourceKeyRef.current) {
+        const rangeKeys = rangeItems.map((item) => item.key);
+        const startIndex = rangeKeys.indexOf(lastMultiSelectedResourceKeyRef.current);
+        const endIndex = rangeKeys.indexOf(itemKey);
+        if (startIndex >= 0 && endIndex >= 0) {
+          rangeKeys
+            .slice(Math.min(startIndex, endIndex), Math.max(startIndex, endIndex) + 1)
+            .forEach((key) => next.add(key));
+          return [...next];
+        }
+      }
+
+      const shouldSelect = typeof checked === 'boolean' ? checked : !next.has(itemKey);
+      if (shouldSelect) next.add(itemKey);
+      else next.delete(itemKey);
+      return [...next];
+    });
+    lastMultiSelectedResourceKeyRef.current = itemKey;
+  };
+
+  const selectVisibleTreeResources = () => {
+    setResourceSelectionForKeys(visibleTreeItems.map((item) => item.key));
+  };
+
+  const selectCurrentListResources = () => {
+    setResourceSelectionForKeys(currentListItems.map((item) => item.key));
+  };
+
+  const getBatchDeleteTargetKeys = () => {
+    const selectedKeySet = new Set(selectedResourceKeys);
+    return selectedResources
+      .filter((resource) => {
+        let parentKey = resource.parentKey ?? null;
+        while (parentKey) {
+          if (selectedKeySet.has(parentKey)) return false;
+          parentKey = resourceMap.get(parentKey)?.parentKey ?? null;
+        }
+        return true;
+      })
+      .map((resource) => resource.key);
+  };
+
+  const requestDeleteSelectedResources = () => {
+    if (!canEditDisplayedResources) {
+      message.warning('当前版本不可编辑');
+      return;
+    }
+    if (!selectedResourceCount) {
+      message.warning('请先选择资料');
+      return;
+    }
+    const targetKeys = getBatchDeleteTargetKeys();
+    const deletedKeys = new Set();
+    targetKeys.forEach((key) => {
+      collectResourceSubtreeKeys(key).forEach((childKey) => deletedKeys.add(childKey));
+    });
+    const hasFolder = selectedResources.some((resource) => resource.isFolder);
+
+    Modal.confirm({
+      title: '确认批量删除',
+      icon: null,
+      content: `确定要删除已选的 ${selectedResourceCount} 项资料吗？${hasFolder ? '文件夹会同时删除其中全部内容。' : ''}`,
+      okText: '删除',
+      okButtonProps: { danger: true },
+      cancelText: '取消',
+      onOk: () => {
+        let nextData = versionData;
+        targetKeys.forEach((key) => {
+          nextData = deleteResource(nextData, currentVersion.id, key, versioningConfig);
+        });
+        setVersionData(nextData);
+        if (selectedFolderKey && deletedKeys.has(selectedFolderKey)) setSelectedFolderKey(null);
+        if (previewItem?.key && deletedKeys.has(previewItem.key)) setPreviewItem(null);
+        if (tagPickerTarget && deletedKeys.has(tagPickerTarget)) setTagPickerTarget(null);
+        if (selectedItemKey && deletedKeys.has(selectedItemKey)) clearSelectedResourceItem();
+        if (inlineRenameItemKey && deletedKeys.has(inlineRenameItemKey)) {
+          setInlineRenameItemKey(null);
+          setInlineRenameName('');
+        }
+        clearResourceMultiSelection();
+        setResourceMultiSelectMode(false);
+        message.success(`已删除 ${selectedResourceCount} 项资料`);
+      },
+    });
+  };
+
   const removeResource = (resourceKey) => {
+    const deletedKeys = collectResourceSubtreeKeys(resourceKey);
     const newData = deleteResource(versionData, currentVersion.id, resourceKey, versioningConfig);
     setVersionData(newData);
-    if (resourceKey === selectedFolderKey) setSelectedFolderKey(null);
-    if (resourceKey === previewItem?.key) setPreviewItem(null);
-    if (resourceKey === tagPickerTarget) setTagPickerTarget(null);
-    if (resourceKey === selectedItemKey) clearSelectedResourceItem();
-    if (resourceKey === inlineRenameItemKey) {
+    if (deletedKeys.has(selectedFolderKey)) setSelectedFolderKey(null);
+    if (deletedKeys.has(previewItem?.key)) setPreviewItem(null);
+    if (deletedKeys.has(tagPickerTarget)) setTagPickerTarget(null);
+    if (deletedKeys.has(selectedItemKey)) clearSelectedResourceItem();
+    if (deletedKeys.has(inlineRenameItemKey)) {
       setInlineRenameItemKey(null);
       setInlineRenameName('');
     }
     if (resourceKey === contextMenuItemKey) setContextMenuItemKey(null);
+    setSelectedResourceKeys((prev) => prev.filter((key) => !deletedKeys.has(key)));
+    if (deletedKeys.has(lastMultiSelectedResourceKeyRef.current)) {
+      lastMultiSelectedResourceKeyRef.current = null;
+    }
     message.success('资料已删除');
   };
 
@@ -3967,8 +4158,15 @@ function TopicDetail({
     setPreviewItem(resource);
   };
 
-  const handleActivateItem = (item, surface = 'list') => {
+  const handleActivateItem = (item, surface = 'list', event = null) => {
     if (!item) return;
+    if (resourceMultiSelectAvailable && (isResourceMultiSelectMode || event?.metaKey || event?.ctrlKey || event?.shiftKey)) {
+      const rangeItems = surface === 'list' ? currentListItems : visibleTreeItems;
+      toggleResourceSelection(item.key, undefined, {
+        rangeItems: event?.shiftKey ? rangeItems : null,
+      });
+      return;
+    }
     if (selectedItemKey === item.key && inlineRenameItemKey !== item.key) {
       if (isRenameActivationWithinWindow(item.key)) {
         queueInlineRename(item, surface);
@@ -4275,6 +4473,10 @@ function TopicDetail({
 
   const handleItemMenuAction = (item, key, surface = 'list') => {
     if (!item) return;
+    if (key === 'toggleSelection') {
+      toggleResourceSelection(item.key);
+      return;
+    }
     if (key === 'enter' && item.isFolder) {
       handleSelectFolder(item.key);
       return;
@@ -4309,7 +4511,18 @@ function TopicDetail({
   };
 
   const getItemMoreMenu = (item, surface = 'list') => {
+    const isResourceSelected = selectedResourceKeySet.has(item.key);
     const items = [
+      ...(resourceMultiSelectAvailable
+        ? [
+            {
+              key: 'toggleSelection',
+              icon: <CheckSquareOutlined />,
+              label: isResourceSelected ? '取消选择' : '选择',
+            },
+            { type: 'divider' },
+          ]
+        : []),
       item.isFolder
         ? { key: 'enter', icon: <RightOutlined />, label: '进入' }
         : { key: 'preview', icon: <EyeOutlined />, label: '预览' },
@@ -4419,10 +4632,32 @@ function TopicDetail({
         label: addResourceLabel,
         disabled: !canAddResourceAtParent(bgMenuSurface === 'tree' ? null : currentListParentKey),
       },
+      ...(resourceMultiSelectAvailable
+        ? [
+            { type: 'divider' },
+            {
+              key: 'toggleMultiSelect',
+              icon: <CheckSquareOutlined />,
+              label: resourceMultiSelectMode ? '退出多选模式' : '多选模式',
+            },
+            {
+              key: 'selectVisible',
+              icon: <CheckSquareOutlined />,
+              label: bgMenuSurface === 'tree' ? '选择可见项目' : '选择当前列表',
+              disabled: bgMenuSurface === 'tree' ? visibleTreeItems.length === 0 : currentListItems.length === 0,
+            },
+          ]
+        : []),
     ],
     onClick: ({ key }) => {
       if (key === 'newFolder') handleCreateFolderAtCurrentLocation(bgMenuSurface);
       if (key === 'addResource') handleAddResourceAtCurrentLocation(bgMenuSurface);
+      if (key === 'toggleMultiSelect') handleToggleResourceMultiSelectMode();
+      if (key === 'selectVisible') {
+        setResourceMultiSelectMode(true);
+        if (bgMenuSurface === 'tree') selectVisibleTreeResources();
+        else selectCurrentListResources();
+      }
       setBgMenuPos(null);
     },
   };
@@ -4460,9 +4695,28 @@ function TopicDetail({
     );
   };
 
+  const renderResourceSelectionCheckbox = (item, surface = 'tree') => {
+    if (!isResourceMultiSelectMode) return null;
+    const isChecked = selectedResourceKeySet.has(item.key);
+    return (
+      <span
+        className={`topic-resource-select-control topic-resource-select-control-${surface}`}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <input
+          type="checkbox"
+          checked={isChecked}
+          aria-label={`选择${item.name || '资料'}`}
+          onChange={() => toggleResourceSelection(item.key, !isChecked)}
+        />
+      </span>
+    );
+  };
+
   const renderTreeItem = (item) => {
     const rowMenu = getItemMoreMenu(item, 'tree');
     const isSelected = selectedItemKey === item.key;
+    const isMultiSelected = selectedResourceKeySet.has(item.key);
     const isContextOpen = contextMenuItemKey === item.key;
     const isInlineRenaming = inlineRenameItemKey === item.key && inlineRenameSurface === 'tree';
     const isDragOverFolder = dragOverFolderKey === item.key;
@@ -4491,18 +4745,19 @@ function TopicDetail({
           >
             <div
               ref={(node) => setProjectItemNode(item.key, node)}
-              className={`project-item project-item-folder ${treeAssessmentClass} ${treeAssessmentToneClass} ${isInlineRenaming ? 'project-item-inline-renaming' : ''} ${isSelected ? 'project-item-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''} ${isDragOverFolder ? 'project-item-dragover' : ''} ${isDragging ? 'project-item-dragging' : ''} ${treeDropPosition === 'before' ? 'project-item-drop-before' : ''} ${treeDropPosition === 'after' ? 'project-item-drop-after' : ''}`}
-              draggable={!isInlineRenaming && canEditDisplayedResources}
+              className={`project-item project-item-folder ${isResourceMultiSelectMode ? 'project-item-multi-mode' : ''} ${treeAssessmentClass} ${treeAssessmentToneClass} ${isInlineRenaming ? 'project-item-inline-renaming' : ''} ${isSelected && !isResourceMultiSelectMode ? 'project-item-selected' : ''} ${isMultiSelected ? 'project-item-multi-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''} ${isDragOverFolder ? 'project-item-dragover' : ''} ${isDragging ? 'project-item-dragging' : ''} ${treeDropPosition === 'before' ? 'project-item-drop-before' : ''} ${treeDropPosition === 'after' ? 'project-item-drop-after' : ''}`}
+              draggable={!isResourceMultiSelectMode && !isInlineRenaming && canEditDisplayedResources}
               onDragStart={(event) => startResourceDrag(event, item)}
               onDragEnd={finishResourceDrag}
               onDragOver={(event) => handleTreeFolderDragOver(event, item)}
               onDragLeave={(event) => handleTreeFolderDragLeave(event, item.key)}
               onDrop={(event) => handleTreeFolderDrop(event, item)}
-              onClick={() => {
+              onClick={(event) => {
                 if (isDraggingRef.current) return;
-                handleActivateItem(item, 'tree');
+                handleActivateItem(item, 'tree', event);
               }}
             >
+              {renderResourceSelectionCheckbox(item, 'tree')}
               <span
                 className="project-item-arrow"
                 onClick={(event) => {
@@ -4577,18 +4832,19 @@ function TopicDetail({
       >
         <div
           ref={(node) => setProjectItemNode(item.key, node)}
-          className={`project-item project-item-child ${treeAssessmentClass} ${treeAssessmentToneClass} ${isInlineRenaming ? 'project-item-inline-renaming' : ''} ${isSelected ? 'project-item-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''} ${isDragging ? 'project-item-dragging' : ''} ${treeDropPosition === 'before' ? 'project-item-drop-before' : ''} ${treeDropPosition === 'after' ? 'project-item-drop-after' : ''}`}
-          draggable={!isInlineRenaming && canEditDisplayedResources}
+          className={`project-item project-item-child ${isResourceMultiSelectMode ? 'project-item-multi-mode' : ''} ${treeAssessmentClass} ${treeAssessmentToneClass} ${isInlineRenaming ? 'project-item-inline-renaming' : ''} ${isSelected && !isResourceMultiSelectMode ? 'project-item-selected' : ''} ${isMultiSelected ? 'project-item-multi-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''} ${isDragging ? 'project-item-dragging' : ''} ${treeDropPosition === 'before' ? 'project-item-drop-before' : ''} ${treeDropPosition === 'after' ? 'project-item-drop-after' : ''}`}
+          draggable={!isResourceMultiSelectMode && !isInlineRenaming && canEditDisplayedResources}
           onDragStart={(event) => startResourceDrag(event, item)}
           onDragEnd={finishResourceDrag}
           onDragOver={(event) => handleTreeFolderDragOver(event, item)}
           onDragLeave={(event) => handleTreeFolderDragLeave(event, item.key)}
           onDrop={(event) => handleTreeFolderDrop(event, item)}
-          onClick={() => {
+          onClick={(event) => {
             if (isDraggingRef.current) return;
-            handleActivateItem(item, 'tree');
+            handleActivateItem(item, 'tree', event);
           }}
         >
+          {renderResourceSelectionCheckbox(item, 'tree')}
           <span className="project-item-arrow project-item-arrow-placeholder" aria-hidden="true" />
           <span className="project-item-icon">{getResourceIcon(item)}</span>
           {isInlineRenaming ? renderInlineRenameInput('tree') : (
@@ -4625,6 +4881,7 @@ function TopicDetail({
   const renderListRow = (item) => {
     const rowMenu = getItemMoreMenu(item, 'list');
     const isSelected = selectedItemKey === item.key;
+    const isMultiSelected = selectedResourceKeySet.has(item.key);
     const isContextOpen = contextMenuItemKey === item.key;
     const isInlineRenaming = inlineRenameItemKey === item.key && inlineRenameSurface === 'list';
     const isDragOverFolder = dragOverFolderKey === item.key;
@@ -4642,16 +4899,16 @@ function TopicDetail({
         onOpenChange={(open) => handleItemContextMenuOpenChange(item.key, open)}
       >
         <div
-          className={`topic-file-row ${isSelected ? 'topic-file-row-selected' : ''} ${isContextOpen ? 'topic-file-row-context-open' : ''} ${isDragOverFolder ? 'topic-file-row-dragover' : ''} ${isDragging ? 'topic-file-row-dragging' : ''} ${dropPosition === 'before' ? 'topic-file-row-drop-before' : ''} ${dropPosition === 'after' ? 'topic-file-row-drop-after' : ''}`}
-          draggable={!isInlineRenaming && canEditDisplayedResources}
+          className={`topic-file-row ${isResourceMultiSelectMode ? 'topic-file-row-multi-mode' : ''} ${isSelected && !isResourceMultiSelectMode ? 'topic-file-row-selected' : ''} ${isMultiSelected ? 'topic-file-row-multi-selected' : ''} ${isContextOpen ? 'topic-file-row-context-open' : ''} ${isDragOverFolder ? 'topic-file-row-dragover' : ''} ${isDragging ? 'topic-file-row-dragging' : ''} ${dropPosition === 'before' ? 'topic-file-row-drop-before' : ''} ${dropPosition === 'after' ? 'topic-file-row-drop-after' : ''}`}
+          draggable={!isResourceMultiSelectMode && !isInlineRenaming && canEditDisplayedResources}
           onDragStart={(event) => startResourceDrag(event, item)}
           onDragEnd={finishResourceDrag}
           onDragOver={(event) => handleListRowDragOver(event, item)}
           onDragLeave={(event) => handleListRowDragLeave(event, item.key)}
           onDrop={(event) => handleListRowDrop(event, item)}
-          onClick={() => {
+          onClick={(event) => {
             if (isDraggingRef.current) return;
-            handleActivateItem(item, 'list');
+            handleActivateItem(item, 'list', event);
           }}
           onDoubleClick={() => {
             if (isDraggingRef.current) return;
@@ -4659,6 +4916,7 @@ function TopicDetail({
           }}
         >
           <div className={`topic-file-col topic-file-col-name ${isInlineRenaming ? 'topic-file-col-name-inline-renaming' : ''}`}>
+            {renderResourceSelectionCheckbox(item, 'list')}
             <span className="topic-file-icon">
               {item.isFolder
                 ? renderFolderTypeIcon(item, {
@@ -5946,13 +6204,63 @@ function TopicDetail({
                 {resourcePanelView === 'resources' ? (
                   <>
                     {!isLearnerProgressMode ? (
-                      <div className="panel-actions panel-actions-single">
+                      <div className={`panel-actions ${resourceMultiSelectAvailable ? '' : 'panel-actions-single'}`}>
                         <div
                           className={`panel-action-btn ${!canAddResourceAtCurrentLocation ? 'panel-action-btn-disabled' : ''}`}
                           onClick={() => canAddResourceAtCurrentLocation && openAddResourceModal(currentListParentKey)}
                         >
                           <PlusOutlined style={{ fontSize: 12 }} />
                           <span>{addResourceLabel}</span>
+                        </div>
+                        {resourceMultiSelectAvailable ? (
+                          <div
+                            className={`panel-action-btn topic-resource-multi-toggle ${resourceMultiSelectMode ? 'panel-action-btn-active' : ''}`}
+                            onClick={handleToggleResourceMultiSelectMode}
+                            title={resourceMultiSelectMode ? '退出多选模式' : '开启多选模式'}
+                          >
+                            <CheckSquareOutlined style={{ fontSize: 13 }} />
+                            <span>{resourceMultiSelectMode ? '退出多选' : '多选'}</span>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+
+                    {isResourceMultiSelectMode ? (
+                      <div className="topic-resource-selection-bar">
+                        <div className="topic-resource-selection-count">
+                          <CheckSquareOutlined />
+                          <span>已选 {selectedResourceCount} 项</span>
+                        </div>
+                        <div className="topic-resource-selection-actions">
+                          <button
+                            type="button"
+                            onClick={selectVisibleTreeResources}
+                            disabled={visibleTreeItems.length === 0}
+                          >
+                            全选可见
+                          </button>
+                          <button
+                            type="button"
+                            onClick={selectCurrentListResources}
+                            disabled={currentListItems.length === 0}
+                          >
+                            全选当前
+                          </button>
+                          <button
+                            type="button"
+                            onClick={clearResourceMultiSelection}
+                            disabled={selectedResourceCount === 0}
+                          >
+                            清空
+                          </button>
+                          <button
+                            type="button"
+                            className="topic-resource-selection-danger"
+                            onClick={requestDeleteSelectedResources}
+                            disabled={!canBatchDeleteSelectedResources}
+                          >
+                            删除
+                          </button>
                         </div>
                       </div>
                     ) : null}
