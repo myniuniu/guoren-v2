@@ -6204,7 +6204,7 @@ function TopicDetail({
                 {resourcePanelView === 'resources' ? (
                   <>
                     {!isLearnerProgressMode ? (
-                      <div className={`panel-actions ${resourceMultiSelectAvailable ? '' : 'panel-actions-single'}`}>
+                      <div className={`panel-actions ${resourceMultiSelectAvailable ? 'topic-resource-action-row' : 'panel-actions-single'}`}>
                         <div
                           className={`panel-action-btn ${!canAddResourceAtCurrentLocation ? 'panel-action-btn-disabled' : ''}`}
                           onClick={() => canAddResourceAtCurrentLocation && openAddResourceModal(currentListParentKey)}
@@ -6217,9 +6217,10 @@ function TopicDetail({
                             className={`panel-action-btn topic-resource-multi-toggle ${resourceMultiSelectMode ? 'panel-action-btn-active' : ''}`}
                             onClick={handleToggleResourceMultiSelectMode}
                             title={resourceMultiSelectMode ? '退出多选模式' : '开启多选模式'}
+                            aria-label={resourceMultiSelectMode ? '退出多选模式' : '开启多选模式'}
                           >
                             <CheckSquareOutlined style={{ fontSize: 13 }} />
-                            <span>{resourceMultiSelectMode ? '退出多选' : '多选'}</span>
+                            <span className="topic-resource-multi-toggle-text">{resourceMultiSelectMode ? '退出多选' : '多选'}</span>
                           </div>
                         ) : null}
                       </div>
