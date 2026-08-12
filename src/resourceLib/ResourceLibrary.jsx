@@ -13,6 +13,7 @@ import {
   FolderFilled, DesktopOutlined,
   DownloadOutlined, ClockCircleOutlined,
   CloudOutlined, ShareAltOutlined, GlobalOutlined,
+  FolderOpenOutlined, LinkOutlined, SettingOutlined,
   QuestionCircleOutlined,
   RobotOutlined,
   ClusterOutlined,
@@ -30,6 +31,7 @@ import {
   getTagDefinitions, addTagDefinition, reorderTagDefinition,
   addTagToItem, removeTagFromItem, toggleTagQuickAccess,
   getLibraryList, getLibraryId, getOrganizations, getTagGroups, setCurrentScope, setCurrentOrg, markItemOpened,
+  getPersonalLocalDirectoryMappings, updatePersonalLocalDirectoryMappings,
 } from './resourceLibStore';
 import { getFileTypeLabel, renderFileIcon } from './resourceIcons.jsx';
 import {
@@ -183,17 +185,88 @@ function clearResourceLibraryEntryRequest(requestId) {
   }
 }
 
+function getLocalDirectoryBridge() {
+  if (typeof window === 'undefined') return null;
+  return window.guorenElectron?.localDirectory
+    || window.guorenElectron?.fileSystem
+    || window.electronAPI?.localDirectory
+    || window.electronAPI
+    || null;
+}
+
+function resolveDirectoryPickerResult(result) {
+  if (!result) return '';
+  if (typeof result === 'string') return result;
+  if (Array.isArray(result.filePaths)) return result.filePaths[0] || '';
+  if (Array.isArray(result.paths)) return result.paths[0] || '';
+  if (typeof result.directoryPath === 'string') return result.directoryPath;
+  if (typeof result.path === 'string') return result.path;
+  return '';
+}
+
+function isDirectoryPickerCanceled(result) {
+  return !!(
+    result
+    && typeof result === 'object'
+    && (result.canceled || result.cancelled)
+  );
+}
+
+function getDemoLocalDirectoryPath() {
+  if (typeof window === 'undefined') return '~/Documents/Guoren Library';
+  const platform = String(window.navigator?.platform || '').toLowerCase();
+  if (platform.includes('win')) return 'C:\\Users\\You\\Documents\\Guoren Library';
+  return '~/Documents/Guoren Library';
+}
+
+function getLocalDirectoryDisplayName(directoryPath = '', fallback = '本地目录') {
+  const normalized = String(directoryPath || '').trim().replace(/[\\/]+$/, '');
+  if (!normalized) return fallback;
+  const parts = normalized.split(/[\\/]/).filter(Boolean);
+  return parts[parts.length - 1] || fallback;
+}
+
+function getLocalDirectoryParseStatusMeta(mapping = {}) {
+  const status = String(mapping.parseStatus || '').trim().toLowerCase();
+  if (['parsed', 'success', 'done', 'completed'].includes(status)) {
+    return { label: 'AI已解析', className: 'is-parsed' };
+  }
+  if (['parsing', 'processing', 'running', 'queued'].includes(status)) {
+    return { label: 'AI解析中', className: 'is-parsing' };
+  }
+  if (['failed', 'fail', 'error', 'errored'].includes(status)) {
+    return { label: 'AI解析失败', className: 'is-failed' };
+  }
+  return { label: 'AI待解析', className: 'is-pending' };
+}
+
+function createLocalDirectoryMappingDraft(patch = {}) {
+  const directoryPath = typeof patch.directoryPath === 'string' ? patch.directoryPath : '';
+  return {
+    id: patch.id || `local_dir_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    enabled: patch.enabled !== false,
+    name: patch.name || getLocalDirectoryDisplayName(directoryPath),
+    directoryPath,
+    accessMode: patch.accessMode || 'readwrite',
+    syncPolicy: patch.syncPolicy || 'manual',
+    parseStatus: patch.parseStatus || 'pending',
+    lastMappedAt: patch.lastMappedAt || '',
+  };
+}
+
 export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = null }) {
   const [data, setData] = useState(() => loadResourceLib());
   const [scope, setScope] = useState(() => data?.currentScope || 'personal');
   const [currentOrgId, setCurrentOrgId] = useState(() => data?.currentOrgId || 'org_default');
   const [keyword, setKeyword] = useState('');
-  const [specialView, setSpecialView] = useState('all'); // all | recent
+  const [specialView, setSpecialView] = useState('all'); // all | recent | local
   const [searchMode, setSearchMode] = useState('name'); // name | content
   const [searchPanelOpen, setSearchPanelOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [addType, setAddType] = useState('file');
   const [addForm] = Form.useForm();
+  const [localMappingOpen, setLocalMappingOpen] = useState(false);
+  const [localMappingDrafts, setLocalMappingDrafts] = useState([]);
   const [activeTagFilter, setActiveTagFilter] = useState(null);
   const [tagFilterContextFolderKeys, setTagFilterContextFolderKeys] = useState([]);
   const [selectedItemKeys, setSelectedItemKeys] = useState([]); // 多选
@@ -564,6 +637,17 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
   const libraryId = getLibraryId(data, scope);
   const selectedFolderKey = data.selectedFolderKey?.[libraryId] ?? null;
   const organizations = getOrganizations(data);
+  const personalLocalDirectoryMappings = useMemo(
+    () => getPersonalLocalDirectoryMappings(data),
+    [data],
+  );
+  const enabledLocalDirectoryMappings = useMemo(
+    () => personalLocalDirectoryMappings.filter((mapping) => mapping.enabled && mapping.directoryPath.trim()),
+    [personalLocalDirectoryMappings],
+  );
+  const primaryLocalDirectoryMapping = enabledLocalDirectoryMappings[0] || null;
+  const mappedLocalDirectoryPath = primaryLocalDirectoryMapping?.directoryPath.trim() || '';
+  const hasPersonalLocalDirectoryMapping = enabledLocalDirectoryMappings.length > 0;
   const tagDefs = getTagDefinitions(data, scope);
   const tagGroups = getTagGroups(data, scope);
   const quickTagDefs = useMemo(
@@ -578,6 +662,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
   const hasActiveSearch = normalizedKeyword.length > 0;
   const normalizedKeywordLower = normalizedKeyword.toLowerCase();
   const isRecentView = specialView === 'recent';
+  const isLocalDirectoryView = scope === 'personal' && specialView === 'local';
 
   const parseDateValue = useCallback((value) => {
     if (!value) return null;
@@ -806,6 +891,196 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
     setCurrentOrgId(orgId);
     setData((d) => setCurrentOrg(d, orgId));
   };
+
+  useEffect(() => {
+    if (!localMappingOpen) return;
+    setLocalMappingDrafts(personalLocalDirectoryMappings.map((mapping) => createLocalDirectoryMappingDraft(mapping)));
+  }, [localMappingOpen, personalLocalDirectoryMappings]);
+
+  const requestLocalDirectoryPath = useCallback(async () => {
+    const bridge = getLocalDirectoryBridge();
+    if (bridge?.selectDirectory) return bridge.selectDirectory();
+    if (bridge?.pickDirectory) return bridge.pickDirectory();
+    if (bridge?.chooseDirectory) return bridge.chooseDirectory();
+    if (bridge?.showOpenDialog) {
+      return bridge.showOpenDialog({ properties: ['openDirectory'] });
+    }
+    return null;
+  }, []);
+
+  const handleAddLocalDirectoryDraft = useCallback(async () => {
+    try {
+      const result = await requestLocalDirectoryPath();
+      if (isDirectoryPickerCanceled(result)) return;
+      const nextPath = resolveDirectoryPickerResult(result);
+      if (nextPath) {
+        setLocalMappingDrafts((prev) => [...prev, createLocalDirectoryMappingDraft({
+          enabled: true,
+          directoryPath: nextPath,
+        })]);
+        return;
+      }
+
+      setLocalMappingDrafts((prev) => [...prev, createLocalDirectoryMappingDraft({
+        enabled: true,
+        directoryPath: getDemoLocalDirectoryPath(),
+      })]);
+      message.info('当前为前端示意：Electron 打包后会唤起系统目录选择器。');
+    } catch (error) {
+      if (error?.name === 'AbortError') return;
+      message.warning(getActionErrorMessage(error, '目录选择失败'));
+    }
+  }, [requestLocalDirectoryPath]);
+
+  const handleAddManualLocalDirectoryDraft = useCallback(() => {
+    setLocalMappingDrafts((prev) => [...prev, createLocalDirectoryMappingDraft({
+      name: `本地目录 ${prev.length + 1}`,
+      directoryPath: '',
+      enabled: true,
+    })]);
+  }, []);
+
+  const updateLocalDirectoryDraft = useCallback((id, patch) => {
+    setLocalMappingDrafts((prev) => prev.map((mapping) => (
+      mapping.id === id ? { ...mapping, ...patch } : mapping
+    )));
+  }, []);
+
+  const removeLocalDirectoryDraft = useCallback((id) => {
+    setLocalMappingDrafts((prev) => prev.filter((mapping) => mapping.id !== id));
+  }, []);
+
+  const handleSaveLocalDirectoryMappings = useCallback(() => {
+    try {
+      if (localMappingDrafts.some((mapping) => mapping.enabled && !String(mapping.directoryPath || '').trim())) {
+        message.warning('请补全已开启目录的本地路径');
+        return;
+      }
+
+      const normalizedMappings = localMappingDrafts
+        .map((mapping, index) => {
+          const directoryPath = String(mapping.directoryPath || '').trim();
+          return {
+            ...mapping,
+            enabled: !!mapping.enabled,
+            name: String(mapping.name || '').trim() || getLocalDirectoryDisplayName(directoryPath, `本地目录 ${index + 1}`),
+            directoryPath,
+            accessMode: mapping.accessMode === 'readonly' ? 'readonly' : 'readwrite',
+            syncPolicy: mapping.syncPolicy === 'startup' ? 'startup' : 'manual',
+            parseStatus: mapping.parseStatus || 'pending',
+            lastMappedAt: mapping.enabled && directoryPath
+              ? (mapping.lastMappedAt || new Date().toLocaleString('zh-CN', { hour12: false }))
+              : '',
+          };
+        })
+        .filter((mapping) => mapping.directoryPath);
+
+      setData((currentData) => updatePersonalLocalDirectoryMappings(currentData, normalizedMappings));
+      setLocalMappingOpen(false);
+      message.success(
+        normalizedMappings.length > 0
+          ? `已保存 ${normalizedMappings.length} 个本地目录映射`
+          : '本地目录映射已清空',
+      );
+    } catch (error) {
+      message.warning(getActionErrorMessage(error, '保存失败'));
+    }
+  }, [localMappingDrafts]);
+
+  const handleAddLocalDirectoryMapping = useCallback(async () => {
+    try {
+      const result = await requestLocalDirectoryPath();
+      if (isDirectoryPickerCanceled(result)) return;
+      let directoryPath = resolveDirectoryPickerResult(result);
+      if (!directoryPath) {
+        directoryPath = getDemoLocalDirectoryPath();
+        message.info('当前为前端示意：Electron 打包后会唤起系统目录选择器。');
+      }
+
+      const nextMapping = createLocalDirectoryMappingDraft({
+        enabled: true,
+        directoryPath,
+      });
+      setData((currentData) => updatePersonalLocalDirectoryMappings(currentData, [
+        ...getPersonalLocalDirectoryMappings(currentData),
+        nextMapping,
+      ]));
+      message.success('本地目录已添加');
+    } catch (error) {
+      if (error?.name === 'AbortError') return;
+      message.warning(getActionErrorMessage(error, '目录选择失败'));
+    }
+  }, [requestLocalDirectoryPath]);
+
+  const handleRemoveLocalDirectoryMapping = useCallback((mapping) => {
+    if (!mapping?.id) return;
+    Modal.confirm({
+      title: '移除本地目录映射',
+      content: `确定移除“${mapping.name || getLocalDirectoryDisplayName(mapping.directoryPath)}”吗？仅移除资料库中的映射，不会删除本机文件夹。`,
+      okText: '移除',
+      cancelText: '取消',
+      okButtonProps: { danger: true },
+      onOk: () => {
+        setData((currentData) => {
+          const nextMappings = getPersonalLocalDirectoryMappings(currentData).filter((item) => item.id !== mapping.id);
+          return updatePersonalLocalDirectoryMappings(currentData, nextMappings);
+        });
+        message.success('本地目录映射已移除');
+      },
+    });
+  }, []);
+
+  const handleOpenMappedLocalDirectory = useCallback(async (directoryPath = mappedLocalDirectoryPath) => {
+    const targetPath = String(directoryPath || '').trim();
+    if (!targetPath) {
+      setLocalMappingOpen(true);
+      message.warning('请先配置本地目录映射');
+      return;
+    }
+
+    const bridge = getLocalDirectoryBridge();
+    try {
+      if (bridge?.openPath) {
+        await bridge.openPath(targetPath);
+        message.success('已请求打开本地目录');
+        return;
+      }
+      if (bridge?.openDirectory) {
+        await bridge.openDirectory(targetPath);
+        message.success('已请求打开本地目录');
+        return;
+      }
+      if (bridge?.revealInFileManager) {
+        await bridge.revealInFileManager(targetPath);
+        message.success('已请求打开本地目录');
+        return;
+      }
+      if (bridge?.showItemInFolder) {
+        await bridge.showItemInFolder(targetPath);
+        message.success('已请求打开本地目录');
+        return;
+      }
+
+      message.info(`示意：Electron 打包后会通过系统文件管理器打开 ${targetPath}`);
+    } catch (error) {
+      message.warning(getActionErrorMessage(error, '无法打开本地目录'));
+    }
+  }, [mappedLocalDirectoryPath]);
+
+  const handleOpenLocalDirectoryDraft = useCallback((mapping) => {
+    handleOpenMappedLocalDirectory(mapping?.directoryPath);
+  }, [handleOpenMappedLocalDirectory]);
+
+  const handleLocalDirectoryLocationClick = useCallback(() => {
+    setSpecialView('local');
+    setKeyword('');
+    setSearchPanelOpen(false);
+    setActiveTagFilter(null);
+    setTagFilterContextFolderKeys([]);
+    setSelectedItemKeys([]);
+    setColumnSelectedItem(null);
+    setColumnPath([null]);
+  }, []);
 
   const recordItemOpened = useCallback((item) => {
     if (!item || item.isFolder) return;
@@ -4071,13 +4346,18 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
     items: [
       { key: 'newFolder', icon: <FolderAddOutlined />, label: '新建文件夹' },
       { key: 'addResource', icon: <FileAddOutlined />, label: '添加资料' },
+      ...(scope === 'personal' ? [
+        { type: 'divider' },
+        { key: 'localMapping', icon: <LinkOutlined />, label: '本地目录映射' },
+      ] : []),
     ],
     onClick: ({ key, domEvent }) => {
       domEvent?.stopPropagation();
       if (key === 'newFolder') handleCreateFolderAtRoot();
       if (key === 'addResource') handleAddResourceAtRoot();
+      if (key === 'localMapping') setLocalMappingOpen(true);
     },
-  }), [handleAddResourceAtRoot, handleCreateFolderAtRoot]);
+  }), [handleAddResourceAtRoot, handleCreateFolderAtRoot, scope]);
 
   const renderPreviewActionButtons = (onCreateFolder, onAdd) => (
     <div className="finder-preview-folder-actions">
@@ -4234,6 +4514,79 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
     );
   }, [getPreviewUnavailableState, markPreviewMediaError, renderPreviewUnavailableBlock]);
 
+  const renderLocalDirectoryView = () => (
+    <div className="finder-local-directory-view">
+      <div className="finder-local-directory-head">
+        <div className="finder-local-directory-title-wrap">
+          <div className="finder-local-directory-title">本地目录</div>
+          <div className="finder-local-directory-count">{personalLocalDirectoryMappings.length} 个目录</div>
+        </div>
+        <div className="finder-local-directory-actions">
+          <Button
+            className="finder-local-directory-btn finder-local-directory-btn-primary"
+            icon={<FolderOpenOutlined />}
+            onClick={handleAddLocalDirectoryMapping}
+          >
+            添加本地目录
+          </Button>
+        </div>
+      </div>
+
+      {personalLocalDirectoryMappings.length === 0 ? (
+        <div className="finder-local-directory-empty">
+          <FolderOpenOutlined />
+          <span>暂无本地目录</span>
+          <Button
+            className="finder-local-directory-btn finder-local-directory-btn-primary"
+            icon={<FolderOpenOutlined />}
+            onClick={handleAddLocalDirectoryMapping}
+          >
+            添加本地目录
+          </Button>
+        </div>
+      ) : (
+        <div className="finder-local-directory-grid">
+          {personalLocalDirectoryMappings.map((mapping) => {
+            const parseStatusMeta = getLocalDirectoryParseStatusMeta(mapping);
+            return (
+              <div className={`finder-local-directory-card ${mapping.enabled ? 'is-enabled' : 'is-disabled'}`} key={mapping.id}>
+                <div className="finder-local-directory-card-main">
+                  <span className="finder-local-directory-card-icon">
+                    <FolderOpenOutlined />
+                  </span>
+                  <div className="finder-local-directory-card-copy">
+                    <span className="finder-local-directory-card-name">{mapping.name || getLocalDirectoryDisplayName(mapping.directoryPath)}</span>
+                    <span className="finder-local-directory-card-path">{mapping.directoryPath}</span>
+                  </div>
+                  <span className={`finder-local-directory-status ${parseStatusMeta.className}`}>{parseStatusMeta.label}</span>
+                </div>
+                <div className="finder-local-directory-card-actions">
+                  <Button
+                    className="finder-local-directory-card-btn"
+                    size="small"
+                    icon={<DesktopOutlined />}
+                    onClick={() => handleOpenMappedLocalDirectory(mapping.directoryPath)}
+                  >
+                    浏览
+                  </Button>
+                  <Button
+                    className="finder-local-directory-card-btn finder-local-directory-card-btn-danger"
+                    size="small"
+                    danger
+                    icon={<DeleteOutlined />}
+                    onClick={() => handleRemoveLocalDirectoryMapping(mapping)}
+                  >
+                    移除
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
   const handleToolbarMenuAction = ({ key, domEvent }) => {
     domEvent?.stopPropagation();
 
@@ -4259,6 +4612,14 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
     }
     if (key === 'addResource') {
       handleAddResourceAtCurrentLocation();
+      return;
+    }
+    if (key === 'addLocalDirectory') {
+      void handleAddLocalDirectoryMapping();
+      return;
+    }
+    if (key === 'localMapping') {
+      setLocalMappingOpen(true);
       return;
     }
     if (key === 'tags-manage') {
@@ -4302,9 +4663,15 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
   };
 
   const toolbarMoreMenu = {
-    items: [
+    items: isLocalDirectoryView ? [
+      { key: 'addLocalDirectory', icon: <FolderOpenOutlined />, label: '添加本地目录' },
+      { key: 'localMapping', icon: <SettingOutlined />, label: '管理映射' },
+    ] : [
       { key: 'newFolder', icon: <FolderAddOutlined />, label: '新建文件夹' },
       { key: 'addResource', icon: <FileAddOutlined />, label: '添加资料' },
+      ...(scope === 'personal' ? [
+        { key: 'localMapping', icon: <LinkOutlined />, label: '本地目录映射' },
+      ] : []),
       { type: 'divider' },
       getSelectionModeMenuItem(),
       {
@@ -4683,6 +5050,39 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
             <span className="finder-sidebar-item-icon" style={{ color: '#8e8e93' }}><GlobalOutlined /></span>
             <span className="finder-sidebar-item-label">云电脑</span>
           </div>
+          {scope === 'personal' && (
+            <div
+              className={`finder-sidebar-item finder-sidebar-item-local ${hasPersonalLocalDirectoryMapping ? 'finder-sidebar-item-local-active' : ''} ${isLocalDirectoryView ? 'finder-sidebar-item-active' : ''}`}
+              onClick={handleLocalDirectoryLocationClick}
+              title={hasPersonalLocalDirectoryMapping ? enabledLocalDirectoryMappings.map((mapping) => mapping.directoryPath).join('\n') : '配置本地目录映射'}
+            >
+              <span className="finder-sidebar-item-icon" style={{ color: hasPersonalLocalDirectoryMapping ? '#1677ff' : '#8e8e93' }}>
+                <FolderOpenOutlined />
+              </span>
+              <span className="finder-sidebar-local-copy">
+                <span className="finder-sidebar-item-label">本地目录</span>
+                <span className="finder-sidebar-local-path">
+                  {hasPersonalLocalDirectoryMapping
+                    ? enabledLocalDirectoryMappings.length === 1
+                      ? mappedLocalDirectoryPath
+                      : `${enabledLocalDirectoryMappings.length} 个已映射目录`
+                    : '未映射'}
+                </span>
+              </span>
+              <button
+                type="button"
+                className="finder-sidebar-local-setting"
+                aria-label="设置本地目录"
+                title="设置"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setLocalMappingOpen(true);
+                }}
+              >
+                <SettingOutlined />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* 标签 */}
@@ -4761,7 +5161,9 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
           </div>
           <div className="finder-toolbar-title">
             <span className="finder-toolbar-title-text">
-              {hasActiveSearch
+              {isLocalDirectoryView
+                ? '本地目录'
+                : hasActiveSearch
                 ? `正在搜索“${normalizedKeyword}”`
                 : isRecentView
                 ? '最近使用'
@@ -4862,6 +5264,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
               prefix={<SearchOutlined style={{ color: '#999', fontSize: 12 }} />}
               placeholder="按文件名或内容搜索"
               value={keyword}
+              disabled={isLocalDirectoryView}
               onChange={handleSearchChange}
               onFocus={() => { if (normalizedKeyword) setSearchPanelOpen(true); }}
               onClick={() => { if (normalizedKeyword) setSearchPanelOpen(true); }}
@@ -4917,7 +5320,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
           </Tooltip>
         </div>
 
-        {hasActiveSearch && (
+        {hasActiveSearch && !isLocalDirectoryView && (
           <div className="finder-search-summary-bar">
             <span className="finder-search-summary-label">搜索：</span>
             <button
@@ -4939,7 +5342,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
           </div>
         )}
 
-        {!hasActiveSearch && isTagFilterContextActive && (
+        {!hasActiveSearch && !isLocalDirectoryView && isTagFilterContextActive && (
           <div className="finder-search-summary-bar">
             <span className="finder-search-summary-label">上下文：</span>
             <button
@@ -4958,6 +5361,9 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
 
         {/* ===== 内容区域：文件列表 + 右侧预览面板 ===== */}
         <div className="finder-content-area" ref={contentAreaRef}>
+          {isLocalDirectoryView ? (
+            renderLocalDirectoryView()
+          ) : (
           <div key={viewMode} className={`finder-content-view finder-content-view-${viewMode}`}>
             {/* ==== 分栏视图 ==== */}
             {viewMode === 'column' ? (
@@ -5460,6 +5866,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
               </>
             )}
           </div>
+          )}
         </div>
 
         {/* 底部路径栏 */}
@@ -5468,7 +5875,15 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
             <span className="finder-pathbar-segment-icon"><DesktopOutlined /></span>
             <span>{scope === 'personal' ? '个人资料库' : '组织资料库'}</span>
           </span>
-          {hasActiveSearch ? (
+          {isLocalDirectoryView ? (
+            <>
+              <span className="finder-pathbar-sep">›</span>
+              <span className="finder-pathbar-segment finder-pathbar-segment-current">
+                <span className="finder-pathbar-segment-icon"><FolderOpenOutlined /></span>
+                <span>本地目录</span>
+              </span>
+            </>
+          ) : hasActiveSearch ? (
             <>
               <span className="finder-pathbar-sep">›</span>
               <span className="finder-pathbar-segment finder-pathbar-segment-current">
@@ -5738,6 +6153,124 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
           onClose: () => setParseDrawerOpen(false),
         }}
       />
+
+      <Modal
+        title="本地目录映射"
+        open={localMappingOpen}
+        width={760}
+        okText="保存映射"
+        cancelText="取消"
+        onOk={handleSaveLocalDirectoryMappings}
+        onCancel={() => setLocalMappingOpen(false)}
+      >
+        <div className="finder-local-mapping-modal">
+          <div className="finder-local-mapping-head">
+            <span className="finder-local-mapping-head-icon">
+              <FolderOpenOutlined />
+            </span>
+            <div className="finder-local-mapping-head-copy">
+              <div className="finder-local-mapping-head-title">个人库连接本机文件夹</div>
+              <div className="finder-local-mapping-head-desc">
+                打包为 Electron 后，可通过 preload 暴露的文件接口选择、读写和打开多个本地目录。
+              </div>
+            </div>
+          </div>
+
+          <div className="finder-local-mapping-list-toolbar">
+            <span>已添加 {localMappingDrafts.length} 个本地目录</span>
+            <span className="finder-local-mapping-list-actions">
+              <Button icon={<FolderOpenOutlined />} onClick={handleAddLocalDirectoryDraft}>
+                添加目录
+              </Button>
+              <Button onClick={handleAddManualLocalDirectoryDraft}>
+                手动填写
+              </Button>
+            </span>
+          </div>
+
+          {localMappingDrafts.length === 0 ? (
+            <div className="finder-local-mapping-empty">
+              <FolderOpenOutlined />
+              <span>暂无本地目录映射</span>
+            </div>
+          ) : (
+            <div className="finder-local-mapping-list">
+              {localMappingDrafts.map((mapping, index) => (
+                <div className="finder-local-mapping-card" key={mapping.id}>
+                  <div className="finder-local-mapping-card-head">
+                    <span className="finder-local-mapping-card-icon">
+                      <FolderOpenOutlined />
+                    </span>
+                    <div className="finder-local-mapping-card-title">
+                      <Input
+                        value={mapping.name}
+                        placeholder={`本地目录 ${index + 1}`}
+                        onChange={(event) => updateLocalDirectoryDraft(mapping.id, { name: event.target.value })}
+                      />
+                      <span>{mapping.directoryPath || '尚未填写本地路径'}</span>
+                    </div>
+                    <Button size="small" icon={<DesktopOutlined />} onClick={() => handleOpenLocalDirectoryDraft(mapping)}>
+                      浏览
+                    </Button>
+                    <Button size="small" danger icon={<DeleteOutlined />} onClick={() => removeLocalDirectoryDraft(mapping.id)}>
+                      移除
+                    </Button>
+                  </div>
+
+                  <div className="finder-local-mapping-card-grid">
+                    <label className="finder-local-mapping-field finder-local-mapping-field-wide">
+                      <span>本地目录路径</span>
+                      <Input
+                        value={mapping.directoryPath}
+                        placeholder="例如 ~/Documents/Guoren Library"
+                        onChange={(event) => updateLocalDirectoryDraft(mapping.id, { directoryPath: event.target.value })}
+                      />
+                    </label>
+                    <label className="finder-local-mapping-field">
+                      <span>映射状态</span>
+                      <Select
+                        value={mapping.enabled ? 'enabled' : 'disabled'}
+                        onChange={(value) => updateLocalDirectoryDraft(mapping.id, { enabled: value === 'enabled' })}
+                        options={[
+                          { label: '开启', value: 'enabled' },
+                          { label: '停用', value: 'disabled' },
+                        ]}
+                      />
+                    </label>
+                    <label className="finder-local-mapping-field">
+                      <span>访问权限</span>
+                      <Select
+                        value={mapping.accessMode}
+                        onChange={(value) => updateLocalDirectoryDraft(mapping.id, { accessMode: value })}
+                        options={[
+                          { label: '读写本地文件', value: 'readwrite' },
+                          { label: '只读浏览', value: 'readonly' },
+                        ]}
+                      />
+                    </label>
+                    <label className="finder-local-mapping-field">
+                      <span>扫描策略</span>
+                      <Select
+                        value={mapping.syncPolicy}
+                        onChange={(value) => updateLocalDirectoryDraft(mapping.id, { syncPolicy: value })}
+                        options={[
+                          { label: '手动刷新', value: 'manual' },
+                          { label: '启动时扫描', value: 'startup' },
+                        ]}
+                      />
+                    </label>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="finder-local-mapping-bridge-note">
+            <span><LinkOutlined /> Electron 桥接示意</span>
+            <code>selectDirectory() / openPath(path) / revealInFileManager(path)</code>
+          </div>
+        </div>
+      </Modal>
     </div>
     </>
   );

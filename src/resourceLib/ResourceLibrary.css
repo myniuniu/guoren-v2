@@ -398,6 +398,76 @@
   text-overflow: ellipsis;
 }
 
+.finder-sidebar-item-local {
+  min-height: 56px;
+  align-items: center;
+  padding-right: 42px;
+}
+
+.finder-sidebar-item-local-active {
+  border-color: rgba(80, 132, 214, 0.22);
+  background:
+    linear-gradient(180deg, rgba(247, 250, 255, 0.68) 0%, rgba(235, 241, 250, 0.52) 100%),
+    linear-gradient(135deg, rgba(87, 135, 209, 0.1) 0%, rgba(255, 255, 255, 0.06) 100%);
+}
+
+.finder-sidebar-local-copy {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.finder-sidebar-local-copy .finder-sidebar-item-label {
+  flex: 0 1 auto;
+  line-height: 1.2;
+}
+
+.finder-sidebar-local-path {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #7a8798;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.finder-sidebar-local-setting {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  z-index: 2;
+  width: 24px;
+  height: 24px;
+  transform: translateY(-50%);
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.22);
+  color: #667181;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition:
+    opacity 0.16s ease,
+    background 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease;
+}
+
+.finder-sidebar-item-local:hover .finder-sidebar-local-setting,
+.finder-sidebar-item-local:focus-within .finder-sidebar-local-setting {
+  opacity: 1;
+}
+
+.finder-sidebar-local-setting:hover {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(210, 218, 229, 0.78);
+  color: #243144;
+}
+
 .finder-sidebar-root-actions {
   position: absolute;
   top: 50%;
@@ -1623,6 +1693,55 @@
   background: rgba(148, 163, 184, 0.18);
 }
 
+.finder-local-mapping-bar {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 16px;
+  background:
+    linear-gradient(180deg, rgba(248, 251, 255, 0.98) 0%, rgba(240, 245, 251, 0.94) 100%);
+  border-bottom: 1px solid rgba(207, 218, 232, 0.62);
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.54);
+  flex-shrink: 0;
+}
+
+.finder-local-mapping-bar-icon {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: rgba(77, 132, 215, 0.11);
+  color: #2f6fcb;
+  flex-shrink: 0;
+}
+
+.finder-local-mapping-bar-copy {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.finder-local-mapping-bar-title {
+  color: #243144;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.finder-local-mapping-bar-path {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #617085;
+  font-size: 12px;
+}
+
 .finder-search-summary-bar {
   min-height: 42px;
   display: flex;
@@ -1704,6 +1823,375 @@
 
 .finder-content-view-column {
   animation: finderContentSlideInFromRight 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.finder-local-directory-view {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--finder-list-surface-bg);
+}
+
+.finder-local-directory-head {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 20px;
+  border-bottom: 1px solid rgba(214, 220, 228, 0.58);
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.48);
+  flex-shrink: 0;
+}
+
+.finder-local-directory-title-wrap {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.finder-local-directory-title {
+  color: #1f2937;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.finder-local-directory-count {
+  color: #748196;
+  font-size: 12px;
+}
+
+.finder-local-directory-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.finder-local-directory-btn.ant-btn {
+  position: relative;
+  isolation: isolate;
+  height: 34px;
+  padding: 0 13px;
+  overflow: hidden;
+  border: 1px solid rgba(186, 199, 216, 0.94) !important;
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(243, 246, 250, 0.9) 100%),
+    linear-gradient(135deg, rgba(231, 240, 252, 0.5) 0%, rgba(220, 231, 246, 0.44) 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.86),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.14),
+    0 6px 14px rgba(15, 23, 42, 0.05),
+    0 2px 6px rgba(148, 163, 184, 0.1) !important;
+  color: #254364 !important;
+  font-size: 13px;
+  font-weight: 700;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease,
+    color 0.18s ease;
+}
+
+.finder-local-directory-btn.ant-btn > span {
+  position: relative;
+  z-index: 1;
+}
+
+.finder-local-directory-btn.ant-btn .ant-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-inline-end: 6px;
+  border-radius: 7px;
+  background: linear-gradient(180deg, rgba(97, 147, 228, 0.96) 0%, rgba(78, 124, 204, 0.96) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 5px 12px rgba(70, 117, 202, 0.18);
+  color: #fff !important;
+}
+
+.finder-local-directory-btn.ant-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.34) 0%, rgba(255, 255, 255, 0.04) 48%),
+    radial-gradient(circle at 86% 14%, rgba(176, 210, 255, 0.14) 0%, rgba(255, 255, 255, 0) 34%);
+  opacity: 0.48;
+  pointer-events: none;
+}
+
+.finder-local-directory-btn.ant-btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  border-color: rgba(173, 189, 214, 0.98) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(249, 251, 255, 0.95) 100%),
+    linear-gradient(135deg, rgba(240, 246, 255, 0.74) 0%, rgba(226, 237, 252, 0.64) 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.94),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.2),
+    0 10px 20px rgba(15, 23, 42, 0.07),
+    0 5px 12px rgba(148, 163, 184, 0.13) !important;
+  color: #203d5d !important;
+}
+
+.finder-local-directory-empty {
+  flex: 1;
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: #7a8798;
+  font-size: 14px;
+}
+
+.finder-local-directory-empty > .anticon {
+  width: 58px;
+  height: 58px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(77, 132, 215, 0.1);
+  color: #2f6fcb;
+  font-size: 28px;
+}
+
+.finder-local-directory-grid {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 12px;
+  overflow: auto;
+  padding: 16px 20px 22px;
+}
+
+.finder-local-directory-card {
+  position: relative;
+  isolation: isolate;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid rgba(211, 220, 232, 0.76);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(246, 249, 252, 0.8) 100%),
+    radial-gradient(circle at 14% 8%, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 34%),
+    linear-gradient(135deg, rgba(226, 236, 249, 0.26) 0%, rgba(255, 255, 255, 0.04) 64%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.74),
+    0 8px 18px rgba(15, 23, 42, 0.04),
+    0 2px 6px rgba(148, 163, 184, 0.06);
+  overflow: hidden;
+  transition:
+    transform 0.22s ease,
+    border-color 0.22s ease,
+    box-shadow 0.22s ease,
+    background 0.22s ease,
+    opacity 0.22s ease;
+}
+
+.finder-local-directory-card::before {
+  content: '';
+  position: absolute;
+  inset: -18%;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0) 34%),
+    radial-gradient(circle at 84% 78%, rgba(206, 218, 235, 0.26) 0%, rgba(255, 255, 255, 0) 42%),
+    linear-gradient(140deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 48%, rgba(255, 255, 255, 0.08) 100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+
+.finder-local-directory-card::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  z-index: 0;
+  border-radius: 7px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.07) 30%, rgba(255, 255, 255, 0) 62%);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.finder-local-directory-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(184, 198, 218, 0.88);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    0 14px 28px rgba(15, 23, 42, 0.07),
+    0 6px 14px rgba(148, 163, 184, 0.12);
+}
+
+.finder-local-directory-card:hover::before {
+  opacity: 0.82;
+  animation: finder-sidebar-liquid-flow 1.7s ease-in-out infinite alternate;
+}
+
+.finder-local-directory-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.finder-local-directory-card.is-disabled {
+  opacity: 0.68;
+}
+
+.finder-local-directory-card-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.finder-local-directory-card-icon {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(77, 132, 215, 0.11);
+  color: #2f6fcb;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.finder-local-directory-card-copy {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.finder-local-directory-card-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #253044;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.finder-local-directory-card-path {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #748196;
+  font-size: 12px;
+}
+
+.finder-local-directory-status {
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: rgba(100, 116, 139, 0.12);
+  color: #526174;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.finder-local-directory-status.is-pending {
+  background: rgba(100, 116, 139, 0.12);
+  color: #526174;
+}
+
+.finder-local-directory-status.is-parsing {
+  background: rgba(22, 119, 255, 0.12);
+  color: #1e63c7;
+}
+
+.finder-local-directory-status.is-parsed {
+  background: rgba(52, 199, 89, 0.1);
+  color: #238447;
+}
+
+.finder-local-directory-status.is-failed {
+  background: rgba(255, 59, 48, 0.1);
+  color: #c24135;
+}
+
+.finder-local-directory-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.finder-local-directory-card-btn.ant-btn {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid rgba(201, 211, 224, 0.9) !important;
+  border-radius: 7px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(242, 246, 250, 0.78) 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.76),
+    0 3px 8px rgba(15, 23, 42, 0.04) !important;
+  color: #40516a !important;
+  font-size: 12px;
+  font-weight: 600;
+  transition:
+    transform 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    background 0.16s ease,
+    color 0.16s ease;
+}
+
+.finder-local-directory-card-btn.ant-btn .ant-btn-icon {
+  color: #526174 !important;
+}
+
+.finder-local-directory-card-btn.ant-btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  border-color: rgba(178, 191, 210, 0.96) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 250, 253, 0.88) 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.86),
+    0 7px 14px rgba(15, 23, 42, 0.06) !important;
+  color: #243144 !important;
+}
+
+.finder-local-directory-card-btn-danger.ant-btn {
+  border-color: rgba(255, 99, 99, 0.44) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 246, 246, 0.78) 100%) !important;
+  color: #e5484d !important;
+}
+
+.finder-local-directory-card-btn-danger.ant-btn .ant-btn-icon {
+  color: #e5484d !important;
+}
+
+.finder-local-directory-card-btn-danger.ant-btn:not(:disabled):hover {
+  border-color: rgba(255, 79, 79, 0.68) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 241, 241, 0.9) 100%) !important;
+  color: #d9363e !important;
 }
 
 .finder-file-list {
@@ -3190,6 +3678,10 @@
   .finder-toolbar-view-icon,
   .finder-content-view-detail,
   .finder-content-view-column,
+  .finder-local-directory-card,
+  .finder-local-directory-card::before,
+  .finder-local-directory-btn,
+  .finder-local-directory-card-btn,
   .finder-file-selection-indicator {
     animation: none !important;
     transition: none !important;
@@ -3272,6 +3764,290 @@
 .finder-pathbar-sep {
   color: #aeb7c4;
   font-size: 11px;
+}
+
+.finder-local-mapping-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 4px;
+}
+
+.finder-local-mapping-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(211, 220, 232, 0.72);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(248, 251, 255, 0.96) 0%, rgba(242, 246, 251, 0.9) 100%);
+}
+
+.finder-local-mapping-head-icon {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(77, 132, 215, 0.12);
+  color: #2f6fcb;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.finder-local-mapping-head-copy {
+  min-width: 0;
+}
+
+.finder-local-mapping-head-title {
+  color: #1f2937;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.finder-local-mapping-head-desc {
+  margin-top: 4px;
+  color: #667085;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.finder-local-mapping-path-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.finder-local-mapping-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.finder-local-mapping-list-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  color: #526174;
+  font-size: 13px;
+}
+
+.finder-local-mapping-list-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.finder-local-mapping-empty {
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px dashed rgba(154, 170, 193, 0.5);
+  border-radius: 8px;
+  background: rgba(248, 250, 252, 0.72);
+  color: #7a8798;
+  font-size: 13px;
+}
+
+.finder-local-mapping-empty .anticon {
+  color: #8ea0b8;
+  font-size: 26px;
+}
+
+.finder-local-mapping-list {
+  max-height: min(460px, 58vh);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.finder-local-mapping-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgba(211, 220, 232, 0.74);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(247, 249, 252, 0.88) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.74);
+}
+
+.finder-local-mapping-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.finder-local-mapping-card-icon {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(77, 132, 215, 0.1);
+  color: #2f6fcb;
+  flex-shrink: 0;
+}
+
+.finder-local-mapping-card-title {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.finder-local-mapping-card-title .ant-input {
+  max-width: 280px;
+}
+
+.finder-local-mapping-card-title > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #7a8798;
+  font-size: 12px;
+}
+
+.finder-local-mapping-card-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(120px, 0.7fr) minmax(140px, 0.8fr) minmax(140px, 0.8fr);
+  gap: 10px;
+  align-items: end;
+}
+
+.finder-local-mapping-field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #526174;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.finder-local-mapping-field .ant-input,
+.finder-local-mapping-field .ant-select {
+  font-weight: 400;
+}
+
+.finder-local-mapping-bridge-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px dashed rgba(143, 161, 186, 0.52);
+  border-radius: 8px;
+  background: rgba(248, 250, 252, 0.82);
+  color: #667085;
+  font-size: 12px;
+}
+
+.finder-local-mapping-bridge-note > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  color: #42526a;
+  font-weight: 600;
+}
+
+.finder-local-mapping-bridge-note code {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: rgba(15, 23, 42, 0.05);
+  color: #40516a;
+}
+
+@media (max-width: 720px) {
+  .finder-local-directory-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .finder-local-directory-actions {
+    width: 100%;
+  }
+
+  .finder-local-directory-actions .ant-btn {
+    flex: 1;
+  }
+
+  .finder-local-directory-grid {
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+
+  .finder-local-directory-card-main {
+    align-items: flex-start;
+  }
+
+  .finder-local-mapping-bar {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .finder-local-mapping-bar-copy {
+    flex-basis: 100%;
+    order: -1;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .finder-local-mapping-path-row,
+  .finder-local-mapping-form-grid,
+  .finder-local-mapping-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .finder-local-mapping-list-toolbar,
+  .finder-local-mapping-card-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .finder-local-mapping-list-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .finder-local-mapping-list-actions .ant-btn {
+    flex: 1;
+  }
+
+  .finder-local-mapping-card-title .ant-input {
+    max-width: none;
+  }
+
+  .finder-local-mapping-bridge-note {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .finder-local-mapping-bridge-note code {
+    max-width: 100%;
+  }
 }
 
 /* ====== Empty State ====== */

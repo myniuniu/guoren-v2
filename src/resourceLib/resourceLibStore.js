@@ -9,7 +9,7 @@ import {
 
 // 资料库本地存储（独立于 versionStore，避免耦合）
 const STORAGE_KEY = 'guoren_resource_lib';
-const DATA_VERSION = 20;
+const DATA_VERSION = 23;
 
 // macOS 访达风格预设标签（7色 + 自定义）
 const PRESET_TAGS = [
@@ -166,6 +166,16 @@ const DEFAULT_ORGANIZATION_TAG_GROUPS = [
     tagIds: ['tag_mk_promo', 'tag_mk_brand'],
   },
 ];
+
+const DEFAULT_PERSONAL_LOCAL_DIRECTORY_MAPPING = {
+  enabled: false,
+  name: '',
+  directoryPath: '',
+  accessMode: 'readwrite',
+  syncPolicy: 'manual',
+  parseStatus: 'pending',
+  lastMappedAt: '',
+};
 
 const AI_GENERAL_COURSES = [
   { id: '01', title: '认识人工智能', focus: '理解人工智能的基本概念、发展历程和课堂中的典型应用', activity: 'AI 应用观察清单' },
@@ -1439,6 +1449,7 @@ function hydrateSearchContent(data) {
   const hydrateList = (items = []) => items.map(withDemoContentText);
   return {
     ...data,
+    personalLocalDirectoryMappings: normalizePersonalLocalDirectoryMappings(data.personalLocalDirectoryMappings, data.personalLocalDirectoryMapping),
     personal: hydrateList(ensurePersonalStudyHourProofFolder(data.personal || [])),
     organizations: Object.fromEntries(
       Object.entries(data.organizations || {}).map(([orgId, items]) => [orgId, hydrateList(items)]),
@@ -1484,6 +1495,8 @@ const defaultData = {
   // 当前选中状态
   currentScope: 'personal',         // 'personal' | 'organization'
   currentOrgId: ORGANIZATION_CAPABILITY_MODEL_ORG_ID,
+  // 个人库本地目录映射：Electron 打包后由 preload/main 进程接入真实文件系统
+  personalLocalDirectoryMappings: [],
   // 各库的当前选中文件夹（key 为 libraryId：'personal' 或 orgId）
   selectedFolderKey: {
     personal: null,
@@ -1577,6 +1590,10 @@ function migrate(old) {
   if (typeof old.currentOrgId === 'string' && old.currentOrgId) {
     next.currentOrgId = old.currentOrgId;
   }
+  next.personalLocalDirectoryMappings = normalizePersonalLocalDirectoryMappings(
+    old.personalLocalDirectoryMappings,
+    old.personalLocalDirectoryMapping,
+  );
   // 保留个人数据
   if (!shouldResetPersonalDemo && Array.isArray(old.personal)) next.personal = old.personal;
   // 旧版本：data.organization[] → 默认组织
@@ -1614,6 +1631,72 @@ export function saveResourceLib(data) {
   } catch (e) {
     console.error('Failed to save resource lib:', e);
   }
+}
+
+function createPersonalLocalDirectoryMappingId(seed = '') {
+  const source = String(seed || 'empty');
+  let hash = 0;
+  for (let i = 0; i < source.length; i += 1) {
+    hash = ((hash << 5) - hash) + source.charCodeAt(i);
+    hash |= 0;
+  }
+  return `local_dir_${Math.abs(hash).toString(36)}`;
+}
+
+function getLocalDirectoryName(directoryPath = '') {
+  const normalized = String(directoryPath || '').trim().replace(/[\\/]+$/, '');
+  if (!normalized) return '';
+  const parts = normalized.split(/[\\/]/).filter(Boolean);
+  return parts[parts.length - 1] || normalized;
+}
+
+function normalizePersonalLocalDirectoryMapping(mapping = {}, index = 0) {
+  const source = mapping && typeof mapping === 'object' ? mapping : {};
+  const directoryPath = typeof source.directoryPath === 'string' ? source.directoryPath : '';
+  return {
+    ...DEFAULT_PERSONAL_LOCAL_DIRECTORY_MAPPING,
+    ...source,
+    id: typeof source.id === 'string' && source.id ? source.id : createPersonalLocalDirectoryMappingId(`${directoryPath || 'dir'}:${index}`),
+    enabled: !!source.enabled,
+    name: typeof source.name === 'string' ? source.name : '',
+    directoryPath,
+    accessMode: source.accessMode === 'readonly' ? 'readonly' : 'readwrite',
+    syncPolicy: source.syncPolicy === 'startup' ? 'startup' : 'manual',
+    parseStatus: ['parsed', 'parsing', 'pending', 'failed'].includes(source.parseStatus) ? source.parseStatus : 'pending',
+    lastMappedAt: typeof source.lastMappedAt === 'string' ? source.lastMappedAt : '',
+  };
+}
+
+function normalizePersonalLocalDirectoryMappings(mappings = [], legacyMapping = null) {
+  const hasLegacyMapping = legacyMapping && typeof legacyMapping === 'object' && (
+    legacyMapping.directoryPath || legacyMapping.enabled
+  );
+  const sourceList = Array.isArray(mappings) && mappings.length > 0
+    ? mappings
+    : (hasLegacyMapping ? [legacyMapping] : []);
+  return sourceList.map((mapping, index) => {
+    const normalized = normalizePersonalLocalDirectoryMapping(mapping, index);
+    return {
+      ...normalized,
+      name: normalized.name || getLocalDirectoryName(normalized.directoryPath) || `本地目录 ${index + 1}`,
+    };
+  });
+}
+
+export function getPersonalLocalDirectoryMappings(data = loadResourceLib()) {
+  return normalizePersonalLocalDirectoryMappings(
+    data.personalLocalDirectoryMappings,
+    data.personalLocalDirectoryMapping,
+  );
+}
+
+export function updatePersonalLocalDirectoryMappings(data, mappings = []) {
+  const next = {
+    ...data,
+    personalLocalDirectoryMappings: normalizePersonalLocalDirectoryMappings(mappings),
+  };
+  saveResourceLib(next);
+  return next;
 }
 
 // ====== 组织管理（只读） ======
