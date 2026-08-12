@@ -1,0 +1,845 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/k51019",
+    "id": "k51019",
+    "slide": 5,
+    "layoutId": "a8301271-dc48-4ac9-969c-504fc991a537",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "dd045b2c-ff73-4cfe-b0c1-d2efc8a7e8a0",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "PingFang SC, Helvetica Neue, Arial, sans-serif"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "a8301271-dc48-4ac9-969c-504fc991a537",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "dd045b2c-ff73-4cfe-b0c1-d2efc8a7e8a0",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "dd045b2c-ff73-4cfe-b0c1-d2efc8a7e8a0",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/nqlcj6po",
+      "id": "1",
+      "name": "title-5",
+      "bbox": [
+        41,
+        36,
+        1030,
+        82
+      ],
+      "geometry": "rect",
+      "text": "培训项目是最典型的端到端场景",
+      "textPreview": "培训项目是最典型的端到端场景",
+      "resolvedFontSize": 38,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 38,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "培训项目是最典型的端到端场景"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "培训项目是最典型的端到端场景",
+          "resolvedTextStyle": {
+            "fontSize": 38,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "培训项目是最典型的端到端场景",
+              "fontSize": 38,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/orudcbqt",
+      "id": "2",
+      "name": "page-5",
+      "bbox": [
+        1182,
+        658,
+        56,
+        24
+      ],
+      "geometry": "rect",
+      "text": "05",
+      "textPreview": "05",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 3,
+        "fontSize": 13,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#000000",
+        "alignment": "right",
+        "verticalAlignment": "bottom",
+        "autoFit": "shrinkText",
+        "autoFitScale": 0.92,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "05"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "05",
+          "resolvedTextStyle": {
+            "fontSize": 13,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "05",
+              "fontSize": 13,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ps3ulg7e",
+      "id": "3",
+      "name": "training-left-title",
+      "bbox": [
+        64,
+        170,
+        360,
+        42
+      ],
+      "geometry": "rect",
+      "text": "传统模式",
+      "textPreview": "传统模式",
+      "resolvedFontSize": 27,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 27,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "传统模式"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "传统模式",
+          "resolvedTextStyle": {
+            "fontSize": 27,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "传统模式",
+              "fontSize": 27,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/atwvel8z",
+      "id": "4",
+      "name": "training-right-title",
+      "bbox": [
+        705,
+        170,
+        360,
+        42
+      ],
+      "geometry": "rect",
+      "text": "AI 原生模式",
+      "textPreview": "AI 原生模式",
+      "resolvedFontSize": 27,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 27,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#3D8DFF",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "AI 原生模式"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "AI 原生模式",
+          "resolvedTextStyle": {
+            "fontSize": 27,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#3D8DFF",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "AI 原生模式",
+              "fontSize": 27,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#3D8DFF",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/bu5cnqpk",
+      "id": "5",
+      "name": "training-left",
+      "bbox": [
+        64,
+        235,
+        500,
+        286
+      ],
+      "geometry": "rect",
+      "text": "用户提出培训需求\n教研部门设计培训计划\n教务部门创建项目、配置课程\n人工安排讲师、导入学员\n持续处理通知、签到、资料和反馈",
+      "textPreview": "用户提出培训需求 | 教研部门设计培训计划 | 教务部门创建项目、配置课程 | 人工安排讲师、导入学员 | 持续处理通知、签到、资料和反馈",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 24,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#585858",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 5,
+        "lines": [
+          {
+            "index": 1,
+            "text": "用户提出培训需求"
+          },
+          {
+            "index": 2,
+            "text": "教研部门设计培训计划"
+          },
+          {
+            "index": 3,
+            "text": "教务部门创建项目、配置课程"
+          },
+          {
+            "index": 4,
+            "text": "人工安排讲师、导入学员"
+          },
+          {
+            "index": 5,
+            "text": "持续处理通知、签到、资料和反馈"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "用户提出培训需求",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#585858",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "用户提出培训需求",
+              "fontSize": 24,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#585858",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "教研部门设计培训计划",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#585858",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "教研部门设计培训计划",
+              "fontSize": 24,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#585858",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 3,
+          "text": "教务部门创建项目、配置课程",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#585858",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "教务部门创建项目、配置课程",
+              "fontSize": 24,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#585858",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 4,
+          "text": "人工安排讲师、导入学员",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#585858",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "人工安排讲师、导入学员",
+              "fontSize": 24,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#585858",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 5,
+          "text": "持续处理通知、签到、资料和反馈",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#585858",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "持续处理通知、签到、资料和反馈",
+              "fontSize": 24,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#585858",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/cvedgvq5",
+      "id": "6",
+      "name": "training-right",
+      "bbox": [
+        705,
+        235,
+        500,
+        286
+      ],
+      "geometry": "rect",
+      "text": "用户与 lucky 多轮对话澄清需求\nlucky 自动生成培训计划\n确认后创建项目并配置课程\n自动生成服务清单和通知\n持续推动过程服务与评估复盘",
+      "textPreview": "用户与 lucky 多轮对话澄清需求 | lucky 自动生成培训计划 | 确认后创建项目并配置课程 | 自动生成服务清单和通知 | 持续推动过程服务与评估复盘",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 24,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 5,
+        "lines": [
+          {
+            "index": 1,
+            "text": "用户与 lucky 多轮对话澄清需求"
+          },
+          {
+            "index": 2,
+            "text": "lucky 自动生成培训计划"
+          },
+          {
+            "index": 3,
+            "text": "确认后创建项目并配置课程"
+          },
+          {
+            "index": 4,
+            "text": "自动生成服务清单和通知"
+          },
+          {
+            "index": 5,
+            "text": "持续推动过程服务与评估复盘"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "用户与 lucky 多轮对话澄清需求",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "用户与 lucky 多轮对话澄清需求",
+              "fontSize": 24,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "lucky 自动生成培训计划",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "lucky 自动生成培训计划",
+              "fontSize": 24,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 3,
+          "text": "确认后创建项目并配置课程",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "确认后创建项目并配置课程",
+              "fontSize": 24,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 4,
+          "text": "自动生成服务清单和通知",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "自动生成服务清单和通知",
+              "fontSize": 24,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 5,
+          "text": "持续推动过程服务与评估复盘",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "持续推动过程服务与评估复盘",
+              "fontSize": 24,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/xwnupg7q",
+      "id": "7",
+      "name": "training-arrow",
+      "bbox": [
+        594,
+        336,
+        72,
+        56
+      ],
+      "geometry": "rect",
+      "text": "→",
+      "textPreview": "→",
+      "resolvedFontSize": 38.67,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 46,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#3D8DFF",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 0.84,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "→"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "→",
+          "resolvedTextStyle": {
+            "fontSize": 46,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#3D8DFF",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "→",
+              "fontSize": 46,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#3D8DFF",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/qxsb2h8v",
+      "id": "8",
+      "name": "training-value-panel",
+      "bbox": [
+        184,
+        574,
+        914,
+        58
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#EAF6FE",
+      "lineColor": "#E0E0E0",
+      "lineWidth": 1
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ry1cbmpg",
+      "id": "9",
+      "name": "training-value",
+      "bbox": [
+        210,
+        590,
+        862,
+        30
+      ],
+      "geometry": "rect",
+      "text": "业务价值：减少跨部门反复沟通，让培训项目从人工协调型流程转向目标驱动型交付。",
+      "textPreview": "业务价值：减少跨部门反复沟通，让培训项目从人工协调型流程转向目标驱动型交付。",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#3D8DFF",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 0.85,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "业务价值：减少跨部门反复沟通，让培训项目从人工协调型流程转向目标驱动型交付。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "业务价值：减少跨部门反复沟通，让培训项目从人工协调型流程转向目标驱动型交付。",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#3D8DFF",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "业务价值：减少跨部门反复沟通，让培训项目从人工协调型流程转向目标驱动型交付。",
+              "fontSize": 20,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#3D8DFF",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

@@ -1,0 +1,2 @@
+Source: /Users/zhanghl/Documents/GitHub/guoren-v2/docs/ai-native-driven-system-use-cases.md
+Usage: The deck is synthesized from the local Markdown document. No external web sources or third-party visual assets are used.

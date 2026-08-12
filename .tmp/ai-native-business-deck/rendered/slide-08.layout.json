@@ -1,0 +1,1498 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/a0g4dn",
+    "id": "a0g4dn",
+    "slide": 8,
+    "layoutId": "a8301271-dc48-4ac9-969c-504fc991a537",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "dd045b2c-ff73-4cfe-b0c1-d2efc8a7e8a0",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "PingFang SC, Helvetica Neue, Arial, sans-serif"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "a8301271-dc48-4ac9-969c-504fc991a537",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "dd045b2c-ff73-4cfe-b0c1-d2efc8a7e8a0",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "dd045b2c-ff73-4cfe-b0c1-d2efc8a7e8a0",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/et0f2x4b",
+      "id": "1",
+      "name": "title-8",
+      "bbox": [
+        41,
+        36,
+        1030,
+        82
+      ],
+      "geometry": "rect",
+      "text": "系统变化不是一个入口，而是五个层面的重构",
+      "textPreview": "系统变化不是一个入口，而是五个层面的重构",
+      "resolvedFontSize": 38,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 38,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "系统变化不是一个入口，而是五个层面的重构"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "系统变化不是一个入口，而是五个层面的重构",
+          "resolvedTextStyle": {
+            "fontSize": 38,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "系统变化不是一个入口，而是五个层面的重构",
+              "fontSize": 38,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/1wrydc32",
+      "id": "2",
+      "name": "page-8",
+      "bbox": [
+        1182,
+        658,
+        56,
+        24
+      ],
+      "geometry": "rect",
+      "text": "08",
+      "textPreview": "08",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 3,
+        "fontSize": 13,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#000000",
+        "alignment": "right",
+        "verticalAlignment": "bottom",
+        "autoFit": "shrinkText",
+        "autoFitScale": 0.92,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "08"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "08",
+          "resolvedTextStyle": {
+            "fontSize": 13,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "08",
+              "fontSize": 13,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/0vix47mh",
+      "id": "3",
+      "name": "system-h1",
+      "bbox": [
+        74,
+        166,
+        160,
+        34
+      ],
+      "geometry": "rect",
+      "text": "变化层面",
+      "textPreview": "变化层面",
+      "resolvedFontSize": 20.33,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 22,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 0.92,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "变化层面"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "变化层面",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "变化层面",
+              "fontSize": 22,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/rqpw7il0",
+      "id": "4",
+      "name": "system-h2",
+      "bbox": [
+        292,
+        166,
+        360,
+        34
+      ],
+      "geometry": "rect",
+      "text": "过去",
+      "textPreview": "过去",
+      "resolvedFontSize": 20.33,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 22,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#585858",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 0.92,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "过去"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "过去",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#585858",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "过去",
+              "fontSize": 22,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#585858",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6pgfyx4f",
+      "id": "5",
+      "name": "system-h3",
+      "bbox": [
+        720,
+        166,
+        430,
+        34
+      ],
+      "geometry": "rect",
+      "text": "现在",
+      "textPreview": "现在",
+      "resolvedFontSize": 20.33,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 22,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#3D8DFF",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 0.92,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "现在"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "现在",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#3D8DFF",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "现在",
+              "fontSize": 22,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#3D8DFF",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ds7e9s36",
+      "id": "6",
+      "name": "system-row-bg-0",
+      "bbox": [
+        41,
+        208,
+        1197,
+        64
+      ],
+      "geometry": "rect",
+      "fillColor": "#F2F2F2",
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/sryx0nml",
+      "id": "7",
+      "name": "system-row-name-0",
+      "bbox": [
+        74,
+        218,
+        140,
+        38
+      ],
+      "geometry": "rect",
+      "text": "入口",
+      "textPreview": "入口",
+      "resolvedFontSize": 23,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 23,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "入口"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "入口",
+          "resolvedTextStyle": {
+            "fontSize": 23,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "入口",
+              "fontSize": 23,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/j2pw3ilo",
+      "id": "8",
+      "name": "system-row-old-0",
+      "bbox": [
+        292,
+        218,
+        360,
+        42
+      ],
+      "geometry": "rect",
+      "text": "用户找菜单和表单",
+      "textPreview": "用户找菜单和表单",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#585858",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "用户找菜单和表单"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "用户找菜单和表单",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#585858",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "用户找菜单和表单",
+              "fontSize": 20,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#585858",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/i1wfud43",
+      "id": "9",
+      "name": "system-row-new-0",
+      "bbox": [
+        720,
+        218,
+        430,
+        42
+      ],
+      "geometry": "rect",
+      "text": "用户表达业务目标",
+      "textPreview": "用户表达业务目标",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "用户表达业务目标"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "用户表达业务目标",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "用户表达业务目标",
+              "fontSize": 20,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/wv6xwjql",
+      "id": "10",
+      "name": "system-row-name-1",
+      "bbox": [
+        74,
+        296,
+        140,
+        38
+      ],
+      "geometry": "rect",
+      "text": "流程",
+      "textPreview": "流程",
+      "resolvedFontSize": 23,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 23,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "流程"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "流程",
+          "resolvedTextStyle": {
+            "fontSize": 23,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "流程",
+              "fontSize": 23,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/xwfy5o76",
+      "id": "11",
+      "name": "system-row-old-1",
+      "bbox": [
+        292,
+        296,
+        360,
+        42
+      ],
+      "geometry": "rect",
+      "text": "流程由人推动，系统被动记录",
+      "textPreview": "流程由人推动，系统被动记录",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#585858",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "流程由人推动，系统被动记录"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "流程由人推动，系统被动记录",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#585858",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "流程由人推动，系统被动记录",
+              "fontSize": 20,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#585858",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/atofu98f",
+      "id": "12",
+      "name": "system-row-new-1",
+      "bbox": [
+        720,
+        296,
+        430,
+        42
+      ],
+      "geometry": "rect",
+      "text": "流程由智能体牵引，系统主动执行",
+      "textPreview": "流程由智能体牵引，系统主动执行",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "流程由智能体牵引，系统主动执行"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "流程由智能体牵引，系统主动执行",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "流程由智能体牵引，系统主动执行",
+              "fontSize": 20,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/buxg3ep0",
+      "id": "13",
+      "name": "system-row-bg-2",
+      "bbox": [
+        41,
+        364,
+        1197,
+        64
+      ],
+      "geometry": "rect",
+      "fillColor": "#F2F2F2",
+      "lineWidth": 0
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/or6xszq9",
+      "id": "14",
+      "name": "system-row-name-2",
+      "bbox": [
+        74,
+        374,
+        140,
+        38
+      ],
+      "geometry": "rect",
+      "text": "角色",
+      "textPreview": "角色",
+      "resolvedFontSize": 23,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 23,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "角色"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "角色",
+          "resolvedTextStyle": {
+            "fontSize": 23,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "角色",
+              "fontSize": 23,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/9sfy147u",
+      "id": "15",
+      "name": "system-row-old-2",
+      "bbox": [
+        292,
+        374,
+        360,
+        42
+      ],
+      "geometry": "rect",
+      "text": "业务人员跨系统、跨部门协调",
+      "textPreview": "业务人员跨系统、跨部门协调",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#585858",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "业务人员跨系统、跨部门协调"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "业务人员跨系统、跨部门协调",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#585858",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "业务人员跨系统、跨部门协调",
+              "fontSize": 20,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#585858",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/m54fq983",
+      "id": "16",
+      "name": "system-row-new-2",
+      "bbox": [
+        720,
+        374,
+        430,
+        42
+      ],
+      "geometry": "rect",
+      "text": "lucky 承担拆解、协调、推进和沉淀",
+      "textPreview": "lucky 承担拆解、协调、推进和沉淀",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "lucky 承担拆解、协调、推进和沉淀"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "lucky 承担拆解、协调、推进和沉淀",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "lucky 承担拆解、协调、推进和沉淀",
+              "fontSize": 20,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/nqxgzupo",
+      "id": "17",
+      "name": "system-row-name-3",
+      "bbox": [
+        74,
+        452,
+        140,
+        38
+      ],
+      "geometry": "rect",
+      "text": "数据",
+      "textPreview": "数据",
+      "resolvedFontSize": 23,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 23,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "数据"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "数据",
+          "resolvedTextStyle": {
+            "fontSize": 23,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "数据",
+              "fontSize": 23,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 18,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/snqh43qt",
+      "id": "18",
+      "name": "system-row-old-3",
+      "bbox": [
+        292,
+        452,
+        360,
+        42
+      ],
+      "geometry": "rect",
+      "text": "数据用于事后统计和报表展示",
+      "textPreview": "数据用于事后统计和报表展示",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#585858",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "数据用于事后统计和报表展示"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "数据用于事后统计和报表展示",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#585858",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "数据用于事后统计和报表展示",
+              "fontSize": 20,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#585858",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 19,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/tozyd87y",
+      "id": "19",
+      "name": "system-row-new-3",
+      "bbox": [
+        720,
+        452,
+        430,
+        42
+      ],
+      "geometry": "rect",
+      "text": "数据实时参与方案、预警和决策建议",
+      "textPreview": "数据实时参与方案、预警和决策建议",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "数据实时参与方案、预警和决策建议"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "数据实时参与方案、预警和决策建议",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "数据实时参与方案、预警和决策建议",
+              "fontSize": 20,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 20,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/1kfyx8zi",
+      "id": "20",
+      "name": "system-row-bg-4",
+      "bbox": [
+        41,
+        520,
+        1197,
+        64
+      ],
+      "geometry": "rect",
+      "fillColor": "#F2F2F2",
+      "lineWidth": 0
+    },
+    {
+      "order": 21,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/gjmxo3yx",
+      "id": "21",
+      "name": "system-row-name-4",
+      "bbox": [
+        74,
+        530,
+        140,
+        38
+      ],
+      "geometry": "rect",
+      "text": "经验",
+      "textPreview": "经验",
+      "resolvedFontSize": 23,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 23,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "经验"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "经验",
+          "resolvedTextStyle": {
+            "fontSize": 23,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "经验",
+              "fontSize": 23,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 22,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/fidgvyhc",
+      "id": "22",
+      "name": "system-row-old-4",
+      "bbox": [
+        292,
+        530,
+        360,
+        42
+      ],
+      "geometry": "rect",
+      "text": "经验散落在个人和文档中",
+      "textPreview": "经验散落在个人和文档中",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#585858",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "经验散落在个人和文档中"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "经验散落在个人和文档中",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#585858",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "经验散落在个人和文档中",
+              "fontSize": 20,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#585858",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 23,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/eh4fmt0r",
+      "id": "23",
+      "name": "system-row-new-4",
+      "bbox": [
+        720,
+        530,
+        430,
+        42
+      ],
+      "geometry": "rect",
+      "text": "经验沉淀为可检索、可复用的组织资产",
+      "textPreview": "经验沉淀为可检索、可复用的组织资产",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "经验沉淀为可检索、可复用的组织资产"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "经验沉淀为可检索、可复用的组织资产",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "经验沉淀为可检索、可复用的组织资产",
+              "fontSize": 20,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

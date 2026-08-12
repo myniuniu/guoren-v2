@@ -1,0 +1,780 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/wzes5i",
+    "id": "wzes5i",
+    "slide": 11,
+    "layoutId": "a8301271-dc48-4ac9-969c-504fc991a537",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "dd045b2c-ff73-4cfe-b0c1-d2efc8a7e8a0",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "PingFang SC, Helvetica Neue, Arial, sans-serif"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "a8301271-dc48-4ac9-969c-504fc991a537",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "dd045b2c-ff73-4cfe-b0c1-d2efc8a7e8a0",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "dd045b2c-ff73-4cfe-b0c1-d2efc8a7e8a0",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/f2d4zeh8",
+      "id": "1",
+      "name": "title-11",
+      "bbox": [
+        41,
+        36,
+        1030,
+        82
+      ],
+      "geometry": "rect",
+      "text": "落地 AI 原生，还要调整组织机制",
+      "textPreview": "落地 AI 原生，还要调整组织机制",
+      "resolvedFontSize": 38,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 38,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "落地 AI 原生，还要调整组织机制"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "落地 AI 原生，还要调整组织机制",
+          "resolvedTextStyle": {
+            "fontSize": 38,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "落地 AI 原生，还要调整组织机制",
+              "fontSize": 38,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/03m58jit",
+      "id": "2",
+      "name": "page-11",
+      "bbox": [
+        1182,
+        658,
+        56,
+        24
+      ],
+      "geometry": "rect",
+      "text": "11",
+      "textPreview": "11",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 3,
+        "fontSize": 13,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#000000",
+        "alignment": "right",
+        "verticalAlignment": "bottom",
+        "autoFit": "shrinkText",
+        "autoFitScale": 0.92,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "11"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "11",
+          "resolvedTextStyle": {
+            "fontSize": 13,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "11",
+              "fontSize": 13,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/14vm1oze",
+      "id": "3",
+      "name": "mechanism-topline-0",
+      "bbox": [
+        84,
+        210,
+        305,
+        4
+      ],
+      "geometry": "rect",
+      "fillColor": "#000000",
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/254nat0z",
+      "id": "4",
+      "name": "mechanism-title-0",
+      "bbox": [
+        84,
+        244,
+        310,
+        42
+      ],
+      "geometry": "rect",
+      "text": "岗位能力",
+      "textPreview": "岗位能力",
+      "resolvedFontSize": 27,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 30,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 0.9,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "岗位能力"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "岗位能力",
+          "resolvedTextStyle": {
+            "fontSize": 30,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "岗位能力",
+              "fontSize": 30,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/n6d43yhk",
+      "id": "5",
+      "name": "mechanism-body-0",
+      "bbox": [
+        84,
+        322,
+        310,
+        176
+      ],
+      "geometry": "rect",
+      "text": "培养员工清晰表达目标、校准 AI 输出、判断业务风险、优化任务模板和沉淀经验。",
+      "textPreview": "培养员工清晰表达目标、校准 AI 输出、判断业务风险、优化任务模板和沉淀经验。",
+      "resolvedFontSize": 21,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 21,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#585858",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 4,
+        "lines": [
+          {
+            "index": 1,
+            "text": "培养员工清晰表达目标、校准"
+          },
+          {
+            "index": 2,
+            "text": "AI"
+          },
+          {
+            "index": 3,
+            "text": "输出、判断业务风险、优化任"
+          },
+          {
+            "index": 4,
+            "text": "务模板和沉淀经验。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "培养员工清晰表达目标、校准 AI 输出、判断业务风险、优化任务模板和沉淀经验。",
+          "resolvedTextStyle": {
+            "fontSize": 21,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#585858",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "培养员工清晰表达目标、校准 AI 输出、判断业务风险、优化任务模板和沉淀经验。",
+              "fontSize": 21,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#585858",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/o765c3i5",
+      "id": "6",
+      "name": "mechanism-topline-1",
+      "bbox": [
+        474,
+        210,
+        305,
+        4
+      ],
+      "geometry": "rect",
+      "fillColor": "#3D8DFF",
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/p8fm5oza",
+      "id": "7",
+      "name": "mechanism-title-1",
+      "bbox": [
+        474,
+        244,
+        310,
+        42
+      ],
+      "geometry": "rect",
+      "text": "责任边界",
+      "textPreview": "责任边界",
+      "resolvedFontSize": 27,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 30,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#3D8DFF",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 0.9,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "责任边界"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "责任边界",
+          "resolvedTextStyle": {
+            "fontSize": 30,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#3D8DFF",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "责任边界",
+              "fontSize": 30,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#3D8DFF",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/i9k3yp0v",
+      "id": "8",
+      "name": "mechanism-body-1",
+      "bbox": [
+        474,
+        322,
+        310,
+        176
+      ],
+      "geometry": "rect",
+      "text": "明确哪些事项自动执行，哪些事项需要人工确认，哪些事项必须负责人审批。",
+      "textPreview": "明确哪些事项自动执行，哪些事项需要人工确认，哪些事项必须负责人审批。",
+      "resolvedFontSize": 21,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 21,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#585858",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "明确哪些事项自动执行，哪些"
+          },
+          {
+            "index": 2,
+            "text": "事项需要人工确认，哪些事项"
+          },
+          {
+            "index": 3,
+            "text": "必须负责人审批。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "明确哪些事项自动执行，哪些事项需要人工确认，哪些事项必须负责人审批。",
+          "resolvedTextStyle": {
+            "fontSize": 21,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#585858",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "明确哪些事项自动执行，哪些事项需要人工确认，哪些事项必须负责人审批。",
+              "fontSize": 21,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#585858",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/3at4ruh0",
+      "id": "9",
+      "name": "mechanism-topline-2",
+      "bbox": [
+        864,
+        210,
+        305,
+        4
+      ],
+      "geometry": "rect",
+      "fillColor": "#000000",
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/fqd8fq9k",
+      "id": "10",
+      "name": "mechanism-title-2",
+      "bbox": [
+        864,
+        244,
+        310,
+        42
+      ],
+      "geometry": "rect",
+      "text": "持续迭代",
+      "textPreview": "持续迭代",
+      "resolvedFontSize": 27,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 30,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 0.9,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "持续迭代"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "持续迭代",
+          "resolvedTextStyle": {
+            "fontSize": 30,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "持续迭代",
+              "fontSize": 30,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ep4rmlsz",
+      "id": "11",
+      "name": "mechanism-body-2",
+      "bbox": [
+        864,
+        322,
+        310,
+        176
+      ],
+      "geometry": "rect",
+      "text": "建立反馈机制，持续优化提示词、任务模板、业务规则、知识库和系统接口。",
+      "textPreview": "建立反馈机制，持续优化提示词、任务模板、业务规则、知识库和系统接口。",
+      "resolvedFontSize": 21,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 21,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#585858",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "建立反馈机制，持续优化提示"
+          },
+          {
+            "index": 2,
+            "text": "词、任务模板、业务规则、知"
+          },
+          {
+            "index": 3,
+            "text": "识库和系统接口。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "建立反馈机制，持续优化提示词、任务模板、业务规则、知识库和系统接口。",
+          "resolvedTextStyle": {
+            "fontSize": 21,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#585858",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "建立反馈机制，持续优化提示词、任务模板、业务规则、知识库和系统接口。",
+              "fontSize": 21,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#585858",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/1cvqh0rq",
+      "id": "12",
+      "name": "mechanism-bottom",
+      "bbox": [
+        160,
+        576,
+        960,
+        58
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#F2F2F2",
+      "lineColor": "#E0E0E0",
+      "lineWidth": 1
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/gbm9ova5",
+      "id": "13",
+      "name": "mechanism-bottom-text",
+      "bbox": [
+        190,
+        592,
+        900,
+        30
+      ],
+      "geometry": "rect",
+      "text": "AI 原生不是一次性上线，而是在真实业务中持续训练、优化和进化。",
+      "textPreview": "AI 原生不是一次性上线，而是在真实业务中持续训练、优化和进化。",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 21,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 0.81,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "AI 原生不是一次性上线，而是在真实业务中持续训练、优化和进化。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "AI 原生不是一次性上线，而是在真实业务中持续训练、优化和进化。",
+          "resolvedTextStyle": {
+            "fontSize": 21,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "AI 原生不是一次性上线，而是在真实业务中持续训练、优化和进化。",
+              "fontSize": 21,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

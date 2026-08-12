@@ -1,0 +1,1064 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/a9krdq",
+    "id": "a9krdq",
+    "slide": 9,
+    "layoutId": "a8301271-dc48-4ac9-969c-504fc991a537",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "dd045b2c-ff73-4cfe-b0c1-d2efc8a7e8a0",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "PingFang SC, Helvetica Neue, Arial, sans-serif"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "a8301271-dc48-4ac9-969c-504fc991a537",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "dd045b2c-ff73-4cfe-b0c1-d2efc8a7e8a0",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "dd045b2c-ff73-4cfe-b0c1-d2efc8a7e8a0",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6psb6lgf",
+      "id": "1",
+      "name": "title-9",
+      "bbox": [
+        41,
+        36,
+        1030,
+        82
+      ],
+      "geometry": "rect",
+      "text": "对公司的影响会体现在组织运行方式上",
+      "textPreview": "对公司的影响会体现在组织运行方式上",
+      "resolvedFontSize": 38,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 38,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "对公司的影响会体现在组织运行方式上"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "对公司的影响会体现在组织运行方式上",
+          "resolvedTextStyle": {
+            "fontSize": 38,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "对公司的影响会体现在组织运行方式上",
+              "fontSize": 38,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ts3u1gz6",
+      "id": "2",
+      "name": "subtitle-9",
+      "bbox": [
+        41,
+        115,
+        1060,
+        56
+      ],
+      "geometry": "rect",
+      "text": "AI 原生会推动公司从控制流程，转向让系统围绕目标自动组织执行。",
+      "textPreview": "AI 原生会推动公司从控制流程，转向让系统围绕目标自动组织执行。",
+      "resolvedFontSize": 21,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 21,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#585858",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "AI 原生会推动公司从控制流程，转向让系统围绕目标自动组织执行。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "AI 原生会推动公司从控制流程，转向让系统围绕目标自动组织执行。",
+          "resolvedTextStyle": {
+            "fontSize": 21,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#585858",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "AI 原生会推动公司从控制流程，转向让系统围绕目标自动组织执行。",
+              "fontSize": 21,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#585858",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/srat8byl",
+      "id": "3",
+      "name": "page-9",
+      "bbox": [
+        1182,
+        658,
+        56,
+        24
+      ],
+      "geometry": "rect",
+      "text": "09",
+      "textPreview": "09",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 3,
+        "fontSize": 13,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#000000",
+        "alignment": "right",
+        "verticalAlignment": "bottom",
+        "autoFit": "shrinkText",
+        "autoFitScale": 0.92,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "09"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "09",
+          "resolvedTextStyle": {
+            "fontSize": 13,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "09",
+              "fontSize": 13,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/fulc3qhw",
+      "id": "4",
+      "name": "impact-panel-0",
+      "bbox": [
+        41,
+        218,
+        360,
+        150
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#EAF6FE",
+      "lineColor": "#E0E0E0",
+      "lineWidth": 1
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/etcbalgb",
+      "id": "5",
+      "name": "impact-title-0",
+      "bbox": [
+        66,
+        242,
+        302,
+        34
+      ],
+      "geometry": "rect",
+      "text": "目标驱动",
+      "textPreview": "目标驱动",
+      "resolvedFontSize": 20.33,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 25,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#3D8DFF",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 0.81,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "目标驱动"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "目标驱动",
+          "resolvedTextStyle": {
+            "fontSize": 25,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#3D8DFF",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "目标驱动",
+              "fontSize": 25,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#3D8DFF",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/1w3u50z2",
+      "id": "6",
+      "name": "impact-body-0",
+      "bbox": [
+        66,
+        290,
+        302,
+        54
+      ],
+      "geometry": "rect",
+      "text": "管理重点从要求员工按流程操作，转向围绕业务目标自动组织执行。",
+      "textPreview": "管理重点从要求员工按流程操作，转向围绕业务目标自动组织执行。",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 17,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#585858",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "管理重点从要求员工按流程操作，转"
+          },
+          {
+            "index": 2,
+            "text": "向围绕业务目标自动组织执行。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "管理重点从要求员工按流程操作，转向围绕业务目标自动组织执行。",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#585858",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "管理重点从要求员工按流程操作，转向围绕业务目标自动组织执行。",
+              "fontSize": 17,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#585858",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/gvutcvyh",
+      "id": "7",
+      "name": "impact-panel-1",
+      "bbox": [
+        452,
+        218,
+        360,
+        150
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#F2F2F2",
+      "lineColor": "#E0E0E0",
+      "lineWidth": 1
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/vyhsrmhs",
+      "id": "8",
+      "name": "impact-title-1",
+      "bbox": [
+        477,
+        242,
+        302,
+        34
+      ],
+      "geometry": "rect",
+      "text": "系统理解人",
+      "textPreview": "系统理解人",
+      "resolvedFontSize": 20.33,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 25,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 0.81,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "系统理解人"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "系统理解人",
+          "resolvedTextStyle": {
+            "fontSize": 25,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "系统理解人",
+              "fontSize": 25,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ux8by1g7",
+      "id": "9",
+      "name": "impact-body-1",
+      "bbox": [
+        477,
+        290,
+        302,
+        54
+      ],
+      "geometry": "rect",
+      "text": "员工不必先学习复杂菜单，通过自然语言即可进入业务流程。",
+      "textPreview": "员工不必先学习复杂菜单，通过自然语言即可进入业务流程。",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 17,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#585858",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "员工不必先学习复杂菜单，通过自然"
+          },
+          {
+            "index": 2,
+            "text": "语言即可进入业务流程。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "员工不必先学习复杂菜单，通过自然语言即可进入业务流程。",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#585858",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "员工不必先学习复杂菜单，通过自然语言即可进入业务流程。",
+              "fontSize": 17,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#585858",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/4je1s32h",
+      "id": "10",
+      "name": "impact-panel-2",
+      "bbox": [
+        863,
+        218,
+        360,
+        150
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#F2F2F2",
+      "lineColor": "#E0E0E0",
+      "lineWidth": 1
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/p4n2l8j2",
+      "id": "11",
+      "name": "impact-title-2",
+      "bbox": [
+        888,
+        242,
+        302,
+        34
+      ],
+      "geometry": "rect",
+      "text": "智能体主导执行",
+      "textPreview": "智能体主导执行",
+      "resolvedFontSize": 20.33,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 25,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 0.81,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "智能体主导执行"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "智能体主导执行",
+          "resolvedTextStyle": {
+            "fontSize": 25,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "智能体主导执行",
+              "fontSize": 25,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/2hwjqtkb",
+      "id": "12",
+      "name": "impact-body-2",
+      "bbox": [
+        888,
+        290,
+        302,
+        54
+      ],
+      "geometry": "rect",
+      "text": "减少人工催办和跨部门反复沟通，执行体系更稳定。",
+      "textPreview": "减少人工催办和跨部门反复沟通，执行体系更稳定。",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 17,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#585858",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "减少人工催办和跨部门反复沟通，执"
+          },
+          {
+            "index": 2,
+            "text": "行体系更稳定。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "减少人工催办和跨部门反复沟通，执行体系更稳定。",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#585858",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "减少人工催办和跨部门反复沟通，执行体系更稳定。",
+              "fontSize": 17,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#585858",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/3i50jy1w",
+      "id": "13",
+      "name": "impact-panel-3",
+      "bbox": [
+        246,
+        428,
+        360,
+        150
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#F2F2F2",
+      "lineColor": "#E0E0E0",
+      "lineWidth": 1
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/c7y1wn2d",
+      "id": "14",
+      "name": "impact-title-3",
+      "bbox": [
+        271,
+        452,
+        302,
+        34
+      ],
+      "geometry": "rect",
+      "text": "能力在组织",
+      "textPreview": "能力在组织",
+      "resolvedFontSize": 20.33,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 25,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 0.81,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "能力在组织"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "能力在组织",
+          "resolvedTextStyle": {
+            "fontSize": 25,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "能力在组织",
+              "fontSize": 25,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/d872psjy",
+      "id": "15",
+      "name": "impact-body-3",
+      "bbox": [
+        271,
+        500,
+        302,
+        54
+      ],
+      "geometry": "rect",
+      "text": "项目经验、客户经验和交付经验沉淀为组织级知识资产。",
+      "textPreview": "项目经验、客户经验和交付经验沉淀为组织级知识资产。",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 17,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#585858",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "项目经验、客户经验和交付经验沉淀"
+          },
+          {
+            "index": 2,
+            "text": "为组织级知识资产。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "项目经验、客户经验和交付经验沉淀为组织级知识资产。",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#585858",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "项目经验、客户经验和交付经验沉淀为组织级知识资产。",
+              "fontSize": 17,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#585858",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/q5gjudkn",
+      "id": "16",
+      "name": "impact-panel-4",
+      "bbox": [
+        657,
+        428,
+        360,
+        150
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#F2F2F2",
+      "lineColor": "#E0E0E0",
+      "lineWidth": 1
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/r6pkni1s",
+      "id": "17",
+      "name": "impact-title-4",
+      "bbox": [
+        682,
+        452,
+        302,
+        34
+      ],
+      "geometry": "rect",
+      "text": "过程洞察",
+      "textPreview": "过程洞察",
+      "resolvedFontSize": 20.33,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 25,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 0.81,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "过程洞察"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "过程洞察",
+          "resolvedTextStyle": {
+            "fontSize": 25,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#000000",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "过程洞察",
+              "fontSize": 25,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#000000",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 18,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/sbu1kj29",
+      "id": "18",
+      "name": "impact-body-4",
+      "bbox": [
+        682,
+        500,
+        302,
+        54
+      ],
+      "geometry": "rect",
+      "text": "提前识别延期、满意度、资源冲突和履约风险。",
+      "textPreview": "提前识别延期、满意度、资源冲突和履约风险。",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 17,
+        "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+        "color": "#585858",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "提前识别延期、满意度、资源冲突和"
+          },
+          {
+            "index": 2,
+            "text": "履约风险。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "提前识别延期、满意度、资源冲突和履约风险。",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+            "color": "#585858",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "提前识别延期、满意度、资源冲突和履约风险。",
+              "fontSize": 17,
+              "typeface": "PingFang SC, Helvetica Neue, Arial, sans-serif",
+              "color": "#585858",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}
