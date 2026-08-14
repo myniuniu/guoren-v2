@@ -1798,12 +1798,12 @@ function ProjectsPage({ projects, onOpenCreate, onOpenProject }) {
   );
 }
 
-function ProjectDetailPage({ project }) {
+function ProjectDetailPage({ project, onBackToProjects }) {
   return (
     <section className="lucky-project-detail-page" aria-label={`${project.name} 项目`}>
       <header className="lucky-project-detail-topbar">
         <div className="lucky-project-detail-breadcrumb">
-          <span>项目</span>
+          <button type="button" onClick={onBackToProjects}>项目</button>
           <span>/</span>
           <strong>{project.name}</strong>
         </div>
@@ -3374,7 +3374,7 @@ function LuckyModule() {
               />
             )
           ) : showProjectDetail ? (
-            <ProjectDetailPage project={activeProject} />
+            <ProjectDetailPage project={activeProject} onBackToProjects={() => setActiveProject(null)} />
           ) : showProjects ? (
             <ProjectsPage
               projects={projects}
