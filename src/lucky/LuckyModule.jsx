@@ -20,6 +20,7 @@ import {
   PlusOutlined,
   ProductOutlined,
   ProjectOutlined,
+  RightOutlined,
   RobotOutlined,
   SearchOutlined,
   ShopOutlined,
@@ -153,6 +154,9 @@ const TEAM_AGENT_AVATARS = [
 
 const AGENT_EDITOR_TABS = ['档案', '技能', '知识', '模型', '管理'];
 const AGENT_EDITOR_SKILLS = ['飞书卡片生成', '用户工作画像', '技能调试优化', 'AI生成技能'];
+const BUILT_IN_AGENT_KEY = 'personal';
+const BUILT_IN_AGENT_TABS = ['人设', '产物', '技能', '模型', '安全'];
+const BUILT_IN_AGENT_ARCHIVE_TABS = ['伙伴档案', '用户档案', '行为准则'];
 const DEFAULT_AGENT_INSTRUCTION_MARKDOWN = `## 角色定位
 
 - 你是团队协作场景下的通用协作角色，可响应团队成员的各类常规咨询与协作需求，交付清晰明确的反馈结果。
@@ -1034,6 +1038,190 @@ function AgentModelView({ selectedModel, onSelectModel }) {
   );
 }
 
+function BuiltInAgentEditorPage({ agent, skills, onOpenSkillMarket, onBack, onStartNewTask }) {
+  const [activeTab, setActiveTab] = useState('人设');
+  const [selectedModel, setSelectedModel] = useState('auto');
+  const statItems = [
+    { label: '陪伴天数', value: 15 },
+    { label: '对话数', value: 1 },
+    { label: '任务数', value: 1 },
+  ];
+  const skillListItems = skills.map((skill) => getAgentSkillMeta(skill));
+
+  useEffect(() => {
+    setActiveTab('人设');
+    setSelectedModel('auto');
+  }, [agent.key]);
+
+  return (
+    <section className="lucky-builtin-agent-editor" aria-label={`${agent.name} 内置编辑页`}>
+      <div className="lucky-agent-editor-breadcrumb">
+        <button type="button" onClick={onBack}>智能体</button>
+        <span>/</span>
+        <strong>{agent.name}</strong>
+        <button
+          type="button"
+          className="lucky-agent-editor-more"
+          title="更多"
+          aria-label="更多"
+          onClick={() => message.info('已打开更多操作')}
+        >
+          <EllipsisOutlined />
+        </button>
+      </div>
+
+      <div className="lucky-builtin-agent-layout">
+        <aside className="lucky-builtin-agent-profile">
+          <div className="lucky-builtin-agent-avatar" aria-hidden="true">
+            <span className="lucky-builtin-avatar-hair" />
+            <span className="lucky-builtin-avatar-face" />
+            <span className="lucky-builtin-avatar-glasses" />
+            <span className="lucky-builtin-avatar-body" />
+          </div>
+
+          <div className="lucky-builtin-agent-name-row">
+            <h2>{agent.name}</h2>
+            <span>{agent.tag}</span>
+          </div>
+          <p className="lucky-builtin-agent-desc">{agent.desc}</p>
+          <button
+            type="button"
+            className="lucky-builtin-auto"
+            onClick={() => message.info(`${agent.name} 已切换为 Auto`)}
+          >
+            <ThunderboltOutlined />
+            Auto
+          </button>
+
+          <div className="lucky-builtin-stats">
+            {statItems.map((item) => (
+              <div key={item.label}>
+                <strong>{item.value}</strong>
+                <span>{item.label}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="lucky-builtin-actions">
+            <button
+              type="button"
+              className="lucky-builtin-action-secondary"
+              onClick={() => message.info('已打开飞书对话')}
+            >
+              <MessageOutlined />
+              去飞书对话
+            </button>
+            <button
+              type="button"
+              className="lucky-builtin-action-primary"
+              onClick={onStartNewTask}
+            >
+              <EditOutlined />
+              新任务
+            </button>
+          </div>
+        </aside>
+
+        <section className="lucky-builtin-agent-panel">
+          <div className="lucky-builtin-tabs" role="tablist" aria-label="内置智能体编辑分区">
+            {BUILT_IN_AGENT_TABS.map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === tab}
+                className={activeTab === tab ? 'is-active' : ''}
+                onClick={() => setActiveTab(tab)}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          <div className="lucky-builtin-panel-body">
+            {activeTab === '人设' ? (
+              <>
+                <div className="lucky-builtin-archive-tabs" aria-label="人设档案分类">
+                  {BUILT_IN_AGENT_ARCHIVE_TABS.map((tab, index) => (
+                    <button key={tab} type="button" className={index === 0 ? 'is-active' : ''}>
+                      {tab}
+                    </button>
+                  ))}
+                  <button type="button">
+                    全部
+                    <RightOutlined />
+                  </button>
+                </div>
+
+                <div className="lucky-builtin-file-meta">
+                  <h3>IDENTITY.md</h3>
+                  <p>智能伙伴的名字、性格和身份定义</p>
+                </div>
+
+                <article className="lucky-builtin-identity-doc">
+                  <h2>IDENTITY.md - 你的名片</h2>
+                  <p>第一次对话时填写。开始成为你自己。</p>
+                  <ul>
+                    <li><strong>名字：</strong>张洪磊的智能伙伴</li>
+                    <li><strong>身份：</strong>（管家、搭档、影子幕僚、数字分身……什么都行，别急着定义）</li>
+                    <li><strong>风格：</strong>（冷静精确，先给答案再解释 / 温暖周到，想得比你多但说得比你少 / 话不多，句句有用 / 毒舌但中肯，越吵越明白。或者，用自己的话描述）</li>
+                    <li><strong>签名：</strong>（一句话，写给还不认识你的人）</li>
+                    <li><strong>头像：</strong>（工作空间相对路径，如 avatars/avatar.png）</li>
+                  </ul>
+                  <p>这不是档案，是起点。</p>
+                </article>
+              </>
+            ) : activeTab === '技能' ? (
+              <section className="lucky-agent-skill-list-view" aria-label="技能列表">
+                <div className="lucky-agent-skill-list-toolbar">
+                  <span>技能</span>
+                  <div>
+                    <button type="button" aria-label="搜索技能" onClick={() => message.info('已打开技能搜索')}>
+                      <SearchOutlined />
+                    </button>
+                    <button type="button" aria-label="添加技能" onClick={onOpenSkillMarket}>
+                      <PlusOutlined />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="lucky-agent-skill-list">
+                  {skillListItems.map((skill) => (
+                    <article key={skill.title} className="lucky-agent-skill-row">
+                      <span className="lucky-agent-skill-row-icon">{skill.icon}</span>
+                      <div className="lucky-agent-skill-row-copy">
+                        <div className="lucky-agent-skill-row-title">
+                          <strong>{skill.title}</strong>
+                          <span>{skill.source}</span>
+                        </div>
+                        <p>{skill.desc}</p>
+                      </div>
+                      <button
+                        type="button"
+                        aria-label={`${skill.title} 更多`}
+                        onClick={() => message.info(`已打开：${skill.title}`)}
+                      >
+                        <EllipsisOutlined />
+                      </button>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            ) : activeTab === '模型' ? (
+              <AgentModelView selectedModel={selectedModel} onSelectModel={setSelectedModel} />
+            ) : (
+              <div className="lucky-builtin-empty-panel">
+                <h3>{activeTab}</h3>
+                <p>该内置智能体的{activeTab}配置将在这里维护。</p>
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+    </section>
+  );
+}
+
 function AgentEditorPage({
   agent,
   skills,
@@ -1658,18 +1846,35 @@ function LuckyModule() {
             />
           ) : showAgents ? (
             editingAgent ? (
-              <AgentEditorPage
-                agent={editingAgent}
-                skills={editingAgentSkills}
-                instructionMarkdown={agentInstructions[editingAgent.key] ?? DEFAULT_AGENT_INSTRUCTION_MARKDOWN}
-                onInstructionChange={(nextMarkdown) => handleAgentInstructionChange(editingAgent.key, nextMarkdown)}
-                onOpenSkillMarket={() => setSkillMarketOpen(true)}
-                onDeleteAgent={handleDeleteAgent}
-                onBack={() => {
-                  setSkillMarketOpen(false);
-                  setEditingAgent(null);
-                }}
-              />
+              editingAgent.key === BUILT_IN_AGENT_KEY ? (
+                <BuiltInAgentEditorPage
+                  agent={editingAgent}
+                  skills={editingAgentSkills}
+                  onOpenSkillMarket={() => setSkillMarketOpen(true)}
+                  onBack={() => {
+                    setSkillMarketOpen(false);
+                    setEditingAgent(null);
+                  }}
+                  onStartNewTask={() => {
+                    setSkillMarketOpen(false);
+                    setEditingAgent(null);
+                    setActiveSection('new');
+                  }}
+                />
+              ) : (
+                <AgentEditorPage
+                  agent={editingAgent}
+                  skills={editingAgentSkills}
+                  instructionMarkdown={agentInstructions[editingAgent.key] ?? DEFAULT_AGENT_INSTRUCTION_MARKDOWN}
+                  onInstructionChange={(nextMarkdown) => handleAgentInstructionChange(editingAgent.key, nextMarkdown)}
+                  onOpenSkillMarket={() => setSkillMarketOpen(true)}
+                  onDeleteAgent={handleDeleteAgent}
+                  onBack={() => {
+                    setSkillMarketOpen(false);
+                    setEditingAgent(null);
+                  }}
+                />
+              )
             ) : (
               <AgentManagementPage
                 activeTab={agentTab}

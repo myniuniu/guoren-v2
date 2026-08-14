@@ -1030,6 +1030,10 @@
   font-size: 14px;
 }
 
+.lucky-agent-editor-breadcrumb > .lucky-agent-editor-more {
+  margin-left: auto;
+}
+
 .lucky-agent-editor-more:hover,
 .lucky-agent-editor-more.is-active {
   background: #eef0f3;
@@ -1112,6 +1116,410 @@
   font-size: 10px;
   font-weight: 900;
   text-shadow: 0 1px 1px rgba(68, 72, 84, 0.22);
+}
+
+.lucky-builtin-agent-editor {
+  min-height: 100%;
+  background: transparent;
+}
+
+.lucky-builtin-agent-layout {
+  width: 100%;
+  min-height: calc(100vh - 50px);
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(280px, 30%) minmax(0, 1fr);
+  justify-content: stretch;
+  align-items: flex-start;
+  gap: 28px;
+  padding: 28px clamp(24px, 2.6vw, 40px) 32px;
+}
+
+.lucky-builtin-agent-profile {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 18px;
+}
+
+.lucky-builtin-agent-avatar {
+  position: relative;
+  width: 112px;
+  height: 112px;
+  overflow: hidden;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 44%, rgba(255, 255, 255, 0.86) 0 24%, transparent 25%),
+    linear-gradient(145deg, #e9e3ff 0%, #cbc2f9 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.74),
+    0 10px 22px rgba(108, 95, 180, 0.12);
+}
+
+.lucky-builtin-agent-avatar > span {
+  position: absolute;
+  display: block;
+}
+
+.lucky-builtin-avatar-hair {
+  left: 29px;
+  top: 20px;
+  z-index: 1;
+  width: 55px;
+  height: 62px;
+  border-radius: 28px 28px 24px 24px;
+  background:
+    radial-gradient(circle at 28% 35%, rgba(105, 72, 53, 0.82) 0 11%, transparent 12%),
+    linear-gradient(160deg, #6a402d 0%, #3a281f 100%);
+}
+
+.lucky-builtin-avatar-face {
+  left: 36px;
+  top: 31px;
+  z-index: 2;
+  width: 40px;
+  height: 44px;
+  border-radius: 48% 48% 46% 46%;
+  background:
+    radial-gradient(circle at 35% 48%, #2f333c 0 3%, transparent 4%),
+    radial-gradient(circle at 65% 48%, #2f333c 0 3%, transparent 4%),
+    radial-gradient(circle at 50% 64%, rgba(178, 93, 79, 0.56) 0 4%, transparent 5%),
+    linear-gradient(#f7cfb5 0%, #eaa983 100%);
+}
+
+.lucky-builtin-avatar-glasses {
+  left: 31px;
+  top: 45px;
+  z-index: 3;
+  width: 19px;
+  height: 13px;
+  border: 2px solid #2d3440;
+  border-radius: 50%;
+  box-shadow: 30px 0 0 -2px transparent, 30px 0 0 0 #2d3440;
+}
+
+.lucky-builtin-avatar-glasses::after {
+  content: '';
+  position: absolute;
+  left: 18px;
+  top: 4px;
+  width: 13px;
+  height: 2px;
+  border-radius: 999px;
+  background: #2d3440;
+}
+
+.lucky-builtin-avatar-body {
+  left: 25px;
+  bottom: -7px;
+  z-index: 2;
+  width: 62px;
+  height: 42px;
+  border-radius: 28px 28px 0 0;
+  background:
+    linear-gradient(90deg, transparent 0 22%, #f7f7fa 23% 77%, transparent 78% 100%),
+    linear-gradient(135deg, #35465e 0%, #8aa3c4 100%);
+}
+
+.lucky-builtin-agent-name-row {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin-top: 20px;
+}
+
+.lucky-builtin-agent-name-row h2 {
+  max-width: 300px;
+  margin: 0;
+  overflow: hidden;
+  color: #303640;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 24px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lucky-builtin-agent-name-row span {
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding: 0 7px;
+  border-radius: 6px;
+  background: #f0f2f5;
+  color: #9aa2ad;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.lucky-builtin-agent-desc {
+  margin: 9px 0 0;
+  color: #a0a7b2;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 21px;
+}
+
+.lucky-builtin-auto {
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 13px;
+  padding: 0 13px;
+  border: 1px solid rgba(228, 231, 236, 0.98);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #8b93a0;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lucky-builtin-auto .anticon {
+  color: #4f76ff;
+  font-size: 13px;
+}
+
+.lucky-builtin-stats {
+  width: min(300px, 100%);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 28px;
+}
+
+.lucky-builtin-stats div {
+  min-width: 0;
+  text-align: center;
+}
+
+.lucky-builtin-stats strong,
+.lucky-builtin-stats span {
+  display: block;
+}
+
+.lucky-builtin-stats strong {
+  color: #1f2329;
+  font-size: 23px;
+  font-weight: 800;
+  line-height: 28px;
+}
+
+.lucky-builtin-stats span {
+  margin-top: 4px;
+  color: #8f97a3;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.lucky-builtin-actions {
+  width: min(330px, 100%);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 28px;
+}
+
+.lucky-builtin-actions button {
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border-radius: 7px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.lucky-builtin-action-secondary {
+  border: 1px solid rgba(226, 230, 236, 0.96);
+  background: #ffffff;
+  color: #49515e;
+}
+
+.lucky-builtin-action-secondary:hover {
+  background: #f8f9fb;
+}
+
+.lucky-builtin-action-primary {
+  border: 0;
+  background: #1f2329;
+  color: #ffffff;
+}
+
+.lucky-builtin-action-primary:hover {
+  background: #111827;
+}
+
+.lucky-builtin-agent-panel {
+  min-width: 0;
+  overflow: visible;
+  border: 1px solid rgba(224, 227, 232, 0.96);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.lucky-builtin-tabs {
+  height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding: 0 28px;
+  border-bottom: 1px solid rgba(230, 232, 236, 0.92);
+}
+
+.lucky-builtin-tabs button {
+  position: relative;
+  height: 46px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #7c8490;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.lucky-builtin-tabs button.is-active {
+  color: #20242c;
+}
+
+.lucky-builtin-tabs button.is-active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 999px;
+  background: #20242c;
+}
+
+.lucky-builtin-panel-body {
+  padding: 22px 28px 24px;
+}
+
+.lucky-builtin-archive-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.lucky-builtin-archive-tabs button {
+  height: 31px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 14px;
+  border: 1px solid rgba(226, 230, 236, 0.96);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #7b8491;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.lucky-builtin-archive-tabs button.is-active {
+  border-color: #edf0f4;
+  background: #f2f3f5;
+  color: #303640;
+}
+
+.lucky-builtin-archive-tabs button:hover {
+  border-color: rgba(198, 204, 214, 0.98);
+  color: #303640;
+}
+
+.lucky-builtin-file-meta {
+  margin-top: 22px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(226, 230, 236, 0.96);
+}
+
+.lucky-builtin-file-meta h3 {
+  margin: 0;
+  color: #303640;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 21px;
+}
+
+.lucky-builtin-file-meta p {
+  margin: 4px 0 0;
+  color: #9aa2ad;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.lucky-builtin-identity-doc {
+  padding-top: 22px;
+  color: #303640;
+}
+
+.lucky-builtin-identity-doc h2 {
+  margin: 0 0 12px;
+  color: #303640;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 22px;
+}
+
+.lucky-builtin-identity-doc p,
+.lucky-builtin-identity-doc li {
+  color: #4f5865;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 25px;
+}
+
+.lucky-builtin-identity-doc p {
+  margin: 0 0 10px;
+}
+
+.lucky-builtin-identity-doc ul {
+  margin: 0 0 12px;
+  padding-left: 22px;
+}
+
+.lucky-builtin-identity-doc li + li {
+  margin-top: 4px;
+}
+
+.lucky-builtin-identity-doc strong {
+  font-weight: 800;
+}
+
+.lucky-builtin-empty-panel {
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #9aa2ad;
+  text-align: center;
+}
+
+.lucky-builtin-empty-panel h3 {
+  margin: 0 0 8px;
+  color: #303640;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.lucky-builtin-empty-panel p {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .lucky-agent-editor-layout {
@@ -3213,6 +3621,12 @@
     gap: 24px;
     padding-inline: 24px;
   }
+
+  .lucky-builtin-agent-layout {
+    grid-template-columns: minmax(270px, 34%) minmax(0, 1fr);
+    gap: 24px;
+    padding-inline: 24px;
+  }
 }
 
 @media (max-width: 900px) {
@@ -3284,8 +3698,18 @@
     padding: 24px 20px 32px;
   }
 
+  .lucky-builtin-agent-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+    padding: 24px 20px 32px;
+  }
+
   .lucky-agent-editor-panel {
     height: auto;
+  }
+
+  .lucky-builtin-agent-panel {
+    min-height: auto;
   }
 
   .lucky-workspace-card,
