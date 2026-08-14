@@ -1,12 +1,28 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Avatar, Button, Dropdown, Input, Select, Tag, message } from 'antd';
+import { Button, Dropdown, Input, Select, Tag, message } from 'antd';
 import {
-  BookOutlined,
-  CompassOutlined,
+  AppstoreOutlined,
+  ArrowUpOutlined,
+  AudioOutlined,
+  BarChartOutlined,
+  CloudServerOutlined,
+  CodeOutlined,
+  MessageOutlined,
+  CloseOutlined,
+  ControlOutlined,
+  DatabaseOutlined,
   DownOutlined,
+  EditOutlined,
   EllipsisOutlined,
+  FileImageOutlined,
+  FilePptOutlined,
+  FolderOutlined,
   PlusOutlined,
+  ProductOutlined,
+  ProjectOutlined,
+  RobotOutlined,
   SearchOutlined,
+  ShopOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
 import ResourceLibrarySaveModal from '../resourceLib/ResourceLibrarySaveModal.jsx';
@@ -42,111 +58,127 @@ function persistLuckySidebarWidth(width) {
   }
 }
 
+const WORK_MODES = [
+  { key: 'office', label: '办公', icon: <AppstoreOutlined /> },
+  { key: 'code', label: '编程', icon: <CodeOutlined /> },
+];
+
 const NAV_ITEMS = [
-  { key: 'new', label: '新建', icon: <PlusOutlined /> },
-  { key: 'discover', label: '发现', icon: <CompassOutlined /> },
-  { key: 'library', label: '库', icon: <BookOutlined /> },
-  { key: 'skills', label: '技能', icon: <ThunderboltOutlined /> },
+  { key: 'new', label: '新任务', icon: <EditOutlined /> },
+  { key: 'automation', label: '自动化', icon: <ThunderboltOutlined /> },
+  { key: 'partners', label: '智能体', icon: <RobotOutlined /> },
+  { key: 'projects', label: '项目', icon: <ProjectOutlined /> },
+  { key: 'library', label: '资源库', icon: <DatabaseOutlined /> },
+  { key: 'market', label: '市场', icon: <ShopOutlined />, meta: '专家 · 技能' },
 ];
 
-const PARTNER_AGENT_ITEMS = [
-  { key: 'assistant', label: '小助手', marker: '小' },
+const QUICK_ACTIONS = [
+  { key: 'slides', label: '幻灯片', icon: <FilePptOutlined /> },
+  { key: 'research', label: '深度研究', icon: <CloudServerOutlined /> },
+  { key: 'chart', label: '数据可视化', icon: <BarChartOutlined /> },
+  { key: 'prototype', label: '产品原型', icon: <ProductOutlined /> },
+  { key: 'office', label: '日常办公', icon: <FolderOutlined /> },
+  { key: 'image', label: '图像生成', icon: <FileImageOutlined /> },
 ];
 
-const CUSTOM_AGENT_ITEMS = [
-  { key: 'programmer', label: '编程助手', marker: '编' },
-  { key: 'navigator', label: '学海导航者', marker: '学' },
+const COMPOSER_CONTEXTS = [
+  { key: 'agent', label: '张洪磊的智能伙伴', icon: <RobotOutlined /> },
+  { key: 'project', label: '进入项目工作', icon: <FolderOutlined /> },
+  { key: 'browser', label: '云端浏览器', icon: <CloudServerOutlined />, hasNotice: true },
 ];
 
-const HISTORY_GROUPS = [
+const RECOMMENDATION_CARDS = [
+  { key: 'ppt', label: '幻灯片', title: '做一份跨部门项目启动会 PPT', icon: <FilePptOutlined /> },
+  { key: 'research', label: '深度研究', title: '研究 AI 会议助手领域的市场格局', icon: <CloudServerOutlined /> },
+  { key: 'data', label: '数据可视化', title: '做一份国内旅游数据可视化分析', icon: <BarChartOutlined /> },
+];
+
+const AGENT_TABS = [
+  { key: 'mine', label: '我的智能体', count: 2 },
+  { key: 'team', label: '智能体小队', count: 1 },
+];
+
+const AGENT_CARDS = [
   {
-    title: '7天内',
-    items: [
-      '/ai-course-review',
-      '今天天气怎么样？',
-      '评价课堂效果',
-      '帮我创建一个研讨会',
-      '/ai-course-review评课',
-      '/ai-course-review讲课',
-      '帮我约个会议室，明天...',
-    ],
+    key: 'personal',
+    name: '张洪磊的智能伙伴',
+    desc: '暂无描述',
+    tag: '专属',
+    tagTone: 'purple',
+    avatar: 'personal',
   },
   {
-    title: '7天外',
-    items: [
-      '介绍一下北京智慧城市...',
-      '北京智慧城市教育科技...',
-      '我刚进大学，对未来...',
-      '创建一个结营流程白板',
-      '/skill-creator 帮我创建...',
-      '给我推荐一些人工智能...',
-      '对课堂实录进行评课',
-    ],
+    key: 'coach',
+    name: '辅导员',
+    desc: '负责团队协作场景下的疑问解答、问题梳理及规则提示辅助工作',
+    tag: '团队',
+    tagTone: 'muted',
+    avatar: 'coach',
+  },
+];
+
+const CREATE_AGENT_OPTIONS = [
+  {
+    key: 'team',
+    title: '团队智能伙伴',
+    desc: '团队专属智能伙伴，聚焦多人协作场景，高效沉淀团队知识，跨群共享上下文',
+    action: '添加',
+    image: 'team',
+    primary: true,
+  },
+  {
+    key: 'third-party',
+    title: '第三方智能体',
+    badge: '限时免费',
+    desc: '将多来源智能体（如 OpenClaw、Hermes 等）无缝接入飞书，打破平台边界，实现多智能体协同工作',
+    link: '查看帮助文档',
+    action: '接入',
+    image: 'third-party',
+  },
+  {
+    key: 'market',
+    title: '去专家市场逛逛',
+    desc: '市场运营、文案编写、内容生成、人事行政、产品研发等等，各领域的专家等你招募',
+    action: '浏览专家市场',
+    image: 'market',
   },
 ];
 
 const SECTION_COPY = {
-  new: {
-    title: '新建',
-    description: '从技能、智能体或资料集合开始，快速创建新的 Lucky 工作项。',
+  automation: {
+    title: '自动化',
+    description: '把重复任务沉淀成可执行流程，让 Lucky 帮你自动推进。',
     cards: [
-      { title: '创建智能体', desc: '配置角色、提示词、工具与知识源。', accent: 'blue' },
-      { title: '上传资料入库', desc: '把文档、网页和课件沉淀到 Lucky 的资源库。', accent: 'gold' },
-      { title: '发起工作流', desc: '基于现有技能直接搭一个可复用流程。', accent: 'green' },
-    ],
-  },
-  discover: {
-    title: '发现',
-    description: '浏览近期活跃的智能体、技能与沉淀资料，挑选可直接复用的内容。',
-    cards: [
-      { title: 'AI 评课助手', desc: '本周被 28 个教学团队复用。', accent: 'blue' },
-      { title: '课程大纲生成器', desc: '最近 7 天新增 112 次调用。', accent: 'gold' },
-      { title: '学海导航者', desc: '适合课堂导学与个性化推荐。', accent: 'green' },
-    ],
-  },
-  skills: {
-    title: '技能',
-    description: '查看当前 Lucky 模块里的高频技能组件，统一管理可复用能力。',
-    cards: [
-      { title: '课程拆解', desc: '自动提取章节、知识点与学习任务。', accent: 'blue' },
-      { title: '资料综述', desc: '多篇资料聚合后生成摘要和行动建议。', accent: 'gold' },
-      { title: '题目讲评', desc: '结合课堂表现生成讲评提纲。', accent: 'green' },
+      { title: '消息提醒', desc: '按时间、状态和负责人触发后续动作。', accent: 'blue' },
+      { title: '资料归档', desc: '自动整理任务产物并保存到资源库。', accent: 'green' },
+      { title: '进度同步', desc: '把项目节点同步到相关团队。', accent: 'gold' },
     ],
   },
   partners: {
-    title: '智能伙伴',
-    description: 'Lucky 已沉淀多个可即用的角色助手，适合按任务协同调用。',
+    title: '智能体',
+    description: '管理可协作的智能伙伴，按任务选择最合适的角色。',
     cards: [
       { title: '教案协作者', desc: '辅助梳理目标、活动和板书设计。', accent: 'blue' },
-      { title: '资源整理员', desc: '负责筛选、命名与结构化归档资料。', accent: 'gold' },
-      { title: '课堂复盘官', desc: '基于记录自动生成课后复盘。', accent: 'green' },
+      { title: '资源整理员', desc: '负责筛选、命名与结构化归档资料。', accent: 'green' },
+      { title: '课堂复盘官', desc: '基于记录自动生成课后复盘。', accent: 'gold' },
     ],
   },
-  assistant: {
-    title: '小助手',
-    description: '常用即时助手集合，适合短任务、快反馈的轻量使用方式。',
+  projects: {
+    title: '项目',
+    description: '围绕真实业务创建工作项目，集中管理任务、资料和输出。',
     cards: [
-      { title: '灵感便签', desc: '快速记下想法并自动归类。', accent: 'blue' },
-      { title: '会议纪要', desc: '从聊天或录音快速生成纪要。', accent: 'gold' },
-      { title: '今日总结', desc: '按任务与成果整理每日输出。', accent: 'green' },
+      { title: 'AI 培训项目', desc: '适合课程、通知、作业和评估一体推进。', accent: 'blue' },
+      { title: '市场研究项目', desc: '汇总资料、调研问题和阶段性报告。', accent: 'green' },
+      { title: '产品原型项目', desc: '沉淀需求、页面和演示材料。', accent: 'gold' },
     ],
   },
-  programmer: {
-    title: '编程助手',
-    description: '面向流程配置、脚本整理和工具搭建的专属智能体。',
+  market: {
+    title: '市场',
+    description: '浏览可复用的专家智能体与技能模板。',
     cards: [
-      { title: '脚本整理', desc: '把零散需求拆成可执行步骤。', accent: 'blue' },
-      { title: '接口联调', desc: '辅助梳理字段、参数和异常路径。', accent: 'gold' },
-      { title: '问题定位', desc: '根据报错和上下文给出排查建议。', accent: 'green' },
-    ],
-  },
-  navigator: {
-    title: '学海导航者',
-    description: '面向教学与学习任务的专属导航智能体，聚合资源、技能与建议。',
-    cards: [
-      { title: '课程诊断', desc: '依据目标、资料与课堂数据做诊断。', accent: 'blue' },
-      { title: '学习路径', desc: '按能力层级给出阶段性学习建议。', accent: 'gold' },
-      { title: '资源推荐', desc: '联动 Lucky 资料库生成个性化推荐。', accent: 'green' },
+      { title: '深度研究助手', desc: '快速生成调研框架、资料清单和分析报告。', accent: 'blue' },
+      { title: '数据可视化技能', desc: '把表格数据转换成可读图表和结论。', accent: 'green' },
+      { title: '会议材料生成', desc: '按会议目标自动组织议程和 PPT。', accent: 'gold' },
     ],
   },
 };
@@ -214,25 +246,23 @@ function StatCard({ title, value, hint }) {
 
 function ShowcaseSection({ title, description, cards }) {
   return (
-    <div className="lucky-workspace-card">
-      <div className="lucky-page-header">
-        <div>
-          <div className="lucky-page-title">{title}</div>
-          <div className="lucky-page-subtitle">{description}</div>
-        </div>
+    <div className="lucky-placeholder-view">
+      <div className="lucky-placeholder-header">
+        <div className="lucky-page-title">{title}</div>
+        <div className="lucky-page-subtitle">{description}</div>
       </div>
       <div className="lucky-showcase-grid">
         {cards.map((card) => (
           <div key={card.title} className={`lucky-showcase-card lucky-showcase-card-${card.accent}`}>
             <div className="lucky-showcase-title">{card.title}</div>
             <div className="lucky-showcase-desc">{card.desc}</div>
-            <Button
-              type="text"
+            <button
+              type="button"
               className="lucky-showcase-action"
               onClick={() => message.success(`已打开：${card.title}`)}
             >
               打开
-            </Button>
+            </button>
           </div>
         ))}
       </div>
@@ -240,17 +270,303 @@ function ShowcaseSection({ title, description, cards }) {
   );
 }
 
+function LuckyHome({ promptText, onPromptChange, onSend }) {
+  return (
+    <div className="lucky-home">
+      <div className="lucky-home-avatar" aria-hidden="true">
+        <span className="lucky-home-avatar-face">张</span>
+      </div>
+      <h1 className="lucky-home-title">让张洪磊的智能伙伴帮你做点什么？</h1>
+
+      <section className="lucky-composer-shell" aria-label="创建新任务">
+        <div className="lucky-composer-frame">
+          <div className="lucky-composer-box">
+            <textarea
+              value={promptText}
+              className="lucky-composer-input"
+              placeholder="输入你的任务或目标"
+              rows={2}
+              onChange={(event) => onPromptChange(event.target.value)}
+            />
+            <div className="lucky-composer-actions">
+              <button
+                type="button"
+                className="lucky-icon-button"
+                title="添加附件"
+                aria-label="添加附件"
+                onClick={() => message.info('已打开附件入口')}
+              >
+                <PlusOutlined />
+              </button>
+              <div className="lucky-composer-action-right">
+                <button
+                  type="button"
+                  className="lucky-auto-button"
+                  title="自动选择能力"
+                  onClick={() => message.info('已切换为 Auto 模式')}
+                >
+                  <ThunderboltOutlined />
+                  <span>Auto</span>
+                  <DownOutlined />
+                </button>
+                <button
+                  type="button"
+                  className="lucky-icon-button"
+                  title="语音输入"
+                  aria-label="语音输入"
+                  onClick={() => message.info('已打开语音输入')}
+                >
+                  <AudioOutlined />
+                </button>
+                <button
+                  type="button"
+                  className="lucky-send-button"
+                  title="发送"
+                  aria-label="发送"
+                  onClick={onSend}
+                >
+                  <ArrowUpOutlined />
+                </button>
+              </div>
+            </div>
+          </div>
+          <div className="lucky-context-bar">
+            {COMPOSER_CONTEXTS.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                className="lucky-context-item"
+                onClick={() => message.info(`已选择：${item.label}`)}
+              >
+                <span className="lucky-context-icon">{item.icon}</span>
+                <span className="lucky-context-label">{item.label}</span>
+                <DownOutlined className="lucky-context-arrow" />
+                {item.hasNotice ? <span className="lucky-context-notice" /> : null}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="lucky-quick-actions" aria-label="快捷能力">
+        {QUICK_ACTIONS.map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            className="lucky-quick-chip"
+            onClick={() => message.info(`已选择：${item.label}`)}
+          >
+            <span>{item.icon}</span>
+            {item.label}
+          </button>
+        ))}
+      </div>
+
+      <section className="lucky-recommend-section">
+        <div className="lucky-recommend-title">为你推荐</div>
+        <div className="lucky-recommend-grid">
+          {RECOMMENDATION_CARDS.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              className="lucky-recommend-card"
+              onClick={() => message.success(`已选择推荐任务：${item.title}`)}
+            >
+              <span className="lucky-recommend-card-kicker">
+                {item.icon}
+                {item.label}
+              </span>
+              <span className="lucky-recommend-card-title">{item.title}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function AgentAvatar({ type }) {
+  return (
+    <span className={`lucky-agent-card-avatar lucky-agent-card-avatar-${type}`} aria-hidden="true">
+      <span />
+    </span>
+  );
+}
+
+function CreateAgentIllustration({ type }) {
+  return (
+    <div className={`lucky-create-agent-visual lucky-create-agent-visual-${type}`} aria-hidden="true">
+      <span className="lucky-create-agent-dot lucky-create-agent-dot-1" />
+      <span className="lucky-create-agent-dot lucky-create-agent-dot-2" />
+      <span className="lucky-create-agent-dot lucky-create-agent-dot-3" />
+      <span className="lucky-create-agent-core" />
+      <span className="lucky-create-agent-cardlet lucky-create-agent-cardlet-1" />
+      <span className="lucky-create-agent-cardlet lucky-create-agent-cardlet-2" />
+      <span className="lucky-create-agent-cardlet lucky-create-agent-cardlet-3" />
+    </div>
+  );
+}
+
+function CreateAgentModal({ open, onClose }) {
+  useEffect(() => {
+    if (!open) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose, open]);
+
+  if (!open) return null;
+
+  const handleOptionClick = (option) => {
+    message.success(`已选择：${option.title}`);
+    onClose();
+  };
+
+  return (
+    <div className="lucky-create-agent-overlay" role="presentation" onMouseDown={onClose} onClick={onClose}>
+      <section
+        className="lucky-create-agent-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="lucky-create-agent-title"
+        onMouseDown={(event) => event.stopPropagation()}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="lucky-create-agent-head">
+          <h2 id="lucky-create-agent-title">创建智能体</h2>
+          <button
+            type="button"
+            className="lucky-create-agent-close"
+            title="关闭"
+            aria-label="关闭"
+            onClick={onClose}
+          >
+            <CloseOutlined />
+          </button>
+        </div>
+
+        <div className="lucky-create-agent-options">
+          {CREATE_AGENT_OPTIONS.map((option) => (
+            <article key={option.key} className="lucky-create-agent-option">
+              <CreateAgentIllustration type={option.image} />
+              <div className="lucky-create-agent-copy">
+                <div className="lucky-create-agent-option-title">
+                  {option.title}
+                  {option.badge ? <span>{option.badge}</span> : null}
+                </div>
+                <p>
+                  {option.desc}
+                  {option.link ? <button type="button">{option.link}</button> : null}
+                </p>
+              </div>
+              <button
+                type="button"
+                className={`lucky-create-agent-action ${option.primary ? 'is-primary' : ''}`}
+                onClick={() => handleOptionClick(option)}
+              >
+                {option.action}
+              </button>
+            </article>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function AgentManagementPage({ activeTab, onTabChange, onOpenCreate }) {
+  const visibleCards = activeTab === 'mine' ? AGENT_CARDS : AGENT_CARDS.slice(1);
+
+  return (
+    <section className="lucky-agent-page" aria-label="智能体">
+      <div className="lucky-agent-page-title">智能体</div>
+      <div className="lucky-agent-board">
+        <div className="lucky-agent-topbar">
+          <div className="lucky-agent-tabs" role="tablist" aria-label="智能体分类">
+            {AGENT_TABS.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === tab.key}
+                className={`lucky-agent-tab ${activeTab === tab.key ? 'is-active' : ''}`}
+                onClick={() => onTabChange(tab.key)}
+              >
+                {tab.label}
+                <span>({tab.count})</span>
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="lucky-agent-create-btn"
+            onClick={onOpenCreate}
+          >
+            <PlusOutlined />
+            创建智能体
+          </button>
+        </div>
+
+        <div className="lucky-agent-card-grid">
+          {visibleCards.map((agent) => (
+            <article key={agent.key} className="lucky-agent-card">
+              <div className="lucky-agent-card-head">
+                <AgentAvatar type={agent.avatar} />
+                <div className="lucky-agent-card-main">
+                  <div className="lucky-agent-card-name">{agent.name}</div>
+                  <div className="lucky-agent-card-desc">{agent.desc}</div>
+                </div>
+                <button
+                  type="button"
+                  className="lucky-agent-card-message"
+                  title="打开对话"
+                  aria-label={`打开${agent.name}对话`}
+                  onClick={() => message.info(`已打开：${agent.name}`)}
+                >
+                  <MessageOutlined />
+                </button>
+              </div>
+              <div className="lucky-agent-card-footer">
+                <span className={`lucky-agent-badge lucky-agent-badge-${agent.tagTone}`}>
+                  {agent.tag}
+                </span>
+                <button
+                  type="button"
+                  className="lucky-agent-auto"
+                  onClick={() => message.info(`${agent.name} 已切换为 Auto`)}
+                >
+                  <ThunderboltOutlined />
+                  <span>Auto</span>
+                  <DownOutlined />
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function LuckyModule() {
   const [sidebarWidth, setSidebarWidth] = useState(() => loadLuckySidebarWidth());
-  const [activeSection, setActiveSection] = useState('library');
+  const [activeSection, setActiveSection] = useState('new');
+  const [workMode, setWorkMode] = useState('office');
+  const [agentTab, setAgentTab] = useState('mine');
   const [sourceFilter, setSourceFilter] = useState('all');
   const [scopeFilter, setScopeFilter] = useState('all');
   const [keyword, setKeyword] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [promptText, setPromptText] = useState('');
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [savingItem, setSavingItem] = useState(null);
-  const [isCustomAgentCollapsed, setIsCustomAgentCollapsed] = useState(false);
-  const [isCustomAgentExpandedByUser, setIsCustomAgentExpandedByUser] = useState(false);
+  const [createAgentOpen, setCreateAgentOpen] = useState(false);
   const sidebarWidthRef = useRef(sidebarWidth);
 
   useEffect(() => {
@@ -281,18 +597,6 @@ function LuckyModule() {
     window.addEventListener('pointerup', handlePointerUp);
   }, [sidebarWidth]);
 
-  const handleSidebarScroll = useCallback((event) => {
-    const nextCollapsed = event.currentTarget.scrollTop > 4;
-    if (!nextCollapsed) {
-      setIsCustomAgentExpandedByUser(false);
-    }
-    setIsCustomAgentCollapsed((prev) => (prev === nextCollapsed ? prev : nextCollapsed));
-  }, []);
-
-  const handleExpandCustomAgents = useCallback(() => {
-    setIsCustomAgentExpandedByUser(true);
-  }, []);
-
   const filteredRows = useMemo(() => {
     const normalizedKeyword = keyword.trim().toLowerCase();
     return LIBRARY_ROWS.filter((item) => {
@@ -321,11 +625,22 @@ function LuckyModule() {
   }, [filteredRows]);
 
   const sectionCopy = SECTION_COPY[activeSection];
+  const showHome = activeSection === 'new';
+  const showAgents = activeSection === 'partners';
   const showLibrary = activeSection === 'library';
-  const isCustomAgentListCollapsed = isCustomAgentCollapsed && !isCustomAgentExpandedByUser;
+
   const handleOpenSaveModal = (item) => {
     setSavingItem(item);
     setSaveModalOpen(true);
+  };
+
+  const handleSendPrompt = () => {
+    if (!promptText.trim()) {
+      message.info('请输入任务或目标');
+      return;
+    }
+    message.success('已创建新任务');
+    setPromptText('');
   };
 
   return (
@@ -335,11 +650,35 @@ function LuckyModule() {
         style={{ width: sidebarWidth, minWidth: sidebarWidth, maxWidth: sidebarWidth }}
       >
         <div className="lucky-sidebar-profile">
-          <Avatar size={28} className="lucky-sidebar-avatar">L</Avatar>
-          <span className="lucky-sidebar-name">lucky</span>
+          <div className="lucky-sidebar-brand">
+            <span className="lucky-brand-logo" aria-hidden="true" />
+            <span className="lucky-sidebar-name">lucky</span>
+          </div>
+          <div className="lucky-sidebar-tools">
+            <button type="button" className="lucky-sidebar-tool" title="搜索" aria-label="搜索">
+              <SearchOutlined />
+            </button>
+            <button type="button" className="lucky-sidebar-tool" title="收起侧栏" aria-label="收起侧栏">
+              <ControlOutlined />
+            </button>
+          </div>
         </div>
 
-        <div className="lucky-sidebar-nav">
+        <div className="lucky-work-mode-switch" aria-label="工作模式">
+          {WORK_MODES.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              className={`lucky-mode-button ${workMode === item.key ? 'is-active' : ''}`}
+              onClick={() => setWorkMode(item.key)}
+            >
+              <span>{item.icon}</span>
+              {item.label}
+            </button>
+          ))}
+        </div>
+
+        <nav className="lucky-sidebar-nav" aria-label="Lucky 导航">
           {NAV_ITEMS.map((item) => (
             <button
               key={item.key}
@@ -349,92 +688,26 @@ function LuckyModule() {
             >
               <span className="lucky-nav-icon">{item.icon}</span>
               <span className="lucky-nav-label">{item.label}</span>
+              {item.meta ? <span className="lucky-nav-meta">{item.meta}</span> : null}
             </button>
           ))}
-        </div>
+        </nav>
 
-        <div
-          className={`lucky-sidebar-scroll-area ${isCustomAgentListCollapsed ? 'is-agent-collapsed' : ''}`}
-          onScroll={handleSidebarScroll}
-        >
-          <div className="lucky-agent-section">
-            <div className="lucky-agent-section-title">智能伙伴</div>
-            <div className="lucky-agent-list">
-              {PARTNER_AGENT_ITEMS.map((item) => (
-                <button
-                  key={item.key}
-                  type="button"
-                  className={`lucky-agent-item ${activeSection === item.key ? 'is-active' : ''}`}
-                  onClick={() => setActiveSection(item.key)}
-                >
-                  <span className="lucky-agent-avatar">{item.marker}</span>
-                  <span className="lucky-agent-label">{item.label}</span>
-                </button>
-              ))}
-            </div>
+        <div className="lucky-task-section">
+          <div className="lucky-task-head">
+            <span>任务</span>
+            <button type="button" className="lucky-sidebar-tool" title="任务设置" aria-label="任务设置">
+              <ControlOutlined />
+            </button>
           </div>
-
-          <div className="lucky-sidebar-group">
-            <div className="lucky-sidebar-group-title">自定义智能体</div>
-            <div className="lucky-sidebar-group-actions">
-              {isCustomAgentListCollapsed ? (
-                <Button
-                  type="text"
-                  size="small"
-                  className="lucky-sidebar-expand-btn"
-                  icon={<DownOutlined />}
-                  aria-label="展开自定义智能体"
-                  title="展开自定义智能体"
-                  onClick={handleExpandCustomAgents}
-                />
-              ) : null}
-              <Button
-                type="text"
-                size="small"
-                className="lucky-sidebar-add-btn"
-                icon={<PlusOutlined />}
-                onClick={() => message.success('已打开自定义智能体创建入口')}
-              />
-            </div>
-          </div>
-          <div
-            className="lucky-agent-list lucky-custom-agent-list"
-            aria-hidden={isCustomAgentListCollapsed}
+          <button
+            type="button"
+            className={`lucky-task-shortcut ${activeSection === 'new' ? 'is-active' : ''}`}
+            onClick={() => setActiveSection('new')}
           >
-            {CUSTOM_AGENT_ITEMS.map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                tabIndex={isCustomAgentListCollapsed ? -1 : undefined}
-                className={`lucky-agent-item ${activeSection === item.key ? 'is-active' : ''}`}
-                onClick={() => setActiveSection(item.key)}
-              >
-                <span className="lucky-agent-avatar">{item.marker}</span>
-                <span className="lucky-agent-label">{item.label}</span>
-              </button>
-            ))}
-          </div>
-
-          <div className="lucky-history">
-            {HISTORY_GROUPS.map((group) => (
-              <div key={group.title} className="lucky-history-group">
-                <div className="lucky-history-title">{group.title}</div>
-                <div className="lucky-history-list">
-                  {group.items.map((item) => (
-                    <button
-                      key={item}
-                      type="button"
-                      className="lucky-history-item"
-                      onClick={() => message.info(`已打开会话：${item}`)}
-                    >
-                      <span className="lucky-history-bullet" />
-                      <span className="lucky-history-text">{item}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+            <span className="lucky-task-text">介绍并引导上手使用</span>
+            <span className="lucky-task-dot" aria-hidden="true" />
+          </button>
         </div>
       </aside>
       <div
@@ -447,11 +720,23 @@ function LuckyModule() {
 
       <main className="lucky-main">
         <div className="lucky-main-inner">
-          {showLibrary ? (
-            <div className="lucky-workspace-card">
+          {showHome ? (
+            <LuckyHome
+              promptText={promptText}
+              onPromptChange={setPromptText}
+              onSend={handleSendPrompt}
+            />
+          ) : showAgents ? (
+            <AgentManagementPage
+              activeTab={agentTab}
+              onTabChange={setAgentTab}
+              onOpenCreate={() => setCreateAgentOpen(true)}
+            />
+          ) : showLibrary ? (
+            <div className="lucky-workspace-card lucky-library-view">
               <div className="lucky-page-header">
                 <div>
-                  <div className="lucky-page-title">库</div>
+                  <div className="lucky-page-title">资源库</div>
                 </div>
                 <div className="lucky-toolbar">
                   <Select
@@ -531,7 +816,7 @@ function LuckyModule() {
                             items: [
                               {
                                 key: 'save-to-library',
-                                label: '另存为资料库',
+                                label: '另存为资源库',
                               },
                             ],
                             onClick: ({ key }) => {
@@ -603,6 +888,7 @@ function LuckyModule() {
           message.success(`已将「${name}」另存到${libraryName}`);
         }}
       />
+      <CreateAgentModal open={createAgentOpen} onClose={() => setCreateAgentOpen(false)} />
     </div>
   );
 }
