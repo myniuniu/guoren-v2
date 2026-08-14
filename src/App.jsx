@@ -378,6 +378,7 @@ function getIconBarAccentColor(iconKey) {
 
 // Left icon bar items
 const baseIconBarItems = [
+  { key: 'lucky', icon: <ThunderboltOutlined />, label: 'lucky' },
   { key: 'my-space', icon: <AppstoreOutlined />, label: '空间', active: true },
   { key: 'resource-lib', icon: <BookOutlined />, label: '资料库' },
   { key: 'resource-recommendation', icon: <ReadOutlined />, label: '推荐' },
@@ -396,7 +397,6 @@ const baseIconBarItems = [
   { key: 'archive', icon: <FolderOutlined />, label: '档案提交' },
   { key: 'study-club', icon: <RocketOutlined />, label: '研习社' },
   { key: 'points-admin', icon: <GiftOutlined />, label: '积分管理' },
-  { key: 'lucky', icon: <ThunderboltOutlined />, label: 'lucky' },
   { key: 'lab', icon: <ExperimentOutlined />, label: '实验室' },
   { key: 'tasks', icon: <AppstoreOutlined />, label: '任务' },
   { key: 'lucky-backend', icon: <SettingOutlined />, label: 'lucky后台' },

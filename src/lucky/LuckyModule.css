@@ -1,6 +1,14 @@
 .lucky-module {
-  --lucky-bg: #fbfbfc;
-  --lucky-sidebar-bg: #f3f4f5;
+  --lucky-bg: #f7f8fa;
+  --lucky-bg-layer:
+    linear-gradient(180deg, rgba(250, 251, 252, 0.992) 0%, rgba(246, 247, 249, 0.986) 52%, rgba(241, 243, 245, 0.978) 100%),
+    radial-gradient(circle at 14% 8%, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0) 32%),
+    radial-gradient(circle at 86% 84%, rgba(212, 217, 223, 0.14) 0%, rgba(255, 255, 255, 0) 38%);
+  --lucky-sidebar-bg:
+    linear-gradient(180deg, rgba(245, 247, 250, 0.92) 0%, rgba(237, 241, 246, 0.88) 46%, rgba(228, 233, 240, 0.84) 100%),
+    radial-gradient(circle at 18% 8%, rgba(255, 255, 255, 0.64) 0%, rgba(255, 255, 255, 0) 34%),
+    radial-gradient(circle at 82% 84%, rgba(190, 202, 220, 0.26) 0%, rgba(255, 255, 255, 0) 40%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.03) 100%);
   --lucky-sidebar-strong: #ffffff;
   --lucky-line: rgba(22, 27, 34, 0.07);
   --lucky-line-strong: rgba(22, 27, 34, 0.1);
@@ -14,7 +22,8 @@
   height: 100vh;
   display: flex;
   color: var(--lucky-text);
-  background: var(--lucky-bg);
+  font-size: 14px;
+  background: var(--lucky-bg-layer);
 }
 
 .lucky-module button,
@@ -23,13 +32,49 @@
 }
 
 .lucky-sidebar {
+  position: relative;
+  isolation: isolate;
   flex-shrink: 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
   padding: 12px 8px 14px;
   background: var(--lucky-sidebar-bg);
-  border-right: 1px solid rgba(228, 231, 235, 0.9);
+  border-right: 0;
+  box-shadow:
+    inset -1px 0 0 rgba(255, 255, 255, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    10px 0 24px rgba(15, 23, 42, 0.045),
+    1px 0 8px rgba(148, 163, 184, 0.12);
+  backdrop-filter: blur(24px) saturate(155%) brightness(0.99);
+  -webkit-backdrop-filter: blur(24px) saturate(155%) brightness(0.99);
+}
+
+.lucky-sidebar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 16% 4%, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 32%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 36%, rgba(255, 255, 255, 0) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.lucky-sidebar::after {
+  content: '';
+  position: absolute;
+  inset: 1px 0 1px 1px;
+  border: 1px solid rgba(224, 231, 240, 0.56);
+  border-right: 0;
+  border-radius: 0 18px 18px 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.lucky-sidebar > * {
+  position: relative;
+  z-index: 1;
 }
 
 .lucky-sidebar-profile {
@@ -71,7 +116,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   color: #2e333b;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1.3;
 }
@@ -94,7 +139,7 @@
   border-radius: 7px;
   background: transparent;
   color: #7f8791;
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
 }
 
@@ -114,7 +159,7 @@
 }
 
 .lucky-mode-button {
-  height: 26px;
+  height: 28px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -123,7 +168,7 @@
   border-radius: 8px;
   background: transparent;
   color: #717985;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
 }
@@ -143,13 +188,13 @@
 
 .lucky-nav-item {
   width: 100%;
-  min-height: 28px;
+  min-height: 32px;
   display: flex;
   align-items: center;
   gap: 8px;
   border: 0;
   border-radius: 8px;
-  padding: 5px 8px;
+  padding: 6px 8px;
   background: transparent;
   color: #4e5661;
   text-align: left;
@@ -181,7 +226,7 @@
   align-items: center;
   justify-content: center;
   color: currentColor;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .lucky-nav-label {
@@ -189,7 +234,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   line-height: 1.4;
 }
@@ -198,7 +243,7 @@
   margin-left: auto;
   flex: 0 0 auto;
   color: #a3a9b2;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
 }
 
@@ -214,13 +259,13 @@
   justify-content: space-between;
   padding: 0 4px 4px 8px;
   color: #9aa2ad;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
 }
 
 .lucky-task-shortcut {
   width: 100%;
-  min-height: 28px;
+  min-height: 32px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -242,7 +287,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
 }
 
@@ -292,7 +337,7 @@
 .lucky-main {
   flex: 1;
   min-width: 0;
-  background: var(--lucky-bg);
+  background: transparent;
 }
 
 .lucky-main-inner {
@@ -300,19 +345,21 @@
   height: 100%;
   min-width: 0;
   overflow: auto;
+  background: var(--lucky-bg-layer);
 }
 
 .lucky-home {
+  --lucky-home-content-width: min(760px, 100%);
   min-height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: min(26vh, 205px) 36px 70px;
+  padding: clamp(78px, 13vh, 128px) clamp(40px, 6vw, 96px) 56px;
 }
 
 .lucky-home-avatar {
-  width: 61px;
-  height: 61px;
+  width: 72px;
+  height: 72px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -322,8 +369,8 @@
 }
 
 .lucky-home-avatar-face {
-  width: 49px;
-  height: 49px;
+  width: 58px;
+  height: 58px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -334,29 +381,29 @@
     linear-gradient(135deg, #ffd9be 0%, #f7bf9c 46%, #8eb8ff 47%, #7a98e7 100%);
   border: 2px solid rgba(255, 255, 255, 0.92);
   color: #ffffff;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
   text-shadow: 0 1px 2px rgba(40, 48, 64, 0.2);
 }
 
 .lucky-home-title {
-  margin: 17px 0 0;
+  margin: 20px 0 0;
   color: #31343b;
-  font-size: 21px;
+  font-size: 30px;
   font-weight: 500;
   line-height: 1.35;
   text-align: center;
 }
 
 .lucky-composer-shell {
-  width: min(576px, 100%);
-  margin-top: 31px;
+  width: var(--lucky-home-content-width);
+  margin-top: 34px;
 }
 
 .lucky-composer-frame {
   overflow: hidden;
   border: 1px solid rgba(225, 228, 233, 0.96);
-  border-radius: 18px;
+  border-radius: 20px;
   background: #ffffff;
   box-shadow:
     0 18px 32px rgba(23, 30, 43, 0.06),
@@ -364,16 +411,16 @@
 }
 
 .lucky-composer-box {
-  min-height: 94px;
+  min-height: 128px;
   display: flex;
   flex-direction: column;
-  padding: 13px 12px 10px;
+  padding: 18px 18px 14px;
   background: #ffffff;
 }
 
 .lucky-composer-input {
   width: 100%;
-  min-height: 38px;
+  min-height: 62px;
   flex: 1;
   resize: none;
   border: 0;
@@ -381,8 +428,8 @@
   padding: 0;
   color: #333842;
   background: transparent;
-  font-size: 12px;
-  line-height: 1.6;
+  font-size: 16px;
+  line-height: 1.65;
 }
 
 .lucky-composer-input::placeholder {
@@ -393,14 +440,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-top: 9px;
+  gap: 14px;
+  margin-top: 12px;
 }
 
 .lucky-composer-action-right {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
+  gap: 11px;
 }
 
 .lucky-icon-button,
@@ -413,14 +460,14 @@
 }
 
 .lucky-icon-button {
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   border-radius: 50%;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .lucky-icon-button:hover,
@@ -430,20 +477,20 @@
 }
 
 .lucky-auto-button {
-  height: 28px;
+  height: 34px;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 0 4px 0 6px;
+  gap: 6px;
+  padding: 0 8px 0 10px;
   border-radius: 999px;
   color: #4f5662;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
 }
 
 .lucky-auto-button .anticon:first-child {
   color: #5574ff;
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .lucky-auto-button .anticon:last-child {
@@ -452,8 +499,8 @@
 }
 
 .lucky-send-button {
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -461,7 +508,7 @@
   border-radius: 50%;
   background: #9ba2af;
   color: #ffffff;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .lucky-send-button:hover {
@@ -469,12 +516,12 @@
 }
 
 .lucky-context-bar {
-  min-height: 36px;
+  min-height: 44px;
   display: flex;
   align-items: center;
-  gap: 17px;
+  gap: 24px;
   overflow-x: auto;
-  padding: 0 13px;
+  padding: 0 18px;
   background: #f1f2f4;
   border-top: 1px solid rgba(230, 232, 236, 0.82);
   scrollbar-width: none;
@@ -488,13 +535,13 @@
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   flex: 0 0 auto;
   border: 0;
   background: transparent;
   color: #777f8b;
   padding: 0;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1;
   cursor: pointer;
 }
@@ -506,7 +553,7 @@
 .lucky-context-icon {
   display: inline-flex;
   align-items: center;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .lucky-context-arrow {
@@ -525,25 +572,25 @@
 }
 
 .lucky-quick-actions {
-  width: min(576px, 100%);
+  width: var(--lucky-home-content-width);
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 7px;
-  margin-top: 18px;
+  gap: 10px;
+  margin-top: 22px;
 }
 
 .lucky-quick-chip {
-  height: 29px;
+  height: 36px;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 0 9px;
+  gap: 6px;
+  padding: 0 14px;
   border: 1px solid rgba(224, 227, 232, 0.92);
   border-radius: 999px;
   background: #ffffff;
   color: #737b86;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   box-shadow: 0 1px 2px rgba(23, 30, 43, 0.02);
@@ -556,30 +603,30 @@
 }
 
 .lucky-recommend-section {
-  width: min(576px, 100%);
-  margin-top: 32px;
+  width: var(--lucky-home-content-width);
+  margin-top: 34px;
 }
 
 .lucky-recommend-title {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   color: #333842;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
 }
 
 .lucky-recommend-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 14px;
 }
 
 .lucky-recommend-card {
-  height: 80px;
+  min-height: 104px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
-  padding: 12px;
+  gap: 10px;
+  padding: 16px;
   border: 1px solid rgba(224, 227, 232, 0.9);
   border-radius: 9px;
   background: #ffffff;
@@ -596,9 +643,9 @@
 .lucky-recommend-card-kicker {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   color: #a0a7b1;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   line-height: 1.2;
 }
@@ -607,7 +654,7 @@
   display: -webkit-box;
   overflow: hidden;
   color: #5d6571;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 600;
   line-height: 1.45;
   -webkit-box-orient: vertical;
@@ -616,21 +663,21 @@
 
 .lucky-agent-page {
   min-height: 100%;
-  padding: 23px 24px 64px;
-  background: var(--lucky-bg);
+  padding: 24px 32px 64px;
+  background: transparent;
 }
 
 .lucky-agent-page-title {
   color: #22262d;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
-  line-height: 18px;
+  line-height: 22px;
 }
 
 .lucky-agent-board {
-  width: min(886px, calc(100% - 68px));
-  margin-top: 17px;
-  margin-left: 68px;
+  width: auto;
+  max-width: none;
+  margin: 18px 24px 0 36px;
 }
 
 .lucky-agent-topbar {
@@ -656,9 +703,9 @@
   border: 0;
   background: transparent;
   color: #a0a7b2;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
-  line-height: 18px;
+  line-height: 22px;
   cursor: pointer;
 }
 
@@ -667,18 +714,18 @@
 }
 
 .lucky-agent-create-btn {
-  height: 30px;
+  height: 34px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   flex: 0 0 auto;
-  padding: 0 13px;
+  padding: 0 15px;
   border: 0;
   border-radius: 6px;
   background: #1f2329;
   color: #ffffff;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 1px 2px rgba(17, 24, 39, 0.14);
@@ -690,41 +737,60 @@
 
 .lucky-agent-create-btn:focus-visible,
 .lucky-create-agent-action:focus-visible,
-.lucky-create-agent-close:focus-visible {
+.lucky-create-agent-close:focus-visible,
+.lucky-team-agent-input:focus-visible,
+.lucky-team-agent-select:focus-visible,
+.lucky-team-agent-cancel:focus-visible,
+.lucky-team-agent-submit:focus-visible,
+.lucky-team-avatar-option:focus-visible,
+.lucky-team-avatar-more:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px rgba(79, 124, 255, 0.18);
 }
 
 .lucky-agent-card-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 288px));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
 }
 
 .lucky-agent-card {
-  height: 137px;
+  min-height: 156px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 18px 16px 17px;
+  padding: 20px 18px 18px;
   border: 1px solid rgba(224, 227, 232, 0.96);
   border-radius: 12px;
   background: #ffffff;
   box-shadow: none;
+  cursor: pointer;
+}
+
+.lucky-agent-card:hover {
+  border-color: rgba(196, 202, 212, 0.98);
+  box-shadow: 0 8px 18px rgba(23, 30, 43, 0.04);
+}
+
+.lucky-agent-card:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px rgba(79, 124, 255, 0.16),
+    0 8px 18px rgba(23, 30, 43, 0.04);
 }
 
 .lucky-agent-card-head {
   min-width: 0;
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) 25px;
+  grid-template-columns: 38px minmax(0, 1fr) 28px;
   align-items: flex-start;
-  gap: 10px;
+  gap: 12px;
 }
 
 .lucky-agent-card-avatar {
   position: relative;
-  width: 34px;
-  height: 34px;
+  width: 38px;
+  height: 38px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -822,9 +888,9 @@
 .lucky-agent-card-name {
   overflow: hidden;
   color: #303640;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
-  line-height: 18px;
+  line-height: 21px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -832,19 +898,19 @@
 .lucky-agent-card-desc {
   display: -webkit-box;
   min-height: 34px;
-  margin-top: 13px;
+  margin-top: 12px;
   overflow: hidden;
   color: #8a929e;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
-  line-height: 17px;
+  line-height: 19px;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
 
 .lucky-agent-card-message {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -853,7 +919,7 @@
   border-radius: 50%;
   background: #ffffff;
   color: #8a929e;
-  font-size: 12px;
+  font-size: 14px;
   cursor: pointer;
 }
 
@@ -870,15 +936,15 @@
 }
 
 .lucky-agent-badge {
-  height: 20px;
+  height: 24px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 9px;
+  padding: 0 11px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
-  line-height: 20px;
+  line-height: 24px;
 }
 
 .lucky-agent-badge-purple {
@@ -899,19 +965,993 @@
   border: 0;
   background: transparent;
   color: #6d7480;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
 }
 
 .lucky-agent-auto .anticon:first-child {
   color: #4f76ff;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .lucky-agent-auto .anticon:last-child {
   color: #a8afba;
   font-size: 9px;
+}
+
+.lucky-agent-editor {
+  min-height: 100%;
+  background: transparent;
+}
+
+.lucky-agent-editor-breadcrumb {
+  height: 50px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 28px;
+  color: #a2a9b3;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.lucky-agent-editor-breadcrumb button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #a2a9b3;
+  font: inherit;
+  cursor: pointer;
+}
+
+.lucky-agent-editor-breadcrumb button:hover {
+  color: #4f5662;
+}
+
+.lucky-agent-editor-breadcrumb strong {
+  color: #333842;
+  font-weight: 800;
+}
+
+.lucky-agent-editor-more-wrap {
+  position: relative;
+  display: inline-flex;
+  margin-left: auto;
+}
+
+.lucky-agent-editor-more {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.lucky-agent-editor-more:hover,
+.lucky-agent-editor-more.is-active {
+  background: #eef0f3;
+  color: #2f3640;
+}
+
+.lucky-agent-more-menu {
+  position: absolute;
+  top: 38px;
+  right: 0;
+  z-index: 60;
+  width: 300px;
+  overflow: hidden;
+  border: 1px solid rgba(225, 228, 233, 0.96);
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow:
+    0 18px 42px rgba(15, 23, 42, 0.14),
+    0 5px 14px rgba(15, 23, 42, 0.07);
+}
+
+.lucky-agent-more-menu .lucky-agent-more-row {
+  width: 100%;
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 0 20px;
+  border: 0;
+  background: #ffffff;
+  color: #8f97a3;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lucky-agent-more-menu .lucky-agent-more-row:hover {
+  background: #f7f8fa;
+  color: #596272;
+}
+
+.lucky-agent-more-menu .lucky-agent-more-row strong {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  color: #303640;
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.lucky-agent-more-menu .lucky-agent-more-row.is-danger {
+  justify-content: flex-start;
+  margin-top: 1px;
+  border-top: 1px solid rgba(230, 232, 236, 0.92);
+  color: #ff4d5a;
+}
+
+.lucky-agent-more-menu .lucky-agent-more-row.is-danger:hover {
+  background: #fff5f6;
+  color: #f03b49;
+}
+
+.lucky-agent-more-owner-avatar {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 22px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 32%, #ffd6b8 0 26%, transparent 27%),
+    linear-gradient(135deg, #f9c78f 0%, #e47f45 48%, #9fe1b9 49%, #67bf8b 100%);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 900;
+  text-shadow: 0 1px 1px rgba(68, 72, 84, 0.22);
+}
+
+.lucky-agent-editor-layout {
+  width: 100%;
+  min-height: calc(100vh - 50px);
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(280px, 30%) minmax(0, 1fr);
+  justify-content: stretch;
+  align-items: flex-start;
+  gap: 28px;
+  padding: 28px clamp(24px, 2.6vw, 40px) 32px;
+}
+
+.lucky-agent-editor-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  padding-top: 18px;
+}
+
+.lucky-agent-editor-avatar {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #e9f8dc;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.78);
+}
+
+.lucky-agent-editor-avatar::before,
+.lucky-agent-editor-avatar::after,
+.lucky-agent-editor-avatar span {
+  content: '';
+  position: absolute;
+  display: block;
+}
+
+.lucky-agent-editor-avatar-personal {
+  background:
+    radial-gradient(circle at 50% 31%, #ffd9bd 0 18%, transparent 19%),
+    linear-gradient(145deg, #e7f9d8 0%, #cfeac4 46%, #f7f5ec 47%, #e1d0b7 100%);
+}
+
+.lucky-agent-editor-avatar-personal::before {
+  left: 22px;
+  top: 16px;
+  width: 44px;
+  height: 34px;
+  border-radius: 20px 20px 10px 10px;
+  background: #6b4b32;
+  transform: rotate(-5deg);
+}
+
+.lucky-agent-editor-avatar-personal::after {
+  left: 28px;
+  top: 27px;
+  width: 33px;
+  height: 36px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 44%, #2f3238 0 4%, transparent 5%),
+    radial-gradient(circle at 65% 44%, #2f3238 0 4%, transparent 5%),
+    linear-gradient(#ffe0c8, #f3b48c);
+}
+
+.lucky-agent-editor-avatar-personal span {
+  left: 15px;
+  bottom: -4px;
+  width: 58px;
+  height: 35px;
+  border-radius: 22px 22px 0 0;
+  background: linear-gradient(135deg, #f7efe4 0%, #d7bd96 100%);
+}
+
+.lucky-agent-editor-avatar-coach {
+  background:
+    radial-gradient(circle at 52% 31%, #ffd6b8 0 18%, transparent 19%),
+    linear-gradient(145deg, #e5fbff 0%, #bceef7 47%, #f8fbff 48%, #d8edff 100%);
+}
+
+.lucky-agent-editor-avatar-coach::before {
+  left: 21px;
+  top: 17px;
+  width: 46px;
+  height: 32px;
+  border-radius: 20px 20px 10px 10px;
+  background: #28394c;
+}
+
+.lucky-agent-editor-avatar-coach::after {
+  left: 28px;
+  top: 28px;
+  width: 33px;
+  height: 36px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 43%, #25313d 0 4%, transparent 5%),
+    radial-gradient(circle at 65% 43%, #25313d 0 4%, transparent 5%),
+    linear-gradient(#ffd5b8, #efaa81);
+}
+
+.lucky-agent-editor-avatar-coach span {
+  left: 15px;
+  bottom: -4px;
+  width: 58px;
+  height: 35px;
+  border-radius: 22px 22px 0 0;
+  background: linear-gradient(135deg, #c7f4f4 0%, #5fb5cd 100%);
+}
+
+.lucky-agent-editor-name {
+  max-width: 300px;
+  margin-top: 16px;
+  overflow: hidden;
+  color: #303640;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 24px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lucky-agent-editor-type {
+  margin-top: 3px;
+  color: #a0a7b2;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.lucky-agent-editor-desc {
+  width: min(310px, 100%);
+  margin: 18px 0 0;
+  color: #9aa2ad;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 21px;
+  text-align: center;
+}
+
+.lucky-agent-editor-auto {
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 0 12px;
+  border: 1px solid rgba(230, 232, 236, 0.96);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #6f7782;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lucky-agent-editor-auto .anticon {
+  color: #4f76ff;
+  font-size: 13px;
+}
+
+.lucky-agent-editor-stats {
+  width: min(300px, 100%);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 28px;
+}
+
+.lucky-agent-editor-stats div {
+  min-width: 0;
+  text-align: center;
+}
+
+.lucky-agent-editor-stats strong,
+.lucky-agent-editor-stats span {
+  display: block;
+}
+
+.lucky-agent-editor-stats strong {
+  color: #1f2329;
+  font-size: 23px;
+  font-weight: 800;
+  line-height: 28px;
+}
+
+.lucky-agent-editor-stats span {
+  margin-top: 4px;
+  color: #8f97a3;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.lucky-agent-editor-add-group {
+  width: min(330px, 100%);
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 28px;
+  border: 0;
+  border-radius: 7px;
+  background: #1f2329;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.lucky-agent-editor-group-empty {
+  width: min(330px, 100%);
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px dashed rgba(224, 227, 232, 0.96);
+  text-align: left;
+}
+
+.lucky-agent-editor-group-title {
+  color: #303640;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 20px;
+}
+
+.lucky-agent-editor-group-hint {
+  margin-top: 5px;
+  color: #a0a7b2;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.lucky-agent-editor-empty-icon {
+  position: relative;
+  width: 40px;
+  height: 34px;
+  margin: 46px auto 8px;
+  border: 2px solid #e4e7ec;
+  border-radius: 6px;
+  transform: rotate(8deg);
+}
+
+.lucky-agent-editor-empty-icon::before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 3px;
+  width: 32px;
+  height: 28px;
+  border: 2px dashed #e4e7ec;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.62);
+  transform: rotate(-15deg);
+}
+
+.lucky-agent-editor-empty-text {
+  color: #a0a7b2;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.lucky-agent-editor-panel {
+  min-width: 0;
+  overflow: visible;
+  border: 1px solid rgba(224, 227, 232, 0.96);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.lucky-agent-editor-tabs {
+  height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding: 0 28px;
+  border-bottom: 1px solid rgba(230, 232, 236, 0.92);
+}
+
+.lucky-agent-editor-tabs button {
+  position: relative;
+  height: 46px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #7c8490;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.lucky-agent-editor-tabs button.is-active {
+  color: #1f2329;
+}
+
+.lucky-agent-editor-tabs button.is-active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 999px;
+  background: #1f2329;
+}
+
+.lucky-agent-editor-scroll {
+  overflow: visible;
+  padding: 22px 28px 24px;
+}
+
+.lucky-agent-editor-section {
+  padding-bottom: 22px;
+  border-bottom: 1px dashed rgba(230, 232, 236, 0.96);
+}
+
+.lucky-agent-editor-section + .lucky-agent-editor-section {
+  padding-top: 20px;
+}
+
+.lucky-agent-editor-section-title,
+.lucky-agent-editor-section-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lucky-agent-editor-section-title {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #303640;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.lucky-agent-editor-section-title .anticon {
+  color: #9aa2ad;
+  font-size: 13px;
+}
+
+.lucky-agent-editor-section h3 {
+  margin: 18px 0 9px;
+  color: #303640;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 20px;
+}
+
+.lucky-agent-editor-section p,
+.lucky-agent-editor-section li {
+  color: #4f5865;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 25px;
+}
+
+.lucky-agent-editor-section p {
+  margin: 0;
+}
+
+.lucky-agent-markdown-editor {
+  width: 100%;
+  min-height: 340px;
+  margin-top: 14px;
+  resize: vertical;
+  border: 1px solid rgba(224, 227, 232, 0.96);
+  border-radius: 10px;
+  outline: none;
+  padding: 14px 16px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.72) 100%);
+  color: #2f3640;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.78;
+  white-space: pre-wrap;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.lucky-agent-markdown-editor:hover {
+  border-color: rgba(196, 202, 212, 0.98);
+}
+
+.lucky-agent-markdown-editor:focus {
+  border-color: rgba(79, 124, 255, 0.64);
+  box-shadow:
+    0 0 0 3px rgba(79, 124, 255, 0.1),
+    inset 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.lucky-agent-editor-section ol {
+  margin: 0;
+  padding-left: 0;
+  list-style-position: inside;
+}
+
+.lucky-agent-editor-section-head h3 {
+  margin: 0;
+}
+
+.lucky-agent-editor-section-head div {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lucky-agent-editor-section-head button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #8f97a3;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.lucky-agent-editor-skills {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.lucky-agent-editor-skills button {
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 14px;
+  border: 1px solid rgba(226, 230, 236, 0.96);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #596272;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lucky-agent-skill-list-view {
+  min-height: 100%;
+}
+
+.lucky-agent-skill-list-toolbar {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.lucky-agent-skill-list-toolbar > span {
+  height: 31px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 14px;
+  border: 1px solid rgba(226, 230, 236, 0.96);
+  border-radius: 999px;
+  background: #f7f8fa;
+  color: #303640;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.lucky-agent-skill-list-toolbar > div {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.lucky-agent-skill-list-toolbar button,
+.lucky-agent-skill-row > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: #8f97a3;
+  cursor: pointer;
+}
+
+.lucky-agent-skill-list-toolbar button {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.lucky-agent-skill-list-toolbar button:hover,
+.lucky-agent-skill-row > button:hover {
+  background: #f4f5f7;
+  color: #303640;
+}
+
+.lucky-agent-skill-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lucky-agent-skill-row {
+  min-height: 72px;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border-radius: 14px;
+  background: transparent;
+}
+
+.lucky-agent-skill-row:hover {
+  background: #f7f8fa;
+}
+
+.lucky-agent-skill-row-icon {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #f3f4f6;
+  color: #f97316;
+  font-size: 18px;
+}
+
+.lucky-agent-skill-row-copy {
+  min-width: 0;
+}
+
+.lucky-agent-skill-row-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.lucky-agent-skill-row-title strong {
+  min-width: 0;
+  overflow: hidden;
+  color: #303640;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 21px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lucky-agent-skill-row-title span {
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding: 0 6px;
+  border-radius: 5px;
+  background: #f0f2f5;
+  color: #8f97a3;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.lucky-agent-skill-row-copy p {
+  display: -webkit-box;
+  margin: 5px 0 0;
+  overflow: hidden;
+  color: #7b8491;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 19px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.lucky-agent-skill-row > button {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+.lucky-agent-knowledge-view {
+  min-height: 100%;
+}
+
+.lucky-agent-knowledge-view .lucky-agent-editor-knowledge-empty {
+  min-height: 320px;
+}
+
+.lucky-agent-model-view {
+  min-height: 100%;
+  padding-top: 6px;
+}
+
+.lucky-agent-model-head {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.lucky-agent-model-head h3 {
+  margin: 0;
+  color: #303640;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 21px;
+}
+
+.lucky-agent-model-head button {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #8f97a3;
+  font-size: 17px;
+  cursor: pointer;
+}
+
+.lucky-agent-model-head button:hover {
+  background: #f4f5f7;
+  color: #303640;
+}
+
+.lucky-agent-model-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lucky-agent-model-row {
+  width: 100%;
+  min-height: 64px;
+  display: grid;
+  grid-template-columns: 22px 36px minmax(0, 1fr) 52px;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #303640;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lucky-agent-model-row:hover {
+  background: #f8f9fb;
+}
+
+.lucky-agent-model-radio {
+  width: 17px;
+  height: 17px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d8dde5;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.lucky-agent-model-row.is-selected .lucky-agent-model-radio::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #1f2329;
+}
+
+.lucky-agent-model-logo {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 900;
+  overflow: hidden;
+}
+
+.lucky-agent-model-logo-auto {
+  color: #3f63ff;
+  background: transparent;
+  font-size: 23px;
+}
+
+.lucky-agent-model-logo-doubao {
+  border-radius: 50%;
+  background: conic-gradient(from 45deg, #38bdf8, #7c3aed, #34d399, #38bdf8);
+}
+
+.lucky-agent-model-logo-doubao::before {
+  content: '';
+  width: 13px;
+  height: 20px;
+  border-radius: 999px;
+  background: #ffffff;
+  transform: rotate(28deg);
+}
+
+.lucky-agent-model-logo-deepseek {
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #4f46e5);
+}
+
+.lucky-agent-model-logo-deepseek::before {
+  content: 'D';
+}
+
+.lucky-agent-model-logo-kimi {
+  background: #ffffff;
+  color: #111827;
+  font-size: 24px;
+}
+
+.lucky-agent-model-logo-kimi::before {
+  content: 'K';
+}
+
+.lucky-agent-model-logo-glm {
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 18%, #3b82f6 0 2px, transparent 3px),
+    radial-gradient(circle at 28% 32%, #3b82f6 0 2px, transparent 3px),
+    radial-gradient(circle at 70% 32%, #3b82f6 0 2px, transparent 3px),
+    radial-gradient(circle at 22% 58%, #3b82f6 0 2px, transparent 3px),
+    radial-gradient(circle at 78% 58%, #3b82f6 0 2px, transparent 3px),
+    radial-gradient(circle at 50% 78%, #3b82f6 0 2px, transparent 3px);
+  background-color: #eff6ff;
+}
+
+.lucky-agent-model-logo-minimax {
+  color: #ff5b7f;
+  background: transparent;
+  font-size: 20px;
+}
+
+.lucky-agent-model-logo-minimax::before {
+  content: '〰';
+}
+
+.lucky-agent-model-logo-qwen {
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+}
+
+.lucky-agent-model-logo-qwen::before {
+  content: 'Q';
+}
+
+.lucky-agent-model-name {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  color: #303640;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 22px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.lucky-agent-model-badge {
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding: 0 7px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.lucky-agent-model-badge-green {
+  color: #0f766e;
+  background: #d7f5ec;
+}
+
+.lucky-agent-model-badge-purple {
+  color: #7c3aed;
+  background: #ede9fe;
+}
+
+.lucky-agent-model-badge-blue {
+  color: #2563eb;
+  background: #dbeafe;
+}
+
+.lucky-agent-model-rate {
+  justify-self: end;
+  color: #a0a7b2;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.lucky-agent-editor-knowledge-empty {
+  min-height: 132px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.lucky-agent-editor-knowledge-empty .lucky-agent-editor-empty-icon {
+  margin: 0 0 12px;
+}
+
+.lucky-agent-editor-knowledge-empty p {
+  color: #a0a7b2;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.lucky-agent-editor-knowledge-empty button {
+  height: 30px;
+  margin-top: 12px;
+  padding: 0 13px;
+  border: 1px solid rgba(226, 230, 236, 0.96);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #596272;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .lucky-create-agent-overlay {
@@ -921,15 +1961,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: 32px;
   background: rgba(0, 0, 0, 0.32);
 }
 
 .lucky-create-agent-modal {
-  width: min(720px, calc(100vw - 48px));
-  padding: 24px 22px 22px;
+  width: min(900px, calc(100vw - 64px));
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  padding: 30px 28px 28px;
   border: 1px solid rgba(229, 231, 235, 0.88);
-  border-radius: 14px;
+  border-radius: 16px;
   background: #ffffff;
   box-shadow:
     0 22px 52px rgba(17, 24, 39, 0.18),
@@ -941,20 +1983,20 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 22px;
+  margin-bottom: 26px;
 }
 
 .lucky-create-agent-head h2 {
   margin: 0;
   color: #20242c;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 800;
-  line-height: 20px;
+  line-height: 25px;
 }
 
 .lucky-create-agent-close {
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -963,7 +2005,7 @@
   border-radius: 8px;
   background: transparent;
   color: #5f6774;
-  font-size: 14px;
+  font-size: 16px;
   cursor: pointer;
 }
 
@@ -975,26 +2017,26 @@
 .lucky-create-agent-options {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 16px;
 }
 
 .lucky-create-agent-option {
   min-width: 0;
-  height: 310px;
+  height: 376px;
   display: flex;
   flex-direction: column;
-  padding: 12px;
+  padding: 14px;
   border: 1px solid rgba(224, 227, 232, 0.96);
-  border-radius: 12px;
+  border-radius: 14px;
   background: #ffffff;
 }
 
 .lucky-create-agent-visual {
   position: relative;
-  height: 138px;
-  flex: 0 0 138px;
+  height: 172px;
+  flex: 0 0 172px;
   overflow: hidden;
-  border-radius: 10px;
+  border-radius: 12px;
 }
 
 .lucky-create-agent-visual-team {
@@ -1254,8 +2296,8 @@
 }
 
 .lucky-create-agent-copy {
-  min-height: 101px;
-  padding: 14px 2px 0;
+  min-height: 122px;
+  padding: 17px 3px 0;
 }
 
 .lucky-create-agent-option-title {
@@ -1263,29 +2305,29 @@
   align-items: center;
   gap: 8px;
   color: #343a45;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 800;
-  line-height: 20px;
+  line-height: 23px;
 }
 
 .lucky-create-agent-option-title span {
-  height: 18px;
+  height: 20px;
   display: inline-flex;
   align-items: center;
-  padding: 0 6px;
+  padding: 0 7px;
   border-radius: 999px;
   background: #eef2ff;
   color: #4f6bff;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 800;
 }
 
 .lucky-create-agent-copy p {
-  margin: 8px 0 0;
+  margin: 10px 0 0;
   color: #8a929e;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
-  line-height: 17px;
+  line-height: 20px;
 }
 
 .lucky-create-agent-copy p button {
@@ -1300,16 +2342,16 @@
 }
 
 .lucky-create-agent-action {
-  height: 31px;
+  height: 38px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   margin-top: auto;
   border: 0;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #f1f2f4;
   color: #343a45;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -1325,6 +2367,548 @@
 
 .lucky-create-agent-action.is-primary:hover {
   background: #111827;
+}
+
+.lucky-team-agent-modal {
+  width: min(640px, calc(100vw - 64px));
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  padding: 30px 28px 22px;
+  border: 1px solid rgba(229, 231, 235, 0.88);
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow:
+    0 22px 52px rgba(17, 24, 39, 0.18),
+    0 6px 18px rgba(17, 24, 39, 0.08);
+}
+
+.lucky-team-agent-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.lucky-team-agent-head h2 {
+  margin: 0;
+  color: #20242c;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 25px;
+}
+
+.lucky-team-agent-field {
+  margin-top: 22px;
+}
+
+.lucky-team-agent-field:first-of-type {
+  margin-top: 0;
+}
+
+.lucky-team-agent-field label {
+  display: block;
+  margin-bottom: 11px;
+  color: #303640;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 20px;
+}
+
+.lucky-team-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.lucky-team-avatar-option {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.lucky-team-avatar-option .lucky-agent-card-avatar {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+}
+
+.lucky-team-avatar-option.is-selected {
+  border-color: #2f6bff;
+  box-shadow: 0 0 0 2px rgba(47, 107, 255, 0.12);
+}
+
+.lucky-team-avatar-camera {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid #ffffff;
+  border-radius: 50%;
+  background: #252b34;
+}
+
+.lucky-team-avatar-camera::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 5px;
+  width: 6px;
+  height: 5px;
+  border-radius: 2px;
+  background: #ffffff;
+}
+
+.lucky-team-avatar-more {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid rgba(229, 232, 237, 0.95);
+  border-radius: 50%;
+  background: #fbfcfd;
+  color: #737b86;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.lucky-team-avatar-more:hover {
+  background: #f4f5f7;
+  color: #303640;
+}
+
+.lucky-team-agent-input,
+.lucky-team-agent-select {
+  width: 100%;
+  height: 38px;
+  border: 1px solid rgba(216, 221, 229, 0.96);
+  border-radius: 10px;
+  background: #ffffff;
+  color: #303640;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.lucky-team-agent-input {
+  padding: 0 12px;
+}
+
+.lucky-team-agent-input::placeholder {
+  color: #b4bac4;
+  font-weight: 500;
+}
+
+.lucky-team-agent-helper {
+  margin: -3px 0 11px;
+  color: #a0a7b2;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.lucky-team-agent-select-wrap {
+  position: relative;
+}
+
+.lucky-team-agent-select {
+  appearance: none;
+  padding: 0 36px 0 12px;
+  color: #8b93a0;
+}
+
+.lucky-team-agent-select-wrap > .anticon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9aa2ad;
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.lucky-team-agent-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+.lucky-team-agent-cancel,
+.lucky-team-agent-submit {
+  height: 36px;
+  min-width: 84px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lucky-team-agent-cancel {
+  border: 1px solid rgba(225, 228, 233, 0.96);
+  background: #ffffff;
+  color: #343a45;
+}
+
+.lucky-team-agent-cancel:hover {
+  background: #f7f8fa;
+}
+
+.lucky-team-agent-submit {
+  border: 0;
+  background: #9da3ad;
+  color: #ffffff;
+}
+
+.lucky-team-agent-submit:disabled {
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.lucky-team-agent-submit.is-ready {
+  background: #1f2329;
+  cursor: pointer;
+}
+
+.lucky-team-agent-submit.is-ready:hover {
+  background: #111827;
+}
+
+.lucky-skill-modal {
+  width: min(940px, calc(100vw - 64px));
+  max-height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 18px 24px 24px;
+  border: 1px solid rgba(229, 231, 235, 0.9);
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow:
+    0 26px 64px rgba(17, 24, 39, 0.2),
+    0 8px 22px rgba(17, 24, 39, 0.1);
+}
+
+.lucky-skill-modal-head {
+  min-height: 38px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px 32px;
+  align-items: center;
+  gap: 14px;
+  flex: 0 0 auto;
+  margin-bottom: 16px;
+}
+
+.lucky-skill-modal-tabs {
+  width: max-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 9px;
+  background: #f3f5f8;
+}
+
+.lucky-skill-modal-tabs button {
+  height: 30px;
+  min-width: 56px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #7b8491;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.lucky-skill-modal-tabs button.is-active {
+  background: #ffffff;
+  color: #20242c;
+  box-shadow: 0 1px 3px rgba(17, 24, 39, 0.07);
+}
+
+.lucky-skill-search {
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 11px;
+  border: 1px solid rgba(225, 229, 235, 0.96);
+  border-radius: 9px;
+  background: #ffffff;
+  color: #9aa2ad;
+}
+
+.lucky-skill-search input {
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  outline: none;
+  color: #303640;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.lucky-skill-search input::placeholder {
+  color: #b4bac4;
+}
+
+.lucky-skill-modal-close {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #8f97a3;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.lucky-skill-modal-close:hover {
+  background: #f4f5f7;
+  color: #303640;
+}
+
+.lucky-skill-modal-body {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 2px 2px;
+}
+
+.lucky-skill-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.lucky-skill-section-head h2 {
+  margin: 0;
+  color: #303640;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 20px;
+}
+
+.lucky-skill-section-head button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  background: transparent;
+  color: #8f97a3;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lucky-skill-pack-grid,
+.lucky-skill-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.lucky-skill-pack-card,
+.lucky-skill-card {
+  position: relative;
+  min-width: 0;
+  border: 1px solid rgba(226, 230, 236, 0.96);
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 8px 18px rgba(23, 30, 43, 0.025);
+}
+
+.lucky-skill-pack-card {
+  min-height: 154px;
+  padding: 16px 16px 14px;
+}
+
+.lucky-skill-pack-top,
+.lucky-skill-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.lucky-skill-pack-top h3,
+.lucky-skill-card-head h3 {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: #303640;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lucky-skill-pack-top h3,
+.lucky-skill-card-head h3 {
+  flex: 1;
+}
+
+.lucky-skill-pack-top button,
+.lucky-skill-card-head button {
+  height: 26px;
+  flex: 0 0 auto;
+  padding: 0 11px;
+  border: 1px solid rgba(226, 230, 236, 0.96);
+  border-radius: 8px;
+  background: #ffffff;
+  color: #596272;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.lucky-skill-pack-top button:hover,
+.lucky-skill-card-head button:hover {
+  border-color: rgba(155, 166, 183, 0.9);
+  color: #303640;
+}
+
+.lucky-skill-card-head button.is-added,
+.lucky-skill-card-head button:disabled {
+  border-color: rgba(226, 230, 236, 0.72);
+  background: #f3f5f7;
+  color: #9aa2ad;
+  cursor: default;
+}
+
+.lucky-skill-pack-card p,
+.lucky-skill-card p {
+  display: -webkit-box;
+  margin: 10px 0 0;
+  overflow: hidden;
+  color: #737b86;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+  -webkit-box-orient: vertical;
+}
+
+.lucky-skill-pack-card p {
+  min-height: 54px;
+  -webkit-line-clamp: 3;
+}
+
+.lucky-skill-card p {
+  min-height: 38px;
+  -webkit-line-clamp: 2;
+}
+
+.lucky-skill-pack-tags,
+.lucky-skill-card-tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 13px;
+}
+
+.lucky-skill-pack-tags span,
+.lucky-skill-card-tags span {
+  max-width: 96px;
+  overflow: hidden;
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: #f4f6f8;
+  color: #7b8491;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lucky-skill-count {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+  color: #a0a7b2;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.lucky-skill-category-row {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  min-width: 0;
+  overflow-x: auto;
+  margin: 20px 0 14px;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.lucky-skill-category-row::-webkit-scrollbar {
+  display: none;
+}
+
+.lucky-skill-category-row button {
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: #8f97a3;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.lucky-skill-category-row button.is-active {
+  color: #303640;
+}
+
+.lucky-skill-category-row .lucky-skill-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+}
+
+.lucky-skill-card {
+  min-height: 146px;
+  padding: 14px 14px 12px;
+}
+
+.lucky-skill-card-icon {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  background: #f3f7ff;
+  color: #5b7cff;
+  font-size: 15px;
 }
 
 .lucky-workspace-card,
@@ -1618,6 +3202,17 @@
   .lucky-showcase-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .lucky-skill-pack-grid,
+  .lucky-skill-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lucky-agent-editor-layout {
+    grid-template-columns: minmax(260px, 30%) minmax(0, 1fr);
+    gap: 24px;
+    padding-inline: 24px;
+  }
 }
 
 @media (max-width: 900px) {
@@ -1650,6 +3245,47 @@
 
   .lucky-recommend-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lucky-create-agent-modal,
+  .lucky-team-agent-modal,
+  .lucky-skill-modal {
+    width: min(640px, calc(100vw - 32px));
+    max-height: calc(100vh - 32px);
+    padding: 24px 20px 22px;
+  }
+
+  .lucky-skill-modal-head {
+    grid-template-columns: minmax(0, 1fr) 36px;
+  }
+
+  .lucky-skill-search {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .lucky-skill-pack-grid,
+  .lucky-skill-card-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lucky-create-agent-options {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lucky-create-agent-option {
+    height: auto;
+    min-height: 340px;
+  }
+
+  .lucky-agent-editor-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+    padding: 24px 20px 32px;
+  }
+
+  .lucky-agent-editor-panel {
+    height: auto;
   }
 
   .lucky-workspace-card,
