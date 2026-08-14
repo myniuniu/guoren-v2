@@ -5,6 +5,8 @@ import {
   ArrowUpOutlined,
   AudioOutlined,
   BarChartOutlined,
+  CheckOutlined,
+  ClockCircleOutlined,
   CloudServerOutlined,
   CodeOutlined,
   MessageOutlined,
@@ -14,17 +16,23 @@ import {
   DownOutlined,
   EditOutlined,
   EllipsisOutlined,
+  FireOutlined,
   FileImageOutlined,
   FilePptOutlined,
+  FileTextOutlined,
   FolderOutlined,
+  MenuOutlined,
   PlusOutlined,
   ProductOutlined,
   ProjectOutlined,
   RightOutlined,
   RobotOutlined,
   SearchOutlined,
+  ShareAltOutlined,
   ShopOutlined,
+  StarOutlined,
   ThunderboltOutlined,
+  TrophyOutlined,
 } from '@ant-design/icons';
 import ResourceLibrarySaveModal from '../resourceLib/ResourceLibrarySaveModal.jsx';
 import './LuckyModule.css';
@@ -34,6 +42,8 @@ const LUCKY_SIDEBAR_WIDTH_STORAGE_KEY = 'gr.lucky.sidebar-width.v1';
 const DEFAULT_LUCKY_SIDEBAR_WIDTH = 224;
 const MIN_LUCKY_SIDEBAR_WIDTH = 188;
 const MAX_LUCKY_SIDEBAR_WIDTH = 320;
+const INTRO_TASK_SECTION_KEY = 'task-intro-guide';
+const INTRO_TASK_KEY = 'intro-guide';
 
 function getBoundedLuckySidebarWidth(value) {
   const width = Number(value);
@@ -94,6 +104,186 @@ const RECOMMENDATION_CARDS = [
   { key: 'data', label: '数据可视化', title: '做一份国内旅游数据可视化分析', icon: <BarChartOutlined /> },
 ];
 
+const AUTOMATION_RECOMMENDATIONS = [
+  {
+    key: 'daily-report',
+    title: '每日工作汇报',
+    desc: '工作日 19:00 定时生成日报，自动发送',
+    icon: <ClockCircleOutlined />,
+    tone: 'clock',
+  },
+  {
+    key: 'bitable-check',
+    title: '多维表数据巡检',
+    desc: '每小时跑一次，异常自动告警',
+    icon: <DatabaseOutlined />,
+    tone: 'table',
+  },
+  {
+    key: 'weekly-report',
+    title: '周报自动生成',
+    desc: '每周五 17:00 出周报草稿',
+    icon: <FileTextOutlined />,
+    tone: 'scroll',
+  },
+];
+
+const MARKET_TABS = ['专家', '技能', '最佳实践', '企业智能体'];
+
+const MARKET_RANKING_CARDS = [
+  {
+    key: 'growth',
+    title: '个人成长',
+    badge: '专属推荐',
+    desc: '成长伙伴，助你精进学习与时间管理',
+    tone: 'pink',
+    icon: <TrophyOutlined />,
+    items: [
+      { name: '学习路径规划师', category: '学习规划', avatar: 'peach' },
+      { name: '表达破局教练', category: '内容梳理', avatar: 'orange' },
+      { name: '业务决策导师', category: '决策框架', avatar: 'blue' },
+    ],
+  },
+  {
+    key: 'hot',
+    title: '热门榜',
+    desc: '全能办公AI工具，高效处理各类日常事务',
+    tone: 'gold',
+    icon: <FireOutlined />,
+    items: [
+      { name: '会议准备与复盘专家', category: '信息提炼', avatar: 'green' },
+      { name: '审批决策参谋', category: '信息提炼', avatar: 'brown' },
+      { name: '群聊摘要与待办助手', category: '信息提炼', avatar: 'violet' },
+    ],
+  },
+  {
+    key: 'selected',
+    title: '精选榜',
+    desc: '专业业务人才，深耕调研数据产品创新',
+    tone: 'blue',
+    icon: <TrophyOutlined />,
+    items: [
+      { name: '行业深度洞察专家', category: '行业研究', avatar: 'amber' },
+      { name: '数据分析师', category: '业务数据分析', avatar: 'cyan' },
+      { name: '产品原型设计师', category: '快速原型', avatar: 'purple' },
+    ],
+  },
+];
+
+const MARKET_CATEGORIES = [
+  '全部',
+  '内容创作',
+  '办公提效',
+  '产品研发',
+  '金融与理财',
+  '电商运营',
+  '短剧与短视频',
+  '数据分析',
+  '学习教育',
+  '求职与人事',
+  '市场营销',
+  '销售与客户',
+];
+
+const MARKET_EXPERTS = [
+  {
+    key: 'data-analyst',
+    name: '数据分析师',
+    category: '数据分析',
+    desc: '擅长业务数据分析与指标诊断，可基于 Excel、飞书多维表等，生成分析图表、诊断结论和行动建议。',
+    tags: ['业务数据分析', '经营指标诊断', '分析报告生成'],
+    avatar: 'cyan',
+  },
+  {
+    key: 'ppt-expert',
+    name: 'PPT 制作专家',
+    category: '办公提效',
+    desc: '帮你把零散业务思路整理成有逻辑、有重点的演示文件，生成可浏览可互动的 HTML 网页或 PPT 文件。',
+    tags: ['演示规划', 'HTML演示', 'PPT文件'],
+    avatar: 'green',
+  },
+  {
+    key: 'ui-designer',
+    name: 'UI 设计师',
+    category: '产品研发',
+    desc: '专注设计系统与组件规范，打磨界面细节，将产品需求转化为可交互原型。',
+    tags: ['界面原型', '组件规范', '界面审查'],
+    avatar: 'purple',
+  },
+  {
+    key: 'hr-recruiter',
+    name: 'HR 招聘助手',
+    category: '求职与人事',
+    desc: '为 HR 和用人经理提供全流程招聘支持，基于岗位要求与候选人履历，输出筛选标准、沟通话术、面试方案与风险提示。',
+    tags: ['招聘管理', '人才筛选', '面试评估'],
+    avatar: 'blue',
+  },
+  {
+    key: 'ai-painter',
+    name: 'AI 画师',
+    category: '内容创作',
+    desc: '根据主题和文字描述，生成适合风格的插画、封面和配图。',
+    tags: ['文章配图', '封面设计', '创意插画'],
+    avatar: 'brown',
+  },
+  {
+    key: 'strategy-report',
+    name: '战略报告顾问',
+    category: '市场营销',
+    desc: '面向职场写作与知识工作者，将汇报材料、项目材料和经营信息浓缩为高密度可快速消化的摘要和决策建议。',
+    tags: ['执行摘要', '战略报告', '决策简报'],
+    avatar: 'amber',
+  },
+  {
+    key: 'sales-coach',
+    name: '销售教练',
+    category: '销售与客户',
+    desc: '帮助销售与经营者诊断商机、演练谈判并交付销售重点话术改进清单。',
+    tags: ['销售教练', '交易策略', '竞品分析'],
+    avatar: 'peach',
+  },
+  {
+    key: 'health-coach',
+    name: '健康管理教练',
+    category: '个人成长',
+    desc: '为健身用户制定训练、饮食与恢复计划，交付可跟踪的打卡方案。',
+    tags: ['训练计划', '饮食指导', '动作指导'],
+    avatar: 'orange',
+  },
+  {
+    key: 'ecommerce-page',
+    name: '电商活动页搭建专家',
+    category: '电商运营',
+    desc: '面向电商运营人员，输入商品和活动信息，即可生成高转化的活动页。',
+    tags: ['活动页搭建', '商品专题设计', '转化体验检查'],
+    avatar: 'violet',
+  },
+  {
+    key: 'short-video-writer',
+    name: '短视频脚本编剧',
+    category: '短剧与短视频',
+    desc: '面向短视频创作者和运营团队，把主题转成结构、台词和镜头提示，交付可用于拍摄的脚本。',
+    tags: ['脚本结构', '分镜提示', '爆点设计'],
+    avatar: 'green',
+  },
+  {
+    key: 'ecommerce-data',
+    name: '电商数据分析师',
+    category: '数据分析',
+    desc: '整合并分析电商经营数据，搭建一目了然的数据看板，发现问题并给出可执行的运营建议。',
+    tags: ['销售分析', '转化诊断', '运营建议'],
+    avatar: 'cyan',
+  },
+  {
+    key: 'growth-strategy',
+    name: '增长破局操盘手',
+    category: '市场营销',
+    desc: '为产品和运营团队诊断增长漏斗，设计增长实验，输出包含指标、重点和复盘方法的执行方案。',
+    tags: ['增长实验', '漏斗诊断', '执行方案'],
+    avatar: 'purple',
+  },
+];
+
 const AGENT_CARDS = [
   {
     key: 'personal',
@@ -110,6 +300,42 @@ const AGENT_CARDS = [
     tag: '团队',
     tagTone: 'muted',
     avatar: 'coach',
+  },
+];
+
+const COMPOSER_EXTRA_AGENTS = [
+  {
+    key: 'demo-slide-polisher',
+    name: '演示文稿打磨师',
+    desc: '优化汇报材料与演示表达',
+    tag: '专属',
+    tagTone: 'purple',
+    avatar: 'personal',
+  },
+  {
+    key: 'demo-1111',
+    name: '1111',
+    desc: '通用团队协作角色',
+    tag: '团队',
+    tagTone: 'muted',
+    avatar: 'personal',
+  },
+];
+
+const COMPOSER_TEAM_OPTIONS = [
+  {
+    key: 'agent-squad',
+    name: '智能体小队（1）',
+    desc: '由多个智能体共同协作',
+  },
+];
+
+const DEFAULT_PROJECTS = [
+  {
+    key: 'project-xx-training',
+    name: 'XX小学培训',
+    instruction: '围绕小学 AI 培训沉淀任务、资料与项目上下文。',
+    createdAt: '创建于 昨天 10:54',
   },
 ];
 
@@ -460,7 +686,657 @@ function ShowcaseSection({ title, description, cards }) {
   );
 }
 
-function LuckyHome({ promptText, onPromptChange, onSend }) {
+function MarketAvatar({ tone, label }) {
+  const initial = label?.slice(0, 1) || '专';
+  return (
+    <span className={`lucky-market-avatar lucky-market-avatar-${tone}`} aria-hidden="true">
+      <span>{initial}</span>
+    </span>
+  );
+}
+
+function MarketRankingCard({ card }) {
+  return (
+    <section className={`lucky-market-ranking-card lucky-market-ranking-${card.tone}`} aria-label={card.title}>
+      <div className="lucky-market-ranking-copy">
+        <div className="lucky-market-ranking-title">
+          <h2>{card.title}</h2>
+          {card.badge ? <span>{card.badge}</span> : null}
+        </div>
+        <p>{card.desc}</p>
+      </div>
+
+      <div className="lucky-market-ranking-icon">{card.icon}</div>
+
+      <div className="lucky-market-ranking-list">
+        {card.items.map((item) => (
+          <button
+            key={item.name}
+            type="button"
+            className="lucky-market-ranking-row"
+            onClick={() => message.success(`已打开专家：${item.name}`)}
+          >
+            <MarketAvatar tone={item.avatar} label={item.name} />
+            <span>{item.name}</span>
+            <em>{item.category}</em>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function MarketPage() {
+  const [activeTab, setActiveTab] = useState(MARKET_TABS[0]);
+  const [activeCategory, setActiveCategory] = useState(MARKET_CATEGORIES[0]);
+  const [sortMode, setSortMode] = useState('hot');
+  const [searchText, setSearchText] = useState('');
+
+  const visibleExperts = useMemo(() => {
+    const normalizedSearch = searchText.trim().toLowerCase();
+    return MARKET_EXPERTS.filter((expert) => {
+      if (activeCategory !== '全部' && expert.category !== activeCategory) return false;
+      if (!normalizedSearch) return true;
+      return `${expert.name} ${expert.desc} ${expert.tags.join(' ')}`.toLowerCase().includes(normalizedSearch);
+    });
+  }, [activeCategory, searchText]);
+
+  return (
+    <section className="lucky-market-page" aria-label="市场">
+      <header className="lucky-market-header">
+        <div className="lucky-market-title">市场</div>
+      </header>
+
+      <div className="lucky-market-topline">
+        <nav className="lucky-market-tabs" aria-label="市场分类">
+          {MARKET_TABS.map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              className={activeTab === tab ? 'is-active' : ''}
+              onClick={() => {
+                setActiveTab(tab);
+                if (tab !== '专家') message.info(`${tab}页面即将上线`);
+              }}
+            >
+              {tab}
+            </button>
+          ))}
+        </nav>
+
+        <div className="lucky-market-actions">
+          <label className="lucky-market-search" htmlFor="lucky-market-search">
+            <SearchOutlined />
+            <input
+              id="lucky-market-search"
+              value={searchText}
+              placeholder="搜索"
+              onChange={(event) => setSearchText(event.target.value)}
+            />
+          </label>
+          <button
+            type="button"
+            className="lucky-market-custom"
+            onClick={() => message.info('已打开自定义专家')}
+          >
+            <PlusOutlined />
+            自定义专家
+          </button>
+        </div>
+      </div>
+
+      <div className="lucky-market-rankings">
+        {MARKET_RANKING_CARDS.map((card) => (
+          <MarketRankingCard key={card.key} card={card} />
+        ))}
+      </div>
+
+      <div className="lucky-market-filterbar">
+        <div className="lucky-market-categories" aria-label="专家领域">
+          {MARKET_CATEGORIES.map((category) => (
+            <button
+              key={category}
+              type="button"
+              className={activeCategory === category ? 'is-active' : ''}
+              onClick={() => setActiveCategory(category)}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+        <div className="lucky-market-sort" aria-label="排序">
+          <button
+            type="button"
+            className={sortMode === 'hot' ? 'is-active' : ''}
+            onClick={() => setSortMode('hot')}
+          >
+            最热
+          </button>
+          <button
+            type="button"
+            className={sortMode === 'new' ? 'is-active' : ''}
+            onClick={() => setSortMode('new')}
+          >
+            最新
+          </button>
+        </div>
+      </div>
+
+      <div className="lucky-market-grid">
+        {visibleExperts.map((expert) => (
+          <article key={expert.key} className="lucky-market-expert-card">
+            <div className="lucky-market-expert-head">
+              <MarketAvatar tone={expert.avatar} label={expert.name} />
+              <div>
+                <h3>{expert.name}</h3>
+                <p>{expert.category}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => message.success(`已招募：${expert.name}`)}
+              >
+                招募专家
+              </button>
+            </div>
+            <p className="lucky-market-expert-desc">{expert.desc}</p>
+            <div className="lucky-market-expert-tags">
+              {expert.tags.map((tag) => <span key={tag}>{tag}</span>)}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function AutomationManualModal({ open, onClose }) {
+  if (!open) return null;
+
+  return (
+    <div className="lucky-automation-modal-overlay" role="presentation">
+      <section className="lucky-automation-modal" role="dialog" aria-modal="true" aria-labelledby="automation-modal-title">
+        <div className="lucky-automation-modal-main">
+          <div className="lucky-automation-modal-left">
+            <h2 id="automation-modal-title">新建自动化</h2>
+
+            <label className="lucky-automation-field">
+              <span>标题</span>
+              <input type="text" autoFocus placeholder="请输入标题" />
+            </label>
+
+            <label className="lucky-automation-field lucky-automation-description-field">
+              <span>描述</span>
+              <div className="lucky-automation-description-box">
+                <textarea placeholder="请输入你想完成的任务" />
+                <button type="button" aria-label="添加描述内容" onClick={() => message.info('已打开添加内容')}>
+                  <PlusOutlined />
+                </button>
+              </div>
+            </label>
+
+            <div className="lucky-automation-bottom-fields">
+              <label className="lucky-automation-field">
+                <span>指派给</span>
+                <button type="button" className="lucky-automation-select-button">
+                  <span className="lucky-automation-user-avatar" aria-hidden="true">张</span>
+                  张洪磊的智能伙伴
+                  <DownOutlined />
+                </button>
+              </label>
+
+              <label className="lucky-automation-field">
+                <span>选择项目</span>
+                <button type="button" className="lucky-automation-select-button">
+                  <FolderOutlined />
+                  选择项目
+                  <DownOutlined />
+                </button>
+              </label>
+            </div>
+          </div>
+
+          <aside className="lucky-automation-modal-right">
+            <button type="button" className="lucky-automation-modal-close" aria-label="关闭" onClick={onClose}>
+              <CloseOutlined />
+            </button>
+
+            <div className="lucky-automation-config-section">
+              <h3>触发器配置</h3>
+
+              <label className="lucky-automation-config-field">
+                <span>触发方式</span>
+                <button type="button" className="lucky-automation-config-select is-compact">
+                  <ClockCircleOutlined />
+                  定时触发
+                  <DownOutlined />
+                </button>
+              </label>
+
+              <label className="lucky-automation-config-field">
+                <span>执行频率</span>
+                <button type="button" className="lucky-automation-config-select is-compact">
+                  每天
+                  <DownOutlined />
+                </button>
+              </label>
+
+              <button type="button" className="lucky-automation-config-select">
+                上午 11:09
+                <DownOutlined />
+              </button>
+
+              <div className="lucky-automation-idle-row">
+                <div>
+                  <div>闲时执行</div>
+                  <p>开启后，任务会在资源空闲时段（00:00-06:00）执行，并按设定的通知时间推送结果，以减少高峰期排队等待。关闭后，任务将按设置的执行时间运行</p>
+                </div>
+                <button type="button" className="lucky-automation-switch" aria-label="闲时执行" aria-pressed="false" />
+              </div>
+
+              <button type="button" className="lucky-automation-advanced">
+                高级配置
+                <DownOutlined />
+              </button>
+            </div>
+
+            <div className="lucky-automation-config-section lucky-automation-push-section">
+              <h3>推送配置</h3>
+              <p>任务完成后，智能体会将执行结果发送给你；企业智能体在群组中创建的自动化任务，任务执行结果会发送到群里</p>
+
+              <label className="lucky-automation-config-field">
+                <span>推送给</span>
+                <div className="lucky-automation-receiver-box">
+                  <span className="lucky-automation-receiver-tag">
+                    <span className="lucky-automation-user-avatar" aria-hidden="true">张</span>
+                    张洪磊
+                    <span aria-hidden="true">×</span>
+                  </span>
+                </div>
+              </label>
+            </div>
+          </aside>
+        </div>
+
+        <footer className="lucky-automation-modal-footer">
+          <button type="button" className="lucky-automation-modal-cancel" onClick={onClose}>取消</button>
+          <button
+            type="button"
+            className="lucky-automation-modal-submit"
+            onClick={() => {
+              onClose();
+              message.success('已创建自动化');
+            }}
+          >
+            创建
+          </button>
+        </footer>
+      </section>
+    </div>
+  );
+}
+
+function AutomationPage() {
+  const [createMenuOpen, setCreateMenuOpen] = useState(false);
+  const [manualModalOpen, setManualModalOpen] = useState(false);
+  const createMenuRef = useRef(null);
+
+  useEffect(() => {
+    if (!createMenuOpen) return undefined;
+
+    const handlePointerDown = (event) => {
+      if (createMenuRef.current?.contains(event.target)) return;
+      setCreateMenuOpen(false);
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setCreateMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [createMenuOpen]);
+
+  return (
+    <section className="lucky-automation-page" aria-label="自动化">
+      <div className="lucky-automation-title">自动化</div>
+
+      <div className="lucky-automation-center">
+        <div className="lucky-automation-empty">
+          <div className="lucky-automation-empty-icon" aria-hidden="true" />
+          <p>为智能体安排自动化任务。你可以使用推荐模板，或从空白新建</p>
+          <div className="lucky-automation-create-wrap" ref={createMenuRef}>
+            <button
+              type="button"
+              className={`lucky-automation-create ${createMenuOpen ? 'is-active' : ''}`}
+              aria-haspopup="menu"
+              aria-expanded={createMenuOpen}
+              onClick={() => setCreateMenuOpen((open) => !open)}
+            >
+              <PlusOutlined />
+              新建自动化
+              <DownOutlined />
+            </button>
+            {createMenuOpen ? (
+              <div className="lucky-automation-create-menu" role="menu" aria-label="新建自动化方式">
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setCreateMenuOpen(false);
+                    message.info('已进入对话创建自动化');
+                  }}
+                >
+                  <MessageOutlined />
+                  使用对话创建
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setCreateMenuOpen(false);
+                    setManualModalOpen(true);
+                  }}
+                >
+                  <PlusOutlined />
+                  手动创建
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="lucky-automation-divider" />
+
+        <div className="lucky-automation-recommend">
+          <div className="lucky-automation-recommend-title">推荐</div>
+          <div className="lucky-automation-card-grid">
+            {AUTOMATION_RECOMMENDATIONS.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                className="lucky-automation-card"
+                onClick={() => message.success(`已选择模板：${item.title}`)}
+              >
+                <span className={`lucky-automation-card-icon lucky-automation-card-icon-${item.tone}`}>
+                  {item.icon}
+                </span>
+                <span className="lucky-automation-card-title">{item.title}</span>
+                <span className="lucky-automation-card-desc">{item.desc}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <AutomationManualModal
+        open={manualModalOpen}
+        onClose={() => setManualModalOpen(false)}
+      />
+    </section>
+  );
+}
+
+function TaskDetailPage({ onSendReply }) {
+  const scoreStars = Array.from({ length: 5 }, (_, index) => index + 1);
+
+  return (
+    <section className="lucky-task-detail-page" aria-label="任务详情">
+      <header className="lucky-task-detail-topbar">
+        <div className="lucky-task-detail-title">介绍并引导上手使用</div>
+        <div className="lucky-task-detail-actions">
+          <button type="button" aria-label="任务视图" onClick={() => message.info('已切换任务视图')}>
+            <MenuOutlined />
+          </button>
+          <button type="button" aria-label="分享任务" onClick={() => message.info('已复制分享入口')}>
+            <ShareAltOutlined />
+          </button>
+          <button type="button" aria-label="更多" onClick={() => message.info('更多操作')}>
+            <EllipsisOutlined />
+          </button>
+        </div>
+      </header>
+
+      <div className="lucky-task-detail-body">
+        <div className="lucky-task-thread">
+          <div className="lucky-task-intro-row">
+            <article className="lucky-task-intro-card">
+              <p>我刚完成初始设置，第一次用你。带我认识你。</p>
+              <p>这个过程中，记着：和我多轮对话，一步步来，每次只带一小步，做完停下等我回应；真的动手操作（建任务 / 加技能 / 设自动化），不要写文档、也不要只讲不做。</p>
+              <h3>先简单介绍你</h3>
+              <p>结合我的角色和场景，用几句话说清你是什么、能帮我做什么，给我个大方向；别罗列功能，说完就带我动手做第一件事。</p>
+              <h3>带我做这几件事（挑一个适合我的真实场景，把下面几件事自然串进去）</h3>
+              <ol>
+                <li>创建第一个任务（不要创建自动化任务）</li>
+                <li>加一个技能</li>
+                <li>设一个自动化（我同意后你再创建）</li>
+              </ol>
+              <h3>关于我</h3>
+              <ul>
+                <li>工作：技术部部门总监</li>
+                <li>喜欢的沟通方式：高效务实，注重结果导向</li>
+              </ul>
+            </article>
+            <span className="lucky-task-author-badge" aria-label="张洪磊">
+              <AgentAvatar type="personal" />
+            </span>
+          </div>
+
+          <article className="lucky-task-message">
+            <AgentAvatar type="personal" />
+            <div className="lucky-task-message-content">
+              <p>
+                张洪磊，你好。我是你的智能工作搭档——帮你盯事、跑腿、串联飞书里的消息/文档/日程/任务，
+                让你少在琐事上花时间，多聚焦在技术决策和团队管理上。
+              </p>
+              <p>
+                咱们直接上手。先帮你建一个任务试试——比如你最近技术部有什么需要跟进的事？选一个：
+              </p>
+              <div className="lucky-task-message-meta">
+                <span>07月30日 21:05</span>
+                <span>结果评分</span>
+                <span className="lucky-task-score" aria-label="结果评分">
+                  {scoreStars.map((star) => (
+                    <StarOutlined key={star} />
+                  ))}
+                </span>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <aside className="lucky-task-info-card" aria-label="基础信息">
+          <h2>基础信息</h2>
+          <dl>
+            <div>
+              <dt>状态</dt>
+              <dd>
+                <span className="lucky-task-status-dot" />
+                进行中
+              </dd>
+            </div>
+            <div>
+              <dt>指派给</dt>
+              <dd>
+                <span className="lucky-task-mini-avatar">
+                  <AgentAvatar type="personal" />
+                </span>
+                张洪磊的智能伙伴
+              </dd>
+            </div>
+            <div>
+              <dt>创建者</dt>
+              <dd>
+                <span className="lucky-task-mini-avatar">
+                  <AgentAvatar type="personal" />
+                </span>
+                张洪磊
+              </dd>
+            </div>
+            <div>
+              <dt>创建时间</dt>
+              <dd>2026年07月30日 21:04</dd>
+            </div>
+            <div>
+              <dt>最近更新</dt>
+              <dd>2026年07月30日 21:04</dd>
+            </div>
+          </dl>
+        </aside>
+      </div>
+
+      <div className="lucky-task-reply-wrap">
+        <div className="lucky-task-reply-box">
+          <textarea rows={2} placeholder="继续补充信息，或 @智能体 派发任务" />
+          <div className="lucky-task-reply-actions">
+            <button type="button" aria-label="添加">
+              <PlusOutlined />
+            </button>
+            <div>
+              <button type="button" aria-label="语音输入">
+                <AudioOutlined />
+              </button>
+              <button type="button" className="lucky-task-reply-send" aria-label="发送" onClick={onSendReply}>
+                <ArrowUpOutlined />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function LuckyHome({
+  promptText,
+  onPromptChange,
+  onSend,
+  agents = [],
+  teams = COMPOSER_TEAM_OPTIONS,
+  projects = DEFAULT_PROJECTS,
+  onOpenCreateProject,
+}) {
+  const [contextMenuOpen, setContextMenuOpen] = useState(false);
+  const [projectMenuOpen, setProjectMenuOpen] = useState(false);
+  const [browserMenuOpen, setBrowserMenuOpen] = useState(false);
+  const [selectedTarget, setSelectedTarget] = useState({ type: 'agent', key: 'personal' });
+  const [selectedProjectKey, setSelectedProjectKey] = useState(projects[0]?.key || '');
+  const [projectSearchText, setProjectSearchText] = useState('');
+  const contextPickerRef = useRef(null);
+  const projectPickerRef = useRef(null);
+  const browserPickerRef = useRef(null);
+  const composerAgents = useMemo(() => {
+    const agentMap = new Map();
+    [...agents, ...COMPOSER_EXTRA_AGENTS].forEach((agent) => {
+      if (!agentMap.has(agent.key)) agentMap.set(agent.key, agent);
+    });
+    return [...agentMap.values()];
+  }, [agents]);
+  const composerTeams = teams.length > 0 ? teams : COMPOSER_TEAM_OPTIONS;
+  const selectedAgent = composerAgents.find((agent) => agent.key === selectedTarget.key) || composerAgents[0];
+  const selectedTeam = composerTeams.find((team) => team.key === selectedTarget.key) || composerTeams[0];
+  const selectedContextLabel = selectedTarget.type === 'team' ? selectedTeam?.name : selectedAgent?.name;
+  const selectedProject = projects.find((project) => project.key === selectedProjectKey) || projects[0];
+  const filteredProjects = useMemo(() => {
+    const normalizedSearch = projectSearchText.trim().toLowerCase();
+    if (!normalizedSearch) return projects;
+    return projects.filter((project) => (
+      `${project.name} ${project.instruction || ''}`.toLowerCase().includes(normalizedSearch)
+    ));
+  }, [projectSearchText, projects]);
+
+  useEffect(() => {
+    if (!contextMenuOpen) return undefined;
+
+    const handlePointerDown = (event) => {
+      if (contextPickerRef.current?.contains(event.target)) return;
+      setContextMenuOpen(false);
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setContextMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [contextMenuOpen]);
+
+  useEffect(() => {
+    if (!projectMenuOpen) return undefined;
+
+    const handlePointerDown = (event) => {
+      if (projectPickerRef.current?.contains(event.target)) return;
+      setProjectMenuOpen(false);
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setProjectMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [projectMenuOpen]);
+
+  useEffect(() => {
+    if (!browserMenuOpen) return undefined;
+
+    const handlePointerDown = (event) => {
+      if (browserPickerRef.current?.contains(event.target)) return;
+      setBrowserMenuOpen(false);
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setBrowserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [browserMenuOpen]);
+
+  useEffect(() => {
+    if (selectedProjectKey || !projects[0]) return;
+    setSelectedProjectKey(projects[0].key);
+  }, [projects, selectedProjectKey]);
+
+  const handleSelectContextTarget = (type, option) => {
+    setSelectedTarget({ type, key: option.key });
+    setContextMenuOpen(false);
+    message.success(`已切换到：${option.name}`);
+  };
+
+  const handleSelectProject = (project) => {
+    setSelectedProjectKey(project.key);
+    setProjectMenuOpen(false);
+    message.success(`已进入项目：${project.name}`);
+  };
+
   return (
     <div className="lucky-home">
       <div className="lucky-home-avatar" aria-hidden="true">
@@ -522,17 +1398,221 @@ function LuckyHome({ promptText, onPromptChange, onSend }) {
           </div>
           <div className="lucky-context-bar">
             {COMPOSER_CONTEXTS.map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                className="lucky-context-item"
-                onClick={() => message.info(`已选择：${item.label}`)}
-              >
-                <span className="lucky-context-icon">{item.icon}</span>
-                <span className="lucky-context-label">{item.label}</span>
-                <DownOutlined className="lucky-context-arrow" />
-                {item.hasNotice ? <span className="lucky-context-notice" /> : null}
-              </button>
+              item.key === 'agent' ? (
+                <div key={item.key} className="lucky-context-picker" ref={contextPickerRef}>
+                  <button
+                    type="button"
+                    className={`lucky-context-item lucky-context-picker-trigger ${contextMenuOpen ? 'is-open' : ''}`}
+                    aria-haspopup="menu"
+                    aria-expanded={contextMenuOpen}
+                    onClick={() => setContextMenuOpen((open) => !open)}
+                  >
+                    <span className="lucky-context-icon">{item.icon}</span>
+                    <span className="lucky-context-label">{selectedContextLabel}</span>
+                    <DownOutlined className="lucky-context-arrow" />
+                  </button>
+
+                  {contextMenuOpen ? (
+                    <div className="lucky-context-menu" role="menu" aria-label="选择智能体或小队">
+                      <div className="lucky-context-menu-section">
+                        <div className="lucky-context-menu-head">
+                          <span>智能体</span>
+                          <button
+                            type="button"
+                            aria-label="新建智能体"
+                            onClick={() => message.info('已打开新建智能体')}
+                          >
+                            <PlusOutlined />
+                          </button>
+                        </div>
+
+                        <div className="lucky-context-option-list">
+                          {composerAgents.map((agent) => {
+                            const isSelected = selectedTarget.type === 'agent' && selectedTarget.key === agent.key;
+                            return (
+                              <button
+                                key={agent.key}
+                                type="button"
+                                role="menuitemradio"
+                                aria-checked={isSelected}
+                                className={`lucky-context-option ${isSelected ? 'is-selected' : ''}`}
+                                onClick={() => handleSelectContextTarget('agent', agent)}
+                              >
+                                <AgentAvatar type={agent.avatar} />
+                                <span className="lucky-context-option-name">{agent.name}</span>
+                                {agent.tag === '专属' ? <span className="lucky-context-option-badge">专属</span> : null}
+                                {isSelected ? <CheckOutlined className="lucky-context-option-check" /> : null}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="lucky-context-menu-section">
+                        <div className="lucky-context-menu-head">
+                          <span>小队</span>
+                          <button
+                            type="button"
+                            aria-label="新建智能体小队"
+                            onClick={() => message.info('已打开新建智能体小队')}
+                          >
+                            <PlusOutlined />
+                          </button>
+                        </div>
+
+                        <div className="lucky-context-option-list">
+                          {composerTeams.map((team) => {
+                            const isSelected = selectedTarget.type === 'team' && selectedTarget.key === team.key;
+                            return (
+                              <button
+                                key={team.key}
+                                type="button"
+                                role="menuitemradio"
+                                aria-checked={isSelected}
+                                className={`lucky-context-option ${isSelected ? 'is-selected' : ''}`}
+                                onClick={() => handleSelectContextTarget('team', team)}
+                              >
+                                <span className="lucky-context-team-icon" aria-hidden="true">
+                                  <RobotOutlined />
+                                </span>
+                                <span className="lucky-context-option-name">{team.name}</span>
+                                {isSelected ? <CheckOutlined className="lucky-context-option-check" /> : null}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              ) : item.key === 'project' ? (
+                <div key={item.key} className="lucky-context-picker lucky-context-project-picker" ref={projectPickerRef}>
+                  <button
+                    type="button"
+                    className={`lucky-context-item lucky-context-picker-trigger ${projectMenuOpen ? 'is-open' : ''}`}
+                    aria-haspopup="menu"
+                    aria-expanded={projectMenuOpen}
+                    onClick={() => setProjectMenuOpen((open) => !open)}
+                  >
+                    <span className="lucky-context-icon">{item.icon}</span>
+                    <span className="lucky-context-label">{selectedProject ? selectedProject.name : item.label}</span>
+                    <DownOutlined className="lucky-context-arrow" />
+                  </button>
+
+                  {projectMenuOpen ? (
+                    <div className="lucky-context-menu lucky-project-context-menu" role="menu" aria-label="选择项目">
+                      <label className="lucky-project-context-search" htmlFor="lucky-project-context-search">
+                        <SearchOutlined />
+                        <input
+                          id="lucky-project-context-search"
+                          value={projectSearchText}
+                          placeholder="搜索"
+                          onChange={(event) => setProjectSearchText(event.target.value)}
+                        />
+                      </label>
+
+                      <div className="lucky-context-option-list lucky-project-context-list">
+                        {filteredProjects.map((project) => {
+                          const isSelected = project.key === selectedProject?.key;
+                          return (
+                            <button
+                              key={project.key}
+                              type="button"
+                              role="menuitemradio"
+                              aria-checked={isSelected}
+                              className={`lucky-context-option lucky-project-context-option ${isSelected ? 'is-selected' : ''}`}
+                              onClick={() => handleSelectProject(project)}
+                            >
+                              <span className="lucky-context-project-icon" aria-hidden="true">
+                                <FolderOutlined />
+                              </span>
+                              <span className="lucky-context-option-name">{project.name}</span>
+                              {isSelected ? <CheckOutlined className="lucky-context-option-check" /> : null}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <button
+                        type="button"
+                        className="lucky-project-context-create"
+                        onClick={() => {
+                          setProjectMenuOpen(false);
+                          onOpenCreateProject?.();
+                        }}
+                      >
+                        <PlusOutlined />
+                        新建项目
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              ) : item.key === 'browser' ? (
+                <div key={item.key} className="lucky-context-picker lucky-context-browser-picker" ref={browserPickerRef}>
+                  <button
+                    type="button"
+                    className={`lucky-context-item lucky-context-picker-trigger ${browserMenuOpen ? 'is-open' : ''}`}
+                    aria-haspopup="menu"
+                    aria-expanded={browserMenuOpen}
+                    onClick={() => setBrowserMenuOpen((open) => !open)}
+                  >
+                    <span className="lucky-context-icon">{item.icon}</span>
+                    <span className="lucky-context-label">{item.label}</span>
+                    <DownOutlined className="lucky-context-arrow" />
+                    {item.hasNotice ? <span className="lucky-context-notice" /> : null}
+                  </button>
+
+                  {browserMenuOpen ? (
+                    <div className="lucky-context-menu lucky-browser-context-menu" role="menu" aria-label="选择浏览器">
+                      <p className="lucky-browser-context-desc">
+                        使用浏览器处理网页操作任务，未开启本地浏览器时将使用云端浏览器
+                      </p>
+
+                      <div className="lucky-browser-context-row">
+                        <span className="lucky-browser-context-icon" aria-hidden="true">
+                          <CloudServerOutlined />
+                        </span>
+                        <span className="lucky-browser-context-copy">
+                          <strong>使用我的浏览器</strong>
+                          <em>便捷访问需登录或验证的网站</em>
+                        </span>
+                        <button
+                          type="button"
+                          className="lucky-browser-install-btn"
+                          onClick={() => message.success('已开始安装浏览器插件')}
+                        >
+                          安装
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="lucky-browser-manage-row"
+                        onClick={() => {
+                          setBrowserMenuOpen(false);
+                          message.info('已打开浏览器管理');
+                        }}
+                      >
+                        <ControlOutlined />
+                        <span>管理</span>
+                        <RightOutlined />
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <button
+                  key={item.key}
+                  type="button"
+                  className="lucky-context-item"
+                  onClick={() => message.info(`已选择：${item.label}`)}
+                >
+                  <span className="lucky-context-icon">{item.icon}</span>
+                  <span className="lucky-context-label">{item.label}</span>
+                  <DownOutlined className="lucky-context-arrow" />
+                  {item.hasNotice ? <span className="lucky-context-notice" /> : null}
+                </button>
+              )
             ))}
           </div>
         </div>
@@ -569,6 +1649,345 @@ function LuckyHome({ promptText, onPromptChange, onSend }) {
               <span className="lucky-recommend-card-title">{item.title}</span>
             </button>
           ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function CreateProjectModal({ open, onClose, onCreate }) {
+  const [projectName, setProjectName] = useState('');
+  const [projectInstruction, setProjectInstruction] = useState('');
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    setProjectName('');
+    setProjectInstruction('');
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose, open]);
+
+  if (!open) return null;
+
+  const canCreate = projectName.trim().length > 0;
+
+  const handleCreate = () => {
+    if (!canCreate) return;
+    onCreate({
+      name: projectName.trim(),
+      instruction: projectInstruction.trim(),
+    });
+    onClose();
+  };
+
+  return (
+    <div className="lucky-create-agent-overlay" role="presentation" onMouseDown={onClose} onClick={onClose}>
+      <section
+        className="lucky-create-project-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="lucky-create-project-title"
+        onMouseDown={(event) => event.stopPropagation()}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="lucky-create-project-head">
+          <h2 id="lucky-create-project-title">创建项目</h2>
+          <button type="button" aria-label="关闭" onClick={onClose}>
+            <CloseOutlined />
+          </button>
+        </div>
+
+        <label className="lucky-create-project-field">
+          <span>
+            项目名
+            <em>*</em>
+          </span>
+          <input
+            type="text"
+            autoFocus
+            value={projectName}
+            placeholder="请输入项目名称"
+            onChange={(event) => setProjectName(event.target.value)}
+          />
+        </label>
+
+        <label className="lucky-create-project-field">
+          <span>指令</span>
+          <textarea
+            value={projectInstruction}
+            placeholder="用于引导智能体在该项目中的行为规范、工作风格及流程。例如：留存数据按自然周计算，结论中附上数据来源。"
+            onChange={(event) => setProjectInstruction(event.target.value)}
+          />
+        </label>
+
+        <footer className="lucky-create-project-footer">
+          <button type="button" className="lucky-create-project-cancel" onClick={onClose}>取消</button>
+          <button
+            type="button"
+            className={`lucky-create-project-submit ${canCreate ? 'is-ready' : ''}`}
+            disabled={!canCreate}
+            onClick={handleCreate}
+          >
+            创建
+          </button>
+        </footer>
+      </section>
+    </div>
+  );
+}
+
+function ProjectsPage({ projects, onOpenCreate, onOpenProject }) {
+  const [projectSearch, setProjectSearch] = useState('');
+  const normalizedSearch = projectSearch.trim().toLowerCase();
+  const visibleProjects = projects.filter((project) => {
+    if (!normalizedSearch) return true;
+    return `${project.name} ${project.instruction || ''}`.toLowerCase().includes(normalizedSearch);
+  });
+
+  return (
+    <section className="lucky-project-page" aria-label="项目">
+      <header className="lucky-project-page-head">
+        <div className="lucky-project-title">项目</div>
+        <div className="lucky-project-actions">
+          <label className="lucky-project-search" htmlFor="lucky-project-search">
+            <SearchOutlined />
+            <input
+              id="lucky-project-search"
+              value={projectSearch}
+              placeholder="搜索"
+              onChange={(event) => setProjectSearch(event.target.value)}
+            />
+          </label>
+          <button type="button" className="lucky-project-create-btn" onClick={onOpenCreate}>
+            <PlusOutlined />
+            新建项目
+          </button>
+        </div>
+      </header>
+
+      <div className="lucky-project-board">
+        <div className="lucky-project-section-title">我的项目 ({projects.length})</div>
+        <div className="lucky-project-grid">
+          {visibleProjects.map((project) => (
+            <button
+              key={project.key}
+              type="button"
+              className="lucky-project-card"
+              onClick={() => onOpenProject(project)}
+            >
+              <span className="lucky-project-card-icon" aria-hidden="true">
+                <FolderOutlined />
+              </span>
+              <span className="lucky-project-card-copy">
+                <strong>{project.name}</strong>
+                <em>{project.createdAt}</em>
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ProjectDetailPage({ project }) {
+  return (
+    <section className="lucky-project-detail-page" aria-label={`${project.name} 项目`}>
+      <header className="lucky-project-detail-topbar">
+        <div className="lucky-project-detail-breadcrumb">
+          <span>项目</span>
+          <span>/</span>
+          <strong>{project.name}</strong>
+        </div>
+        <div className="lucky-project-detail-actions">
+          <button type="button" aria-label="视图" onClick={() => message.info('已切换项目视图')}>
+            <MenuOutlined />
+          </button>
+          <button type="button" aria-label="更多" onClick={() => message.info('更多项目操作')}>
+            <EllipsisOutlined />
+          </button>
+        </div>
+      </header>
+
+      <div className="lucky-project-detail-layout">
+        <main className="lucky-project-detail-main">
+          <h1>{project.name}</h1>
+
+          <section className="lucky-project-task-composer" aria-label="项目任务输入">
+            <div className="lucky-project-task-box">
+              <textarea rows={3} placeholder="指派智能体开始任务" />
+              <div className="lucky-project-task-actions">
+                <button type="button" aria-label="添加">
+                  <PlusOutlined />
+                </button>
+                <div>
+                  <button type="button" className="lucky-project-auto-button">
+                    <ThunderboltOutlined />
+                    Auto
+                    <RightOutlined />
+                  </button>
+                  <button type="button" aria-label="语音输入">
+                    <AudioOutlined />
+                  </button>
+                  <button
+                    type="button"
+                    className="lucky-project-task-send"
+                    aria-label="发送"
+                    onClick={() => message.success('已发送项目任务')}
+                  >
+                    <ArrowUpOutlined />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="lucky-project-context-row">
+              <button type="button" onClick={() => message.info('选择智能体')}>
+                <RobotOutlined />
+                张洪磊的智能伙伴
+                <DownOutlined />
+              </button>
+              <button type="button" onClick={() => message.info('选择项目')}>
+                <FolderOutlined />
+                {project.name}
+                <DownOutlined />
+              </button>
+            </div>
+          </section>
+
+          <section className="lucky-project-task-list" aria-label="我的任务">
+            <h2>我的任务 (0)</h2>
+            <div className="lucky-project-empty-task">
+              <span className="lucky-project-empty-illustration" aria-hidden="true" />
+              <p>暂无任务</p>
+            </div>
+          </section>
+        </main>
+
+        <aside className="lucky-project-detail-side" aria-label="项目配置">
+          <section className="lucky-project-side-card">
+            <div className="lucky-project-side-card-head">
+              <h2>指令</h2>
+              <button type="button" aria-label="编辑指令" onClick={() => message.info('编辑项目指令')}>
+                <EditOutlined />
+              </button>
+            </div>
+            <p>设置指令，用于引导智能体在该项目中的行为规范、工作风格及流程。项目中的所有任务均会遵循该指令</p>
+          </section>
+
+          <section className="lucky-project-side-card">
+            <div className="lucky-project-side-card-head">
+              <h2>知识</h2>
+              <button type="button" aria-label="添加知识" onClick={() => message.info('添加项目知识')}>
+                <PlusOutlined />
+              </button>
+            </div>
+            <p>暂无知识，添加后将自动共享至本项目的所有任务</p>
+          </section>
+
+          <section className="lucky-project-side-card lucky-project-side-member-card">
+            <div className="lucky-project-side-card-head">
+              <h2>协作者</h2>
+              <button type="button" aria-label="添加协作者" onClick={() => message.info('添加协作者')}>
+                <PlusOutlined />
+              </button>
+            </div>
+            <div className="lucky-project-member-row">
+              <span className="lucky-project-member-avatar">
+                <AgentAvatar type="personal" />
+              </span>
+              <span>张洪磊</span>
+              <em>所有者</em>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </section>
+  );
+}
+
+function LuckyGlobalSearchModal({ open, onClose, onCreateTask, onOpenIntroTask }) {
+  const [searchText, setSearchText] = useState('');
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    setSearchText('');
+    window.setTimeout(() => inputRef.current?.focus(), 0);
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose, open]);
+
+  if (!open) return null;
+
+  const normalizedSearch = searchText.trim().toLowerCase();
+  const showRecentTask = !normalizedSearch || '介绍并引导上手使用'.toLowerCase().includes(normalizedSearch);
+  const showCreateTask = !normalizedSearch || '新建任务'.includes(normalizedSearch);
+
+  return (
+    <div className="lucky-global-search-overlay" role="presentation" onMouseDown={onClose} onClick={onClose}>
+      <section
+        className="lucky-global-search-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="搜索"
+        onMouseDown={(event) => event.stopPropagation()}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <label className="lucky-global-search-input" htmlFor="lucky-global-search-input">
+          <SearchOutlined />
+          <input
+            ref={inputRef}
+            id="lucky-global-search-input"
+            value={searchText}
+            placeholder="搜索任务或选择快捷操作"
+            onChange={(event) => setSearchText(event.target.value)}
+          />
+          <button type="button" aria-label="关闭搜索" onClick={onClose}>
+            <CloseOutlined />
+          </button>
+        </label>
+
+        <div className="lucky-global-search-content">
+          {showCreateTask ? (
+            <section className="lucky-global-search-section">
+              <h2>快捷功能</h2>
+              <button type="button" className="lucky-global-search-row is-highlighted" onClick={onCreateTask}>
+                <PlusOutlined />
+                <span>新建任务</span>
+              </button>
+            </section>
+          ) : null}
+
+          {showRecentTask ? (
+            <section className="lucky-global-search-section">
+              <h2>最近任务</h2>
+              <button type="button" className="lucky-global-search-row" onClick={onOpenIntroTask}>
+                <span className="lucky-global-search-status" aria-hidden="true" />
+                <span>介绍并引导上手使用</span>
+              </button>
+            </section>
+          ) : null}
+
+          {!showCreateTask && !showRecentTask ? (
+            <div className="lucky-global-search-empty">暂无匹配结果</div>
+          ) : null}
         </div>
       </section>
     </div>
@@ -1605,6 +3024,7 @@ function AgentManagementPage({ activeTab, agents, teamAgents, onTabChange, onOpe
 function LuckyModule() {
   const [sidebarWidth, setSidebarWidth] = useState(() => loadLuckySidebarWidth());
   const [activeSection, setActiveSection] = useState('new');
+  const [activeTaskKey, setActiveTaskKey] = useState(null);
   const [workMode, setWorkMode] = useState('office');
   const [agentTab, setAgentTab] = useState('mine');
   const [createdAgents, setCreatedAgents] = useState([]);
@@ -1612,6 +3032,8 @@ function LuckyModule() {
   const [editingAgent, setEditingAgent] = useState(null);
   const [agentInstructions, setAgentInstructions] = useState({});
   const [agentSkills, setAgentSkills] = useState({});
+  const [projects, setProjects] = useState(DEFAULT_PROJECTS);
+  const [activeProject, setActiveProject] = useState(null);
   const [sourceFilter, setSourceFilter] = useState('all');
   const [scopeFilter, setScopeFilter] = useState('all');
   const [keyword, setKeyword] = useState('');
@@ -1621,7 +3043,9 @@ function LuckyModule() {
   const [savingItem, setSavingItem] = useState(null);
   const [createAgentOpen, setCreateAgentOpen] = useState(false);
   const [teamAgentOpen, setTeamAgentOpen] = useState(false);
+  const [createProjectOpen, setCreateProjectOpen] = useState(false);
   const [skillMarketOpen, setSkillMarketOpen] = useState(false);
+  const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const sidebarWidthRef = useRef(sidebarWidth);
 
   useEffect(() => {
@@ -1679,10 +3103,16 @@ function LuckyModule() {
     };
   }, [filteredRows]);
 
-  const sectionCopy = SECTION_COPY[activeSection];
-  const showHome = activeSection === 'new';
+  const sectionCopy = SECTION_COPY[activeSection] ?? SECTION_COPY.new;
+  const showTaskDetail = activeSection === INTRO_TASK_SECTION_KEY && activeTaskKey === INTRO_TASK_KEY;
+  const showHome = activeSection === 'new' && !showTaskDetail;
+  const showAutomation = activeSection === 'automation';
   const showAgents = activeSection === 'partners';
+  const showProjectDetail = activeSection === 'projects' && Boolean(activeProject);
+  const showProjects = activeSection === 'projects' && !showProjectDetail;
   const showLibrary = activeSection === 'library';
+  const showMarket = activeSection === 'market';
+  const activeNavIndex = Math.max(0, NAV_ITEMS.findIndex((item) => item.key === activeSection));
   const mineAgents = useMemo(
     () => [...AGENT_CARDS, ...createdAgents].filter((agent) => !deletedAgentKeys.includes(agent.key)),
     [createdAgents, deletedAgentKeys],
@@ -1711,6 +3141,17 @@ function LuckyModule() {
     setCreatedAgents((prev) => [...prev, agent]);
     setAgentTab('mine');
     message.success(`已创建：${agent.name}`);
+  };
+
+  const handleCreateProject = ({ name, instruction }) => {
+    const project = {
+      key: `project-${Date.now()}`,
+      name,
+      instruction,
+      createdAt: '创建于 刚刚',
+    };
+    setProjects((prev) => [...prev, project]);
+    message.success(`已创建项目：${name}`);
   };
 
   const handleAgentInstructionChange = (agentKey, nextMarkdown) => {
@@ -1753,11 +3194,39 @@ function LuckyModule() {
 
   const handleSelectSection = (key) => {
     setActiveSection(key);
+    setActiveTaskKey(null);
+    setActiveProject(null);
     setSkillMarketOpen(false);
     if (key === 'partners') {
       setEditingAgent(null);
       return;
     }
+    setEditingAgent(null);
+  };
+
+  const handleOpenIntroTask = () => {
+    setActiveSection(INTRO_TASK_SECTION_KEY);
+    setActiveTaskKey(INTRO_TASK_KEY);
+    setActiveProject(null);
+    setSkillMarketOpen(false);
+    setEditingAgent(null);
+  };
+
+  const handleOpenIntroTaskFromSearch = () => {
+    setGlobalSearchOpen(false);
+    handleOpenIntroTask();
+  };
+
+  const handleCreateTaskFromSearch = () => {
+    setGlobalSearchOpen(false);
+    handleSelectSection('new');
+  };
+
+  const handleOpenProject = (project) => {
+    setActiveSection('projects');
+    setActiveTaskKey(null);
+    setActiveProject(project);
+    setSkillMarketOpen(false);
     setEditingAgent(null);
   };
 
@@ -1773,7 +3242,13 @@ function LuckyModule() {
             <span className="lucky-sidebar-name">lucky</span>
           </div>
           <div className="lucky-sidebar-tools">
-            <button type="button" className="lucky-sidebar-tool" title="搜索" aria-label="搜索">
+            <button
+              type="button"
+              className="lucky-sidebar-tool"
+              title="搜索"
+              aria-label="搜索"
+              onClick={() => setGlobalSearchOpen(true)}
+            >
               <SearchOutlined />
             </button>
             <button type="button" className="lucky-sidebar-tool" title="收起侧栏" aria-label="收起侧栏">
@@ -1782,7 +3257,7 @@ function LuckyModule() {
           </div>
         </div>
 
-        <div className="lucky-work-mode-switch" aria-label="工作模式">
+        <div className={`lucky-work-mode-switch ${workMode === 'code' ? 'is-code' : 'is-office'}`} aria-label="工作模式">
           {WORK_MODES.map((item) => (
             <button
               key={item.key}
@@ -1796,12 +3271,16 @@ function LuckyModule() {
           ))}
         </div>
 
-        <nav className="lucky-sidebar-nav" aria-label="Lucky 导航">
+        <nav
+          className={`lucky-sidebar-nav ${showTaskDetail ? 'is-task-detail' : ''}`}
+          style={{ '--lucky-nav-active-y': `${activeNavIndex * 38}px` }}
+          aria-label="Lucky 导航"
+        >
           {NAV_ITEMS.map((item) => (
             <button
               key={item.key}
               type="button"
-              className={`lucky-nav-item ${activeSection === item.key ? 'is-active' : ''}`}
+              className={`lucky-nav-item ${!showTaskDetail && activeSection === item.key ? 'is-active' : ''}`}
               onClick={() => handleSelectSection(item.key)}
             >
               <span className="lucky-nav-icon">{item.icon}</span>
@@ -1820,8 +3299,8 @@ function LuckyModule() {
           </div>
           <button
             type="button"
-            className={`lucky-task-shortcut ${activeSection === 'new' ? 'is-active' : ''}`}
-            onClick={() => handleSelectSection('new')}
+            className={`lucky-task-shortcut ${showTaskDetail ? 'is-active' : ''}`}
+            onClick={handleOpenIntroTask}
           >
             <span className="lucky-task-text">介绍并引导上手使用</span>
             <span className="lucky-task-dot" aria-hidden="true" />
@@ -1838,12 +3317,20 @@ function LuckyModule() {
 
       <main className="lucky-main">
         <div className="lucky-main-inner">
-          {showHome ? (
+          {showTaskDetail ? (
+            <TaskDetailPage onSendReply={() => message.success('已发送补充信息')} />
+          ) : showHome ? (
             <LuckyHome
               promptText={promptText}
               onPromptChange={setPromptText}
               onSend={handleSendPrompt}
+              agents={mineAgents}
+              teams={COMPOSER_TEAM_OPTIONS}
+              projects={projects}
+              onOpenCreateProject={() => setCreateProjectOpen(true)}
             />
+          ) : showAutomation ? (
+            <AutomationPage />
           ) : showAgents ? (
             editingAgent ? (
               editingAgent.key === BUILT_IN_AGENT_KEY ? (
@@ -1859,6 +3346,7 @@ function LuckyModule() {
                     setSkillMarketOpen(false);
                     setEditingAgent(null);
                     setActiveSection('new');
+                    setActiveTaskKey(null);
                   }}
                 />
               ) : (
@@ -1885,6 +3373,14 @@ function LuckyModule() {
                 onOpenAgent={setEditingAgent}
               />
             )
+          ) : showProjectDetail ? (
+            <ProjectDetailPage project={activeProject} />
+          ) : showProjects ? (
+            <ProjectsPage
+              projects={projects}
+              onOpenCreate={() => setCreateProjectOpen(true)}
+              onOpenProject={handleOpenProject}
+            />
           ) : showLibrary ? (
             <div className="lucky-workspace-card lucky-library-view">
               <div className="lucky-page-header">
@@ -2020,6 +3516,8 @@ function LuckyModule() {
                 </div>
               </div>
             </div>
+          ) : showMarket ? (
+            <MarketPage />
           ) : (
             <ShowcaseSection
               title={sectionCopy.title}
@@ -2051,11 +3549,22 @@ function LuckyModule() {
         onClose={() => setTeamAgentOpen(false)}
         onCreate={handleCreateTeamAgent}
       />
+      <CreateProjectModal
+        open={createProjectOpen}
+        onClose={() => setCreateProjectOpen(false)}
+        onCreate={handleCreateProject}
+      />
       <SkillMarketModal
         open={skillMarketOpen && Boolean(editingAgent)}
         selectedSkills={editingAgentSkills}
         onClose={() => setSkillMarketOpen(false)}
         onAddSkill={handleAddAgentSkill}
+      />
+      <LuckyGlobalSearchModal
+        open={globalSearchOpen}
+        onClose={() => setGlobalSearchOpen(false)}
+        onCreateTask={handleCreateTaskFromSearch}
+        onOpenIntroTask={handleOpenIntroTaskFromSearch}
       />
     </div>
   );

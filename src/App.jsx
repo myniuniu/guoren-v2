@@ -1696,8 +1696,10 @@ function App({ onLogout }) {
     );
   }
 
+  const isLuckyShell = currentPage === 'lucky' || currentPage === 'lucky-backend';
+
   return (
-    <Layout className="app-layout">
+    <Layout className={`app-layout ${isLuckyShell ? 'app-layout-lucky' : ''}`}>
       {/* Far-left Icon Bar */}
       <div className="icon-bar" style={{ width: iconBarWidth, minWidth: iconBarWidth, maxWidth: iconBarWidth }}>
         <div className="icon-bar-avatar">
