@@ -1,0 +1,1195 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/fp1i5t",
+    "id": "fp1i5t",
+    "slide": 14,
+    "layoutId": "3210f54d-5442-4430-b5c7-f5259f1de373",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "739402d4-d8f7-4fa5-81fb-bd84547eafb2",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "PingFang SC"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "3210f54d-5442-4430-b5c7-f5259f1de373",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "739402d4-d8f7-4fa5-81fb-bd84547eafb2",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "739402d4-d8f7-4fa5-81fb-bd84547eafb2",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ps32hkbm",
+      "id": "1",
+      "bbox": [
+        52,
+        44,
+        420,
+        30
+      ],
+      "geometry": "rect",
+      "text": "组合交付",
+      "textPreview": "组合交付",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "PingFang SC",
+        "color": "#666666",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "组合交付"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "组合交付",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC",
+            "color": "#666666",
+            "bold": true,
+            "alignment": "left",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "组合交付",
+              "fontSize": 20,
+              "typeface": "PingFang SC",
+              "color": "#666666",
+              "bold": true,
+              "alignment": "left",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/2psj65cb",
+      "id": "2",
+      "bbox": [
+        52,
+        86,
+        1120,
+        58
+      ],
+      "geometry": "rect",
+      "text": "平台能力可以按客户成熟度组合成多种交付形态",
+      "textPreview": "平台能力可以按客户成熟度组合成多种交付形态",
+      "resolvedFontSize": 42,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 42,
+        "typeface": "PingFang SC",
+        "color": "#050505",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "平台能力可以按客户成熟度组合成多种交付形态"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "平台能力可以按客户成熟度组合成多种交付形态",
+          "lineSpacingPercent": 102000,
+          "resolvedTextStyle": {
+            "fontSize": 42,
+            "typeface": "PingFang SC",
+            "color": "#050505",
+            "bold": true,
+            "alignment": "left",
+            "lineSpacing": 1.02
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "平台能力可以按客户成熟度组合成多种交付形态",
+              "fontSize": 42,
+              "typeface": "PingFang SC",
+              "color": "#050505",
+              "bold": true,
+              "alignment": "left",
+              "lineSpacing": 1.02
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/3qlkfatw",
+      "id": "3",
+      "bbox": [
+        52,
+        184,
+        1176,
+        2
+      ],
+      "geometry": "rect",
+      "fillColor": "#BFC4CC",
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/cvu1czud",
+      "id": "4",
+      "bbox": [
+        1182,
+        660,
+        46,
+        24
+      ],
+      "geometry": "rect",
+      "text": "14",
+      "textPreview": "14",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 16,
+        "typeface": "PingFang SC",
+        "color": "#8A8A8A",
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "14"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "14",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "typeface": "PingFang SC",
+            "color": "#8A8A8A",
+            "alignment": "right",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "14",
+              "fontSize": 16,
+              "typeface": "PingFang SC",
+              "color": "#8A8A8A",
+              "alignment": "right",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/dg32lkby",
+      "id": "5",
+      "bbox": [
+        48,
+        252,
+        270,
+        314
+      ],
+      "geometry": "rect",
+      "fillColor": "#F2F2F2",
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/qtcjapc7",
+      "id": "6",
+      "bbox": [
+        74,
+        286,
+        218,
+        42
+      ],
+      "geometry": "rect",
+      "text": "Lucky",
+      "textPreview": "Lucky",
+      "resolvedFontSize": 30,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 30,
+        "typeface": "PingFang SC",
+        "color": "#050505",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Lucky"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Lucky",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 30,
+            "typeface": "PingFang SC",
+            "color": "#050505",
+            "bold": true,
+            "alignment": "left",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Lucky",
+              "fontSize": 30,
+              "typeface": "PingFang SC",
+              "color": "#050505",
+              "bold": true,
+              "alignment": "left",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/bulkjuts",
+      "id": "7",
+      "bbox": [
+        74,
+        350,
+        214,
+        130
+      ],
+      "geometry": "rect",
+      "text": "独立智能体平台\n适合智能助理、账号订阅、模型能力调用等交付。",
+      "textPreview": "独立智能体平台 | 适合智能助理、账号订阅、模型能力调用等交付。",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "PingFang SC",
+        "color": "#111111",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 4,
+        "lines": [
+          {
+            "index": 1,
+            "text": "独立智能体平台"
+          },
+          {
+            "index": 2,
+            "text": "适合智能助理、账号订"
+          },
+          {
+            "index": 3,
+            "text": "阅、模型能力调用等交"
+          },
+          {
+            "index": 4,
+            "text": "付。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "独立智能体平台",
+          "lineSpacingPercent": 118000,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "alignment": "left",
+            "lineSpacing": 1.18
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "独立智能体平台",
+              "fontSize": 20,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "alignment": "left",
+              "lineSpacing": 1.18
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "适合智能助理、账号订阅、模型能力调用等交付。",
+          "lineSpacingPercent": 118000,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "alignment": "left",
+            "lineSpacing": 1.18
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "适合智能助理、账号订阅、模型能力调用等交付。",
+              "fontSize": 20,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "alignment": "left",
+              "lineSpacing": 1.18
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/sza10vu9",
+      "id": "8",
+      "bbox": [
+        348,
+        252,
+        270,
+        314
+      ],
+      "geometry": "rect",
+      "fillColor": "#F2F2F2",
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/tkji90be",
+      "id": "9",
+      "bbox": [
+        374,
+        286,
+        218,
+        42
+      ],
+      "geometry": "rect",
+      "text": "Lucky + 资料库",
+      "textPreview": "Lucky + 资料库",
+      "resolvedFontSize": 26,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 26,
+        "typeface": "PingFang SC",
+        "color": "#050505",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Lucky + 资料库"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Lucky + 资料库",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 26,
+            "typeface": "PingFang SC",
+            "color": "#050505",
+            "bold": true,
+            "alignment": "left",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Lucky + 资料库",
+              "fontSize": 26,
+              "typeface": "PingFang SC",
+              "color": "#050505",
+              "bold": true,
+              "alignment": "left",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/1oj29wru",
+      "id": "10",
+      "bbox": [
+        374,
+        350,
+        214,
+        130
+      ],
+      "geometry": "rect",
+      "text": "形成私域知识服务\n适合知识库问答、智能资料库、机构知识助手。",
+      "textPreview": "形成私域知识服务 | 适合知识库问答、智能资料库、机构知识助手。",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "PingFang SC",
+        "color": "#111111",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 4,
+        "lines": [
+          {
+            "index": 1,
+            "text": "形成私域知识服务"
+          },
+          {
+            "index": 2,
+            "text": "适合知识库问答、智能"
+          },
+          {
+            "index": 3,
+            "text": "资料库、机构知识助手"
+          },
+          {
+            "index": 4,
+            "text": "。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "形成私域知识服务",
+          "lineSpacingPercent": 118000,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "alignment": "left",
+            "lineSpacing": 1.18
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "形成私域知识服务",
+              "fontSize": 20,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "alignment": "left",
+              "lineSpacing": 1.18
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "适合知识库问答、智能资料库、机构知识助手。",
+          "lineSpacingPercent": 118000,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "alignment": "left",
+            "lineSpacing": 1.18
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "适合知识库问答、智能资料库、机构知识助手。",
+              "fontSize": 20,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "alignment": "left",
+              "lineSpacing": 1.18
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/03a10ra9",
+      "id": "11",
+      "bbox": [
+        648,
+        252,
+        270,
+        314
+      ],
+      "geometry": "rect",
+      "fillColor": "#F2F2F2",
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/f21k7m9o",
+      "id": "12",
+      "bbox": [
+        674,
+        286,
+        218,
+        42
+      ],
+      "geometry": "rect",
+      "text": "Lucky + 资料库 + 空间",
+      "textPreview": "Lucky + 资料库 + 空间",
+      "resolvedFontSize": 26,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 26,
+        "typeface": "PingFang SC",
+        "color": "#050505",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Lucky + 资料库"
+          },
+          {
+            "index": 2,
+            "text": "+ 空间"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Lucky + 资料库 + 空间",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 26,
+            "typeface": "PingFang SC",
+            "color": "#050505",
+            "bold": true,
+            "alignment": "left",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Lucky + 资料库 + 空间",
+              "fontSize": 26,
+              "typeface": "PingFang SC",
+              "color": "#050505",
+              "bold": true,
+              "alignment": "left",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/e1sjyhs3",
+      "id": "13",
+      "bbox": [
+        674,
+        350,
+        214,
+        130
+      ],
+      "geometry": "rect",
+      "text": "形成 AI 原生业务平台\n承载培训、教研、教学和项目协作过程。",
+      "textPreview": "形成 AI 原生业务平台 | 承载培训、教研、教学和项目协作过程。",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "PingFang SC",
+        "color": "#111111",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "形成 AI 原生业务平台"
+          },
+          {
+            "index": 2,
+            "text": "承载培训、教研、教学"
+          },
+          {
+            "index": 3,
+            "text": "和项目协作过程。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "形成 AI 原生业务平台",
+          "lineSpacingPercent": 118000,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "alignment": "left",
+            "lineSpacing": 1.18
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "形成 AI 原生业务平台",
+              "fontSize": 20,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "alignment": "left",
+              "lineSpacing": 1.18
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "承载培训、教研、教学和项目协作过程。",
+          "lineSpacingPercent": 118000,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "alignment": "left",
+            "lineSpacing": 1.18
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "承载培训、教研、教学和项目协作过程。",
+              "fontSize": 20,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "alignment": "left",
+              "lineSpacing": 1.18
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ps32dwrq",
+      "id": "14",
+      "bbox": [
+        948,
+        252,
+        270,
+        314
+      ],
+      "geometry": "rect",
+      "fillColor": "#050505",
+      "lineColor": "#050505",
+      "lineWidth": 0
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ora14ba5",
+      "id": "15",
+      "bbox": [
+        974,
+        286,
+        218,
+        42
+      ],
+      "geometry": "rect",
+      "text": "再叠加场景模板",
+      "textPreview": "再叠加场景模板",
+      "resolvedFontSize": 26,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 26,
+        "typeface": "PingFang SC",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "再叠加场景模板"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "再叠加场景模板",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 26,
+            "typeface": "PingFang SC",
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "left",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "再叠加场景模板",
+              "fontSize": 26,
+              "typeface": "PingFang SC",
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "left",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/nq1kb69k",
+      "id": "16",
+      "bbox": [
+        974,
+        350,
+        214,
+        130
+      ],
+      "geometry": "rect",
+      "text": "生成多种垂直方案\n面向工作室、工作坊、校本研修、区域教师发展等业务。",
+      "textPreview": "生成多种垂直方案 | 面向工作室、工作坊、校本研修、区域教师发展等业务。",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "PingFang SC",
+        "color": "#FFFFFF",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 4,
+        "lines": [
+          {
+            "index": 1,
+            "text": "生成多种垂直方案"
+          },
+          {
+            "index": 2,
+            "text": "面向工作室、工作坊、"
+          },
+          {
+            "index": 3,
+            "text": "校本研修、区域教师发"
+          },
+          {
+            "index": 4,
+            "text": "展等业务。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "生成多种垂直方案",
+          "lineSpacingPercent": 118000,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC",
+            "color": "#FFFFFF",
+            "alignment": "left",
+            "lineSpacing": 1.18
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "生成多种垂直方案",
+              "fontSize": 20,
+              "typeface": "PingFang SC",
+              "color": "#FFFFFF",
+              "alignment": "left",
+              "lineSpacing": 1.18
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "面向工作室、工作坊、校本研修、区域教师发展等业务。",
+          "lineSpacingPercent": 118000,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC",
+            "color": "#FFFFFF",
+            "alignment": "left",
+            "lineSpacing": 1.18
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "面向工作室、工作坊、校本研修、区域教师发展等业务。",
+              "fontSize": 20,
+              "typeface": "PingFang SC",
+              "color": "#FFFFFF",
+              "alignment": "left",
+              "lineSpacing": 1.18
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/2psj21sf",
+      "id": "17",
+      "bbox": [
+        48,
+        636,
+        560,
+        34
+      ],
+      "geometry": "rect",
+      "text": "这些组合都可以支持相应的商业模式交付。",
+      "textPreview": "这些组合都可以支持相应的商业模式交付。",
+      "resolvedFontSize": 26,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 26,
+        "typeface": "PingFang SC",
+        "color": "#111111",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "这些组合都可以支持相应的商业模式交付。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "这些组合都可以支持相应的商业模式交付。",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 26,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "bold": true,
+            "alignment": "left",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "这些组合都可以支持相应的商业模式交付。",
+              "fontSize": 26,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "bold": true,
+              "alignment": "left",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 18,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/xw32hgr2",
+      "id": "18",
+      "bbox": [
+        760,
+        640,
+        390,
+        28
+      ],
+      "geometry": "rect",
+      "text": "从工具平台到场景方案，交付深度逐级增加。",
+      "textPreview": "从工具平台到场景方案，交付深度逐级增加。",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 18,
+        "typeface": "PingFang SC",
+        "color": "#666666",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "从工具平台到场景方案，交付深度逐级增加。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "从工具平台到场景方案，交付深度逐级增加。",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "typeface": "PingFang SC",
+            "color": "#666666",
+            "alignment": "left",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "从工具平台到场景方案，交付深度逐级增加。",
+              "fontSize": 18,
+              "typeface": "PingFang SC",
+              "color": "#666666",
+              "alignment": "left",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

@@ -1,0 +1,1414 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/dlbu16",
+    "id": "dlbu16",
+    "slide": 16,
+    "layoutId": "3210f54d-5442-4430-b5c7-f5259f1de373",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "739402d4-d8f7-4fa5-81fb-bd84547eafb2",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "PingFang SC"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "3210f54d-5442-4430-b5c7-f5259f1de373",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "739402d4-d8f7-4fa5-81fb-bd84547eafb2",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "739402d4-d8f7-4fa5-81fb-bd84547eafb2",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/gv6d4zqd",
+      "id": "1",
+      "bbox": [
+        52,
+        44,
+        420,
+        30
+      ],
+      "geometry": "rect",
+      "text": "场景模板",
+      "textPreview": "场景模板",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "PingFang SC",
+        "color": "#666666",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "场景模板"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "场景模板",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC",
+            "color": "#666666",
+            "bold": true,
+            "alignment": "left",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "场景模板",
+              "fontSize": 20,
+              "typeface": "PingFang SC",
+              "color": "#666666",
+              "bold": true,
+              "alignment": "left",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/vuxcbups",
+      "id": "2",
+      "bbox": [
+        52,
+        86,
+        1120,
+        58
+      ],
+      "geometry": "rect",
+      "text": "智能体建设平台优先承载高频、跨部门、强规则场景",
+      "textPreview": "智能体建设平台优先承载高频、跨部门、强规则场景",
+      "resolvedFontSize": 42,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 42,
+        "typeface": "PingFang SC",
+        "color": "#050505",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "智能体建设平台优先承载高频、跨部门、强规则场景"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "智能体建设平台优先承载高频、跨部门、强规则场景",
+          "lineSpacingPercent": 102000,
+          "resolvedTextStyle": {
+            "fontSize": 42,
+            "typeface": "PingFang SC",
+            "color": "#050505",
+            "bold": true,
+            "alignment": "left",
+            "lineSpacing": 1.02
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "智能体建设平台优先承载高频、跨部门、强规则场景",
+              "fontSize": 42,
+              "typeface": "PingFang SC",
+              "color": "#050505",
+              "bold": true,
+              "alignment": "left",
+              "lineSpacing": 1.02
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/utov2p87",
+      "id": "3",
+      "bbox": [
+        52,
+        184,
+        1176,
+        2
+      ],
+      "geometry": "rect",
+      "fillColor": "#BFC4CC",
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/t8fu9k7m",
+      "id": "4",
+      "bbox": [
+        1182,
+        660,
+        46,
+        24
+      ],
+      "geometry": "rect",
+      "text": "16",
+      "textPreview": "16",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 16,
+        "typeface": "PingFang SC",
+        "color": "#8A8A8A",
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "16"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "16",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "typeface": "PingFang SC",
+            "color": "#8A8A8A",
+            "alignment": "right",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "16",
+              "fontSize": 16,
+              "typeface": "PingFang SC",
+              "color": "#8A8A8A",
+              "alignment": "right",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/876d0fq1",
+      "id": "5",
+      "bbox": [
+        54,
+        248,
+        250,
+        330
+      ],
+      "geometry": "rect",
+      "fillColor": "#050505",
+      "lineColor": "#BFC4CC",
+      "lineWidth": 1
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/76xc7apg",
+      "id": "6",
+      "bbox": [
+        78,
+        286,
+        202,
+        60
+      ],
+      "geometry": "rect",
+      "text": "培训交付智能体群",
+      "textPreview": "培训交付智能体群",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 24,
+        "typeface": "PingFang SC",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "培训交付智能体群"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "培训交付智能体群",
+          "lineSpacingPercent": 110000,
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "typeface": "PingFang SC",
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "center",
+            "lineSpacing": 1.1
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "培训交付智能体群",
+              "fontSize": 24,
+              "typeface": "PingFang SC",
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "center",
+              "lineSpacing": 1.1
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/654vy58b",
+      "id": "7",
+      "bbox": [
+        102,
+        376,
+        154,
+        132
+      ],
+      "geometry": "rect",
+      "text": "需求澄清\n方案生成\n排课与师资\n过程服务\n评估复盘",
+      "textPreview": "需求澄清 | 方案生成 | 排课与师资 | 过程服务 | 评估复盘",
+      "resolvedFontSize": 19,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 19,
+        "typeface": "PingFang SC",
+        "color": "#EEEEEE",
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 5,
+        "lines": [
+          {
+            "index": 1,
+            "text": "需求澄清"
+          },
+          {
+            "index": 2,
+            "text": "方案生成"
+          },
+          {
+            "index": 3,
+            "text": "排课与师资"
+          },
+          {
+            "index": 4,
+            "text": "过程服务"
+          },
+          {
+            "index": 5,
+            "text": "评估复盘"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "需求澄清",
+          "lineSpacingPercent": 132000,
+          "resolvedTextStyle": {
+            "fontSize": 19,
+            "typeface": "PingFang SC",
+            "color": "#EEEEEE",
+            "alignment": "center",
+            "lineSpacing": 1.32
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "需求澄清",
+              "fontSize": 19,
+              "typeface": "PingFang SC",
+              "color": "#EEEEEE",
+              "alignment": "center",
+              "lineSpacing": 1.32
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "方案生成",
+          "lineSpacingPercent": 132000,
+          "resolvedTextStyle": {
+            "fontSize": 19,
+            "typeface": "PingFang SC",
+            "color": "#EEEEEE",
+            "alignment": "center",
+            "lineSpacing": 1.32
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "方案生成",
+              "fontSize": 19,
+              "typeface": "PingFang SC",
+              "color": "#EEEEEE",
+              "alignment": "center",
+              "lineSpacing": 1.32
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 3,
+          "text": "排课与师资",
+          "lineSpacingPercent": 132000,
+          "resolvedTextStyle": {
+            "fontSize": 19,
+            "typeface": "PingFang SC",
+            "color": "#EEEEEE",
+            "alignment": "center",
+            "lineSpacing": 1.32
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "排课与师资",
+              "fontSize": 19,
+              "typeface": "PingFang SC",
+              "color": "#EEEEEE",
+              "alignment": "center",
+              "lineSpacing": 1.32
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 4,
+          "text": "过程服务",
+          "lineSpacingPercent": 132000,
+          "resolvedTextStyle": {
+            "fontSize": 19,
+            "typeface": "PingFang SC",
+            "color": "#EEEEEE",
+            "alignment": "center",
+            "lineSpacing": 1.32
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "过程服务",
+              "fontSize": 19,
+              "typeface": "PingFang SC",
+              "color": "#EEEEEE",
+              "alignment": "center",
+              "lineSpacing": 1.32
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 5,
+          "text": "评估复盘",
+          "lineSpacingPercent": 132000,
+          "resolvedTextStyle": {
+            "fontSize": 19,
+            "typeface": "PingFang SC",
+            "color": "#EEEEEE",
+            "alignment": "center",
+            "lineSpacing": 1.32
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "评估复盘",
+              "fontSize": 19,
+              "typeface": "PingFang SC",
+              "color": "#EEEEEE",
+              "alignment": "center",
+              "lineSpacing": 1.32
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/dozel47q",
+      "id": "8",
+      "bbox": [
+        360,
+        248,
+        250,
+        330
+      ],
+      "geometry": "rect",
+      "fillColor": "#F2F2F2",
+      "lineColor": "#BFC4CC",
+      "lineWidth": 1
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/s3qdcjql",
+      "id": "9",
+      "bbox": [
+        384,
+        286,
+        202,
+        60
+      ],
+      "geometry": "rect",
+      "text": "教研工作坊智能体群",
+      "textPreview": "教研工作坊智能体群",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 24,
+        "typeface": "PingFang SC",
+        "color": "#050505",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "教研工作坊智能体"
+          },
+          {
+            "index": 2,
+            "text": "群"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "教研工作坊智能体群",
+          "lineSpacingPercent": 110000,
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "typeface": "PingFang SC",
+            "color": "#050505",
+            "bold": true,
+            "alignment": "center",
+            "lineSpacing": 1.1
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "教研工作坊智能体群",
+              "fontSize": 24,
+              "typeface": "PingFang SC",
+              "color": "#050505",
+              "bold": true,
+              "alignment": "center",
+              "lineSpacing": 1.1
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/m54f6lwj",
+      "id": "10",
+      "bbox": [
+        408,
+        376,
+        154,
+        132
+      ],
+      "geometry": "rect",
+      "text": "议题设计\n资料共创\n研讨纪要\n任务跟进\n成果沉淀",
+      "textPreview": "议题设计 | 资料共创 | 研讨纪要 | 任务跟进 | 成果沉淀",
+      "resolvedFontSize": 19,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 19,
+        "typeface": "PingFang SC",
+        "color": "#111111",
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 5,
+        "lines": [
+          {
+            "index": 1,
+            "text": "议题设计"
+          },
+          {
+            "index": 2,
+            "text": "资料共创"
+          },
+          {
+            "index": 3,
+            "text": "研讨纪要"
+          },
+          {
+            "index": 4,
+            "text": "任务跟进"
+          },
+          {
+            "index": 5,
+            "text": "成果沉淀"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "议题设计",
+          "lineSpacingPercent": 132000,
+          "resolvedTextStyle": {
+            "fontSize": 19,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "alignment": "center",
+            "lineSpacing": 1.32
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "议题设计",
+              "fontSize": 19,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "alignment": "center",
+              "lineSpacing": 1.32
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "资料共创",
+          "lineSpacingPercent": 132000,
+          "resolvedTextStyle": {
+            "fontSize": 19,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "alignment": "center",
+            "lineSpacing": 1.32
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "资料共创",
+              "fontSize": 19,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "alignment": "center",
+              "lineSpacing": 1.32
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 3,
+          "text": "研讨纪要",
+          "lineSpacingPercent": 132000,
+          "resolvedTextStyle": {
+            "fontSize": 19,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "alignment": "center",
+            "lineSpacing": 1.32
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "研讨纪要",
+              "fontSize": 19,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "alignment": "center",
+              "lineSpacing": 1.32
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 4,
+          "text": "任务跟进",
+          "lineSpacingPercent": 132000,
+          "resolvedTextStyle": {
+            "fontSize": 19,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "alignment": "center",
+            "lineSpacing": 1.32
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "任务跟进",
+              "fontSize": 19,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "alignment": "center",
+              "lineSpacing": 1.32
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 5,
+          "text": "成果沉淀",
+          "lineSpacingPercent": 132000,
+          "resolvedTextStyle": {
+            "fontSize": 19,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "alignment": "center",
+            "lineSpacing": 1.32
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "成果沉淀",
+              "fontSize": 19,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "alignment": "center",
+              "lineSpacing": 1.32
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/n6xgf6x4",
+      "id": "11",
+      "bbox": [
+        666,
+        248,
+        250,
+        330
+      ],
+      "geometry": "rect",
+      "fillColor": "#F2F2F2",
+      "lineColor": "#BFC4CC",
+      "lineWidth": 1
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/876x8bep",
+      "id": "12",
+      "bbox": [
+        690,
+        286,
+        202,
+        60
+      ],
+      "geometry": "rect",
+      "text": "资料运营智能体群",
+      "textPreview": "资料运营智能体群",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 24,
+        "typeface": "PingFang SC",
+        "color": "#050505",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "资料运营智能体群"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "资料运营智能体群",
+          "lineSpacingPercent": 110000,
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "typeface": "PingFang SC",
+            "color": "#050505",
+            "bold": true,
+            "alignment": "center",
+            "lineSpacing": 1.1
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "资料运营智能体群",
+              "fontSize": 24,
+              "typeface": "PingFang SC",
+              "color": "#050505",
+              "bold": true,
+              "alignment": "center",
+              "lineSpacing": 1.1
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/98fyhgfa",
+      "id": "13",
+      "bbox": [
+        714,
+        376,
+        154,
+        132
+      ],
+      "geometry": "rect",
+      "text": "资料解析\nFAQ 草稿\n标签治理\n图谱维护\n版本更新",
+      "textPreview": "资料解析 | FAQ 草稿 | 标签治理 | 图谱维护 | 版本更新",
+      "resolvedFontSize": 19,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 19,
+        "typeface": "PingFang SC",
+        "color": "#111111",
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 5,
+        "lines": [
+          {
+            "index": 1,
+            "text": "资料解析"
+          },
+          {
+            "index": 2,
+            "text": "FAQ 草稿"
+          },
+          {
+            "index": 3,
+            "text": "标签治理"
+          },
+          {
+            "index": 4,
+            "text": "图谱维护"
+          },
+          {
+            "index": 5,
+            "text": "版本更新"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "资料解析",
+          "lineSpacingPercent": 132000,
+          "resolvedTextStyle": {
+            "fontSize": 19,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "alignment": "center",
+            "lineSpacing": 1.32
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "资料解析",
+              "fontSize": 19,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "alignment": "center",
+              "lineSpacing": 1.32
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "FAQ 草稿",
+          "lineSpacingPercent": 132000,
+          "resolvedTextStyle": {
+            "fontSize": 19,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "alignment": "center",
+            "lineSpacing": 1.32
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "FAQ 草稿",
+              "fontSize": 19,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "alignment": "center",
+              "lineSpacing": 1.32
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 3,
+          "text": "标签治理",
+          "lineSpacingPercent": 132000,
+          "resolvedTextStyle": {
+            "fontSize": 19,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "alignment": "center",
+            "lineSpacing": 1.32
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "标签治理",
+              "fontSize": 19,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "alignment": "center",
+              "lineSpacing": 1.32
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 4,
+          "text": "图谱维护",
+          "lineSpacingPercent": 132000,
+          "resolvedTextStyle": {
+            "fontSize": 19,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "alignment": "center",
+            "lineSpacing": 1.32
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "图谱维护",
+              "fontSize": 19,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "alignment": "center",
+              "lineSpacing": 1.32
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 5,
+          "text": "版本更新",
+          "lineSpacingPercent": 132000,
+          "resolvedTextStyle": {
+            "fontSize": 19,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "alignment": "center",
+            "lineSpacing": 1.32
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "版本更新",
+              "fontSize": 19,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "alignment": "center",
+              "lineSpacing": 1.32
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/eh4f21wn",
+      "id": "14",
+      "bbox": [
+        972,
+        248,
+        250,
+        330
+      ],
+      "geometry": "rect",
+      "fillColor": "#F2F2F2",
+      "lineColor": "#BFC4CC",
+      "lineWidth": 1
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/z2dwb6x8",
+      "id": "15",
+      "bbox": [
+        996,
+        286,
+        202,
+        60
+      ],
+      "geometry": "rect",
+      "text": "经营与客户成功智能体群",
+      "textPreview": "经营与客户成功智能体群",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 24,
+        "typeface": "PingFang SC",
+        "color": "#050505",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "经营与客户成功智"
+          },
+          {
+            "index": 2,
+            "text": "能体群"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "经营与客户成功智能体群",
+          "lineSpacingPercent": 110000,
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "typeface": "PingFang SC",
+            "color": "#050505",
+            "bold": true,
+            "alignment": "center",
+            "lineSpacing": 1.1
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "经营与客户成功智能体群",
+              "fontSize": 24,
+              "typeface": "PingFang SC",
+              "color": "#050505",
+              "bold": true,
+              "alignment": "center",
+              "lineSpacing": 1.1
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/03mx4bed",
+      "id": "16",
+      "bbox": [
+        1020,
+        376,
+        154,
+        132
+      ],
+      "geometry": "rect",
+      "text": "客户需求转方案\n项目风险预警\n续约机会识别\n经营问答",
+      "textPreview": "客户需求转方案 | 项目风险预警 | 续约机会识别 | 经营问答",
+      "resolvedFontSize": 19,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 19,
+        "typeface": "PingFang SC",
+        "color": "#111111",
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 4,
+        "lines": [
+          {
+            "index": 1,
+            "text": "客户需求转方案"
+          },
+          {
+            "index": 2,
+            "text": "项目风险预警"
+          },
+          {
+            "index": 3,
+            "text": "续约机会识别"
+          },
+          {
+            "index": 4,
+            "text": "经营问答"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "客户需求转方案",
+          "lineSpacingPercent": 132000,
+          "resolvedTextStyle": {
+            "fontSize": 19,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "alignment": "center",
+            "lineSpacing": 1.32
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "客户需求转方案",
+              "fontSize": 19,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "alignment": "center",
+              "lineSpacing": 1.32
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "项目风险预警",
+          "lineSpacingPercent": 132000,
+          "resolvedTextStyle": {
+            "fontSize": 19,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "alignment": "center",
+            "lineSpacing": 1.32
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "项目风险预警",
+              "fontSize": 19,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "alignment": "center",
+              "lineSpacing": 1.32
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 3,
+          "text": "续约机会识别",
+          "lineSpacingPercent": 132000,
+          "resolvedTextStyle": {
+            "fontSize": 19,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "alignment": "center",
+            "lineSpacing": 1.32
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "续约机会识别",
+              "fontSize": 19,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "alignment": "center",
+              "lineSpacing": 1.32
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 4,
+          "text": "经营问答",
+          "lineSpacingPercent": 132000,
+          "resolvedTextStyle": {
+            "fontSize": 19,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "alignment": "center",
+            "lineSpacing": 1.32
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "经营问答",
+              "fontSize": 19,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "alignment": "center",
+              "lineSpacing": 1.32
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/14vedgfy",
+      "id": "17",
+      "bbox": [
+        116,
+        620,
+        1048,
+        32
+      ],
+      "geometry": "rect",
+      "text": "判断优先级：越高频、重复、跨部门、强规则、强数据依赖，越适合优先建设智能体。",
+      "textPreview": "判断优先级：越高频、重复、跨部门、强规则、强数据依赖，越适合优先建设智能体。",
+      "resolvedFontSize": 23,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 23,
+        "typeface": "PingFang SC",
+        "color": "#111111",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "判断优先级：越高频、重复、跨部门、强规则、强数据依赖，越适合优先建设智能体。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "判断优先级：越高频、重复、跨部门、强规则、强数据依赖，越适合优先建设智能体。",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 23,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "bold": true,
+            "alignment": "center",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "判断优先级：越高频、重复、跨部门、强规则、强数据依赖，越适合优先建设智能体。",
+              "fontSize": 23,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "bold": true,
+              "alignment": "center",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

@@ -1,0 +1,1293 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/a6xijb",
+    "id": "a6xijb",
+    "slide": 13,
+    "layoutId": "3210f54d-5442-4430-b5c7-f5259f1de373",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "739402d4-d8f7-4fa5-81fb-bd84547eafb2",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "PingFang SC"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "3210f54d-5442-4430-b5c7-f5259f1de373",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "739402d4-d8f7-4fa5-81fb-bd84547eafb2",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "739402d4-d8f7-4fa5-81fb-bd84547eafb2",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/a5cj2tsb",
+      "id": "1",
+      "bbox": [
+        52,
+        44,
+        420,
+        30
+      ],
+      "geometry": "rect",
+      "text": "建设与生态层",
+      "textPreview": "建设与生态层",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "PingFang SC",
+        "color": "#666666",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "建设与生态层"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "建设与生态层",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC",
+            "color": "#666666",
+            "bold": true,
+            "alignment": "left",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "建设与生态层",
+              "fontSize": 20,
+              "typeface": "PingFang SC",
+              "color": "#666666",
+              "bold": true,
+              "alignment": "left",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/x832x8b2",
+      "id": "2",
+      "bbox": [
+        52,
+        86,
+        1120,
+        58
+      ],
+      "geometry": "rect",
+      "text": "Lucky 不只是内置助手，而是可配置、可扩展、可运营的平台",
+      "textPreview": "Lucky 不只是内置助手，而是可配置、可扩展、可运营的平台",
+      "resolvedFontSize": 39,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 39,
+        "typeface": "PingFang SC",
+        "color": "#050505",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Lucky 不只是内置助手，而是可配置、可扩展、可运营的平台"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Lucky 不只是内置助手，而是可配置、可扩展、可运营的平台",
+          "lineSpacingPercent": 102000,
+          "resolvedTextStyle": {
+            "fontSize": 39,
+            "typeface": "PingFang SC",
+            "color": "#050505",
+            "bold": true,
+            "alignment": "left",
+            "lineSpacing": 1.02
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Lucky 不只是内置助手，而是可配置、可扩展、可运营的平台",
+              "fontSize": 39,
+              "typeface": "PingFang SC",
+              "color": "#050505",
+              "bold": true,
+              "alignment": "left",
+              "lineSpacing": 1.02
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/w7ul43ah",
+      "id": "3",
+      "bbox": [
+        52,
+        146,
+        1110,
+        42
+      ],
+      "geometry": "rect",
+      "text": "智能体、资源库、市场和编程模式共同构成持续扩展的能力生态。",
+      "textPreview": "智能体、资源库、市场和编程模式共同构成持续扩展的能力生态。",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "PingFang SC",
+        "color": "#666666",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "智能体、资源库、市场和编程模式共同构成持续扩展的能力生态。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "智能体、资源库、市场和编程模式共同构成持续扩展的能力生态。",
+          "lineSpacingPercent": 116000,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC",
+            "color": "#666666",
+            "alignment": "left",
+            "lineSpacing": 1.16
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "智能体、资源库、市场和编程模式共同构成持续扩展的能力生态。",
+              "fontSize": 20,
+              "typeface": "PingFang SC",
+              "color": "#666666",
+              "alignment": "left",
+              "lineSpacing": 1.16
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ja5kzyt8",
+      "id": "4",
+      "bbox": [
+        52,
+        204,
+        1176,
+        2
+      ],
+      "geometry": "rect",
+      "fillColor": "#BFC4CC",
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/i9w36tsn",
+      "id": "5",
+      "bbox": [
+        1182,
+        660,
+        46,
+        24
+      ],
+      "geometry": "rect",
+      "text": "13",
+      "textPreview": "13",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 16,
+        "typeface": "PingFang SC",
+        "color": "#8A8A8A",
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "13"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "13",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "typeface": "PingFang SC",
+            "color": "#8A8A8A",
+            "alignment": "right",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "13",
+              "fontSize": 16,
+              "typeface": "PingFang SC",
+              "color": "#8A8A8A",
+              "alignment": "right",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/5wn218by",
+      "id": "6",
+      "bbox": [
+        68,
+        264,
+        320,
+        212
+      ],
+      "geometry": "rect",
+      "fillColor": "#050505",
+      "lineColor": "#050505",
+      "lineWidth": 1
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/kvel83at",
+      "id": "7",
+      "bbox": [
+        96,
+        296,
+        264,
+        34
+      ],
+      "geometry": "rect",
+      "text": "智能体",
+      "textPreview": "智能体",
+      "resolvedFontSize": 28,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 28,
+        "typeface": "PingFang SC",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "智能体"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "智能体",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 28,
+            "typeface": "PingFang SC",
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "center",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "智能体",
+              "fontSize": 28,
+              "typeface": "PingFang SC",
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "center",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ze1kneto",
+      "id": "8",
+      "bbox": [
+        96,
+        342,
+        264,
+        26
+      ],
+      "geometry": "rect",
+      "text": "管理可协作的智能伙伴",
+      "textPreview": "管理可协作的智能伙伴",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "PingFang SC",
+        "color": "#EEEEEE",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "管理可协作的智能伙伴"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "管理可协作的智能伙伴",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC",
+            "color": "#EEEEEE",
+            "bold": true,
+            "alignment": "center",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "管理可协作的智能伙伴",
+              "fontSize": 20,
+              "typeface": "PingFang SC",
+              "color": "#EEEEEE",
+              "bold": true,
+              "alignment": "center",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ydsju9c3",
+      "id": "9",
+      "bbox": [
+        98,
+        386,
+        260,
+        72
+      ],
+      "geometry": "rect",
+      "text": "支持档案、技能、知识、模型、管理等配置，让不同角色进入同一任务体系。",
+      "textPreview": "支持档案、技能、知识、模型、管理等配置，让不同角色进入同一任务体系。",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 16,
+        "typeface": "PingFang SC",
+        "color": "#DDDDDD",
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "支持档案、技能、知识、模型、管"
+          },
+          {
+            "index": 2,
+            "text": "理等配置，让不同角色进入同一任"
+          },
+          {
+            "index": 3,
+            "text": "务体系。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "支持档案、技能、知识、模型、管理等配置，让不同角色进入同一任务体系。",
+          "lineSpacingPercent": 114000,
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "typeface": "PingFang SC",
+            "color": "#DDDDDD",
+            "alignment": "center",
+            "lineSpacing": 1.14
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "支持档案、技能、知识、模型、管理等配置，让不同角色进入同一任务体系。",
+              "fontSize": 16,
+              "typeface": "PingFang SC",
+              "color": "#DDDDDD",
+              "alignment": "center",
+              "lineSpacing": 1.14
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/03ihkbe5",
+      "id": "10",
+      "bbox": [
+        454,
+        264,
+        320,
+        212
+      ],
+      "geometry": "rect",
+      "fillColor": "#F2F2F2",
+      "lineColor": "#BFC4CC",
+      "lineWidth": 1
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/l4ritgfq",
+      "id": "11",
+      "bbox": [
+        482,
+        296,
+        264,
+        34
+      ],
+      "geometry": "rect",
+      "text": "资源库",
+      "textPreview": "资源库",
+      "resolvedFontSize": 28,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 28,
+        "typeface": "PingFang SC",
+        "color": "#050505",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "资源库"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "资源库",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 28,
+            "typeface": "PingFang SC",
+            "color": "#050505",
+            "bold": true,
+            "alignment": "center",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "资源库",
+              "fontSize": 28,
+              "typeface": "PingFang SC",
+              "color": "#050505",
+              "bold": true,
+              "alignment": "center",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/y1gzi1wz",
+      "id": "12",
+      "bbox": [
+        482,
+        342,
+        264,
+        26
+      ],
+      "geometry": "rect",
+      "text": "沉淀资料和知识上下文",
+      "textPreview": "沉淀资料和知识上下文",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "PingFang SC",
+        "color": "#111111",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "沉淀资料和知识上下文"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "沉淀资料和知识上下文",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "bold": true,
+            "alignment": "center",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "沉淀资料和知识上下文",
+              "fontSize": 20,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "bold": true,
+              "alignment": "center",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/z290r6xk",
+      "id": "13",
+      "bbox": [
+        484,
+        386,
+        260,
+        72
+      ],
+      "geometry": "rect",
+      "text": "沉淀资料、产物、模板和任务输出，作为智能体可检索和引用的资料范围。",
+      "textPreview": "沉淀资料、产物、模板和任务输出，作为智能体可检索和引用的资料范围。",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 16,
+        "typeface": "PingFang SC",
+        "color": "#666666",
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "沉淀资料、产物、模板和任务输出"
+          },
+          {
+            "index": 2,
+            "text": "，作为智能体可检索和引用的资料"
+          },
+          {
+            "index": 3,
+            "text": "范围。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "沉淀资料、产物、模板和任务输出，作为智能体可检索和引用的资料范围。",
+          "lineSpacingPercent": 114000,
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "typeface": "PingFang SC",
+            "color": "#666666",
+            "alignment": "center",
+            "lineSpacing": 1.14
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "沉淀资料、产物、模板和任务输出，作为智能体可检索和引用的资料范围。",
+              "fontSize": 16,
+              "typeface": "PingFang SC",
+              "color": "#666666",
+              "alignment": "center",
+              "lineSpacing": 1.14
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8rihove1",
+      "id": "14",
+      "bbox": [
+        840,
+        264,
+        320,
+        212
+      ],
+      "geometry": "rect",
+      "fillColor": "#F2F2F2",
+      "lineColor": "#BFC4CC",
+      "lineWidth": 1
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/9srix0fm",
+      "id": "15",
+      "bbox": [
+        868,
+        296,
+        264,
+        34
+      ],
+      "geometry": "rect",
+      "text": "市场",
+      "textPreview": "市场",
+      "resolvedFontSize": 28,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 28,
+        "typeface": "PingFang SC",
+        "color": "#050505",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "市场"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "市场",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 28,
+            "typeface": "PingFang SC",
+            "color": "#050505",
+            "bold": true,
+            "alignment": "center",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "市场",
+              "fontSize": 28,
+              "typeface": "PingFang SC",
+              "color": "#050505",
+              "bold": true,
+              "alignment": "center",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/m50zmlwb",
+      "id": "16",
+      "bbox": [
+        868,
+        342,
+        264,
+        26
+      ],
+      "geometry": "rect",
+      "text": "分发可复用能力",
+      "textPreview": "分发可复用能力",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "PingFang SC",
+        "color": "#111111",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "分发可复用能力"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "分发可复用能力",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "bold": true,
+            "alignment": "center",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "分发可复用能力",
+              "fontSize": 20,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "bold": true,
+              "alignment": "center",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/nq90vqxg",
+      "id": "17",
+      "bbox": [
+        870,
+        386,
+        260,
+        72
+      ],
+      "geometry": "rect",
+      "text": "提供专家、技能、最佳实践、企业智能体等能力，让组织按场景招募和复用。",
+      "textPreview": "提供专家、技能、最佳实践、企业智能体等能力，让组织按场景招募和复用。",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 16,
+        "typeface": "PingFang SC",
+        "color": "#666666",
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "提供专家、技能、最佳实践、企业"
+          },
+          {
+            "index": 2,
+            "text": "智能体等能力，让组织按场景招募"
+          },
+          {
+            "index": 3,
+            "text": "和复用。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "提供专家、技能、最佳实践、企业智能体等能力，让组织按场景招募和复用。",
+          "lineSpacingPercent": 114000,
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "typeface": "PingFang SC",
+            "color": "#666666",
+            "alignment": "center",
+            "lineSpacing": 1.14
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "提供专家、技能、最佳实践、企业智能体等能力，让组织按场景招募和复用。",
+              "fontSize": 16,
+              "typeface": "PingFang SC",
+              "color": "#666666",
+              "alignment": "center",
+              "lineSpacing": 1.14
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 18,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ovyhcrex",
+      "id": "18",
+      "bbox": [
+        106,
+        512,
+        1068,
+        86
+      ],
+      "geometry": "rect",
+      "fillColor": "#050505",
+      "lineWidth": 0
+    },
+    {
+      "order": 19,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/pw7ylwfi",
+      "id": "19",
+      "bbox": [
+        148,
+        536,
+        150,
+        34
+      ],
+      "geometry": "rect",
+      "text": "编程模式",
+      "textPreview": "编程模式",
+      "resolvedFontSize": 28,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 28,
+        "typeface": "PingFang SC",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "编程模式"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "编程模式",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 28,
+            "typeface": "PingFang SC",
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "left",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "编程模式",
+              "fontSize": 28,
+              "typeface": "PingFang SC",
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "left",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 20,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/5gf6to3u",
+      "id": "20",
+      "bbox": [
+        330,
+        538,
+        820,
+        30
+      ],
+      "geometry": "rect",
+      "text": "作为技术任务入口，覆盖代码生成、脚本调试、技能创建和自动化开发辅助。",
+      "textPreview": "作为技术任务入口，覆盖代码生成、脚本调试、技能创建和自动化开发辅助。",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 22,
+        "typeface": "PingFang SC",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "作为技术任务入口，覆盖代码生成、脚本调试、技能创建和自动化开发辅助。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "作为技术任务入口，覆盖代码生成、脚本调试、技能创建和自动化开发辅助。",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "PingFang SC",
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "left",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "作为技术任务入口，覆盖代码生成、脚本调试、技能创建和自动化开发辅助。",
+              "fontSize": 22,
+              "typeface": "PingFang SC",
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "left",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 21,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/kf650j29",
+      "id": "21",
+      "bbox": [
+        172,
+        626,
+        936,
+        28
+      ],
+      "geometry": "rect",
+      "text": "从内置智能体，到组织自建智能体，再到市场生态，Lucky 的能力可以被持续配置和运营。",
+      "textPreview": "从内置智能体，到组织自建智能体，再到市场生态，Lucky 的能力可以被持续配置和运营。",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 22,
+        "typeface": "PingFang SC",
+        "color": "#111111",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "从内置智能体，到组织自建智能体，再到市场生态，Lucky 的能力可以被持续配置和运营。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "从内置智能体，到组织自建智能体，再到市场生态，Lucky 的能力可以被持续配置和运营。",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "bold": true,
+            "alignment": "center",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "从内置智能体，到组织自建智能体，再到市场生态，Lucky 的能力可以被持续配置和运营。",
+              "fontSize": 22,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "bold": true,
+              "alignment": "center",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

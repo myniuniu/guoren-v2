@@ -688,6 +688,28 @@
   animation: luckyContextMenuIn 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+.lucky-target-context-menu {
+  height: min(480px, calc(100vh - 220px));
+  min-height: 260px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #cfd6df transparent;
+}
+
+.lucky-target-context-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.lucky-target-context-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.lucky-target-context-menu::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #cfd6df;
+}
+
 @keyframes luckyContextMenuIn {
   from {
     opacity: 0;
@@ -2064,7 +2086,18 @@
 .lucky-team-agent-cancel:focus-visible,
 .lucky-team-agent-submit:focus-visible,
 .lucky-team-avatar-option:focus-visible,
-.lucky-team-avatar-more:focus-visible {
+.lucky-team-avatar-more:focus-visible,
+.lucky-squad-avatar-option:focus-visible,
+.lucky-squad-member-option:focus-visible,
+.lucky-create-squad-cancel:focus-visible,
+.lucky-create-squad-submit:focus-visible,
+.lucky-squad-action-btn:focus-visible,
+.lucky-squad-add-member-menu button:focus-visible,
+.lucky-squad-breadcrumb button:focus-visible,
+.lucky-squad-editor-tabs button:focus-visible,
+.lucky-squad-member-more:focus-visible,
+.lucky-squad-member-menu button:focus-visible,
+.lucky-squad-zoom button:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px rgba(79, 124, 255, 0.18);
 }
@@ -2254,6 +2287,633 @@
   align-items: center;
   gap: 13px;
   padding-left: 2px;
+}
+
+.lucky-squad-avatar {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 38px;
+  border: 2px solid rgba(255, 255, 255, 0.94);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 30%, rgba(255, 255, 255, 0.48) 0 12%, transparent 13%),
+    linear-gradient(135deg, var(--lucky-squad-avatar-color), color-mix(in srgb, var(--lucky-squad-avatar-color), #111827 16%));
+  color: #ffffff;
+  font-size: 18px;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.34),
+    0 5px 12px rgba(15, 23, 42, 0.13);
+}
+
+.lucky-squad-avatar.is-compact {
+  width: 28px;
+  height: 28px;
+  flex-basis: 28px;
+  font-size: 14px;
+}
+
+.lucky-squad-card .lucky-agent-card-head {
+  grid-template-columns: 38px minmax(0, 1fr) 28px;
+}
+
+.lucky-squad-card-footer {
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lucky-squad-member-stack {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  padding-left: 2px;
+}
+
+.lucky-squad-member-stack-item {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin-left: -8px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.lucky-squad-member-stack-item:first-child {
+  margin-left: 0;
+}
+
+.lucky-squad-member-stack-item .lucky-agent-card-avatar {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+}
+
+.lucky-squad-member-stack-item .lucky-agent-card-avatar::before {
+  width: 16px;
+  height: 12px;
+  left: 5px;
+  top: 6px;
+}
+
+.lucky-squad-member-stack-item .lucky-agent-card-avatar::after {
+  width: 10px;
+  height: 12px;
+  left: 8px;
+  top: 8px;
+}
+
+.lucky-squad-member-stack-item .lucky-agent-card-avatar span {
+  width: 22px;
+  height: 11px;
+  left: 2px;
+  bottom: -2px;
+}
+
+.lucky-squad-member-extra {
+  min-width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: -8px;
+  padding: 0 7px;
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+  background: #f1f3f6;
+  color: #697383;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.lucky-squad-editor {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  color: #303640;
+}
+
+.lucky-squad-editor-header {
+  flex: 0 0 auto;
+  border-bottom: 1px solid rgba(225, 228, 233, 0.96);
+  background: #ffffff;
+}
+
+.lucky-squad-breadcrumb {
+  height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 48px;
+  color: #a0a7b2;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 20px;
+}
+
+.lucky-squad-breadcrumb button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #a0a7b2;
+  font: inherit;
+  cursor: pointer;
+}
+
+.lucky-squad-breadcrumb button:hover {
+  color: #596272;
+}
+
+.lucky-squad-breadcrumb strong {
+  color: #4b5563;
+  font-weight: 800;
+}
+
+.lucky-squad-editor-top {
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 0 48px 6px;
+}
+
+.lucky-squad-editor-titlebar {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.lucky-squad-editor-titlebar .lucky-squad-avatar {
+  width: 42px;
+  height: 42px;
+  flex-basis: 42px;
+  font-size: 20px;
+}
+
+.lucky-squad-editor-titlebar h1 {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  color: #303640;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 22px;
+}
+
+.lucky-squad-editor-titlebar h1 span {
+  color: #a1a8b3;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.lucky-squad-editor-titlebar p {
+  max-width: min(560px, 54vw);
+  margin: 4px 0 0;
+  overflow: hidden;
+  color: #9aa2ad;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lucky-squad-editor-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.lucky-squad-add-member-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.lucky-squad-action-btn {
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 12px;
+  border: 1px solid rgba(214, 219, 227, 0.96);
+  border-radius: 6px;
+  background: #ffffff;
+  color: #4d5663;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lucky-squad-action-btn.is-icon-only {
+  width: 32px;
+  padding: 0;
+}
+
+.lucky-squad-action-btn:hover {
+  border-color: rgba(180, 188, 201, 0.98);
+  background: #f7f8fa;
+  color: #2f3640;
+}
+
+.lucky-squad-add-member-menu {
+  position: absolute;
+  top: 38px;
+  right: 0;
+  z-index: 30;
+  width: 232px;
+  max-height: 292px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid rgba(225, 228, 233, 0.96);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow:
+    0 18px 42px rgba(15, 23, 42, 0.12),
+    0 5px 14px rgba(15, 23, 42, 0.07);
+}
+
+.lucky-squad-add-member-menu button {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #303640;
+  font-size: 13px;
+  font-weight: 750;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lucky-squad-add-member-menu button:hover {
+  background: #f7f8fa;
+}
+
+.lucky-squad-add-member-menu .lucky-agent-card-avatar {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+}
+
+.lucky-squad-add-member-menu .lucky-agent-card-avatar::before {
+  width: 14px;
+  height: 10px;
+  left: 4px;
+  top: 5px;
+}
+
+.lucky-squad-add-member-menu .lucky-agent-card-avatar::after {
+  width: 8px;
+  height: 10px;
+  left: 7px;
+  top: 7px;
+}
+
+.lucky-squad-add-member-menu .lucky-agent-card-avatar span {
+  width: 19px;
+  height: 10px;
+  left: 2px;
+  bottom: -2px;
+}
+
+.lucky-squad-add-member-menu button > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lucky-squad-add-member-empty {
+  padding: 10px 12px;
+  color: #98a1ad;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 20px;
+}
+
+.lucky-squad-editor-tabs {
+  height: 34px;
+  display: flex;
+  align-items: flex-end;
+  gap: 24px;
+  padding: 0 48px;
+}
+
+.lucky-squad-editor-tabs button {
+  position: relative;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #89929f;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 34px;
+  cursor: pointer;
+}
+
+.lucky-squad-editor-tabs button.is-active {
+  color: #303640;
+}
+
+.lucky-squad-editor-tabs button.is-active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 999px;
+  background: #303640;
+}
+
+.lucky-squad-canvas {
+  position: relative;
+  flex: 1;
+  min-height: calc(100vh - 106px);
+  overflow: auto;
+  background:
+    radial-gradient(circle, rgba(207, 213, 222, 0.82) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+.lucky-squad-flow {
+  width: min(380px, calc(100% - 40px));
+  margin-left: clamp(120px, 26vw, 310px);
+  padding: 132px 0 160px;
+}
+
+.lucky-squad-flow-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.lucky-squad-member-node {
+  position: relative;
+  width: 260px;
+  min-height: 96px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 28px;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px 16px 18px;
+  border: 1px solid rgba(224, 227, 232, 0.98);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(30, 41, 59, 0.05);
+}
+
+.lucky-squad-member-node .lucky-agent-card-avatar {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+}
+
+.lucky-squad-member-node .lucky-agent-card-avatar::before {
+  width: 20px;
+  height: 13px;
+  left: 6px;
+  top: 7px;
+}
+
+.lucky-squad-member-node .lucky-agent-card-avatar::after {
+  width: 12px;
+  height: 14px;
+  left: 10px;
+  top: 10px;
+}
+
+.lucky-squad-member-node .lucky-agent-card-avatar span {
+  width: 26px;
+  height: 13px;
+  left: 3px;
+  bottom: -2px;
+}
+
+.lucky-squad-member-copy {
+  min-width: 0;
+}
+
+.lucky-squad-member-title {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.lucky-squad-member-title strong {
+  min-width: 0;
+  overflow: hidden;
+  color: #303640;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lucky-squad-member-title .anticon {
+  color: #f5b21b;
+  font-size: 13px;
+}
+
+.lucky-squad-member-copy p {
+  display: -webkit-box;
+  margin: 13px 0 0;
+  overflow: hidden;
+  color: #9aa2ad;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.lucky-squad-member-more {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #f0f2f5;
+  color: #8a929e;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.lucky-squad-member-more:hover {
+  background: #e8ebf0;
+  color: #303640;
+}
+
+.lucky-squad-member-menu {
+  position: absolute;
+  top: 42px;
+  left: calc(100% - 44px);
+  z-index: 20;
+  width: 198px;
+  overflow: hidden;
+  border: 1px solid rgba(225, 228, 233, 0.96);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow:
+    0 18px 42px rgba(15, 23, 42, 0.12),
+    0 5px 14px rgba(15, 23, 42, 0.07);
+}
+
+.lucky-squad-member-menu button {
+  width: 100%;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 14px;
+  border: 0;
+  background: #ffffff;
+  color: #4d5663;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lucky-squad-member-menu button:hover {
+  background: #f7f8fa;
+}
+
+.lucky-squad-member-menu strong {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  overflow: hidden;
+  color: #303640;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lucky-squad-member-menu .is-danger {
+  justify-content: flex-start;
+  color: #ff4d5a;
+}
+
+.lucky-squad-member-menu .is-danger:hover {
+  background: #fff5f6;
+}
+
+.lucky-squad-connector {
+  position: relative;
+  width: 2px;
+  height: 88px;
+  background: #dce1e8;
+}
+
+.lucky-squad-connector span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border: 1px solid #dce1e8;
+  border-radius: 50%;
+  background: #ffffff;
+  transform: translate(-50%, -50%);
+}
+
+.lucky-squad-zoom {
+  position: absolute;
+  right: 22px;
+  bottom: 22px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(225, 228, 233, 0.96);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+.lucky-squad-zoom button {
+  width: 34px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #6f7885;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.lucky-squad-zoom button:hover {
+  background: #f7f8fa;
+  color: #303640;
+}
+
+.lucky-squad-zoom span {
+  min-width: 52px;
+  color: #606a78;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.lucky-squad-rules-canvas {
+  padding: 96px clamp(32px, 11vw, 148px);
+}
+
+.lucky-squad-rules-panel {
+  max-width: 560px;
+  padding: 28px 30px;
+  border: 1px solid rgba(224, 227, 232, 0.98);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(30, 41, 59, 0.05);
+}
+
+.lucky-squad-rules-panel h2 {
+  margin: 0;
+  color: #303640;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 26px;
+}
+
+.lucky-squad-rules-panel p {
+  margin: 14px 0 0;
+  color: #6f7885;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 24px;
 }
 
 .lucky-agent-badge {
@@ -4322,6 +4982,349 @@
   background: #111827;
 }
 
+.lucky-create-squad-modal {
+  width: min(760px, calc(100vw - 64px));
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding: 22px 24px 18px;
+  border: 1px solid rgba(229, 231, 235, 0.88);
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow:
+    0 22px 52px rgba(17, 24, 39, 0.18),
+    0 6px 18px rgba(17, 24, 39, 0.08);
+}
+
+.lucky-create-squad-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 16px;
+}
+
+.lucky-create-squad-head h2 {
+  margin: 0;
+  color: #20242c;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 25px;
+}
+
+.lucky-create-squad-head p {
+  margin: 4px 0 0;
+  color: #8d96a3;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.lucky-create-squad-field {
+  display: block;
+  margin-top: 12px;
+  color: #303640;
+}
+
+.lucky-create-squad-field:first-of-type {
+  margin-top: 0;
+}
+
+.lucky-create-squad-label {
+  display: block;
+  margin-bottom: 9px;
+  color: #303640;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 20px;
+}
+
+.lucky-create-squad-label em {
+  margin-left: 2px;
+  color: #f05252;
+  font-style: normal;
+}
+
+.lucky-create-squad-helper {
+  margin: -4px 0 12px;
+  color: #8d96a3;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.lucky-squad-avatar-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+}
+
+.lucky-squad-avatar-option {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 36px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.lucky-squad-avatar-option.is-selected {
+  border-color: #2f6bff;
+  box-shadow: 0 0 0 2px rgba(47, 107, 255, 0.12);
+}
+
+.lucky-squad-avatar-option .lucky-squad-avatar {
+  width: 32px;
+  height: 32px;
+  flex-basis: 32px;
+  font-size: 15px;
+}
+
+.lucky-squad-avatar-camera {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid #ffffff;
+  border-radius: 50%;
+  background: #252b34;
+}
+
+.lucky-squad-avatar-camera::before {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 4px;
+  width: 6px;
+  height: 5px;
+  border-radius: 2px;
+  background: #ffffff;
+}
+
+.lucky-create-squad-input-wrap,
+.lucky-create-squad-textarea-wrap {
+  position: relative;
+  border: 1px solid rgba(216, 221, 229, 0.96);
+  border-radius: 9px;
+  background: #ffffff;
+}
+
+.lucky-create-squad-input-wrap:focus-within,
+.lucky-create-squad-textarea-wrap:focus-within {
+  border-color: rgba(120, 128, 143, 0.88);
+  box-shadow: 0 0 0 2px rgba(31, 35, 41, 0.04);
+}
+
+.lucky-create-squad-input-wrap input,
+.lucky-create-squad-textarea-wrap textarea {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #303640;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.lucky-create-squad-input-wrap input {
+  height: 34px;
+  padding: 0 54px 0 12px;
+}
+
+.lucky-create-squad-input-wrap input::placeholder,
+.lucky-create-squad-textarea-wrap textarea::placeholder {
+  color: #b4bac4;
+  font-weight: 500;
+}
+
+.lucky-create-squad-input-wrap > span,
+.lucky-create-squad-textarea-wrap > span {
+  position: absolute;
+  right: 10px;
+  color: #a0a7b2;
+  font-size: 12px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.lucky-create-squad-input-wrap > span {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.lucky-squad-member-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.lucky-squad-member-option {
+  min-width: 0;
+  height: 42px;
+  display: grid;
+  grid-template-columns: 16px 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 0 11px;
+  border: 1px solid rgba(226, 230, 236, 0.96);
+  border-radius: 10px;
+  background: #ffffff;
+  color: #303640;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lucky-squad-member-option:hover,
+.lucky-squad-member-option.is-selected {
+  border-color: rgba(196, 202, 212, 0.98);
+  background: #fbfcfd;
+}
+
+.lucky-squad-member-checkbox {
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d9dee6;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #ffffff;
+  font-size: 9px;
+}
+
+.lucky-squad-member-option.is-selected .lucky-squad-member-checkbox {
+  border-color: #2f6bff;
+  background: #2f6bff;
+}
+
+.lucky-squad-member-option .lucky-agent-card-avatar {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 24px;
+  margin: -7px;
+  transform: scale(0.64);
+  transform-origin: center;
+}
+
+.lucky-squad-member-name {
+  min-width: 0;
+  overflow: hidden;
+  color: #4f5865;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lucky-squad-member-option em {
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: #eef2ff;
+  color: #4f6bff;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.lucky-create-squad-textarea-wrap {
+  height: 96px;
+  overflow: hidden;
+}
+
+.lucky-create-squad-textarea-wrap textarea {
+  height: 100%;
+  resize: none;
+  padding: 16px 16px 44px;
+  line-height: 22px;
+}
+
+.lucky-create-squad-textarea-wrap button {
+  position: absolute;
+  left: 14px;
+  bottom: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lucky-create-squad-textarea-wrap button:hover {
+  color: #303640;
+}
+
+.lucky-create-squad-textarea-wrap > span {
+  right: 12px;
+  bottom: 10px;
+}
+
+.lucky-create-squad-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.lucky-create-squad-cancel,
+.lucky-create-squad-submit {
+  height: 36px;
+  min-width: 72px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 17px;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.lucky-create-squad-cancel {
+  border: 1px solid rgba(225, 228, 233, 0.96);
+  background: #ffffff;
+  color: #343a45;
+}
+
+.lucky-create-squad-cancel:hover {
+  background: #f7f8fa;
+}
+
+.lucky-create-squad-submit {
+  border: 0;
+  background: #c7cdd6;
+  color: #ffffff;
+  cursor: not-allowed;
+}
+
+.lucky-create-squad-submit.is-ready {
+  background: #1f2329;
+  cursor: pointer;
+}
+
+.lucky-create-squad-submit.is-ready:hover {
+  background: #111827;
+}
+
 .lucky-skill-modal {
   width: min(940px, calc(100vw - 64px));
   max-height: calc(100vh - 64px);
@@ -6037,12 +7040,16 @@
 .lucky-showcase-card,
 .lucky-create-agent-modal,
 .lucky-team-agent-modal,
+.lucky-create-squad-modal,
 .lucky-skill-modal,
 .lucky-automation-modal,
 .lucky-agent-more-menu,
 .lucky-automation-create-menu,
 .lucky-team-agent-input,
 .lucky-team-agent-select,
+.lucky-create-squad-input-wrap,
+.lucky-create-squad-textarea-wrap,
+.lucky-squad-member-option,
 .lucky-skill-search,
 .lucky-automation-field input,
 .lucky-automation-description-box,
@@ -6060,6 +7067,7 @@
 .lucky-composer-box,
 .lucky-context-bar,
 .lucky-create-agent-option,
+.lucky-squad-member-option,
 .lucky-skill-pack-card,
 .lucky-skill-card,
 .lucky-automation-modal-left,
@@ -6080,6 +7088,7 @@
 .lucky-automation-card,
 .lucky-showcase-card,
 .lucky-create-agent-option,
+.lucky-squad-member-option,
 .lucky-skill-pack-card,
 .lucky-skill-card {
   box-shadow:
@@ -6597,7 +7606,8 @@
 }
 
 .lucky-create-agent-modal,
-.lucky-team-agent-modal {
+.lucky-team-agent-modal,
+.lucky-create-squad-modal {
   border-color: rgba(222, 226, 233, 0.96);
   background: #ffffff;
   box-shadow:
@@ -6609,7 +7619,10 @@
 
 .lucky-create-agent-option,
 .lucky-team-agent-input,
-.lucky-team-agent-select {
+.lucky-team-agent-select,
+.lucky-create-squad-input-wrap,
+.lucky-create-squad-textarea-wrap,
+.lucky-squad-member-option {
   border-color: rgba(216, 221, 229, 0.96);
   background: #ffffff;
   box-shadow: none;
@@ -6748,6 +7761,10 @@
     width: min(680px, 100%);
     grid-template-columns: minmax(0, 1fr);
     gap: 0;
+  }
+
+  .lucky-squad-flow {
+    margin-left: clamp(72px, 20vw, 180px);
   }
 }
 
@@ -6893,6 +7910,7 @@
 
   .lucky-create-agent-modal,
   .lucky-team-agent-modal,
+  .lucky-create-squad-modal,
   .lucky-skill-modal {
     width: min(640px, calc(100vw - 32px));
     max-height: calc(100vh - 32px);
@@ -6915,6 +7933,49 @@
 
   .lucky-create-agent-options {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lucky-squad-member-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lucky-squad-editor-top {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 0 24px 8px;
+  }
+
+  .lucky-squad-breadcrumb {
+    padding: 0 24px;
+  }
+
+  .lucky-squad-editor-titlebar p {
+    max-width: calc(100vw - 96px);
+  }
+
+  .lucky-squad-editor-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .lucky-squad-add-member-menu {
+    left: 0;
+    right: auto;
+  }
+
+  .lucky-squad-editor-tabs {
+    padding: 0 24px;
+  }
+
+  .lucky-squad-flow {
+    width: min(360px, calc(100% - 32px));
+    margin: 0 auto;
+    padding-top: 72px;
+  }
+
+  .lucky-squad-rules-canvas {
+    padding: 56px 24px;
   }
 
   .lucky-create-agent-option {
@@ -6996,6 +8057,38 @@
   .lucky-create-project-modal {
     width: min(520px, calc(100vw - 32px));
     padding: 22px 18px 18px;
+  }
+
+  .lucky-squad-member-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lucky-squad-editor-titlebar {
+    align-items: flex-start;
+  }
+
+  .lucky-squad-editor-titlebar p {
+    max-width: calc(100vw - 86px);
+    white-space: normal;
+  }
+
+  .lucky-squad-member-node {
+    width: min(280px, 100%);
+  }
+
+  .lucky-squad-member-menu {
+    left: auto;
+    right: 10px;
+    width: min(198px, calc(100vw - 72px));
+  }
+
+  .lucky-squad-add-member-menu {
+    width: min(232px, calc(100vw - 48px));
+  }
+
+  .lucky-squad-zoom {
+    right: 14px;
+    bottom: 14px;
   }
 
   .lucky-market-filterbar {

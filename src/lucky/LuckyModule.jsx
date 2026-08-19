@@ -22,6 +22,7 @@ import {
   FileTextOutlined,
   FolderOutlined,
   MenuOutlined,
+  MinusOutlined,
   PlusOutlined,
   ProductOutlined,
   ProjectOutlined,
@@ -284,50 +285,214 @@ const MARKET_EXPERTS = [
   },
 ];
 
-const AGENT_CARDS = [
+const INITIAL_AGENT_DATA = [
   {
-    key: 'personal',
-    name: '张洪磊的智能伙伴',
-    desc: '暂无描述',
-    tag: '专属',
-    tagTone: 'purple',
-    avatar: 'personal',
+    key: 'party-affairs',
+    name: '党务智能体',
+    desc: '辅助党务通知、会议材料、活动方案和党建资料整理。',
   },
   {
-    key: 'coach',
-    name: '辅导员',
-    desc: '负责团队协作场景下的疑问解答、问题梳理及规则提示辅助工作',
-    tag: '团队',
-    tagTone: 'muted',
-    avatar: 'coach',
+    key: 'party-review',
+    name: '党务工作智能审核助手',
+    desc: '用于党务材料初审、要点核查和规范性提示。',
+  },
+  {
+    key: 'counselor-agent',
+    name: '辅导员智能体',
+    desc: '支持学生管理、谈心谈话、通知提醒和过程记录。',
+  },
+  {
+    key: 'college-cadre-position',
+    name: '高校干部岗位智能体',
+    desc: '面向高校干部岗位职责、履职评价和岗位能力建设。',
+  },
+  {
+    key: 'college-teacher',
+    name: '高校教师智能体',
+    desc: '服务高校教师教学、科研、教改和成长发展场景。',
+  },
+  {
+    key: 'school-nucleus',
+    name: '校氪',
+    desc: '围绕学校日常运营提供信息问答、材料生成和协同辅助。',
+  },
+  {
+    key: 'teacher-ability-map',
+    name: '师能智绘助手——基于高职学校教师能力清单绘制工作',
+    desc: '基于教师能力清单生成画像、差距分析和发展建议。',
+  },
+  {
+    key: 'vocational-moral-education',
+    name: '职业学校德育工作智能助手“职小班”',
+    desc: '支持职业学校德育活动设计、班级管理和育人案例沉淀。',
+  },
+  {
+    key: 'k12-principal',
+    name: '中小学校长智能体',
+    desc: '辅助校长开展学校治理、质量分析和发展规划。',
+  },
+  {
+    key: 'k12-teacher',
+    name: '中小学教师智能体',
+    desc: '支持备课、作业设计、课堂活动和教学反思。',
+  },
+  {
+    key: 'ai-teacher-training',
+    name: '人工智能赋能中小学教师智能选学培训项目',
+    desc: '围绕教师 AI 选学培训提供路径规划、资源推荐和过程跟进。',
+  },
+  {
+    key: 'class-teacher-helper',
+    name: '班主任智能体“班小助”——全场景智慧教育伙伴',
+    desc: '服务班主任家校沟通、班级管理、学生成长和事务提醒。',
+  },
+  {
+    key: 'elderly-education',
+    name: '老年教育智能体',
+    desc: '辅助老年教育课程设计、活动组织和学习支持。',
+  },
+  {
+    key: 'tongda-ai-teaching',
+    name: '通答人工智能教学平台',
+    desc: '提供 AI 教学平台能力问答、方案介绍和应用指引。',
+  },
+  {
+    key: 'family-education',
+    name: '家庭教育智能体',
+    desc: '面向家庭教育咨询、亲子沟通和成长陪伴提供建议。',
+  },
+  {
+    key: 'elderly-agent',
+    name: '老年智能体',
+    desc: '面向老年服务场景提供陪伴问答、服务引导和信息提醒。',
+  },
+  {
+    key: 'education-supervision',
+    name: '智慧教育督导平台（督学智能体）',
+    desc: '支持教育督导资料梳理、现场记录和整改跟踪。',
+  },
+  {
+    key: 'agri-electric',
+    name: '“农电通”AI智能体',
+    desc: '面向农业用电、服务咨询和业务办理提供智能辅助。',
   },
 ];
 
-const COMPOSER_EXTRA_AGENTS = [
-  {
-    key: 'demo-slide-polisher',
-    name: '演示文稿打磨师',
-    desc: '优化汇报材料与演示表达',
-    tag: '专属',
-    tagTone: 'purple',
-    avatar: 'personal',
-  },
-  {
-    key: 'demo-1111',
-    name: '1111',
-    desc: '通用团队协作角色',
-    tag: '团队',
-    tagTone: 'muted',
-    avatar: 'personal',
-  },
-];
+const AGENT_CARDS = INITIAL_AGENT_DATA.map((agent, index) => ({
+  tag: index % 3 === 0 ? '组织' : '团队',
+  tagTone: index % 3 === 0 ? 'purple' : 'muted',
+  avatar: index % 2 === 0 ? 'personal' : 'coach',
+  ...agent,
+}));
+
+const COMPOSER_EXTRA_AGENTS = [];
 
 const COMPOSER_TEAM_OPTIONS = [
   {
-    key: 'agent-squad',
-    name: '智能体小队（1）',
-    desc: '由多个智能体共同协作',
+    key: 'party-work-squad',
+    name: '党务材料协作小队',
+    desc: '面向党建活动、党务材料和流程审核的日常协作小队。',
+    avatarColor: '#f59e0b',
+    memberKeys: ['party-affairs', 'party-review', 'school-nucleus'],
+    leaderKey: 'party-affairs',
+    memberNotes: {
+      'party-affairs': '负责党建通知、会议材料、活动方案和归档材料的统筹起草。',
+      'party-review': '负责对党务材料进行规范性、完整性和表述风险初审。',
+      'school-nucleus': '负责补充学校运营口径、校内制度和协同事项提醒。',
+    },
+    instruction: '党务智能体作为队长接收需求并拆解材料类型，党务审核助手负责规范校验，校氪补充学校运营口径，最终由队长汇总为可提交版本。',
   },
+  {
+    key: 'college-teacher-development-squad',
+    name: '高校教师发展小队',
+    desc: '聚焦高校教师成长、能力画像、岗位职责和督导反馈闭环。',
+    avatarColor: '#4f7cff',
+    memberKeys: ['college-teacher', 'teacher-ability-map', 'college-cadre-position', 'education-supervision'],
+    leaderKey: 'college-teacher',
+    memberNotes: {
+      'college-teacher': '负责统筹高校教师教学、科研、教改和发展场景需求。',
+      'teacher-ability-map': '负责生成教师能力画像、差距分析和成长建议。',
+      'college-cadre-position': '负责补充岗位职责、履职评价和干部能力要求。',
+      'education-supervision': '负责引入督导视角，形成问题清单和改进闭环。',
+    },
+    instruction: '高校教师智能体先明确发展目标和对象，师能智绘助手输出能力画像，干部岗位智能体补充岗位要求，督学智能体形成诊断和整改建议。',
+  },
+  {
+    key: 'k12-ai-teaching-squad',
+    name: '中小学 AI 教研小队',
+    desc: '服务中小学课堂教学、校本教研、教师培训和班级应用场景。',
+    avatarColor: '#20c7a8',
+    memberKeys: ['k12-principal', 'k12-teacher', 'ai-teacher-training', 'class-teacher-helper'],
+    leaderKey: 'k12-principal',
+    memberNotes: {
+      'k12-principal': '负责学校治理视角、实施路径和阶段目标统筹。',
+      'k12-teacher': '负责备课、作业、课堂活动和教学反思等一线教学设计。',
+      'ai-teacher-training': '负责 AI 选学培训路径、资源推荐和学习过程跟进。',
+      'class-teacher-helper': '负责班级管理、家校沟通和学生成长支持场景补充。',
+    },
+    instruction: '中小学校长智能体担任队长，先确定学校层面的目标和约束，再由教师、培训和班主任智能体分别产出教学方案、培训安排和班级应用建议。',
+  },
+  {
+    key: 'moral-classroom-squad',
+    name: '德育与班主任协作小队',
+    desc: '围绕德育活动、班级治理、学生支持和家校沟通开展协作。',
+    avatarColor: '#f26ca7',
+    memberKeys: ['vocational-moral-education', 'class-teacher-helper', 'counselor-agent', 'family-education'],
+    leaderKey: 'vocational-moral-education',
+    memberNotes: {
+      'vocational-moral-education': '负责德育主题、活动设计、育人案例和职业学校场景统筹。',
+      'class-teacher-helper': '负责班级事务、家校沟通和学生成长陪伴方案。',
+      'counselor-agent': '负责学生管理、谈心谈话和过程记录建议。',
+      'family-education': '负责家庭教育、亲子沟通和家校协同建议。',
+    },
+    instruction: '德育智能助手先确定育人目标和活动主线，班主任与辅导员智能体补充班级执行方案，家庭教育智能体完善家校协同话术和注意事项。',
+  },
+  {
+    key: 'lifelong-education-service-squad',
+    name: '终身教育服务小队',
+    desc: '面向老年教育、家庭教育和社区学习服务的咨询支持小队。',
+    avatarColor: '#8b5cf6',
+    memberKeys: ['elderly-education', 'elderly-agent', 'family-education'],
+    leaderKey: 'elderly-education',
+    memberNotes: {
+      'elderly-education': '负责老年教育课程、活动组织和学习支持方案。',
+      'elderly-agent': '负责老年服务咨询、陪伴问答和生活信息提醒。',
+      'family-education': '负责家庭关系、亲子沟通和跨代协同建议。',
+    },
+    instruction: '老年教育智能体统筹学习服务目标，老年智能体补充服务触点和陪伴问答，家庭教育智能体完善家庭支持与沟通建议。',
+  },
+  {
+    key: 'smart-platform-operation-squad',
+    name: '智慧教学平台运营小队',
+    desc: '支持智慧教育平台介绍、应用落地、督导反馈和服务问答。',
+    avatarColor: '#377ef4',
+    memberKeys: ['tongda-ai-teaching', 'education-supervision', 'school-nucleus', 'agri-electric'],
+    leaderKey: 'tongda-ai-teaching',
+    memberNotes: {
+      'tongda-ai-teaching': '负责 AI 教学平台能力介绍、应用指引和方案包装。',
+      'education-supervision': '负责从督导视角梳理评价指标、整改记录和反馈闭环。',
+      'school-nucleus': '负责结合学校运营场景补充落地流程和协作节点。',
+      'agri-electric': '负责公共服务咨询、业务办理和基层服务场景参考。',
+    },
+    instruction: '通答人工智能教学平台作为队长梳理平台能力和应用路径，督学智能体补充评价反馈，校氪完善校内落地流程，农电通提供基层服务问答场景参考。',
+  },
+];
+
+const SQUAD_AVATAR_OPTIONS = [
+  { key: 'orange', color: '#f59e0b' },
+  { key: 'blue', color: '#4f7cff' },
+  { key: 'rose', color: '#f26ca7' },
+  { key: 'violet', color: '#8b5cf6' },
+  { key: 'cyan', color: '#2fb7d3' },
+  { key: 'olive', color: '#b5bf42' },
+  { key: 'green', color: '#3f9f68' },
+  { key: 'red', color: '#ff5b5f' },
+  { key: 'coral', color: '#ff8a3d' },
+  { key: 'magenta', color: '#c65be8' },
+  { key: 'indigo', color: '#6675f0' },
+  { key: 'royal', color: '#377ef4' },
+  { key: 'lime', color: '#76b900' },
+  { key: 'teal', color: '#20c7a8' },
 ];
 
 const DEFAULT_PROJECTS = [
@@ -1225,7 +1390,7 @@ function LuckyHome({
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [projectMenuOpen, setProjectMenuOpen] = useState(false);
   const [browserMenuOpen, setBrowserMenuOpen] = useState(false);
-  const [selectedTarget, setSelectedTarget] = useState({ type: 'agent', key: 'personal' });
+  const [selectedTarget, setSelectedTarget] = useState({ type: 'agent', key: 'party-affairs' });
   const [selectedProjectKey, setSelectedProjectKey] = useState(projects[0]?.key || '');
   const [projectSearchText, setProjectSearchText] = useState('');
   const contextPickerRef = useRef(null);
@@ -1342,7 +1507,7 @@ function LuckyHome({
       <div className="lucky-home-avatar" aria-hidden="true">
         <span className="lucky-home-avatar-face">张</span>
       </div>
-      <h1 className="lucky-home-title">让张洪磊的智能伙伴帮你做点什么？</h1>
+      <h1 className="lucky-home-title">让{selectedContextLabel || '智能体'}帮你做点什么？</h1>
 
       <section className="lucky-composer-shell" aria-label="创建新任务">
         <div className="lucky-composer-frame">
@@ -1413,7 +1578,7 @@ function LuckyHome({
                   </button>
 
                   {contextMenuOpen ? (
-                    <div className="lucky-context-menu" role="menu" aria-label="选择智能体或小队">
+                    <div className="lucky-context-menu lucky-target-context-menu" role="menu" aria-label="选择智能体或小队">
                       <div className="lucky-context-menu-section">
                         <div className="lucky-context-menu-head">
                           <span>智能体</span>
@@ -2002,6 +2167,18 @@ function AgentAvatar({ type }) {
   );
 }
 
+function SquadAvatar({ color = '#f59e0b', compact = false }) {
+  return (
+    <span
+      className={`lucky-squad-avatar ${compact ? 'is-compact' : ''}`}
+      style={{ '--lucky-squad-avatar-color': color }}
+      aria-hidden="true"
+    >
+      <RobotOutlined />
+    </span>
+  );
+}
+
 function CreateAgentIllustration({ type }) {
   return (
     <div className={`lucky-create-agent-visual lucky-create-agent-visual-${type}`} aria-hidden="true">
@@ -2012,6 +2189,206 @@ function CreateAgentIllustration({ type }) {
       <span className="lucky-create-agent-cardlet lucky-create-agent-cardlet-1" />
       <span className="lucky-create-agent-cardlet lucky-create-agent-cardlet-2" />
       <span className="lucky-create-agent-cardlet lucky-create-agent-cardlet-3" />
+    </div>
+  );
+}
+
+function CreateAgentSquadModal({ open, agents, onClose, onCreate }) {
+  const [selectedAvatar, setSelectedAvatar] = useState(SQUAD_AVATAR_OPTIONS[0].key);
+  const [squadName, setSquadName] = useState('');
+  const [squadDesc, setSquadDesc] = useState('');
+  const [selectedMemberKeys, setSelectedMemberKeys] = useState([]);
+  const [instruction, setInstruction] = useState('');
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    setSelectedAvatar(SQUAD_AVATAR_OPTIONS[0].key);
+    setSquadName('');
+    setSquadDesc('');
+    setSelectedMemberKeys([]);
+    setInstruction('');
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose, open]);
+
+  if (!open) return null;
+
+  const selectedAvatarOption = SQUAD_AVATAR_OPTIONS.find((avatar) => avatar.key === selectedAvatar) || SQUAD_AVATAR_OPTIONS[0];
+  const canCreate = squadName.trim().length > 0 && selectedMemberKeys.length > 0;
+
+  const handleToggleMember = (agentKey) => {
+    setSelectedMemberKeys((prev) => (
+      prev.includes(agentKey)
+        ? prev.filter((key) => key !== agentKey)
+        : [...prev, agentKey]
+    ));
+  };
+
+  const handleCreate = () => {
+    if (!canCreate) return;
+    onCreate({
+      key: `agent-squad-${Date.now()}`,
+      name: squadName.trim(),
+      desc: squadDesc.trim() || '由多个智能体共同协作',
+      avatarColor: selectedAvatarOption.color,
+      memberKeys: selectedMemberKeys,
+      instruction: instruction.trim(),
+    });
+    onClose();
+  };
+
+  return (
+    <div className="lucky-create-agent-overlay" role="presentation" onMouseDown={onClose} onClick={onClose}>
+      <section
+        className="lucky-create-squad-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="lucky-create-squad-title"
+        onMouseDown={(event) => event.stopPropagation()}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="lucky-create-squad-head">
+          <div>
+            <h2 id="lucky-create-squad-title">新建智能体小队</h2>
+            <p>可指定小队内的智能体成员和协作方式，由队长接收任务并协调分配</p>
+          </div>
+          <button
+            type="button"
+            className="lucky-create-agent-close"
+            title="关闭"
+            aria-label="关闭"
+            onClick={onClose}
+          >
+            <CloseOutlined />
+          </button>
+        </div>
+
+        <div className="lucky-create-squad-field">
+          <div className="lucky-create-squad-label">头像</div>
+          <div className="lucky-squad-avatar-row">
+            {SQUAD_AVATAR_OPTIONS.map((avatar, index) => (
+              <button
+                key={avatar.key}
+                type="button"
+                className={`lucky-squad-avatar-option ${selectedAvatar === avatar.key ? 'is-selected' : ''}`}
+                aria-label={`选择小队头像 ${index + 1}`}
+                onClick={() => setSelectedAvatar(avatar.key)}
+              >
+                <SquadAvatar color={avatar.color} />
+                {index === 0 ? <span className="lucky-squad-avatar-camera" /> : null}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <label className="lucky-create-squad-field" htmlFor="lucky-create-squad-name">
+          <span className="lucky-create-squad-label">
+            名称
+            <em>*</em>
+          </span>
+          <div className="lucky-create-squad-input-wrap">
+            <input
+              id="lucky-create-squad-name"
+              type="text"
+              autoFocus
+              maxLength={20}
+              value={squadName}
+              placeholder="请输入名称"
+              onChange={(event) => setSquadName(event.target.value)}
+            />
+            <span>{squadName.length}/20</span>
+          </div>
+        </label>
+
+        <label className="lucky-create-squad-field" htmlFor="lucky-create-squad-desc">
+          <span className="lucky-create-squad-label">描述</span>
+          <div className="lucky-create-squad-input-wrap">
+            <input
+              id="lucky-create-squad-desc"
+              type="text"
+              maxLength={100}
+              value={squadDesc}
+              placeholder="请描述小队负责的工作"
+              onChange={(event) => setSquadDesc(event.target.value)}
+            />
+            <span>{squadDesc.length}/100</span>
+          </div>
+        </label>
+
+        <div className="lucky-create-squad-field">
+          <span className="lucky-create-squad-label">
+            小队成员
+            <em>*</em>
+          </span>
+          <p className="lucky-create-squad-helper">
+            选择小队成员，并设置其中一位为队长。队长可指派任务给成员，成员之间可互相协作完成任务
+          </p>
+          <div className="lucky-squad-member-grid">
+            {agents.map((agent) => {
+              const selected = selectedMemberKeys.includes(agent.key);
+              const leader = selected && selectedMemberKeys[0] === agent.key;
+              return (
+                <button
+                  key={agent.key}
+                  type="button"
+                  role="checkbox"
+                  aria-checked={selected}
+                  className={`lucky-squad-member-option ${selected ? 'is-selected' : ''}`}
+                  onClick={() => handleToggleMember(agent.key)}
+                >
+                  <span className="lucky-squad-member-checkbox" aria-hidden="true">
+                    {selected ? <CheckOutlined /> : null}
+                  </span>
+                  <AgentAvatar type={agent.avatar} />
+                  <span className="lucky-squad-member-name">{agent.name}</span>
+                  {leader ? <em>队长</em> : null}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <label className="lucky-create-squad-field" htmlFor="lucky-create-squad-instruction">
+          <span className="lucky-create-squad-label">协作指引</span>
+          <p className="lucky-create-squad-helper">设定成员之间的协作方式、任务规划机制等，支持从模板导入</p>
+          <div className="lucky-create-squad-textarea-wrap">
+            <textarea
+              id="lucky-create-squad-instruction"
+              maxLength={20000}
+              value={instruction}
+              placeholder="请输入协作规则，或 @ 使用模板"
+              onChange={(event) => setInstruction(event.target.value)}
+            />
+            <button type="button" onClick={() => message.info('已打开协作模板')}>
+              <RobotOutlined />
+              使用模板
+            </button>
+            <span>{instruction.length}/20000</span>
+          </div>
+        </label>
+
+        <footer className="lucky-create-squad-footer">
+          <button type="button" className="lucky-create-squad-cancel" onClick={onClose}>
+            取消
+          </button>
+          <button
+            type="button"
+            className={`lucky-create-squad-submit ${canCreate ? 'is-ready' : ''}`}
+            disabled={!canCreate}
+            onClick={handleCreate}
+          >
+            创建
+          </button>
+        </footer>
+      </section>
     </div>
   );
 }
@@ -2797,7 +3174,7 @@ function AgentEditorPage({
 
         <section className="lucky-agent-editor-panel">
           <div className="lucky-agent-editor-tabs" role="tablist" aria-label="智能体编辑分区">
-            {AGENT_EDITOR_TABS.map((tab, index) => (
+            {AGENT_EDITOR_TABS.map((tab) => (
               <button
                 key={tab}
                 type="button"
@@ -2924,12 +3301,299 @@ function AgentEditorPage({
   );
 }
 
-function AgentManagementPage({ activeTab, agents, teamAgents, onTabChange, onOpenCreate, onOpenAgent }) {
+function AgentSquadCard({ squad, members, onOpen }) {
+  const previewMembers = members.slice(0, 4);
+  const extraCount = Math.max(0, members.length - previewMembers.length);
+
+  const handleKeyDown = (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    onOpen();
+  };
+
+  return (
+    <article
+      className="lucky-agent-card lucky-squad-card"
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={handleKeyDown}
+    >
+      <div className="lucky-agent-card-head">
+        <SquadAvatar color={squad.avatarColor} />
+        <div className="lucky-agent-card-main">
+          <div className="lucky-agent-card-name">{squad.name}</div>
+          <div className="lucky-agent-card-desc">{squad.desc}</div>
+        </div>
+        <button
+          type="button"
+          className="lucky-agent-card-message"
+          title="打开小队"
+          aria-label={`打开${squad.name}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            onOpen();
+          }}
+        >
+          <MessageOutlined />
+        </button>
+      </div>
+      <div className="lucky-agent-card-footer lucky-squad-card-footer">
+        <span className="lucky-squad-member-stack" aria-label={`${members.length} 位成员`}>
+          {previewMembers.map((member) => (
+            <span key={member.key} className="lucky-squad-member-stack-item">
+              <AgentAvatar type={member.avatar} />
+            </span>
+          ))}
+          {extraCount > 0 ? <span className="lucky-squad-member-extra">+{extraCount}</span> : null}
+        </span>
+        <span className="lucky-agent-badge lucky-agent-badge-muted">
+          {members.length} 位成员
+        </span>
+      </div>
+    </article>
+  );
+}
+
+function AgentSquadEditorPage({ squad, agents, onBack, onStartNewTask }) {
+  const [activeTab, setActiveTab] = useState('members');
+  const [memberKeys, setMemberKeys] = useState(squad.memberKeys || []);
+  const [leaderKey, setLeaderKey] = useState(squad.leaderKey || squad.memberKeys?.[0] || '');
+  const [openMemberMenuKey, setOpenMemberMenuKey] = useState(null);
+  const [memberPickerOpen, setMemberPickerOpen] = useState(false);
+
+  const agentByKey = useMemo(() => new Map(agents.map((agent) => [agent.key, agent])), [agents]);
+  const members = useMemo(
+    () => memberKeys.map((key) => agentByKey.get(key)).filter(Boolean),
+    [agentByKey, memberKeys],
+  );
+  const availableMembers = useMemo(
+    () => agents.filter((agent) => !memberKeys.includes(agent.key)),
+    [agents, memberKeys],
+  );
+  const leader = members.find((member) => member.key === leaderKey) || members[0];
+  const leaderName = leader?.name || '队长';
+
+  const handleAddMember = (agent) => {
+    setMemberKeys((prevKeys) => {
+      if (prevKeys.includes(agent.key)) return prevKeys;
+      return [...prevKeys, agent.key];
+    });
+    if (!leaderKey) setLeaderKey(agent.key);
+    setOpenMemberMenuKey(null);
+    setMemberPickerOpen(false);
+    message.success(`已添加：${agent.name}`);
+  };
+
+  const handleSetLeader = (member) => {
+    setLeaderKey(member.key);
+    setOpenMemberMenuKey(null);
+    message.success(`已将${member.name}设为队长`);
+  };
+
+  const handleRemoveMember = (member) => {
+    if (memberKeys.length <= 1) {
+      message.info('小队至少保留 1 位成员');
+      return;
+    }
+    setMemberKeys((prevKeys) => prevKeys.filter((key) => key !== member.key));
+    if (leaderKey === member.key) {
+      const nextLeaderKey = memberKeys.find((key) => key !== member.key) || '';
+      setLeaderKey(nextLeaderKey);
+    }
+    setOpenMemberMenuKey(null);
+    message.success(`已移出：${member.name}`);
+  };
+
+  return (
+    <section className="lucky-squad-editor" aria-label={`${squad.name}编辑页`}>
+      <header className="lucky-squad-editor-header">
+        <nav className="lucky-squad-breadcrumb" aria-label="小队详情面包屑">
+          <button
+            type="button"
+            onClick={() => {
+              setMemberPickerOpen(false);
+              setOpenMemberMenuKey(null);
+              onBack();
+            }}
+          >
+            工作伙伴
+          </button>
+          <span aria-hidden="true">/</span>
+          <strong>智能体小队详情</strong>
+        </nav>
+
+        <div className="lucky-squad-editor-top">
+          <div className="lucky-squad-editor-titlebar">
+            <SquadAvatar color={squad.avatarColor} />
+            <div>
+              <h1>
+                {squad.name}
+                <span>{members.length}</span>
+              </h1>
+              <p>{squad.desc}</p>
+            </div>
+          </div>
+
+          <div className="lucky-squad-editor-actions">
+            <div className="lucky-squad-add-member-wrap">
+              <button
+                type="button"
+                className="lucky-squad-action-btn"
+                onClick={() => setMemberPickerOpen((current) => !current)}
+              >
+                <PlusOutlined />
+                添加成员
+              </button>
+
+              {memberPickerOpen ? (
+                <div className="lucky-squad-add-member-menu">
+                  {availableMembers.length > 0 ? availableMembers.slice(0, 8).map((agent) => (
+                    <button key={agent.key} type="button" onClick={() => handleAddMember(agent)}>
+                      <AgentAvatar type={agent.avatar} />
+                      <span>{agent.name}</span>
+                    </button>
+                  )) : (
+                    <div className="lucky-squad-add-member-empty">暂无可添加成员</div>
+                  )}
+                </div>
+              ) : null}
+            </div>
+            <button type="button" className="lucky-squad-action-btn" onClick={onStartNewTask}>
+              <EditOutlined />
+              新任务
+            </button>
+            <button
+              type="button"
+              className="lucky-squad-action-btn is-icon-only"
+              aria-label="更多小队操作"
+              onClick={() => message.info('更多小队操作')}
+            >
+              <EllipsisOutlined />
+            </button>
+          </div>
+        </div>
+
+        <nav className="lucky-squad-editor-tabs" aria-label="小队编辑">
+          <button
+            type="button"
+            className={activeTab === 'members' ? 'is-active' : ''}
+            onClick={() => {
+              setActiveTab('members');
+              setMemberPickerOpen(false);
+            }}
+          >
+            小队成员
+          </button>
+          <button
+            type="button"
+            className={activeTab === 'rules' ? 'is-active' : ''}
+            onClick={() => {
+              setActiveTab('rules');
+              setMemberPickerOpen(false);
+            }}
+          >
+            协作规则
+          </button>
+        </nav>
+      </header>
+
+      {activeTab === 'members' ? (
+        <div className="lucky-squad-canvas" onClick={() => {
+          setOpenMemberMenuKey(null);
+          setMemberPickerOpen(false);
+        }}>
+          <div className="lucky-squad-flow">
+            {members.map((member, index) => {
+              const isLeader = member.key === leaderKey;
+              const note = squad.memberNotes?.[member.key] || member.desc || '暂无描述';
+
+              return (
+                <div key={member.key} className="lucky-squad-flow-item">
+                  <article
+                    className={`lucky-squad-member-node ${isLeader ? 'is-leader' : ''}`}
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <AgentAvatar type={member.avatar} />
+                    <div className="lucky-squad-member-copy">
+                      <div className="lucky-squad-member-title">
+                        <strong>{member.name}</strong>
+                        {isLeader ? <StarOutlined /> : null}
+                      </div>
+                      <p>{note}</p>
+                    </div>
+                    <button
+                      type="button"
+                      className="lucky-squad-member-more"
+                      aria-label={`${member.name}操作`}
+                      onClick={() => setOpenMemberMenuKey((current) => (current === member.key ? null : member.key))}
+                    >
+                      <EllipsisOutlined />
+                    </button>
+
+                    {openMemberMenuKey === member.key ? (
+                      <div className="lucky-squad-member-menu">
+                        <button type="button" onClick={() => message.info(`${member.name}汇报给${leaderName}`)}>
+                          <span>汇报给</span>
+                          <strong>
+                            {isLeader ? '暂无' : leaderName}
+                            <RightOutlined />
+                          </strong>
+                        </button>
+                        <button type="button" onClick={() => handleSetLeader(member)}>
+                          设置为队长
+                        </button>
+                        <button type="button" className="is-danger" onClick={() => handleRemoveMember(member)}>
+                          移出小队
+                        </button>
+                      </div>
+                    ) : null}
+                  </article>
+
+                  {index < members.length - 1 ? (
+                    <div className="lucky-squad-connector" aria-hidden="true">
+                      <span />
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="lucky-squad-zoom" aria-label="画布缩放">
+            <button type="button" aria-label="缩小"><MinusOutlined /></button>
+            <span>100%</span>
+            <button type="button" aria-label="放大"><PlusOutlined /></button>
+          </div>
+        </div>
+      ) : (
+        <div className="lucky-squad-canvas lucky-squad-rules-canvas">
+          <section className="lucky-squad-rules-panel">
+            <h2>协作规则</h2>
+            <p>{squad.instruction || '队长接收任务后拆解目标，并按成员能力分派子任务，最终汇总为统一结果。'}</p>
+          </section>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function AgentManagementPage({
+  activeTab,
+  agents,
+  agentSquads,
+  onTabChange,
+  onOpenCreateAgent,
+  onOpenCreateSquad,
+  onOpenAgent,
+  onOpenSquad,
+}) {
   const tabs = [
     { key: 'mine', label: '我的智能体', count: agents.length },
-    { key: 'team', label: '智能体小队', count: teamAgents.length },
+    { key: 'team', label: '智能体小队', count: agentSquads.length },
   ];
-  const visibleCards = activeTab === 'mine' ? agents : teamAgents;
+  const visibleCards = activeTab === 'mine' ? agents : agentSquads;
+  const agentByKey = useMemo(() => new Map(agents.map((agent) => [agent.key, agent])), [agents]);
 
   const handleCardKeyDown = (event, agent) => {
     if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -2960,15 +3624,25 @@ function AgentManagementPage({ activeTab, agents, teamAgents, onTabChange, onOpe
           <button
             type="button"
             className="lucky-agent-create-btn"
-            onClick={onOpenCreate}
+            onClick={activeTab === 'team' ? onOpenCreateSquad : onOpenCreateAgent}
           >
             <PlusOutlined />
-            创建智能体
+            {activeTab === 'team' ? '创建小队' : '创建智能体'}
           </button>
         </div>
 
         <div className="lucky-agent-card-grid">
-          {visibleCards.map((agent) => (
+          {activeTab === 'team' ? visibleCards.map((squad) => {
+            const members = (squad.memberKeys || []).map((key) => agentByKey.get(key)).filter(Boolean);
+            return (
+              <AgentSquadCard
+                key={squad.key}
+                squad={squad}
+                members={members}
+                onOpen={() => onOpenSquad(squad)}
+              />
+            );
+          }) : visibleCards.map((agent) => (
             <article
               key={agent.key}
               className="lucky-agent-card"
@@ -3028,8 +3702,10 @@ function LuckyModule() {
   const [workMode, setWorkMode] = useState('office');
   const [agentTab, setAgentTab] = useState('mine');
   const [createdAgents, setCreatedAgents] = useState([]);
+  const [createdSquads, setCreatedSquads] = useState([]);
   const [deletedAgentKeys, setDeletedAgentKeys] = useState([]);
   const [editingAgent, setEditingAgent] = useState(null);
+  const [editingSquad, setEditingSquad] = useState(null);
   const [agentInstructions, setAgentInstructions] = useState({});
   const [agentSkills, setAgentSkills] = useState({});
   const [projects, setProjects] = useState(DEFAULT_PROJECTS);
@@ -3043,6 +3719,7 @@ function LuckyModule() {
   const [savingItem, setSavingItem] = useState(null);
   const [createAgentOpen, setCreateAgentOpen] = useState(false);
   const [teamAgentOpen, setTeamAgentOpen] = useState(false);
+  const [createSquadOpen, setCreateSquadOpen] = useState(false);
   const [createProjectOpen, setCreateProjectOpen] = useState(false);
   const [skillMarketOpen, setSkillMarketOpen] = useState(false);
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
@@ -3117,11 +3794,24 @@ function LuckyModule() {
     () => [...AGENT_CARDS, ...createdAgents].filter((agent) => !deletedAgentKeys.includes(agent.key)),
     [createdAgents, deletedAgentKeys],
   );
-  const teamAgents = useMemo(
-    () => AGENT_CARDS.filter((agent) => agent.tag === '团队' && !deletedAgentKeys.includes(agent.key)),
-    [deletedAgentKeys],
+  const agentSquads = useMemo(
+    () => [...COMPOSER_TEAM_OPTIONS, ...createdSquads],
+    [createdSquads],
+  );
+  const squadMemberOptions = useMemo(
+    () => {
+      const agentMap = new Map();
+      [...mineAgents, ...COMPOSER_EXTRA_AGENTS].forEach((agent) => {
+        if (!agentMap.has(agent.key)) agentMap.set(agent.key, agent);
+      });
+      return [...agentMap.values()];
+    },
+    [mineAgents],
   );
   const editingAgentSkills = editingAgent ? (agentSkills[editingAgent.key] ?? AGENT_EDITOR_SKILLS) : AGENT_EDITOR_SKILLS;
+  const editingSquadData = editingSquad
+    ? agentSquads.find((squad) => squad.key === editingSquad.key) || editingSquad
+    : null;
 
   const handleOpenSaveModal = (item) => {
     setSavingItem(item);
@@ -3141,6 +3831,12 @@ function LuckyModule() {
     setCreatedAgents((prev) => [...prev, agent]);
     setAgentTab('mine');
     message.success(`已创建：${agent.name}`);
+  };
+
+  const handleCreateAgentSquad = (squad) => {
+    setCreatedSquads((prev) => [...prev, squad]);
+    setAgentTab('team');
+    message.success(`已创建小队：${squad.name}`);
   };
 
   const handleCreateProject = ({ name, instruction }) => {
@@ -3199,9 +3895,11 @@ function LuckyModule() {
     setSkillMarketOpen(false);
     if (key === 'partners') {
       setEditingAgent(null);
+      setEditingSquad(null);
       return;
     }
     setEditingAgent(null);
+    setEditingSquad(null);
   };
 
   const handleOpenIntroTask = () => {
@@ -3210,6 +3908,7 @@ function LuckyModule() {
     setActiveProject(null);
     setSkillMarketOpen(false);
     setEditingAgent(null);
+    setEditingSquad(null);
   };
 
   const handleOpenIntroTaskFromSearch = () => {
@@ -3228,6 +3927,7 @@ function LuckyModule() {
     setActiveProject(project);
     setSkillMarketOpen(false);
     setEditingAgent(null);
+    setEditingSquad(null);
   };
 
   return (
@@ -3325,14 +4025,29 @@ function LuckyModule() {
               onPromptChange={setPromptText}
               onSend={handleSendPrompt}
               agents={mineAgents}
-              teams={COMPOSER_TEAM_OPTIONS}
+              teams={agentSquads}
               projects={projects}
               onOpenCreateProject={() => setCreateProjectOpen(true)}
             />
           ) : showAutomation ? (
             <AutomationPage />
           ) : showAgents ? (
-            editingAgent ? (
+            editingSquadData ? (
+              <AgentSquadEditorPage
+                key={editingSquadData.key}
+                squad={editingSquadData}
+                agents={mineAgents}
+                onBack={() => {
+                  setAgentTab('team');
+                  setEditingSquad(null);
+                }}
+                onStartNewTask={() => {
+                  setEditingSquad(null);
+                  setActiveSection('new');
+                  setActiveTaskKey(null);
+                }}
+              />
+            ) : editingAgent ? (
               editingAgent.key === BUILT_IN_AGENT_KEY ? (
                 <BuiltInAgentEditorPage
                   agent={editingAgent}
@@ -3341,10 +4056,12 @@ function LuckyModule() {
                   onBack={() => {
                     setSkillMarketOpen(false);
                     setEditingAgent(null);
+                    setEditingSquad(null);
                   }}
                   onStartNewTask={() => {
                     setSkillMarketOpen(false);
                     setEditingAgent(null);
+                    setEditingSquad(null);
                     setActiveSection('new');
                     setActiveTaskKey(null);
                   }}
@@ -3360,6 +4077,7 @@ function LuckyModule() {
                   onBack={() => {
                     setSkillMarketOpen(false);
                     setEditingAgent(null);
+                    setEditingSquad(null);
                   }}
                 />
               )
@@ -3367,10 +4085,18 @@ function LuckyModule() {
               <AgentManagementPage
                 activeTab={agentTab}
                 agents={mineAgents}
-                teamAgents={teamAgents}
+                agentSquads={agentSquads}
                 onTabChange={setAgentTab}
-                onOpenCreate={() => setCreateAgentOpen(true)}
-                onOpenAgent={setEditingAgent}
+                onOpenCreateAgent={() => setCreateAgentOpen(true)}
+                onOpenCreateSquad={() => setCreateSquadOpen(true)}
+                onOpenAgent={(agent) => {
+                  setEditingSquad(null);
+                  setEditingAgent(agent);
+                }}
+                onOpenSquad={(squad) => {
+                  setEditingAgent(null);
+                  setEditingSquad(squad);
+                }}
               />
             )
           ) : showProjectDetail ? (
@@ -3548,6 +4274,12 @@ function LuckyModule() {
         open={teamAgentOpen}
         onClose={() => setTeamAgentOpen(false)}
         onCreate={handleCreateTeamAgent}
+      />
+      <CreateAgentSquadModal
+        open={createSquadOpen}
+        agents={squadMemberOptions}
+        onClose={() => setCreateSquadOpen(false)}
+        onCreate={handleCreateAgentSquad}
       />
       <CreateProjectModal
         open={createProjectOpen}

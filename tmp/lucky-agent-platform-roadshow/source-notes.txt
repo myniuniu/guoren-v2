@@ -1,0 +1,16 @@
+Lucky 智能体建设平台路演资料来源
+
+- /Users/zhanghl/Documents/GitHub/guoren-v2/docs/ai-native-driven-system-use-cases.md
+- /Users/zhanghl/Documents/GitHub/guoren-v2/docs/guoren-vs-learnbuddy-ai-native-platform.md
+- /Users/zhanghl/Documents/GitHub/guoren-v2/src/solutionShowroom/SolutionShowroomPortal.jsx
+- /Users/zhanghl/Documents/GitHub/guoren-v2/src/TopicDetail.jsx
+- /Users/zhanghl/Documents/GitHub/guoren-v2/src/lucky/LuckyModule.jsx
+- /Users/zhanghl/Documents/GitHub/guoren-v2/src/resourceLib/ResourceLibrary.jsx
+- /Users/zhanghl/Documents/GitHub/guoren-v2/src/knowledgeSpace/KnowledgeSpaceModule.jsx
+- /Users/zhanghl/Documents/GitHub/guoren-v2/src/solutionPrototype/SolutionPrototypeModule.jsx
+- /var/folders/b1/n7l3tg6951bg2fxcv64856x00000gn/T/codex-clipboard-fe142be4-2baa-4fdb-8293-9f8e62f1a49d.png
+- /var/folders/b1/n7l3tg6951bg2fxcv64856x00000gn/T/codex-clipboard-e6a131c5-9be4-4c66-a04c-7f40c1f6776f.png
+- /var/folders/b1/n7l3tg6951bg2fxcv64856x00000gn/T/codex-clipboard-84e60447-97c7-4d3e-93d7-2321f91ae6a7.png
+- /var/folders/b1/n7l3tg6951bg2fxcv64856x00000gn/T/codex-clipboard-78400771-9e11-4cc4-8bff-d2626c6a3e16.png
+
+No external web sources or third-party visual assets were used.
