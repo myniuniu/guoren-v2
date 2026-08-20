@@ -207,6 +207,14 @@
   cursor: pointer;
 }
 
+.lucky-mode-button:focus {
+  outline: none;
+}
+
+.lucky-mode-button:focus-visible {
+  box-shadow: inset 0 0 0 1px rgba(78, 86, 97, 0.18);
+}
+
 .lucky-mode-button.is-active {
   background: #ffffff;
   color: #3a3f48;
@@ -546,6 +554,7 @@
 }
 
 .lucky-auto-button {
+  max-width: 228px;
   height: 34px;
   display: inline-flex;
   align-items: center;
@@ -557,14 +566,171 @@
   font-weight: 600;
 }
 
+.lucky-auto-button.is-open {
+  background: #f4f5f7;
+  color: #313843;
+}
+
 .lucky-auto-button .anticon:first-child {
   color: #5574ff;
   font-size: 15px;
 }
 
+.lucky-auto-button span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .lucky-auto-button .anticon:last-child {
   color: #a3aab4;
   font-size: 10px;
+  transition: transform 180ms ease;
+}
+
+.lucky-auto-button.is-open .anticon:last-child {
+  transform: rotate(180deg);
+}
+
+.lucky-model-picker {
+  position: relative;
+  z-index: 70;
+  min-width: 0;
+}
+
+.lucky-model-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: -124px;
+  z-index: 90;
+  width: min(390px, calc(100vw - 40px));
+  max-height: clamp(220px, calc(100vh - 376px), 344px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px;
+  border: 1px solid rgba(224, 227, 232, 0.96);
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow:
+    0 18px 42px rgba(15, 23, 42, 0.14),
+    0 5px 14px rgba(15, 23, 42, 0.06);
+  animation: luckyContextMenuIn 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  scrollbar-width: thin;
+  scrollbar-color: #cfd6df transparent;
+}
+
+.lucky-model-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.lucky-model-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.lucky-model-menu::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #cfd6df;
+}
+
+.lucky-model-menu-title {
+  padding: 0 8px 7px;
+  border-bottom: 1px solid rgba(238, 240, 243, 0.96);
+  color: #9aa2ad;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+.lucky-model-menu-list {
+  display: grid;
+  gap: 1px;
+  margin-top: 5px;
+}
+
+.lucky-model-menu-row {
+  width: 100%;
+  min-width: 0;
+  height: 31px;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 44px 16px;
+  align-items: center;
+  gap: 9px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #303640;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lucky-model-menu-row:hover,
+.lucky-model-menu-row.is-selected {
+  background: #f5f7fa;
+}
+
+.lucky-model-menu-row .lucky-agent-model-logo {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.lucky-model-menu-row .lucky-agent-model-logo-auto {
+  font-size: 18px;
+}
+
+.lucky-model-menu-row .lucky-agent-model-logo-doubao,
+.lucky-model-menu-row .lucky-agent-model-logo-deepseek,
+.lucky-model-menu-row .lucky-agent-model-logo-glm {
+  border-radius: 50%;
+}
+
+.lucky-model-menu-row .lucky-agent-model-logo-doubao::before {
+  width: 9px;
+  height: 14px;
+}
+
+.lucky-model-menu-name {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  overflow: hidden;
+  color: #303640;
+  font-size: 13px;
+  font-weight: 760;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.lucky-model-menu-name > span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lucky-model-menu-name .lucky-agent-model-badge {
+  height: 18px;
+  padding: 0 6px;
+  font-size: 10px;
+  line-height: 18px;
+}
+
+.lucky-model-menu-rate {
+  justify-self: end;
+  color: #a0a7b2;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.lucky-model-menu-check {
+  justify-self: end;
+  color: #303640;
+  font-size: 13px;
 }
 
 .lucky-send-button {
@@ -1126,6 +1292,546 @@
   line-height: 1.45;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+}
+
+.lucky-sidebar.is-code-mode {
+  padding-top: 10px;
+  background: #f7f8fa;
+  box-shadow:
+    inset -1px 0 0 rgba(226, 230, 236, 0.76),
+    8px 0 24px rgba(31, 41, 55, 0.035);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.lucky-sidebar.is-code-mode::before,
+.lucky-sidebar.is-code-mode::after {
+  display: none;
+}
+
+.lucky-code-sidebar-content {
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding-top: 4px;
+}
+
+.lucky-code-nav {
+  display: grid;
+  gap: 4px;
+}
+
+.lucky-code-nav-item {
+  width: 100%;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #4f5662;
+  font-size: 13px;
+  font-weight: 520;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lucky-code-nav-item:hover,
+.lucky-code-nav-item.is-active {
+  background: #eceef1;
+  color: #20252d;
+}
+
+.lucky-code-nav-icon {
+  width: 16px;
+  flex: 0 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #68717e;
+  font-size: 13px;
+}
+
+.lucky-code-app-section {
+  min-height: 0;
+  margin-top: 26px;
+  padding: 0 8px;
+}
+
+.lucky-code-sidebar-label {
+  margin-bottom: 10px;
+  color: #a3aab4;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 16px;
+}
+
+.lucky-code-app-list {
+  display: grid;
+  gap: 4px;
+}
+
+.lucky-code-app-item {
+  width: 100%;
+  min-width: 0;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #525b68;
+  font-size: 12px;
+  font-weight: 560;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lucky-code-app-item:hover {
+  color: #20252d;
+}
+
+.lucky-code-app-item span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lucky-code-app-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 2px;
+  background: var(--code-app-color);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.52);
+}
+
+.lucky-code-sidebar-end {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  color: #b5bbc4;
+  font-size: 12px;
+  font-weight: 560;
+}
+
+.lucky-code-sidebar-end::before,
+.lucky-code-sidebar-end::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: #e1e4e8;
+}
+
+.lucky-code-sidebar-user {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding: 12px 8px 0;
+}
+
+.lucky-code-user-avatar {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 25%, #ffe0c4 0 27%, transparent 28%),
+    linear-gradient(135deg, #f8c897 0%, #f59e0b 48%, #6da5ff 49%, #5f7cff 100%);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.lucky-code-user-copy {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.lucky-code-user-copy strong,
+.lucky-code-user-copy em {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lucky-code-user-copy strong {
+  color: #303640;
+  font-size: 12px;
+  font-weight: 760;
+  line-height: 16px;
+}
+
+.lucky-code-user-copy em {
+  color: #9aa2ad;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 14px;
+}
+
+.lucky-code-sidebar-user button {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #7f8791;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.lucky-code-sidebar-user button:hover {
+  background: #eceef1;
+  color: #20252d;
+}
+
+.lucky-code-home {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(92px, 13vh, 132px) clamp(44px, 6vw, 84px) 88px;
+  background: #fbfbfc;
+}
+
+.lucky-code-hero {
+  width: min(760px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.lucky-code-hero h1 {
+  margin: 0;
+  color: #30343b;
+  font-size: 25px;
+  font-weight: 520;
+  line-height: 34px;
+  text-align: center;
+}
+
+.lucky-code-type-switch {
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 48px;
+  padding: 4px;
+  border-radius: 10px;
+  background: #f0f1f3;
+}
+
+.lucky-code-type-switch button {
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #8a929e;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lucky-code-type-switch button.is-active {
+  background: #ffffff;
+  color: #4c5562;
+  box-shadow: 0 1px 3px rgba(31, 41, 55, 0.08);
+}
+
+.lucky-code-composer {
+  position: relative;
+  width: 100%;
+  min-height: 118px;
+  display: grid;
+  grid-template-rows: minmax(56px, 1fr) auto;
+  margin-top: 30px;
+  padding: 18px 18px 12px;
+  border: 1px solid rgba(224, 227, 232, 0.96);
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 10px 28px rgba(23, 30, 43, 0.035);
+}
+
+.lucky-code-composer textarea {
+  width: 100%;
+  min-height: 54px;
+  resize: none;
+  border: 0;
+  outline: 0;
+  padding: 0 48px 0 0;
+  background: transparent;
+  color: #303640;
+  font-size: 14px;
+  font-weight: 520;
+  line-height: 22px;
+}
+
+.lucky-code-composer textarea::placeholder {
+  color: #b3bac4;
+}
+
+.lucky-code-tab-hint {
+  position: absolute;
+  top: 18px;
+  left: 232px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 5px;
+  border: 1px solid #d9dee6;
+  border-radius: 5px;
+  color: #a0a7b2;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+.lucky-code-composer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.lucky-code-composer-actions > div {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.lucky-code-composer-actions button {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #6d7580;
+  font-size: 15px;
+  font-weight: 760;
+  cursor: pointer;
+}
+
+.lucky-code-composer-actions button:hover {
+  background: #f3f5f7;
+  color: #303640;
+}
+
+.lucky-code-composer-actions .lucky-code-send {
+  background: #9aa2ad;
+  color: #ffffff;
+}
+
+.lucky-code-composer-actions .lucky-code-send:hover {
+  background: #838c98;
+  color: #ffffff;
+}
+
+.lucky-code-chip-row {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+.lucky-code-chip-row button {
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  border: 1px solid rgba(224, 227, 232, 0.96);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #707986;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(23, 30, 43, 0.025);
+}
+
+.lucky-code-chip-row button:hover {
+  border-color: #cbd3dd;
+  color: #303640;
+}
+
+.lucky-code-style-section {
+  width: min(760px, 100%);
+  margin-top: 36px;
+}
+
+.lucky-code-style-section h2 {
+  margin: 0 0 16px;
+  color: #303640;
+  font-size: 13px;
+  font-weight: 760;
+  line-height: 18px;
+}
+
+.lucky-code-style-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 26px 22px;
+}
+
+.lucky-code-style-card {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #4b5563;
+  text-align: center;
+  cursor: pointer;
+}
+
+.lucky-code-style-card:hover .lucky-code-style-preview {
+  border-color: rgba(145, 155, 171, 0.72);
+  box-shadow: 0 10px 20px rgba(23, 30, 43, 0.08);
+  transform: translateY(-1px);
+}
+
+.lucky-code-style-preview {
+  position: relative;
+  min-width: 0;
+  aspect-ratio: 1.88 / 1;
+  display: grid;
+  grid-template-columns: 46% 54%;
+  overflow: hidden;
+  border: 1px solid rgba(224, 227, 232, 0.96);
+  border-radius: 8px;
+  background: #f6f7f8;
+  box-shadow: 0 3px 8px rgba(23, 30, 43, 0.035);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.lucky-code-style-cover {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  overflow: hidden;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 15px;
+  text-align: left;
+}
+
+.lucky-code-style-panel {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  align-content: center;
+  gap: 6px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.lucky-code-style-panel i {
+  width: 34px;
+  height: 6px;
+  border-radius: 999px;
+  background: #d6dbe3;
+}
+
+.lucky-code-style-panel strong {
+  color: #313843;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 18px;
+  text-align: left;
+}
+
+.lucky-code-style-panel em,
+.lucky-code-style-panel b {
+  display: block;
+  height: 16px;
+  border-radius: 5px;
+  background: #e9edf3;
+}
+
+.lucky-code-style-panel b {
+  width: 60%;
+  background: #dbe2ec;
+}
+
+.lucky-code-style-preview::after {
+  content: '';
+  position: absolute;
+  right: 6px;
+  bottom: 5px;
+  width: 28px;
+  height: 4px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle, #111827 0 2px, transparent 2.5px) 0 0 / 8px 4px repeat-x;
+}
+
+.lucky-code-style-name {
+  min-width: 0;
+  overflow: hidden;
+  color: #525b68;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lucky-code-style-lime .lucky-code-style-cover { background: #b7df19; color: #375100; }
+.lucky-code-style-blue .lucky-code-style-cover { background: #174bd7; }
+.lucky-code-style-cream .lucky-code-style-cover { background: #f4efe0; color: #6b5b37; }
+.lucky-code-style-green .lucky-code-style-cover { background: #89e563; color: #1f5a1c; }
+.lucky-code-style-black .lucky-code-style-cover { background: #0f1115; }
+.lucky-code-style-violet .lucky-code-style-cover { background: #c7bcff; color: #302767; }
+.lucky-code-style-terra .lucky-code-style-cover { background: #cf6f4f; }
+.lucky-code-style-paper .lucky-code-style-cover { background: #f5f2e9; color: #4c493f; }
+.lucky-code-style-antd .lucky-code-style-cover { background: #1877f2; }
+.lucky-code-style-mint .lucky-code-style-cover { background: #e8faf1; color: #25624b; }
+.lucky-code-style-slate .lucky-code-style-cover { background: #111318; }
+.lucky-code-style-royal .lucky-code-style-cover { background: #1f4dff; }
+.lucky-code-style-beige .lucky-code-style-cover { background: #e7e1d3; color: #514b42; }
+.lucky-code-style-purple .lucky-code-style-cover { background: #6a52b8; }
+.lucky-code-style-emerald .lucky-code-style-cover { background: #ecf8f1; color: #2f6047; }
+.lucky-code-style-magenta .lucky-code-style-cover { background: #bc2de2; }
+
+.lucky-code-style-card.is-dark .lucky-code-style-panel {
+  background: #1d2430;
+}
+
+.lucky-code-style-card.is-dark .lucky-code-style-panel i,
+.lucky-code-style-card.is-dark .lucky-code-style-panel em,
+.lucky-code-style-card.is-dark .lucky-code-style-panel b {
+  background: #3c4655;
+}
+
+.lucky-code-style-card.is-dark .lucky-code-style-panel strong {
+  color: #f8fafc;
 }
 
 .lucky-project-page {
@@ -6558,36 +7264,36 @@
   height: 100%;
   min-height: 0;
   overflow-y: auto;
-  padding: 24px 32px 42px;
+  padding: 32px clamp(36px, 4vw, 56px) 72px;
   color: #303640;
 }
 
 .lucky-market-header {
   display: flex;
   align-items: center;
-  min-height: 26px;
+  min-height: 32px;
 }
 
 .lucky-market-title {
   color: #22262d;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
-  line-height: 22px;
+  line-height: 24px;
 }
 
 .lucky-market-topline {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 22px;
-  margin-top: 24px;
+  gap: 28px;
+  margin-top: 30px;
 }
 
 .lucky-market-tabs {
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 26px;
+  gap: 32px;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -6602,9 +7308,9 @@
   border: 0;
   background: transparent;
   color: #8f97a3;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-  line-height: 24px;
+  line-height: 30px;
   cursor: pointer;
 }
 
@@ -6621,12 +7327,12 @@
 }
 
 .lucky-market-search {
-  width: 214px;
-  height: 32px;
+  width: 260px;
+  height: 38px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 0 12px;
+  padding: 0 14px;
   border: 1px solid rgba(220, 225, 232, 0.96);
   border-radius: 8px;
   background: #ffffff;
@@ -6650,12 +7356,12 @@
 }
 
 .lucky-market-custom {
-  height: 32px;
+  height: 38px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 0 13px;
+  padding: 0 16px;
   border: 0;
   border-radius: 8px;
   background: #1f2329;
@@ -6671,19 +7377,19 @@
 
 .lucky-market-rankings {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 22px;
 }
 
 .lucky-market-ranking-card {
   position: relative;
   min-width: 0;
-  min-height: 148px;
+  min-height: 176px;
   overflow: hidden;
-  padding: 14px 16px 12px;
+  padding: 20px 22px 18px;
   border: 1px solid rgba(224, 227, 232, 0.92);
-  border-radius: 12px;
+  border-radius: 14px;
   background: #ffffff;
 }
 
@@ -6708,7 +7414,7 @@
 .lucky-market-ranking-copy {
   position: relative;
   z-index: 1;
-  padding-right: 64px;
+  padding-right: 72px;
 }
 
 .lucky-market-ranking-title {
@@ -6721,9 +7427,9 @@
 .lucky-market-ranking-title h2 {
   margin: 0;
   color: #1f2329;
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 800;
-  line-height: 22px;
+  line-height: 25px;
 }
 
 .lucky-market-ranking-title span {
@@ -6741,28 +7447,29 @@
 }
 
 .lucky-market-ranking-copy p {
-  margin: 3px 0 0;
+  display: -webkit-box;
+  margin: 7px 0 0;
   overflow: hidden;
   color: #8a93a0;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
-  line-height: 16px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 19px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .lucky-market-ranking-icon {
   position: absolute;
-  top: 11px;
-  right: 16px;
-  width: 54px;
-  height: 54px;
+  top: 16px;
+  right: 20px;
+  width: 62px;
+  height: 62px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 18px;
   color: rgba(255, 147, 51, 0.58);
-  font-size: 38px;
+  font-size: 42px;
   transform: rotate(-10deg);
 }
 
@@ -6774,17 +7481,17 @@
   position: relative;
   z-index: 1;
   display: grid;
-  gap: 5px;
-  margin-top: 11px;
+  gap: 8px;
+  margin-top: 18px;
 }
 
 .lucky-market-ranking-row {
   min-width: 0;
-  height: 21px;
+  height: 28px;
   display: grid;
-  grid-template-columns: 21px minmax(0, 1fr) auto;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   padding: 0;
   border: 0;
   background: transparent;
@@ -6795,9 +7502,9 @@
 
 .lucky-market-ranking-row > span:nth-child(2) {
   overflow: hidden;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
-  line-height: 17px;
+  line-height: 19px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -6805,7 +7512,7 @@
 .lucky-market-ranking-row em {
   overflow: hidden;
   color: #8f97a3;
-  font-size: 11px;
+  font-size: 12px;
   font-style: normal;
   font-weight: 600;
   line-height: 16px;
@@ -6827,15 +7534,15 @@
 }
 
 .lucky-market-ranking-row .lucky-market-avatar {
-  width: 21px;
-  height: 21px;
-  flex-basis: 21px;
+  width: 26px;
+  height: 26px;
+  flex-basis: 26px;
 }
 
 .lucky-market-expert-head .lucky-market-avatar {
-  width: 28px;
-  height: 28px;
-  flex-basis: 28px;
+  width: 34px;
+  height: 34px;
+  flex-basis: 34px;
 }
 
 .lucky-market-avatar::before {
@@ -6873,15 +7580,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  margin-top: 22px;
+  gap: 18px;
+  margin-top: 32px;
 }
 
 .lucky-market-categories {
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
   overflow-x: auto;
   padding-bottom: 2px;
   scrollbar-width: none;
@@ -6897,21 +7604,21 @@
   border: 0;
   background: transparent;
   color: #9aa2ad;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
-  line-height: 26px;
+  line-height: 32px;
   cursor: pointer;
 }
 
 .lucky-market-categories button.is-active {
-  padding: 0 12px;
+  padding: 0 15px;
   border-radius: 999px;
   background: #eef1f5;
   color: #303640;
 }
 
 .lucky-market-sort {
-  height: 28px;
+  height: 34px;
   display: inline-flex;
   align-items: center;
   flex: 0 0 auto;
@@ -6922,10 +7629,10 @@
 }
 
 .lucky-market-sort button {
-  height: 24px;
-  padding: 0 11px;
+  height: 30px;
+  padding: 0 14px;
   border-radius: 999px;
-  line-height: 24px;
+  line-height: 30px;
 }
 
 .lucky-market-sort button.is-active {
@@ -6936,17 +7643,17 @@
 
 .lucky-market-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 9px;
-  margin-top: 9px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  margin-top: 18px;
 }
 
 .lucky-market-expert-card {
   min-width: 0;
-  min-height: 108px;
-  padding: 12px 13px 10px;
+  min-height: 146px;
+  padding: 17px 18px 16px;
   border: 1px solid rgba(224, 227, 232, 0.9);
-  border-radius: 12px;
+  border-radius: 14px;
   background: #ffffff;
   box-shadow: 0 4px 12px rgba(23, 30, 43, 0.025);
 }
@@ -6958,18 +7665,18 @@
 
 .lucky-market-expert-head {
   display: grid;
-  grid-template-columns: 28px minmax(0, 1fr) auto;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 9px;
+  gap: 12px;
 }
 
 .lucky-market-expert-head h3 {
   margin: 0;
   overflow: hidden;
   color: #303640;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 800;
-  line-height: 20px;
+  line-height: 22px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -6979,13 +7686,13 @@
 }
 
 .lucky-market-expert-head button {
-  height: 24px;
-  padding: 0 9px;
+  height: 30px;
+  padding: 0 12px;
   border: 1px solid rgba(226, 230, 236, 0.96);
   border-radius: 7px;
   background: #ffffff;
   color: #6b7280;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -6997,13 +7704,13 @@
 
 .lucky-market-expert-desc {
   display: -webkit-box;
-  min-height: 36px;
-  margin: 9px 0 0;
+  min-height: 42px;
+  margin: 14px 0 0;
   overflow: hidden;
   color: #6f7783;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
-  line-height: 18px;
+  line-height: 21px;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
@@ -7011,23 +7718,1090 @@
 .lucky-market-expert-tags {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 7px;
   overflow: hidden;
-  margin-top: 9px;
+  margin-top: 14px;
 }
 
 .lucky-market-expert-tags span {
   max-width: 92px;
   overflow: hidden;
-  padding: 3px 7px;
-  border-radius: 5px;
+  padding: 5px 9px;
+  border-radius: 6px;
+  background: #f4f6f8;
+  color: #7b8491;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lucky-market-skill-view {
+  margin-top: 22px;
+}
+
+.lucky-market-skill-banners {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.lucky-market-skill-banner {
+  position: relative;
+  min-width: 0;
+  min-height: 186px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 178px;
+  align-items: center;
+  gap: 18px;
+  overflow: hidden;
+  padding: 28px 30px;
+  border: 1px solid rgba(222, 228, 238, 0.92);
+  border-radius: 14px;
+  color: #253142;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lucky-market-skill-banner-blue {
+  background:
+    linear-gradient(135deg, rgba(232, 241, 255, 0.96) 0%, rgba(217, 231, 255, 0.94) 58%, rgba(246, 249, 255, 0.98) 100%);
+}
+
+.lucky-market-skill-banner-warm {
+  background:
+    linear-gradient(135deg, rgba(255, 247, 232, 0.96) 0%, rgba(255, 229, 192, 0.92) 58%, rgba(255, 250, 241, 0.98) 100%);
+}
+
+.lucky-market-skill-banner:hover {
+  border-color: rgba(177, 190, 211, 0.9);
+  box-shadow: 0 16px 32px rgba(37, 49, 66, 0.08);
+}
+
+.lucky-market-skill-banner-copy {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.lucky-market-skill-banner-copy strong {
+  color: #2f67ff;
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 30px;
+}
+
+.lucky-market-skill-banner-warm .lucky-market-skill-banner-copy strong {
+  color: #f07a28;
+}
+
+.lucky-market-skill-banner-copy span {
+  max-width: 440px;
+  color: #5f6b7a;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 23px;
+}
+
+.lucky-market-skill-banner-copy em {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  color: #303640;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.lucky-market-skill-banner-art {
+  position: relative;
+  z-index: 1;
+  height: 126px;
+  display: grid;
+  place-items: center;
+}
+
+.lucky-market-skill-banner-art > .anticon {
+  width: 86px;
+  height: 86px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #4f7cff;
+  font-size: 42px;
+  box-shadow: 0 18px 42px rgba(67, 101, 179, 0.18);
+}
+
+.lucky-market-skill-banner-warm .lucky-market-skill-banner-art > .anticon {
+  color: #f97316;
+  box-shadow: 0 18px 42px rgba(190, 111, 45, 0.18);
+}
+
+.lucky-market-skill-banner-art i,
+.lucky-market-skill-banner-art b {
+  position: absolute;
+  display: block;
+  border: 1px solid rgba(255, 255, 255, 0.74);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 12px 28px rgba(67, 101, 179, 0.12);
+}
+
+.lucky-market-skill-banner-art i {
+  right: 12px;
+  bottom: 6px;
+  width: 70px;
+  height: 44px;
+}
+
+.lucky-market-skill-banner-art b {
+  left: 10px;
+  top: 4px;
+  width: 58px;
+  height: 36px;
+}
+
+.lucky-market-skill-scope {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 26px;
+  padding: 4px;
+  border-radius: 10px;
+  background: #f2f4f7;
+}
+
+.lucky-market-skill-scope button {
+  height: 30px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #8b93a0;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.lucky-market-skill-scope button.is-active {
+  background: #ffffff;
+  color: #303640;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.lucky-market-skill-section {
+  margin-top: 24px;
+}
+
+.lucky-market-skill-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.lucky-market-skill-section-head span {
+  color: #303640;
+  font-size: 14px;
+  font-weight: 850;
+  line-height: 22px;
+}
+
+.lucky-market-skill-section-head button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #9aa2ad;
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.lucky-market-skill-section-head button:hover {
+  color: #303640;
+}
+
+.lucky-market-skill-pack-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.lucky-market-skill-pack-card {
+  min-width: 0;
+  min-height: 170px;
+  padding: 20px 20px 16px;
+  border: 1px solid rgba(224, 227, 232, 0.92);
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(23, 30, 43, 0.025);
+}
+
+.lucky-market-skill-pack-card:hover {
+  border-color: rgba(200, 207, 218, 0.96);
+  box-shadow: 0 10px 24px rgba(23, 30, 43, 0.045);
+}
+
+.lucky-market-skill-pack-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.lucky-market-skill-pack-top h3 {
+  margin: 0;
+  overflow: hidden;
+  color: #303640;
+  font-size: 15px;
+  font-weight: 850;
+  line-height: 22px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lucky-market-skill-pack-top p {
+  display: -webkit-box;
+  min-height: 63px;
+  margin: 12px 0 0;
+  overflow: hidden;
+  color: #6f7783;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 21px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.lucky-market-skill-pack-top button {
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid rgba(226, 230, 236, 0.96);
+  border-radius: 7px;
+  background: #ffffff;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.lucky-market-skill-pack-top button:hover {
+  border-color: #cbd5e1;
+  color: #303640;
+}
+
+.lucky-market-skill-pack-foot {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  color: #a0a7b2;
+}
+
+.lucky-market-skill-pack-foot > span {
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.lucky-market-skill-pack-foot div {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.lucky-market-skill-pack-foot em {
+  max-width: 96px;
+  overflow: hidden;
+  padding: 4px 8px;
+  border-radius: 6px;
   background: #f4f6f8;
   color: #7b8491;
   font-size: 11px;
-  font-weight: 700;
+  font-style: normal;
+  font-weight: 750;
   line-height: 14px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.lucky-market-skill-pack-foot strong {
+  color: #9aa2ad;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.lucky-market-skill-filterbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 32px;
+}
+
+.lucky-market-skill-categories {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.lucky-market-skill-categories::-webkit-scrollbar {
+  display: none;
+}
+
+.lucky-market-skill-categories button,
+.lucky-market-skill-filter {
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: #9aa2ad;
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 32px;
+  cursor: pointer;
+}
+
+.lucky-market-skill-categories button.is-active {
+  padding: 0 15px;
+  border-radius: 999px;
+  background: #eef1f5;
+  color: #303640;
+}
+
+.lucky-market-skill-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lucky-market-skill-filter:hover {
+  color: #303640;
+}
+
+.lucky-market-skill-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.lucky-market-skill-card {
+  min-width: 0;
+  min-height: 158px;
+  padding: 18px 18px 16px;
+  border: 1px solid rgba(224, 227, 232, 0.9);
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(23, 30, 43, 0.025);
+}
+
+.lucky-market-skill-card:hover {
+  border-color: rgba(200, 207, 218, 0.96);
+  box-shadow: 0 10px 24px rgba(23, 30, 43, 0.045);
+}
+
+.lucky-market-skill-card-head {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.lucky-market-skill-card-icon {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: #f0f7ff;
+  color: #3f7af8;
+  font-size: 18px;
+}
+
+.lucky-market-skill-card-head h3 {
+  margin: 0;
+  overflow: hidden;
+  color: #303640;
+  font-size: 15px;
+  font-weight: 850;
+  line-height: 22px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lucky-market-skill-card-head p {
+  margin: 2px 0 0;
+  overflow: hidden;
+  color: #9aa2ad;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 17px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lucky-market-skill-card-head button {
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid rgba(226, 230, 236, 0.96);
+  border-radius: 7px;
+  background: #ffffff;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lucky-market-skill-card-head button:hover {
+  border-color: #cbd5e1;
+  color: #303640;
+}
+
+.lucky-market-skill-card-desc {
+  display: -webkit-box;
+  min-height: 42px;
+  margin: 14px 0 0;
+  overflow: hidden;
+  color: #6f7783;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 21px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.lucky-market-skill-card-tags {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  overflow: hidden;
+  margin-top: 14px;
+}
+
+.lucky-market-skill-card-tags span {
+  max-width: 92px;
+  overflow: hidden;
+  padding: 5px 9px;
+  border-radius: 6px;
+  background: #f4f6f8;
+  color: #7b8491;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lucky-market-skill-card-tags strong {
+  margin-left: auto;
+  color: #9aa2ad;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.lucky-market-practice-view {
+  margin-top: 24px;
+}
+
+.lucky-market-practice-filterbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.lucky-market-practice-categories {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.lucky-market-practice-categories::-webkit-scrollbar {
+  display: none;
+}
+
+.lucky-market-practice-categories button {
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: #9aa2ad;
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 32px;
+  cursor: pointer;
+}
+
+.lucky-market-practice-categories button.is-active {
+  padding: 0 15px;
+  border-radius: 999px;
+  background: #eef1f5;
+  color: #303640;
+}
+
+.lucky-market-practice-masonry {
+  column-count: 4;
+  column-gap: 18px;
+  margin-top: 22px;
+}
+
+.lucky-market-practice-card {
+  width: 100%;
+  display: inline-block;
+  margin: 0 0 26px;
+  vertical-align: top;
+  break-inside: avoid;
+  color: #303640;
+  cursor: pointer;
+}
+
+.lucky-market-practice-card:focus {
+  outline: none;
+}
+
+.lucky-market-practice-card:hover .lucky-market-practice-thumb,
+.lucky-market-practice-card:focus-visible .lucky-market-practice-thumb {
+  border-color: rgba(192, 201, 215, 0.96);
+  box-shadow: 0 16px 36px rgba(31, 41, 55, 0.1);
+  transform: translateY(-2px);
+}
+
+.lucky-market-practice-card h3 {
+  display: -webkit-box;
+  margin: 11px 4px 0;
+  overflow: hidden;
+  color: #303640;
+  font-size: 15px;
+  font-weight: 820;
+  line-height: 22px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.lucky-market-practice-card p {
+  margin: 5px 4px 0;
+  overflow: hidden;
+  color: #9aa2ad;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lucky-market-practice-thumb {
+  --practice-accent-soft: color-mix(in srgb, var(--practice-accent) 18%, #ffffff);
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(224, 228, 236, 0.92);
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, var(--practice-accent-soft) 0%, #ffffff 62%, #f7f9fc 100%),
+    repeating-linear-gradient(0deg, rgba(148, 163, 184, 0.12) 0 1px, transparent 1px 18px);
+  box-shadow: 0 6px 18px rgba(23, 30, 43, 0.035);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.lucky-market-practice-thumb::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(90deg, rgba(148, 163, 184, 0.09) 0 1px, transparent 1px 28px),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.44) 0%, rgba(255, 255, 255, 0) 64%);
+  pointer-events: none;
+}
+
+.lucky-market-practice-thumb-short {
+  height: 150px;
+}
+
+.lucky-market-practice-thumb-medium {
+  height: 198px;
+}
+
+.lucky-market-practice-thumb-tall {
+  height: 286px;
+}
+
+.lucky-market-practice-thumb-head {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px 0;
+}
+
+.lucky-market-practice-thumb-head span {
+  min-width: 0;
+  overflow: hidden;
+  color: #303640;
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lucky-market-practice-thumb-head em {
+  flex: 0 0 auto;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: color-mix(in srgb, var(--practice-accent) 78%, #303640);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 850;
+  line-height: 14px;
+}
+
+.lucky-market-practice-visual {
+  position: relative;
+  z-index: 1;
+  height: calc(100% - 42px);
+  display: grid;
+  align-items: center;
+  padding: 12px 16px 16px;
+}
+
+.lucky-market-practice-avatar {
+  position: relative;
+  width: 58px;
+  height: 58px;
+  display: inline-block;
+  border: 5px solid rgba(255, 255, 255, 0.78);
+  border-radius: 22px;
+  background: linear-gradient(135deg, var(--practice-accent) 0%, #b9e8ff 100%);
+  box-shadow: 0 16px 28px rgba(31, 41, 55, 0.13);
+}
+
+.lucky-market-practice-avatar::before {
+  content: '';
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #f0bf98;
+  transform: translateX(-50%);
+}
+
+.lucky-market-practice-avatar::after {
+  content: '';
+  position: absolute;
+  left: 13px;
+  right: 13px;
+  bottom: 9px;
+  height: 19px;
+  border-radius: 15px 15px 9px 9px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.lucky-market-practice-thumb-profile .lucky-market-practice-visual {
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 16px;
+}
+
+.lucky-market-practice-profile-lines {
+  display: grid;
+  gap: 8px;
+}
+
+.lucky-market-practice-profile-lines i,
+.lucky-market-practice-flow span,
+.lucky-market-practice-card-stack span,
+.lucky-market-practice-doc span,
+.lucky-market-practice-report span,
+.lucky-market-practice-calendar span,
+.lucky-market-practice-checklist span {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(226, 230, 237, 0.86);
+  background: rgba(255, 255, 255, 0.78);
+  color: #5f6875;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 760;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-shadow: 0 8px 18px rgba(31, 41, 55, 0.045);
+}
+
+.lucky-market-practice-profile-lines i {
+  padding: 8px 10px;
+  border-radius: 999px;
+}
+
+.lucky-market-practice-flow {
+  display: grid;
+  gap: 10px;
+}
+
+.lucky-market-practice-flow span {
+  position: relative;
+  padding: 9px 12px 9px 34px;
+  border-radius: 10px;
+}
+
+.lucky-market-practice-flow span::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  width: 10px;
+  height: 10px;
+  border: 3px solid color-mix(in srgb, var(--practice-accent) 70%, #ffffff);
+  border-radius: 50%;
+  transform: translateY(-50%);
+}
+
+.lucky-market-practice-flow span:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 18px;
+  bottom: -12px;
+  width: 1px;
+  height: 12px;
+  background: color-mix(in srgb, var(--practice-accent) 36%, #cbd5e1);
+}
+
+.lucky-market-practice-dashboard {
+  min-height: 116px;
+  display: grid;
+  grid-template-columns: minmax(92px, 0.8fr) minmax(0, 1fr);
+  align-items: end;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid rgba(226, 230, 237, 0.86);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.lucky-market-practice-bars {
+  height: 92px;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 8px 0 0;
+}
+
+.lucky-market-practice-bars i {
+  flex: 1 1 0;
+  min-width: 10px;
+  border-radius: 999px 999px 5px 5px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--practice-accent) 76%, #ffffff) 0%, var(--practice-accent) 100%);
+}
+
+.lucky-market-practice-dashboard div:last-child {
+  display: grid;
+  gap: 8px;
+}
+
+.lucky-market-practice-dashboard span {
+  height: 9px;
+  display: block;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--practice-accent) 20%, #edf2f7);
+  color: transparent;
+}
+
+.lucky-market-practice-dashboard span:nth-child(2) {
+  width: 78%;
+}
+
+.lucky-market-practice-dashboard span:nth-child(3) {
+  width: 58%;
+}
+
+.lucky-market-practice-chat {
+  display: grid;
+  align-content: center;
+  gap: 10px;
+}
+
+.lucky-market-practice-chat span {
+  max-width: 82%;
+  padding: 10px 12px;
+  border-radius: 14px 14px 14px 5px;
+  background: rgba(255, 255, 255, 0.82);
+  color: #4b5563;
+  font-size: 12px;
+  font-weight: 760;
+  line-height: 18px;
+  box-shadow: 0 9px 18px rgba(31, 41, 55, 0.055);
+}
+
+.lucky-market-practice-chat span.is-right {
+  margin-left: auto;
+  border-radius: 14px 14px 5px 14px;
+  background: color-mix(in srgb, var(--practice-accent) 24%, #ffffff);
+  color: #303640;
+}
+
+.lucky-market-practice-poster {
+  min-height: 116px;
+  display: grid;
+  align-content: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--practice-accent) 30%, #ffffff) 0%, rgba(255, 255, 255, 0.84) 100%);
+}
+
+.lucky-market-practice-poster strong {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #1f2329;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 25px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.lucky-market-practice-poster div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.lucky-market-practice-poster span {
+  max-width: 100%;
+  overflow: hidden;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  color: #566071;
+  font-size: 11px;
+  font-weight: 780;
+  line-height: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lucky-market-practice-calendar {
+  display: grid;
+  gap: 9px;
+}
+
+.lucky-market-practice-calendar span {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.lucky-market-practice-calendar em {
+  height: 26px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--practice-accent) 20%, #ffffff);
+  color: color-mix(in srgb, var(--practice-accent) 78%, #303640);
+  font-style: normal;
+}
+
+.lucky-market-practice-board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 8px;
+}
+
+.lucky-market-practice-board span {
+  min-height: 94px;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgba(226, 230, 237, 0.86);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 10px 20px rgba(31, 41, 55, 0.045);
+}
+
+.lucky-market-practice-board i {
+  width: 28px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--practice-accent);
+}
+
+.lucky-market-practice-board b {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #303640;
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 18px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.lucky-market-practice-board em {
+  align-self: end;
+  color: #9aa2ad;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 760;
+}
+
+.lucky-market-practice-card-stack {
+  position: relative;
+  min-height: 124px;
+}
+
+.lucky-market-practice-card-stack span {
+  position: absolute;
+  left: 12px;
+  top: 8px;
+  width: 78%;
+  padding: 14px 15px;
+  border-radius: 13px;
+  transform: rotate(3deg);
+}
+
+.lucky-market-practice-card-stack span:nth-child(2) {
+  left: 30px;
+  top: 32px;
+  width: 70%;
+  transform: rotate(-1deg);
+}
+
+.lucky-market-practice-card-stack span:nth-child(3) {
+  left: 48px;
+  top: 56px;
+  width: 62%;
+  transform: rotate(-4deg);
+}
+
+.lucky-market-practice-report,
+.lucky-market-practice-doc {
+  min-height: 118px;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 15px;
+  border: 1px solid rgba(226, 230, 237, 0.86);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 12px 24px rgba(31, 41, 55, 0.055);
+}
+
+.lucky-market-practice-report strong {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #303640;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 20px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.lucky-market-practice-doc span,
+.lucky-market-practice-report span {
+  position: relative;
+  padding: 7px 10px 7px 28px;
+  border-radius: 9px;
+}
+
+.lucky-market-practice-doc span::before,
+.lucky-market-practice-report span::before,
+.lucky-market-practice-checklist span::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  background: var(--practice-accent);
+  transform: translateY(-50%);
+}
+
+.lucky-market-practice-checklist {
+  display: grid;
+  gap: 9px;
+}
+
+.lucky-market-practice-checklist span {
+  position: relative;
+  padding: 9px 10px 9px 30px;
+  border-radius: 10px;
+}
+
+.lucky-market-practice-checklist span::before {
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.62);
+}
+
+.lucky-market-coming-soon {
+  min-height: 360px;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 12px;
+  margin-top: 34px;
+  border: 1px solid rgba(224, 227, 232, 0.9);
+  border-radius: 14px;
+  background: #ffffff;
+  color: #9aa2ad;
+  text-align: center;
+}
+
+.lucky-market-coming-soon .anticon {
+  color: #7c8aa0;
+  font-size: 34px;
+}
+
+.lucky-market-coming-soon h2 {
+  margin: 0;
+  color: #303640;
+  font-size: 18px;
+  font-weight: 850;
+}
+
+.lucky-market-coming-soon p {
+  margin: 0;
+  color: #8a93a0;
+  font-size: 13px;
+  font-weight: 650;
 }
 
 .lucky-composer-frame,
@@ -7730,6 +9504,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .lucky-market-practice-masonry {
+    column-count: 3;
+  }
+
   .lucky-skill-pack-grid,
   .lucky-skill-card-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -7805,6 +9583,14 @@
     padding: 58px 20px 44px;
   }
 
+  .lucky-code-home {
+    padding: 58px 20px 44px;
+  }
+
+  .lucky-code-style-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .lucky-automation-page {
     padding: 24px 20px 44px;
   }
@@ -7870,6 +9656,28 @@
   .lucky-market-search {
     width: auto;
     flex: 1;
+  }
+
+  .lucky-market-skill-banners {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lucky-market-skill-banner {
+    grid-template-columns: minmax(0, 1fr) 144px;
+  }
+
+  .lucky-market-skill-filterbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .lucky-market-practice-filterbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .lucky-market-practice-masonry {
+    column-count: 2;
   }
 
   .lucky-automation-center {
@@ -8043,6 +9851,53 @@
   .lucky-market-search,
   .lucky-market-custom {
     width: 100%;
+  }
+
+  .lucky-market-skill-banner {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 210px;
+  }
+
+  .lucky-market-skill-banner-art {
+    display: none;
+  }
+
+  .lucky-market-skill-scope,
+  .lucky-market-skill-filter {
+    width: 100%;
+  }
+
+  .lucky-code-type-switch,
+  .lucky-code-chip-row {
+    max-width: 100%;
+  }
+
+  .lucky-code-style-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lucky-code-tab-hint {
+    display: none;
+  }
+
+  .lucky-market-skill-filter {
+    justify-content: flex-end;
+  }
+
+  .lucky-market-practice-masonry {
+    column-count: 1;
+  }
+
+  .lucky-market-practice-filterbar {
+    gap: 12px;
+  }
+
+  .lucky-market-practice-categories {
+    width: 100%;
+  }
+
+  .lucky-market-practice-thumb-tall {
+    height: 238px;
   }
 
   .lucky-project-actions {

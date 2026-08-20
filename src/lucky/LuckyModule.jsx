@@ -9,6 +9,7 @@ import {
   ClockCircleOutlined,
   CloudServerOutlined,
   CodeOutlined,
+  CompassOutlined,
   MessageOutlined,
   CloseOutlined,
   ControlOutlined,
@@ -21,6 +22,8 @@ import {
   FilePptOutlined,
   FileTextOutlined,
   FolderOutlined,
+  ImportOutlined,
+  LockOutlined,
   MenuOutlined,
   MinusOutlined,
   PlusOutlined,
@@ -71,7 +74,7 @@ function persistLuckySidebarWidth(width) {
 }
 
 const WORK_MODES = [
-  { key: 'office', label: '办公', icon: <AppstoreOutlined /> },
+  { key: 'office', label: '学习办公', icon: <AppstoreOutlined /> },
   { key: 'code', label: '编程', icon: <CodeOutlined /> },
 ];
 
@@ -100,9 +103,47 @@ const COMPOSER_CONTEXTS = [
 ];
 
 const RECOMMENDATION_CARDS = [
-  { key: 'ppt', label: '幻灯片', title: '做一份跨部门项目启动会 PPT', icon: <FilePptOutlined /> },
-  { key: 'research', label: '深度研究', title: '研究 AI 会议助手领域的市场格局', icon: <CloudServerOutlined /> },
-  { key: 'data', label: '数据可视化', title: '做一份国内旅游数据可视化分析', icon: <BarChartOutlined /> },
+  { key: 'ppt', label: '幻灯片', title: '生成一份党务智能体应用培训 PPT', icon: <FilePptOutlined /> },
+  { key: 'research', label: '深度研究', title: '研究教育智能体在学校治理中的落地场景', icon: <CloudServerOutlined /> },
+  { key: 'data', label: '数据可视化', title: '制作智能体任务完成率与使用效果看板', icon: <BarChartOutlined /> },
+];
+
+const CODE_NAV_ITEMS = [
+  { key: 'new-app', label: '新应用', icon: <PlusOutlined /> },
+  { key: 'import', label: '导入', icon: <ImportOutlined /> },
+  { key: 'discover', label: '发现', icon: <CompassOutlined /> },
+  { key: 'community', label: '开发者社区', icon: <MessageOutlined /> },
+];
+
+const CODE_APP_ITEMS = [
+  { key: 'sql-path', name: 'SQL 学习路径 · 3 个月工作取...', color: '#1fbf8f' },
+];
+
+const CODE_PROMPT_CHIPS = [
+  { key: 'web', label: '互动网页', icon: <ProductOutlined /> },
+  { key: 'signup', label: '活动报名', icon: <FileTextOutlined /> },
+  { key: 'business', label: '轻型业务系统', icon: <AppstoreOutlined /> },
+  { key: 'it', label: '企业 IT 系统', icon: <DatabaseOutlined /> },
+  { key: 'ai', label: 'AI 工具', icon: <ProjectOutlined /> },
+];
+
+const CODE_STYLE_TEMPLATES = [
+  { key: 'party-review', name: '党务材料审核台', tone: 'lime', metric: '24项', dark: false },
+  { key: 'teacher-profile', name: '教师能力画像', tone: 'blue', metric: '93%', dark: true },
+  { key: 'school-dashboard', name: '校情数据看板', tone: 'cream', metric: '10.4K', dark: false },
+  { key: 'class-helper', name: '班级事务助手', tone: 'green', metric: '80%', dark: false },
+  { key: 'supervision-report', name: '督导周报工具', tone: 'black', metric: '58', dark: true },
+  { key: 'home-school', name: '家校沟通脚本', tone: 'violet', metric: '62', dark: true },
+  { key: 'knowledge-qa', name: '知识库问答台', tone: 'terra', metric: '59.8', dark: false },
+  { key: 'training-path', name: '培训路径规划', tone: 'paper', metric: '44.4K', dark: false },
+  { key: 'moral-plan', name: '德育活动策划', tone: 'antd', metric: '73%', dark: true },
+  { key: 'agent-quality', name: '智能体质检台', tone: 'mint', metric: '70', dark: false },
+  { key: 'meeting-todo', name: '会议纪要待办', tone: 'slate', metric: '22.8', dark: true },
+  { key: 'resource-citation', name: '资料引用检索', tone: 'royal', metric: '13', dark: true },
+  { key: 'elderly-activity', name: '老年教育活动', tone: 'beige', metric: '43.8', dark: false },
+  { key: 'family-advisor', name: '家庭教育咨询', tone: 'purple', metric: '55.8', dark: true },
+  { key: 'agri-electric', name: '农电服务台账', tone: 'emerald', metric: '8.4K', dark: false },
+  { key: 'squad-board', name: '智能体小队看板', tone: 'magenta', metric: '75', dark: true },
 ];
 
 const AUTOMATION_RECOMMENDATIONS = [
@@ -282,6 +323,571 @@ const MARKET_EXPERTS = [
     desc: '为产品和运营团队诊断增长漏斗，设计增长实验，输出包含指标、重点和复盘方法的执行方案。',
     tags: ['增长实验', '漏斗诊断', '执行方案'],
     avatar: 'purple',
+  },
+];
+
+const MARKET_SKILL_BANNERS = [
+  {
+    key: 'publish-skill',
+    title: '你的智能体技能值得被更多人复用',
+    desc: '将沉淀好的工作方法、提示词和工具流程发布到 SkillHub，让智能体能力持续积累。',
+    action: '了解详情',
+    tone: 'blue',
+    icon: <CloudServerOutlined />,
+  },
+  {
+    key: 'agent-board',
+    title: '一句话生成智能体工作流',
+    desc: '安装并使用智能体 Flow Pack，一键编排任务拆解、资料检索、审核和汇报链路。',
+    action: '了解详情',
+    tone: 'warm',
+    icon: <ProjectOutlined />,
+  },
+];
+
+const MARKET_SKILL_SCOPES = ['全部', '企业专属', '我的'];
+
+const MARKET_SKILL_CATEGORIES = [
+  '官方精选',
+  '智能体搭建',
+  '小队协作',
+  '知识库增强',
+  '工具调用',
+  '审核质检',
+  '教育教学',
+  '数据分析',
+  '内容生成',
+  '组织管理',
+];
+
+const MARKET_SKILL_PACKS = [
+  {
+    key: 'party-agent-pack',
+    title: '党务智能体技能包',
+    desc: '适用于党务通知、会议纪要、活动方案、材料审核和归档汇编，让党务智能体从起草到审核形成闭环。',
+    tags: ['党务材料生成', '审核清单', '归档汇编'],
+    count: '8,426',
+    scope: '企业专属',
+  },
+  {
+    key: 'teacher-growth-pack',
+    title: '教师发展智能体技能包',
+    desc: '面向高校和中小学教师成长，支持能力画像、研修路径、听评课记录和发展建议自动生成。',
+    tags: ['能力画像', '研修推荐', '听评课记录'],
+    count: '6,938',
+    scope: '官方精选',
+  },
+  {
+    key: 'squad-orchestration-pack',
+    title: '智能体小队协作技能包',
+    desc: '为多智能体小队提供任务拆解、成员分工、阶段汇报、结果合成和复盘报告等协作能力。',
+    tags: ['任务拆解', '成员调度', '汇总复盘'],
+    count: '9,204',
+    scope: '官方精选',
+  },
+  {
+    key: 'knowledge-agent-pack',
+    title: '知识库问答增强技能包',
+    desc: '支持从制度文件、课程资料和项目文档中抽取知识，增强智能体问答的依据、引用和可信度。',
+    tags: ['知识抽取', '引用生成', '问答增强'],
+    count: '7,715',
+    scope: '企业专属',
+  },
+  {
+    key: 'education-service-pack',
+    title: '终身教育服务技能包',
+    desc: '围绕老年教育、家庭教育和社区学习服务，生成课程活动、咨询话术和服务记录模板。',
+    tags: ['活动方案', '服务问答', '记录模板'],
+    count: '4,382',
+    scope: '官方精选',
+  },
+  {
+    key: 'agent-evaluation-pack',
+    title: '智能体评测与质检技能包',
+    desc: '为智能体输出建立质量检查、事实核验、敏感内容提醒和人工复核建议。',
+    tags: ['输出质检', '事实核验', '风险提醒'],
+    count: '5,991',
+    scope: '我的',
+  },
+];
+
+const MARKET_SKILL_ITEMS = [
+  {
+    key: 'agent-persona-builder',
+    title: '智能体人设生成',
+    desc: '根据业务对象、服务边界和语气要求，生成可直接填入智能体配置的人设、目标和约束。',
+    tags: ['人设档案', '角色目标', '行为约束'],
+    category: '智能体搭建',
+    scope: '官方精选',
+    count: '128,430',
+    icon: <RobotOutlined />,
+  },
+  {
+    key: 'agent-instruction-polish',
+    title: '智能体指令优化',
+    desc: '将零散的工作要求整理成结构化指令，补齐输入、流程、输出格式和禁止事项。',
+    tags: ['提示词优化', '输出格式', '规则补齐'],
+    category: '智能体搭建',
+    scope: '企业专属',
+    count: '96,275',
+    icon: <EditOutlined />,
+  },
+  {
+    key: 'squad-task-router',
+    title: '小队任务拆解器',
+    desc: '把用户目标拆成多个子任务，并为队长和成员生成分工、依赖关系与交付物要求。',
+    tags: ['任务拆解', '成员分工', '交付清单'],
+    category: '小队协作',
+    scope: '官方精选',
+    count: '88,612',
+    icon: <ProjectOutlined />,
+  },
+  {
+    key: 'squad-report-merger',
+    title: '小队汇报合成',
+    desc: '收集多个智能体的阶段结果，去重、归并和排序，输出统一汇报稿或行动清单。',
+    tags: ['结果汇总', '去重归并', '汇报生成'],
+    category: '小队协作',
+    scope: '官方精选',
+    count: '76,904',
+    icon: <FileTextOutlined />,
+  },
+  {
+    key: 'party-material-review',
+    title: '党务材料审核链',
+    desc: '对党务通知、会议记录、活动方案和总结材料进行完整性、规范性与表述一致性检查。',
+    tags: ['党务审核', '材料规范', '风险提示'],
+    category: '审核质检',
+    scope: '企业专属',
+    count: '62,188',
+    icon: <CheckOutlined />,
+  },
+  {
+    key: 'teacher-ability-profile',
+    title: '教师能力画像生成',
+    desc: '基于教师能力清单、研修记录和评价材料，生成能力画像、短板诊断和发展建议。',
+    tags: ['能力画像', '差距分析', '成长建议'],
+    category: '教育教学',
+    scope: '企业专属',
+    count: '58,732',
+    icon: <BarChartOutlined />,
+  },
+  {
+    key: 'lesson-plan-maker',
+    title: '教案课件一键生成',
+    desc: '根据课标、学情和知识点，为教师智能体生成教案、课堂活动和课件大纲。',
+    tags: ['教案生成', '课堂活动', '课件大纲'],
+    category: '教育教学',
+    scope: '官方精选',
+    count: '54,930',
+    icon: <FilePptOutlined />,
+  },
+  {
+    key: 'knowledge-rag-index',
+    title: '知识库索引构建',
+    desc: '将制度文件、课程资料和项目文档转为可检索知识片段，便于智能体基于资料回答。',
+    tags: ['知识切片', '索引生成', '引用问答'],
+    category: '知识库增强',
+    scope: '官方精选',
+    count: '49,385',
+    icon: <DatabaseOutlined />,
+  },
+  {
+    key: 'policy-summary',
+    title: '政策文件摘要',
+    desc: '自动提炼政策文件中的适用对象、关键要求、时间节点和待办事项。',
+    tags: ['政策解读', '要点提炼', '待办生成'],
+    category: '内容生成',
+    scope: '企业专属',
+    count: '46,019',
+    icon: <FileTextOutlined />,
+  },
+  {
+    key: 'supervision-record',
+    title: '督导听评课记录',
+    desc: '为督学智能体生成听评课记录、问题清单、整改建议和跟踪反馈模板。',
+    tags: ['听评课', '问题清单', '整改反馈'],
+    category: '教育教学',
+    scope: '企业专属',
+    count: '42,377',
+    icon: <ControlOutlined />,
+  },
+  {
+    key: 'home-school-message',
+    title: '家校沟通话术',
+    desc: '面向班主任和家庭教育智能体，生成不同情境下的家长沟通话术和注意事项。',
+    tags: ['家校沟通', '话术生成', '情绪安抚'],
+    category: '内容生成',
+    scope: '官方精选',
+    count: '38,746',
+    icon: <MessageOutlined />,
+  },
+  {
+    key: 'training-path-recommend',
+    title: '教师培训路径推荐',
+    desc: '根据教师画像、岗位目标和课程库，为培训智能体推荐个性化选学路径。',
+    tags: ['培训路径', '课程推荐', '进度跟踪'],
+    category: '教育教学',
+    scope: '官方精选',
+    count: '35,804',
+    icon: <FolderOutlined />,
+  },
+  {
+    key: 'workflow-node-composer',
+    title: '工作流节点编排',
+    desc: '把智能体任务转换为可执行节点，生成触发条件、输入字段、处理步骤和异常分支。',
+    tags: ['流程编排', '节点配置', '异常分支'],
+    category: '工具调用',
+    scope: '我的',
+    count: '31,980',
+    icon: <CodeOutlined />,
+  },
+  {
+    key: 'table-data-diagnosis',
+    title: '表格数据诊断',
+    desc: '让智能体读取表格指标，自动发现异常波动、缺失字段和可解释的业务结论。',
+    tags: ['指标诊断', '异常发现', '表格分析'],
+    category: '数据分析',
+    scope: '官方精选',
+    count: '29,416',
+    icon: <BarChartOutlined />,
+  },
+  {
+    key: 'agent-output-check',
+    title: '智能体输出质检',
+    desc: '检查智能体回复是否偏题、遗漏约束、引用缺失或存在不适合发布的内容。',
+    tags: ['输出质检', '约束检查', '人工复核'],
+    category: '审核质检',
+    scope: '企业专属',
+    count: '27,603',
+    icon: <CheckOutlined />,
+  },
+  {
+    key: 'campus-service-faq',
+    title: '校园服务问答生成',
+    desc: '基于校内制度和服务流程，为校氪类智能体生成高频问答、办理指引和兜底话术。',
+    tags: ['高频问答', '办理指引', '兜底话术'],
+    category: '知识库增强',
+    scope: '企业专属',
+    count: '24,912',
+    icon: <SearchOutlined />,
+  },
+  {
+    key: 'class-affairs-reminder',
+    title: '班级事务提醒器',
+    desc: '把班级工作安排转换为提醒任务，生成通知文案、执行清单和跟进记录。',
+    tags: ['班级管理', '提醒任务', '通知文案'],
+    category: '组织管理',
+    scope: '我的',
+    count: '21,706',
+    icon: <ClockCircleOutlined />,
+  },
+  {
+    key: 'elderly-course-plan',
+    title: '老年教育活动设计',
+    desc: '为老年教育智能体生成课程活动方案、物料清单、风险提醒和活动复盘。',
+    tags: ['活动设计', '物料清单', '复盘报告'],
+    category: '教育教学',
+    scope: '官方精选',
+    count: '19,854',
+    icon: <FileImageOutlined />,
+  },
+  {
+    key: 'agent-tool-permission',
+    title: '智能体工具权限配置',
+    desc: '根据智能体职责推荐可调用工具、权限边界、审批方式和使用提示。',
+    tags: ['工具权限', '边界控制', '审批设置'],
+    category: '工具调用',
+    scope: '企业专属',
+    count: '18,209',
+    icon: <ControlOutlined />,
+  },
+  {
+    key: 'agent-retrospective',
+    title: '任务复盘报告',
+    desc: '对智能体任务过程、调用结果和用户反馈进行复盘，沉淀可复用的优化建议。',
+    tags: ['任务复盘', '质量分析', '优化建议'],
+    category: '组织管理',
+    scope: '我的',
+    count: '15,687',
+    icon: <FileTextOutlined />,
+  },
+];
+
+const MARKET_PRACTICE_CATEGORIES = [
+  '全部',
+  '幻灯片',
+  '深度研究',
+  '数据分析',
+  '产品原型',
+  '日常办公',
+  '图像生成',
+];
+
+const MARKET_BEST_PRACTICES = [
+  {
+    key: 'party-agent-portrait',
+    title: '党务智能体画像与职责边界设计',
+    category: '日常办公',
+    agent: '党务智能体',
+    visual: 'profile',
+    size: 'medium',
+    color: '#f59e0b',
+    heat: 9820,
+    fresh: 12,
+    preview: ['会议材料', '活动方案', '归档提醒'],
+  },
+  {
+    key: 'party-review-flow',
+    title: '党务材料审核助手的三步质检流程',
+    category: '日常办公',
+    agent: '党务工作智能审核助手',
+    visual: 'workflow',
+    size: 'short',
+    color: '#ef6c5b',
+    heat: 9124,
+    fresh: 18,
+    preview: ['格式核查', '要点校验', '风险提示'],
+  },
+  {
+    key: 'teacher-growth-report',
+    title: '高校教师能力画像分析报告',
+    category: '深度研究',
+    agent: '师能智绘助手',
+    visual: 'report',
+    size: 'tall',
+    color: '#4f7cff',
+    heat: 8951,
+    fresh: 23,
+    preview: ['能力维度', '短板诊断', '成长路径'],
+  },
+  {
+    key: 'squad-summary-board',
+    title: '智能体小队任务分工与汇总看板',
+    category: '数据分析',
+    agent: '智能体小队',
+    visual: 'board',
+    size: 'medium',
+    color: '#20c7a8',
+    heat: 8732,
+    fresh: 8,
+    preview: ['队长拆解', '成员协同', '统一汇报'],
+  },
+  {
+    key: 'supervision-weekly',
+    title: '督学智能体工作周报生成',
+    category: '日常办公',
+    agent: '智慧教育督导平台',
+    visual: 'document',
+    size: 'tall',
+    color: '#377ef4',
+    heat: 8429,
+    fresh: 31,
+    preview: ['听评课', '问题清单', '整改跟踪'],
+  },
+  {
+    key: 'class-parent-message',
+    title: '班主任智能体家校沟通案例库',
+    category: '日常办公',
+    agent: '班主任智能体“班小助”',
+    visual: 'chat',
+    size: 'short',
+    color: '#f26ca7',
+    heat: 8068,
+    fresh: 15,
+    preview: ['情绪安抚', '问题反馈', '协同建议'],
+  },
+  {
+    key: 'school-knowledge-qa',
+    title: '校氪知识库问答搭建实录',
+    category: '产品原型',
+    agent: '校氪',
+    visual: 'cards',
+    size: 'medium',
+    color: '#8b5cf6',
+    heat: 7920,
+    fresh: 44,
+    preview: ['制度切片', '引用问答', '兜底话术'],
+  },
+  {
+    key: 'k12-lesson-agent',
+    title: '中小学教师智能体生成一节 AI 融合课',
+    category: '幻灯片',
+    agent: '中小学教师智能体',
+    visual: 'poster',
+    size: 'medium',
+    color: '#14b8c4',
+    heat: 7716,
+    fresh: 26,
+    preview: ['教学目标', '课堂活动', '评价任务'],
+  },
+  {
+    key: 'principal-data-dashboard',
+    title: '中小学校长智能体的校情数据看板',
+    category: '数据分析',
+    agent: '中小学校长智能体',
+    visual: 'dashboard',
+    size: 'short',
+    color: '#22c55e',
+    heat: 7464,
+    fresh: 35,
+    preview: ['质量分析', '风险预警', '治理建议'],
+  },
+  {
+    key: 'training-path',
+    title: 'AI 选学培训项目的个性化路径推荐',
+    category: '数据分析',
+    agent: 'AI 选学培训项目',
+    visual: 'timeline',
+    size: 'medium',
+    color: '#6366f1',
+    heat: 7240,
+    fresh: 7,
+    preview: ['能力诊断', '课程推荐', '学习跟踪'],
+  },
+  {
+    key: 'moral-activity-plan',
+    title: '职业学校德育活动从主题到执行清单',
+    category: '日常办公',
+    agent: '德育工作智能助手“职小班”',
+    visual: 'calendar',
+    size: 'short',
+    color: '#fb7185',
+    heat: 6902,
+    fresh: 39,
+    preview: ['主题设计', '过程记录', '育人案例'],
+  },
+  {
+    key: 'tongda-product-story',
+    title: '通答教学平台智能体产品说明页',
+    category: '产品原型',
+    agent: '通答人工智能教学平台',
+    visual: 'product',
+    size: 'medium',
+    color: '#0ea5e9',
+    heat: 6680,
+    fresh: 20,
+    preview: ['能力地图', '应用路径', '案例呈现'],
+  },
+  {
+    key: 'family-education-script',
+    title: '家庭教育智能体的亲子沟通脚本',
+    category: '日常办公',
+    agent: '家庭教育智能体',
+    visual: 'chat',
+    size: 'medium',
+    color: '#f97316',
+    heat: 6412,
+    fresh: 42,
+    preview: ['场景识别', '沟通建议', '行动约定'],
+  },
+  {
+    key: 'elderly-course-card',
+    title: '老年教育智能体活动卡片生成',
+    category: '图像生成',
+    agent: '老年教育智能体',
+    visual: 'poster',
+    size: 'short',
+    color: '#a855f7',
+    heat: 6198,
+    fresh: 11,
+    preview: ['活动海报', '课程安排', '报名提示'],
+  },
+  {
+    key: 'agri-electric-faq',
+    title: '“农电通”AI 智能体服务问答台账',
+    category: '日常办公',
+    agent: '“农电通”AI智能体',
+    visual: 'document',
+    size: 'medium',
+    color: '#84cc16',
+    heat: 5965,
+    fresh: 55,
+    preview: ['业务办理', '用电咨询', '服务记录'],
+  },
+  {
+    key: 'agent-safe-output',
+    title: '智能体输出质检与人工复核模板',
+    category: '日常办公',
+    agent: '智能体质检',
+    visual: 'checklist',
+    size: 'medium',
+    color: '#64748b',
+    heat: 5728,
+    fresh: 28,
+    preview: ['事实核验', '风险分级', '复核建议'],
+  },
+  {
+    key: 'agent-resource-citation',
+    title: '让知识库回答带上资料引用',
+    category: '深度研究',
+    agent: '知识库问答智能体',
+    visual: 'report',
+    size: 'tall',
+    color: '#06b6d4',
+    heat: 5480,
+    fresh: 33,
+    preview: ['引用定位', '证据摘要', '答案合成'],
+  },
+  {
+    key: 'meeting-agent-minutes',
+    title: '会议智能体自动生成纪要与待办',
+    category: '日常办公',
+    agent: '党务材料协作小队',
+    visual: 'timeline',
+    size: 'short',
+    color: '#f59e0b',
+    heat: 5312,
+    fresh: 63,
+    preview: ['议题提炼', '责任人', '截止时间'],
+  },
+  {
+    key: 'agent-workbench-screen',
+    title: '智能体工作台首屏信息架构',
+    category: '产品原型',
+    agent: '工作伙伴',
+    visual: 'dashboard',
+    size: 'medium',
+    color: '#3b82f6',
+    heat: 5069,
+    fresh: 49,
+    preview: ['入口分组', '任务推荐', '上下文选择'],
+  },
+  {
+    key: 'data-agent-chart',
+    title: '数据分析智能体生成经营诊断图表',
+    category: '数据分析',
+    agent: '数据分析师',
+    visual: 'chart',
+    size: 'short',
+    color: '#10b981',
+    heat: 4893,
+    fresh: 58,
+    preview: ['指标拆解', '趋势判断', '行动建议'],
+  },
+  {
+    key: 'teacher-team-review',
+    title: '教师发展小队月度复盘材料',
+    category: '幻灯片',
+    agent: '高校教师发展小队',
+    visual: 'board',
+    size: 'tall',
+    color: '#7c3aed',
+    heat: 4635,
+    fresh: 73,
+    preview: ['进展同步', '问题归因', '下月计划'],
+  },
+  {
+    key: 'image-agent-poster',
+    title: '智能体生成校园活动主视觉',
+    category: '图像生成',
+    agent: '图像生成技能',
+    visual: 'poster',
+    size: 'medium',
+    color: '#ec4899',
+    heat: 4388,
+    fresh: 66,
+    preview: ['主题提炼', '视觉风格', '海报文案'],
   },
 ];
 
@@ -891,11 +1497,359 @@ function MarketRankingCard({ card }) {
   );
 }
 
+function MarketSkillBanner({ banner }) {
+  return (
+    <button
+      type="button"
+      className={`lucky-market-skill-banner lucky-market-skill-banner-${banner.tone}`}
+      onClick={() => message.info(banner.title)}
+    >
+      <span className="lucky-market-skill-banner-copy">
+        <strong>{banner.title}</strong>
+        <span>{banner.desc}</span>
+        <em>
+          {banner.action}
+          <RightOutlined />
+        </em>
+      </span>
+      <span className="lucky-market-skill-banner-art" aria-hidden="true">
+        {banner.icon}
+        <i />
+        <b />
+      </span>
+    </button>
+  );
+}
+
+function MarketSkillPackCard({ pack }) {
+  return (
+    <article className="lucky-market-skill-pack-card">
+      <div className="lucky-market-skill-pack-top">
+        <div>
+          <h3>{pack.title}</h3>
+          <p>{pack.desc}</p>
+        </div>
+        <button type="button" onClick={() => message.success(`已添加：${pack.title}`)}>
+          一键添加
+        </button>
+      </div>
+      <div className="lucky-market-skill-pack-foot">
+        <span>Skill Pack</span>
+        <div>
+          {pack.tags.map((tag) => <em key={tag}>{tag}</em>)}
+        </div>
+        <strong>{pack.count}</strong>
+      </div>
+    </article>
+  );
+}
+
+function MarketSkillCard({ skill }) {
+  return (
+    <article className="lucky-market-skill-card">
+      <div className="lucky-market-skill-card-head">
+        <span className="lucky-market-skill-card-icon" aria-hidden="true">{skill.icon}</span>
+        <div>
+          <h3>{skill.title}</h3>
+          <p>{skill.category}</p>
+        </div>
+        <button type="button" onClick={() => message.success(`已添加：${skill.title}`)}>
+          添加
+        </button>
+      </div>
+      <p className="lucky-market-skill-card-desc">{skill.desc}</p>
+      <div className="lucky-market-skill-card-tags">
+        {skill.tags.map((tag) => <span key={tag}>{tag}</span>)}
+        <strong>{skill.count}</strong>
+      </div>
+    </article>
+  );
+}
+
+function MarketSkillPage({
+  searchText,
+  activeScope,
+  activeCategory,
+  onScopeChange,
+  onCategoryChange,
+}) {
+  const visibleSkills = useMemo(() => {
+    const normalizedSearch = searchText.trim().toLowerCase();
+    return MARKET_SKILL_ITEMS.filter((skill) => {
+      if (activeScope !== '全部' && skill.scope !== activeScope) return false;
+      if (activeCategory !== '官方精选' && skill.category !== activeCategory) return false;
+      if (!normalizedSearch) return true;
+      return `${skill.title} ${skill.desc} ${skill.category} ${skill.tags.join(' ')}`.toLowerCase().includes(normalizedSearch);
+    });
+  }, [activeCategory, activeScope, searchText]);
+
+  return (
+    <div className="lucky-market-skill-view">
+      <div className="lucky-market-skill-banners">
+        {MARKET_SKILL_BANNERS.map((banner) => (
+          <MarketSkillBanner key={banner.key} banner={banner} />
+        ))}
+      </div>
+
+      <div className="lucky-market-skill-scope" aria-label="技能范围">
+        {MARKET_SKILL_SCOPES.map((scope) => (
+          <button
+            key={scope}
+            type="button"
+            className={activeScope === scope ? 'is-active' : ''}
+            onClick={() => onScopeChange(scope)}
+          >
+            {scope}
+          </button>
+        ))}
+      </div>
+
+      <section className="lucky-market-skill-section" aria-label="精选技能包">
+        <div className="lucky-market-skill-section-head">
+          <span>精选技能包</span>
+          <button type="button" onClick={() => message.info('更多技能包')}>
+            更多
+            <RightOutlined />
+          </button>
+        </div>
+        <div className="lucky-market-skill-pack-grid">
+          {MARKET_SKILL_PACKS.map((pack) => (
+            <MarketSkillPackCard key={pack.key} pack={pack} />
+          ))}
+        </div>
+      </section>
+
+      <div className="lucky-market-skill-filterbar">
+        <div className="lucky-market-skill-categories" aria-label="技能分类">
+          {MARKET_SKILL_CATEGORIES.map((category) => (
+            <button
+              key={category}
+              type="button"
+              className={activeCategory === category ? 'is-active' : ''}
+              onClick={() => onCategoryChange(category)}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+        <button type="button" className="lucky-market-skill-filter" onClick={() => message.info('筛选技能')}>
+          <ControlOutlined />
+          筛选
+        </button>
+      </div>
+
+      <div className="lucky-market-skill-grid">
+        {visibleSkills.map((skill) => (
+          <MarketSkillCard key={skill.key} skill={skill} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MarketPracticeThumb({ practice }) {
+  const preview = practice.preview || [];
+  const accentStyle = { '--practice-accent': practice.color };
+
+  return (
+    <div
+      className={`lucky-market-practice-thumb lucky-market-practice-thumb-${practice.visual} lucky-market-practice-thumb-${practice.size}`}
+      style={accentStyle}
+      aria-hidden="true"
+    >
+      <div className="lucky-market-practice-thumb-head">
+        <span>{practice.agent}</span>
+        <em>{practice.category}</em>
+      </div>
+      <div className="lucky-market-practice-visual">
+        {practice.visual === 'profile' ? (
+          <>
+            <span className="lucky-market-practice-avatar" />
+            <div className="lucky-market-practice-profile-lines">
+              {preview.map((item) => <i key={item}>{item}</i>)}
+            </div>
+          </>
+        ) : practice.visual === 'workflow' || practice.visual === 'timeline' ? (
+          <div className="lucky-market-practice-flow">
+            {preview.map((item) => <span key={item}>{item}</span>)}
+          </div>
+        ) : practice.visual === 'dashboard' || practice.visual === 'chart' ? (
+          <div className="lucky-market-practice-dashboard">
+            <div className="lucky-market-practice-bars">
+              {preview.map((item, index) => <i key={item} style={{ height: `${38 + index * 18}%` }} />)}
+            </div>
+            <div>
+              {preview.map((item) => <span key={item}>{item}</span>)}
+            </div>
+          </div>
+        ) : practice.visual === 'chat' ? (
+          <div className="lucky-market-practice-chat">
+            {preview.map((item, index) => (
+              <span key={item} className={index % 2 ? 'is-right' : ''}>{item}</span>
+            ))}
+          </div>
+        ) : practice.visual === 'poster' || practice.visual === 'product' ? (
+          <div className="lucky-market-practice-poster">
+            <strong>{practice.title}</strong>
+            <div>
+              {preview.map((item) => <span key={item}>{item}</span>)}
+            </div>
+          </div>
+        ) : practice.visual === 'calendar' ? (
+          <div className="lucky-market-practice-calendar">
+            {preview.map((item, index) => (
+              <span key={item}>
+                <em>{String(index + 1).padStart(2, '0')}</em>
+                {item}
+              </span>
+            ))}
+          </div>
+        ) : practice.visual === 'board' ? (
+          <div className="lucky-market-practice-board">
+            {preview.map((item, index) => (
+              <span key={item}>
+                <i />
+                <b>{item}</b>
+                <em>{['已完成', '进行中', '待确认'][index]}</em>
+              </span>
+            ))}
+          </div>
+        ) : practice.visual === 'cards' ? (
+          <div className="lucky-market-practice-card-stack">
+            {preview.map((item, index) => (
+              <span key={item} style={{ '--practice-card-index': index }}>
+                {item}
+              </span>
+            ))}
+          </div>
+        ) : practice.visual === 'report' ? (
+          <div className="lucky-market-practice-report">
+            <strong>{practice.title}</strong>
+            {preview.map((item) => <span key={item}>{item}</span>)}
+          </div>
+        ) : practice.visual === 'checklist' ? (
+          <div className="lucky-market-practice-checklist">
+            {preview.map((item) => <span key={item}>{item}</span>)}
+          </div>
+        ) : (
+          <div className="lucky-market-practice-doc">
+            {preview.map((item) => <span key={item}>{item}</span>)}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MarketPracticeCard({ practice }) {
+  const openPractice = () => message.success(`已打开案例：${practice.title}`);
+
+  return (
+    <article
+      className="lucky-market-practice-card"
+      role="button"
+      tabIndex={0}
+      onClick={openPractice}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openPractice();
+        }
+      }}
+    >
+      <MarketPracticeThumb practice={practice} />
+      <h3>{practice.title}</h3>
+      <p>{practice.agent}</p>
+    </article>
+  );
+}
+
+function MarketBestPracticePage({
+  searchText,
+  activeCategory,
+  sortMode,
+  onCategoryChange,
+  onSortChange,
+}) {
+  const visiblePractices = useMemo(() => {
+    const normalizedSearch = searchText.trim().toLowerCase();
+    return MARKET_BEST_PRACTICES
+      .filter((practice) => {
+        if (activeCategory !== '全部' && practice.category !== activeCategory) return false;
+        if (!normalizedSearch) return true;
+        return `${practice.title} ${practice.agent} ${practice.category} ${practice.preview.join(' ')}`
+          .toLowerCase()
+          .includes(normalizedSearch);
+      })
+      .sort((left, right) => (
+        sortMode === 'new'
+          ? left.fresh - right.fresh
+          : right.heat - left.heat
+      ));
+  }, [activeCategory, searchText, sortMode]);
+
+  return (
+    <div className="lucky-market-practice-view">
+      <div className="lucky-market-practice-filterbar">
+        <div className="lucky-market-practice-categories" aria-label="最佳实践分类">
+          {MARKET_PRACTICE_CATEGORIES.map((category) => (
+            <button
+              key={category}
+              type="button"
+              className={activeCategory === category ? 'is-active' : ''}
+              onClick={() => onCategoryChange(category)}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+        <div className="lucky-market-sort" aria-label="最佳实践排序">
+          <button
+            type="button"
+            className={sortMode === 'hot' ? 'is-active' : ''}
+            onClick={() => onSortChange('hot')}
+          >
+            最热
+          </button>
+          <button
+            type="button"
+            className={sortMode === 'new' ? 'is-active' : ''}
+            onClick={() => onSortChange('new')}
+          >
+            最新
+          </button>
+        </div>
+      </div>
+
+      <div className="lucky-market-practice-masonry">
+        {visiblePractices.map((practice) => (
+          <MarketPracticeCard key={practice.key} practice={practice} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MarketComingSoon({ title }) {
+  return (
+    <section className="lucky-market-coming-soon" aria-label={title}>
+      <RobotOutlined />
+      <h2>{title}</h2>
+      <p>这里会继续补充与智能体生态相关的内容。</p>
+    </section>
+  );
+}
+
 function MarketPage() {
   const [activeTab, setActiveTab] = useState(MARKET_TABS[0]);
   const [activeCategory, setActiveCategory] = useState(MARKET_CATEGORIES[0]);
+  const [activeSkillScope, setActiveSkillScope] = useState(MARKET_SKILL_SCOPES[0]);
+  const [activeSkillCategory, setActiveSkillCategory] = useState(MARKET_SKILL_CATEGORIES[0]);
+  const [activePracticeCategory, setActivePracticeCategory] = useState(MARKET_PRACTICE_CATEGORIES[0]);
   const [sortMode, setSortMode] = useState('hot');
   const [searchText, setSearchText] = useState('');
+  const isSkillTab = activeTab === '技能';
+  const isPracticeTab = activeTab === '最佳实践';
 
   const visibleExperts = useMemo(() => {
     const normalizedSearch = searchText.trim().toLowerCase();
@@ -921,7 +1875,7 @@ function MarketPage() {
               className={activeTab === tab ? 'is-active' : ''}
               onClick={() => {
                 setActiveTab(tab);
-                if (tab !== '专家') message.info(`${tab}页面即将上线`);
+                if (tab !== '专家' && tab !== '技能' && tab !== '最佳实践') message.info(`${tab}页面即将上线`);
               }}
             >
               {tab}
@@ -933,83 +1887,108 @@ function MarketPage() {
           <label className="lucky-market-search" htmlFor="lucky-market-search">
             <SearchOutlined />
             <input
-              id="lucky-market-search"
-              value={searchText}
-              placeholder="搜索"
+            id="lucky-market-search"
+            value={searchText}
+            placeholder="搜索"
               onChange={(event) => setSearchText(event.target.value)}
             />
           </label>
-          <button
-            type="button"
-            className="lucky-market-custom"
-            onClick={() => message.info('已打开自定义专家')}
-          >
-            <PlusOutlined />
-            自定义专家
-          </button>
-        </div>
-      </div>
-
-      <div className="lucky-market-rankings">
-        {MARKET_RANKING_CARDS.map((card) => (
-          <MarketRankingCard key={card.key} card={card} />
-        ))}
-      </div>
-
-      <div className="lucky-market-filterbar">
-        <div className="lucky-market-categories" aria-label="专家领域">
-          {MARKET_CATEGORIES.map((category) => (
+          {!isPracticeTab ? (
             <button
-              key={category}
               type="button"
-              className={activeCategory === category ? 'is-active' : ''}
-              onClick={() => setActiveCategory(category)}
+              className="lucky-market-custom"
+              onClick={() => message.info(isSkillTab ? '已打开新建技能' : '已打开自定义专家')}
             >
-              {category}
+              <PlusOutlined />
+              {isSkillTab ? '新建' : '自定义专家'}
+              {isSkillTab ? <DownOutlined /> : null}
             </button>
-          ))}
-        </div>
-        <div className="lucky-market-sort" aria-label="排序">
-          <button
-            type="button"
-            className={sortMode === 'hot' ? 'is-active' : ''}
-            onClick={() => setSortMode('hot')}
-          >
-            最热
-          </button>
-          <button
-            type="button"
-            className={sortMode === 'new' ? 'is-active' : ''}
-            onClick={() => setSortMode('new')}
-          >
-            最新
-          </button>
+          ) : null}
         </div>
       </div>
 
-      <div className="lucky-market-grid">
-        {visibleExperts.map((expert) => (
-          <article key={expert.key} className="lucky-market-expert-card">
-            <div className="lucky-market-expert-head">
-              <MarketAvatar tone={expert.avatar} label={expert.name} />
-              <div>
-                <h3>{expert.name}</h3>
-                <p>{expert.category}</p>
-              </div>
+      {isSkillTab ? (
+        <MarketSkillPage
+          searchText={searchText}
+          activeScope={activeSkillScope}
+          activeCategory={activeSkillCategory}
+          onScopeChange={setActiveSkillScope}
+          onCategoryChange={setActiveSkillCategory}
+        />
+      ) : isPracticeTab ? (
+        <MarketBestPracticePage
+          searchText={searchText}
+          activeCategory={activePracticeCategory}
+          sortMode={sortMode}
+          onCategoryChange={setActivePracticeCategory}
+          onSortChange={setSortMode}
+        />
+      ) : activeTab === '专家' ? (
+        <>
+          <div className="lucky-market-rankings">
+            {MARKET_RANKING_CARDS.map((card) => (
+              <MarketRankingCard key={card.key} card={card} />
+            ))}
+          </div>
+
+          <div className="lucky-market-filterbar">
+            <div className="lucky-market-categories" aria-label="专家领域">
+              {MARKET_CATEGORIES.map((category) => (
+                <button
+                  key={category}
+                  type="button"
+                  className={activeCategory === category ? 'is-active' : ''}
+                  onClick={() => setActiveCategory(category)}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+            <div className="lucky-market-sort" aria-label="排序">
               <button
                 type="button"
-                onClick={() => message.success(`已招募：${expert.name}`)}
+                className={sortMode === 'hot' ? 'is-active' : ''}
+                onClick={() => setSortMode('hot')}
               >
-                招募专家
+                最热
+              </button>
+              <button
+                type="button"
+                className={sortMode === 'new' ? 'is-active' : ''}
+                onClick={() => setSortMode('new')}
+              >
+                最新
               </button>
             </div>
-            <p className="lucky-market-expert-desc">{expert.desc}</p>
-            <div className="lucky-market-expert-tags">
-              {expert.tags.map((tag) => <span key={tag}>{tag}</span>)}
-            </div>
-          </article>
-        ))}
-      </div>
+          </div>
+
+          <div className="lucky-market-grid">
+            {visibleExperts.map((expert) => (
+              <article key={expert.key} className="lucky-market-expert-card">
+                <div className="lucky-market-expert-head">
+                  <MarketAvatar tone={expert.avatar} label={expert.name} />
+                  <div>
+                    <h3>{expert.name}</h3>
+                    <p>{expert.category}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => message.success(`已招募：${expert.name}`)}
+                  >
+                    招募专家
+                  </button>
+                </div>
+                <p className="lucky-market-expert-desc">{expert.desc}</p>
+                <div className="lucky-market-expert-tags">
+                  {expert.tags.map((tag) => <span key={tag}>{tag}</span>)}
+                </div>
+              </article>
+            ))}
+          </div>
+        </>
+      ) : (
+        <MarketComingSoon title={activeTab} />
+      )}
     </section>
   );
 }
@@ -1390,12 +2369,15 @@ function LuckyHome({
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [projectMenuOpen, setProjectMenuOpen] = useState(false);
   const [browserMenuOpen, setBrowserMenuOpen] = useState(false);
+  const [modelMenuOpen, setModelMenuOpen] = useState(false);
+  const [selectedModelKey, setSelectedModelKey] = useState(AGENT_MODEL_OPTIONS[0].key);
   const [selectedTarget, setSelectedTarget] = useState({ type: 'agent', key: 'party-affairs' });
   const [selectedProjectKey, setSelectedProjectKey] = useState(projects[0]?.key || '');
   const [projectSearchText, setProjectSearchText] = useState('');
   const contextPickerRef = useRef(null);
   const projectPickerRef = useRef(null);
   const browserPickerRef = useRef(null);
+  const modelPickerRef = useRef(null);
   const composerAgents = useMemo(() => {
     const agentMap = new Map();
     [...agents, ...COMPOSER_EXTRA_AGENTS].forEach((agent) => {
@@ -1407,6 +2389,7 @@ function LuckyHome({
   const selectedAgent = composerAgents.find((agent) => agent.key === selectedTarget.key) || composerAgents[0];
   const selectedTeam = composerTeams.find((team) => team.key === selectedTarget.key) || composerTeams[0];
   const selectedContextLabel = selectedTarget.type === 'team' ? selectedTeam?.name : selectedAgent?.name;
+  const selectedModel = AGENT_MODEL_OPTIONS.find((model) => model.key === selectedModelKey) || AGENT_MODEL_OPTIONS[0];
   const selectedProject = projects.find((project) => project.key === selectedProjectKey) || projects[0];
   const filteredProjects = useMemo(() => {
     const normalizedSearch = projectSearchText.trim().toLowerCase();
@@ -1486,6 +2469,29 @@ function LuckyHome({
   }, [browserMenuOpen]);
 
   useEffect(() => {
+    if (!modelMenuOpen) return undefined;
+
+    const handlePointerDown = (event) => {
+      if (modelPickerRef.current?.contains(event.target)) return;
+      setModelMenuOpen(false);
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setModelMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [modelMenuOpen]);
+
+  useEffect(() => {
     if (selectedProjectKey || !projects[0]) return;
     setSelectedProjectKey(projects[0].key);
   }, [projects, selectedProjectKey]);
@@ -1530,16 +2536,66 @@ function LuckyHome({
                 <PlusOutlined />
               </button>
               <div className="lucky-composer-action-right">
-                <button
-                  type="button"
-                  className="lucky-auto-button"
-                  title="自动选择能力"
-                  onClick={() => message.info('已切换为 Auto 模式')}
-                >
-                  <ThunderboltOutlined />
-                  <span>Auto</span>
-                  <DownOutlined />
-                </button>
+                <div className="lucky-model-picker" ref={modelPickerRef}>
+                  <button
+                    type="button"
+                    className={`lucky-auto-button ${modelMenuOpen ? 'is-open' : ''}`}
+                    title="选择模型"
+                    aria-haspopup="menu"
+                    aria-expanded={modelMenuOpen}
+                    onClick={() => {
+                      setContextMenuOpen(false);
+                      setProjectMenuOpen(false);
+                      setBrowserMenuOpen(false);
+                      setModelMenuOpen((open) => !open);
+                    }}
+                  >
+                    <ThunderboltOutlined />
+                    <span>{selectedModel.name}</span>
+                    <DownOutlined />
+                  </button>
+
+                  {modelMenuOpen ? (
+                    <div className="lucky-model-menu" role="menu" aria-label="选择模型">
+                      <div className="lucky-model-menu-title">
+                        切换“{selectedContextLabel || '智能体'}”所用模型
+                      </div>
+                      <div className="lucky-model-menu-list">
+                        {AGENT_MODEL_OPTIONS.map((model) => {
+                          const isSelected = model.key === selectedModelKey;
+                          return (
+                            <button
+                              key={model.key}
+                              type="button"
+                              role="menuitemradio"
+                              aria-checked={isSelected}
+                              className={`lucky-model-menu-row ${isSelected ? 'is-selected' : ''}`}
+                              onClick={() => {
+                                setSelectedModelKey(model.key);
+                                setModelMenuOpen(false);
+                                message.success(`已切换模型：${model.name}`);
+                              }}
+                            >
+                              <span className={`lucky-agent-model-logo lucky-agent-model-logo-${model.tone}`} aria-hidden="true">
+                                {model.tone === 'auto' ? <ThunderboltOutlined /> : null}
+                              </span>
+                              <span className="lucky-model-menu-name">
+                                <span>{model.name}</span>
+                                {model.badge ? (
+                                  <span className={`lucky-agent-model-badge lucky-agent-model-badge-${model.badgeTone}`}>
+                                    {model.badge}
+                                  </span>
+                                ) : null}
+                              </span>
+                              <span className="lucky-model-menu-rate">{model.rate}</span>
+                              {isSelected ? <CheckOutlined className="lucky-model-menu-check" /> : null}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
                 <button
                   type="button"
                   className="lucky-icon-button"
@@ -1570,7 +2626,10 @@ function LuckyHome({
                     className={`lucky-context-item lucky-context-picker-trigger ${contextMenuOpen ? 'is-open' : ''}`}
                     aria-haspopup="menu"
                     aria-expanded={contextMenuOpen}
-                    onClick={() => setContextMenuOpen((open) => !open)}
+                    onClick={() => {
+                      setModelMenuOpen(false);
+                      setContextMenuOpen((open) => !open);
+                    }}
                   >
                     <span className="lucky-context-icon">{item.icon}</span>
                     <span className="lucky-context-label">{selectedContextLabel}</span>
@@ -1657,7 +2716,10 @@ function LuckyHome({
                     className={`lucky-context-item lucky-context-picker-trigger ${projectMenuOpen ? 'is-open' : ''}`}
                     aria-haspopup="menu"
                     aria-expanded={projectMenuOpen}
-                    onClick={() => setProjectMenuOpen((open) => !open)}
+                    onClick={() => {
+                      setModelMenuOpen(false);
+                      setProjectMenuOpen((open) => !open);
+                    }}
                   >
                     <span className="lucky-context-icon">{item.icon}</span>
                     <span className="lucky-context-label">{selectedProject ? selectedProject.name : item.label}</span>
@@ -1719,7 +2781,10 @@ function LuckyHome({
                     className={`lucky-context-item lucky-context-picker-trigger ${browserMenuOpen ? 'is-open' : ''}`}
                     aria-haspopup="menu"
                     aria-expanded={browserMenuOpen}
-                    onClick={() => setBrowserMenuOpen((open) => !open)}
+                    onClick={() => {
+                      setModelMenuOpen(false);
+                      setBrowserMenuOpen((open) => !open);
+                    }}
                   >
                     <span className="lucky-context-icon">{item.icon}</span>
                     <span className="lucky-context-label">{item.label}</span>
@@ -1817,6 +2882,154 @@ function LuckyHome({
         </div>
       </section>
     </div>
+  );
+}
+
+function CodeSidebarContent({ activeCodeSection, onCodeSectionChange }) {
+  return (
+    <div className="lucky-code-sidebar-content">
+      <nav className="lucky-code-nav" aria-label="编程导航">
+        {CODE_NAV_ITEMS.map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            className={`lucky-code-nav-item ${activeCodeSection === item.key ? 'is-active' : ''}`}
+            onClick={() => onCodeSectionChange(item.key)}
+          >
+            <span className="lucky-code-nav-icon">{item.icon}</span>
+            <span>{item.label}</span>
+          </button>
+        ))}
+      </nav>
+
+      <section className="lucky-code-app-section" aria-label="应用">
+        <div className="lucky-code-sidebar-label">应用</div>
+        <div className="lucky-code-app-list">
+          {CODE_APP_ITEMS.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              className="lucky-code-app-item"
+              onClick={() => message.info(`已打开：${item.name}`)}
+            >
+              <span className="lucky-code-app-dot" style={{ '--code-app-color': item.color }} aria-hidden="true" />
+              <span>{item.name}</span>
+            </button>
+          ))}
+        </div>
+        <div className="lucky-code-sidebar-end">到底了</div>
+      </section>
+
+      <div className="lucky-code-sidebar-user">
+        <span className="lucky-code-user-avatar">张</span>
+        <span className="lucky-code-user-copy">
+          <strong>张洪磊</strong>
+          <em>企业版</em>
+        </span>
+        <button type="button" aria-label="锁定" onClick={() => message.info('已锁定')}>
+          <LockOutlined />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function CodeStyleCard({ item }) {
+  return (
+    <button
+      type="button"
+      className={`lucky-code-style-card lucky-code-style-${item.tone} ${item.dark ? 'is-dark' : ''}`}
+      onClick={() => message.success(`已选择风格：${item.name}`)}
+    >
+      <span className="lucky-code-style-preview" aria-hidden="true">
+        <span className="lucky-code-style-cover">{item.name}</span>
+        <span className="lucky-code-style-panel">
+          <i />
+          <strong>{item.metric}</strong>
+          <em />
+          <b />
+        </span>
+      </span>
+      <span className="lucky-code-style-name">{item.name}</span>
+    </button>
+  );
+}
+
+function CodeModeHome({
+  promptText,
+  onPromptChange,
+  onSend,
+}) {
+  return (
+    <section className="lucky-code-home" aria-label="编程">
+      <div className="lucky-code-hero">
+        <h1>灵感落地生花，即刻智搭万物</h1>
+
+        <div className="lucky-code-type-switch" aria-label="创作类型">
+          <button type="button" className="is-active" onClick={() => message.info('已选择应用开发')}>
+            <ProductOutlined />
+            应用开发
+          </button>
+          <button type="button" onClick={() => message.info('已选择创意设计')}>
+            <FileImageOutlined />
+            创意设计
+          </button>
+        </div>
+
+        <section className="lucky-code-composer" aria-label="创建应用">
+          <textarea
+            value={promptText}
+            placeholder="创建一个党务材料审核与归档工具"
+            rows={2}
+            onChange={(event) => onPromptChange(event.target.value)}
+          />
+          <span className="lucky-code-tab-hint">tab</span>
+          <div className="lucky-code-composer-actions">
+            <div>
+              <button type="button" aria-label="添加" onClick={() => message.info('已打开添加入口')}>
+                <PlusOutlined />
+              </button>
+              <button type="button" aria-label="引用" onClick={() => message.info('已打开引用入口')}>
+                @
+              </button>
+            </div>
+            <div>
+              <button type="button" aria-label="语音输入" onClick={() => message.info('已打开语音输入')}>
+                <AudioOutlined />
+              </button>
+              <button type="button" aria-label="参数设置" onClick={() => message.info('已打开参数设置')}>
+                <ControlOutlined />
+              </button>
+              <button type="button" className="lucky-code-send" aria-label="生成应用" onClick={onSend}>
+                <ArrowUpOutlined />
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <div className="lucky-code-chip-row" aria-label="应用类型">
+          {CODE_PROMPT_CHIPS.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => message.info(`已选择：${item.label}`)}
+            >
+              {item.icon}
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <section className="lucky-code-style-section" aria-label="推荐场景">
+        <h2>推荐场景</h2>
+        <div className="lucky-code-style-grid">
+          {CODE_STYLE_TEMPLATES.map((item) => (
+            <CodeStyleCard key={item.key} item={item} />
+          ))}
+        </div>
+      </section>
+    </section>
   );
 }
 
@@ -3700,6 +4913,7 @@ function LuckyModule() {
   const [activeSection, setActiveSection] = useState('new');
   const [activeTaskKey, setActiveTaskKey] = useState(null);
   const [workMode, setWorkMode] = useState('office');
+  const [activeCodeSection, setActiveCodeSection] = useState('new-app');
   const [agentTab, setAgentTab] = useState('mine');
   const [createdAgents, setCreatedAgents] = useState([]);
   const [createdSquads, setCreatedSquads] = useState([]);
@@ -3789,6 +5003,7 @@ function LuckyModule() {
   const showProjects = activeSection === 'projects' && !showProjectDetail;
   const showLibrary = activeSection === 'library';
   const showMarket = activeSection === 'market';
+  const isCodeMode = workMode === 'code';
   const activeNavIndex = Math.max(0, NAV_ITEMS.findIndex((item) => item.key === activeSection));
   const mineAgents = useMemo(
     () => [...AGENT_CARDS, ...createdAgents].filter((agent) => !deletedAgentKeys.includes(agent.key)),
@@ -3933,7 +5148,7 @@ function LuckyModule() {
   return (
     <div className="lucky-module">
       <aside
-        className="lucky-sidebar"
+        className={`lucky-sidebar ${isCodeMode ? 'is-code-mode' : ''}`}
         style={{ width: sidebarWidth, minWidth: sidebarWidth, maxWidth: sidebarWidth }}
       >
         <div className="lucky-sidebar-profile">
@@ -3971,41 +5186,50 @@ function LuckyModule() {
           ))}
         </div>
 
-        <nav
-          className={`lucky-sidebar-nav ${showTaskDetail ? 'is-task-detail' : ''}`}
-          style={{ '--lucky-nav-active-y': `${activeNavIndex * 38}px` }}
-          aria-label="Lucky 导航"
-        >
-          {NAV_ITEMS.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              className={`lucky-nav-item ${!showTaskDetail && activeSection === item.key ? 'is-active' : ''}`}
-              onClick={() => handleSelectSection(item.key)}
+        {isCodeMode ? (
+          <CodeSidebarContent
+            activeCodeSection={activeCodeSection}
+            onCodeSectionChange={setActiveCodeSection}
+          />
+        ) : (
+          <>
+            <nav
+              className={`lucky-sidebar-nav ${showTaskDetail ? 'is-task-detail' : ''}`}
+              style={{ '--lucky-nav-active-y': `${activeNavIndex * 38}px` }}
+              aria-label="Lucky 导航"
             >
-              <span className="lucky-nav-icon">{item.icon}</span>
-              <span className="lucky-nav-label">{item.label}</span>
-              {item.meta ? <span className="lucky-nav-meta">{item.meta}</span> : null}
-            </button>
-          ))}
-        </nav>
+              {NAV_ITEMS.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  className={`lucky-nav-item ${!showTaskDetail && activeSection === item.key ? 'is-active' : ''}`}
+                  onClick={() => handleSelectSection(item.key)}
+                >
+                  <span className="lucky-nav-icon">{item.icon}</span>
+                  <span className="lucky-nav-label">{item.label}</span>
+                  {item.meta ? <span className="lucky-nav-meta">{item.meta}</span> : null}
+                </button>
+              ))}
+            </nav>
 
-        <div className="lucky-task-section">
-          <div className="lucky-task-head">
-            <span>任务</span>
-            <button type="button" className="lucky-sidebar-tool" title="任务设置" aria-label="任务设置">
-              <ControlOutlined />
-            </button>
-          </div>
-          <button
-            type="button"
-            className={`lucky-task-shortcut ${showTaskDetail ? 'is-active' : ''}`}
-            onClick={handleOpenIntroTask}
-          >
-            <span className="lucky-task-text">介绍并引导上手使用</span>
-            <span className="lucky-task-dot" aria-hidden="true" />
-          </button>
-        </div>
+            <div className="lucky-task-section">
+              <div className="lucky-task-head">
+                <span>任务</span>
+                <button type="button" className="lucky-sidebar-tool" title="任务设置" aria-label="任务设置">
+                  <ControlOutlined />
+                </button>
+              </div>
+              <button
+                type="button"
+                className={`lucky-task-shortcut ${showTaskDetail ? 'is-active' : ''}`}
+                onClick={handleOpenIntroTask}
+              >
+                <span className="lucky-task-text">介绍并引导上手使用</span>
+                <span className="lucky-task-dot" aria-hidden="true" />
+              </button>
+            </div>
+          </>
+        )}
       </aside>
       <div
         className="lucky-sidebar-resize-handle"
@@ -4017,7 +5241,13 @@ function LuckyModule() {
 
       <main className="lucky-main">
         <div className="lucky-main-inner">
-          {showTaskDetail ? (
+          {isCodeMode ? (
+            <CodeModeHome
+              promptText={promptText}
+              onPromptChange={setPromptText}
+              onSend={handleSendPrompt}
+            />
+          ) : showTaskDetail ? (
             <TaskDetailPage onSendReply={() => message.success('已发送补充信息')} />
           ) : showHome ? (
             <LuckyHome
