@@ -305,11 +305,16 @@ function validateDimension(template, dimension) {
   if (!dimension.code) throw new Error('请输入维度编码');
   if (!dimension.name) throw new Error('请输入维度名称');
   ensureDimensionCodeUnique(template, dimension);
+  const dimensionMap = new Map(template.dimensions.map((item) => [item.id, item]));
+  let parentId = dimension.parentId;
+  while (parentId && dimensionMap.has(parentId)) {
+    if (parentId === dimension.id) {
+      throw new Error('父级维度不能选择自身或自己的下级维度');
+    }
+    parentId = dimensionMap.get(parentId)?.parentId;
+  }
   if (dimension.parentId && !template.dimensions.some((item) => item.id === dimension.parentId)) {
     throw new Error('父级维度不存在');
-  }
-  if (dimension.parentId === dimension.id) {
-    throw new Error('父级维度不能选择自身');
   }
 }
 

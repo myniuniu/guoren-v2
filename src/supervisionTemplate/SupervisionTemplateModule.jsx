@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Alert,
   Button,
   Card,
   Drawer,
+  Dropdown,
   Empty,
   Form,
   Input,
@@ -21,12 +21,15 @@ import {
 import {
   ArrowLeftOutlined,
   AppstoreOutlined,
+  CaretDownOutlined,
+  CaretRightOutlined,
   CheckCircleOutlined,
   CopyOutlined,
   DeleteOutlined,
   EditOutlined,
   EyeOutlined,
   ImportOutlined,
+  MoreOutlined,
   PlusOutlined,
   ReloadOutlined,
   SearchOutlined,
@@ -92,6 +95,7 @@ const DIMENSION_LEVEL_OPTIONS = [
   { label: '一级维度', value: '一级维度' },
   { label: '二级维度', value: '二级维度' },
   { label: '三级维度', value: '三级维度' },
+  { label: '四级维度', value: '四级维度' },
 ];
 
 const INDICATOR_TYPE_OPTIONS = [
@@ -119,6 +123,9 @@ const DEFAULT_TEMPLATE_FORM = {
   schoolType: '职业院校',
   status: 'ACTIVE',
 };
+
+const MAX_DIMENSION_DEPTH = 4;
+const DIMENSION_LEVEL_LABELS = ['一级维度', '二级维度', '三级维度', '四级维度'];
 
 function getStatusTag(status) {
   return status === 'DISABLED'
@@ -162,6 +169,86 @@ function getDimensionLabel(template, dimensionId) {
   return `${dimension.code} ${dimension.name}`;
 }
 
+function getDimensionDepth(template, dimensionId) {
+  if (!template || !dimensionId) return 1;
+  const dimensionMap = createDimensionMap(template);
+  let depth = 1;
+  let parentId = dimensionMap.get(dimensionId)?.parentId;
+  const visitedIds = new Set([dimensionId]);
+  while (parentId && dimensionMap.has(parentId) && !visitedIds.has(parentId)) {
+    depth += 1;
+    visitedIds.add(parentId);
+    parentId = dimensionMap.get(parentId)?.parentId;
+  }
+  return Math.max(1, Math.min(MAX_DIMENSION_DEPTH, depth));
+}
+
+function getDimensionLevelLabel(depth) {
+  return DIMENSION_LEVEL_LABELS[Math.max(1, Math.min(MAX_DIMENSION_DEPTH, depth)) - 1] || '一级维度';
+}
+
+function getDescendantDimensionIds(template, dimensionId) {
+  const descendants = new Set();
+  const childrenByParentId = new Map();
+  (template?.dimensions || []).forEach((dimension) => {
+    const parentId = dimension.parentId || '';
+    if (!childrenByParentId.has(parentId)) childrenByParentId.set(parentId, []);
+    childrenByParentId.get(parentId).push(dimension);
+  });
+
+  const walk = (parentId) => {
+    (childrenByParentId.get(parentId) || []).forEach((child) => {
+      descendants.add(child.id);
+      walk(child.id);
+    });
+  };
+  walk(dimensionId);
+  return descendants;
+}
+
+function buildDimensionTreeEntries(template) {
+  const dimensions = template?.dimensions || [];
+  const dimensionMap = createDimensionMap(template);
+  const childrenByParentId = new Map();
+  dimensions.forEach((dimension) => {
+    const parentId = dimension.parentId && dimensionMap.has(dimension.parentId) ? dimension.parentId : '';
+    if (!childrenByParentId.has(parentId)) childrenByParentId.set(parentId, []);
+    childrenByParentId.get(parentId).push(dimension);
+  });
+
+  childrenByParentId.forEach((items) => {
+    items.sort((left, right) => {
+      const orderGap = Number(left.sortOrder || 0) - Number(right.sortOrder || 0);
+      if (orderGap !== 0) return orderGap;
+      return String(left.code || '').localeCompare(String(right.code || ''), 'zh-CN');
+    });
+  });
+
+  const entries = [];
+  const indicatorCountMap = new Map();
+  (template?.indicators || []).forEach((indicator) => {
+    indicatorCountMap.set(indicator.dimensionId, (indicatorCountMap.get(indicator.dimensionId) || 0) + 1);
+  });
+
+  const walk = (parentId, level, ancestorIds) => {
+    (childrenByParentId.get(parentId) || []).forEach((dimension) => {
+      const childCount = (childrenByParentId.get(dimension.id) || []).length;
+      entries.push({
+        key: dimension.id,
+        dimension,
+        level,
+        ancestorIds,
+        childCount,
+        indicatorCount: indicatorCountMap.get(dimension.id) || 0,
+      });
+      walk(dimension.id, Math.min(MAX_DIMENSION_DEPTH, level + 1), [...ancestorIds, dimension.id]);
+    });
+  };
+
+  walk('', 1, []);
+  return entries;
+}
+
 function buildCopyCode(items, code) {
   const existingCodes = new Set((items || []).map((item) => item.code));
   const baseCode = `${code || 'COPY'}_COPY`;
@@ -188,7 +275,7 @@ function createTemplateFormValues(template) {
   };
 }
 
-function createDimensionFormValues(template, dimension) {
+function createDimensionFormValues(template, dimension, parentDimensionId = '') {
   if (dimension) {
     return {
       code: dimension.code,
@@ -199,17 +286,18 @@ function createDimensionFormValues(template, dimension) {
       status: dimension.status,
     };
   }
+  const parentDepth = parentDimensionId ? getDimensionDepth(template, parentDimensionId) : 0;
   return {
     code: '',
     name: '',
-    level: '一级维度',
-    parentId: undefined,
+    level: getDimensionLevelLabel(parentDepth + 1),
+    parentId: parentDimensionId || undefined,
     sortOrder: ((template?.dimensions || []).length + 1) * 10,
     status: 'ACTIVE',
   };
 }
 
-function createIndicatorFormValues(template, indicator) {
+function createIndicatorFormValues(template, indicator, dimensionId = '') {
   if (indicator) {
     return {
       code: indicator.code,
@@ -226,7 +314,7 @@ function createIndicatorFormValues(template, indicator) {
   return {
     code: '',
     name: '',
-    dimensionId: template?.dimensions?.[0]?.id,
+    dimensionId: dimensionId || template?.dimensions?.[0]?.id,
     resultOptions: ['优秀', '良好', '合格', '需改进'],
     indicatorType: '观察项',
     scoringMethod: '人工评分',
@@ -241,6 +329,8 @@ export default function SupervisionTemplateModule() {
   const [templates, setTemplates] = useState([]);
   const [activeTemplateId, setActiveTemplateId] = useState(undefined);
   const [viewMode, setViewMode] = useState('list');
+  const [activeDimensionId, setActiveDimensionId] = useState(undefined);
+  const [collapsedDimensionIds, setCollapsedDimensionIds] = useState(() => new Set());
   const [templateDrawerOpen, setTemplateDrawerOpen] = useState(false);
   const [editingTemplateId, setEditingTemplateId] = useState(undefined);
   const [dimensionModalOpen, setDimensionModalOpen] = useState(false);
@@ -253,7 +343,6 @@ export default function SupervisionTemplateModule() {
   const [templateStatusFilter, setTemplateStatusFilter] = useState(undefined);
   const [templateSchoolFilter, setTemplateSchoolFilter] = useState(undefined);
   const [indicatorKeyword, setIndicatorKeyword] = useState('');
-  const [indicatorDimensionId, setIndicatorDimensionId] = useState(undefined);
   const [templateForm] = Form.useForm();
   const [dimensionForm] = Form.useForm();
   const [indicatorForm] = Form.useForm();
@@ -294,18 +383,24 @@ export default function SupervisionTemplateModule() {
     [activeTemplateId, templates],
   );
 
-  const activeDimensionMap = useMemo(
-    () => createDimensionMap(activeTemplate),
+  const dimensionTreeEntries = useMemo(
+    () => buildDimensionTreeEntries(activeTemplate),
     [activeTemplate],
   );
 
-  const templateOptions = useMemo(
-    () => templates.map((template) => ({
-      label: template.name,
-      value: template.id,
-    })),
-    [templates],
+  const visibleDimensionTreeEntries = useMemo(
+    () => dimensionTreeEntries.filter((entry) => (
+      entry.ancestorIds.every((dimensionId) => !collapsedDimensionIds.has(dimensionId))
+    )),
+    [collapsedDimensionIds, dimensionTreeEntries],
   );
+
+  const selectedDimension = useMemo(() => {
+    if (!activeTemplate?.dimensions?.length) return null;
+    return activeTemplate.dimensions.find((dimension) => dimension.id === activeDimensionId)
+      || activeTemplate.dimensions[0]
+      || null;
+  }, [activeDimensionId, activeTemplate]);
 
   const dimensionOptions = useMemo(
     () => (activeTemplate?.dimensions || []).map((dimension) => ({
@@ -322,24 +417,29 @@ export default function SupervisionTemplateModule() {
   );
 
   const parentDimensionOptions = useMemo(
-    () => (activeTemplate?.dimensions || []).map((dimension) => ({
-      label: `${dimension.code} ${dimension.name}`,
-      value: dimension.id,
-      disabled: dimension.id === editingDimensionId,
-    })),
+    () => {
+      const descendantIds = editingDimensionId ? getDescendantDimensionIds(activeTemplate, editingDimensionId) : new Set();
+      return (activeTemplate?.dimensions || []).map((dimension) => ({
+        label: `${dimension.code} ${dimension.name}`,
+        value: dimension.id,
+        disabled: dimension.id === editingDimensionId
+          || descendantIds.has(dimension.id)
+          || getDimensionDepth(activeTemplate, dimension.id) >= MAX_DIMENSION_DEPTH,
+      }));
+    },
     [activeTemplate, editingDimensionId],
   );
 
-  const filteredIndicators = useMemo(() => {
+  const selectedDimensionIndicators = useMemo(() => {
+    if (!activeTemplate || !selectedDimension) return [];
     const keyword = indicatorKeyword.trim().toLowerCase();
-    return (activeTemplate?.indicators || []).filter((indicator) => {
-      if (indicatorDimensionId && indicator.dimensionId !== indicatorDimensionId) return false;
+    return activeTemplate.indicators.filter((indicator) => {
+      if (indicator.dimensionId !== selectedDimension.id) return false;
       if (!keyword) return true;
-      const dimension = activeDimensionMap.get(indicator.dimensionId);
-      const text = `${indicator.code} ${indicator.name} ${dimension?.name || ''}`.toLowerCase();
+      const text = `${indicator.code} ${indicator.name} ${indicator.indicatorType} ${indicator.scoringMethod}`.toLowerCase();
       return text.includes(keyword);
     });
-  }, [activeDimensionMap, activeTemplate, indicatorDimensionId, indicatorKeyword]);
+  }, [activeTemplate, indicatorKeyword, selectedDimension]);
 
   const filteredTemplates = useMemo(() => {
     const keyword = templateKeyword.trim().toLowerCase();
@@ -379,13 +479,6 @@ export default function SupervisionTemplateModule() {
       other: templates.filter((item) => getTemplateCategory(item) === '其他').length,
     };
   }, [templates]);
-
-  const activeTemplateStats = useMemo(() => ({
-    total: templates.length,
-    active: templates.filter((item) => item.status === 'ACTIVE').length,
-    dimensions: activeTemplate?.dimensions?.length || 0,
-    indicators: activeTemplate?.indicators?.length || 0,
-  }), [activeTemplate, templates]);
 
   const overviewCards = [
     { key: 'total', label: '模板总数', value: templateOverviewStats.total, tone: 'blue', icon: <AppstoreOutlined /> },
@@ -479,7 +572,7 @@ export default function SupervisionTemplateModule() {
       width: 260,
       fixed: 'right',
       render: (_, record) => (
-        <Space size={4}>
+        <Space size={2} className="supervision-template-table-actions">
           <Button type="link" size="small" icon={<EyeOutlined />} onClick={() => openTemplateDetail(record)}>
             配置
           </Button>
@@ -495,73 +588,6 @@ export default function SupervisionTemplateModule() {
           <Button type="link" size="small" danger icon={<DeleteOutlined />} onClick={() => handleDeleteTemplate(record)}>
             删除
           </Button>
-        </Space>
-      ),
-    },
-  ];
-
-  const dimensionColumns = [
-    {
-      title: '维度编码',
-      dataIndex: 'code',
-      key: 'code',
-      width: 110,
-      render: (value) => <strong>{value}</strong>,
-    },
-    {
-      title: '维度名称',
-      dataIndex: 'name',
-      key: 'name',
-      width: 220,
-    },
-    {
-      title: '层级',
-      dataIndex: 'level',
-      key: 'level',
-      width: 110,
-      render: (value) => <Tag>{value}</Tag>,
-    },
-    {
-      title: '父级维度',
-      dataIndex: 'parentId',
-      key: 'parentId',
-      width: 220,
-      render: (value) => (value ? getDimensionLabel(activeTemplate, value) : '无'),
-    },
-    {
-      title: '排序',
-      dataIndex: 'sortOrder',
-      key: 'sortOrder',
-      width: 90,
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      width: 100,
-      render: (value) => getStatusTag(value),
-    },
-    {
-      title: '操作',
-      key: 'action',
-      width: 160,
-      fixed: 'right',
-      render: (_, record) => (
-        <Space size={4}>
-          <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openDimensionModal(record)}>
-            编辑
-          </Button>
-          <Popconfirm
-            title="删除维度"
-            description="确认删除该维度吗？"
-            okText="删除"
-            cancelText="取消"
-            onConfirm={() => handleDeleteDimension(record)}
-          >
-            <Button type="link" size="small" danger icon={<DeleteOutlined />}>
-              删除
-            </Button>
-          </Popconfirm>
         </Space>
       ),
     },
@@ -629,10 +655,10 @@ export default function SupervisionTemplateModule() {
     {
       title: '操作',
       key: 'action',
-      width: 200,
+      width: 168,
       fixed: 'right',
       render: (_, record) => (
-        <Space size={4}>
+        <Space size={2} className="supervision-template-table-actions is-indicator-actions">
           <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openIndicatorModal(record)}>
             编辑
           </Button>
@@ -655,18 +681,19 @@ export default function SupervisionTemplateModule() {
     },
   ];
 
+  const frameworkIndicatorColumns = indicatorColumns.filter((column) => column.key !== 'dimensionId');
+
   function openTemplateDetail(template) {
     if (!template) return;
     setActiveTemplateId(template.id);
     setViewMode('detail');
     setIndicatorKeyword('');
-    setIndicatorDimensionId(undefined);
+    setActiveDimensionId(template.dimensions?.[0]?.id);
   }
 
   function handleBackToList() {
     setViewMode('list');
     setIndicatorKeyword('');
-    setIndicatorDimensionId(undefined);
   }
 
   function handleResetTemplateFilters() {
@@ -678,6 +705,15 @@ export default function SupervisionTemplateModule() {
 
   function handleImportTemplate() {
     message.info('导入模板能力预留中，可后续接入文件解析或模板市场。');
+  }
+
+  function handleToggleDimensionCollapse(dimensionId) {
+    setCollapsedDimensionIds((current) => {
+      const next = new Set(current);
+      if (next.has(dimensionId)) next.delete(dimensionId);
+      else next.add(dimensionId);
+      return next;
+    });
   }
 
   function openTemplateDrawer(mode, targetTemplate = null) {
@@ -779,10 +815,22 @@ export default function SupervisionTemplateModule() {
     });
   }
 
-  function openDimensionModal(record) {
+  function confirmDeleteDimension(record) {
+    if (!record) return;
+    Modal.confirm({
+      title: `删除维度「${record.name}」`,
+      content: '确认删除该维度吗？如存在下级维度或关联指标，系统会阻止删除。',
+      okText: '删除',
+      cancelText: '取消',
+      okButtonProps: { danger: true },
+      onOk: () => handleDeleteDimension(record),
+    });
+  }
+
+  function openDimensionModal(record = null, parentDimensionId = '') {
     if (!activeTemplate) return;
     setEditingDimensionId(record?.id);
-    dimensionForm.setFieldsValue(createDimensionFormValues(activeTemplate, record));
+    dimensionForm.setFieldsValue(createDimensionFormValues(activeTemplate, record, parentDimensionId));
     setDimensionModalOpen(true);
   }
 
@@ -791,12 +839,13 @@ export default function SupervisionTemplateModule() {
     setSubmitting(true);
     try {
       const values = await dimensionForm.validateFields();
-      await supervisionTemplateApi.saveDimension(activeTemplate.id, {
+      const saved = await supervisionTemplateApi.saveDimension(activeTemplate.id, {
         id: editingDimensionId,
         ...values,
         parentId: values.parentId || '',
       });
       message.success(editingDimensionId ? '维度已更新' : '维度已新增');
+      setActiveDimensionId(saved.id);
       setDimensionModalOpen(false);
       setEditingDimensionId(undefined);
       await refreshData();
@@ -819,10 +868,10 @@ export default function SupervisionTemplateModule() {
     }
   }
 
-  function openIndicatorModal(record) {
+  function openIndicatorModal(record = null, dimensionId = '') {
     if (!activeTemplate) return;
     setEditingIndicatorId(record?.id);
-    indicatorForm.setFieldsValue(createIndicatorFormValues(activeTemplate, record));
+    indicatorForm.setFieldsValue(createIndicatorFormValues(activeTemplate, record, dimensionId));
     setIndicatorModalOpen(true);
   }
 
@@ -831,11 +880,12 @@ export default function SupervisionTemplateModule() {
     setSubmitting(true);
     try {
       const values = await indicatorForm.validateFields();
-      await supervisionTemplateApi.saveIndicator(activeTemplate.id, {
+      const saved = await supervisionTemplateApi.saveIndicator(activeTemplate.id, {
         id: editingIndicatorId,
         ...values,
       });
       message.success(editingIndicatorId ? '指标已更新' : '指标已新增');
+      setActiveDimensionId(saved.dimensionId);
       setIndicatorModalOpen(false);
       setEditingIndicatorId(undefined);
       await refreshData();
@@ -879,6 +929,42 @@ export default function SupervisionTemplateModule() {
     }
   }
 
+  function renderTemplateFormFields() {
+    return (
+      <>
+        <div className="supervision-template-form-grid">
+          <Form.Item label="模板名称" name="name" rules={[{ required: true, message: '请输入模板名称' }]}>
+            <Input placeholder="例如：课堂教学督导评价模板" />
+          </Form.Item>
+          <Form.Item label="模板类型" name="templateType" rules={[{ required: true, message: '请选择模板类型' }]}>
+            <Select options={TEMPLATE_TYPE_OPTIONS} placeholder="选择模板类型" />
+          </Form.Item>
+          <Form.Item label="评价模式" name="evaluationMode" rules={[{ required: true, message: '请选择评价模式' }]}>
+            <Select options={EVALUATION_MODE_OPTIONS} placeholder="选择评价模式" />
+          </Form.Item>
+          <Form.Item label="模板用途" name="purpose" rules={[{ required: true, message: '请选择模板用途' }]}>
+            <Select options={PURPOSE_OPTIONS} placeholder="选择模板用途" />
+          </Form.Item>
+          <Form.Item label="权限级别" name="permissionLevel" rules={[{ required: true, message: '请选择权限级别' }]}>
+            <Select options={PERMISSION_LEVEL_OPTIONS} placeholder="选择权限级别" />
+          </Form.Item>
+          <Form.Item label="状态" name="status" rules={[{ required: true, message: '请选择状态' }]}>
+            <Select options={STATUS_OPTIONS} placeholder="选择状态" />
+          </Form.Item>
+          <Form.Item label="适用对象" name="applicableObject" rules={[{ required: true, message: '请选择适用对象' }]}>
+            <Select options={APPLICABLE_OBJECT_OPTIONS} placeholder="选择适用对象" />
+          </Form.Item>
+          <Form.Item label="学校类型" name="schoolType" rules={[{ required: true, message: '请选择学校类型' }]}>
+            <Select options={SCHOOL_TYPE_OPTIONS} placeholder="选择学校类型" />
+          </Form.Item>
+        </div>
+        <Form.Item label="模板描述" name="description">
+          <TextArea rows={4} placeholder="说明该督导模板的适用场景、关注重点和使用边界。" />
+        </Form.Item>
+      </>
+    );
+  }
+
   function renderTemplateList() {
     return (
       <>
@@ -886,7 +972,7 @@ export default function SupervisionTemplateModule() {
           {overviewCards.map((card) => (
             <Card
               key={card.key}
-              bordered={false}
+              variant="borderless"
               className={`supervision-template-overview-card is-${card.tone}`}
             >
               <div>
@@ -898,7 +984,7 @@ export default function SupervisionTemplateModule() {
           ))}
         </div>
 
-        <Card bordered={false} className="supervision-template-card supervision-template-list-card">
+        <Card variant="borderless" className="supervision-template-card supervision-template-list-card">
           <div className="supervision-template-list-toolbar">
             <div className="supervision-template-list-filters">
               <Input
@@ -944,11 +1030,12 @@ export default function SupervisionTemplateModule() {
           </div>
 
           <Table
+            className="supervision-template-list-table"
             rowKey="id"
             columns={templateColumns}
             dataSource={filteredTemplates}
             size="middle"
-            scroll={{ x: 1380 }}
+            scroll={{ x: 1680 }}
             rowClassName={(record) => (record.id === activeTemplateId ? 'supervision-template-row-active' : '')}
             pagination={{
               pageSize: 10,
@@ -969,45 +1056,209 @@ export default function SupervisionTemplateModule() {
     );
   }
 
+  function renderDimensionTreeNode(entry) {
+    const { dimension, childCount, indicatorCount, level } = entry;
+    const isCollapsed = collapsedDimensionIds.has(dimension.id);
+    const isActive = selectedDimension?.id === dimension.id;
+    const canAddChild = level < MAX_DIMENSION_DEPTH;
+    const dimensionActionItems = [
+      {
+        key: 'add-child',
+        label: '新增下级维度',
+        icon: <PlusOutlined />,
+        disabled: !canAddChild,
+      },
+      {
+        key: 'edit',
+        label: '编辑维度',
+        icon: <EditOutlined />,
+      },
+      {
+        type: 'divider',
+      },
+      {
+        key: 'delete',
+        label: '删除维度',
+        icon: <DeleteOutlined />,
+        danger: true,
+      },
+    ];
+
+    const handleDimensionActionClick = ({ key, domEvent }) => {
+      domEvent?.stopPropagation();
+      setActiveDimensionId(dimension.id);
+      if (key === 'add-child') {
+        openDimensionModal(null, dimension.id);
+        return;
+      }
+      if (key === 'edit') {
+        openDimensionModal(dimension);
+        return;
+      }
+      if (key === 'delete') {
+        confirmDeleteDimension(dimension);
+      }
+    };
+
+    return (
+      <div
+        key={dimension.id}
+        className={`supervision-template-framework-tree-node is-level-${level}${isActive ? ' is-active' : ''}`}
+        style={{ '--supervision-tree-level': level - 1 }}
+      >
+        <button
+          type="button"
+          className="supervision-template-framework-tree-row"
+          onClick={() => setActiveDimensionId(dimension.id)}
+        >
+          <span
+            className={`supervision-template-framework-tree-toggle${childCount ? '' : ' is-empty'}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (childCount) handleToggleDimensionCollapse(dimension.id);
+            }}
+          >
+            {childCount ? (isCollapsed ? <CaretRightOutlined /> : <CaretDownOutlined />) : null}
+          </span>
+          <span className="supervision-template-framework-tree-icon">
+            <AppstoreOutlined />
+          </span>
+          <span className="supervision-template-framework-tree-copy">
+            <span className="supervision-template-framework-tree-title">{dimension.code} {dimension.name}</span>
+            <span className="supervision-template-framework-tree-meta">
+              {dimension.level} · {childCount} 个下级 · {indicatorCount} 个指标
+            </span>
+          </span>
+        </button>
+        <span className="supervision-template-framework-tree-actions" onClick={(event) => event.stopPropagation()}>
+          <Dropdown
+            trigger={['click']}
+            menu={{
+              items: dimensionActionItems,
+              onClick: handleDimensionActionClick,
+            }}
+          >
+            <Tooltip title="更多操作">
+              <Button
+                size="small"
+                shape="circle"
+                icon={<MoreOutlined />}
+                aria-label={`${dimension.name} 更多操作`}
+              />
+            </Tooltip>
+          </Dropdown>
+        </span>
+      </div>
+    );
+  }
+
+  function renderTemplateFrameworkSection() {
+    if (!activeTemplate?.dimensions?.length) {
+      return (
+        <div className="supervision-template-editor-section supervision-template-framework-empty">
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无维度，请先新增" />
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => openDimensionModal()}>
+            新增维度
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="supervision-template-framework-split">
+        <aside className="supervision-template-framework-tree-panel">
+          <div className="supervision-template-framework-tree-head">
+            <div>
+              <div className="supervision-template-dimension-title">维度结构</div>
+              <div className="supervision-template-section-desc">
+                {activeTemplate.dimensions.length} 个维度 · {activeTemplate.indicators.length} 个指标
+              </div>
+            </div>
+            <Button size="small" type="primary" icon={<PlusOutlined />} onClick={() => openDimensionModal()}>
+              新增
+            </Button>
+          </div>
+          <div className="supervision-template-framework-tree-list">
+            {visibleDimensionTreeEntries.map((entry) => renderDimensionTreeNode(entry))}
+          </div>
+        </aside>
+
+        <section className="supervision-template-framework-config-panel">
+          {selectedDimension ? (
+            <div className="supervision-template-framework-config-card">
+              <div className="supervision-template-indicator-panel">
+                <div className="supervision-template-subsection-head">
+                  <div>
+                    <div className="supervision-template-item-title">指标配置</div>
+                    <div className="supervision-template-section-desc">
+                      当前维度：{selectedDimension.code} {selectedDimension.name}
+                    </div>
+                  </div>
+                  <Space wrap>
+                    <Input
+                      allowClear
+                      prefix={<SearchOutlined />}
+                      placeholder="搜索当前维度指标"
+                      value={indicatorKeyword}
+                      onChange={(event) => setIndicatorKeyword(event.target.value)}
+                    />
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
+                      onClick={() => openIndicatorModal(null, selectedDimension.id)}
+                    >
+                      新增指标
+                    </Button>
+                  </Space>
+                </div>
+                <Table
+                  rowKey="id"
+                  columns={frameworkIndicatorColumns}
+                  dataSource={selectedDimensionIndicators}
+                  size="middle"
+                  scroll={{ x: 1180 }}
+                  pagination={{ pageSize: 8, showTotal: (total) => `共 ${total} 条` }}
+                  locale={{
+                    emptyText: (
+                      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="当前维度暂无指标">
+                        <Button type="primary" icon={<PlusOutlined />} onClick={() => openIndicatorModal(null, selectedDimension.id)}>
+                          新增指标
+                        </Button>
+                      </Empty>
+                    ),
+                  }}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="supervision-template-framework-empty">
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="请选择一个维度开始配置" />
+            </div>
+          )}
+        </section>
+      </div>
+    );
+  }
+
+  function renderTemplateDetail() {
+    return (
+      <div className="supervision-template-editor">
+        {renderTemplateFrameworkSection()}
+      </div>
+    );
+  }
+
   function renderTemplateDrawer() {
     return (
       <Drawer
         title={editingTemplateId ? '编辑督导模板' : '新增督导模板'}
-        width={760}
+        size="large"
         open={templateDrawerOpen}
         onClose={() => setTemplateDrawerOpen(false)}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form layout="vertical" form={templateForm} onFinish={handleSaveTemplate}>
-          <div className="supervision-template-form-grid">
-            <Form.Item label="模板名称" name="name" rules={[{ required: true, message: '请输入模板名称' }]}>
-              <Input placeholder="例如：课堂教学督导评价模板" />
-            </Form.Item>
-            <Form.Item label="模板类型" name="templateType" rules={[{ required: true, message: '请选择模板类型' }]}>
-              <Select options={TEMPLATE_TYPE_OPTIONS} placeholder="选择模板类型" />
-            </Form.Item>
-            <Form.Item label="评价模式" name="evaluationMode" rules={[{ required: true, message: '请选择评价模式' }]}>
-              <Select options={EVALUATION_MODE_OPTIONS} placeholder="选择评价模式" />
-            </Form.Item>
-            <Form.Item label="模板用途" name="purpose" rules={[{ required: true, message: '请选择模板用途' }]}>
-              <Select options={PURPOSE_OPTIONS} placeholder="选择模板用途" />
-            </Form.Item>
-            <Form.Item label="权限级别" name="permissionLevel" rules={[{ required: true, message: '请选择权限级别' }]}>
-              <Select options={PERMISSION_LEVEL_OPTIONS} placeholder="选择权限级别" />
-            </Form.Item>
-            <Form.Item label="状态" name="status" rules={[{ required: true, message: '请选择状态' }]}>
-              <Select options={STATUS_OPTIONS} placeholder="选择状态" />
-            </Form.Item>
-            <Form.Item label="适用对象" name="applicableObject" rules={[{ required: true, message: '请选择适用对象' }]}>
-              <Select options={APPLICABLE_OBJECT_OPTIONS} placeholder="选择适用对象" />
-            </Form.Item>
-            <Form.Item label="学校类型" name="schoolType" rules={[{ required: true, message: '请选择学校类型' }]}>
-              <Select options={SCHOOL_TYPE_OPTIONS} placeholder="选择学校类型" />
-            </Form.Item>
-          </div>
-          <Form.Item label="模板描述" name="description">
-            <TextArea rows={4} placeholder="说明该督导模板的适用场景、关注重点和使用边界。" />
-          </Form.Item>
+          {renderTemplateFormFields()}
           <div className="supervision-template-form-footer">
             <Button onClick={() => setTemplateDrawerOpen(false)}>取消</Button>
             <Button type="primary" htmlType="submit" loading={submitting}>保存模板</Button>
@@ -1045,6 +1296,10 @@ export default function SupervisionTemplateModule() {
                 allowClear
                 options={parentDimensionOptions}
                 placeholder="无父级维度"
+                onChange={(value) => {
+                  const nextDepth = value ? getDimensionDepth(activeTemplate, value) + 1 : 1;
+                  dimensionForm.setFieldValue('level', getDimensionLevelLabel(nextDepth));
+                }}
               />
             </Form.Item>
             <Form.Item label="排序" name="sortOrder">
@@ -1120,25 +1375,41 @@ export default function SupervisionTemplateModule() {
   }
 
   return (
-    <div className="sys-module supervision-template-module">
+    <div className={`sys-module supervision-template-module${viewMode === 'detail' ? ' is-detail' : ''}`}>
       <div className="sys-module-header">
-        <div>
-          <span className="sys-module-header-title">
-            {viewMode === 'list' ? '督导模板管理' : '督导模板配置'}
-          </span>
-          <span className="sys-module-header-subtitle">
-            {viewMode === 'list' ? '管理和维护面向督导场景的评价模板体系' : '维护模板基础信息、维度和指标题项'}
-          </span>
+        <div className="supervision-template-header-copy">
+          {viewMode === 'detail' && activeTemplate ? (
+            <>
+              <div className="supervision-template-header-title-row">
+                <span className="sys-module-header-title">{activeTemplate.name || '未命名模板'}</span>
+                {getStatusTag(activeTemplate.status)}
+              </div>
+              <span className="sys-module-header-subtitle supervision-template-header-subtitle">
+                督导模板配置 · {activeTemplate.templateType || '-'} · {activeTemplate.schoolType || '-'} · 更新于 {formatDateTime(activeTemplate.updatedAt)}
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="sys-module-header-title">督导模板管理</span>
+              <span className="sys-module-header-subtitle">管理和维护面向督导场景的评价模板体系</span>
+            </>
+          )}
         </div>
-        <Space wrap>
+        <Space wrap className="supervision-template-header-actions">
           {viewMode === 'detail' ? (
-            <Button icon={<ArrowLeftOutlined />} onClick={handleBackToList}>
-              返回列表
-            </Button>
+            <>
+              <Button icon={<ArrowLeftOutlined />} onClick={handleBackToList}>
+                返回列表
+              </Button>
+              {activeTemplate ? (
+                <>
+                  <Button onClick={() => handleToggleTemplateStatus()} loading={submitting}>
+                    {activeTemplate.status === 'ACTIVE' ? '停用模板' : '启用模板'}
+                  </Button>
+                </>
+              ) : null}
+            </>
           ) : null}
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => openTemplateDrawer('create')}>
-            新增模板
-          </Button>
         </Space>
       </div>
 
@@ -1147,147 +1418,9 @@ export default function SupervisionTemplateModule() {
           {viewMode === 'list' ? (
             renderTemplateList()
           ) : activeTemplate ? (
-            <>
-              <Alert
-                showIcon
-                type="info"
-                className="supervision-template-alert"
-                message="督导模板独立维护"
-                description="本模块先维护模板基础信息、维度和指标配置；听评课记录、督导任务和统计看板可在后续模块中接入。"
-              />
-              <Card bordered={false} className="supervision-template-card">
-                <div className="supervision-template-card-head">
-                  <div>
-                    <span className="supervision-template-kicker">模板基本信息</span>
-                    <h2>{activeTemplate.name}</h2>
-                  </div>
-                  <Space wrap>
-                    <Select
-                      className="supervision-template-selector"
-                      value={activeTemplate.id}
-                      options={templateOptions}
-                      onChange={setActiveTemplateId}
-                    />
-                    <Button icon={<EditOutlined />} onClick={() => openTemplateDrawer('edit')}>编辑</Button>
-                    <Button icon={<CopyOutlined />} onClick={() => handleCopyTemplate()} loading={submitting}>复制</Button>
-                    <Button onClick={() => handleToggleTemplateStatus()} loading={submitting}>
-                      {activeTemplate.status === 'ACTIVE' ? '停用' : '启用'}
-                    </Button>
-                    <Button danger icon={<DeleteOutlined />} onClick={() => handleDeleteTemplate()}>删除</Button>
-                  </Space>
-                </div>
-
-                <p className="supervision-template-description">{activeTemplate.description || '暂无模板描述'}</p>
-
-                <div className="supervision-template-info-grid">
-                  <div className="supervision-template-info-item">
-                    <span>模板类型</span>
-                    <strong>{activeTemplate.templateType}</strong>
-                  </div>
-                  <div className="supervision-template-info-item">
-                    <span>评价模式</span>
-                    <strong>{activeTemplate.evaluationMode}</strong>
-                  </div>
-                  <div className="supervision-template-info-item">
-                    <span>模板用途</span>
-                    <strong>{activeTemplate.purpose}</strong>
-                  </div>
-                  <div className="supervision-template-info-item">
-                    <span>权限级别</span>
-                    <strong>{activeTemplate.permissionLevel}</strong>
-                  </div>
-                  <div className="supervision-template-info-item">
-                    <span>适用对象</span>
-                    <strong>{activeTemplate.applicableObject}</strong>
-                  </div>
-                  <div className="supervision-template-info-item">
-                    <span>学校类型</span>
-                    <strong>{activeTemplate.schoolType}</strong>
-                  </div>
-                  <div className="supervision-template-info-item">
-                    <span>模板状态</span>
-                    <strong>{getStatusTag(activeTemplate.status)}</strong>
-                  </div>
-                  <div className="supervision-template-info-item">
-                    <span>更新时间</span>
-                    <strong>{formatDateTime(activeTemplate.updatedAt)}</strong>
-                  </div>
-                </div>
-
-                <div className="supervision-template-stat-row">
-                  <Tag color="blue">{activeTemplateStats.total} 个模板</Tag>
-                  <Tag color="success">{activeTemplateStats.active} 个启用中</Tag>
-                  <Tag color="purple">{activeTemplateStats.dimensions} 个维度</Tag>
-                  <Tag color="processing">{activeTemplateStats.indicators} 个指标</Tag>
-                </div>
-              </Card>
-
-              <Card bordered={false} className="supervision-template-card">
-                <div className="supervision-template-card-head supervision-template-card-head-compact">
-                  <div>
-                    <span className="supervision-template-kicker">维度管理</span>
-                    <strong>管理模板的评价维度和层级关系</strong>
-                  </div>
-                  <Button type="primary" icon={<PlusOutlined />} onClick={() => openDimensionModal()}>
-                    新增维度
-                  </Button>
-                </div>
-                <Table
-                  rowKey="id"
-                  columns={dimensionColumns}
-                  dataSource={activeTemplate.dimensions}
-                  pagination={false}
-                  size="middle"
-                  scroll={{ x: 920 }}
-                />
-              </Card>
-
-              <Card bordered={false} className="supervision-template-card">
-                <div className="supervision-template-card-head supervision-template-card-head-compact">
-                  <div>
-                    <span className="supervision-template-kicker">指标管理</span>
-                    <strong>维护每个维度下可评分、可选择的督导指标</strong>
-                  </div>
-                  <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    disabled={!activeTemplate.dimensions.length}
-                    onClick={() => openIndicatorModal()}
-                  >
-                    新增指标
-                  </Button>
-                </div>
-                <div className="supervision-template-toolbar">
-                  <Input
-                    allowClear
-                    prefix={<SearchOutlined />}
-                    placeholder="搜索指标编码、名称或维度"
-                    value={indicatorKeyword}
-                    onChange={(event) => setIndicatorKeyword(event.target.value)}
-                  />
-                  <Select
-                    allowClear
-                    placeholder="按维度筛选"
-                    value={indicatorDimensionId}
-                    options={dimensionOptions}
-                    onChange={setIndicatorDimensionId}
-                  />
-                  <Tooltip title="刷新">
-                    <Button shape="circle" icon={<ReloadOutlined />} onClick={refreshData} />
-                  </Tooltip>
-                </div>
-                <Table
-                  rowKey="id"
-                  columns={indicatorColumns}
-                  dataSource={filteredIndicators}
-                  size="middle"
-                  scroll={{ x: 1280 }}
-                  pagination={{ pageSize: 10, showTotal: (total) => `共 ${total} 条` }}
-                />
-              </Card>
-            </>
+            renderTemplateDetail()
           ) : (
-            <Card bordered={false} className="supervision-template-card">
+            <Card variant="borderless" className="supervision-template-card">
               <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无督导模板">
                 <Button type="primary" icon={<PlusOutlined />} onClick={() => openTemplateDrawer('create')}>
                   新增第一个模板

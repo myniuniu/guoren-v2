@@ -222,6 +222,7 @@ const APP_HASH_ROUTE_PAGES = new Set([
   'capability-model',
   'capability-model-full',
   'resource-recommendation',
+  'supervision-template',
 ]);
 
 function replaceAppHash(nextHash = '') {
@@ -258,6 +259,10 @@ function buildPersistentHashRoute(page, knowledgeGraphEntry, capabilityModelEntr
 
   if (page === 'resource-recommendation') {
     return 'resource-recommendation';
+  }
+
+  if (page === 'supervision-template') {
+    return 'supervision-template';
   }
 
   return '';
@@ -1146,6 +1151,19 @@ function App({ onLogout }) {
   useEffect(() => {
     sceneSiderWidthRef.current = sceneSiderWidth;
   }, [sceneSiderWidth]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const handleHashRouteChange = () => {
+      const route = parseHashRoute(window.location.hash);
+      if (route.page !== 'supervision-template') return;
+      setCurrentPage('supervision-template');
+      setActiveIconKey('supervision-template');
+      setSelectedKeys(['supervision-template']);
+    };
+    window.addEventListener('hashchange', handleHashRouteChange);
+    return () => window.removeEventListener('hashchange', handleHashRouteChange);
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
