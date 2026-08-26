@@ -89,6 +89,7 @@ import SceneTemplateModule from './scene/SceneTemplateModule';
 import CapabilityModelModule from './capabilityModel/CapabilityModelModule';
 import TeacherEvaluationModule from './teacherEvaluation/TeacherEvaluationModule';
 import TeacherEvaluationSchemeModule from './teacherEvaluation/TeacherEvaluationSchemeModule';
+import SupervisionTemplateModule from './supervisionTemplate/SupervisionTemplateModule';
 import TeacherDevelopmentModule from './teacherDevelopment/TeacherDevelopmentModule';
 import TeacherPortraitModule from './teacherPortrait/TeacherPortraitModule';
 import ResourceRecommendationModule from './resourceRecommendation/ResourceRecommendationModule';
@@ -158,10 +159,15 @@ function persistIconBarWidth(width) {
 }
 
 function getDefaultSceneSiderWidth() {
-  return 220;
+  return 288;
+}
+
+function isLegacyDefaultSceneSiderWidth(value) {
+  return [188, 220, 252].includes(Number(value));
 }
 
 function getBoundedSceneSiderWidth(value) {
+  if (value == null || value === '') return getDefaultSceneSiderWidth();
   const width = Number(value);
   if (!Number.isFinite(width)) return getDefaultSceneSiderWidth();
   return Math.max(188, Math.min(420, Math.round(width)));
@@ -170,7 +176,11 @@ function getBoundedSceneSiderWidth(value) {
 function loadSceneSiderWidth() {
   if (typeof window === 'undefined') return getDefaultSceneSiderWidth();
   try {
-    return getBoundedSceneSiderWidth(window.localStorage.getItem(SCENE_SIDER_WIDTH_STORAGE_KEY));
+    const storedWidth = window.localStorage.getItem(SCENE_SIDER_WIDTH_STORAGE_KEY);
+    if (isLegacyDefaultSceneSiderWidth(storedWidth)) {
+      return getDefaultSceneSiderWidth();
+    }
+    return getBoundedSceneSiderWidth(storedWidth);
   } catch {
     return getDefaultSceneSiderWidth();
   }
@@ -341,6 +351,7 @@ const iconBarAccentColorMap = Object.freeze({
   'my-profile': '#ec4899',
   'teacher-portrait': '#3b82f6',
   'teacher-development': '#14b8a6',
+  'supervision-template': '#0284c7',
   'teacher-evaluation-schemes': '#8b5cf6',
   'teacher-evaluation': '#ef4444',
   'capability-model': '#0f766e',
@@ -381,6 +392,7 @@ const baseIconBarItems = [
   { key: 'lucky', icon: <ThunderboltOutlined />, label: 'lucky' },
   { key: 'my-space', icon: <AppstoreOutlined />, label: '空间', active: true },
   { key: 'resource-lib', icon: <BookOutlined />, label: '资料库' },
+  { key: 'solution-showroom', icon: <RocketOutlined />, label: '门户' },
   { key: 'resource-recommendation', icon: <ReadOutlined />, label: '推荐' },
   { key: 'knowledge-space', icon: <ClusterOutlined />, label: '知识空间' },
   { key: 'messages', icon: <MessageOutlined />, label: '消息' },
@@ -411,11 +423,11 @@ const baseIconBarItems = [
   { key: 'my-profile', icon: <IdcardOutlined />, label: '我的档案' },
   { key: 'teacher-portrait', icon: <SolutionOutlined />, label: '教师画像' },
   { key: 'teacher-development', icon: <BarChartOutlined />, label: '教师发展' },
+  { key: 'supervision-template', icon: <AuditOutlined />, label: '督导模板' },
   { key: 'teacher-evaluation-schemes', icon: <FileTextOutlined />, label: '评价方案' },
   { key: 'teacher-evaluation', icon: <AuditOutlined />, label: '教师评价' },
   { key: 'capability-model', icon: <AppstoreOutlined />, label: '能力模型' },
   { key: 'industry-roles', icon: <BranchesOutlined />, label: '岗位序列' },
-  { key: 'solution-showroom', icon: <RocketOutlined />, label: '样板间' },
   { key: 'solution-management', icon: <AppstoreOutlined />, label: '解决方案' },
   { key: 'package-management', icon: <TagsOutlined />, label: '套餐管理' },
   { key: 'tenant-management', icon: <BankOutlined />, label: '租户管理' },
@@ -1453,6 +1465,8 @@ function App({ onLogout }) {
       setCurrentPage('teacher-portrait');
     } else if (key === 'teacher-development') {
       setCurrentPage('teacher-development');
+    } else if (key === 'supervision-template') {
+      setCurrentPage('supervision-template');
     } else if (key === 'teacher-evaluation-schemes') {
       setCurrentPage('teacher-evaluation-schemes');
     } else if (key === 'teacher-evaluation') {
@@ -1511,6 +1525,7 @@ function App({ onLogout }) {
       currentPage === 'my-profile' ||
       currentPage === 'teacher-portrait' ||
       currentPage === 'teacher-development' ||
+      currentPage === 'supervision-template' ||
       currentPage === 'teacher-evaluation-schemes' ||
       currentPage === 'teacher-evaluation' ||
       currentPage === 'capability-model' ||
@@ -1582,7 +1597,7 @@ function App({ onLogout }) {
             <TrophyOutlined />
             L3 共创者
           </span>
-          <span className="account-points-note">果仁积分</span>
+          <span className="account-points-note">通答积分</span>
         </div>
         <div className="account-points-main">
           <div>
@@ -1832,6 +1847,8 @@ function App({ onLogout }) {
         />
       ) : currentPage === 'teacher-development' ? (
         <TeacherDevelopmentModule />
+      ) : currentPage === 'supervision-template' ? (
+        <SupervisionTemplateModule />
       ) : currentPage === 'teacher-evaluation-schemes' ? (
         <TeacherEvaluationSchemeModule />
       ) : currentPage === 'teacher-evaluation' ? (

@@ -12,6 +12,7 @@ const BUILT_IN_SYNC_KEY = 'gr.scene.builtin-sync.v11';
 const STORE_CHANGE_EVENT = 'gr:scene-store-change';
 const VERSION_STORAGE_KEY = 'guoren_version_data';
 const DEFAULT_SCENE_GROUP_NAME = '人工智能通识体系';
+const ORG_TRAINING_MENU_LABEL = '培训（学习公社）';
 
 export const SCENE_TYPE_OPTIONS = [
   { value: 'TEACHING', label: '教学场景' },
@@ -45,7 +46,7 @@ export const DEFAULT_SCENE_MENU_GROUPS = [
     children: [
       { key: 'teaching-research', label: '教研空间' },
       { key: 'course-creation-center', label: '课程创作中心' },
-      { key: 'org-training', label: '组织培训' },
+      { key: 'org-training', label: ORG_TRAINING_MENU_LABEL },
     ],
   },
 ];
@@ -672,6 +673,14 @@ function getDefaultSceneMenuOption(value) {
   return SCENE_MENU_OPTIONS.find((item) => item.value === value) || null;
 }
 
+function getSceneMenuCategoryDisplayLabel(item = {}, record = null) {
+  const recordLabel = trimToNull(record?.label);
+  if (item.key === 'org-training' && (!recordLabel || recordLabel === '组织培训')) {
+    return ORG_TRAINING_MENU_LABEL;
+  }
+  return recordLabel || item.label || item.key;
+}
+
 function normalizeSceneMenuCategoryRecord(input = {}) {
   const key = trimToNull(input.key || input.value || input.menuKey);
   if (!key) return null;
@@ -722,7 +731,7 @@ export function listSceneMenuGroups() {
           return {
             ...item,
             value: item.key,
-            label: record?.label || item.label,
+            label: getSceneMenuCategoryDisplayLabel(item, record),
             builtIn: true,
           };
         })

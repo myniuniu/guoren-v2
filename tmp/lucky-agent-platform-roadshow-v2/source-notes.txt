@@ -1,0 +1,19 @@
+Lucky 智能体建设平台路演 v2 资料来源
+
+- 用户提供的路演计划与补充要求: 用户提供的路演计划与补充要求（本对话）
+- AI 原生业务执行模式本地文档: /Users/zhanghl/Documents/GitHub/guoren-v2/docs/ai-native-driven-system-use-cases.md
+- AI 原生平台定位本地文档: /Users/zhanghl/Documents/GitHub/guoren-v2/docs/guoren-vs-learnbuddy-ai-native-platform.md
+- Lucky 模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/lucky/LuckyModule.jsx
+- 智搭模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/quickBuild/QuickBuildModule.jsx
+- 资料库模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/resourceLib/ResourceLibrary.jsx
+- 资料库本地存储与目录映射源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/resourceLib/resourceLibStore.js
+- 解决方案原型模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/solutionPrototype/SolutionPrototypeModule.jsx
+- 空间与教学场景源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/TopicDetail.jsx
+- 解决方案样板间数据源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/solutionShowroom/showroomData.js
+- 用户提供人工智能教学平台参考图 1: /var/folders/b1/n7l3tg6951bg2fxcv64856x00000gn/T/codex-clipboard-149b152b-a9f3-46b5-b650-9833bb59d8e3.png
+- 用户提供人工智能教学平台参考图 2: /var/folders/b1/n7l3tg6951bg2fxcv64856x00000gn/T/codex-clipboard-045c5a90-5e45-4103-a96e-d1c743c1afbd.png
+- 用户提供人工智能教学平台参考图 3: /var/folders/b1/n7l3tg6951bg2fxcv64856x00000gn/T/codex-clipboard-48052a4b-3632-4796-b381-46cc82e6faea.png
+- 用户提供人工智能教学平台参考图 4: /var/folders/b1/n7l3tg6951bg2fxcv64856x00000gn/T/codex-clipboard-607e9416-7674-4dba-91be-15d5a4c0b775.png
+- 用户提供人工智能教学平台参考图 5: /var/folders/b1/n7l3tg6951bg2fxcv64856x00000gn/T/codex-clipboard-eb583dcd-848d-49ac-8dea-1edd799ac397.png
+
+No external web sources or third-party visual assets were used.

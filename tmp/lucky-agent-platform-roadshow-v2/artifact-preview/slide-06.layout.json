@@ -1,0 +1,910 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/4bgjlj",
+    "id": "4bgjlj",
+    "slide": 6,
+    "layoutId": "84faab48-cf86-43b8-b7f9-d2a6b904b5f5",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "fb91e23d-c6a5-47f8-8c1a-480f9f4f4dbe",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "PingFang SC"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "84faab48-cf86-43b8-b7f9-d2a6b904b5f5",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "fb91e23d-c6a5-47f8-8c1a-480f9f4f4dbe",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "fb91e23d-c6a5-47f8-8c1a-480f9f4f4dbe",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/pgb6dczy",
+      "id": "1",
+      "bbox": [
+        52,
+        42,
+        420,
+        28
+      ],
+      "geometry": "rect",
+      "text": "业务示例",
+      "textPreview": "业务示例",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "PingFang SC",
+        "color": "#666666",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "业务示例"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "业务示例",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC",
+            "color": "#666666",
+            "bold": true,
+            "alignment": "left",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "业务示例",
+              "fontSize": 20,
+              "typeface": "PingFang SC",
+              "color": "#666666",
+              "bold": true,
+              "alignment": "left",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/2dkn2x0n",
+      "id": "2",
+      "bbox": [
+        52,
+        84,
+        1136,
+        62
+      ],
+      "geometry": "rect",
+      "text": "培训项目组织从人工协调，转向目标驱动交付",
+      "textPreview": "培训项目组织从人工协调，转向目标驱动交付",
+      "resolvedFontSize": 40,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 40,
+        "typeface": "PingFang SC",
+        "color": "#050505",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "培训项目组织从人工协调，转向目标驱动交付"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "培训项目组织从人工协调，转向目标驱动交付",
+          "lineSpacingPercent": 102000,
+          "resolvedTextStyle": {
+            "fontSize": 40,
+            "typeface": "PingFang SC",
+            "color": "#050505",
+            "bold": true,
+            "alignment": "left",
+            "lineSpacing": 1.02
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "培训项目组织从人工协调，转向目标驱动交付",
+              "fontSize": 40,
+              "typeface": "PingFang SC",
+              "color": "#050505",
+              "bold": true,
+              "alignment": "left",
+              "lineSpacing": 1.02
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/netob2h8",
+      "id": "3",
+      "bbox": [
+        52,
+        148,
+        1120,
+        42
+      ],
+      "geometry": "rect",
+      "text": "用户只表达培训目标，Lucky 负责梳理需求、生成方案、推荐资源，并在空间中推进执行。",
+      "textPreview": "用户只表达培训目标，Lucky 负责梳理需求、生成方案、推荐资源，并在空间中推进执行。",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "PingFang SC",
+        "color": "#666666",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "用户只表达培训目标，Lucky 负责梳理需求、生成方案、推荐资源，并在空间中推进执行。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "用户只表达培训目标，Lucky 负责梳理需求、生成方案、推荐资源，并在空间中推进执行。",
+          "lineSpacingPercent": 115000,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC",
+            "color": "#666666",
+            "alignment": "left",
+            "lineSpacing": 1.15
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "用户只表达培训目标，Lucky 负责梳理需求、生成方案、推荐资源，并在空间中推进执行。",
+              "fontSize": 20,
+              "typeface": "PingFang SC",
+              "color": "#666666",
+              "alignment": "left",
+              "lineSpacing": 1.15
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/0bi50nih",
+      "id": "4",
+      "bbox": [
+        52,
+        206,
+        1176,
+        2
+      ],
+      "geometry": "rect",
+      "fillColor": "#C2C7D0",
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/1cb69sz2",
+      "id": "5",
+      "bbox": [
+        1182,
+        660,
+        46,
+        24
+      ],
+      "geometry": "rect",
+      "text": "06",
+      "textPreview": "06",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 16,
+        "typeface": "PingFang SC",
+        "color": "#8A8A8A",
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "06"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "06",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "typeface": "PingFang SC",
+            "color": "#8A8A8A",
+            "alignment": "right",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "06",
+              "fontSize": 16,
+              "typeface": "PingFang SC",
+              "color": "#8A8A8A",
+              "alignment": "right",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/e90nyx0b",
+      "id": "6",
+      "bbox": [
+        78,
+        254,
+        500,
+        300
+      ],
+      "geometry": "rect",
+      "fillColor": "#F1F1F1",
+      "lineColor": "#C2C7D0",
+      "lineWidth": 1
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/fa947ihw",
+      "id": "7",
+      "bbox": [
+        118,
+        296,
+        420,
+        38
+      ],
+      "geometry": "rect",
+      "text": "传统模式",
+      "textPreview": "传统模式",
+      "resolvedFontSize": 32,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 32,
+        "typeface": "PingFang SC",
+        "color": "#050505",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "传统模式"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "传统模式",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 32,
+            "typeface": "PingFang SC",
+            "color": "#050505",
+            "bold": true,
+            "alignment": "center",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "传统模式",
+              "fontSize": 32,
+              "typeface": "PingFang SC",
+              "color": "#050505",
+              "bold": true,
+              "alignment": "center",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/s7i5wnil",
+      "id": "8",
+      "bbox": [
+        154,
+        372,
+        348,
+        120
+      ],
+      "geometry": "rect",
+      "text": "需求方提出需求\n教研设计培训计划\n教务创建项目和课程\n运营通知、签到、资料、作业和反馈",
+      "textPreview": "需求方提出需求 | 教研设计培训计划 | 教务创建项目和课程 | 运营通知、签到、资料、作业和反馈",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "PingFang SC",
+        "color": "#111111",
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 4,
+        "lines": [
+          {
+            "index": 1,
+            "text": "需求方提出需求"
+          },
+          {
+            "index": 2,
+            "text": "教研设计培训计划"
+          },
+          {
+            "index": 3,
+            "text": "教务创建项目和课程"
+          },
+          {
+            "index": 4,
+            "text": "运营通知、签到、资料、作业和反馈"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "需求方提出需求",
+          "lineSpacingPercent": 134000,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "alignment": "center",
+            "lineSpacing": 1.34
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "需求方提出需求",
+              "fontSize": 20,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "alignment": "center",
+              "lineSpacing": 1.34
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "教研设计培训计划",
+          "lineSpacingPercent": 134000,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "alignment": "center",
+            "lineSpacing": 1.34
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "教研设计培训计划",
+              "fontSize": 20,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "alignment": "center",
+              "lineSpacing": 1.34
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 3,
+          "text": "教务创建项目和课程",
+          "lineSpacingPercent": 134000,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "alignment": "center",
+            "lineSpacing": 1.34
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "教务创建项目和课程",
+              "fontSize": 20,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "alignment": "center",
+              "lineSpacing": 1.34
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 4,
+          "text": "运营通知、签到、资料、作业和反馈",
+          "lineSpacingPercent": 134000,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "alignment": "center",
+            "lineSpacing": 1.34
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "运营通知、签到、资料、作业和反馈",
+              "fontSize": 20,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "alignment": "center",
+              "lineSpacing": 1.34
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/d8rm5sz6",
+      "id": "9",
+      "bbox": [
+        698,
+        254,
+        500,
+        300
+      ],
+      "geometry": "rect",
+      "fillColor": "#050505",
+      "lineColor": "#050505",
+      "lineWidth": 1
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ts7apwv2",
+      "id": "10",
+      "bbox": [
+        738,
+        296,
+        420,
+        38
+      ],
+      "geometry": "rect",
+      "text": "AI 原生模式",
+      "textPreview": "AI 原生模式",
+      "resolvedFontSize": 32,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 32,
+        "typeface": "PingFang SC",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "AI 原生模式"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "AI 原生模式",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 32,
+            "typeface": "PingFang SC",
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "center",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "AI 原生模式",
+              "fontSize": 32,
+              "typeface": "PingFang SC",
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "center",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/srytgreh",
+      "id": "11",
+      "bbox": [
+        774,
+        372,
+        348,
+        120
+      ],
+      "geometry": "rect",
+      "text": "用户与 Lucky 多轮对话\nLucky 生成培训计划\n推荐课程、讲师和日程\n确认后创建空间、课程和服务清单",
+      "textPreview": "用户与 Lucky 多轮对话 | Lucky 生成培训计划 | 推荐课程、讲师和日程 | 确认后创建空间、课程和服务清单",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "PingFang SC",
+        "color": "#EEEEEE",
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 4,
+        "lines": [
+          {
+            "index": 1,
+            "text": "用户与 Lucky 多轮对话"
+          },
+          {
+            "index": 2,
+            "text": "Lucky 生成培训计划"
+          },
+          {
+            "index": 3,
+            "text": "推荐课程、讲师和日程"
+          },
+          {
+            "index": 4,
+            "text": "确认后创建空间、课程和服务清单"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "用户与 Lucky 多轮对话",
+          "lineSpacingPercent": 134000,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC",
+            "color": "#EEEEEE",
+            "alignment": "center",
+            "lineSpacing": 1.34
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "用户与 Lucky 多轮对话",
+              "fontSize": 20,
+              "typeface": "PingFang SC",
+              "color": "#EEEEEE",
+              "alignment": "center",
+              "lineSpacing": 1.34
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Lucky 生成培训计划",
+          "lineSpacingPercent": 134000,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC",
+            "color": "#EEEEEE",
+            "alignment": "center",
+            "lineSpacing": 1.34
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Lucky 生成培训计划",
+              "fontSize": 20,
+              "typeface": "PingFang SC",
+              "color": "#EEEEEE",
+              "alignment": "center",
+              "lineSpacing": 1.34
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 3,
+          "text": "推荐课程、讲师和日程",
+          "lineSpacingPercent": 134000,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC",
+            "color": "#EEEEEE",
+            "alignment": "center",
+            "lineSpacing": 1.34
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "推荐课程、讲师和日程",
+              "fontSize": 20,
+              "typeface": "PingFang SC",
+              "color": "#EEEEEE",
+              "alignment": "center",
+              "lineSpacing": 1.34
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 4,
+          "text": "确认后创建空间、课程和服务清单",
+          "lineSpacingPercent": 134000,
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "PingFang SC",
+            "color": "#EEEEEE",
+            "alignment": "center",
+            "lineSpacing": 1.34
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "确认后创建空间、课程和服务清单",
+              "fontSize": 20,
+              "typeface": "PingFang SC",
+              "color": "#EEEEEE",
+              "alignment": "center",
+              "lineSpacing": 1.34
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/rqpsn6dw",
+      "id": "12",
+      "bbox": [
+        132,
+        620,
+        1016,
+        30
+      ],
+      "geometry": "rect",
+      "text": "业务价值：减少跨部门反复沟通，让项目从“人工协调型流程”变成“目标驱动型交付”。",
+      "textPreview": "业务价值：减少跨部门反复沟通，让项目从“人工协调型流程”变成“目标驱动型交付”。",
+      "resolvedFontSize": 23,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 23,
+        "typeface": "PingFang SC",
+        "color": "#111111",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "wrap": "square",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "业务价值：减少跨部门反复沟通，让项目从“人工协调型流程”变成“目标驱动型交付”。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "业务价值：减少跨部门反复沟通，让项目从“人工协调型流程”变成“目标驱动型交付”。",
+          "lineSpacingPercent": 112000,
+          "resolvedTextStyle": {
+            "fontSize": 23,
+            "typeface": "PingFang SC",
+            "color": "#111111",
+            "bold": true,
+            "alignment": "center",
+            "lineSpacing": 1.12
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "业务价值：减少跨部门反复沟通，让项目从“人工协调型流程”变成“目标驱动型交付”。",
+              "fontSize": 23,
+              "typeface": "PingFang SC",
+              "color": "#111111",
+              "bold": true,
+              "alignment": "center",
+              "lineSpacing": 1.12
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

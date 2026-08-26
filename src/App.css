@@ -1099,6 +1099,10 @@
   transition: color 0.18s ease, transform 0.18s ease;
 }
 
+.sider-menu .ant-menu-item .ant-menu-title-content {
+  min-width: 0;
+}
+
 .scene-shortcut-menu-label {
   display: inline-block;
   max-width: 132px;
@@ -1109,6 +1113,7 @@
 }
 
 .scene-menu-item-label {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1117,6 +1122,7 @@
 }
 
 .scene-menu-item-text {
+  flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1124,9 +1130,13 @@
 }
 
 .scene-menu-more-btn {
+  position: absolute;
+  top: 50%;
+  right: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex: 0 0 auto;
   width: 22px;
   height: 22px;
   padding: 0;
@@ -1136,6 +1146,7 @@
   color: #7b8798;
   opacity: 0;
   cursor: pointer;
+  transform: translateY(-50%);
   transition: opacity 0.18s ease, color 0.18s ease, background 0.18s ease;
 }
 

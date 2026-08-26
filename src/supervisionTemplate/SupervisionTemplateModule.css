@@ -1,0 +1,339 @@
+.supervision-template-module {
+  background: #f6f8fc;
+}
+
+.supervision-template-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+}
+
+.supervision-template-loading {
+  width: 100%;
+  padding: 56px 0;
+}
+
+.supervision-template-alert,
+.supervision-template-card {
+  border-radius: 12px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+}
+
+.supervision-template-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.supervision-template-overview-card {
+  min-height: 76px;
+  border: 1px solid #e8edf5;
+  border-radius: 10px;
+}
+
+.supervision-template-overview-card .ant-card-body {
+  height: 100%;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.supervision-template-overview-card span {
+  color: #667085;
+  font-size: 13px;
+}
+
+.supervision-template-overview-card strong {
+  display: block;
+  margin-top: 6px;
+  color: #172033;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.supervision-template-overview-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #edf4ff;
+  color: #1677ff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex: 0 0 auto;
+}
+
+.supervision-template-overview-card.is-green {
+  border-color: #b7ebc9;
+}
+
+.supervision-template-overview-card.is-green strong {
+  color: #15945b;
+}
+
+.supervision-template-overview-card.is-green .supervision-template-overview-icon {
+  background: #eafaf1;
+  color: #18a058;
+}
+
+.supervision-template-overview-card.is-orange {
+  border-color: #ffd8a8;
+}
+
+.supervision-template-overview-card.is-orange strong {
+  color: #d97706;
+}
+
+.supervision-template-overview-card.is-orange .supervision-template-overview-icon {
+  background: #fff4e5;
+  color: #f59e0b;
+}
+
+.supervision-template-overview-card.is-gray .supervision-template-overview-icon {
+  background: #f3f4f6;
+  color: #667085;
+}
+
+.supervision-template-overview-card.is-plain {
+  min-height: 58px;
+}
+
+.supervision-template-overview-card.is-plain .ant-card-body {
+  justify-content: center;
+  text-align: center;
+}
+
+.supervision-template-overview-card.is-plain strong {
+  font-size: 20px;
+}
+
+.supervision-template-list-card .ant-card-body {
+  padding: 18px;
+}
+
+.supervision-template-list-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.supervision-template-list-filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+}
+
+.supervision-template-list-filters .ant-input-affix-wrapper {
+  width: 340px;
+}
+
+.supervision-template-list-filters .ant-select {
+  width: 150px;
+}
+
+.supervision-template-name-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.supervision-template-name-cell strong {
+  color: #172033;
+  font-size: 14px;
+}
+
+.supervision-template-name-cell span {
+  color: #667085;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.supervision-template-row-active > td {
+  background: #f5f9ff !important;
+}
+
+.supervision-template-card-head,
+.supervision-template-toolbar,
+.supervision-template-form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.supervision-template-card-head {
+  margin-bottom: 16px;
+}
+
+.supervision-template-card-head > div {
+  min-width: 0;
+}
+
+.supervision-template-card-head h2 {
+  margin: 6px 0 0;
+  color: #172033;
+  font-size: 22px;
+  line-height: 1.35;
+}
+
+.supervision-template-card-head-compact {
+  align-items: flex-start;
+}
+
+.supervision-template-card-head-compact strong {
+  display: block;
+  margin-top: 4px;
+  color: #172033;
+  font-size: 15px;
+}
+
+.supervision-template-kicker {
+  color: #667085;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.supervision-template-selector {
+  min-width: 320px;
+}
+
+.supervision-template-description {
+  margin: 0 0 16px;
+  max-width: 980px;
+  color: #475467;
+  line-height: 1.8;
+}
+
+.supervision-template-info-grid,
+.supervision-template-form-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.supervision-template-info-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.supervision-template-form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.supervision-template-form-grid-compact {
+  gap: 12px;
+}
+
+.supervision-template-info-item {
+  min-width: 0;
+  padding: 14px 16px;
+  border: 1px solid #e3eaf5;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.supervision-template-info-item span {
+  color: #667085;
+  font-size: 12px;
+}
+
+.supervision-template-info-item strong {
+  min-width: 0;
+  color: #172033;
+  font-size: 14px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.supervision-template-stat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.supervision-template-toolbar {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.supervision-template-toolbar .ant-input-affix-wrapper {
+  width: min(360px, 100%);
+}
+
+.supervision-template-toolbar .ant-select {
+  min-width: 220px;
+}
+
+.supervision-template-form-footer {
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.supervision-template-full-width {
+  width: 100%;
+}
+
+.supervision-template-card .ant-table-wrapper {
+  min-width: 0;
+}
+
+.supervision-template-card .ant-btn-link {
+  padding-inline: 4px;
+}
+
+@media (max-width: 900px) {
+  .supervision-template-overview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .supervision-template-list-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .supervision-template-list-toolbar > .ant-space,
+  .supervision-template-list-toolbar > .ant-space .ant-space-item,
+  .supervision-template-list-toolbar > .ant-space .ant-btn,
+  .supervision-template-list-filters .ant-input-affix-wrapper,
+  .supervision-template-list-filters .ant-select {
+    width: 100%;
+  }
+
+  .supervision-template-card-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .supervision-template-selector,
+  .supervision-template-card-head .ant-space,
+  .supervision-template-card-head .ant-space-item,
+  .supervision-template-card-head .ant-btn {
+    width: 100%;
+  }
+
+  .supervision-template-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .supervision-template-overview-grid {
+    grid-template-columns: 1fr;
+  }
+}

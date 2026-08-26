@@ -1287,7 +1287,7 @@ function TenantPrototypeModule({ showroomEntry = null, onBackToShowroom }) {
 
   const openShowroomTenantConfig = () => {
     if (!showroomTenant) {
-      message.warning('未找到关联租户');
+      message.warning('暂未找到关联示范空间');
       return;
     }
     setActiveTenantId(showroomTenant.id);
@@ -1308,22 +1308,22 @@ function TenantPrototypeModule({ showroomEntry = null, onBackToShowroom }) {
           ...(tenant.domainConfig || {}),
         }
       : null;
-    const primaryDomain = domainConfig?.domains?.[0]?.domain || activeShowroom.domain;
+    const primaryDomain = activeShowroom.domain || domainConfig?.domains?.[0]?.domain;
     const tenantDisplayName = tenant.name || activeShowroom.tenantName;
     const tenantDisplayCode = tenant.code || activeShowroom.tenantCode;
     const servicePeriod = tenant.serviceStart && tenant.serviceEnd
       ? `${tenant.serviceStart} 至 ${tenant.serviceEnd}`
-      : '样板服务周期';
+      : '示范服务周期';
 
     return (
       <div className="tenant-prototype-module tenant-showroom-page" style={{ '--tenant-showroom-accent': activeShowroom.accent }}>
         <div className="tenant-showroom-header">
           <div className="tenant-showroom-head-actions">
             <Button icon={<ArrowLeftOutlined />} onClick={onBackToShowroom}>
-              返回门户
+              返回方案首页
             </Button>
             <Button type="primary" icon={<SettingOutlined />} onClick={openShowroomTenantConfig} disabled={!showroomTenant}>
-              租户配置
+              方案参数
             </Button>
           </div>
 
@@ -1340,22 +1340,46 @@ function TenantPrototypeModule({ showroomEntry = null, onBackToShowroom }) {
               <Tag>{activeShowroom.region} · {activeShowroom.industry}</Tag>
               {renderStatusTag(TENANT_STATUS_OPTIONS, tenant.status || 'ACTIVE')}
             </Space>
+            <div className="tenant-showroom-hero-modules">
+              {activeShowroom.modules.slice(0, 5).map((moduleName) => (
+                <span key={moduleName}>{moduleName}</span>
+              ))}
+            </div>
           </div>
 
-          <div className="tenant-showroom-identity">
-            <div>
-              <span>租户编码</span>
-              <strong>{tenantDisplayCode}</strong>
+          <aside className="tenant-showroom-hero-panel">
+            <div className="tenant-showroom-hero-panel-head">
+              <span>平台入口</span>
+              <strong>{loginConfig.platformName}</strong>
             </div>
-            <div>
-              <span>访问域名</span>
-              <strong title={primaryDomain}>{primaryDomain}</strong>
+            <div className="tenant-showroom-hero-login">
+              <div>
+                <span>{loginConfig.welcomeText}</span>
+                <strong>{loginConfig.heroTitle}</strong>
+                <small>{loginConfig.heroSubtitle}</small>
+              </div>
+              <div className="tenant-showroom-hero-login-form">
+                <span>{loginConfig.defaultMethod === 'account' ? '账号密码登录' : '手机号登录'}</span>
+                <i />
+                <i className="is-short" />
+                <b>立即登录</b>
+              </div>
             </div>
-            <div>
-              <span>客户成功</span>
-              <strong>{tenant.successOwner || activeShowroom.owner}</strong>
+            <div className="tenant-showroom-identity">
+              <div>
+                <span>空间编号</span>
+                <strong>{tenantDisplayCode}</strong>
+              </div>
+              <div>
+                <span>访问地址</span>
+                <strong title={primaryDomain}>{primaryDomain}</strong>
+              </div>
+              <div>
+                <span>服务团队</span>
+                <strong>{tenant.successOwner || activeShowroom.owner}</strong>
+              </div>
             </div>
-          </div>
+          </aside>
         </div>
 
         <div className="tenant-showroom-summary">
@@ -1372,7 +1396,7 @@ function TenantPrototypeModule({ showroomEntry = null, onBackToShowroom }) {
           <section className="tenant-showroom-panel tenant-showroom-panel-main">
             <div className="tenant-showroom-panel-head">
               <div>
-                <span>解决方案承载</span>
+                <span>方案能力</span>
                 <h2>{activeShowroom.signal}</h2>
               </div>
               <Tag color="purple">{packageItem?.name || activeShowroom.packageName}</Tag>
@@ -1383,7 +1407,7 @@ function TenantPrototypeModule({ showroomEntry = null, onBackToShowroom }) {
                 <div key={moduleName} className="tenant-showroom-module">
                   <span className="tenant-showroom-module-icon">{getShowroomModuleIcon(moduleName)}</span>
                   <strong>{moduleName}</strong>
-                  <small>已纳入样板租户</small>
+                  <small>已纳入方案体验</small>
                 </div>
               ))}
             </div>
@@ -1392,7 +1416,7 @@ function TenantPrototypeModule({ showroomEntry = null, onBackToShowroom }) {
           <aside className="tenant-showroom-panel tenant-showroom-side">
             <div className="tenant-showroom-panel-head">
               <div>
-                <span>服务权益</span>
+                <span>服务规格</span>
                 <h2>{packageItem?.code || activeShowroom.packageCode}</h2>
               </div>
             </div>
@@ -1419,7 +1443,7 @@ function TenantPrototypeModule({ showroomEntry = null, onBackToShowroom }) {
           <section className="tenant-showroom-panel">
             <div className="tenant-showroom-panel-head">
               <div>
-                <span>运营流程</span>
+                <span>实施路径</span>
                 <h2>{activeShowroom.scenario}落地路径</h2>
               </div>
             </div>
@@ -1436,8 +1460,8 @@ function TenantPrototypeModule({ showroomEntry = null, onBackToShowroom }) {
           <section className="tenant-showroom-panel tenant-showroom-ops">
             <div className="tenant-showroom-panel-head">
               <div>
-                <span>运营待办</span>
-                <h2>当前租户信号</h2>
+                <span>服务动态</span>
+                <h2>当前应用信号</h2>
               </div>
               <ClockCircleOutlined />
             </div>
@@ -1454,7 +1478,7 @@ function TenantPrototypeModule({ showroomEntry = null, onBackToShowroom }) {
           <section className="tenant-showroom-panel tenant-showroom-login-panel">
             <div className="tenant-showroom-panel-head">
               <div>
-                <span>入口体验</span>
+                <span>平台入口</span>
                 <h2>{loginConfig.platformName}</h2>
               </div>
               <LoginOutlined />
@@ -1477,8 +1501,8 @@ function TenantPrototypeModule({ showroomEntry = null, onBackToShowroom }) {
           <section className="tenant-showroom-panel tenant-showroom-health">
             <div className="tenant-showroom-panel-head">
               <div>
-                <span>样板健康度</span>
-                <h2>交付状态</h2>
+                <span>方案成熟度</span>
+                <h2>能力就绪度</h2>
               </div>
               <CheckCircleOutlined />
             </div>
@@ -1488,7 +1512,7 @@ function TenantPrototypeModule({ showroomEntry = null, onBackToShowroom }) {
                 <Progress percent={96} showInfo={false} strokeColor={activeShowroom.accent} />
               </div>
               <div>
-                <span>运营活跃度</span>
+                <span>应用活跃度</span>
                 <Progress percent={88} showInfo={false} strokeColor="#0f766e" />
               </div>
               <div>

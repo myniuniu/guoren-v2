@@ -1,0 +1,508 @@
+{"kind":"deck","id":"pr/a2j21e","name":"Deck"}
+{"kind":"layout","layoutId":"fb91e23d-c6a5-47f8-8c1a-480f9f4f4dbe","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"84faab48-cf86-43b8-b7f9-d2a6b904b5f5","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/jm5dxd","slide":1,"title":"智能体建设平台路演","textShapes":9}
+{"kind":"textbox","id":"sh/a5k36x8j","slide":1,"text":"智能体建设平台路演","textPreview":"智能体建设平台路演","textChars":9,"textLines":1,"bbox":[52,56,480,32]}
+{"kind":"textbox","id":"sh/x8bm1c7u","slide":1,"text":"Lucky 智能体建设平台","textPreview":"Lucky 智能体建设平台","textChars":13,"textLines":1,"bbox":[52,150,900,78]}
+{"kind":"textbox","id":"sh/c72l87q9","slide":1,"text":"内部建设智能体，外部交付智能体；用资料库和智搭把 AI 能力变成可运行、可复用、可销售的业务应用。","textPreview":"内部建设智能体，外部交付智能体；用资料库和智搭把 AI 能力变成可运行、可复用、可销售的业务应用。","textChars":49,"textLines":1,"bbox":[54,260,920,78]}
+{"kind":"shape","id":"sh/n2t4bips","slide":1,"bbox":[964,52,196,520]}
+{"kind":"textbox","id":"sh/21032x87","slide":1,"text":"AGENT\nBUILDING\nPLATFORM","textPreview":"AGENT | BUILDING | PLATFORM","textChars":23,"textLines":3,"bbox":[990,246,144,116]}
+{"kind":"shape","id":"sh/p4bmds7y","slide":1,"bbox":[54,418,104,46]}
+{"kind":"textbox","id":"sh/o32l4nqd","slide":1,"text":"内用","textPreview":"内用","textChars":2,"textLines":1,"bbox":[66,431,80,18]}
+{"kind":"shape","id":"sh/7yd47mpw","slide":1,"bbox":[180,418,104,46]}
+{"kind":"textbox","id":"sh/mx4neh8r","slide":1,"text":"外售","textPreview":"外售","textChars":2,"textLines":1,"bbox":[192,431,80,18]}
+{"kind":"shape","id":"sh/8rq9g7a9","slide":1,"bbox":[306,418,104,46]}
+{"kind":"textbox","id":"sh/tszq9cbu","slide":1,"text":"智搭","textPreview":"智搭","textChars":2,"textLines":1,"bbox":[318,431,80,18]}
+{"kind":"shape","id":"sh/6587ehsj","slide":1,"bbox":[432,418,104,46]}
+{"kind":"textbox","id":"sh/7qh872t4","slide":1,"text":"私有化","textPreview":"私有化","textChars":3,"textLines":1,"bbox":[444,431,80,18]}
+{"kind":"textbox","id":"sh/k36pc7ad","slide":1,"text":"Lucky + 资料库 + 空间 + 智搭","textPreview":"Lucky + 资料库 + 空间 + 智搭","textChars":21,"textLines":1,"bbox":[54,650,360,24]}
+{"kind":"notes","id":"nt/jm5dxd","slide":1,"text":"Open with the platform positioning: Lucky supports internal agent construction and external commercialization.\n\n[Sources]\n- 用户提供的路演计划与补充要求: 用户提供的路演计划与补充要求（本对话）\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/chrfdj","slide":2,"title":"为什么现在","textShapes":11}
+{"kind":"textbox","id":"sh/1w3ydk3a","slide":2,"text":"为什么现在","textPreview":"为什么现在","textChars":5,"textLines":1,"bbox":[52,42,420,28]}
+{"kind":"textbox","id":"sh/e9cfip4j","slide":2,"text":"公司需要掌握自己的智能体建设能力","textPreview":"公司需要掌握自己的智能体建设能力","textChars":16,"textLines":1,"bbox":[52,84,1136,62]}
+{"kind":"textbox","id":"sh/falgbal4","slide":2,"text":"采购一个聊天入口解决不了长期问题；真正的竞争力来自可沉淀、可复用、可交付的智能体资产。","textPreview":"采购一个聊天入口解决不了长期问题；真正的竞争力来自可沉淀、可复用、可交付的智能体资产。","textChars":43,"textLines":1,"bbox":[52,148,1120,42]}
+{"kind":"shape","id":"sh/s7uxgfmt","slide":2,"bbox":[52,206,1176,2]}
+{"kind":"textbox","id":"sh/t83y9k3y","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1182,660,46,24]}
+{"kind":"shape","id":"sh/65cfe54n","slide":2,"bbox":[76,268,324,222]}
+{"kind":"textbox","id":"sh/r6lw7al8","slide":2,"text":"业务会持续变化","textPreview":"业务会持续变化","textChars":7,"textLines":1,"bbox":[104,312,268,36]}
+{"kind":"textbox","id":"sh/c3exszmx","slide":2,"text":"培训、教研、教学、市场、客户成功等场景不断变化，需要快速生成新能力。","textPreview":"培训、教研、教学、市场、客户成功等场景不断变化，需要快速生成新能力。","textChars":34,"textLines":1,"bbox":[108,378,260,74]}
+{"kind":"shape","id":"sh/d47yl43i","slide":2,"bbox":[462,268,324,222]}
+{"kind":"textbox","id":"sh/t8zy94bm","slide":2,"text":"知识必须可控","textPreview":"知识必须可控","textChars":6,"textLines":1,"bbox":[490,312,268,36]}
+{"kind":"textbox","id":"sh/s7qxgzu1","slide":2,"text":"资料、经验、流程和客户数据要沉淀在公司自己的知识体系和权限边界内。","textPreview":"资料、经验、流程和客户数据要沉淀在公司自己的知识体系和权限边界内。","textChars":33,"textLines":1,"bbox":[494,378,260,74]}
+{"kind":"shape","id":"sh/r6hw7utg","slide":2,"bbox":[848,268,324,222]}
+{"kind":"textbox","id":"sh/65ofepcv","slide":2,"text":"交付要能复制","textPreview":"交付要能复制","textChars":6,"textLines":1,"bbox":[876,312,268,36]}
+{"kind":"textbox","id":"sh/5kfe5kba","slide":2,"text":"对外销售不能每次从零定制，需要把方案、技能和应用沉淀为模板。","textPreview":"对外销售不能每次从零定制，需要把方案、技能和应用沉淀为模板。","textChars":30,"textLines":1,"bbox":[880,378,260,74]}
+{"kind":"shape","id":"sh/4j6xczup","slide":2,"bbox":[180,604,920,50]}
+{"kind":"textbox","id":"sh/jixw3ut4","slide":2,"text":"智能体平台的价值，是让公司从“使用 AI”升级为“建设 AI 能力”。","textPreview":"智能体平台的价值，是让公司从“使用 AI”升级为“建设 AI 能力”。","textChars":35,"textLines":1,"bbox":[208,618,864,24]}
+{"kind":"notes","id":"nt/chrfdj","slide":2,"text":"Explain why platform ownership matters before introducing Lucky modules.\n\n[Sources]\n- 用户提供的路演计划与补充要求: 用户提供的路演计划与补充要求（本对话）\n- AI 原生平台定位本地文档: /Users/zhanghl/Documents/GitHub/guoren-v2/docs/guoren-vs-learnbuddy-ai-native-platform.md\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/2hhsf2","slide":3,"title":"平台定位","textShapes":17}
+{"kind":"textbox","id":"sh/zeh8zut0","slide":3,"text":"平台定位","textPreview":"平台定位","textChars":4,"textLines":1,"bbox":[52,42,420,28]}
+{"kind":"textbox","id":"sh/kfapszal","slide":3,"text":"Lucky 是智能体建设、运营和交付平台","textPreview":"Lucky 是智能体建设、运营和交付平台","textChars":20,"textLines":1,"bbox":[52,84,1136,62]}
+{"kind":"textbox","id":"sh/l0jq14bq","slide":3,"text":"一个入口连接助理、智能体、技能、知识、空间和应用搭建，让 AI 能力进入业务执行。","textPreview":"一个入口连接助理、智能体、技能、知识、空间和应用搭建，让 AI 能力进入业务执行。","textChars":41,"textLines":1,"bbox":[52,148,1120,42]}
+{"kind":"shape","id":"sh/q987mpc3","slide":3,"bbox":[52,206,1176,2]}
+{"kind":"textbox","id":"sh/bahovuto","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1182,660,46,24]}
+{"kind":"textbox","id":"sh/cbqpoza9","slide":3,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[82,248,60,44]}
+{"kind":"shape","id":"sh/dcz6x4bu","slide":3,"bbox":[158,270,168,3]}
+{"kind":"textbox","id":"sh/25o7i5c7","slide":3,"text":"Lucky 助理","textPreview":"Lucky 助理","textChars":8,"textLines":1,"bbox":[82,326,220,34]}
+{"kind":"textbox","id":"sh/36xorats","slide":3,"text":"推理、检索资料库、操作平台功能","textPreview":"推理、检索资料库、操作平台功能","textChars":15,"textLines":1,"bbox":[82,382,220,60]}
+{"kind":"textbox","id":"sh/7i5obm14","slide":3,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[376,248,60,44]}
+{"kind":"shape","id":"sh/mhw7i10j","slide":3,"bbox":[452,270,168,3]}
+{"kind":"textbox","id":"sh/9kn6dwja","slide":3,"text":"智能体建设","textPreview":"智能体建设","textChars":5,"textLines":1,"bbox":[376,326,220,34]}
+{"kind":"textbox","id":"sh/8jepkrip","slide":3,"text":"通过对话创建角色、技能、知识和工具权限","textPreview":"通过对话创建角色、技能、知识和工具权限","textChars":19,"textLines":1,"bbox":[376,382,220,60]}
+{"kind":"textbox","id":"sh/v6pof610","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[670,248,60,44]}
+{"kind":"shape","id":"sh/ulw7m10v","slide":3,"bbox":[746,270,168,3]}
+{"kind":"textbox","id":"sh/h87qhgj6","slide":3,"text":"知识底座","textPreview":"知识底座","textChars":4,"textLines":1,"bbox":[670,326,220,34]}
+{"kind":"textbox","id":"sh/w7ypobil","slide":3,"text":"资料库与本地目录成为可引用知识范围","textPreview":"资料库与本地目录成为可引用知识范围","textChars":17,"textLines":1,"bbox":[670,382,220,60]}
+{"kind":"textbox","id":"sh/bqlo321w","slide":3,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[964,248,60,44]}
+{"kind":"shape","id":"sh/qpc7ah0b","slide":3,"bbox":[1040,270,168,3]}
+{"kind":"textbox","id":"sh/e5kripkz","slide":3,"text":"智搭应用","textPreview":"智搭应用","textChars":4,"textLines":1,"bbox":[964,326,220,34]}
+{"kind":"textbox","id":"sh/f6tsbalk","slide":3,"text":"把场景、表单、流程和工具搭成可运行应用","textPreview":"把场景、表单、流程和工具搭成可运行应用","textChars":19,"textLines":1,"bbox":[964,382,220,60]}
+{"kind":"shape","id":"sh/g729kf25","slide":3,"bbox":[202,542,876,60]}
+{"kind":"textbox","id":"sh/18badkjq","slide":3,"text":"Lucky 解决“谁来理解和执行”，智搭解决“交付成什么可运行应用”。","textPreview":"Lucky 解决“谁来理解和执行”，智搭解决“交付成什么可运行应用”。","textChars":35,"textLines":1,"bbox":[246,560,788,26]}
+{"kind":"notes","id":"nt/2hhsf2","slide":3,"text":"Define the platform's four-layer capability model.\n\n[Sources]\n- 用户提供的路演计划与补充要求: 用户提供的路演计划与补充要求（本对话）\n- Lucky 模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/lucky/LuckyModule.jsx\n- 智搭模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/quickBuild/QuickBuildModule.jsx\n- 解决方案原型模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/solutionPrototype/SolutionPrototypeModule.jsx\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/m6amu6","slide":4,"title":"双场景定位","textShapes":17}
+{"kind":"textbox","id":"sh/o3edsf6t","slide":4,"text":"双场景定位","textPreview":"双场景定位","textChars":5,"textLines":1,"bbox":[52,42,420,28]}
+{"kind":"textbox","id":"sh/325czapo","slide":4,"text":"同一套平台，同时支撑内部使用和对外销售","textPreview":"同一套平台，同时支撑内部使用和对外销售","textChars":19,"textLines":1,"bbox":[52,84,1136,62]}
+{"kind":"textbox","id":"sh/21wvq5o3","slide":4,"text":"内部先跑通智能体建设和运营机制，再沉淀为可复制、可私有化交付的外部方案。","textPreview":"内部先跑通智能体建设和运营机制，再沉淀为可复制、可私有化交付的外部方案。","textChars":36,"textLines":1,"bbox":[52,148,1120,42]}
+{"kind":"shape","id":"sh/d87u5knq","slide":4,"bbox":[52,206,1176,2]}
+{"kind":"textbox","id":"sh/c7ydwf65","slide":4,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1182,660,46,24]}
+{"kind":"shape","id":"sh/b65c3a5k","slide":4,"bbox":[104,246,494,328]}
+{"kind":"textbox","id":"sh/q5wvu5oz","slide":4,"text":"内部使用","textPreview":"内部使用","textChars":4,"textLines":1,"bbox":[150,294,402,44]}
+{"kind":"textbox","id":"sh/tc3ut076","slide":4,"text":"面向员工、部门和项目","textPreview":"面向员工、部门和项目","textChars":10,"textLines":1,"bbox":[164,356,374,30]}
+{"kind":"shape","id":"sh/sbutkv61","slide":4,"bbox":[166,430,162,38]}
+{"kind":"textbox","id":"sh/utkbyx4f","slide":4,"text":"提升效率","textPreview":"提升效率","textChars":4,"textLines":1,"bbox":[176,440,142,16]}
+{"kind":"shape","id":"sh/vutsri5k","slide":4,"bbox":[356,430,162,38]}
+{"kind":"textbox","id":"sh/wf2t0nm5","slide":4,"text":"沉淀知识","textPreview":"沉淀知识","textChars":4,"textLines":1,"bbox":[366,440,142,16]}
+{"kind":"shape","id":"sh/hgbatsnq","slide":4,"bbox":[166,488,162,38]}
+{"kind":"textbox","id":"sh/ih4b2x4b","slide":4,"text":"复用技能","textPreview":"复用技能","textChars":4,"textLines":1,"bbox":[176,498,142,16]}
+{"kind":"shape","id":"sh/jidsv25w","slide":4,"bbox":[356,488,162,38]}
+{"kind":"textbox","id":"sh/4jmt47mh","slide":4,"text":"推动任务","textPreview":"推动任务","textChars":4,"textLines":1,"bbox":[366,498,142,16]}
+{"kind":"shape","id":"sh/5kvaxcn2","slide":4,"bbox":[682,246,494,328]}
+{"kind":"textbox","id":"sh/6l4b6h47","slide":4,"text":"对外销售","textPreview":"对外销售","textChars":4,"textLines":1,"bbox":[728,294,402,44]}
+{"kind":"textbox","id":"sh/rmdsz25s","slide":4,"text":"面向客户场景和行业方案","textPreview":"面向客户场景和行业方案","textChars":11,"textLines":1,"bbox":[742,356,374,30]}
+{"kind":"shape","id":"sh/3qxsnm10","slide":4,"bbox":[744,430,162,38]}
+{"kind":"textbox","id":"sh/2porehkf","slide":4,"text":"产品化交付","textPreview":"产品化交付","textChars":5,"textLines":1,"bbox":[754,440,142,16]}
+{"kind":"shape","id":"sh/pcfapcj6","slide":4,"bbox":[934,430,162,38]}
+{"kind":"textbox","id":"sh/or69gr2l","slide":4,"text":"方案复制","textPreview":"方案复制","textChars":4,"textLines":1,"bbox":[944,440,142,16]}
+{"kind":"shape","id":"sh/fmdsj214","slide":4,"bbox":[744,488,162,38]}
+{"kind":"textbox","id":"sh/el4raxkj","slide":4,"text":"私有化部署","textPreview":"私有化部署","textChars":5,"textLines":1,"bbox":[754,498,142,16]}
+{"kind":"shape","id":"sh/1ofalcju","slide":4,"bbox":[934,488,162,38]}
+{"kind":"textbox","id":"sh/gnm9c72p","slide":4,"text":"商业增长","textPreview":"商业增长","textChars":4,"textLines":1,"bbox":[944,498,142,16]}
+{"kind":"textbox","id":"sh/rid8f21s","slide":4,"text":"内部智能体沉淀方法，外部智能体沉淀收入；两者共用一套平台能力。","textPreview":"内部智能体沉淀方法，外部智能体沉淀收入；两者共用一套平台能力。","textChars":31,"textLines":1,"bbox":[200,626,880,28]}
+{"kind":"notes","id":"nt/m6amu6","slide":4,"text":"Introduce the internal/external split requested by the user and connect it to platform economics.\n\n[Sources]\n- 用户提供的路演计划与补充要求: 用户提供的路演计划与补充要求（本对话）\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/wvg6me","slide":5,"title":"Lucky 助理","textShapes":11}
+{"kind":"textbox","id":"sh/0rqd8bid","slide":5,"text":"Lucky 助理","textPreview":"Lucky 助理","textChars":8,"textLines":1,"bbox":[52,42,420,28]}
+{"kind":"textbox","id":"sh/zqhcz6hs","slide":5,"text":"个人助理是入口，推理和平台操作才是关键","textPreview":"个人助理是入口，推理和平台操作才是关键","textChars":19,"textLines":1,"bbox":[52,84,1136,62]}
+{"kind":"textbox","id":"sh/ep8v6107","slide":5,"text":"Lucky 内置个人助理智能体，能理解目标、调用知识、拆解任务，并操作 AI 原生平台能力。","textPreview":"Lucky 内置个人助理智能体，能理解目标、调用知识、拆解任务，并操作 AI 原生平台能力。","textChars":46,"textLines":1,"bbox":[52,148,1120,42]}
+{"kind":"shape","id":"sh/dozuxwzm","slide":5,"bbox":[52,206,1176,2]}
+{"kind":"textbox","id":"sh/cnqd4ri1","slide":5,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1182,660,46,24]}
+{"kind":"shape","id":"sh/rmhcvmhg","slide":5,"bbox":[92,260,310,240]}
+{"kind":"textbox","id":"sh/ql8v210v","slide":5,"text":"支持推理","textPreview":"支持推理","textChars":4,"textLines":1,"bbox":[120,314,254,34]}
+{"kind":"textbox","id":"sh/xk3e90zq","slide":5,"text":"多轮澄清目标、对象、约束和成功标准。","textPreview":"多轮澄清目标、对象、约束和成功标准。","textChars":18,"textLines":1,"bbox":[124,386,246,58]}
+{"kind":"shape","id":"sh/wjudgvil","slide":5,"bbox":[466,260,310,240]}
+{"kind":"textbox","id":"sh/ap03mh4z","slide":5,"text":"资料库为知识库","textPreview":"资料库为知识库","textChars":7,"textLines":1,"bbox":[494,314,254,34]}
+{"kind":"textbox","id":"sh/vq9kvm5k","slide":5,"text":"把资料库和本地目录作为可检索、可引用的知识范围。","textPreview":"把资料库和本地目录作为可检索、可引用的知识范围。","textChars":24,"textLines":1,"bbox":[498,386,246,58]}
+{"kind":"shape","id":"sh/wrilorm5","slide":5,"bbox":[840,260,310,240]}
+{"kind":"textbox","id":"sh/xsr2xcnq","slide":5,"text":"操作平台功能","textPreview":"操作平台功能","textChars":6,"textLines":1,"bbox":[868,314,254,34]}
+{"kind":"textbox","id":"sh/mlg3ix43","slide":5,"text":"创建空间、配置课程、生成任务、推动通知和服务清单。","textPreview":"创建空间、配置课程、生成任务、推动通知和服务清单。","textChars":25,"textLines":1,"bbox":[872,386,246,58]}
+{"kind":"shape","id":"sh/nmpkr258","slide":5,"bbox":[180,604,920,50]}
+{"kind":"textbox","id":"sh/8nilk7mt","slide":5,"text":"这让 Lucky 从“回答问题”进入“理解目标并推动业务完成”。","textPreview":"这让 Lucky 从“回答问题”进入“理解目标并推动业务完成”。","textChars":32,"textLines":1,"bbox":[208,618,864,24]}
+{"kind":"notes","id":"nt/wvg6me","slide":5,"text":"Frame Lucky's assistant as the first user-facing entry, but focus on reasoning, knowledge access, and system operations.\n\n[Sources]\n- 用户提供的路演计划与补充要求: 用户提供的路演计划与补充要求（本对话）\n- Lucky 模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/lucky/LuckyModule.jsx\n- AI 原生业务执行模式本地文档: /Users/zhanghl/Documents/GitHub/guoren-v2/docs/ai-native-driven-system-use-cases.md\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/4bgjlj","slide":6,"title":"业务示例","textShapes":9}
+{"kind":"textbox","id":"sh/pgb6dczy","slide":6,"text":"业务示例","textPreview":"业务示例","textChars":4,"textLines":1,"bbox":[52,42,420,28]}
+{"kind":"textbox","id":"sh/2dkn2x0n","slide":6,"text":"培训项目组织从人工协调，转向目标驱动交付","textPreview":"培训项目组织从人工协调，转向目标驱动交付","textChars":20,"textLines":1,"bbox":[52,84,1136,62]}
+{"kind":"textbox","id":"sh/netob2h8","slide":6,"text":"用户只表达培训目标，Lucky 负责梳理需求、生成方案、推荐资源，并在空间中推进执行。","textPreview":"用户只表达培训目标，Lucky 负责梳理需求、生成方案、推荐资源，并在空间中推进执行。","textChars":43,"textLines":1,"bbox":[52,148,1120,42]}
+{"kind":"shape","id":"sh/0bi50nih","slide":6,"bbox":[52,206,1176,2]}
+{"kind":"textbox","id":"sh/1cb69sz2","slide":6,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1182,660,46,24]}
+{"kind":"shape","id":"sh/e90nyx0b","slide":6,"bbox":[78,254,500,300]}
+{"kind":"textbox","id":"sh/fa947ihw","slide":6,"text":"传统模式","textPreview":"传统模式","textChars":4,"textLines":1,"bbox":[118,296,420,38]}
+{"kind":"textbox","id":"sh/s7i5wnil","slide":6,"text":"需求方提出需求\n教研设计培训计划\n教务创建项目和课程\n运营通知、签到、资料、作业和反馈","textPreview":"需求方提出需求 | 教研设计培训计划 | 教务创建项目和课程 | 运营通知、签到、资料、作业和反馈","textChars":43,"textLines":4,"bbox":[154,372,348,120]}
+{"kind":"shape","id":"sh/d8rm5sz6","slide":6,"bbox":[698,254,500,300]}
+{"kind":"textbox","id":"sh/ts7apwv2","slide":6,"text":"AI 原生模式","textPreview":"AI 原生模式","textChars":7,"textLines":1,"bbox":[738,296,420,38]}
+{"kind":"textbox","id":"sh/srytgreh","slide":6,"text":"用户与 Lucky 多轮对话\nLucky 生成培训计划\n推荐课程、讲师和日程\n确认后创建空间、课程和服务清单","textPreview":"用户与 Lucky 多轮对话 | Lucky 生成培训计划 | 推荐课程、讲师和日程 | 确认后创建空间、课程和服务清单","textChars":54,"textLines":4,"bbox":[774,372,348,120]}
+{"kind":"textbox","id":"sh/rqpsn6dw","slide":6,"text":"业务价值：减少跨部门反复沟通，让项目从“人工协调型流程”变成“目标驱动型交付”。","textPreview":"业务价值：减少跨部门反复沟通，让项目从“人工协调型流程”变成“目标驱动型交付”。","textChars":40,"textLines":1,"bbox":[132,620,1016,30]}
+{"kind":"notes","id":"nt/4bgjlj","slide":6,"text":"Use the user-provided training project example and the local AI-native use-case document.\n\n[Sources]\n- 用户提供的路演计划与补充要求: 用户提供的路演计划与补充要求（本对话）\n- AI 原生业务执行模式本地文档: /Users/zhanghl/Documents/GitHub/guoren-v2/docs/ai-native-driven-system-use-cases.md\n- 空间与教学场景源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/TopicDetail.jsx\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/mxqw5j","slide":7,"title":"智能体构建","textShapes":17}
+{"kind":"textbox","id":"sh/0zq1cbup","slide":7,"text":"智能体构建","textPreview":"智能体构建","textChars":5,"textLines":1,"bbox":[52,42,420,28]}
+{"kind":"textbox","id":"sh/zyhk3qd4","slide":7,"text":"通过对话创建智能体，并配置知识、技能和工具","textPreview":"通过对话创建智能体，并配置知识、技能和工具","textChars":21,"textLines":1,"bbox":[52,84,1136,62]}
+{"kind":"textbox","id":"sh/yx8jalcj","slide":7,"text":"平台把智能体创建从专业配置工作，变成可被部门和项目团队复用的建设流程。","textPreview":"平台把智能体创建从专业配置工作，变成可被部门和项目团队复用的建设流程。","textChars":35,"textLines":1,"bbox":[52,148,1120,42]}
+{"kind":"shape","id":"sh/dwz21gvy","slide":7,"bbox":[52,206,1176,2]}
+{"kind":"textbox","id":"sh/cv618but","slide":7,"text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1182,660,46,24]}
+{"kind":"textbox","id":"sh/buxkz6d8","slide":7,"text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[146,252,76,60]}
+{"kind":"shape","id":"sh/qtoj61wn","slide":7,"bbox":[246,282,100,3]}
+{"kind":"textbox","id":"sh/p8f2xwv2","slide":7,"text":"描述角色","textPreview":"描述角色","textChars":4,"textLines":1,"bbox":[76,352,220,32]}
+{"kind":"textbox","id":"sh/o7614reh","slide":7,"text":"说明服务对象、任务边界和工作风格","textPreview":"说明服务对象、任务边界和工作风格","textChars":16,"textLines":1,"bbox":[76,410,220,54]}
+{"kind":"textbox","id":"sh/axs7etkr","slide":7,"text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[438,252,76,60]}
+{"kind":"shape","id":"sh/vy18nylc","slide":7,"bbox":[538,282,100,3]}
+{"kind":"textbox","id":"sh/wzapg32x","slide":7,"text":"配置知识","textPreview":"配置知识","textChars":4,"textLines":1,"bbox":[368,352,220,32]}
+{"kind":"textbox","id":"sh/x0jqp83i","slide":7,"text":"选择资料库、本地目录和空间资料范围","textPreview":"选择资料库、本地目录和空间资料范围","textChars":17,"textLines":1,"bbox":[368,410,220,54]}
+{"kind":"textbox","id":"sh/m987atkv","slide":7,"text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[730,252,76,60]}
+{"kind":"shape","id":"sh/na18jylg","slide":7,"bbox":[830,282,100,3]}
+{"kind":"textbox","id":"sh/8bapc321","slide":7,"text":"绑定技能","textPreview":"绑定技能","textChars":4,"textLines":1,"bbox":[660,352,220,32]}
+{"kind":"textbox","id":"sh/9wjqlo3m","slide":7,"text":"添加可调用技能、流程和工具权限","textPreview":"添加可调用技能、流程和工具权限","textChars":15,"textLines":1,"bbox":[660,410,220,54]}
+{"kind":"textbox","id":"sh/y58769kz","slide":7,"text":"4","textPreview":"4","textChars":1,"textLines":1,"bbox":[1022,252,76,60]}
+{"kind":"shape","id":"sh/z6h8fel4","slide":7,"bbox":[1122,282,100,3]}
+{"kind":"textbox","id":"sh/3ad4na1w","slide":7,"text":"上线运营","textPreview":"上线运营","textChars":4,"textLines":1,"bbox":[952,352,220,32]}
+{"kind":"textbox","id":"sh/294ne50r","slide":7,"text":"跟踪效果、复盘问题、持续迭代","textPreview":"跟踪效果、复盘问题、持续迭代","textChars":14,"textLines":1,"bbox":[952,410,220,54]}
+{"kind":"shape","id":"sh/pcfmpkj2","slide":7,"bbox":[180,604,920,50]}
+{"kind":"textbox","id":"sh/ob65gfih","slide":7,"text":"平台让智能体从一次性配置，变成可建设、可运营、可复用的能力资产。","textPreview":"平台让智能体从一次性配置，变成可建设、可运营、可复用的能力资产。","textChars":32,"textLines":1,"bbox":[208,618,864,24]}
+{"kind":"notes","id":"nt/mxqw5j","slide":7,"text":"Explain conversational agent creation and operational configuration.\n\n[Sources]\n- 用户提供的路演计划与补充要求: 用户提供的路演计划与补充要求（本对话）\n- Lucky 模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/lucky/LuckyModule.jsx\n- 解决方案原型模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/solutionPrototype/SolutionPrototypeModule.jsx\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/hb8yo5","slide":8,"title":"技能构建","textShapes":11}
+{"kind":"textbox","id":"sh/tobyd0ze","slide":8,"text":"技能构建","textPreview":"技能构建","textChars":4,"textLines":1,"bbox":[52,42,420,28]}
+{"kind":"textbox","id":"sh/6lkzi50n","slide":8,"text":"技能可以通过对话创建，也可以从外部优秀实践导入","textPreview":"技能可以通过对话创建，也可以从外部优秀实践导入","textChars":23,"textLines":1,"bbox":[52,84,1136,62]}
+{"kind":"textbox","id":"sh/7mtgbah8","slide":8,"text":"技能沉淀的是可复用动作：提示词、工具调用、流程节点、任务模板和输出标准。","textPreview":"技能沉淀的是可复用动作：提示词、工具调用、流程节点、任务模板和输出标准。","textChars":36,"textLines":1,"bbox":[52,148,1120,42]}
+{"kind":"shape","id":"sh/gr2hofi5","slide":8,"bbox":[52,206,1176,2]}
+{"kind":"textbox","id":"sh/1svihkza","slide":8,"text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1182,660,46,24]}
+{"kind":"shape","id":"sh/upkzm50z","slide":8,"bbox":[82,264,306,236]}
+{"kind":"textbox","id":"sh/fqtgfahk","slide":8,"text":"对话创建","textPreview":"对话创建","textChars":4,"textLines":1,"bbox":[110,318,250,34]}
+{"kind":"textbox","id":"sh/wvihcvil","slide":8,"text":"用自然语言描述要完成的工作，生成可复用技能草稿。","textPreview":"用自然语言描述要完成的工作，生成可复用技能草稿。","textChars":24,"textLines":1,"bbox":[116,388,238,62]}
+{"kind":"shape","id":"sh/xwry5gz6","slide":8,"bbox":[454,264,306,236]}
+{"kind":"textbox","id":"sh/d8vut8na","slide":8,"text":"外部导入","textPreview":"外部导入","textChars":4,"textLines":1,"bbox":[482,318,250,34]}
+{"kind":"textbox","id":"sh/cn2dk36p","slide":8,"text":"看到外部平台或技能市场中的优秀技能，可导入、改造、内化。","textPreview":"看到外部平台或技能市场中的优秀技能，可导入、改造、内化。","textChars":28,"textLines":1,"bbox":[488,388,238,62]}
+{"kind":"shape","id":"sh/bmtcry54","slide":8,"bbox":[826,264,306,236]}
+{"kind":"textbox","id":"sh/qlkvitoj","slide":8,"text":"持续沉淀","textPreview":"持续沉淀","textChars":4,"textLines":1,"bbox":[854,318,250,34]}
+{"kind":"textbox","id":"sh/lcvux8n6","slide":8,"text":"把项目交付中验证过的动作，沉淀为部门和客户可复用能力。","textPreview":"把项目交付中验证过的动作，沉淀为部门和客户可复用能力。","textChars":27,"textLines":1,"bbox":[860,388,238,62]}
+{"kind":"shape","id":"sh/kbmdo36l","slide":8,"bbox":[180,604,920,50]}
+{"kind":"textbox","id":"sh/zadcvi5g","slide":8,"text":"技能是智能体平台的“动作库”，决定智能体能做什么、怎么做、做到什么标准。","textPreview":"技能是智能体平台的“动作库”，决定智能体能做什么、怎么做、做到什么标准。","textChars":36,"textLines":1,"bbox":[208,618,864,24]}
+{"kind":"notes","id":"nt/hb8yo5","slide":8,"text":"Position skills as reusable action assets rather than just prompt fragments.\n\n[Sources]\n- 用户提供的路演计划与补充要求: 用户提供的路演计划与补充要求（本对话）\n- Lucky 模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/lucky/LuckyModule.jsx\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/tzm2h8","slide":9,"title":"能力市场","textShapes":11}
+{"kind":"textbox","id":"sh/tcb2l0zu","slide":9,"text":"能力市场","textPreview":"能力市场","textChars":4,"textLines":1,"bbox":[52,42,420,28]}
+{"kind":"textbox","id":"sh/69k3alg3","slide":9,"text":"市场机制让专家、技能和最佳实践被复制","textPreview":"市场机制让专家、技能和最佳实践被复制","textChars":18,"textLines":1,"bbox":[52,84,1136,62]}
+{"kind":"textbox","id":"sh/7atkjqho","slide":9,"text":"智能体市场、技能市场和最佳实践市场，是平台内部复用与外部交付复制的核心机制。","textPreview":"智能体市场、技能市场和最佳实践市场，是平台内部复用与外部交付复制的核心机制。","textChars":38,"textLines":1,"bbox":[52,148,1120,42]}
+{"kind":"shape","id":"sh/gf2lgvy5","slide":9,"bbox":[52,206,1176,2]}
+{"kind":"textbox","id":"sh/1gv2p0zq","slide":9,"text":"09","textPreview":"09","textChars":2,"textLines":1,"bbox":[1182,660,46,24]}
+{"kind":"shape","id":"sh/udk3elgz","slide":9,"bbox":[96,260,286,248]}
+{"kind":"textbox","id":"sh/fetknqhk","slide":9,"text":"智能体市场","textPreview":"智能体市场","textChars":5,"textLines":1,"bbox":[124,324,230,34]}
+{"kind":"textbox","id":"sh/o3mlkfyh","slide":9,"text":"复用专家智能体、部门智能体和客户场景智能体。","textPreview":"复用专家智能体、部门智能体和客户场景智能体。","textChars":22,"textLines":1,"bbox":[130,392,218,62]}
+{"kind":"shape","id":"sh/p4v2tkzm","slide":9,"bbox":[456,260,286,248]}
+{"kind":"textbox","id":"sh/58zi9wfm","slide":9,"text":"技能市场","textPreview":"技能市场","textChars":4,"textLines":1,"bbox":[484,324,230,34]}
+{"kind":"textbox","id":"sh/47q10ry1","slide":9,"text":"沉淀可调用动作，让智能体复用成熟任务能力。","textPreview":"沉淀可调用动作，让智能体复用成熟任务能力。","textChars":21,"textLines":1,"bbox":[490,392,218,62]}
+{"kind":"shape","id":"sh/j6h076xg","slide":9,"bbox":[816,260,286,248]}
+{"kind":"textbox","id":"sh/i58jy1gb","slide":9,"text":"最佳实践市场","textPreview":"最佳实践市场","textChars":6,"textLines":1,"bbox":[844,324,230,34]}
+{"kind":"textbox","id":"sh/tcjidgfy","slide":9,"text":"把成功项目、行业方案和交付流程打包成模板。","textPreview":"把成功项目、行业方案和交付流程打包成模板。","textChars":21,"textLines":1,"bbox":[850,392,218,62]}
+{"kind":"textbox","id":"sh/sba14byd","slide":9,"text":"市场不是展示入口，而是让能力从一个项目复制到更多项目的分发机制。","textPreview":"市场不是展示入口，而是让能力从一个项目复制到更多项目的分发机制。","textChars":32,"textLines":1,"bbox":[202,620,876,28]}
+{"kind":"notes","id":"nt/tzm2h8","slide":9,"text":"Use the user's corrected wording: best-practice market, not best-time market.\n\n[Sources]\n- 用户提供的路演计划与补充要求: 用户提供的路演计划与补充要求（本对话）\n- Lucky 模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/lucky/LuckyModule.jsx\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/claik2","slide":10,"title":"运营治理","textShapes":13}
+{"kind":"textbox","id":"sh/m5czyx0r","slide":10,"text":"运营治理","textPreview":"运营治理","textChars":4,"textLines":1,"bbox":[52,42,420,28]}
+{"kind":"textbox","id":"sh/98nitcji","slide":10,"text":"智能体要测得准、看得见、管得住","textPreview":"智能体要测得准、看得见、管得住","textChars":15,"textLines":1,"bbox":[52,84,1136,62]}
+{"kind":"textbox","id":"sh/87uh07ix","slide":10,"text":"当智能体从内部试点走向规模使用和外售交付，平台需要同时管理效果、消耗和成本边界。","textPreview":"当智能体从内部试点走向规模使用和外售交付，平台需要同时管理效果、消耗和成本边界。","textChars":40,"textLines":1,"bbox":[52,148,1120,42]}
+{"kind":"shape","id":"sh/z2lgni1g","slide":10,"bbox":[52,206,1176,2]}
+{"kind":"textbox","id":"sh/y1czux0v","slide":10,"text":"10","textPreview":"10","textChars":2,"textLines":1,"bbox":[1182,660,46,24]}
+{"kind":"shape","id":"sh/l43ypsjm","slide":10,"bbox":[72,252,330,302]}
+{"kind":"textbox","id":"sh/03uhwni1","slide":10,"text":"从建设\n到运营","textPreview":"从建设 | 到运营","textChars":7,"textLines":2,"bbox":[112,330,250,88]}
+{"kind":"textbox","id":"sh/jy50zm1k","slide":10,"text":"质量、流量和计费是智能体平台商业化交付的基础设施。","textPreview":"质量、流量和计费是智能体平台商业化交付的基础设施。","textChars":25,"textLines":1,"bbox":[112,452,250,52]}
+{"kind":"shape","id":"sh/ixwz6h0z","slide":10,"bbox":[488,248,700,86]}
+{"kind":"textbox","id":"sh/o7algz6t","slide":10,"text":"质量测评","textPreview":"质量测评","textChars":4,"textLines":1,"bbox":[526,272,156,28]}
+{"kind":"textbox","id":"sh/psj2947e","slide":10,"text":"用标准测试集、场景样例和人工反馈评估回答准确性、任务完成率、稳定性和安全边界。","textPreview":"用标准测试集、场景样例和人工反馈评估回答准确性、任务完成率、稳定性和安全边界。","textChars":39,"textLines":1,"bbox":[716,270,420,40]}
+{"kind":"shape","id":"sh/25sjepon","slide":10,"bbox":[488,356,700,86]}
+{"kind":"textbox","id":"sh/n61k7up8","slide":10,"text":"Token 流量","textPreview":"Token 流量","textChars":8,"textLines":1,"bbox":[526,380,156,28]}
+{"kind":"textbox","id":"sh/03a1cz6h","slide":10,"text":"按智能体、技能、用户和项目统计模型调用、输入输出 Token、峰值趋势和异常消耗。","textPreview":"按智能体、技能、用户和项目统计模型调用、输入输出 Token、峰值趋势和异常消耗。","textChars":41,"textLines":1,"bbox":[716,378,420,40]}
+{"kind":"shape","id":"sh/14j25k72","slide":10,"bbox":[488,464,700,86]}
+{"kind":"textbox","id":"sh/e18japor","slide":10,"text":"计费管控","textPreview":"计费管控","textChars":4,"textLines":1,"bbox":[526,488,156,28]}
+{"kind":"textbox","id":"sh/f21k3upc","slide":10,"text":"按部门、客户和项目设置额度、预算、套餐、告警和结算口径，支撑私有化与外售。","textPreview":"按部门、客户和项目设置额度、预算、套餐、告警和结算口径，支撑私有化与外售。","textChars":37,"textLines":1,"bbox":[716,486,420,40]}
+{"kind":"shape","id":"sh/szq18fql","slide":10,"bbox":[160,610,960,50]}
+{"kind":"textbox","id":"sh/d0z21k76","slide":10,"text":"治理能力让智能体平台从“能用”，走向“可信、可控、可规模销售”。","textPreview":"治理能力让智能体平台从“能用”，走向“可信、可控、可规模销售”。","textChars":32,"textLines":1,"bbox":[188,624,904,24]}
+{"kind":"notes","id":"nt/claik2","slide":10,"text":"Add the user's requested operation layer: agent quality evaluation, Token traffic visibility, and billing control.\n\n[Sources]\n- 用户提供的路演计划与补充要求: 用户提供的路演计划与补充要求（本对话）\n- Lucky 模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/lucky/LuckyModule.jsx\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/qlql8t","slide":11,"title":"知识底座","textShapes":13}
+{"kind":"textbox","id":"sh/e9c3m5gz","slide":11,"text":"知识底座","textPreview":"知识底座","textChars":4,"textLines":1,"bbox":[52,42,420,28]}
+{"kind":"textbox","id":"sh/1wn2xkzq","slide":11,"text":"资料库统一管理多类型资料，成为智能体知识底座","textPreview":"资料库统一管理多类型资料，成为智能体知识底座","textChars":22,"textLines":1,"bbox":[52,84,1136,62]}
+{"kind":"textbox","id":"sh/0velofy5","slide":11,"text":"资料库的核心不是类型多，而是所有资料都能进入智能体可识别、可引用、可生成的知识范围。","textPreview":"资料库的核心不是类型多，而是所有资料都能进入智能体可识别、可引用、可生成的知识范围。","textChars":42,"textLines":1,"bbox":[52,148,1120,42]}
+{"kind":"shape","id":"sh/r6lkraho","slide":11,"bbox":[52,206,1176,2]}
+{"kind":"textbox","id":"sh/65cji5g3","slide":11,"text":"11","textPreview":"11","textChars":2,"textLines":1,"bbox":[1182,660,46,24]}
+{"kind":"shape","id":"sh/d832tkzu","slide":11,"bbox":[70,250,400,320]}
+{"kind":"textbox","id":"sh/s7ulkfy9","slide":11,"text":"资料类型","textPreview":"资料类型","textChars":4,"textLines":1,"bbox":[106,292,328,40]}
+{"kind":"textbox","id":"sh/b2pk3uxs","slide":11,"text":"office、md、pdf、音视频、会议回放、在线文档、白板、问卷、投票、考试、报名、接龙、360评估、测评、实训任务、知识图谱、能力模型、虚拟课堂、html课件、案例仿真、AI课堂评价报告等。","textPreview":"office、md、pdf、音视频、会议回放、在线文档、白板、问卷、投票、考试、报名、接龙、360评估、测评、实训任务、知识图谱、能力模型、虚拟课堂、html课件、案例仿真、AI课堂评价报告等。","textChars":97,"textLines":1,"bbox":[108,356,324,126]}
+{"kind":"shape","id":"sh/a1g3u9g7","slide":11,"bbox":[536,254,280,134]}
+{"kind":"textbox","id":"sh/w36doze9","slide":11,"text":"智能体识别资料","textPreview":"智能体识别资料","textChars":7,"textLines":1,"bbox":[558,276,236,28]}
+{"kind":"textbox","id":"sh/x4fuh4ve","slide":11,"text":"所有资料进入知识范围后，可被问答、分析、推荐和生成调用。","textPreview":"所有资料进入知识范围后，可被问答、分析、推荐和生成调用。","textChars":28,"textLines":1,"bbox":[564,316,224,44]}
+{"kind":"shape","id":"sh/a1ovm9w3","slide":11,"bbox":[854,254,280,134]}
+{"kind":"textbox","id":"sh/b2xcfedo","slide":11,"text":"智能体生成资料","textPreview":"智能体生成资料","textChars":7,"textLines":1,"bbox":[876,276,236,28]}
+{"kind":"textbox","id":"sh/oz6tkzex","slide":11,"text":"通过智能体生成课件、报告、问卷、任务、评价材料和业务文档。","textPreview":"通过智能体生成课件、报告、问卷、任务、评价材料和业务文档。","textChars":29,"textLines":1,"bbox":[882,316,224,44]}
+{"kind":"shape","id":"sh/90fud4vi","slide":11,"bbox":[536,432,636,106]}
+{"kind":"textbox","id":"sh/2xobipwr","slide":11,"text":"资料参与业务","textPreview":"资料参与业务","textChars":6,"textLines":1,"bbox":[558,454,592,28]}
+{"kind":"textbox","id":"sh/nyxcbudc","slide":11,"text":"资料不止存放，而是进入空间、项目、智能体和智搭应用。","textPreview":"资料不止存放，而是进入空间、项目、智能体和智搭应用。","textChars":26,"textLines":1,"bbox":[564,494,580,44]}
+{"kind":"textbox","id":"sh/0bmtgfe1","slide":11,"text":"资料库让公司资产从“文件”变成“智能体可调用的业务上下文”。","textPreview":"资料库让公司资产从“文件”变成“智能体可调用的业务上下文”。","textChars":30,"textLines":1,"bbox":[204,622,872,28]}
+{"kind":"notes","id":"nt/qlql8t","slide":11,"text":"Summarize the user-provided resource types and emphasize AI-native recognizability and generation.\n\n[Sources]\n- 用户提供的路演计划与补充要求: 用户提供的路演计划与补充要求（本对话）\n- 资料库模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/resourceLib/ResourceLibrary.jsx\n- 资料库本地存储与目录映射源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/resourceLib/resourceLibStore.js\n- 解决方案原型模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/solutionPrototype/SolutionPrototypeModule.jsx\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/rpc6b3","slide":12,"title":"知识库规划","textShapes":11}
+{"kind":"textbox","id":"sh/m1036pob","slide":12,"text":"知识库规划","textPreview":"知识库规划","textChars":5,"textLines":1,"bbox":[52,42,420,28]}
+{"kind":"textbox","id":"sh/94rmhkn2","slide":12,"text":"本地磁盘目录映射，让已有文件夹直接成为知识库来源","textPreview":"本地磁盘目录映射，让已有文件夹直接成为知识库来源","textChars":24,"textLines":1,"bbox":[52,84,1136,62]}
+{"kind":"textbox","id":"sh/o3il8z6h","slide":12,"text":"客户和内部部门不必先搬迁所有资料；本地目录可映射进知识范围，逐步识别、检索、引用和治理。","textPreview":"客户和内部部门不必先搬迁所有资料；本地目录可映射进知识范围，逐步识别、检索、引用和治理。","textChars":44,"textLines":1,"bbox":[52,148,1120,42]}
+{"kind":"shape","id":"sh/zyp4ba50","slide":12,"bbox":[52,206,1176,2]}
+{"kind":"textbox","id":"sh/exg325of","slide":12,"text":"12","textPreview":"12","textChars":2,"textLines":1,"bbox":[1182,660,46,24]}
+{"kind":"shape","id":"sh/10rmdkn6","slide":12,"bbox":[90,280,300,190]}
+{"kind":"textbox","id":"sh/0zil4f6l","slide":12,"text":"本地文件夹","textPreview":"本地文件夹","textChars":5,"textLines":1,"bbox":[118,326,244,32]}
+{"kind":"textbox","id":"sh/jut4ne54","slide":12,"text":"已有项目资料、课件、案例、交付物","textPreview":"已有项目资料、课件、案例、交付物","textChars":16,"textLines":1,"bbox":[126,388,228,46]}
+{"kind":"shape","id":"sh/ytk3e9oj","slide":12,"bbox":[404,354,58,32]}
+{"kind":"shape","id":"sh/0ni1onet","slide":12,"bbox":[480,280,300,190]}
+{"kind":"textbox","id":"sh/1orihsfe","slide":12,"text":"目录映射","textPreview":"目录映射","textChars":4,"textLines":1,"bbox":[508,326,244,32]}
+{"kind":"textbox","id":"sh/e10zmdw3","slide":12,"text":"建立路径、权限、同步和扫描规则","textPreview":"建立路径、权限、同步和扫描规则","textChars":15,"textLines":1,"bbox":[516,388,228,46]}
+{"kind":"shape","id":"sh/z290fixo","slide":12,"bbox":[794,354,58,32]}
+{"kind":"shape","id":"sh/szihk3ex","slide":12,"bbox":[870,280,300,190]}
+{"kind":"textbox","id":"sh/d0rid8fi","slide":12,"text":"知识库引用","textPreview":"知识库引用","textChars":5,"textLines":1,"bbox":[898,326,244,32]}
+{"kind":"textbox","id":"sh/qxgzidwr","slide":12,"text":"智能体检索、生成、分析和任务执行","textPreview":"智能体检索、生成、分析和任务执行","textChars":16,"textLines":1,"bbox":[906,388,228,46]}
+{"kind":"shape","id":"sh/ry90byxc","slide":12,"bbox":[180,604,920,50]}
+{"kind":"textbox","id":"sh/4vyhg3e1","slide":12,"text":"价值：降低资料迁移成本，让已有知识更快进入智能体能力范围。","textPreview":"价值：降低资料迁移成本，让已有知识更快进入智能体能力范围。","textChars":29,"textLines":1,"bbox":[208,618,864,24]}
+{"kind":"notes","id":"nt/rpc6b3","slide":12,"text":"Add the planning item requested by the user: local disk directory mapping as a knowledge-base source.\n\n[Sources]\n- 用户提供的路演计划与补充要求: 用户提供的路演计划与补充要求（本对话）\n- 资料库模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/resourceLib/ResourceLibrary.jsx\n- 资料库本地存储与目录映射源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/resourceLib/resourceLibStore.js\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/q197w6","slide":13,"title":"智搭模块","textShapes":14}
+{"kind":"textbox","id":"sh/fudcfad0","slide":13,"text":"智搭模块","textPreview":"智搭模块","textChars":4,"textLines":1,"bbox":[52,42,420,28]}
+{"kind":"textbox","id":"sh/gvmt8fel","slide":13,"text":"智搭把场景、知识库和工具流程快速搭成应用","textPreview":"智搭把场景、知识库和工具流程快速搭成应用","textChars":20,"textLines":1,"bbox":[52,84,1136,62]}
+{"kind":"textbox","id":"sh/hwvu1kv6","slide":13,"text":"当智能体能力需要被演示、交付和复制时，智搭把它落成轻量业务系统、AI 应用和团队工具。","textPreview":"当智能体能力需要被演示、交付和复制时，智搭把它落成轻量业务系统、AI 应用和团队工具。","textChars":43,"textLines":1,"bbox":[52,148,1120,42]}
+{"kind":"shape","id":"sh/2h4va5wr","slide":13,"bbox":[52,206,1176,2]}
+{"kind":"textbox","id":"sh/3idc3adc","slide":13,"text":"13","textPreview":"13","textChars":2,"textLines":1,"bbox":[1182,660,46,24]}
+{"kind":"shape","id":"sh/4jmdcfeh","slide":13,"bbox":[72,254,344,302]}
+{"kind":"textbox","id":"sh/pkvu5kv2","slide":13,"text":"智搭","textPreview":"智搭","textChars":2,"textLines":1,"bbox":[110,314,268,52]}
+{"kind":"textbox","id":"sh/qlovepwn","slide":13,"text":"灵感落地生花，即刻智搭万物","textPreview":"灵感落地生花，即刻智搭万物","textChars":13,"textLines":1,"bbox":[112,398,264,54]}
+{"kind":"textbox","id":"sh/bmxc7ud8","slide":13,"text":"面向智能体应用开发，把业务场景、知识库和工具流程快速搭成可运行应用。","textPreview":"面向智能体应用开发，把业务场景、知识库和工具流程快速搭成可运行应用。","textChars":34,"textLines":1,"bbox":[112,478,264,52]}
+{"kind":"shape","id":"sh/729wby1w","slide":13,"bbox":[488,258,292,118]}
+{"kind":"textbox","id":"sh/610vidkb","slide":13,"text":"AI 应用","textPreview":"AI 应用","textChars":5,"textLines":1,"bbox":[512,280,244,28]}
+{"kind":"textbox","id":"sh/t4red8j2","slide":13,"text":"面向客户或内部部门快速搭建可运行应用。","textPreview":"面向客户或内部部门快速搭建可运行应用。","textChars":19,"textLines":1,"bbox":[518,322,232,34]}
+{"kind":"shape","id":"sh/s3idk32h","slide":13,"bbox":[816,258,292,118]}
+{"kind":"textbox","id":"sh/jypc7yl0","slide":13,"text":"轻型业务系统","textPreview":"轻型业务系统","textChars":6,"textLines":1,"bbox":[840,280,244,28]}
+{"kind":"textbox","id":"sh/ixgvetkf","slide":13,"text":"承载表单、看板、流程、任务和团队协作。","textPreview":"承载表单、看板、流程、任务和团队协作。","textChars":19,"textLines":1,"bbox":[846,322,232,34]}
+{"kind":"shape","id":"sh/507e983q","slide":13,"bbox":[488,430,656,118]}
+{"kind":"textbox","id":"sh/kzydg32l","slide":13,"text":"应用模板","textPreview":"应用模板","textChars":4,"textLines":1,"bbox":[512,452,608,28]}
+{"kind":"textbox","id":"sh/3utwj214","slide":13,"text":"沉淀做同款、部署和复用能力，降低交付成本。","textPreview":"沉淀做同款、部署和复用能力，降低交付成本。","textChars":21,"textLines":1,"bbox":[518,494,596,34]}
+{"kind":"textbox","id":"sh/2tkvqxkj","slide":13,"text":"智搭让智能体能力不只存在于对话里，而是变成客户能看见、能操作、能部署的应用。","textPreview":"智搭让智能体能力不只存在于对话里，而是变成客户能看见、能操作、能部署的应用。","textChars":38,"textLines":1,"bbox":[150,626,980,28]}
+{"kind":"notes","id":"nt/q197w6","slide":13,"text":"Use the product copy from QuickBuild and Lucky code mode: fast application building for AI applications and lightweight systems.\n\n[Sources]\n- 用户提供的路演计划与补充要求: 用户提供的路演计划与补充要求（本对话）\n- 智搭模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/quickBuild/QuickBuildModule.jsx\n- Lucky 模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/lucky/LuckyModule.jsx\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/c5szka","slide":14,"title":"交付形态","textShapes":13}
+{"kind":"textbox","id":"sh/98n69cby","slide":14,"text":"交付形态","textPreview":"交付形态","textChars":4,"textLines":1,"bbox":[52,42,420,28]}
+{"kind":"textbox","id":"sh/mlcnyhcn","slide":14,"text":"平台能力可以组合成四种递进式交付","textPreview":"平台能力可以组合成四种递进式交付","textChars":16,"textLines":1,"bbox":[52,84,1136,62]}
+{"kind":"textbox","id":"sh/7mlo7mds","slide":14,"text":"从单个智能体，到知识服务，再到业务空间和智搭应用，交付深度逐级增加。","textPreview":"从单个智能体，到知识服务，再到业务空间和智搭应用，交付深度逐级增加。","textChars":34,"textLines":1,"bbox":[52,148,1120,42]}
+{"kind":"shape","id":"sh/kju5w7uh","slide":14,"bbox":[52,206,1176,2]}
+{"kind":"textbox","id":"sh/lk365cv2","slide":14,"text":"14","textPreview":"14","textChars":2,"textLines":1,"bbox":[1182,660,46,24]}
+{"kind":"shape","id":"sh/yhcnuxcb","slide":14,"bbox":[48,250,268,306]}
+{"kind":"textbox","id":"sh/zilo32dw","slide":14,"text":"智能体","textPreview":"智能体","textChars":3,"textLines":1,"bbox":[70,294,224,60]}
+{"kind":"textbox","id":"sh/4fyp8bul","slide":14,"text":"适合内部助理、专家智能体、业务问答和轻量任务。","textPreview":"适合内部助理、专家智能体、业务问答和轻量任务。","textChars":23,"textLines":1,"bbox":[76,392,212,88]}
+{"kind":"shape","id":"sh/5g76hwb6","slide":14,"bbox":[348,250,268,306]}
+{"kind":"textbox","id":"sh/tkbm18zi","slide":14,"text":"智能体 + 资料库","textPreview":"智能体 + 资料库","textChars":9,"textLines":1,"bbox":[370,294,224,60]}
+{"kind":"textbox","id":"sh/sj25snix","slide":14,"text":"适合组织知识助手、资料问答、内容生成和资料运营。","textPreview":"适合组织知识助手、资料问答、内容生成和资料运营。","textChars":24,"textLines":1,"bbox":[376,392,212,88]}
+{"kind":"shape","id":"sh/rit4zihs","slide":14,"bbox":[648,250,268,306]}
+{"kind":"textbox","id":"sh/6hknqd07","slide":14,"text":"智能体 + 资料库 + 空间","textPreview":"智能体 + 资料库 + 空间","textChars":14,"textLines":1,"bbox":[670,294,224,60]}
+{"kind":"textbox","id":"sh/5gbmx8zm","slide":14,"text":"适合培训、教研、教学、项目协作等业务场景。","textPreview":"适合培训、教研、教学、项目协作等业务场景。","textChars":21,"textLines":1,"bbox":[676,392,212,88]}
+{"kind":"shape","id":"sh/4fi5o3i1","slide":14,"bbox":[948,250,268,306]}
+{"kind":"textbox","id":"sh/je94vyhg","slide":14,"text":"智搭应用","textPreview":"智搭应用","textChars":4,"textLines":1,"bbox":[970,294,224,60]}
+{"kind":"textbox","id":"sh/id03mt0v","slide":14,"text":"把客户需求包装成可运行、可演示、可部署的 AI 应用。","textPreview":"把客户需求包装成可运行、可演示、可部署的 AI 应用。","textChars":27,"textLines":1,"bbox":[976,392,212,88]}
+{"kind":"textbox","id":"sh/pcvm9szq","slide":14,"text":"交付越深入，客户沉淀的资料、流程、智能体和应用越多，平台粘性越强。","textPreview":"交付越深入，客户沉淀的资料、流程、智能体和应用越多，平台粘性越强。","textChars":33,"textLines":1,"bbox":[146,622,988,30]}
+{"kind":"notes","id":"nt/c5szka","slide":14,"text":"Update delivery forms to include QuickBuild applications as requested.\n\n[Sources]\n- 用户提供的路演计划与补充要求: 用户提供的路演计划与补充要求（本对话）\n- 解决方案原型模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/solutionPrototype/SolutionPrototypeModule.jsx\n- 智搭模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/quickBuild/QuickBuildModule.jsx\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/qrgb45","slide":15,"title":"内部价值","textShapes":13}
+{"kind":"textbox","id":"sh/1kb21wbu","slide":15,"text":"内部价值","textPreview":"内部价值","textChars":4,"textLines":1,"bbox":[52,42,420,28]}
+{"kind":"textbox","id":"sh/ehk36hc3","slide":15,"text":"内部使用的价值，是把组织经验变成可复用生产力","textPreview":"内部使用的价值，是把组织经验变成可复用生产力","textChars":22,"textLines":1,"bbox":[52,84,1136,62]}
+{"kind":"textbox","id":"sh/fitkzmto","slide":15,"text":"内部智能体不是只帮个人省时间，而是帮助部门沉淀知识、流程、技能和应用模板。","textPreview":"内部智能体不是只帮个人省时间，而是帮助部门沉淀知识、流程、技能和应用模板。","textChars":37,"textLines":1,"bbox":[52,148,1120,42]}
+{"kind":"shape","id":"sh/onmlcrul","slide":15,"bbox":[52,206,1176,2]}
+{"kind":"textbox","id":"sh/pov25wbq","slide":15,"text":"15","textPreview":"15","textChars":2,"textLines":1,"bbox":[1182,660,46,24]}
+{"kind":"shape","id":"sh/2lk3ahcf","slide":15,"bbox":[84,262,236,242]}
+{"kind":"textbox","id":"sh/nmtk3mt0","slide":15,"text":"效率提升","textPreview":"效率提升","textChars":4,"textLines":1,"bbox":[106,314,192,34]}
+{"kind":"textbox","id":"sh/cbmlgbuh","slide":15,"text":"自然语言发起任务，减少找功能、填表单和反复沟通。","textPreview":"自然语言发起任务，减少找功能、填表单和反复沟通。","textChars":24,"textLines":1,"bbox":[110,386,184,66]}
+{"kind":"shape","id":"sh/xcvm9gb2","slide":15,"bbox":[376,262,236,242]}
+{"kind":"textbox","id":"sh/58f69or2","slide":15,"text":"知识复用","textPreview":"知识复用","textChars":4,"textLines":1,"bbox":[398,314,192,34]}
+{"kind":"textbox","id":"sh/47m5gjah","slide":15,"text":"资料库、本地目录、项目经验和专家方法都能被调用。","textPreview":"资料库、本地目录、项目经验和专家方法都能被调用。","textChars":24,"textLines":1,"bbox":[402,386,184,66]}
+{"kind":"shape","id":"sh/j6do7e9w","slide":15,"bbox":[668,262,236,242]}
+{"kind":"textbox","id":"sh/i54ne9sb","slide":15,"text":"流程沉淀","textPreview":"流程沉淀","textChars":4,"textLines":1,"bbox":[690,314,192,34]}
+{"kind":"textbox","id":"sh/twf6dory","slide":15,"text":"把重复任务、服务清单和交付动作沉淀为技能和自动化。","textPreview":"把重复任务、服务清单和交付动作沉淀为技能和自动化。","textChars":25,"textLines":1,"bbox":[694,386,184,66]}
+{"kind":"shape","id":"sh/sv65kjad","slide":15,"bbox":[960,262,236,242]}
+{"kind":"textbox","id":"sh/ruxobe9s","slide":15,"text":"应用建设","textPreview":"应用建设","textChars":4,"textLines":1,"bbox":[982,314,192,34]}
+{"kind":"textbox","id":"sh/6toni9sn","slide":15,"text":"用智搭快速生成内部工具、看板、表单和轻量系统。","textPreview":"用智搭快速生成内部工具、看板、表单和轻量系统。","textChars":23,"textLines":1,"bbox":[986,386,184,66]}
+{"kind":"shape","id":"sh/90vm14ru","slide":15,"bbox":[180,604,920,50]}
+{"kind":"textbox","id":"sh/8z258za9","slide":15,"text":"把经验从“个人会做”沉淀为“智能体会做、应用能跑、团队可复用”。","textPreview":"把经验从“个人会做”沉淀为“智能体会做、应用能跑、团队可复用”。","textChars":32,"textLines":1,"bbox":[208,618,864,24]}
+{"kind":"notes","id":"nt/qrgb45","slide":15,"text":"Strengthen the internal value slide per the user's request.\n\n[Sources]\n- 用户提供的路演计划与补充要求: 用户提供的路演计划与补充要求（本对话）\n- AI 原生业务执行模式本地文档: /Users/zhanghl/Documents/GitHub/guoren-v2/docs/ai-native-driven-system-use-cases.md\n- Lucky 模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/lucky/LuckyModule.jsx\n- 智搭模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/quickBuild/QuickBuildModule.jsx\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/7chf7g","slide":16,"title":"外售价值","textShapes":15}
+{"kind":"textbox","id":"sh/kfm58bml","slide":16,"text":"外售价值","textPreview":"外售价值","textChars":4,"textLines":1,"bbox":[52,42,420,28]}
+{"kind":"textbox","id":"sh/jud4f6l0","slide":16,"text":"对外销售的价值，是把 AI 能力产品化、方案化、私有化","textPreview":"对外销售的价值，是把 AI 能力产品化、方案化、私有化","textChars":27,"textLines":1,"bbox":[52,84,1136,62]}
+{"kind":"textbox","id":"sh/yt4n6l4f","slide":16,"text":"客户买到的不是一个聊天窗口，而是能读取资料、执行任务、承载场景并生成应用的完整能力包。","textPreview":"客户买到的不是一个聊天窗口，而是能读取资料、执行任务、承载场景并生成应用的完整能力包。","textChars":43,"textLines":1,"bbox":[52,148,1120,42]}
+{"kind":"shape","id":"sh/tkf6l032","slide":16,"bbox":[52,206,1176,2]}
+{"kind":"textbox","id":"sh/8j65cvmh","slide":16,"text":"16","textPreview":"16","textChars":2,"textLines":1,"bbox":[1182,660,46,24]}
+{"kind":"shape","id":"sh/7ixojqlw","slide":16,"bbox":[92,248,1096,326]}
+{"kind":"shape","id":"sh/6h4nal4r","slide":16,"bbox":[92,248,1096,58]}
+{"kind":"textbox","id":"sh/hof6p03e","slide":16,"text":"外售价值","textPreview":"外售价值","textChars":4,"textLines":1,"bbox":[128,266,180,24]}
+{"kind":"textbox","id":"sh/gn65gvmt","slide":16,"text":"为什么客户愿意买","textPreview":"为什么客户愿意买","textChars":8,"textLines":1,"bbox":[430,266,360,24]}
+{"kind":"shape","id":"sh/2twjmh0n","slide":16,"bbox":[92,320,1096,52]}
+{"kind":"textbox","id":"sh/nu50vm18","slide":16,"text":"产品化交付","textPreview":"产品化交付","textChars":5,"textLines":1,"bbox":[128,330,190,24]}
+{"kind":"textbox","id":"sh/ofe1orit","slide":16,"text":"智能体、资料库、空间和智搭应用可以按客户成熟度组合销售。","textPreview":"智能体、资料库、空间和智搭应用可以按客户成熟度组合销售。","textChars":28,"textLines":1,"bbox":[430,330,660,24]}
+{"kind":"textbox","id":"sh/pgnixwje","slide":16,"text":"方案复制","textPreview":"方案复制","textChars":4,"textLines":1,"bbox":[128,386,190,24]}
+{"kind":"textbox","id":"sh/ahwjqh0j","slide":16,"text":"专家经验、交付流程、最佳实践和应用模板可以跨客户复用。","textPreview":"专家经验、交付流程、最佳实践和应用模板可以跨客户复用。","textChars":27,"textLines":1,"bbox":[430,386,660,24]}
+{"kind":"shape","id":"sh/bi50zm14","slide":16,"bbox":[92,432,1096,52]}
+{"kind":"textbox","id":"sh/cje1srip","slide":16,"text":"私有化部署","textPreview":"私有化部署","textChars":5,"textLines":1,"bbox":[128,442,190,24]}
+{"kind":"textbox","id":"sh/xkn21wja","slide":16,"text":"满足客户对数据、权限、模型接入、本地资料和流程控制的要求。","textPreview":"满足客户对数据、权限、模型接入、本地资料和流程控制的要求。","textChars":29,"textLines":1,"bbox":[430,442,660,24]}
+{"kind":"textbox","id":"sh/qlsjex0f","slide":16,"text":"商业增长","textPreview":"商业增长","textChars":4,"textLines":1,"bbox":[128,498,190,24]}
+{"kind":"textbox","id":"sh/rml0n210","slide":16,"text":"从项目定制走向平台订阅、场景方案、智能体资产和运营服务。","textPreview":"从项目定制走向平台订阅、场景方案、智能体资产和运营服务。","textChars":28,"textLines":1,"bbox":[430,498,660,24]}
+{"kind":"textbox","id":"sh/vqhgvyhs","slide":16,"text":"外售智能体的重点不是“能聊”，而是能嵌入客户业务并持续沉淀客户资产。","textPreview":"外售智能体的重点不是“能聊”，而是能嵌入客户业务并持续沉淀客户资产。","textChars":34,"textLines":1,"bbox":[154,624,972,28]}
+{"kind":"notes","id":"nt/7chf7g","slide":16,"text":"Strengthen external sales value and private deployment positioning.\n\n[Sources]\n- 用户提供的路演计划与补充要求: 用户提供的路演计划与补充要求（本对话）\n- AI 原生平台定位本地文档: /Users/zhanghl/Documents/GitHub/guoren-v2/docs/guoren-vs-learnbuddy-ai-native-platform.md\n- 解决方案原型模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/solutionPrototype/SolutionPrototypeModule.jsx\n- 智搭模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/quickBuild/QuickBuildModule.jsx\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/xu31m0","slide":17,"title":"案例","textShapes":13}
+{"kind":"textbox","id":"sh/wbmhwf69","slide":17,"text":"案例","textPreview":"案例","textChars":2,"textLines":1,"bbox":[52,42,420,28]}
+{"kind":"textbox","id":"sh/vadgna54","slide":17,"text":"人工智能教学平台打造“教、学、练、评”一体化闭环","textPreview":"人工智能教学平台打造“教、学、练、评”一体化闭环","textChars":24,"textLines":1,"bbox":[52,84,1136,62]}
+{"kind":"textbox","id":"sh/u94zu5oj","slide":17,"text":"线上课堂、任务管理、课堂实训和学情分析共同构成可运营、可评价、可持续优化的教学场景。","textPreview":"线上课堂、任务管理、课堂实训和学情分析共同构成可运营、可评价、可持续优化的教学场景。","textChars":42,"textLines":1,"bbox":[52,148,1120,42]}
+{"kind":"shape","id":"sh/98vyl07y","slide":17,"bbox":[52,206,1176,2]}
+{"kind":"textbox","id":"sh/87mhsv6d","slide":17,"text":"17","textPreview":"17","textChars":2,"textLines":1,"bbox":[1182,660,46,24]}
+{"kind":"shape","id":"sh/76tgjqps","slide":17,"bbox":[74,250,520,126]}
+{"kind":"textbox","id":"sh/mlkzqlo7","slide":17,"text":"01 / 线上课堂","textPreview":"01 / 线上课堂","textChars":9,"textLines":1,"bbox":[102,276,464,28]}
+{"kind":"textbox","id":"sh/t4fixkn2","slide":17,"text":"集成高清直播、互动白板和 IM 工具，支持大规模在线教学与实时互动。","textPreview":"集成高清直播、互动白板和 IM 工具，支持大规模在线教学与实时互动。","textChars":34,"textLines":1,"bbox":[122,318,424,40]}
+{"kind":"shape","id":"sh/s36h4z6h","slide":17,"bbox":[664,250,520,126]}
+{"kind":"textbox","id":"sh/elwr61kz","slide":17,"text":"02 / 任务管理","textPreview":"02 / 任务管理","textChars":9,"textLines":1,"bbox":[692,276,464,28]}
+{"kind":"textbox","id":"sh/fm58f61k","slide":17,"text":"教师一键发布理论学习、编程练习等任务，学生在线接收、完成和提交。","textPreview":"教师一键发布理论学习、编程练习等任务，学生在线接收、完成和提交。","textChars":32,"textLines":1,"bbox":[712,318,424,40]}
+{"kind":"shape","id":"sh/gne98b25","slide":17,"bbox":[74,410,520,126]}
+{"kind":"textbox","id":"sh/1onqhwjq","slide":17,"text":"03 / 课堂实训","textPreview":"03 / 课堂实训","textChars":9,"textLines":1,"bbox":[102,436,464,28]}
+{"kind":"textbox","id":"sh/6hcr2hk3","slide":17,"text":"提供云电脑环境，支持复杂编程和模型训练，智能体辅助答疑与代码纠错。","textPreview":"提供云电脑环境，支持复杂编程和模型训练，智能体辅助答疑与代码纠错。","textChars":33,"textLines":1,"bbox":[122,478,424,40]}
+{"kind":"shape","id":"sh/ri58bm1o","slide":17,"bbox":[664,410,520,126]}
+{"kind":"textbox","id":"sh/sje94r29","slide":17,"text":"04 / 学情分析","textPreview":"04 / 学情分析","textChars":9,"textLines":1,"bbox":[692,436,464,28]}
+{"kind":"textbox","id":"sh/tknqdwje","slide":17,"text":"自动采集学习数据，生成多维学情报告，支持精准化和个性化教学。","textPreview":"自动采集学习数据，生成多维学情报告，支持精准化和个性化教学。","textChars":30,"textLines":1,"bbox":[712,478,424,40]}
+{"kind":"shape","id":"sh/qdgrelk7","slide":17,"bbox":[180,604,920,50]}
+{"kind":"textbox","id":"sh/bepsnq1s","slide":17,"text":"案例价值：把 AI 教学从单点工具，升级为“教、学、练、评”一体化平台。","textPreview":"案例价值：把 AI 教学从单点工具，升级为“教、学、练、评”一体化平台。","textChars":36,"textLines":1,"bbox":[208,618,864,24]}
+{"kind":"notes","id":"nt/xu31m0","slide":17,"text":"Rebuild the user's first teaching-platform reference as a native slide instead of pasting the image.\n\n[Sources]\n- 用户提供的路演计划与补充要求: 用户提供的路演计划与补充要求（本对话）\n- 用户提供人工智能教学平台参考图 1: /var/folders/b1/n7l3tg6951bg2fxcv64856x00000gn/T/codex-clipboard-149b152b-a9f3-46b5-b650-9833bb59d8e3.png\n- 空间与教学场景源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/TopicDetail.jsx\n- 解决方案样板间数据源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/solutionShowroom/showroomData.js\n- 解决方案原型模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/solutionPrototype/SolutionPrototypeModule.jsx\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/n4qi3r","slide":18,"title":"案例 / 实训实验","textShapes":19}
+{"kind":"textbox","id":"sh/947id8by","slide":18,"text":"案例 / 实训实验","textPreview":"案例 / 实训实验","textChars":9,"textLines":1,"bbox":[52,42,420,28]}
+{"kind":"textbox","id":"sh/m1wzitcn","slide":18,"text":"实训实验开发让教师从运维转向教学设计","textPreview":"实训实验开发让教师从运维转向教学设计","textChars":18,"textLines":1,"bbox":[52,84,1136,62]}
+{"kind":"textbox","id":"sh/n250byt8","slide":18,"text":"基于 Lucky 和实验室能力，教师可以选择实验室、配置内容、发布任务，并持续监控与指导。","textPreview":"基于 Lucky 和实验室能力，教师可以选择实验室、配置内容、发布任务，并持续监控与指导。","textChars":45,"textLines":1,"bbox":[52,148,1120,42]}
+{"kind":"shape","id":"sh/0fehg3uh","slide":18,"bbox":[52,206,1176,2]}
+{"kind":"textbox","id":"sh/10ni9ob2","slide":18,"text":"18","textPreview":"18","textChars":2,"textLines":1,"bbox":[1182,660,46,24]}
+{"kind":"shape","id":"sh/edwzetcb","slide":18,"bbox":[64,258,278,120]}
+{"kind":"textbox","id":"sh/ze507ytw","slide":18,"text":"01 选择/创建实验室","textPreview":"01 选择/创建实验室","textChars":11,"textLines":1,"bbox":[86,276,234,32]}
+{"kind":"textbox","id":"sh/cbehcjul","slide":18,"text":"从模板库选择，或按教学需求组合软件，自定义实训环境。","textPreview":"从模板库选择，或按教学需求组合软件，自定义实训环境。","textChars":26,"textLines":1,"bbox":[90,320,226,40]}
+{"kind":"shape","id":"sh/dcni5ob6","slide":18,"bbox":[382,258,278,120]}
+{"kind":"textbox","id":"sh/t4ja1cn2","slide":18,"text":"02 配置实验内容","textPreview":"02 配置实验内容","textChars":9,"textLines":1,"bbox":[404,276,234,32]}
+{"kind":"textbox","id":"sh/s3a9s76h","slide":18,"text":"设置目标、步骤、代码/文档/数据集，并配置评价标准。","textPreview":"设置目标、步骤、代码/文档/数据集，并配置评价标准。","textChars":26,"textLines":1,"bbox":[408,320,226,40]}
+{"kind":"shape","id":"sh/r21sz25w","slide":18,"bbox":[64,412,278,120]}
+{"kind":"textbox","id":"sh/61srqxob","slide":18,"text":"03 发布实训任务","textPreview":"03 发布实训任务","textChars":9,"textLines":1,"bbox":[86,430,234,32]}
+{"kind":"textbox","id":"sh/50jaxsnq","slide":18,"text":"一键发布给班级或学生，学生无需复杂配置即可开始。","textPreview":"一键发布给班级或学生，学生无需复杂配置即可开始。","textChars":24,"textLines":1,"bbox":[90,474,226,40]}
+{"kind":"shape","id":"sh/4zq9on65","slide":18,"bbox":[382,412,278,120]}
+{"kind":"textbox","id":"sh/jyhsvipk","slide":18,"text":"04 监控与指导","textPreview":"04 监控与指导","textChars":8,"textLines":1,"bbox":[404,430,234,32]}
+{"kind":"textbox","id":"sh/ix8rmxof","slide":18,"text":"通过仪表盘查看进度和资源状态，在线答疑与代码评审。","textPreview":"通过仪表盘查看进度和资源状态，在线答疑与代码评审。","textChars":25,"textLines":1,"bbox":[408,474,226,40]}
+{"kind":"shape","id":"sh/hwzats7u","slide":18,"bbox":[720,258,490,274]}
+{"kind":"textbox","id":"sh/wvq9kn69","slide":18,"text":"全流程掌控","textPreview":"全流程掌控","textChars":5,"textLines":1,"bbox":[758,294,420,24]}
+{"kind":"textbox","id":"sh/8fut0ne5","slide":18,"text":"从模板生成到任务分发与实时监管，覆盖核心教学动作。","textPreview":"从模板生成到任务分发与实时监管，覆盖核心教学动作。","textChars":25,"textLines":1,"bbox":[758,324,398,30]}
+{"kind":"textbox","id":"sh/9g3a9sfq","slide":18,"text":"所见即所得","textPreview":"所见即所得","textChars":5,"textLines":1,"bbox":[758,370,420,24]}
+{"kind":"textbox","id":"sh/mdcrydwz","slide":18,"text":"代码和数据资源自动同步，降低环境差异与核对错误。","textPreview":"代码和数据资源自动同步，降低环境差异与核对错误。","textChars":24,"textLines":1,"bbox":[758,400,398,30]}
+{"kind":"textbox","id":"sh/nels7ixk","slide":18,"text":"多元化教学工具","textPreview":"多元化教学工具","textChars":7,"textLines":1,"bbox":[758,446,420,24]}
+{"kind":"textbox","id":"sh/0ba9w3et","slide":18,"text":"编程录制、线上授课、异步录制与实时互动按需组合。","textPreview":"编程录制、线上授课、异步录制与实时互动按需组合。","textChars":24,"textLines":1,"bbox":[758,476,398,30]}
+{"kind":"shape","id":"sh/1cja58fe","slide":18,"bbox":[175,604,930,50]}
+{"kind":"textbox","id":"sh/epsrudw3","slide":18,"text":"核心价值：释放教师生产力，专注教学设计与指导，实现高质量实训教学。","textPreview":"核心价值：释放教师生产力，专注教学设计与指导，实现高质量实训教学。","textChars":33,"textLines":1,"bbox":[203,618,874,24]}
+{"kind":"notes","id":"nt/n4qi3r","slide":18,"text":"Rebuild the second teaching-platform reference as a native slide focused on lab development workflow and teacher value.\n\n[Sources]\n- 用户提供的路演计划与补充要求: 用户提供的路演计划与补充要求（本对话）\n- 用户提供人工智能教学平台参考图 2: /var/folders/b1/n7l3tg6951bg2fxcv64856x00000gn/T/codex-clipboard-045c5a90-5e45-4103-a96e-d1c743c1afbd.png\n- Lucky 模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/lucky/LuckyModule.jsx\n- 空间与教学场景源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/TopicDetail.jsx\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/t25wfi","slide":19,"title":"案例 / 课件创作","textShapes":11}
+{"kind":"textbox","id":"sh/bydkz2p8","slide":19,"text":"案例 / 课件创作","textPreview":"案例 / 课件创作","textChars":9,"textLines":1,"bbox":[52,42,420,28]}
+{"kind":"textbox","id":"sh/czml876t","slide":19,"text":"课件创作中心用 AI 驱动智能教学内容生成","textPreview":"课件创作中心用 AI 驱动智能教学内容生成","textChars":21,"textLines":1,"bbox":[52,84,1136,62]}
+{"kind":"textbox","id":"sh/xkv21c7e","slide":19,"text":"依托 Lucky，把教学目标和素材转化为结构化、可交互、可实训的教学内容。","textPreview":"依托 Lucky，把教学目标和素材转化为结构化、可交互、可实训的教学内容。","textChars":37,"textLines":1,"bbox":[52,148,1120,42]}
+{"kind":"shape","id":"sh/2tkj2xor","slide":19,"bbox":[52,206,1176,2]}
+{"kind":"textbox","id":"sh/nutkv2pc","slide":19,"text":"19","textPreview":"19","textChars":2,"textLines":1,"bbox":[1182,660,46,24]}
+{"kind":"shape","id":"sh/ov214n6h","slide":19,"bbox":[66,260,324,300]}
+{"kind":"textbox","id":"sh/pwb2xs72","slide":19,"text":"依托 Lucky 智能体平台","textPreview":"依托 Lucky 智能体平台","textChars":14,"textLines":1,"bbox":[94,326,268,38]}
+{"kind":"textbox","id":"sh/ep0jydof","slide":19,"text":"通过自然语言理解与多模态生成，将教师目标和课程素材转化为结构化教学内容。","textPreview":"通过自然语言理解与多模态生成，将教师目标和课程素材转化为结构化教学内容。","textChars":36,"textLines":1,"bbox":[98,404,260,88]}
+{"kind":"shape","id":"sh/fqtkrip0","slide":19,"bbox":[454,260,324,300]}
+{"kind":"textbox","id":"sh/bud4fulk","slide":19,"text":"多模态课件生成","textPreview":"多模态课件生成","textChars":7,"textLines":1,"bbox":[482,326,268,38]}
+{"kind":"textbox","id":"sh/at436pkz","slide":19,"text":"一句话或一段文字即可生成文本、图片、音视频、互动问答和在线代码等富媒体课件。","textPreview":"一句话或一段文字即可生成文本、图片、音视频、互动问答和在线代码等富媒体课件。","textChars":38,"textLines":1,"bbox":[486,404,260,88]}
+{"kind":"shape","id":"sh/xwvmhk3q","slide":19,"bbox":[842,260,324,300]}
+{"kind":"textbox","id":"sh/cvml8z25","slide":19,"text":"实训课件生成","textPreview":"实训课件生成","textChars":6,"textLines":1,"bbox":[870,326,268,38]}
+{"kind":"textbox","id":"sh/zyd4ju1w","slide":19,"text":"围绕实践任务、操作步骤、过程考核和结果评价，生成完整实训课程。","textPreview":"围绕实践任务、操作步骤、过程考核和结果评价，生成完整实训课程。","textChars":31,"textLines":1,"bbox":[874,404,260,88]}
+{"kind":"textbox","id":"sh/yx43apkb","slide":19,"text":"这让课件生产从“手工编辑内容”，升级为“AI 理解目标、生成内容、支持互动和实训”。","textPreview":"这让课件生产从“手工编辑内容”，升级为“AI 理解目标、生成内容、支持互动和实训”。","textChars":42,"textLines":1,"bbox":[148,626,984,28]}
+{"kind":"notes","id":"nt/t25wfi","slide":19,"text":"Rebuild the third teaching-platform reference as a native slide about AI-driven courseware generation.\n\n[Sources]\n- 用户提供的路演计划与补充要求: 用户提供的路演计划与补充要求（本对话）\n- 用户提供人工智能教学平台参考图 3: /var/folders/b1/n7l3tg6951bg2fxcv64856x00000gn/T/codex-clipboard-48052a4b-3632-4796-b381-46cc82e6faea.png\n- Lucky 模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/lucky/LuckyModule.jsx\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/1v20wh","slide":20,"title":"案例 / 创作工作台","textShapes":19}
+{"kind":"textbox","id":"sh/wvalc721","slide":20,"text":"案例 / 创作工作台","textPreview":"案例 / 创作工作台","textChars":10,"textLines":1,"bbox":[52,42,420,28]}
+{"kind":"textbox","id":"sh/vu14j2lg","slide":20,"text":"创作工作台把互动课件进一步生成互动课堂","textPreview":"创作工作台把互动课件进一步生成互动课堂","textChars":19,"textLines":1,"bbox":[52,84,1136,62]}
+{"kind":"textbox","id":"sh/uts3axkv","slide":20,"text":"教师输入教学主题或大纲，AI 生成课件，教师预览编辑后可一键加入备课系统。","textPreview":"教师输入教学主题或大纲，AI 生成课件，教师预览编辑后可一键加入备课系统。","textChars":37,"textLines":1,"bbox":[52,148,1120,42]}
+{"kind":"shape","id":"sh/9sjmhs3q","slide":20,"bbox":[52,206,1176,2]}
+{"kind":"textbox","id":"sh/8rql8n25","slide":20,"text":"20","textPreview":"20","textChars":2,"textLines":1,"bbox":[1182,660,46,24]}
+{"kind":"shape","id":"sh/7qhkfilk","slide":20,"bbox":[62,260,268,120]}
+{"kind":"textbox","id":"sh/mp836dkz","slide":20,"text":"01 输入目标","textPreview":"01 输入目标","textChars":7,"textLines":1,"bbox":[82,280,228,30]}
+{"kind":"textbox","id":"sh/do3mtc3u","slide":20,"text":"教师输入教学主题或大纲，系统识别并解析备课需求。","textPreview":"教师输入教学主题或大纲，系统识别并解析备课需求。","textChars":24,"textLines":1,"bbox":[86,324,220,40]}
+{"kind":"shape","id":"sh/snulkr29","slide":20,"bbox":[370,260,268,120]}
+{"kind":"textbox","id":"sh/e5sjuxkv","slide":20,"text":"02 AI 生成","textPreview":"02 AI 生成","textChars":8,"textLines":1,"bbox":[390,280,228,30]}
+{"kind":"textbox","id":"sh/f61k321g","slide":20,"text":"生成包含文本、图片、互动问答和在线代码的互动课件。","textPreview":"生成包含文本、图片、互动问答和在线代码的互动课件。","textChars":25,"textLines":1,"bbox":[394,324,220,40]}
+{"kind":"shape","id":"sh/g7a1w721","slide":20,"bbox":[62,414,268,120]}
+{"kind":"textbox","id":"sh/18j25sjm","slide":20,"text":"03 预览编辑","textPreview":"03 预览编辑","textChars":7,"textLines":1,"bbox":[82,434,228,30]}
+{"kind":"textbox","id":"sh/618jqdkz","slide":20,"text":"教师在线预览课件，进行二次修改和个性化完善。","textPreview":"教师在线预览课件，进行二次修改和个性化完善。","textChars":22,"textLines":1,"bbox":[86,478,220,40]}
+{"kind":"shape","id":"sh/r2hkzi1k","slide":20,"bbox":[370,414,268,120]}
+{"kind":"textbox","id":"sh/s3q1sn25","slide":20,"text":"04 一键备课","textPreview":"04 一键备课","textChars":7,"textLines":1,"bbox":[390,434,228,30]}
+{"kind":"textbox","id":"sh/t4j21sjq","slide":20,"text":"编辑完成后，一键添加至平台备课系统，用于课堂教学。","textPreview":"编辑完成后，一键添加至平台备课系统，用于课堂教学。","textChars":25,"textLines":1,"bbox":[394,478,220,40]}
+{"kind":"shape","id":"sh/qxc32hk3","slide":20,"bbox":[716,262,484,86]}
+{"kind":"textbox","id":"sh/bylkbm1o","slide":20,"text":"智能生成多模态互动课件","textPreview":"智能生成多模态互动课件","textChars":11,"textLines":1,"bbox":[748,280,420,22]}
+{"kind":"textbox","id":"sh/7idg3eh0","slide":20,"text":"内置智能体自动生成图文、问答、代码演示和游戏化元素。","textPreview":"内置智能体自动生成图文、问答、代码演示和游戏化元素。","textChars":26,"textLines":1,"bbox":[748,310,410,24]}
+{"kind":"shape","id":"sh/mh4zu90v","slide":20,"bbox":[716,376,484,86]}
+{"kind":"textbox","id":"sh/94vy5oz6","slide":20,"text":"生成多智能体互动课堂","textPreview":"生成多智能体互动课堂","textChars":10,"textLines":1,"bbox":[748,394,420,22]}
+{"kind":"textbox","id":"sh/83mhwjil","slide":20,"text":"一键生成含师生助智能体的平台，支持模拟教学和小组讨论。","textPreview":"一键生成含师生助智能体的平台，支持模拟教学和小组讨论。","textChars":27,"textLines":1,"bbox":[748,424,410,24]}
+{"kind":"shape","id":"sh/v6xg7ehc","slide":20,"bbox":[716,490,484,86]}
+{"kind":"textbox","id":"sh/u5ozy90r","slide":20,"text":"一键添加至备课","textPreview":"一键添加至备课","textChars":7,"textLines":1,"bbox":[748,508,420,22]}
+{"kind":"textbox","id":"sh/h8fy9ozi","slide":20,"text":"无缝集成备课系统，减少格式转换和重复录入。","textPreview":"无缝集成备课系统，减少格式转换和重复录入。","textChars":21,"textLines":1,"bbox":[748,538,410,24]}
+{"kind":"shape","id":"sh/w76h0jix","slide":20,"bbox":[130,604,1020,50]}
+{"kind":"textbox","id":"sh/jax0byh8","slide":20,"text":"互动课件不是静态内容，而是能进入课堂、连接智能体和教学活动的应用化资源。","textPreview":"互动课件不是静态内容，而是能进入课堂、连接智能体和教学活动的应用化资源。","textChars":36,"textLines":1,"bbox":[158,618,964,24]}
+{"kind":"notes","id":"nt/1v20wh","slide":20,"text":"Rebuild the fourth teaching-platform reference as a native workflow slide.\n\n[Sources]\n- 用户提供的路演计划与补充要求: 用户提供的路演计划与补充要求（本对话）\n- 用户提供人工智能教学平台参考图 4: /var/folders/b1/n7l3tg6951bg2fxcv64856x00000gn/T/codex-clipboard-607e9416-7674-4dba-91be-15d5a4c0b775.png\n- Lucky 模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/lucky/LuckyModule.jsx\n- 空间与教学场景源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/TopicDetail.jsx\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/mg11ps","slide":21,"title":"案例 / 实训课程","textShapes":19}
+{"kind":"textbox","id":"sh/3y1of65s","slide":21,"text":"案例 / 实训课程","textPreview":"案例 / 实训课程","textChars":9,"textLines":1,"bbox":[52,42,420,28]}
+{"kind":"textbox","id":"sh/4za5obmd","slide":21,"text":"创作工作台让实训课程从目标输入到环境生成","textPreview":"创作工作台让实训课程从目标输入到环境生成","textChars":20,"textLines":1,"bbox":[52,84,1136,62]}
+{"kind":"textbox","id":"sh/5036hgny","slide":21,"text":"教师输入课程目标后，AI 规划知识脉络、配置实训环境，并生成互动课件与评测脚本。","textPreview":"教师输入课程目标后，AI 规划知识脉络、配置实训环境，并生成互动课件与评测脚本。","textChars":40,"textLines":1,"bbox":[52,148,1120,42]}
+{"kind":"shape","id":"sh/u9sni14b","slide":21,"bbox":[52,206,1176,2]}
+{"kind":"textbox","id":"sh/vu1obm5g","slide":21,"text":"21","textPreview":"21","textChars":2,"textLines":1,"bbox":[1182,660,46,24]}
+{"kind":"shape","id":"sh/wva5krm1","slide":21,"bbox":[64,252,278,126]}
+{"kind":"textbox","id":"sh/hwj6dwnm","slide":21,"text":"01 输入教学目标","textPreview":"01 输入教学目标","textChars":9,"textLines":1,"bbox":[84,272,238,30]}
+{"kind":"textbox","id":"sh/m58neh4z","slide":21,"text":"明确课程目标、学生基础和预期能力。","textPreview":"明确课程目标、学生基础和预期能力。","textChars":17,"textLines":1,"bbox":[88,318,230,40]}
+{"kind":"shape","id":"sh/76ho7m5k","slide":21,"bbox":[382,252,278,126]}
+{"kind":"textbox","id":"sh/jmhc76xo","slide":21,"text":"02 AI 分析与规划","textPreview":"02 AI 分析与规划","textChars":11,"textLines":1,"bbox":[402,272,238,30]}
+{"kind":"textbox","id":"sh/il8vy1w3","slide":21,"text":"拆解目标，生成知识图谱、技能要求和实操任务。","textPreview":"拆解目标，生成知识图谱、技能要求和实操任务。","textChars":22,"textLines":1,"bbox":[406,318,230,40]}
+{"kind":"shape","id":"sh/5ozu9wfe","slide":21,"bbox":[64,412,278,126]}
+{"kind":"textbox","id":"sh/knqd0be9","slide":21,"text":"03 自动生成实训环境","textPreview":"03 自动生成实训环境","textChars":11,"textLines":1,"bbox":[84,432,238,30]}
+{"kind":"textbox","id":"sh/rq1wb6dk","slide":21,"text":"调用云端资源，生成操作系统、编程语言、数据库和软件预置。","textPreview":"调用云端资源，生成操作系统、编程语言、数据库和软件预置。","textChars":28,"textLines":1,"bbox":[88,478,230,40]}
+{"kind":"shape","id":"sh/6psv21wz","slide":21,"bbox":[382,412,278,126]}
+{"kind":"textbox","id":"sh/tcjedgvq","slide":21,"text":"04 生成课件与评测","textPreview":"04 生成课件与评测","textChars":10,"textLines":1,"bbox":[402,432,238,30]}
+{"kind":"textbox","id":"sh/srad4be5","slide":21,"text":"生成图文讲解、代码演示、互动练习和自动评分脚本。","textPreview":"生成图文讲解、代码演示、互动练习和自动评分脚本。","textChars":24,"textLines":1,"bbox":[406,478,230,40]}
+{"kind":"shape","id":"sh/nuxczmxg","slide":21,"bbox":[708,256,506,84]}
+{"kind":"textbox","id":"sh/mtovqhwv","slide":21,"text":"智能分析与规划","textPreview":"智能分析与规划","textChars":7,"textLines":1,"bbox":[738,272,446,22]}
+{"kind":"textbox","id":"sh/q9wfepgj","slide":21,"text":"理解教学目标，自动拆解知识图谱、技能要求和实操任务。","textPreview":"理解教学目标，自动拆解知识图谱、技能要求和实操任务。","textChars":26,"textLines":1,"bbox":[738,302,430,24]}
+{"kind":"shape","id":"sh/ba5g7ux4","slide":21,"bbox":[708,368,506,84]}
+{"kind":"textbox","id":"sh/cbexgzy9","slide":21,"text":"环境自动配置","textPreview":"环境自动配置","textChars":6,"textLines":1,"bbox":[738,384,446,22]}
+{"kind":"textbox","id":"sh/dcny9kfu","slide":21,"text":"根据大纲匹配云端资源，一键完成实训环境底层部署。","textPreview":"根据大纲匹配云端资源，一键完成实训环境底层部署。","textChars":24,"textLines":1,"bbox":[738,414,430,24]}
+{"kind":"shape","id":"sh/25cfa5g7","slide":21,"bbox":[708,480,506,84]}
+{"kind":"textbox","id":"sh/36lg3ahs","slide":21,"text":"内容与价值双重飞跃","textPreview":"内容与价值双重飞跃","textChars":9,"textLines":1,"bbox":[738,496,446,22]}
+{"kind":"textbox","id":"sh/o7uxcfyd","slide":21,"text":"将数天课程开发压缩为分钟级生成，并通过标准化流程保证专业性。","textPreview":"将数天课程开发压缩为分钟级生成，并通过标准化流程保证专业性。","textChars":30,"textLines":1,"bbox":[738,526,430,24]}
+{"kind":"shape","id":"sh/p83y5kfy","slide":21,"bbox":[140,604,1000,50]}
+{"kind":"textbox","id":"sh/ehcf65gb","slide":21,"text":"实训课程生成把教师从环境部署细节中释放出来，回到教学目标和学习效果设计。","textPreview":"实训课程生成把教师从环境部署细节中释放出来，回到教学目标和学习效果设计。","textChars":36,"textLines":1,"bbox":[168,618,944,24]}
+{"kind":"notes","id":"nt/mg11ps","slide":21,"text":"Rebuild the fifth teaching-platform reference as a native slide about practical-course generation.\n\n[Sources]\n- 用户提供的路演计划与补充要求: 用户提供的路演计划与补充要求（本对话）\n- 用户提供人工智能教学平台参考图 5: /var/folders/b1/n7l3tg6951bg2fxcv64856x00000gn/T/codex-clipboard-eb583dcd-848d-49ac-8dea-1edd799ac397.png\n- Lucky 模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/lucky/LuckyModule.jsx\n- 空间与教学场景源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/TopicDetail.jsx\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/xoz8h6","slide":22,"title":"价值总结","textShapes":13}
+{"kind":"textbox","id":"sh/lgjad07m","slide":22,"text":"价值总结","textPreview":"价值总结","textChars":4,"textLines":1,"bbox":[52,42,420,28]}
+{"kind":"textbox","id":"sh/ydsb258v","slide":22,"text":"Lucky 的核心价值，是把智能体能力变成公司资产","textPreview":"Lucky 的核心价值，是把智能体能力变成公司资产","textChars":25,"textLines":1,"bbox":[52,84,1136,62]}
+{"kind":"textbox","id":"sh/je1sbapg","slide":22,"text":"快速搭建、能力复用、效果更智能、从对话到干活，是平台价值的四个落点。","textPreview":"快速搭建、能力复用、效果更智能、从对话到干活，是平台价值的四个落点。","textChars":34,"textLines":1,"bbox":[52,148,1120,42]}
+{"kind":"shape","id":"sh/wrat0vq5","slide":22,"bbox":[52,206,1176,2]}
+{"kind":"textbox","id":"sh/xcja907q","slide":22,"text":"22","textPreview":"22","textChars":2,"textLines":1,"bbox":[1182,660,46,24]}
+{"kind":"shape","id":"sh/ap8byl8z","slide":22,"bbox":[72,264,236,250]}
+{"kind":"textbox","id":"sh/bq1s7q9k","slide":22,"text":"快速搭建","textPreview":"快速搭建","textChars":4,"textLines":1,"bbox":[96,322,188,34]}
+{"kind":"textbox","id":"sh/onqtwvqt","slide":22,"text":"通过对话创建智能体、技能和应用。","textPreview":"通过对话创建智能体、技能和应用。","textChars":16,"textLines":1,"bbox":[100,396,180,52]}
+{"kind":"shape","id":"sh/9oza5gre","slide":22,"bbox":[366,264,236,250]}
+{"kind":"textbox","id":"sh/l876pkvu","slide":22,"text":"能力复用","textPreview":"能力复用","textChars":4,"textLines":1,"bbox":[390,322,188,34]}
+{"kind":"textbox","id":"sh/07ypwfu9","slide":22,"text":"市场、模板、资料库和智搭应用持续沉淀。","textPreview":"市场、模板、资料库和智搭应用持续沉淀。","textChars":19,"textLines":1,"bbox":[394,396,180,52]}
+{"kind":"shape","id":"sh/z6ponado","slide":22,"bbox":[660,264,236,250]}
+{"kind":"textbox","id":"sh/y5g7u5cj","slide":22,"text":"效果更智能","textPreview":"效果更智能","textChars":5,"textLines":1,"bbox":[684,322,188,34]}
+{"kind":"textbox","id":"sh/d476lkvy","slide":22,"text":"支持推理、资料识别、知识引用和业务上下文。","textPreview":"支持推理、资料识别、知识引用和业务上下文。","textChars":21,"textLines":1,"bbox":[688,396,180,52]}
+{"kind":"shape","id":"sh/c3ypsfud","slide":22,"bbox":[954,264,236,250]}
+{"kind":"textbox","id":"sh/b25ojads","slide":22,"text":"从对话到干活","textPreview":"从对话到干活","textChars":6,"textLines":1,"bbox":[978,322,188,34]}
+{"kind":"textbox","id":"sh/q1w7q5c7","slide":22,"text":"能调用平台功能，推动任务、空间和流程执行。","textPreview":"能调用平台功能，推动任务、空间和流程执行。","textChars":21,"textLines":1,"bbox":[982,396,180,52]}
+{"kind":"textbox","id":"sh/p0n6h0vm","slide":22,"text":"最终目标：公司既能自己建设智能体，也能把智能体能力打包卖出去。","textPreview":"最终目标：公司既能自己建设智能体，也能把智能体能力打包卖出去。","textChars":31,"textLines":1,"bbox":[194,624,892,30]}
+{"kind":"notes","id":"nt/xoz8h6","slide":22,"text":"Close the value argument before the planning slide.\n\n[Sources]\n- 用户提供的路演计划与补充要求: 用户提供的路演计划与补充要求（本对话）\n- AI 原生业务执行模式本地文档: /Users/zhanghl/Documents/GitHub/guoren-v2/docs/ai-native-driven-system-use-cases.md\n- AI 原生平台定位本地文档: /Users/zhanghl/Documents/GitHub/guoren-v2/docs/guoren-vs-learnbuddy-ai-native-platform.md\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/0wf31j","slide":23,"title":"规划","textShapes":23}
+{"kind":"textbox","id":"sh/p4nedwz6","slide":23,"text":"规划","textPreview":"规划","textChars":2,"textLines":1,"bbox":[52,42,420,28]}
+{"kind":"textbox","id":"sh/21cv2h0f","slide":23,"text":"下一阶段聚焦平台能力建设和运营治理","textPreview":"下一阶段聚焦平台能力建设和运营治理","textChars":17,"textLines":1,"bbox":[52,84,1136,62]}
+{"kind":"textbox","id":"sh/n2lwbmh0","slide":23,"text":"围绕公司智能体建设、多智能体协同、自动化、运营治理、本地知识库映射和智搭增强，形成持续演进路线。","textPreview":"围绕公司智能体建设、多智能体协同、自动化、运营治理、本地知识库映射和智搭增强，形成持续演进路线。","textChars":48,"textLines":1,"bbox":[52,148,1120,42]}
+{"kind":"shape","id":"sh/cred8bih","slide":23,"bbox":[52,206,1176,2]}
+{"kind":"textbox","id":"sh/xsnehgz2","slide":23,"text":"23","textPreview":"23","textChars":2,"textLines":1,"bbox":[1182,660,46,24]}
+{"kind":"shape","id":"sh/apwv610r","slide":23,"bbox":[86,248,324,116]}
+{"kind":"textbox","id":"sh/bq5wf6hc","slide":23,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[108,272,58,34]}
+{"kind":"textbox","id":"sh/kvydcbit","slide":23,"text":"公司智能体建设","textPreview":"公司智能体建设","textChars":7,"textLines":1,"bbox":[182,272,198,28]}
+{"kind":"textbox","id":"sh/lw7elgze","slide":23,"text":"先建内部部门智能体，再沉淀外售模板。","textPreview":"先建内部部门智能体，再沉淀外售模板。","textChars":18,"textLines":1,"bbox":[182,310,196,42]}
+{"kind":"shape","id":"sh/18rq5sv6","slide":23,"bbox":[460,248,324,116]}
+{"kind":"textbox","id":"sh/07ipwnu1","slide":23,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[482,272,58,34]}
+{"kind":"textbox","id":"sh/fmpo3idg","slide":23,"text":"多智能体协同","textPreview":"多智能体协同","textChars":6,"textLines":1,"bbox":[556,272,198,28]}
+{"kind":"textbox","id":"sh/elg7udwv","slide":23,"text":"支持任务分工、调度、汇总与复盘。","textPreview":"支持任务分工、调度、汇总与复盘。","textChars":16,"textLines":1,"bbox":[556,310,196,42]}
+{"kind":"shape","id":"sh/pcrq9svi","slide":23,"bbox":[834,248,324,116]}
+{"kind":"textbox","id":"sh/obip0nux","slide":23,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[856,272,58,34]}
+{"kind":"textbox","id":"sh/na987idc","slide":23,"text":"自动化","textPreview":"自动化","textChars":3,"textLines":1,"bbox":[930,272,198,28]}
+{"kind":"textbox","id":"sh/2907yxcr","slide":23,"text":"按时间、状态、事件和规则触发任务。","textPreview":"按时间、状态、事件和规则触发任务。","textChars":17,"textLines":1,"bbox":[930,310,196,42]}
+{"kind":"shape","id":"sh/5g76x8vy","slide":23,"bbox":[86,402,324,116]}
+{"kind":"textbox","id":"sh/4fepo3et","slide":23,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[108,426,58,34]}
+{"kind":"textbox","id":"sh/wzip43m9","slide":23,"text":"运营治理","textPreview":"运营治理","textChars":4,"textLines":1,"bbox":[182,426,198,28]}
+{"kind":"textbox","id":"sh/h0rqd83u","slide":23,"text":"质量测评、Token 统计、额度和计费管控。","textPreview":"质量测评、Token 统计、额度和计费管控。","textChars":22,"textLines":1,"bbox":[182,464,196,42]}
+{"kind":"shape","id":"sh/ux072t4j","slide":23,"bbox":[460,402,324,116]}
+{"kind":"textbox","id":"sh/vy98byl4","slide":23,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[482,426,58,34]}
+{"kind":"textbox","id":"sh/4n2p83ml","slide":23,"text":"本地知识库映射","textPreview":"本地知识库映射","textChars":7,"textLines":1,"bbox":[556,426,198,28]}
+{"kind":"textbox","id":"sh/5obqh836","slide":23,"text":"本地文件夹接入知识库，支持检索引用。","textPreview":"本地文件夹接入知识库，支持检索引用。","textChars":18,"textLines":1,"bbox":[556,464,196,42]}
+{"kind":"shape","id":"sh/i1k76d4f","slide":23,"bbox":[834,402,324,116]}
+{"kind":"textbox","id":"sh/j2t8fil0","slide":23,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[856,426,58,34]}
+{"kind":"textbox","id":"sh/sr2pcnmh","slide":23,"text":"智搭增强","textPreview":"智搭增强","textChars":4,"textLines":1,"bbox":[930,426,198,28]}
+{"kind":"textbox","id":"sh/tsvqls32","slide":23,"text":"自然语言创建应用，连接资料、智能体和流程。","textPreview":"自然语言创建应用，连接资料、智能体和流程。","textChars":21,"textLines":1,"bbox":[930,464,196,42]}
+{"kind":"shape","id":"sh/3mxsbm5k","slide":23,"bbox":[205,594,870,50]}
+{"kind":"textbox","id":"sh/2lobihoz","slide":23,"text":"规划重点：让平台持续沉淀能力、复制方案、支撑交付。","textPreview":"规划重点：让平台持续沉淀能力、复制方案、支撑交付。","textChars":25,"textLines":1,"bbox":[233,608,814,24]}
+{"kind":"notes","id":"nt/0wf31j","slide":23,"text":"Roadmap focuses on platform capability construction across agents, automation, operation governance, local knowledge mapping, and QuickBuild.\n\n[Sources]\n- 用户提供的路演计划与补充要求: 用户提供的路演计划与补充要求（本对话）\n- Lucky 模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/lucky/LuckyModule.jsx\n- 智搭模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/quickBuild/QuickBuildModule.jsx\n- 资料库模块源码: /Users/zhanghl/Documents/GitHub/guoren-v2/src/resourceLib/ResourceLibrary.jsx\n- No external web sources or third-party visual assets were used."}
