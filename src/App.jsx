@@ -115,6 +115,7 @@ const { Sider, Header, Content } = Layout;
 const EMPTY_MENU_INDICATOR = { x: 0, y: 0, width: 0, height: 0, opacity: 0 };
 const SCENE_SHORTCUT_KEY_PREFIX = 'scene-shortcut:';
 const SCENE_SYSTEM_MENU_SHORTCUT_KEY_PREFIX = 'scene-system-menu:';
+const PINNED_ICON_BAR_SCENE_MENU_KEYS = ['supervision-inspection'];
 const ICON_BAR_WIDTH_STORAGE_KEY = 'gr.icon-bar-width.v1';
 const SCENE_SIDER_WIDTH_STORAGE_KEY = 'gr.scene.sider-width.v1';
 const RESOURCE_LIBRARY_ENTRY_STORAGE_KEY = 'gr.resource-library-entry.v1';
@@ -302,6 +303,7 @@ const sceneMenuIconMap = Object.freeze({
   'my-classroom': <CloudOutlined />,
   'workshop-cloud': <FolderOutlined />,
   'teaching-research': <BookOutlined />,
+  'supervision-inspection': <AuditOutlined />,
   'course-creation-center': <ReadOutlined />,
   'org-training': <DatabaseOutlined />,
 });
@@ -313,6 +315,7 @@ const sceneMenuAccentColorMap = Object.freeze({
   'my-classroom': '#0ea5e9',
   'workshop-cloud': '#6366f1',
   'teaching-research': '#eab308',
+  'supervision-inspection': '#0f766e',
   'course-creation-center': '#10b981',
   'org-training': '#14b8a6',
 });
@@ -392,7 +395,23 @@ function getIconBarAccentColor(iconKey) {
   return iconBarAccentColorMap[iconKey] || '#4f7cff';
 }
 
+function getSceneContentCountText(scene) {
+  const unit = scene?.sceneType === 'SUPERVISION' ? '任务' : '主题';
+  return `${scene?.topicCount || 0} 个${unit}`;
+}
+
+function getSceneObjectLabel(scene) {
+  return scene?.sceneType === 'SUPERVISION' ? '项目' : '空间';
+}
+
+function getSceneGroupObjectLabel(group) {
+  const spaces = Array.isArray(group?.spaces) ? group.spaces : [];
+  return spaces.length > 0 && spaces.every((scene) => scene?.sceneType === 'SUPERVISION') ? '项目' : '空间';
+}
+
 // Left icon bar items
+const supervisionTemplateIconBarItem = { key: 'supervision-template', icon: <AuditOutlined />, label: '督导模板' };
+
 const baseIconBarItems = [
   { key: 'lucky', icon: <ThunderboltOutlined />, label: 'lucky' },
   { key: 'my-space', icon: <AppstoreOutlined />, label: '空间', active: true },
@@ -428,7 +447,6 @@ const baseIconBarItems = [
   { key: 'my-profile', icon: <IdcardOutlined />, label: '我的档案' },
   { key: 'teacher-portrait', icon: <SolutionOutlined />, label: '教师画像' },
   { key: 'teacher-development', icon: <BarChartOutlined />, label: '教师发展' },
-  { key: 'supervision-template', icon: <AuditOutlined />, label: '督导模板' },
   { key: 'teacher-evaluation-schemes', icon: <FileTextOutlined />, label: '评价方案' },
   { key: 'teacher-evaluation', icon: <AuditOutlined />, label: '教师评价' },
   { key: 'capability-model', icon: <AppstoreOutlined />, label: '能力模型' },
@@ -673,13 +691,22 @@ function App({ onLogout }) {
         ? { ...item, badgeCount: messageUnreadCount }
         : item
     ));
-    const sceneCategoryItems = sceneSystemMenuShortcutKeys.map((menuKey) => ({
+    const pinnedSceneCategoryItems = PINNED_ICON_BAR_SCENE_MENU_KEYS.map((menuKey) => ({
+      key: getSceneSystemMenuShortcutKey(menuKey),
+      icon: getSceneMenuIcon(menuKey),
+      label: getSceneMenuDisplayLabel(menuKey),
+    }));
+    const sceneCategoryItems = sceneSystemMenuShortcutKeys
+      .filter((menuKey) => !PINNED_ICON_BAR_SCENE_MENU_KEYS.includes(menuKey))
+      .map((menuKey) => ({
       key: getSceneSystemMenuShortcutKey(menuKey),
       icon: getSceneMenuIcon(menuKey),
       label: getSceneMenuDisplayLabel(menuKey),
     }));
     return [
       ...decoratedBaseItems.slice(0, 1),
+      ...pinnedSceneCategoryItems,
+      supervisionTemplateIconBarItem,
       ...sceneCategoryItems,
       ...decoratedBaseItems.slice(1),
     ];
@@ -884,11 +911,12 @@ function App({ onLogout }) {
 
   const sceneOwnershipSummary = useMemo(() => {
     const activeCount = sceneOwnershipCounts[sceneOwnershipTab] || 0;
+    const objectLabel = activeSceneKey === 'supervision-inspection' ? '项目' : '空间';
     if (menuFilteredScenes.length === 0) {
-      return `${sceneHomeDisplayName}当前分类下还没有空间`;
+      return `${sceneHomeDisplayName}当前分类下还没有${objectLabel}`;
     }
-    return `${sceneHomeDisplayName} · ${getSceneOwnershipTabLabel(sceneOwnershipTab)} ${activeCount} 个，当前分类共 ${menuFilteredScenes.length} 个空间`;
-  }, [menuFilteredScenes.length, sceneHomeDisplayName, sceneOwnershipCounts, sceneOwnershipTab]);
+    return `${sceneHomeDisplayName} · ${getSceneOwnershipTabLabel(sceneOwnershipTab)} ${activeCount} 个，当前分类共 ${menuFilteredScenes.length} 个${objectLabel}`;
+  }, [activeSceneKey, menuFilteredScenes.length, sceneHomeDisplayName, sceneOwnershipCounts, sceneOwnershipTab]);
 
   const sceneEmptyDescription = useMemo(() => {
     const normalizedKeyword = sceneKeyword.trim();
@@ -896,10 +924,12 @@ function App({ onLogout }) {
       return `没有找到符合条件的${getSceneOwnershipTabLabel(sceneOwnershipTab)}空间`;
     }
     if (menuFilteredScenes.length === 0) {
-      return activeSceneKey === 'home' ? '暂无空间，先创建一个模板化空间。' : '当前栏目暂无空间，先新建一个。';
+      return activeSceneKey === 'home'
+        ? '暂无空间，先创建一个模板化空间。'
+        : `当前栏目暂无${activeSceneKey === 'supervision-inspection' ? '项目' : '空间'}，先新建一个。`;
     }
     if ((sceneOwnershipCounts[sceneOwnershipTab] || 0) === 0) {
-      return `${getSceneOwnershipTabLabel(sceneOwnershipTab)}暂无空间`;
+      return `${getSceneOwnershipTabLabel(sceneOwnershipTab)}暂无${activeSceneKey === 'supervision-inspection' ? '项目' : '空间'}`;
     }
     return '当前筛选下暂无空间';
   }, [activeSceneKey, menuFilteredScenes.length, sceneKeyword, sceneOwnershipCounts, sceneOwnershipTab]);
@@ -1377,9 +1407,10 @@ function App({ onLogout }) {
       setSceneModalDefaultMenuKey(null);
       setSelectedKeys([saved.menuKey || 'home']);
       await loadSceneHomeData(false);
+      const objectLabel = getSceneObjectLabel(saved);
       message.success(values.id
-        ? (sceneModalMode === 'scene' ? '场景已更新' : '空间已更新')
-        : (sceneModalMode === 'scene' ? '场景已创建' : '空间已创建'));
+        ? (sceneModalMode === 'scene' ? '场景已更新' : `${objectLabel}已更新`)
+        : (sceneModalMode === 'scene' ? '场景已创建' : `${objectLabel}已创建`));
     } catch (error) {
       message.error(error?.message || (sceneModalMode === 'scene' ? '保存场景失败' : '保存空间失败'));
     }
@@ -1387,9 +1418,10 @@ function App({ onLogout }) {
 
   const handleDeleteScene = (scene) => {
     if (!scene?.id) return;
+    const objectLabel = getSceneObjectLabel(scene);
     Modal.confirm({
-      title: '删除空间',
-      content: `确定删除“${scene.name}”吗？该空间下的本地内容数据也会一并清除。`,
+      title: `删除${objectLabel}`,
+      content: `确定删除“${scene.name}”吗？该${objectLabel}下的本地内容数据也会一并清除。`,
       okText: '删除',
       okButtonProps: { danger: true },
       cancelText: '取消',
@@ -1400,9 +1432,9 @@ function App({ onLogout }) {
             handleBackToHome();
           }
           await loadSceneHomeData(false);
-          message.success('空间已删除');
+          message.success(`${objectLabel}已删除`);
         } catch (error) {
-          message.error(error?.message || '删除空间失败');
+          message.error(error?.message || `删除${objectLabel}失败`);
         }
       },
     });
@@ -1948,7 +1980,7 @@ function App({ onLogout }) {
               <div className="header-title">{homeHeaderTitle}</div>
               <div className="header-actions">
                 <Input
-                  placeholder="搜索空间名称..."
+                  placeholder={activeSceneKey === 'supervision-inspection' ? '搜索督导项目名称...' : '搜索空间名称...'}
                   prefix={<SearchOutlined style={{ color: '#bbb' }} />}
                   className="search-input"
                   value={sceneKeyword}
@@ -1961,7 +1993,7 @@ function App({ onLogout }) {
                   className="new-topic-btn"
                   onClick={openCreateSpaceModal}
                 >
-                  新建空间
+                  {activeSceneKey === 'supervision-inspection' ? '新建项目' : '新建空间'}
                 </Button>
               </div>
             </Header>
@@ -1995,14 +2027,15 @@ function App({ onLogout }) {
                         <div className="scene-group-header">
                           <div>
                             <div className="scene-group-title">{group.name}</div>
-                            <div className="scene-group-subtitle">一个场景下可承载多个空间。</div>
+                            <div className="scene-group-subtitle">一个场景下可承载多个{getSceneGroupObjectLabel(group)}。</div>
                           </div>
-                          <div className="scene-group-count">{group.spaces.length} 个空间</div>
+                          <div className="scene-group-count">{group.spaces.length} 个{getSceneGroupObjectLabel(group)}</div>
                         </div>
                       ) : null}
                       <div className="card-grid">
                         {group.spaces.map((scene) => {
                           const theme = getSceneTheme(scene);
+                          const sceneObjectLabel = getSceneObjectLabel(scene);
                           const topicCardConfig = normalizeTopicCardConfig(scene.templateSnapshot?.topicCard);
                           const roleList = (scene.templateSnapshot?.roles || []).slice(0, 3);
                           const memberCount = Number.isFinite(Number(scene.memberCount)) && Number(scene.memberCount) > 0
@@ -2019,8 +2052,8 @@ function App({ onLogout }) {
                                 key: 'toggle-shortcut',
                                 label: scene.menuShortcutEnabled ? '从菜单移除快捷方式' : '添加到菜单快捷方式',
                               },
-                              { key: 'edit', label: '编辑空间' },
-                              { key: 'delete', label: '删除空间', danger: true },
+                              { key: 'edit', label: `编辑${sceneObjectLabel}` },
+                              { key: 'delete', label: `删除${sceneObjectLabel}`, danger: true },
                             ],
                             onClick: ({ key, domEvent }) => {
                               domEvent.stopPropagation();
@@ -2113,7 +2146,7 @@ function App({ onLogout }) {
                                   {scene.menuShortcutEnabled ? (
                                     <Tag className="scene-shortcut-tag">菜单快捷方式</Tag>
                                   ) : null}
-                                  <span className="card-count">{scene.topicCount} 个主题</span>
+                                  <span className="card-count">{getSceneContentCountText(scene)}</span>
                                 </div>
                               </div>
                             </Card>

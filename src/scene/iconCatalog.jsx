@@ -1,5 +1,6 @@
 import {
   AppstoreOutlined,
+  AuditOutlined,
   BorderOutlined,
   CheckSquareOutlined,
   CommentOutlined,
@@ -121,6 +122,13 @@ const SCENE_ICON_META_LIST = [
     background: '#ebfff1',
   },
   {
+    value: 'AUDIT',
+    label: '督导',
+    Icon: AuditOutlined,
+    color: '#0f766e',
+    background: '#e6fffb',
+  },
+  {
     value: 'ROCKET',
     label: '发布',
     Icon: RocketOutlined,
@@ -166,6 +174,7 @@ export const SCENE_TOOL_ICON_OPTIONS = [
   'GRAPH',
   'VIDEO',
   'TASK',
+  'AUDIT',
   'ROCKET',
   'LINK',
   'GRID',
@@ -181,6 +190,7 @@ export const SCENE_FOLDER_ICON_OPTIONS = [
   'GRAPH',
   'VIDEO',
   'TASK',
+  'AUDIT',
   'ROCKET',
   'LINK',
   'TAG',
@@ -199,6 +209,7 @@ export const SCENE_MODE_ICON_OPTIONS = [
   'USER',
   'LIBRARY',
   'VIDEO',
+  'AUDIT',
   'ROCKET',
   'LINK',
   'TAG',
@@ -232,6 +243,7 @@ export function inferSceneToolIconKey(tool = {}) {
   if (/capability|model|resource[_\s-]?library|library|database|资料库|能力模型/.test(text)) return 'LIBRARY';
   if (/live|meeting|直播|会议|授课/.test(text)) return 'LIVE';
   if (/video|录像|录播|视频/.test(text)) return 'VIDEO';
+  if (/supervision|inspect|audit|督导|检查|巡查|听课/.test(text)) return 'AUDIT';
   if (/exam|assessment|quiz|test|考试|测评|题库|评阅/.test(text)) return 'EXAM';
   if (/survey|vote|register|sign|报名|调查|投票|表单/.test(text)) return 'FORM';
   if (/forum|chat|comment|talk|discussion|论坛|讨论|评审/.test(text)) return 'CHAT';
@@ -249,6 +261,7 @@ export function inferSceneFolderIconKey(folder = {}) {
   if (/video|录播|点播|视频/.test(text) || allowedTools.includes('ONLINE_VIDEO')) return 'VIDEO';
   if (/live|meeting|直播|会议/.test(text) || allowedTools.includes('LIVE')) return 'LIVE';
   if (/exam|assessment|quiz|test|考试|测评|题库/.test(text) || allowedTools.includes('EXAM') || allowedTools.includes('ASSESSMENT')) return 'EXAM';
+  if (/supervision|inspect|audit|督导|检查|巡查|听课/.test(text) || allowedTools.includes('SUPERVISION_TASK')) return 'AUDIT';
   if (/register|signup|报名|成员/.test(text) || allowedTools.includes('REGISTER')) return 'USER';
   if (/forum|topic|talk|discussion|论坛|议题|讨论/.test(text) || allowedTools.includes('FORUM')) return 'CHAT';
   if (/resource|library|archive|资料库|资源/.test(text) || allowedTools.includes('RESOURCE_LIBRARY')) return 'LIBRARY';
@@ -265,6 +278,7 @@ export function inferSceneModeTabIconKey(modeTab = {}) {
   if (/home|首页/.test(text)) return 'HOME';
   if (/ai|智能|助教/.test(text)) return 'AI';
   if (/assessment|考核|评价|评阅/.test(text)) return 'EXAM';
+  if (/supervision|inspect|audit|督导|检查|巡查|听课/.test(text)) return 'AUDIT';
   if (/practice|train|task|实训|任务|练习|实验|作业/.test(text)) return 'TASK';
   if (/knowledge|graph|resource|资料|课程|课件|知识|图谱|文档/.test(text)) {
     return /graph|图谱/.test(text) ? 'GRAPH' : 'DOCUMENT';

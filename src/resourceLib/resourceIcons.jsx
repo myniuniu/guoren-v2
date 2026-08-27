@@ -1,5 +1,6 @@
 import {
   AppstoreOutlined,
+  AuditOutlined,
   FolderFilled,
   FilePdfFilled,
   FilePptFilled,
@@ -39,6 +40,7 @@ const TYPE_META = {
   exam:       { color: '#722ed1', Icon: EditOutlined },
   register:   { color: '#13c2c2', Icon: UserOutlined },
   training:   { color: '#34c759', Icon: ExperimentFilled },
+  supervisionTask: { color: '#0f766e', Icon: AuditOutlined },
   test:       { color: '#52c41a', Icon: ExperimentFilled },
   knowledgeGraph: { color: '#1677ff', Icon: NodeIndexOutlined },
   capabilityModel: { color: '#0f766e', Icon: AppstoreOutlined },
@@ -62,6 +64,7 @@ const TYPE_LABEL_MAP = {
   exam: '考试',
   register: '报名',
   training: '实训任务',
+  supervisionTask: '督导任务',
   test: '测试',
   knowledgeGraph: '知识图谱',
   capabilityModel: '能力模型',

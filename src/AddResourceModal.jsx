@@ -1,6 +1,7 @@
 import { Modal } from 'antd';
 import {
   AppstoreOutlined,
+  AuditOutlined,
   BorderOutlined,
   CheckSquareOutlined,
   DatabaseOutlined,
@@ -93,10 +94,23 @@ const activityEntries = [
     iconBackground: '#e6fffb',
   },
   {
+    key: 'supervision-task',
+    icon: <AuditOutlined />,
+    label: '督导任务',
+    type: 'supervisionTask',
+    moduleKey: 'SUPERVISION_TASK',
+    sceneTypes: ['SUPERVISION'],
+    defaultName: '新建督导任务',
+    description: '创建检查事项、对象与整改要求',
+    iconColor: '#0f766e',
+    iconBackground: '#e6fffb',
+  },
+  {
     key: 'training',
     icon: <ExperimentOutlined />,
     label: '实训任务',
     type: 'training',
+    sceneTypes: ['TRAINING'],
     defaultName: '新建实训任务',
     description: '布置实操练习与过程产出',
     iconColor: '#34c759',
@@ -193,12 +207,18 @@ function AddResourceModal({
   onPickCapabilityModel,
   enabledEntries,
   hiddenTypes = [],
+  sceneType = 'CUSTOM',
 }) {
   const isEntryEnabled = (item) => {
     if (!Array.isArray(enabledEntries) || !item?.moduleKey) return true;
     return enabledEntries.includes(item.moduleKey);
   };
   const isTypeVisible = (item) => !hiddenTypes.includes(item?.type);
+  const isSceneVisible = (item) => (
+    !Array.isArray(item?.sceneTypes)
+    || item.sceneTypes.length === 0
+    || item.sceneTypes.includes(sceneType)
+  );
   const isKnowledgeEntryVisible = (item) => (
     isEntryEnabled(item)
     && isTypeVisible(item)
@@ -206,9 +226,17 @@ function AddResourceModal({
   );
 
   const libraryEnabled = isEntryEnabled(libraryEntry);
-  const visibleActivityEntries = activityEntries.filter(isEntryEnabled);
+  const visibleActivityEntries = activityEntries.filter((item) => (
+    isEntryEnabled(item) && isTypeVisible(item) && isSceneVisible(item)
+  ));
   const visibleToolEntries = toolEntries.filter(isEntryEnabled);
   const visibleKnowledgeEntries = knowledgeEntries.filter(isKnowledgeEntryVisible);
+  const modalSubtitle = sceneType === 'SUPERVISION'
+    ? '从资料库导入内容，或直接新建督导任务与协作资料。'
+    : '从资料库导入内容，或直接新建协作资料与知识体系。';
+  const activityPanelSubtitle = sceneType === 'SUPERVISION'
+    ? '督导任务与问卷互动内容'
+    : '研讨会与问卷互动内容';
 
   const handleItemClick = (item) => {
     if (item.key === 'resource-lib') {
@@ -249,7 +277,7 @@ function AddResourceModal({
       <div className="add-resource-modal-shell">
         <div className="add-resource-modal-heading">
           <div className="add-resource-modal-title">添加资料</div>
-          <div className="add-resource-modal-subtitle">从资料库导入内容，或直接新建协作资料与知识体系。</div>
+          <div className="add-resource-modal-subtitle">{modalSubtitle}</div>
         </div>
 
         {libraryEnabled ? (
@@ -277,7 +305,7 @@ function AddResourceModal({
           {visibleActivityEntries.length ? (
             <section className="add-resource-modal-panel add-resource-modal-panel-activity">
               <div className="add-resource-modal-panel-title">活动</div>
-              <div className="add-resource-modal-panel-subtitle">研讨会与问卷互动内容</div>
+              <div className="add-resource-modal-panel-subtitle">{activityPanelSubtitle}</div>
               <div className="add-resource-modal-card-grid add-resource-modal-card-grid-activity">
                 {visibleActivityEntries.map((item) => (
                   <button

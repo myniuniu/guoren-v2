@@ -8,7 +8,7 @@ const SCENE_STORAGE_KEY = 'gr.scenes.v1';
 const SCENE_MENU_CATEGORY_STORAGE_KEY = 'gr.scene.menu-categories.v1';
 const SCENE_SYSTEM_MENU_SHORTCUT_STORAGE_KEY = 'gr.scene.system-menu-shortcuts.v1';
 const SEED_KEY = 'gr.scene.seeded.v1';
-const BUILT_IN_SYNC_KEY = 'gr.scene.builtin-sync.v11';
+const BUILT_IN_SYNC_KEY = 'gr.scene.builtin-sync.v13';
 const STORE_CHANGE_EVENT = 'gr:scene-store-change';
 const VERSION_STORAGE_KEY = 'guoren_version_data';
 const DEFAULT_SCENE_GROUP_NAME = '人工智能通识体系';
@@ -17,6 +17,7 @@ const ORG_TRAINING_MENU_LABEL = '培训（学习公社）';
 export const SCENE_TYPE_OPTIONS = [
   { value: 'TEACHING', label: '教学场景' },
   { value: 'RESEARCH', label: '教研场景' },
+  { value: 'SUPERVISION', label: '督导场景' },
   { value: 'TRAINING', label: '培训场景' },
   { value: 'COMMUNITY', label: '社区共创' },
   { value: 'CUSTOM', label: '自定义场景' },
@@ -45,6 +46,7 @@ export const DEFAULT_SCENE_MENU_GROUPS = [
     label: '',
     children: [
       { key: 'teaching-research', label: '教研空间' },
+      { key: 'supervision-inspection', label: '督导检查' },
       { key: 'course-creation-center', label: '课程创作中心' },
       { key: 'org-training', label: ORG_TRAINING_MENU_LABEL },
     ],
@@ -92,6 +94,7 @@ export const TOOL_OPTIONS = [
   { value: 'KNOWLEDGE_GRAPH', label: '知识图谱' },
   { value: 'CAPABILITY_MODEL', label: '能力模型' },
   { value: 'ONLINE_VIDEO', label: '在线视频' },
+  { value: 'SUPERVISION_TASK', label: '督导任务' },
 ];
 
 const TOOL_LABEL_MAP = Object.freeze(
@@ -120,6 +123,10 @@ const LEGACY_TOOL_KEY_MAP = Object.freeze({
   knowledge_graph: 'KNOWLEDGE_GRAPH',
   capability_model: 'CAPABILITY_MODEL',
   online_video: 'ONLINE_VIDEO',
+  supervision: 'SUPERVISION_TASK',
+  supervision_task: 'SUPERVISION_TASK',
+  inspection_task: 'SUPERVISION_TASK',
+  audit_task: 'SUPERVISION_TASK',
 });
 
 export const TOOL_PLACEMENT_OPTIONS = [
@@ -266,6 +273,7 @@ export const ROLE_DATA_ACCESS_AREA_OPTIONS = [
   { value: 'VOTE', label: '投票' },
   { value: 'EXAM', label: '考试' },
   { value: 'REGISTER', label: '报名' },
+  { value: 'SUPERVISION_TASK', label: '督导任务' },
 ];
 
 export const MODE_TAB_PRESET_OPTIONS = [
@@ -420,6 +428,47 @@ const SCENE_TYPE_STATUS_PRESETS = Object.freeze({
       },
     ],
   },
+  SUPERVISION: {
+    description: '督导场景通常采用“筹备 -> 检查 -> 整改 -> 归档”，聚焦检查任务、证据材料、反馈整改和归档复盘。',
+    rules: [
+      {
+        key: 'planning',
+        name: '项目筹备',
+        stage: 'PREPARING',
+        controlMode: 'ADMIN_ONLY',
+        entryEnabled: false,
+        roleKeys: ['director', 'inspector'],
+        description: '用于确定检查对象、任务分工、材料清单和评价模板。',
+      },
+      {
+        key: 'inspecting',
+        name: '检查中',
+        stage: 'RUNNING',
+        controlMode: 'COLLABORATIVE',
+        entryEnabled: true,
+        roleKeys: ['director', 'inspector', 'school_contact'],
+        description: '开放督导任务记录、现场佐证上传和问题登记。',
+      },
+      {
+        key: 'rectifying',
+        name: '整改反馈',
+        stage: 'REVIEWING',
+        controlMode: 'REVIEW_ONLY',
+        entryEnabled: false,
+        roleKeys: ['director', 'inspector', 'school_contact'],
+        description: '用于提交整改说明、复核结论和督导反馈。',
+      },
+      {
+        key: 'archived',
+        name: '已归档',
+        stage: 'ARCHIVED',
+        controlMode: 'READ_ONLY',
+        entryEnabled: false,
+        roleKeys: ['director', 'inspector'],
+        description: '固化督导项目资料，保留查询和复盘入口。',
+      },
+    ],
+  },
   TRAINING: {
     description: '培训场景通常采用“开放 -> 运行 -> 评阅 -> 结束”，覆盖报名入营、学习过程和结营评定。',
     rules: [
@@ -542,6 +591,9 @@ const BUILT_IN_RESOURCE_ACCESS = Object.freeze({
   TEACHING_LEARNER: ['NOTE', 'SURVEY', 'EXAM'],
   RESEARCH_CORE: ['SEMINAR', 'NOTE'],
   RESEARCH_EXPERT: ['SEMINAR', 'NOTE', 'SURVEY'],
+  SUPERVISION_MANAGER: ['NOTE', 'SURVEY', 'SUPERVISION_TASK'],
+  SUPERVISION_INSPECTOR: ['NOTE', 'SURVEY', 'SUPERVISION_TASK'],
+  SUPERVISION_SCHOOL: ['NOTE', 'SUPERVISION_TASK'],
   TRAINING_LEARNER: ['NOTE', 'SURVEY', 'EXAM', 'REGISTER'],
   TRAINING_REVIEWER: ['NOTE', 'EXAM'],
   COMMUNITY_OPERATOR: ['SEMINAR', 'NOTE', 'SURVEY', 'VOTE', 'REGISTER'],
@@ -575,6 +627,23 @@ const BUILT_IN_ROLE_AUTHORIZATION = {
     dataAccessScope: 'ASSIGNED',
     assignedAccessRuleType: 'RESOURCE_TYPE',
     dataAccessAreas: ['FOLDER::lesson_review'],
+  },
+  'SUPERVISION:director': {
+    functionalPermissions: ['TOPIC_EDIT', 'RESOURCE_CREATE', 'RESOURCE_EDIT', 'TOOL_USE', 'ASSESSMENT_CONFIG', 'MEMBER_MANAGE', 'DATA_EXPORT'],
+    dataAccessScope: 'ALL',
+    dataAccessAreas: BUILT_IN_RESOURCE_ACCESS.ALL,
+  },
+  'SUPERVISION:inspector': {
+    functionalPermissions: ['RESOURCE_CREATE', 'RESOURCE_EDIT', 'TOOL_USE', 'RESULT_REVIEW', 'COMMENT_INTERACT', 'DATA_EXPORT'],
+    dataAccessScope: 'ASSIGNED',
+    assignedAccessRuleType: 'RESOURCE_TYPE',
+    dataAccessAreas: ['FOLDER::inspection_tasks', 'FOLDER::evidence_materials', 'FOLDER::feedback_rectification'],
+  },
+  'SUPERVISION:school_contact': {
+    functionalPermissions: ['RESOURCE_CREATE', 'RESOURCE_EDIT', 'TOOL_USE', 'RESULT_SUBMIT', 'COMMENT_INTERACT'],
+    dataAccessScope: 'ASSIGNED',
+    assignedAccessRuleType: 'RESOURCE_TYPE',
+    dataAccessAreas: ['FOLDER::evidence_materials', 'FOLDER::feedback_rectification'],
   },
   'TRAINING:admin': {
     functionalPermissions: ['TOPIC_EDIT', 'RESOURCE_CREATE', 'RESOURCE_EDIT', 'LIVE_ACTIVITY_MANAGE', 'ASSESSMENT_CONFIG', 'MEMBER_MANAGE', 'DATA_EXPORT'],
@@ -1001,6 +1070,8 @@ function defaultMenuKeyByType(sceneType) {
       return 'my-classroom';
     case 'RESEARCH':
       return 'teaching-research';
+    case 'SUPERVISION':
+      return 'supervision-inspection';
     case 'TRAINING':
       return 'org-training';
     case 'COMMUNITY':
@@ -1425,6 +1496,15 @@ export function getSceneTypeStatusGuidance(sceneType = 'CUSTOM', statusRules = [
     }
     if (!stageCountMap.has('REVIEWING')) {
       messages.push('培训场景通常应包含“评阅阶段”，用于考试、作业和成果评定。');
+    }
+  }
+
+  if (normalizedType === 'SUPERVISION') {
+    if (!stageCountMap.has('REVIEWING')) {
+      messages.push('督导场景通常应包含“评阅阶段”，用于整改反馈、复核和结论确认。');
+    }
+    if (!stageCountMap.has('ARCHIVED')) {
+      messages.push('督导场景通常应包含“归档阶段”，用于沉淀检查项目资料。');
     }
   }
 
@@ -1881,6 +1961,124 @@ function buildPresetTemplates() {
       },
     },
     {
+      id: 'tpl_supervision_builtin',
+      templateCode: 'TPL-SUPERVISION',
+      name: '督导检查场景',
+      sceneType: 'SUPERVISION',
+      defaultMenuKey: 'supervision-inspection',
+      description: '用于教学督导、专项检查、巡课记录和整改闭环的督导项目空间模板。',
+      builtIn: true,
+      theme: {
+        badgeText: '督导检查',
+        emoji: '🔎',
+        coverSource: 'PRESET',
+        coverPresetId: 'abstract_speed',
+        coverStart: '#0f766e',
+        coverEnd: '#67e8f9',
+        accentColor: '#0f766e',
+        heroTitle: '围绕检查任务、佐证材料和整改反馈的督导项目',
+        heroSubtitle: '支持督导组创建检查任务、收集证据、形成反馈并完成项目归档。',
+        surfaceHint: '督导任务、佐证材料、整改反馈、项目归档',
+      },
+      homepage: {
+        templateName: '督导项目主页模板',
+        introMode: 'AI_OR_MANUAL',
+        introText: '展示督导项目目标、检查对象、任务进度、重点问题与整改要求。',
+      },
+      topicPage: {
+        resourcePanelTitle: '项目资料',
+        addResourceLabel: '添加督导任务',
+        appLabel: '督导工具',
+        emptyStateText: '暂无项目资料，可先创建督导任务或上传佐证材料',
+        allowRootResources: true,
+        modeTabs: createModeTabs({
+          knowledge: '项目资料',
+          ai: 'AI督导助手',
+          assessment: '整改复核',
+        }, {
+          practice: {
+            enabled: false,
+          },
+          assessment: {
+            resourcePanelTitle: '整改反馈',
+            addResourceLabel: '添加整改材料',
+            emptyStateText: '暂无整改反馈，可先上传整改说明或复核记录',
+          },
+          'learner-progress': { enabled: false },
+        }, 'SUPERVISION', '督导项目主页模板'),
+      },
+      roles: [
+        {
+          key: 'director',
+          name: '督导负责人',
+          agentName: '督导统筹助手',
+          functionalPermissions: ['TOPIC_EDIT', 'RESOURCE_CREATE', 'RESOURCE_EDIT', 'TOOL_USE', 'ASSESSMENT_CONFIG', 'MEMBER_MANAGE', 'DATA_EXPORT'],
+          permissionSummary: '维护项目、任务分工、检查标准与整改闭环',
+          dataAccessScope: 'ALL',
+          dataAccessAreas: ['TOPIC_METADATA', 'RESOURCE_AREA', 'RESULT_AREA', 'ASSESSMENT_DATA', 'MEMBER_DATA', 'SUPERVISION_TASK'],
+          scopeSummary: '可管理全部项目资料、督导任务和整改数据',
+          description: '负责督导检查项目的组织、分工与结论确认。',
+        },
+        {
+          key: 'inspector',
+          name: '督导成员',
+          agentName: '检查记录助手',
+          functionalPermissions: ['RESOURCE_CREATE', 'RESOURCE_EDIT', 'TOOL_USE', 'RESULT_REVIEW', 'COMMENT_INTERACT', 'DATA_EXPORT'],
+          permissionSummary: '添加督导任务、记录检查结果并提交反馈',
+          dataAccessScope: 'ASSIGNED',
+          assignedAccessRuleType: 'RESOURCE_TYPE',
+          dataAccessAreas: ['FOLDER::inspection_tasks', 'FOLDER::evidence_materials', 'FOLDER::feedback_rectification', 'SUPERVISION_TASK'],
+          scopeSummary: '可访问分配到的任务、佐证与反馈材料',
+          description: '负责现场检查、材料核验和问题记录。',
+        },
+        {
+          key: 'school_contact',
+          name: '学校联络人',
+          agentName: '整改跟进助手',
+          functionalPermissions: ['RESOURCE_CREATE', 'RESOURCE_EDIT', 'TOOL_USE', 'RESULT_SUBMIT', 'COMMENT_INTERACT'],
+          permissionSummary: '提交佐证材料、整改说明和复核补充',
+          dataAccessScope: 'ASSIGNED',
+          assignedAccessRuleType: 'RESOURCE_TYPE',
+          dataAccessAreas: ['FOLDER::evidence_materials', 'FOLDER::feedback_rectification', 'SUPERVISION_TASK'],
+          scopeSummary: '仅访问本校相关任务与整改材料',
+          description: '负责对接检查安排并提交整改材料。',
+        },
+      ],
+      metadataFields: [
+        { key: 'project_name', label: '项目名称', type: 'TEXT', required: true },
+        { key: 'inspection_type', label: '督导类型', type: 'TEXT', required: true, description: '例如：课堂教学督导、实训安全检查、专项检查' },
+        { key: 'target_school', label: '检查对象', type: 'TEXT', required: true },
+        { key: 'inspection_period', label: '检查周期', type: 'TEXT', required: false },
+        { key: 'responsible_department', label: '责任部门', type: 'TEXT', required: false },
+      ],
+      statusRules: buildSceneTypeStatusRules('SUPERVISION'),
+      toolAreas: {
+        resourceAreaTools: ['SUPERVISION_TASK', 'RESOURCE_LIBRARY', 'ONLINE_DOC', 'OFFICE_UPLOAD'],
+        resultAreaTools: ['SURVEY', 'FORUM', 'URL'],
+      },
+      toolConfigs: [
+        { key: 'supervision_task', name: '督导任务', placement: 'RESOURCE_AREA', enabled: true, description: '创建检查事项、记录对象、结果与整改要求。' },
+        { key: 'survey', name: '问卷调查', placement: 'RESULT_AREA', enabled: true, description: '收集师生反馈、满意度和检查补充信息。' },
+        { key: 'forum', name: '整改讨论', placement: 'RESULT_AREA', enabled: true, description: '沉淀问题确认、整改沟通和复核意见。' },
+      ],
+      folderTypes: [
+        { key: 'inspection_tasks', name: '督导任务', required: true, iconKey: 'AUDIT', allowedTools: ['SUPERVISION_TASK', 'ONLINE_DOC'], roleIds: ['director', 'inspector'], description: '按检查事项维护任务、对象、责任人、截止时间和结果。' },
+        { key: 'evidence_materials', name: '佐证材料', required: true, iconKey: 'DOCUMENT', allowedTools: ['RESOURCE_LIBRARY', 'OFFICE_UPLOAD', 'ONLINE_DOC'], roleIds: ['director', 'inspector', 'school_contact'], description: '收集课堂记录、现场照片、制度文件和数据报表。' },
+        { key: 'feedback_rectification', name: '整改反馈', required: true, iconKey: 'EXAM', allowedTools: ['SUPERVISION_TASK', 'ONLINE_DOC', 'SURVEY'], roleIds: ['director', 'inspector', 'school_contact'], description: '维护问题清单、整改措施、复核结论和反馈记录。' },
+        { key: 'archive', name: '归档材料', required: false, iconKey: 'LIBRARY', allowedTools: ['ONLINE_DOC', 'OFFICE_UPLOAD', 'URL'], roleIds: ['director'], description: '归档督导报告、会议纪要和项目总结。' },
+      ],
+      agents: [
+        { name: '督导统筹助手', roleIds: ['director'], knowledgeSource: '项目资料与督导任务', prompt: '辅助拆解检查任务、汇总问题清单并生成督导报告。', avatar: '📋' },
+        { name: '检查记录助手', roleIds: ['inspector'], knowledgeSource: '佐证材料与整改反馈', prompt: '帮助督导成员记录观察要点、提炼问题和形成整改建议。', avatar: '📝' },
+      ],
+      entryMethods: ['MANUAL', 'BATCH_IMPORT', 'INVITATION'],
+      recommendation: {
+        enabled: true,
+        resourceScope: '督导项目中的任务、佐证材料、整改反馈与归档报告',
+        description: '根据检查对象、问题类型和整改状态推荐相关材料与历史案例。',
+      },
+    },
+    {
       id: 'tpl_training_builtin',
       templateCode: 'TPL-TRAINING',
       name: '组织培训场景',
@@ -2267,6 +2465,19 @@ function buildPresetScenes(templates) {
       templateId: byCode.get('TPL-RESEARCH')?.id,
     },
     {
+      id: 'scene_supervision_seed_1',
+      sceneCode: 'SCN-SUP-CLASS-QUALITY',
+      name: '课堂教学质量专项督导',
+      sceneGroupName: '教学督导项目',
+      description: '面向课堂教学过程质量开展听课、巡课、材料核验与整改反馈。',
+      owner: '督导办公室',
+      visibility: 'INTERNAL',
+      menuKey: 'supervision-inspection',
+      topicCount: 6,
+      memberCount: 12,
+      templateId: byCode.get('TPL-SUPERVISION')?.id,
+    },
+    {
       id: 'scene_training_seed_1',
       sceneCode: 'SCN-NEW-TEACHER',
       name: '新教师岗前培训',
@@ -2505,6 +2716,162 @@ function migrateBuiltInTrainingEntries(existingTemplates, existingScenes) {
   };
 }
 
+function migrateBuiltInSupervisionEntries(existingTemplates, existingScenes) {
+  let templateChanged = false;
+  let sceneChanged = false;
+  const presetTemplates = buildPresetTemplates();
+  const presetTemplate = presetTemplates.find((template) => (
+    template?.id === 'tpl_supervision_builtin' || template?.templateCode === 'TPL-SUPERVISION'
+  )) || null;
+  if (!presetTemplate) {
+    return { nextTemplates: existingTemplates, nextScenes: existingScenes, templateChanged, sceneChanged };
+  }
+
+  const presetScenes = buildPresetScenes(presetTemplates);
+  const presetScene = presetScenes.find((scene) => (
+    scene?.id === 'scene_supervision_seed_1' || scene?.sceneCode === 'SCN-SUP-CLASS-QUALITY'
+  )) || null;
+
+  const nextTemplates = existingTemplates.map((template) => {
+    if (
+      template?.id !== 'tpl_supervision_builtin'
+      && template?.templateCode !== 'TPL-SUPERVISION'
+    ) {
+      return template;
+    }
+    const nextTemplate = {
+      ...template,
+      templateCode: presetTemplate.templateCode,
+      name: presetTemplate.name,
+      sceneType: presetTemplate.sceneType,
+      statusPresetSceneType: presetTemplate.statusPresetSceneType,
+      defaultMenuKey: presetTemplate.defaultMenuKey,
+      description: presetTemplate.description,
+      theme: clone(presetTemplate.theme),
+      homepage: clone(presetTemplate.homepage),
+      topicPage: clone(presetTemplate.topicPage),
+      roles: clone(presetTemplate.roles),
+      metadataFields: clone(presetTemplate.metadataFields),
+      statusRules: clone(presetTemplate.statusRules),
+      toolAreas: clone(presetTemplate.toolAreas),
+      toolConfigs: clone(presetTemplate.toolConfigs),
+      folderTypes: clone(presetTemplate.folderTypes),
+      agents: clone(presetTemplate.agents),
+      entryMethods: clone(presetTemplate.entryMethods),
+      recommendation: clone(presetTemplate.recommendation),
+      versioning: clone(presetTemplate.versioning),
+    };
+    const changed = JSON.stringify({
+      templateCode: template.templateCode,
+      name: template.name,
+      sceneType: template.sceneType,
+      statusPresetSceneType: template.statusPresetSceneType,
+      defaultMenuKey: template.defaultMenuKey,
+      description: template.description,
+      theme: template.theme,
+      homepage: template.homepage,
+      topicPage: template.topicPage,
+      roles: template.roles,
+      metadataFields: template.metadataFields,
+      statusRules: template.statusRules,
+      toolAreas: template.toolAreas,
+      toolConfigs: template.toolConfigs,
+      folderTypes: template.folderTypes,
+      agents: template.agents,
+      entryMethods: template.entryMethods,
+      recommendation: template.recommendation,
+      versioning: template.versioning,
+    }) !== JSON.stringify({
+      templateCode: nextTemplate.templateCode,
+      name: nextTemplate.name,
+      sceneType: nextTemplate.sceneType,
+      statusPresetSceneType: nextTemplate.statusPresetSceneType,
+      defaultMenuKey: nextTemplate.defaultMenuKey,
+      description: nextTemplate.description,
+      theme: nextTemplate.theme,
+      homepage: nextTemplate.homepage,
+      topicPage: nextTemplate.topicPage,
+      roles: nextTemplate.roles,
+      metadataFields: nextTemplate.metadataFields,
+      statusRules: nextTemplate.statusRules,
+      toolAreas: nextTemplate.toolAreas,
+      toolConfigs: nextTemplate.toolConfigs,
+      folderTypes: nextTemplate.folderTypes,
+      agents: nextTemplate.agents,
+      entryMethods: nextTemplate.entryMethods,
+      recommendation: nextTemplate.recommendation,
+      versioning: nextTemplate.versioning,
+    });
+    if (changed) {
+      templateChanged = true;
+      return {
+        ...nextTemplate,
+        updatedAt: nowIso(),
+      };
+    }
+    return template;
+  });
+
+  const nextScenes = existingScenes.map((scene) => {
+    const templateSnapshot = scene?.templateSnapshot;
+    if (
+      scene?.id !== 'scene_supervision_seed_1'
+      && scene?.sceneCode !== 'SCN-SUP-CLASS-QUALITY'
+      && templateSnapshot?.id !== 'tpl_supervision_builtin'
+      && templateSnapshot?.templateCode !== 'TPL-SUPERVISION'
+    ) {
+      return scene;
+    }
+    const nextScene = {
+      ...scene,
+      name: scene.id === 'scene_supervision_seed_1' || scene.sceneCode === 'SCN-SUP-CLASS-QUALITY'
+        ? (presetScene?.name || scene.name)
+        : scene.name,
+      description: scene.id === 'scene_supervision_seed_1' || scene.sceneCode === 'SCN-SUP-CLASS-QUALITY'
+        ? (presetScene?.description || scene.description)
+        : scene.description,
+      sceneGroupName: scene.id === 'scene_supervision_seed_1' || scene.sceneCode === 'SCN-SUP-CLASS-QUALITY'
+        ? (presetScene?.sceneGroupName || scene.sceneGroupName)
+        : scene.sceneGroupName,
+      owner: scene.id === 'scene_supervision_seed_1' || scene.sceneCode === 'SCN-SUP-CLASS-QUALITY'
+        ? (presetScene?.owner || scene.owner)
+        : scene.owner,
+      menuKey: 'supervision-inspection',
+      templateSnapshot: clone(presetTemplate),
+    };
+    const changed = JSON.stringify({
+      name: scene.name,
+      description: scene.description,
+      sceneGroupName: scene.sceneGroupName,
+      owner: scene.owner,
+      menuKey: scene.menuKey,
+      templateSnapshot: scene.templateSnapshot,
+    }) !== JSON.stringify({
+      name: nextScene.name,
+      description: nextScene.description,
+      sceneGroupName: nextScene.sceneGroupName,
+      owner: nextScene.owner,
+      menuKey: nextScene.menuKey,
+      templateSnapshot: nextScene.templateSnapshot,
+    });
+    if (changed) {
+      sceneChanged = true;
+      return {
+        ...nextScene,
+        updatedAt: nowIso(),
+      };
+    }
+    return scene;
+  });
+
+  return {
+    nextTemplates,
+    nextScenes,
+    templateChanged,
+    sceneChanged,
+  };
+}
+
 function migrateBuiltInRootUploadPolicy(existingTemplates, existingScenes) {
   let templateChanged = false;
   let sceneChanged = false;
@@ -2639,14 +3006,20 @@ export function seedSceneData() {
       templateChanged: trainingTemplateChanged,
       sceneChanged: trainingSceneChanged,
     } = migrateBuiltInTrainingEntries(migratedRootUploadTemplates, migratedRootUploadScenes);
-    const { nextTemplates, changed: versioningChanged } = migrateTemplateVersioningPolicy(migratedTrainingTemplates);
-    const scenesToAppend = mergeMissingBuiltInScenes(migratedTrainingScenes, nextTemplates);
+    const {
+      nextTemplates: migratedSupervisionTemplates,
+      nextScenes: migratedSupervisionScenes,
+      templateChanged: supervisionTemplateChanged,
+      sceneChanged: supervisionSceneChanged,
+    } = migrateBuiltInSupervisionEntries(migratedTrainingTemplates, migratedTrainingScenes);
+    const { nextTemplates, changed: versioningChanged } = migrateTemplateVersioningPolicy(migratedSupervisionTemplates);
+    const scenesToAppend = mergeMissingBuiltInScenes(migratedSupervisionScenes, nextTemplates);
 
-    if (templatesToAppend.length > 0 || templateChanged || rootUploadTemplateChanged || trainingTemplateChanged || versioningChanged) {
+    if (templatesToAppend.length > 0 || templateChanged || rootUploadTemplateChanged || trainingTemplateChanged || supervisionTemplateChanged || versioningChanged) {
       writeList(TEMPLATE_STORAGE_KEY, nextTemplates);
     }
-    if (scenesToAppend.length > 0 || sceneChanged || rootUploadSceneChanged || trainingSceneChanged) {
-      writeList(SCENE_STORAGE_KEY, [...migratedTrainingScenes, ...scenesToAppend]);
+    if (scenesToAppend.length > 0 || sceneChanged || rootUploadSceneChanged || trainingSceneChanged || supervisionSceneChanged) {
+      writeList(SCENE_STORAGE_KEY, [...migratedSupervisionScenes, ...scenesToAppend]);
     }
 
     localStorage.setItem(BUILT_IN_SYNC_KEY, '1');
@@ -2659,6 +3032,8 @@ export function seedSceneData() {
       || rootUploadSceneChanged
       || trainingTemplateChanged
       || trainingSceneChanged
+      || supervisionTemplateChanged
+      || supervisionSceneChanged
       || versioningChanged
     ) {
       emitChange();
@@ -2882,6 +3257,7 @@ export function removeScene(id) {
 
 function guessResourceType(folder) {
   const name = `${folder?.name || ''} ${folder?.description || ''}`;
+  if (/督导任务|检查任务|巡课|听课|督导/.test(name)) return 'supervisionTask';
   if (/考试|测评|题库/.test(name)) return 'exam';
   if (/视频|直播/.test(name)) return 'video';
   if (/活动/.test(name)) return 'activity';
@@ -3110,10 +3486,129 @@ function buildTrainingInitialVersionData(template) {
   };
 }
 
+function buildSupervisionInitialVersionData(template) {
+  const rootFolders = template.folderTypes.length > 0
+    ? template.folderTypes
+    : [
+      { key: 'inspection_tasks', name: '督导任务', description: '按检查事项维护任务、对象、责任人、截止时间和结果。' },
+      { key: 'evidence_materials', name: '佐证材料', description: '收集课堂记录、现场照片、制度文件和数据报表。' },
+      { key: 'feedback_rectification', name: '整改反馈', description: '维护问题清单、整改措施、复核结论和反馈记录。' },
+      { key: 'archive', name: '归档材料', description: '归档督导报告、会议纪要和项目总结。' },
+    ];
+  const resources = [];
+  const folderKeyMap = new Map();
+
+  rootFolders.forEach((folder, index) => {
+    const folderKey = `supervision_folder_${index + 1}`;
+    folderKeyMap.set(folder.key || folder.name, folderKey);
+    resources.push({
+      key: folderKey,
+      name: folder.name,
+      isFolder: true,
+      folderTypeKey: folder.key || '',
+      iconKey: trimToNull(folder?.iconKey) || '',
+      parentKey: null,
+      owner: template.roles[0]?.name || '督导负责人',
+      lastEdit: nowText(),
+    });
+  });
+
+  const taskFolderKey = folderKeyMap.get('inspection_tasks') || resources[0]?.key || null;
+  const evidenceFolderKey = folderKeyMap.get('evidence_materials') || resources[1]?.key || taskFolderKey;
+  const feedbackFolderKey = folderKeyMap.get('feedback_rectification') || resources[2]?.key || taskFolderKey;
+
+  if (taskFolderKey) {
+    resources.push({
+      key: 'supervision_task_1',
+      name: '课堂观察任务 · 教学目标与课堂组织',
+      type: 'supervisionTask',
+      isFolder: false,
+      parentKey: taskFolderKey,
+      owner: template.roles[0]?.name || '督导负责人',
+      lastEdit: nowText(),
+      meta: {
+        summary: '用于记录课堂观察对象、检查要点、责任人和处理状态。',
+        supervisionTask: {
+          status: '待检查',
+          inspector: '督导成员',
+          target: '课堂教学过程',
+          dueDate: '2026-09-15',
+        },
+        paragraphs: [
+          '检查课堂教学目标、课堂组织、教学互动和学生参与情况。',
+          '任务完成后可继续补充观察记录、问题描述和整改建议。',
+        ],
+      },
+    });
+  }
+
+  if (evidenceFolderKey) {
+    resources.push({
+      key: 'supervision_evidence_1',
+      name: '课堂观察记录表模板.docx',
+      type: 'file',
+      isFolder: false,
+      parentKey: evidenceFolderKey,
+      owner: template.roles[0]?.name || '督导负责人',
+      lastEdit: nowText(),
+      meta: {
+        summary: '督导检查过程中的课堂观察记录表模板。',
+        paragraphs: [
+          '用于统一记录听课对象、课程信息、观察要点和现场证据。',
+          '可在实际项目中替换为正式记录表或从资料库导入。',
+        ],
+      },
+    });
+  }
+
+  if (feedbackFolderKey) {
+    resources.push({
+      key: 'supervision_feedback_1',
+      name: '整改问题清单',
+      type: 'note',
+      isFolder: false,
+      parentKey: feedbackFolderKey,
+      owner: template.roles[0]?.name || '督导负责人',
+      lastEdit: nowText(),
+      meta: {
+        summary: '汇总督导检查发现的问题、责任人、整改期限和复核状态。',
+        paragraphs: [
+          '可按检查维度记录问题描述、影响范围、整改建议和责任部门。',
+          '复核完成后可补充结论并归档到项目材料中。',
+        ],
+      },
+    });
+  }
+
+  return {
+    versions: [
+      {
+        id: 'v1',
+        name: formatVersionName(template.versioning?.namePattern, 1),
+        status: 'active',
+        createdAt: nowText(),
+        publishedAt: nowText(),
+        resources,
+        assessment: {
+          totalHours: Math.max(rootFolders.length * 2, 4),
+          passScore: 60,
+          certificate: false,
+          rules: [],
+        },
+        assessmentChat: [],
+      },
+    ],
+    currentVersionId: 'v1',
+  };
+}
+
 export function buildSceneInitialVersionData(sceneOrTemplate) {
   const template = normalizeTemplate(sceneOrTemplate?.templateSnapshot || sceneOrTemplate);
   if (template.sceneType === 'TRAINING') {
     return buildTrainingInitialVersionData(template);
+  }
+  if (template.sceneType === 'SUPERVISION') {
+    return buildSupervisionInitialVersionData(template);
   }
   const rootFolders = template.folderTypes.length > 0
     ? template.folderTypes

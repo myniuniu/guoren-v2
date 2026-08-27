@@ -248,6 +248,7 @@ const coverPresetMap = new Map(SCENE_THEME_COVER_PRESETS.map((preset) => [preset
 const DEFAULT_PRESET_BY_SCENE_TYPE = Object.freeze({
   TEACHING: 'abstract_blue_wave',
   RESEARCH: 'abstract_portal',
+  SUPERVISION: 'abstract_speed',
   TRAINING: 'abstract_gold',
   COMMUNITY: 'abstract_mint',
   CUSTOM: 'abstract_mist',

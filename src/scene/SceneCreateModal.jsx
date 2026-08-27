@@ -136,29 +136,35 @@ export default function SceneCreateModal({
   const requiredFolders = folderTypes.filter((folder) => folder?.required);
   const versioning = selectedTemplate?.versioning || {};
   const versioningEnabled = versioning.enabled !== false;
-  const modalTitle = initialValues?.id ? (isSceneMode ? '编辑场景' : '编辑空间') : (isSceneMode ? '新建场景' : '新建空间');
-  const modalOkText = initialValues?.id ? (isSceneMode ? '保存场景' : '保存空间') : (isSceneMode ? '创建场景' : '创建空间');
+  const isSupervisionProjectMode = !isSceneMode && selectedTemplate?.sceneType === 'SUPERVISION';
+  const spaceObjectLabel = isSupervisionProjectMode ? '项目' : '空间';
+  const modalTitle = initialValues?.id
+    ? (isSceneMode ? '编辑场景' : `编辑${spaceObjectLabel}`)
+    : (isSceneMode ? '新建场景' : `新建${spaceObjectLabel}`);
+  const modalOkText = initialValues?.id
+    ? (isSceneMode ? '保存场景' : `保存${spaceObjectLabel}`)
+    : (isSceneMode ? '创建场景' : `创建${spaceObjectLabel}`);
   const modalWidth = isSceneMode ? 1040 : 840;
   const infoContent = (
     <>
       <div className="scene-create-panel-head">
-        <div className="scene-create-panel-title">{isSceneMode ? '2. 填写场景信息' : '填写空间信息'}</div>
+        <div className="scene-create-panel-title">{isSceneMode ? '2. 填写场景信息' : `填写${spaceObjectLabel}信息`}</div>
         <div className="scene-create-panel-desc">
           {isSceneMode
             ? '创建场景时会根据所选模板生成默认结构。'
-            : '新建空间会沿用当前场景模板，不需要再次选择模板。'}
+            : `新建${spaceObjectLabel}会沿用当前场景模板，不需要再次选择模板。`}
         </div>
       </div>
 
       <div className="scene-create-form-grid">
         <Form.Item
-          label={isSceneMode ? '场景名称' : '空间名称'}
+          label={isSceneMode ? '场景名称' : `${spaceObjectLabel}名称`}
           name="name"
-          rules={[{ required: true, message: isSceneMode ? '请输入场景名称' : '请输入空间名称' }]}
+          rules={[{ required: true, message: isSceneMode ? '请输入场景名称' : `请输入${spaceObjectLabel}名称` }]}
         >
-          <Input placeholder="例如：新教师岗前培训" />
+          <Input placeholder={isSupervisionProjectMode ? '例如：课堂教学质量专项督导' : '例如：新教师岗前培训'} />
         </Form.Item>
-        <Form.Item label={isSceneMode ? '场景编码' : '空间编码'} name="sceneCode">
+        <Form.Item label={isSceneMode ? '场景编码' : `${spaceObjectLabel}编码`} name="sceneCode">
           <Input placeholder="留空则自动生成" />
         </Form.Item>
         {isSceneMode ? (
@@ -184,8 +190,8 @@ export default function SceneCreateModal({
             </Form.Item>
           </>
         )}
-        <Form.Item className="scene-create-form-span-2" label={isSceneMode ? '场景简介' : '空间简介'} name="description">
-          <TextArea rows={4} placeholder={isSceneMode ? '填写场景简介，用于后续空间创建和展示说明。' : '填写空间简介，用于首页卡片和空间说明。'} />
+        <Form.Item className="scene-create-form-span-2" label={isSceneMode ? '场景简介' : `${spaceObjectLabel}简介`} name="description">
+          <TextArea rows={4} placeholder={isSceneMode ? '填写场景简介，用于后续空间创建和展示说明。' : `填写${spaceObjectLabel}简介，用于首页卡片和${spaceObjectLabel}说明。`} />
         </Form.Item>
       </div>
     </>
