@@ -2063,9 +2063,7 @@ function buildPresetTemplates() {
       ],
       folderTypes: [
         { key: 'inspection_tasks', name: '督导任务', required: true, iconKey: 'AUDIT', allowedTools: ['SUPERVISION_TASK', 'ONLINE_DOC'], roleIds: ['director', 'inspector'], description: '按检查事项维护任务、对象、责任人、截止时间和结果。' },
-        { key: 'evidence_materials', name: '佐证材料', required: true, iconKey: 'DOCUMENT', allowedTools: ['RESOURCE_LIBRARY', 'OFFICE_UPLOAD', 'ONLINE_DOC'], roleIds: ['director', 'inspector', 'school_contact'], description: '收集课堂记录、现场照片、制度文件和数据报表。' },
         { key: 'feedback_rectification', name: '整改反馈', required: true, iconKey: 'EXAM', allowedTools: ['SUPERVISION_TASK', 'ONLINE_DOC', 'SURVEY'], roleIds: ['director', 'inspector', 'school_contact'], description: '维护问题清单、整改措施、复核结论和反馈记录。' },
-        { key: 'archive', name: '归档材料', required: false, iconKey: 'LIBRARY', allowedTools: ['ONLINE_DOC', 'OFFICE_UPLOAD', 'URL'], roleIds: ['director'], description: '归档督导报告、会议纪要和项目总结。' },
       ],
       agents: [
         { name: '督导统筹助手', roleIds: ['director'], knowledgeSource: '项目资料与督导任务', prompt: '辅助拆解检查任务、汇总问题清单并生成督导报告。', avatar: '📋' },
@@ -3491,9 +3489,7 @@ function buildSupervisionInitialVersionData(template) {
     ? template.folderTypes
     : [
       { key: 'inspection_tasks', name: '督导任务', description: '按检查事项维护任务、对象、责任人、截止时间和结果。' },
-      { key: 'evidence_materials', name: '佐证材料', description: '收集课堂记录、现场照片、制度文件和数据报表。' },
       { key: 'feedback_rectification', name: '整改反馈', description: '维护问题清单、整改措施、复核结论和反馈记录。' },
-      { key: 'archive', name: '归档材料', description: '归档督导报告、会议纪要和项目总结。' },
     ];
   const resources = [];
   const folderKeyMap = new Map();
@@ -3514,8 +3510,6 @@ function buildSupervisionInitialVersionData(template) {
   });
 
   const taskFolderKey = folderKeyMap.get('inspection_tasks') || resources[0]?.key || null;
-  const evidenceFolderKey = folderKeyMap.get('evidence_materials') || resources[1]?.key || taskFolderKey;
-  const feedbackFolderKey = folderKeyMap.get('feedback_rectification') || resources[2]?.key || taskFolderKey;
 
   if (taskFolderKey) {
     resources.push({
@@ -3537,44 +3531,6 @@ function buildSupervisionInitialVersionData(template) {
         paragraphs: [
           '检查课堂教学目标、课堂组织、教学互动和学生参与情况。',
           '任务完成后可继续补充观察记录、问题描述和整改建议。',
-        ],
-      },
-    });
-  }
-
-  if (evidenceFolderKey) {
-    resources.push({
-      key: 'supervision_evidence_1',
-      name: '课堂观察记录表模板.docx',
-      type: 'file',
-      isFolder: false,
-      parentKey: evidenceFolderKey,
-      owner: template.roles[0]?.name || '督导负责人',
-      lastEdit: nowText(),
-      meta: {
-        summary: '督导检查过程中的课堂观察记录表模板。',
-        paragraphs: [
-          '用于统一记录听课对象、课程信息、观察要点和现场证据。',
-          '可在实际项目中替换为正式记录表或从资料库导入。',
-        ],
-      },
-    });
-  }
-
-  if (feedbackFolderKey) {
-    resources.push({
-      key: 'supervision_feedback_1',
-      name: '整改问题清单',
-      type: 'note',
-      isFolder: false,
-      parentKey: feedbackFolderKey,
-      owner: template.roles[0]?.name || '督导负责人',
-      lastEdit: nowText(),
-      meta: {
-        summary: '汇总督导检查发现的问题、责任人、整改期限和复核状态。',
-        paragraphs: [
-          '可按检查维度记录问题描述、影响范围、整改建议和责任部门。',
-          '复核完成后可补充结论并归档到项目材料中。',
         ],
       },
     });

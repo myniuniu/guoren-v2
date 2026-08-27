@@ -2354,6 +2354,51 @@
   color: var(--td-library-selected-meta);
 }
 
+.project-item-supervision-rectification {
+  min-height: 48px;
+  border-color: rgba(248, 113, 113, 0.26);
+  background: linear-gradient(90deg, rgba(254, 242, 242, 0.78) 0%, rgba(255, 255, 255, 0.72) 78%) !important;
+  box-shadow: inset 2px 0 0 rgba(239, 68, 68, 0.58);
+}
+
+.project-item-supervision-rectification:hover {
+  border-color: rgba(248, 113, 113, 0.34);
+  background: linear-gradient(90deg, rgba(254, 226, 226, 0.72) 0%, rgba(255, 255, 255, 0.78) 78%) !important;
+}
+
+.project-item-supervision-rectification.project-item-selected {
+  border-color: rgba(248, 113, 113, 0.38);
+  background: linear-gradient(90deg, rgba(254, 242, 242, 0.86) 0%, var(--td-library-selected-bg) 82%) !important;
+  box-shadow: inset 3px 0 0 rgba(239, 68, 68, 0.68);
+}
+
+.project-item-supervision-rectification .project-item-icon,
+.project-item-supervision-rectification .project-item-icon .anticon {
+  color: #dc2626 !important;
+}
+
+.project-item-supervision-risk {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  align-items: center;
+  gap: 5px;
+  color: #dc2626;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.project-item-supervision-risk-dot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+
 .project-item-assessment-activity {
   --tree-assessment-row-color: #3b82f6;
   min-height: 42px;
@@ -5748,6 +5793,11 @@
 .topic-preview-body-main:has(.supervision-school-check-form) {
   align-items: stretch;
   padding: 20px 22px;
+}
+
+.topic-preview-body-main:has(.supervision-rectification-view) {
+  align-items: stretch;
+  padding: 8px 10px 10px;
 }
 
 .topic-preview-header-icon {

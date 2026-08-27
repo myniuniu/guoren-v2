@@ -598,6 +598,27 @@
   background: #eef2f7;
 }
 
+.supervision-school-dimension-node.has-rectification .supervision-school-dimension-row {
+  border-color: rgba(248, 113, 113, 0.28);
+  background: rgba(254, 242, 242, 0.72);
+  box-shadow: inset 2px 0 0 rgba(239, 68, 68, 0.52);
+}
+
+.supervision-school-dimension-node.has-rectification.is-active .supervision-school-dimension-row {
+  border-color: rgba(248, 113, 113, 0.38);
+  background: #fff1f2;
+}
+
+.supervision-school-dimension-node.has-rectification .supervision-school-dimension-icon {
+  background: rgba(254, 226, 226, 0.92);
+  color: #dc2626;
+}
+
+.supervision-school-dimension-node.has-rectified .supervision-school-dimension-icon {
+  background: rgba(220, 252, 231, 0.88);
+  color: #16a34a;
+}
+
 .supervision-school-dimension-toggle {
   width: 14px;
   min-width: 14px;
@@ -627,12 +648,22 @@
 
 .supervision-school-dimension-copy {
   min-width: 0;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
+.supervision-school-dimension-title-line {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .supervision-school-dimension-title {
+  min-width: 0;
+  flex: 1 1 auto;
   overflow: hidden;
   color: #172033;
   text-overflow: ellipsis;
@@ -640,6 +671,27 @@
   font-size: 13px;
   font-weight: 600;
   line-height: 1.35;
+}
+
+.supervision-school-dimension-risk-badge,
+.supervision-school-dimension-done-badge {
+  flex: 0 0 auto;
+  padding: 2px 5px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.supervision-school-dimension-risk-badge {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.supervision-school-dimension-done-badge {
+  background: #ecfdf3;
+  color: #16a34a;
 }
 
 .supervision-school-dimension-meta {
@@ -695,6 +747,17 @@
   line-height: 1.45;
 }
 
+.supervision-school-framework-panel-tags {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.supervision-school-framework-panel-tags .ant-tag {
+  margin: 0;
+}
+
 .supervision-school-framework-empty {
   display: flex;
   min-height: 240px;
@@ -722,6 +785,20 @@
   border: 1px solid #e5ebf3;
   border-radius: 8px;
   background: #fff;
+}
+
+.supervision-school-indicator-collapse .ant-collapse-item.is-rectification-needed {
+  border-color: rgba(248, 113, 113, 0.32);
+  box-shadow: inset 3px 0 0 rgba(239, 68, 68, 0.56);
+}
+
+.supervision-school-indicator-collapse .ant-collapse-item.is-rectification-needed .ant-collapse-header {
+  background: linear-gradient(90deg, rgba(254, 242, 242, 0.82) 0%, rgba(255, 255, 255, 0.92) 76%);
+}
+
+.supervision-school-indicator-collapse .ant-collapse-item.is-rectification-done {
+  border-color: rgba(34, 197, 94, 0.26);
+  box-shadow: inset 3px 0 0 rgba(34, 197, 94, 0.44);
 }
 
 .supervision-school-indicator-collapse .ant-collapse-header {
@@ -766,11 +843,32 @@
   margin-bottom: 12px;
 }
 
+.supervision-school-indicator-title-line {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.supervision-school-indicator-risk-icon {
+  flex: 0 0 auto;
+  color: #ef4444;
+  font-size: 14px;
+}
+
 .supervision-school-indicator-title {
+  min-width: 0;
+  overflow: hidden;
   color: #101828;
   font-size: 14px;
   font-weight: 700;
   line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.supervision-school-indicator-collapse-head.has-rectification .supervision-school-indicator-title {
+  color: #b42318;
 }
 
 .supervision-school-indicator-meta {
@@ -784,8 +882,16 @@
 }
 
 .supervision-school-indicator-meta .ant-tag,
-.supervision-school-indicator-head > .ant-tag {
+.supervision-school-indicator-head > .ant-tag,
+.supervision-school-indicator-status-tags .ant-tag {
   margin: 0;
+}
+
+.supervision-school-indicator-status-tags {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .supervision-school-indicator-form {
@@ -835,10 +941,605 @@
   font-weight: 700;
 }
 
-.supervision-school-check-footer {
+.supervision-rectification-view {
+  width: 100%;
+  align-self: stretch;
+  min-height: 0;
   display: flex;
-  justify-content: flex-end;
-  margin-top: 14px;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
+  color: #101828;
+}
+
+.supervision-rectification-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid #e5ebf3;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.supervision-rectification-school {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.supervision-rectification-school-icon {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: #eef6ff;
+  color: #1677ff;
+  font-size: 17px;
+}
+
+.supervision-rectification-kicker {
+  margin-bottom: 3px;
+  color: #8a94a6;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.supervision-rectification-school-name {
+  overflow: hidden;
+  color: #101828;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.supervision-rectification-school-meta {
+  margin-top: 3px;
+  color: #8a94a6;
+  font-size: 12px;
+}
+
+.supervision-rectification-school-region {
+  margin-top: 3px;
+  color: #667085;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.supervision-rectification-head-actions {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.supervision-rectification-page {
+  min-height: 0;
+  flex: 0 1 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #e5ebf3;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.supervision-rectification-tabs-bar {
+  min-width: 0;
+  padding: 10px 12px 0;
+  border-bottom: 1px solid #edf1f6;
+  background: #fff;
+}
+
+.supervision-rectification-tabs-title {
+  color: #101828;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.supervision-rectification-tabs-desc {
+  margin-top: 2px;
+  color: #8a94a6;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.supervision-rectification-task-tabs {
+  margin-top: 6px;
+}
+
+.supervision-rectification-task-tabs .ant-tabs-nav {
+  margin: 0;
+}
+
+.supervision-rectification-task-tabs .ant-tabs-tab {
+  padding: 7px 0;
+}
+
+.supervision-rectification-task-tabs .ant-tabs-tab + .ant-tabs-tab {
+  margin-left: 16px;
+}
+
+.supervision-rectification-task-tabs .ant-tabs-content-holder {
+  display: none;
+}
+
+.supervision-rectification-task-tab-label {
+  max-width: 320px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #475467;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.supervision-rectification-task-tab-label > span:not(.ant-tag) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.supervision-rectification-task-tab-label .anticon {
+  flex: 0 0 auto;
+  color: #ef4444;
+}
+
+.supervision-rectification-task-tab-label .ant-tag {
+  margin: 0;
+}
+
+.supervision-rectification-framework {
+  min-height: 360px;
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid #e5ebf3;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.supervision-rectification-page .supervision-rectification-framework {
+  min-height: 340px;
+  border: 0;
+  border-radius: 0;
+}
+
+.supervision-rectification-task-panel {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 12px 16px 16px;
+  border-right: 1px solid #e6edf5;
+  background: linear-gradient(180deg, #f8fbff 0%, #f6f9fc 100%);
+}
+
+.supervision-rectification-task-head {
+  padding: 0 4px 4px;
+}
+
+.supervision-rectification-task-title {
+  color: #101828;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.supervision-rectification-task-desc {
+  margin-top: 3px;
+  color: #8a94a6;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.supervision-rectification-task-list {
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-right: 2px;
+}
+
+.supervision-rectification-task-node {
+  width: 100%;
+  min-height: 62px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.16s ease, border-color 0.16s ease;
+}
+
+.supervision-rectification-task-node:hover,
+.supervision-rectification-task-node.is-active {
+  border-color: #d6dde8;
+  background: #eef2f7;
+}
+
+.supervision-rectification-task-icon {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #fff;
+  color: #ff4d4f;
+}
+
+.supervision-rectification-task-copy {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.supervision-rectification-task-name {
+  overflow: hidden;
+  color: #1f2937;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.supervision-rectification-task-meta {
+  overflow: hidden;
+  color: #8a94a6;
+  font-size: 12px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.supervision-rectification-dimension-panel {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 10px 10px 12px;
+  border-right: 1px solid #e6edf5;
+  background:
+    radial-gradient(circle at 16% 0%, rgba(226, 232, 240, 0.68), rgba(226, 232, 240, 0) 34%),
+    linear-gradient(180deg, rgba(248, 250, 252, 0.96) 0%, rgba(241, 245, 249, 0.9) 100%);
+}
+
+.supervision-rectification-dimension-head {
+  flex: 0 0 auto;
+  padding: 0 2px 8px 0;
+}
+
+.supervision-rectification-dimension-title {
+  color: #101828;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.supervision-rectification-dimension-desc {
+  margin-top: 3px;
+  color: #8a94a6;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.supervision-rectification-dimension-list {
+  min-height: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 2px 4px 6px 0;
+}
+
+.supervision-rectification-dimension-node {
+  --supervision-rectification-tree-indent: calc(var(--supervision-rectification-tree-level, 0) * 18px);
+  position: relative;
+  width: calc(100% - var(--supervision-rectification-tree-indent));
+  margin-left: var(--supervision-rectification-tree-indent);
+}
+
+.supervision-rectification-dimension-node.is-level-2::before,
+.supervision-rectification-dimension-node.is-level-3::before,
+.supervision-rectification-dimension-node.is-level-4::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  left: -10px;
+  width: 1px;
+  background: linear-gradient(180deg, rgba(148, 163, 184, 0.08), rgba(100, 116, 139, 0.3), rgba(148, 163, 184, 0.08));
+}
+
+.supervision-rectification-dimension-node.is-level-2::after,
+.supervision-rectification-dimension-node.is-level-3::after,
+.supervision-rectification-dimension-node.is-level-4::after {
+  content: '';
+  position: absolute;
+  top: 21px;
+  left: -10px;
+  width: 9px;
+  height: 1px;
+  background: rgba(100, 116, 139, 0.3);
+}
+
+.supervision-rectification-dimension-row {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border: 1px solid rgba(248, 113, 113, 0.18);
+  border-radius: 8px;
+  background: rgba(254, 242, 242, 0.46);
+  color: #303846;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.supervision-rectification-dimension-row:hover {
+  border-color: rgba(248, 113, 113, 0.3);
+  background: rgba(254, 226, 226, 0.58);
+}
+
+.supervision-rectification-dimension-node.is-active .supervision-rectification-dimension-row {
+  border-color: rgba(248, 113, 113, 0.4);
+  background: #fff1f2;
+  box-shadow: inset 2px 0 0 rgba(239, 68, 68, 0.62);
+}
+
+.supervision-rectification-dimension-toggle {
+  width: 14px;
+  min-width: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #98a2b3;
+  font-size: 10px;
+}
+
+.supervision-rectification-dimension-toggle.is-empty {
+  opacity: 0;
+}
+
+.supervision-rectification-dimension-icon {
+  width: 22px;
+  min-width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(254, 226, 226, 0.92);
+  color: #dc2626;
+  font-size: 13px;
+}
+
+.supervision-rectification-dimension-copy {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.supervision-rectification-dimension-title-line {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.supervision-rectification-dimension-title {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  color: #172033;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.supervision-rectification-dimension-risk-badge {
+  min-width: 20px;
+  flex: 0 0 auto;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #dc2626;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.supervision-rectification-dimension-meta {
+  overflow: hidden;
+  color: #7b8598;
+  font-size: 11px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.supervision-rectification-card {
+  overflow: hidden;
+  border: 1px solid #e5ebf3;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.supervision-rectification-framework .supervision-rectification-card {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  border: 0;
+  border-radius: 0;
+}
+
+.supervision-rectification-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #edf1f6;
+}
+
+.supervision-rectification-card-tags {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.supervision-rectification-card-title {
+  min-width: 0;
+  overflow: hidden;
+  color: #101828;
+  font-size: 14px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.supervision-rectification-card-subtitle {
+  margin-top: 4px;
+  color: #8a94a6;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.supervision-rectification-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 10px 10px;
+}
+
+.supervision-rectification-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 54px;
+  padding: 9px 10px;
+  border: 1px solid #edf1f6;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.supervision-rectification-item.is-confirmed {
+  background: #fbfefb;
+}
+
+.supervision-rectification-item-main {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.supervision-rectification-warning {
+  flex: 0 0 auto;
+  margin-top: 3px;
+  color: #ff4d4f;
+  font-size: 15px;
+}
+
+.supervision-rectification-item-copy {
+  min-width: 0;
+}
+
+.supervision-rectification-item-title {
+  overflow: hidden;
+  color: #1f2937;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.supervision-rectification-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+  color: #667085;
+  font-size: 12px;
+}
+
+.supervision-rectification-item-meta .ant-tag,
+.supervision-rectification-item-actions .ant-tag,
+.supervision-rectification-card-head .ant-tag,
+.supervision-rectification-card-tags .ant-tag,
+.supervision-rectification-head-actions .ant-tag,
+.supervision-rectification-task-node .ant-tag {
+  margin: 0;
+}
+
+.supervision-rectification-item-note {
+  margin-top: 6px;
+  color: #667085;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.supervision-rectification-item-actions {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.supervision-rectification-deadline {
+  color: #ff4d4f;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.supervision-rectification-deadline.is-empty {
+  color: #98a2b3;
+}
+
+.supervision-rectification-empty {
+  display: flex;
+  min-height: 220px;
+  align-items: center;
+  justify-content: center;
 }
 
 @media (max-width: 900px) {
@@ -891,5 +1592,28 @@
   .supervision-task-school-meta,
   .supervision-task-school-row .ant-tag {
     grid-column: 2;
+  }
+
+  .supervision-rectification-head,
+  .supervision-rectification-item {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .supervision-rectification-framework {
+    min-height: 0;
+    grid-template-columns: 1fr;
+  }
+
+  .supervision-rectification-dimension-panel,
+  .supervision-rectification-task-panel {
+    max-height: 260px;
+    border-right: 0;
+    border-bottom: 1px solid #e6edf5;
+  }
+
+  .supervision-rectification-head-actions,
+  .supervision-rectification-item-actions {
+    justify-content: flex-end;
   }
 }

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Collapse, Empty, Form, Input, InputNumber, Radio, Tag } from 'antd';
+import { Button, Collapse, Empty, Form, Input, InputNumber, Radio, Tabs, Tag } from 'antd';
 import {
   AppstoreOutlined,
   BankOutlined,
@@ -9,13 +9,17 @@ import {
   ClockCircleOutlined,
   DownloadOutlined,
   SaveOutlined,
+  ToolOutlined,
   UploadOutlined,
+  WarningOutlined,
 } from '@ant-design/icons';
 import './SupervisionTaskModal.css';
 
 const { TextArea } = Input;
 
 const UNGROUPED_DIMENSION_ID = 'ungrouped_indicators';
+const RECTIFICATION_RESULT_PATTERN = /需改进|需整改|待整改|未达成|部分达成|不达标|不合格|低|异常|缺失|隐患|逾期/;
+const RECTIFICATION_NOTE_PATTERN = /需改进|需整改|待整改|未达成|不达标|不合格|异常|缺失|隐患|逾期/;
 
 const LEGACY_TASK_TEMPLATE_NAMES = new Set([
   '综合督学评估模板',
@@ -307,6 +311,17 @@ function hasInspectionValue(record = {}) {
   );
 }
 
+function isRectificationEntry(record = {}) {
+  const resultText = normalizeText(record.result);
+  const noteText = [
+    record.remark,
+    record.evidenceNote,
+    record.issueDescription,
+  ].map(normalizeText).filter(Boolean).join(' ');
+  return RECTIFICATION_RESULT_PATTERN.test(resultText)
+    || RECTIFICATION_NOTE_PATTERN.test(noteText);
+}
+
 function buildInitialValues(item, indicators) {
   const storedValues = item?.meta?.supervisionSchoolTask?.indicatorValues || {};
   return {
@@ -412,6 +427,364 @@ function buildSchoolTaskResource({
   };
 }
 
+function getRectificationStatusColor(status) {
+  if (status === '已整改') return 'success';
+  if (status === '已通知') return 'processing';
+  return 'error';
+}
+
+function getRectificationIssueDimensionSegments(issue = {}) {
+  const pathText = normalizeText(issue.dimensionPath);
+  if (!pathText) return ['未分组'];
+  return pathText
+    .split('/')
+    .map((item) => normalizeText(item))
+    .filter(Boolean);
+}
+
+function buildRectificationDimensionFramework(issues = []) {
+  const nodeMap = new Map();
+  const roots = [];
+
+  issues.forEach((issue) => {
+    const segments = getRectificationIssueDimensionSegments(issue);
+    let parentKey = '';
+    segments.forEach((segment, index) => {
+      const key = segments.slice(0, index + 1).join(' / ');
+      let node = nodeMap.get(key);
+      if (!node) {
+        node = {
+          key,
+          name: segment,
+          path: key,
+          parentKey,
+          level: index + 1,
+          children: [],
+          directIssues: [],
+          allIssues: [],
+          childCount: 0,
+          issueCount: 0,
+          pendingCount: 0,
+          confirmedCount: 0,
+        };
+        nodeMap.set(key, node);
+        if (parentKey && nodeMap.has(parentKey)) {
+          nodeMap.get(parentKey).children.push(node);
+        } else {
+          roots.push(node);
+        }
+      }
+      if (index === segments.length - 1) {
+        node.directIssues.push(issue);
+      }
+      parentKey = key;
+    });
+  });
+
+  const flatNodes = [];
+  const finalizeNode = (node) => {
+    flatNodes.push(node);
+    node.children.forEach(finalizeNode);
+    node.allIssues = [
+      ...node.directIssues,
+      ...node.children.flatMap((child) => child.allIssues),
+    ];
+    node.childCount = node.children.length;
+    node.issueCount = node.allIssues.length;
+    node.confirmedCount = node.allIssues.filter((issue) => issue.status === '已整改').length;
+    node.pendingCount = Math.max(node.issueCount - node.confirmedCount, 0);
+  };
+  roots.forEach(finalizeNode);
+
+  return {
+    roots,
+    flatNodes,
+    nodeMap,
+  };
+}
+
+function getVisibleRectificationDimensionNodes(nodes, collapsedIds) {
+  const result = [];
+  const walk = (items) => {
+    items.forEach((node) => {
+      result.push(node);
+      if (!collapsedIds.has(node.key)) walk(node.children);
+    });
+  };
+  walk(nodes);
+  return result;
+}
+
+export function SupervisionRectificationChecklist({
+  item,
+  canEdit = true,
+  onConfirmIssue,
+}) {
+  const [activeTaskKey, setActiveTaskKey] = useState('');
+  const [activeDimensionKey, setActiveDimensionKey] = useState('');
+  const [collapsedDimensionIds, setCollapsedDimensionIds] = useState(() => new Set());
+  const rectification = item?.meta?.supervisionRectification || {};
+  const school = rectification.school || {};
+  const taskGroups = Array.isArray(rectification.tasks) && rectification.tasks.length
+    ? rectification.tasks
+    : [{
+        taskKey: rectification.parentTaskKey || rectification.schoolTaskKey || 'default',
+        schoolTaskKey: rectification.schoolTaskKey || '',
+        taskName: rectification.parentTaskName || '督导任务整改清单',
+        dueDate: '',
+        issues: Array.isArray(rectification.issues) ? rectification.issues : [],
+      }];
+  const normalizedTaskGroups = taskGroups.map((task, index) => {
+    const issues = Array.isArray(task.issues) ? task.issues : [];
+    const confirmedCount = issues.filter((issue) => issue.status === '已整改').length;
+    const dimensionFramework = buildRectificationDimensionFramework(issues);
+    return {
+      ...task,
+      taskKey: task.taskKey || task.schoolTaskKey || `task_${index + 1}`,
+      taskName: task.taskName || `督导任务 ${index + 1}`,
+      issueCount: issues.length,
+      confirmedCount,
+      pendingCount: Math.max(issues.length - confirmedCount, 0),
+      dimensionFramework,
+      issues,
+    };
+  }).filter((task) => task.issueCount > 0);
+  const allIssues = normalizedTaskGroups.flatMap((task) => task.issues);
+  const confirmedCount = allIssues.filter((issue) => issue.status === '已整改').length;
+  const pendingCount = Math.max(allIssues.length - confirmedCount, 0);
+  const defaultTaskKey = normalizedTaskGroups.find((task) => task.pendingCount > 0)?.taskKey
+    || normalizedTaskGroups[0]?.taskKey
+    || '';
+  const selectedTaskKey = normalizedTaskGroups.some((task) => task.taskKey === activeTaskKey)
+    ? activeTaskKey
+    : defaultTaskKey;
+  const selectedTask = normalizedTaskGroups.find((task) => task.taskKey === selectedTaskKey)
+    || normalizedTaskGroups[0]
+    || null;
+  const selectedDimensionFramework = selectedTask?.dimensionFramework || { roots: [], flatNodes: [], nodeMap: new Map() };
+  const visibleDimensionNodes = getVisibleRectificationDimensionNodes(
+    selectedDimensionFramework.roots || [],
+    collapsedDimensionIds,
+  );
+  const defaultDimensionKey = selectedDimensionFramework.flatNodes?.find((node) => node.issueCount)?.key
+    || selectedDimensionFramework.flatNodes?.[0]?.key
+    || '';
+  const selectedDimensionKey = selectedDimensionFramework.nodeMap?.has(activeDimensionKey)
+    ? activeDimensionKey
+    : defaultDimensionKey;
+  const selectedDimensionNode = selectedDimensionKey
+    ? selectedDimensionFramework.nodeMap.get(selectedDimensionKey)
+    : null;
+  const selectedIssues = selectedDimensionNode?.allIssues || selectedTask?.issues || [];
+  const selectedPendingIssueCount = selectedIssues.filter((issue) => issue.status !== '已整改').length;
+  const schoolMeta = [school.province, school.city, school.district, school.nature].filter(Boolean).join(' · ');
+  const taskMeta = [
+    '整改反馈',
+    item?.owner || '督导负责人',
+    item?.lastEdit || '',
+  ].filter(Boolean).join(' · ');
+
+  const handleTaskTabChange = (taskKey) => {
+    setActiveTaskKey(taskKey);
+    setActiveDimensionKey('');
+    setCollapsedDimensionIds(new Set());
+  };
+
+  const handleToggleDimensionCollapse = (dimensionKey) => {
+    setCollapsedDimensionIds((prevIds) => {
+      const nextIds = new Set(prevIds);
+      if (nextIds.has(dimensionKey)) nextIds.delete(dimensionKey);
+      else nextIds.add(dimensionKey);
+      return nextIds;
+    });
+  };
+
+  const renderRectificationDimensionNode = (node) => {
+    const isCollapsed = collapsedDimensionIds.has(node.key);
+    const isActive = selectedDimensionKey === node.key;
+    return (
+      <div
+        key={node.key}
+        className={`supervision-rectification-dimension-node is-level-${Math.min(node.level, 4)}${isActive ? ' is-active' : ''}${node.pendingCount ? ' has-rectification' : ''}`}
+        style={{ '--supervision-rectification-tree-level': node.level - 1 }}
+      >
+        <button
+          type="button"
+          className="supervision-rectification-dimension-row"
+          onClick={() => setActiveDimensionKey(node.key)}
+        >
+          <span
+            className={`supervision-rectification-dimension-toggle${node.childCount ? '' : ' is-empty'}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (node.childCount) handleToggleDimensionCollapse(node.key);
+            }}
+          >
+            {node.childCount ? (isCollapsed ? <CaretRightOutlined /> : <CaretDownOutlined />) : null}
+          </span>
+          <span className="supervision-rectification-dimension-icon">
+            <AppstoreOutlined />
+          </span>
+          <span className="supervision-rectification-dimension-copy">
+            <span className="supervision-rectification-dimension-title-line">
+              <span className="supervision-rectification-dimension-title">{node.name}</span>
+              {node.pendingCount ? (
+                <span className="supervision-rectification-dimension-risk-badge">{node.pendingCount}</span>
+              ) : null}
+            </span>
+            <span className="supervision-rectification-dimension-meta">
+              {node.level}级维度 · {node.childCount} 个下级 · {node.confirmedCount}/{node.issueCount} 已整改
+            </span>
+          </span>
+        </button>
+      </div>
+    );
+  };
+
+  const renderRectificationIssueItem = (issue) => {
+    const issueStatus = issue.status || '待整改';
+    const displayStatus = issueStatus === '待整改' ? '已通知' : issueStatus;
+    const confirmed = issueStatus === '已整改';
+    return (
+      <div key={`${selectedTask.schoolTaskKey || selectedTask.taskKey}-${issue.id}`} className={`supervision-rectification-item ${confirmed ? 'is-confirmed' : ''}`}>
+        <div className="supervision-rectification-item-main">
+          <WarningOutlined className="supervision-rectification-warning" />
+          <div className="supervision-rectification-item-copy">
+            <div className="supervision-rectification-item-title">
+              {[issue.code, issue.name].filter(Boolean).join(' ')}
+            </div>
+            <div className="supervision-rectification-item-meta">
+              {issue.dimensionPath ? <span>{issue.dimensionPath}</span> : null}
+              {issue.result ? <Tag>{issue.result}</Tag> : null}
+              {issue.required ? <Tag color="green">必填</Tag> : null}
+              <span>{issue.scoringMethod || '人工评分'}</span>
+            </div>
+            {(issue.remark || issue.evidenceNote || issue.value) ? (
+              <div className="supervision-rectification-item-note">
+                {issue.remark || issue.evidenceNote || issue.value}
+              </div>
+            ) : null}
+          </div>
+        </div>
+        <div className="supervision-rectification-item-actions">
+          <Tag color={getRectificationStatusColor(displayStatus)}>{displayStatus}</Tag>
+          <span className={`supervision-rectification-deadline ${issue.dueDate ? '' : 'is-empty'}`}>
+            期限：{issue.dueDate || selectedTask.dueDate || '未设置'}
+          </span>
+          <Button
+            icon={<ToolOutlined />}
+            disabled={!canEdit || confirmed}
+            onClick={() => onConfirmIssue?.(selectedTask.schoolTaskKey, issue.id)}
+          >
+            {confirmed ? '已整改' : '确认整改'}
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="supervision-rectification-view">
+      <div className="supervision-rectification-head">
+        <div className="supervision-rectification-school">
+          <span className="supervision-rectification-school-icon"><BankOutlined /></span>
+          <div>
+            <div className="supervision-rectification-kicker">整改反馈</div>
+            <div className="supervision-rectification-school-name">{rectification.schoolName || item?.name || '被评估学校'}</div>
+            <div className="supervision-rectification-school-meta">
+              {taskMeta}
+            </div>
+            <div className="supervision-rectification-school-region">
+              {schoolMeta || rectification.parentTaskName || '未设置学校范围'}
+            </div>
+          </div>
+        </div>
+        <div className="supervision-rectification-head-actions">
+          <Tag color={pendingCount > 0 ? 'error' : 'success'}>{pendingCount} 项待整改</Tag>
+          <Button icon={<DownloadOutlined />}>打包整改材料</Button>
+        </div>
+      </div>
+
+      {normalizedTaskGroups.length ? (
+        <div className="supervision-rectification-page">
+          <div className="supervision-rectification-tabs-bar">
+            <div>
+              <div className="supervision-rectification-tabs-title">不合格任务</div>
+              <div className="supervision-rectification-tabs-desc">
+                {normalizedTaskGroups.length} 个任务 · {allIssues.length} 项指标
+              </div>
+            </div>
+            <Tabs
+              activeKey={selectedTaskKey}
+              onChange={handleTaskTabChange}
+              className="supervision-rectification-task-tabs"
+              items={normalizedTaskGroups.map((task) => ({
+                key: task.taskKey,
+                label: (
+                  <span className="supervision-rectification-task-tab-label">
+                    <WarningOutlined />
+                    <span>{task.taskName}</span>
+                    <Tag color={task.pendingCount > 0 ? 'red' : 'success'}>{task.issueCount}</Tag>
+                  </span>
+                ),
+              }))}
+            />
+          </div>
+
+          <div className="supervision-rectification-framework">
+            <aside className="supervision-rectification-dimension-panel">
+              <div className="supervision-rectification-dimension-head">
+                <div>
+                  <div className="supervision-rectification-dimension-title">整改维度</div>
+                  <div className="supervision-rectification-dimension-desc">
+                    {selectedDimensionFramework.flatNodes.length} 个维度 · {selectedTask?.issueCount || 0} 项指标
+                  </div>
+                </div>
+              </div>
+              <div className="supervision-rectification-dimension-list">
+                {visibleDimensionNodes.map(renderRectificationDimensionNode)}
+              </div>
+            </aside>
+
+            <section className="supervision-rectification-card">
+              <div className="supervision-rectification-card-head">
+                <div>
+                  <div className="supervision-rectification-card-title">
+                    {selectedTask?.taskName || '督导任务整改清单'}
+                  </div>
+                  <div className="supervision-rectification-card-subtitle">
+                    当前维度：{selectedDimensionNode?.path || '全部维度'} · {selectedTask?.dueDate ? `整改期限：${selectedTask.dueDate}` : '整改期限：未设置'}
+                  </div>
+                </div>
+                <div className="supervision-rectification-card-tags">
+                  <Tag color="red">{selectedIssues.length} 项指标</Tag>
+                  <Tag color={selectedPendingIssueCount ? 'error' : 'success'}>
+                    {selectedPendingIssueCount} 项待整改
+                  </Tag>
+                </div>
+              </div>
+
+              {selectedIssues.length ? (
+                <div className="supervision-rectification-list">
+                  {selectedIssues.map(renderRectificationIssueItem)}
+                </div>
+              ) : (
+                <div className="supervision-rectification-empty">
+                  <Empty description="当前维度暂无需要整改的问题" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                </div>
+              )}
+            </section>
+          </div>
+        </div>
+      ) : (
+        <div className="supervision-rectification-empty">
+          <Empty description="暂无需要整改的问题" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function SupervisionSchoolTaskForm({
   item,
   parentTask,
@@ -441,7 +814,28 @@ export default function SupervisionSchoolTaskForm({
   const selectedIndicators = selectedNode?.allIndicators || [];
   const initialValues = useMemo(() => buildInitialValues(item, indicators), [indicators, item]);
   const watchedEntries = Form.useWatch('entries', form) || initialValues.entries || {};
+  const schoolTaskMeta = item?.meta?.supervisionSchoolTask || {};
+  const rectificationStatuses = schoolTaskMeta.rectificationStatuses || {};
+  const rectificationMetaByIndicatorId = new Map();
+  indicators.forEach((indicator) => {
+    const entry = watchedEntries[indicator.id] || {};
+    const detected = isRectificationEntry(entry);
+    const confirmed = detected && rectificationStatuses[indicator.id]?.status === '已整改';
+    rectificationMetaByIndicatorId.set(indicator.id, {
+      detected,
+      confirmed,
+      pending: detected && !confirmed,
+    });
+  });
   const filledIndicatorCount = indicators.filter((indicator) => hasInspectionValue(watchedEntries[indicator.id])).length;
+  const pendingRectificationCount = indicators.filter((indicator) => rectificationMetaByIndicatorId.get(indicator.id)?.pending).length;
+  const rectifiedIndicatorCount = indicators.filter((indicator) => rectificationMetaByIndicatorId.get(indicator.id)?.confirmed).length;
+  const pendingRectificationDimensionCount = dimensionFramework.flatNodes
+    .filter((node) => node.allIndicators.some((indicator) => rectificationMetaByIndicatorId.get(indicator.id)?.pending))
+    .length;
+  const selectedPendingRectificationCount = selectedIndicators
+    .filter((indicator) => rectificationMetaByIndicatorId.get(indicator.id)?.pending)
+    .length;
   const aiIndicators = indicators.filter(isAiIndicator);
   const manualIndicators = indicators.filter((indicator) => !isAiIndicator(indicator));
   const aiFilledCount = aiIndicators.filter((indicator) => hasInspectionValue(watchedEntries[indicator.id])).length;
@@ -481,11 +875,13 @@ export default function SupervisionSchoolTaskForm({
     const isCollapsed = collapsedDimensionIds.has(node.key);
     const isActive = selectedDimensionKey === node.key;
     const filledCount = node.allIndicators.filter((indicator) => hasInspectionValue(watchedEntries[indicator.id])).length;
+    const pendingCount = node.allIndicators.filter((indicator) => rectificationMetaByIndicatorId.get(indicator.id)?.pending).length;
+    const rectifiedCount = node.allIndicators.filter((indicator) => rectificationMetaByIndicatorId.get(indicator.id)?.confirmed).length;
 
     return (
       <div
         key={node.key}
-        className={`supervision-school-dimension-node is-level-${Math.min(node.level, 4)}${isActive ? ' is-active' : ''}`}
+        className={`supervision-school-dimension-node is-level-${Math.min(node.level, 4)}${isActive ? ' is-active' : ''}${pendingCount ? ' has-rectification' : ''}${rectifiedCount && !pendingCount ? ' has-rectified' : ''}`}
         style={{ '--supervision-school-tree-level': node.level - 1 }}
       >
         <button
@@ -506,8 +902,15 @@ export default function SupervisionSchoolTaskForm({
             <AppstoreOutlined />
           </span>
           <span className="supervision-school-dimension-copy">
-            <span className="supervision-school-dimension-title">
-              {node.dimension.code ? `${node.dimension.code} ` : ''}{node.dimension.name}
+            <span className="supervision-school-dimension-title-line">
+              <span className="supervision-school-dimension-title">
+                {node.dimension.code ? `${node.dimension.code} ` : ''}{node.dimension.name}
+              </span>
+              {pendingCount ? (
+                <span className="supervision-school-dimension-risk-badge">整改 {pendingCount}</span>
+              ) : rectifiedCount ? (
+                <span className="supervision-school-dimension-done-badge">已整改</span>
+              ) : null}
             </span>
             <span className="supervision-school-dimension-meta">
               {node.dimension.level || `${node.level}级维度`} · {node.childCount} 个下级 · {filledCount}/{node.totalIndicatorCount} 项
@@ -521,11 +924,15 @@ export default function SupervisionSchoolTaskForm({
   const renderIndicatorHeader = (indicator) => {
     const entry = watchedEntries[indicator.id] || {};
     const filled = hasInspectionValue(entry);
+    const rectificationMeta = rectificationMetaByIndicatorId.get(indicator.id) || {};
 
     return (
-      <div className="supervision-school-indicator-collapse-head">
+      <div className={`supervision-school-indicator-collapse-head${rectificationMeta.pending ? ' has-rectification' : ''}${rectificationMeta.confirmed ? ' has-rectified' : ''}`}>
         <div>
-          <div className="supervision-school-indicator-title">{indicator.name}</div>
+          <div className="supervision-school-indicator-title-line">
+            {rectificationMeta.pending ? <WarningOutlined className="supervision-school-indicator-risk-icon" /> : null}
+            <span className="supervision-school-indicator-title">{indicator.name}</span>
+          </div>
           <div className="supervision-school-indicator-meta">
             <Tag color={isAiIndicator(indicator) ? 'blue' : undefined}>
               {isAiIndicator(indicator) ? 'AI' : '人工'}
@@ -537,7 +944,11 @@ export default function SupervisionSchoolTaskForm({
             {indicator.required ? <Tag color="green">必填</Tag> : null}
           </div>
         </div>
-        <Tag color={filled ? 'success' : 'default'}>{filled ? '已填写' : '未填写'}</Tag>
+        <div className="supervision-school-indicator-status-tags">
+          {rectificationMeta.pending ? <Tag color="error">需整改</Tag> : null}
+          {rectificationMeta.confirmed ? <Tag color="success">已整改</Tag> : null}
+          <Tag color={filled ? 'success' : 'default'}>{filled ? '已填写' : '未填写'}</Tag>
+        </div>
       </div>
     );
   };
@@ -626,6 +1037,12 @@ export default function SupervisionSchoolTaskForm({
         </div>
         <div className="supervision-school-check-stats">
           <Tag>{indicators.length} 项指标</Tag>
+          {pendingRectificationCount ? (
+            <Tag color="error">{pendingRectificationDimensionCount} 个维度 · {pendingRectificationCount} 项需整改</Tag>
+          ) : null}
+          {!pendingRectificationCount && rectifiedIndicatorCount ? (
+            <Tag color="success">{rectifiedIndicatorCount} 项已整改</Tag>
+          ) : null}
           <Tag color={filledIndicatorCount === indicators.length && indicators.length ? 'success' : 'processing'}>
             {filledIndicatorCount}/{indicators.length} 已填写
           </Tag>
@@ -676,7 +1093,12 @@ export default function SupervisionSchoolTaskForm({
                     : '未选择维度'}
                 </div>
               </div>
-              <Tag>{selectedIndicators.length} 项指标</Tag>
+              <div className="supervision-school-framework-panel-tags">
+                <Tag>{selectedIndicators.length} 项指标</Tag>
+                {selectedPendingRectificationCount ? (
+                  <Tag color="error">{selectedPendingRectificationCount} 项需整改</Tag>
+                ) : null}
+              </div>
             </div>
 
             {selectedIndicators.length ? (
@@ -685,11 +1107,19 @@ export default function SupervisionSchoolTaskForm({
                 ghost
                 defaultActiveKey={[]}
                 className="supervision-school-indicator-collapse"
-                items={selectedIndicators.map((indicator) => ({
-                  key: indicator.id,
-                  label: renderIndicatorHeader(indicator),
-                  children: renderIndicatorForm(indicator),
-                }))}
+                items={selectedIndicators.map((indicator) => {
+                  const rectificationMeta = rectificationMetaByIndicatorId.get(indicator.id) || {};
+                  return {
+                    key: indicator.id,
+                    className: rectificationMeta.pending
+                      ? 'is-rectification-needed'
+                      : rectificationMeta.confirmed
+                        ? 'is-rectification-done'
+                        : '',
+                    label: renderIndicatorHeader(indicator),
+                    children: renderIndicatorForm(indicator),
+                  };
+                })}
               />
             ) : (
               <div className="supervision-school-framework-empty">
@@ -699,12 +1129,6 @@ export default function SupervisionSchoolTaskForm({
           </section>
         </div>
       )}
-
-      <div className="supervision-school-check-footer">
-        <Button type="primary" icon={<SaveOutlined />} onClick={handleSave} disabled={!canEdit}>
-          保存检查情况
-        </Button>
-      </div>
     </Form>
   );
 }

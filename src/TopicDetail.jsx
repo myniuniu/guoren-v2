@@ -55,7 +55,7 @@ import {
 } from '@ant-design/icons';
 import AddResourceModal from './AddResourceModal';
 import SupervisionTaskModal, { SupervisionTaskInlineForm } from './supervisionTask/SupervisionTaskModal.jsx';
-import SupervisionSchoolTaskForm from './supervisionTask/SupervisionSchoolTaskForm.jsx';
+import SupervisionSchoolTaskForm, { SupervisionRectificationChecklist } from './supervisionTask/SupervisionSchoolTaskForm.jsx';
 import AssessmentConfig from './AssessmentConfig';
 import LearnerAssessmentProgressView from './LearnerAssessmentProgressView';
 import {
@@ -230,6 +230,25 @@ const AI_DEFAULT_SUGGESTION_TEMPLATES = Object.freeze([
   (scopeLabel) => `请整理「${scopeLabel}」的核心知识点与教学活动建议`,
   (scopeLabel) => `请把「${scopeLabel}」转成可直接授课的教案大纲`,
 ]);
+const AI_SUPERVISION_SUGGESTION_TEMPLATES = Object.freeze([
+  (scopeLabel) => `请基于「${scopeLabel}」生成督导检查要点和执行安排`,
+  (scopeLabel) => `请梳理「${scopeLabel}」的指标口径、证据要求和风险提醒`,
+  (scopeLabel) => `请根据「${scopeLabel}」生成问题反馈、整改建议和报告摘要`,
+]);
+const COURSE_AI_GENERATION_SKILLS = Object.freeze([
+  { key: 'course', label: '课程生成', description: '生成课程蓝图、目标、活动与课时安排。' },
+  { key: 'courseware', label: '课件生成', description: '生成适合授课展示的课件内容与页面结构。' },
+  { key: 'teaching-plan', label: '教案生成', description: '生成课堂流程、提问策略与教学组织建议。' },
+  { key: 'interactive-courseware', label: '互动课件生成', description: '生成包含互动环节与反馈机制的课件方案。' },
+]);
+const SUPERVISION_AI_GENERATION_SKILLS = Object.freeze([
+  { key: 'inspection-plan', label: '检查方案生成', description: '根据督导类型、学校范围和周期生成检查安排。' },
+  { key: 'template-indicator', label: '模板指标解读', description: '拆解督导模板维度、指标口径和证据要求。' },
+  { key: 'school-checklist', label: '学校检查清单', description: '按学校生成待核验事项、访谈问题和材料清单。' },
+  { key: 'observation-record', label: '听评课记录整理', description: '整理课堂观察记录、亮点问题和佐证说明。' },
+  { key: 'issue-rectification', label: '整改问题归纳', description: '汇总问题等级、整改措施、责任建议和复核要求。' },
+  { key: 'supervision-report', label: '督导报告生成', description: '基于检查结果生成督导报告、反馈意见和结论摘要。' },
+]);
 
 function normalizeAiSuggestionText(item) {
   if (typeof item === 'string') return item.trim();
@@ -271,7 +290,7 @@ function collectAiSuggestionTexts(source) {
   return AI_SUGGESTION_FIELD_KEYS.flatMap((key) => normalizeAiSuggestionList(source[key]));
 }
 
-function buildAiSuggestedQuestions({ currentVersion, previewItem, selectedFolder, scopeLabel }) {
+function buildAiSuggestedQuestions({ currentVersion, previewItem, selectedFolder, scopeLabel, activeSceneType }) {
   const sources = [
     previewItem,
     previewItem?.meta,
@@ -294,7 +313,10 @@ function buildAiSuggestedQuestions({ currentVersion, previewItem, selectedFolder
 
   if (questions.length > 0) return questions.slice(0, 5);
 
-  return AI_DEFAULT_SUGGESTION_TEMPLATES.map((createQuestion) => createQuestion(scopeLabel || '当前资料'));
+  const defaultTemplates = activeSceneType === 'SUPERVISION'
+    ? AI_SUPERVISION_SUGGESTION_TEMPLATES
+    : AI_DEFAULT_SUGGESTION_TEMPLATES;
+  return defaultTemplates.map((createQuestion) => createQuestion(scopeLabel || '当前资料'));
 }
 
 function isLiveToolConfig(tool = {}) {
@@ -372,6 +394,318 @@ function countResourceBranchItems(childrenMap, folderKey) {
   return count;
 }
 
+const SUPERVISION_HIDDEN_ROOT_FOLDER_KEYS = new Set(['evidence_materials', 'archive']);
+const SUPERVISION_HIDDEN_ROOT_FOLDER_NAMES = new Set(['佐证材料', '归档材料']);
+const SUPERVISION_FEEDBACK_FOLDER_KEYS = new Set(['feedback_rectification']);
+const SUPERVISION_FEEDBACK_FOLDER_NAMES = new Set(['整改反馈']);
+const SUPERVISION_LEGACY_FEEDBACK_NAMES = new Set(['整改问题清单']);
+const SUPERVISION_RECTIFICATION_RESOURCE_TYPE = 'supervisionRectificationSchool';
+const SUPERVISION_RECTIFICATION_RESULT_PATTERN = /需改进|需整改|待整改|未达成|部分达成|不达标|不合格|低|异常|缺失|隐患|逾期/;
+const SUPERVISION_RECTIFICATION_NOTE_PATTERN = /需改进|需整改|待整改|未达成|不达标|不合格|异常|缺失|隐患|逾期/;
+
+function isSupervisionFeedbackFolder(resource) {
+  return Boolean(
+    resource?.isFolder
+      && (resource.parentKey ?? null) === null
+      && (
+        SUPERVISION_FEEDBACK_FOLDER_KEYS.has(resource.folderTypeKey)
+        || SUPERVISION_FEEDBACK_FOLDER_NAMES.has(resource.name)
+      ),
+  );
+}
+
+function isGeneratedSupervisionResource(resource) {
+  return resource?.type === SUPERVISION_RECTIFICATION_RESOURCE_TYPE
+    || resource?.meta?.supervisionGenerated === true;
+}
+
+function filterSupervisionResourceTree(resources = [], activeSceneType) {
+  if (activeSceneType !== 'SUPERVISION') return resources;
+
+  const childrenByParent = buildResourceChildrenMap(resources);
+  const hiddenKeys = new Set();
+  const collectBranch = (resourceKey) => {
+    if (!resourceKey || hiddenKeys.has(resourceKey)) return;
+    hiddenKeys.add(resourceKey);
+    (childrenByParent.get(resourceKey) || []).forEach((child) => collectBranch(child.key));
+  };
+
+  resources.forEach((resource) => {
+    const isRoot = (resource?.parentKey ?? null) === null;
+    const shouldHide = resource?.isFolder
+      && isRoot
+      && (
+        SUPERVISION_HIDDEN_ROOT_FOLDER_KEYS.has(resource.folderTypeKey)
+        || SUPERVISION_HIDDEN_ROOT_FOLDER_NAMES.has(resource.name)
+      );
+    if (shouldHide) collectBranch(resource.key);
+  });
+
+  if (hiddenKeys.size === 0) return resources;
+  return resources.filter((resource) => !hiddenKeys.has(resource.key));
+}
+
+function normalizeSupervisionText(value) {
+  return String(value ?? '').trim();
+}
+
+function getSupervisionDimensionIdentities(dimension) {
+  return [
+    dimension?.id,
+    dimension?.key,
+    dimension?.dimensionId,
+    dimension?.code,
+    dimension?.dimensionCode,
+    dimension?.name,
+    dimension?.dimensionName,
+  ].map(normalizeSupervisionText).filter(Boolean);
+}
+
+function normalizeSupervisionDimensions(dimensions = []) {
+  const normalized = dimensions.map((dimension, index) => {
+    const code = normalizeSupervisionText(dimension?.code || dimension?.dimensionCode);
+    const name = normalizeSupervisionText(dimension?.name || dimension?.dimensionName || dimension?.title);
+    const id = normalizeSupervisionText(dimension?.id || dimension?.key || dimension?.dimensionId || code || name || `dimension_${index + 1}`);
+    return {
+      ...dimension,
+      id,
+      code,
+      name,
+      parentId: normalizeSupervisionText(dimension?.parentId || dimension?.parentKey || dimension?.parentDimensionId || dimension?.parentCode),
+    };
+  });
+  const identityMap = new Map();
+  normalized.forEach((dimension) => {
+    getSupervisionDimensionIdentities(dimension).forEach((identity) => {
+      if (!identityMap.has(identity)) identityMap.set(identity, dimension.id);
+    });
+  });
+  return normalized.map((dimension) => ({
+    ...dimension,
+    parentId: dimension.parentId ? identityMap.get(dimension.parentId) || dimension.parentId : '',
+  }));
+}
+
+function getSupervisionDimensionPath(dimensionId, dimensionMap) {
+  const names = [];
+  let cursor = dimensionMap.get(dimensionId);
+  const visitedIds = new Set();
+  while (cursor && !visitedIds.has(cursor.id)) {
+    visitedIds.add(cursor.id);
+    names.unshift([cursor.code, cursor.name].filter(Boolean).join(' '));
+    cursor = cursor.parentId ? dimensionMap.get(cursor.parentId) : null;
+  }
+  return names.join(' / ');
+}
+
+function buildSupervisionIndicatorMap(indicators = []) {
+  const map = new Map();
+  indicators.forEach((indicator, index) => {
+    const code = normalizeSupervisionText(indicator?.code || indicator?.indicatorCode);
+    const name = normalizeSupervisionText(indicator?.name || indicator?.indicatorName || indicator?.title);
+    const id = normalizeSupervisionText(indicator?.id || indicator?.key || indicator?.indicatorId || code || name || `indicator_${index + 1}`);
+    const normalized = {
+      ...indicator,
+      id,
+      code,
+      name,
+      dimensionId: normalizeSupervisionText(
+        indicator?.dimensionId
+        || indicator?.dimensionKey
+        || indicator?.dimensionCode
+        || indicator?.dimensionName
+        || indicator?.parentDimensionId
+        || indicator?.parentId,
+      ),
+      indicatorType: normalizeSupervisionText(indicator?.indicatorType || indicator?.type) || '检查项',
+      scoringMethod: normalizeSupervisionText(indicator?.scoringMethod || indicator?.scoreMode) || '人工评分',
+      required: Boolean(indicator?.required),
+    };
+    [
+      normalized.id,
+      indicator?.key,
+      indicator?.indicatorId,
+      normalized.code,
+      indicator?.indicatorCode,
+      normalized.name,
+      indicator?.indicatorName,
+    ].map(normalizeSupervisionText).filter(Boolean).forEach((identity) => {
+      if (!map.has(identity)) map.set(identity, normalized);
+    });
+  });
+  return map;
+}
+
+function isRectificationEntry(entry = {}) {
+  const resultText = normalizeSupervisionText(entry.result);
+  const noteText = [
+    entry.remark,
+    entry.evidenceNote,
+    entry.issueDescription,
+  ].map(normalizeSupervisionText).filter(Boolean).join(' ');
+  return SUPERVISION_RECTIFICATION_RESULT_PATTERN.test(resultText)
+    || SUPERVISION_RECTIFICATION_NOTE_PATTERN.test(noteText);
+}
+
+function buildSupervisionRectificationIssues(schoolTask, parentTask) {
+  const schoolTaskMeta = schoolTask?.meta?.supervisionSchoolTask || {};
+  const parentTaskMeta = parentTask?.meta?.supervisionTask || {};
+  const templateSnapshot = schoolTaskMeta.templateSnapshot || parentTaskMeta.templateSnapshot || {};
+  const dimensions = normalizeSupervisionDimensions(Array.isArray(templateSnapshot.dimensions) ? templateSnapshot.dimensions : []);
+  const dimensionIdentityMap = new Map();
+  dimensions.forEach((dimension) => {
+    getSupervisionDimensionIdentities(dimension).forEach((identity) => {
+      if (!dimensionIdentityMap.has(identity)) dimensionIdentityMap.set(identity, dimension.id);
+    });
+  });
+  const dimensionMap = new Map(dimensions.map((dimension) => [dimension.id, dimension]));
+  const indicatorMap = buildSupervisionIndicatorMap(Array.isArray(templateSnapshot.indicators) ? templateSnapshot.indicators : []);
+  const indicatorValues = schoolTaskMeta.indicatorValues || {};
+  const rectificationStatuses = schoolTaskMeta.rectificationStatuses || {};
+
+  return Object.entries(indicatorValues)
+    .map(([entryKey, entry]) => {
+      if (!isRectificationEntry(entry)) return null;
+      const indicator = indicatorMap.get(normalizeSupervisionText(entry.indicatorId))
+        || indicatorMap.get(normalizeSupervisionText(entry.indicatorCode))
+        || indicatorMap.get(normalizeSupervisionText(entry.indicatorName))
+        || indicatorMap.get(normalizeSupervisionText(entryKey))
+        || {};
+      const issueId = normalizeSupervisionText(indicator.id || entry.indicatorId || entryKey);
+      const rawDimensionId = normalizeSupervisionText(indicator.dimensionId);
+      const dimensionId = dimensionIdentityMap.get(rawDimensionId) || rawDimensionId;
+      const dimensionPath = getSupervisionDimensionPath(dimensionId, dimensionMap);
+      return {
+        id: issueId,
+        schoolTaskKey: schoolTask?.key || '',
+        code: normalizeSupervisionText(indicator.code || entry.indicatorCode || entryKey),
+        name: normalizeSupervisionText(indicator.name || entry.indicatorName || '未命名指标'),
+        dimensionPath,
+        result: normalizeSupervisionText(entry.result),
+        value: normalizeSupervisionText(entry.value),
+        remark: normalizeSupervisionText(entry.remark),
+        evidenceNote: normalizeSupervisionText(entry.evidenceNote),
+        taskName: parentTask?.name || schoolTaskMeta.parentTaskName || '督导任务',
+        dueDate: schoolTaskMeta.endDate || parentTaskMeta.endDate || parentTaskMeta.dueDate || '',
+        required: Boolean(indicator.required),
+        scoringMethod: normalizeSupervisionText(indicator.scoringMethod || entry.scoringMethod || '人工评分'),
+        status: rectificationStatuses[issueId]?.status || '待整改',
+        confirmedAt: rectificationStatuses[issueId]?.confirmedAt || '',
+      };
+    })
+    .filter(Boolean);
+}
+
+function buildSupervisionDisplayResources(resources = [], activeSceneType) {
+  const baseResources = filterSupervisionResourceTree(resources, activeSceneType);
+  if (activeSceneType !== 'SUPERVISION') return baseResources;
+
+  const baseResourceMap = new Map(baseResources.map((resource) => [resource.key, resource]));
+  const feedbackFolder = baseResources.find(isSupervisionFeedbackFolder) || null;
+  const visibleBaseResources = baseResources.filter((resource) => {
+    const parent = baseResourceMap.get(resource.parentKey);
+    return !(parent && isSupervisionFeedbackFolder(parent) && SUPERVISION_LEGACY_FEEDBACK_NAMES.has(resource.name));
+  });
+  if (!feedbackFolder) return visibleBaseResources;
+
+  const schoolRectificationGroups = new Map();
+  baseResources
+    .filter((resource) => resource.type === 'supervisionSchoolTask')
+    .forEach((schoolTask) => {
+      const parentTask = baseResourceMap.get(schoolTask.parentKey) || null;
+      const issues = buildSupervisionRectificationIssues(schoolTask, parentTask);
+      const confirmedCount = issues.filter((issue) => issue.status === '已整改').length;
+      const pendingCount = Math.max(issues.length - confirmedCount, 0);
+      if (pendingCount === 0) return;
+      const schoolTaskMeta = schoolTask.meta?.supervisionSchoolTask || {};
+      const school = schoolTaskMeta.school || {};
+      const schoolId = schoolTaskMeta.schoolId || school.id || '';
+      const schoolName = schoolTaskMeta.schoolName || school.name || schoolTask.name || '被评估学校';
+      const groupKey = schoolId || schoolName || schoolTask.key;
+      const existingGroup = schoolRectificationGroups.get(groupKey) || {
+        schoolId,
+        schoolName,
+        school: {
+          id: schoolId || groupKey,
+          name: schoolName,
+          province: school.province || '',
+          city: school.city || '',
+          district: school.district || '',
+          nature: school.nature || '',
+        },
+        owner: schoolTask.owner || parentTask?.owner || '督导负责人',
+        lastEdit: schoolTask.lastEdit || parentTask?.lastEdit || '',
+        tasks: [],
+      };
+      existingGroup.tasks.push({
+        taskKey: parentTask?.key || schoolTaskMeta.parentTaskKey || '',
+        schoolTaskKey: schoolTask.key,
+        taskName: parentTask?.name || schoolTaskMeta.parentTaskName || '督导任务',
+        taskStatus: schoolTaskMeta.status || parentTask?.meta?.supervisionTask?.status || '待整改',
+        dueDate: schoolTaskMeta.endDate || parentTask?.meta?.supervisionTask?.endDate || parentTask?.meta?.supervisionTask?.dueDate || '',
+        lastEdit: schoolTask.lastEdit || parentTask?.lastEdit || '',
+        issueCount: issues.length,
+        confirmedCount,
+        pendingCount,
+        issues,
+      });
+      schoolRectificationGroups.set(groupKey, existingGroup);
+    });
+
+  const generatedRectificationNodes = Array.from(schoolRectificationGroups.values())
+    .map((group) => {
+      const issueCount = group.tasks.reduce((sum, task) => sum + task.issueCount, 0);
+      const confirmedCount = group.tasks.reduce((sum, task) => sum + task.confirmedCount, 0);
+      const pendingCount = group.tasks.reduce((sum, task) => sum + task.pendingCount, 0);
+      return {
+        key: `supervision_rectification_school_${encodeURIComponent(group.schoolId || group.schoolName)}`,
+        name: group.schoolName,
+        type: SUPERVISION_RECTIFICATION_RESOURCE_TYPE,
+        fileType: SUPERVISION_RECTIFICATION_RESOURCE_TYPE,
+        isFolder: false,
+        parentKey: feedbackFolder.key,
+        owner: group.owner,
+        lastEdit: group.lastEdit,
+        comment: `${group.tasks.length} 个任务 · ${pendingCount} 项待整改`,
+        meta: {
+          supervisionGenerated: true,
+          summary: `${group.schoolName} · ${group.tasks.length} 个任务 · ${pendingCount} 项待整改`,
+          supervisionRectification: {
+            schoolId: group.schoolId,
+            schoolName: group.schoolName,
+            school: group.school,
+            taskCount: group.tasks.length,
+            issueCount,
+            confirmedCount,
+            pendingCount,
+            tasks: group.tasks,
+            issues: group.tasks.flatMap((task) => task.issues),
+          },
+        },
+      };
+    })
+    .sort((left, right) => String(left.name || '').localeCompare(String(right.name || ''), 'zh-CN'));
+
+  return [...visibleBaseResources, ...generatedRectificationNodes];
+}
+
+function getSupervisionSchoolTaskRectificationMeta(schoolTask, resourceMap) {
+  if (schoolTask?.type !== 'supervisionSchoolTask') return null;
+  const parentTask = schoolTask.parentKey ? resourceMap.get(schoolTask.parentKey) || null : null;
+  const issues = buildSupervisionRectificationIssues(schoolTask, parentTask);
+  if (!issues.length) return null;
+  const pendingIssues = issues.filter((issue) => issue.status !== '已整改');
+  const dimensionNames = new Set(
+    pendingIssues.map((issue) => normalizeSupervisionText(issue.dimensionPath) || '未分组').filter(Boolean),
+  );
+  return {
+    issueCount: issues.length,
+    pendingCount: pendingIssues.length,
+    confirmedCount: issues.length - pendingIssues.length,
+    dimensionCount: dimensionNames.size,
+  };
+}
+
 function getResourceIcon(resource) {
   const type = resource?.type;
   const fileType = resource?.fileType;
@@ -387,6 +721,8 @@ function getResourceIcon(resource) {
       return <CheckCircleOutlined style={{ color: '#0f766e' }} />;
     case 'supervisionSchoolTask':
       return <BankOutlined style={{ color: '#3b82f6' }} />;
+    case 'supervisionRectificationSchool':
+      return <BankOutlined style={{ color: '#64748b' }} />;
     case 'training':
       return <ExperimentOutlined style={{ color: '#34c759' }} />;
     case 'survey':
@@ -413,6 +749,8 @@ function getTopicResourceFileType(resource) {
       return 'supervisionTask';
     case 'supervisionSchoolTask':
       return 'supervisionSchoolTask';
+    case 'supervisionRectificationSchool':
+      return 'supervisionRectificationSchool';
     case 'training':
     case 'survey':
     case 'vote':
@@ -438,6 +776,8 @@ function getResourceTypeLabel(resource, fileType) {
       return '督导任务';
     case 'supervisionSchoolTask':
       return '学校督导';
+    case 'supervisionRectificationSchool':
+      return '整改反馈';
     case 'training':
       return '实训任务';
     case 'survey':
@@ -1541,7 +1881,11 @@ function TopicDetail({
   );
   const isLearnerProgressMode = activeTab === 'learner-progress';
   const isKnowledgeGraphView = resourcePanelView === 'knowledgeGraph';
-  const resources = isKnowledgeGraphView && knowledgeGraphGraph && !isLearnerProgressMode ? knowledgeGraphMirrorResources : sourceResources;
+  const supervisionVisibleResources = useMemo(
+    () => buildSupervisionDisplayResources(sourceResources, activeSceneType),
+    [activeSceneType, sourceResources],
+  );
+  const resources = isKnowledgeGraphView && knowledgeGraphGraph && !isLearnerProgressMode ? knowledgeGraphMirrorResources : supervisionVisibleResources;
   const canEditDisplayedResources = canEditCurrentVersion && !isKnowledgeGraphView && !isLearnerProgressMode;
   const resourceAssessmentProgressMap = useMemo(() => (
     activeSceneType === 'TRAINING'
@@ -1564,6 +1908,14 @@ function TopicDetail({
   const fileCount = resources.filter((r) => !r.isFolder).length;
   const currentListItems = selectedFolder ? folderChildren : rootItems;
   const currentListParentKey = selectedFolderKey || null;
+  const supervisionFeedbackFolderKey = useMemo(
+    () => (activeSceneType === 'SUPERVISION' ? resources.find(isSupervisionFeedbackFolder)?.key || null : null),
+    [activeSceneType, resources],
+  );
+  const supervisionRectificationNodeCount = useMemo(
+    () => resources.filter((resource) => resource.type === SUPERVISION_RECTIFICATION_RESOURCE_TYPE).length,
+    [resources],
+  );
   const resourceMap = useMemo(
     () => new Map(resources.map((resource) => [resource.key, resource])),
     [resources],
@@ -1611,8 +1963,9 @@ function TopicDetail({
       previewItem,
       selectedFolder,
       scopeLabel: aiSuggestionScopeLabel,
+      activeSceneType,
     })
-  ), [aiSuggestionScopeLabel, currentVersion, previewItem, selectedFolder]);
+  ), [activeSceneType, aiSuggestionScopeLabel, currentVersion, previewItem, selectedFolder]);
   const shouldShowAiSuggestions = aiPromptValue.trim().length === 0 && aiSuggestedQuestions.length > 0;
   const canAddResourceAtParent = useCallback((parentKey) => {
     if (!canEditDisplayedResources) return false;
@@ -1663,13 +2016,16 @@ function TopicDetail({
     { key: 'experience', label: 'AI体验馆', items: ['图像识别', '语音交互', '智能推荐', '机器翻译'] },
     { key: 'training', label: 'AI训练馆', items: ['数据标注', '模型训练', '推理部署', '效果评测'] },
   ];
-  const aiGenerationSkills = [
-    { key: 'course', label: '课程生成', description: '生成课程蓝图、目标、活动与课时安排。' },
-    { key: 'courseware', label: '课件生成', description: '生成适合授课展示的课件内容与页面结构。' },
-    { key: 'teaching-plan', label: '教案生成', description: '生成课堂流程、提问策略与教学组织建议。' },
-    { key: 'interactive-courseware', label: '互动课件生成', description: '生成包含互动环节与反馈机制的课件方案。' },
-  ];
-  const hasAiFloatingPanel = aiActivePanel === 'plus' || aiActivePanel === 'structure' || aiActivePanel === 'outline' || aiActivePanel === 'tool';
+  const isSupervisionAiScene = activeSceneType === 'SUPERVISION';
+  const aiAgentLabel = isSupervisionAiScene ? 'AI督导助手' : '课程创作智能体';
+  const aiPromptPlaceholder = isSupervisionAiScene
+    ? '请描述督导任务、检查对象、模板指标或需要生成的整改报告'
+    : '请描述课程主题、适用年级、课程结构与额外要求';
+  const aiGenerationSkills = isSupervisionAiScene
+    ? SUPERVISION_AI_GENERATION_SKILLS
+    : COURSE_AI_GENERATION_SKILLS;
+  const hasAiFloatingPanel = aiActivePanel === 'plus'
+    || (!isSupervisionAiScene && (aiActivePanel === 'structure' || aiActivePanel === 'outline' || aiActivePanel === 'tool'));
   const selectedStructureOption = aiStructureOptions.find((item) => item.key === aiSelectedStructure) || aiStructureOptions[4];
   const selectedToolGroup = aiToolGroups.find((group) => group.key === aiSelectedToolGroup) || aiToolGroups[0];
   const aiStructureLabel = aiStructureTouched ? selectedStructureOption.label : '课程结构';
@@ -1679,16 +2035,19 @@ function TopicDetail({
     : aiSelectedTools.length <= 2
       ? aiSelectedTools.join('、')
       : `${aiSelectedTools.slice(0, 2).join('、')}等${aiSelectedTools.length}项`;
-  const aiVisibleSkills = aiSelectedSkill
-    ? aiGenerationSkills.filter((skill) => skill.label === aiSelectedSkill)
+  const effectiveAiSelectedSkill = aiGenerationSkills.some((skill) => skill.label === aiSelectedSkill)
+    ? aiSelectedSkill
+    : null;
+  const aiVisibleSkills = effectiveAiSelectedSkill
+    ? aiGenerationSkills.filter((skill) => skill.label === effectiveAiSelectedSkill)
     : aiGenerationSkills;
-  const aiPrimarySkills = aiSelectedSkill ? aiVisibleSkills : aiVisibleSkills.slice(0, aiVisibleSkillCount);
-  const aiOverflowSkills = aiSelectedSkill ? [] : aiVisibleSkills.slice(aiVisibleSkillCount);
+  const aiPrimarySkills = effectiveAiSelectedSkill ? aiVisibleSkills : aiVisibleSkills.slice(0, aiVisibleSkillCount);
+  const aiOverflowSkills = effectiveAiSelectedSkill ? [] : aiVisibleSkills.slice(aiVisibleSkillCount);
   const isAiMode = activeTab === 'ai';
   const isAiKnowledgeGraphLayout = activeTab === 'ai' && isKnowledgeGraphView;
   const isAiKnowledgeGraphPreviewVisible = isAiKnowledgeGraphLayout && aiKnowledgeGraphPreviewOpen;
   const isStandaloneKnowledgeGraphView = isKnowledgeGraphView && !isAiMode;
-  const aiComposerItems = aiSelectedSkill
+  const aiComposerItems = effectiveAiSelectedSkill && !isSupervisionAiScene
     ? [
         { key: 'structure', label: aiStructureLabel },
         { key: 'outline', label: aiOutlineLabel },
@@ -1744,7 +2103,7 @@ function TopicDetail({
   }, [aiActivePanel, hasAiFloatingPanel]);
 
   const updateAiVisibleSkillCount = useCallback(() => {
-    if (aiSelectedSkill) {
+    if (effectiveAiSelectedSkill) {
       setAiVisibleSkillCount(aiVisibleSkills.length);
       return;
     }
@@ -1785,7 +2144,7 @@ function TopicDetail({
     }
 
     setAiVisibleSkillCount(Math.max(1, nextVisibleCount));
-  }, [aiSelectedSkill, aiVisibleSkills]);
+  }, [effectiveAiSelectedSkill, aiVisibleSkills]);
 
   const handleAiPromptChange = useCallback((event) => {
     const nextValue = event.target.value;
@@ -4096,6 +4455,44 @@ function TopicDetail({
     message.success('检查情况已保存');
   };
 
+  const handleConfirmSupervisionRectificationIssue = (rectificationResource, schoolTaskKey, issueId) => {
+    if (!canEditDisplayedResources) {
+      message.warning(versioningEnabled ? '当前版本已发布，请新建版本后再确认整改' : '当前内容不可编辑');
+      return;
+    }
+    const targetSchoolTaskKey = schoolTaskKey || rectificationResource?.meta?.supervisionRectification?.schoolTaskKey;
+    if (!targetSchoolTaskKey || !issueId) return;
+    const schoolTask = sourceResources.find((resource) => resource.key === targetSchoolTaskKey && resource.type === 'supervisionSchoolTask');
+    if (!schoolTask) {
+      message.warning('未找到对应学校检查记录');
+      return;
+    }
+    const confirmedAt = formatNowText();
+    const schoolTaskMeta = schoolTask.meta?.supervisionSchoolTask || {};
+    const nextRectificationStatuses = {
+      ...(schoolTaskMeta.rectificationStatuses || {}),
+      [issueId]: {
+        ...(schoolTaskMeta.rectificationStatuses?.[issueId] || {}),
+        status: '已整改',
+        confirmedAt,
+      },
+    };
+    const nextMeta = {
+      ...(schoolTask.meta || {}),
+      supervisionSchoolTask: {
+        ...schoolTaskMeta,
+        rectificationStatuses: nextRectificationStatuses,
+        updatedAt: confirmedAt,
+      },
+    };
+    const nextData = updateResource(versionData, currentVersion.id, targetSchoolTaskKey, {
+      meta: nextMeta,
+      lastEdit: confirmedAt,
+    }, versioningConfig);
+    setVersionData(nextData);
+    message.success('已确认整改');
+  };
+
   const handleConfirmCapabilityModelImport = () => {
     if (!canEditDisplayedResources) {
       message.warning(versioningEnabled ? '当前版本已发布，请新建版本后再添加资料' : '当前内容不可编辑');
@@ -4195,7 +4592,7 @@ function TopicDetail({
   };
 
   const handleArchiveResourceToProfile = (resource) => {
-    if (!resource || resource.isFolder || resource.__kgMirror || !canArchiveSceneResource) return;
+    if (!resource || resource.isFolder || resource.__kgMirror || isGeneratedSupervisionResource(resource) || !canArchiveSceneResource) return;
     if (isSceneResourceArchived(resource)) {
       message.info('该业务活动已归档到我的档案');
       return;
@@ -4251,7 +4648,10 @@ function TopicDetail({
   };
 
   const setResourceSelectionForKeys = (keys) => {
-    const nextKeys = [...new Set(keys)].filter((key) => resourceMap.has(key));
+    const nextKeys = [...new Set(keys)].filter((key) => {
+      const resource = resourceMap.get(key);
+      return resource && !isGeneratedSupervisionResource(resource);
+    });
     setSelectedResourceKeys(nextKeys);
     lastMultiSelectedResourceKeyRef.current = nextKeys.length ? nextKeys[nextKeys.length - 1] : null;
   };
@@ -4399,6 +4799,11 @@ function TopicDetail({
     const target = resources.find((item) => item.key === inlineRenameItemKey);
     const trimmed = inlineRenameName.trim();
 
+    if (target && isGeneratedSupervisionResource(target)) {
+      cancelInlineRename();
+      return;
+    }
+
     if (target && trimmed && trimmed !== target.name) {
       const newData = updateResource(versionData, currentVersion.id, target.key, { name: trimmed }, versioningConfig);
       setVersionData(newData);
@@ -4410,6 +4815,7 @@ function TopicDetail({
 
   const startInlineRename = (item, surface = 'list') => {
     if (!item?.key) return;
+    if (isGeneratedSupervisionResource(item)) return;
     if (!canEditDisplayedResources) {
       message.warning('当前版本不可编辑');
       return;
@@ -4503,6 +4909,7 @@ function TopicDetail({
   const handleActivateItem = (item, surface = 'list', event = null) => {
     if (!item) return;
     if (resourceMultiSelectAvailable && (isResourceMultiSelectMode || event?.metaKey || event?.ctrlKey || event?.shiftKey)) {
+      if (isGeneratedSupervisionResource(item)) return;
       const rangeItems = surface === 'list' ? currentListItems : visibleTreeItems;
       toggleResourceSelection(item.key, undefined, {
         rangeItems: event?.shiftKey ? rangeItems : null,
@@ -4510,7 +4917,7 @@ function TopicDetail({
       return;
     }
     if (selectedItemKey === item.key && inlineRenameItemKey !== item.key) {
-      if (isRenameActivationWithinWindow(item.key)) {
+      if (!isGeneratedSupervisionResource(item) && isRenameActivationWithinWindow(item.key)) {
         queueInlineRename(item, surface);
       } else {
         clearPendingRenameTrigger();
@@ -4598,6 +5005,7 @@ function TopicDetail({
   };
 
   const handleListRowDragOver = (event, item) => {
+    if (isGeneratedSupervisionResource(item)) return;
     if (!hasResourceDragPayload(event)) return;
     const draggedItem = getDraggedResourcePayload(event);
     if (!draggedItem?.key || draggedItem.key === item.key) return;
@@ -4625,6 +5033,7 @@ function TopicDetail({
   };
 
   const handleListRowDrop = (event, targetItem) => {
+    if (isGeneratedSupervisionResource(targetItem)) return;
     if (!hasResourceDragPayload(event)) return;
     event.preventDefault();
     event.stopPropagation();
@@ -4701,6 +5110,7 @@ function TopicDetail({
   };
 
   const handleTreeFolderDragOver = (event, targetItem) => {
+    if (isGeneratedSupervisionResource(targetItem)) return;
     if (!hasResourceDragPayload(event)) return;
     const draggedItem = getDraggedResourcePayload(event);
     if (!draggedItem?.key || draggedItem.key === targetItem?.key) return;
@@ -4727,6 +5137,7 @@ function TopicDetail({
   };
 
   const handleTreeFolderDrop = (event, targetItem) => {
+    if (isGeneratedSupervisionResource(targetItem)) return;
     if (!hasResourceDragPayload(event)) return;
     event.preventDefault();
     event.stopPropagation();
@@ -4854,6 +5265,20 @@ function TopicDetail({
 
   const getItemMoreMenu = (item, surface = 'list') => {
     const isResourceSelected = selectedResourceKeySet.has(item.key);
+    const isGeneratedItem = isGeneratedSupervisionResource(item);
+    if (isGeneratedItem) {
+      return {
+        items: [
+          item.isFolder
+            ? { key: 'enter', icon: <RightOutlined />, label: '进入' }
+            : { key: 'preview', icon: <EyeOutlined />, label: '查看清单' },
+        ],
+        onClick: ({ key, domEvent }) => {
+          domEvent?.stopPropagation();
+          handleItemMenuAction(item, key, surface);
+        },
+      };
+    }
     const items = [
       ...(resourceMultiSelectAvailable
         ? [
@@ -5038,7 +5463,7 @@ function TopicDetail({
   };
 
   const renderResourceSelectionCheckbox = (item, surface = 'tree') => {
-    if (!isResourceMultiSelectMode) return null;
+    if (!isResourceMultiSelectMode || isGeneratedSupervisionResource(item)) return null;
     const isChecked = selectedResourceKeySet.has(item.key);
     return (
       <span
@@ -5070,10 +5495,17 @@ function TopicDetail({
     const treeProgressSource = treeProgressMeta?.source || '';
     const treeAssessmentClass = treeProgressSource ? `project-item-assessment-${treeProgressSource}` : '';
     const treeAssessmentToneClass = treeProgressMeta?.tone ? `project-item-assessment-tone-${treeProgressMeta.tone}` : '';
+    const supervisionSchoolRectificationMeta = activeSceneType === 'SUPERVISION'
+      ? getSupervisionSchoolTaskRectificationMeta(item, resourceMap)
+      : null;
+    const treeSupervisionRectificationClass = supervisionSchoolRectificationMeta?.pendingCount
+      ? 'project-item-supervision-rectification'
+      : '';
     const isTreeParentItem = canResourceNestChildren(item);
 
     if (isTreeParentItem) {
-      const isExpanded = expandedFolders.has(item.key);
+      const shouldAutoExpandFeedbackFolder = item.key === supervisionFeedbackFolderKey && supervisionRectificationNodeCount > 0;
+      const isExpanded = expandedFolders.has(item.key) || shouldAutoExpandFeedbackFolder;
       const children = getChildren(item.key);
       const hasChildren = children.length > 0;
       return (
@@ -5089,8 +5521,8 @@ function TopicDetail({
           >
             <div
               ref={(node) => setProjectItemNode(item.key, node)}
-              className={`project-item ${item.isFolder ? 'project-item-folder' : 'project-item-child project-item-parent-resource'} ${isResourceMultiSelectMode ? 'project-item-multi-mode' : ''} ${treeAssessmentClass} ${treeAssessmentToneClass} ${isInlineRenaming ? 'project-item-inline-renaming' : ''} ${isSelected && !isResourceMultiSelectMode ? 'project-item-selected' : ''} ${isMultiSelected ? 'project-item-multi-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''} ${isDragOverFolder ? 'project-item-dragover' : ''} ${isDragging ? 'project-item-dragging' : ''} ${treeDropPosition === 'before' ? 'project-item-drop-before' : ''} ${treeDropPosition === 'after' ? 'project-item-drop-after' : ''}`}
-              draggable={!isResourceMultiSelectMode && !isInlineRenaming && canEditDisplayedResources}
+              className={`project-item ${item.isFolder ? 'project-item-folder' : 'project-item-child project-item-parent-resource'} ${isResourceMultiSelectMode ? 'project-item-multi-mode' : ''} ${treeAssessmentClass} ${treeAssessmentToneClass} ${treeSupervisionRectificationClass} ${isInlineRenaming ? 'project-item-inline-renaming' : ''} ${isSelected && !isResourceMultiSelectMode ? 'project-item-selected' : ''} ${isMultiSelected ? 'project-item-multi-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''} ${isDragOverFolder ? 'project-item-dragover' : ''} ${isDragging ? 'project-item-dragging' : ''} ${treeDropPosition === 'before' ? 'project-item-drop-before' : ''} ${treeDropPosition === 'after' ? 'project-item-drop-after' : ''}`}
+              draggable={!isGeneratedSupervisionResource(item) && !isResourceMultiSelectMode && !isInlineRenaming && canEditDisplayedResources}
               onDragStart={(event) => startResourceDrag(event, item)}
               onDragEnd={finishResourceDrag}
               onDragOver={(event) => handleTreeFolderDragOver(event, item)}
@@ -5127,6 +5559,15 @@ function TopicDetail({
               {isInlineRenaming ? renderInlineRenameInput('tree') : (
                 <span className="project-item-title-stack">
                   <span className="project-item-title">{item.name}</span>
+                  {supervisionSchoolRectificationMeta?.pendingCount ? (
+                    <span
+                      className="project-item-supervision-risk"
+                      title={`${supervisionSchoolRectificationMeta.dimensionCount} 个维度、${supervisionSchoolRectificationMeta.pendingCount} 项指标需要整改`}
+                    >
+                      <span className="project-item-supervision-risk-dot" />
+                      {supervisionSchoolRectificationMeta.dimensionCount}维度 · {supervisionSchoolRectificationMeta.pendingCount}项整改
+                    </span>
+                  ) : null}
                   {renderResourceAssessmentProgressMeter(item.key, 'tree')}
                 </span>
               )}
@@ -5184,8 +5625,8 @@ function TopicDetail({
       >
         <div
           ref={(node) => setProjectItemNode(item.key, node)}
-          className={`project-item project-item-child ${isResourceMultiSelectMode ? 'project-item-multi-mode' : ''} ${treeAssessmentClass} ${treeAssessmentToneClass} ${isInlineRenaming ? 'project-item-inline-renaming' : ''} ${isSelected && !isResourceMultiSelectMode ? 'project-item-selected' : ''} ${isMultiSelected ? 'project-item-multi-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''} ${isDragging ? 'project-item-dragging' : ''} ${treeDropPosition === 'before' ? 'project-item-drop-before' : ''} ${treeDropPosition === 'after' ? 'project-item-drop-after' : ''}`}
-          draggable={!isResourceMultiSelectMode && !isInlineRenaming && canEditDisplayedResources}
+          className={`project-item project-item-child ${isResourceMultiSelectMode ? 'project-item-multi-mode' : ''} ${treeAssessmentClass} ${treeAssessmentToneClass} ${treeSupervisionRectificationClass} ${isInlineRenaming ? 'project-item-inline-renaming' : ''} ${isSelected && !isResourceMultiSelectMode ? 'project-item-selected' : ''} ${isMultiSelected ? 'project-item-multi-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''} ${isDragging ? 'project-item-dragging' : ''} ${treeDropPosition === 'before' ? 'project-item-drop-before' : ''} ${treeDropPosition === 'after' ? 'project-item-drop-after' : ''}`}
+          draggable={!isGeneratedSupervisionResource(item) && !isResourceMultiSelectMode && !isInlineRenaming && canEditDisplayedResources}
           onDragStart={(event) => startResourceDrag(event, item)}
           onDragEnd={finishResourceDrag}
           onDragOver={(event) => handleTreeFolderDragOver(event, item)}
@@ -5202,6 +5643,15 @@ function TopicDetail({
           {isInlineRenaming ? renderInlineRenameInput('tree') : (
             <span className="project-item-title-stack">
               <span className="project-item-title">{item.name}</span>
+              {supervisionSchoolRectificationMeta?.pendingCount ? (
+                <span
+                  className="project-item-supervision-risk"
+                  title={`${supervisionSchoolRectificationMeta.dimensionCount} 个维度、${supervisionSchoolRectificationMeta.pendingCount} 项指标需要整改`}
+                >
+                  <span className="project-item-supervision-risk-dot" />
+                  {supervisionSchoolRectificationMeta.dimensionCount}维度 · {supervisionSchoolRectificationMeta.pendingCount}项整改
+                </span>
+              ) : null}
               {renderResourceAssessmentProgressMeter(item.key, 'tree')}
             </span>
           )}
@@ -5252,7 +5702,7 @@ function TopicDetail({
       >
         <div
           className={`topic-file-row ${isResourceMultiSelectMode ? 'topic-file-row-multi-mode' : ''} ${isSelected && !isResourceMultiSelectMode ? 'topic-file-row-selected' : ''} ${isMultiSelected ? 'topic-file-row-multi-selected' : ''} ${isContextOpen ? 'topic-file-row-context-open' : ''} ${isDragOverFolder ? 'topic-file-row-dragover' : ''} ${isDragging ? 'topic-file-row-dragging' : ''} ${dropPosition === 'before' ? 'topic-file-row-drop-before' : ''} ${dropPosition === 'after' ? 'topic-file-row-drop-after' : ''}`}
-          draggable={!isResourceMultiSelectMode && !isInlineRenaming && canEditDisplayedResources}
+          draggable={!isGeneratedSupervisionResource(item) && !isResourceMultiSelectMode && !isInlineRenaming && canEditDisplayedResources}
           onDragStart={(event) => startResourceDrag(event, item)}
           onDragEnd={finishResourceDrag}
           onDragOver={(event) => handleListRowDragOver(event, item)}
@@ -5353,6 +5803,16 @@ function TopicDetail({
     );
   };
 
+  const renderSupervisionRectificationPreview = (item) => {
+    return (
+      <SupervisionRectificationChecklist
+        item={item}
+        canEdit={canEditDisplayedResources}
+        onConfirmIssue={(schoolTaskKey, issueId) => handleConfirmSupervisionRectificationIssue(item, schoolTaskKey, issueId)}
+      />
+    );
+  };
+
   const renderPreviewContent = (item) => {
     const fileType = getTopicResourceFileType(item);
     const previewSummary = getPreviewSummary(item, fileType);
@@ -5364,6 +5824,10 @@ function TopicDetail({
 
     if (item?.type === 'supervisionSchoolTask') {
       return renderSupervisionSchoolTaskPreview(item);
+    }
+
+    if (item?.type === 'supervisionRectificationSchool') {
+      return renderSupervisionRectificationPreview(item);
     }
 
     if (fileType === 'image') {
@@ -6750,7 +7214,7 @@ function TopicDetail({
                         <span className="topic-ai-agent-icon">
                           <MessageOutlined />
                         </span>
-                        <span>课程创作智能体</span>
+                        <span>{aiAgentLabel}</span>
                       </div>
                       <div className="topic-ai-toolbar-actions">
                         <span className="topic-ai-toolbar-action">
@@ -6796,7 +7260,7 @@ function TopicDetail({
                         <textarea
                           ref={aiPromptInputRef}
                           className="topic-ai-composer-input"
-                          placeholder="请描述课程主题、适用年级、课程结构与额外要求"
+                          placeholder={aiPromptPlaceholder}
                           value={aiPromptValue}
                           onChange={handleAiPromptChange}
                           rows={1}
@@ -6874,7 +7338,7 @@ function TopicDetail({
                                   </div>
                                   <div className="topic-ai-plus-skills">
                                     <div className="topic-ai-plus-skills-head">
-                                      <div className="topic-ai-plus-skills-title">技能</div>
+                                      <div className="topic-ai-plus-skills-title">{isSupervisionAiScene ? '督导技能' : '技能'}</div>
                                       <div className="topic-ai-plus-skills-search">
                                         <SearchOutlined />
                                         <span>搜索技能</span>
@@ -6885,7 +7349,7 @@ function TopicDetail({
                                         <button
                                           key={skill.key}
                                           type="button"
-                                          className={`topic-ai-plus-skill-card ${aiSelectedSkill === skill.label ? 'topic-ai-plus-skill-card-active' : ''}`}
+                                          className={`topic-ai-plus-skill-card ${effectiveAiSelectedSkill === skill.label ? 'topic-ai-plus-skill-card-active' : ''}`}
                                           onClick={() => {
                                             setAiSelectedSkill(skill.label);
                                             setAiActivePanel('course');
@@ -7037,13 +7501,13 @@ function TopicDetail({
                             <span className="topic-ai-composer-divider" />
                             <div
                               ref={aiComposerSkillsRef}
-                              className={`topic-ai-composer-skills ${aiSelectedSkill ? 'topic-ai-composer-skills-has-selection' : ''}`}
+                              className={`topic-ai-composer-skills ${effectiveAiSelectedSkill ? 'topic-ai-composer-skills-has-selection' : ''}`}
                             >
                               {aiPrimarySkills.map((skill) => (
                                 <button
                                   key={skill.key}
                                   type="button"
-                                  className={`topic-ai-composer-skill ${aiSelectedSkill === skill.label ? 'topic-ai-composer-skill-active' : ''}`}
+                                  className={`topic-ai-composer-skill ${effectiveAiSelectedSkill === skill.label ? 'topic-ai-composer-skill-active' : ''}`}
                                   title={skill.label}
                                   onClick={() => {
                                     setAiSelectedSkill(skill.label);
@@ -7052,7 +7516,7 @@ function TopicDetail({
                                 >
                                   <ThunderboltOutlined />
                                   <span className="topic-ai-composer-skill-label">{skill.label}</span>
-                                  {aiSelectedSkill === skill.label ? (
+                                  {effectiveAiSelectedSkill === skill.label ? (
                                     <span
                                       role="button"
                                       tabIndex={0}
@@ -7103,7 +7567,7 @@ function TopicDetail({
                                 </Dropdown>
                               ) : null}
                             </div>
-                            {aiSelectedSkill ? <span className="topic-ai-composer-divider" /> : null}
+                            {effectiveAiSelectedSkill ? <span className="topic-ai-composer-divider" /> : null}
                             {aiComposerItems.map((item) => (
                               <button
                                 key={item.key}
@@ -7221,8 +7685,8 @@ function TopicDetail({
             ) : (
               previewItem ? (
                 previewItem.fileType === 'capabilityModel' ? renderCapabilityModelPreviewPane() : (
-                  <div className={`topic-preview-main ${['supervisionTask', 'supervisionSchoolTask'].includes(previewItem.type) ? 'topic-preview-main-supervision-task' : ''}`}>
-                    {!['supervisionTask', 'supervisionSchoolTask'].includes(previewItem.type) ? (
+                  <div className={`topic-preview-main ${['supervisionTask', 'supervisionSchoolTask', 'supervisionRectificationSchool'].includes(previewItem.type) ? 'topic-preview-main-supervision-task' : ''}`}>
+                    {!['supervisionTask', 'supervisionSchoolTask', 'supervisionRectificationSchool'].includes(previewItem.type) ? (
                       <div className="topic-preview-main-head">
                         <div className="topic-preview-main-head-left">
                           <span className="topic-preview-main-icon">
