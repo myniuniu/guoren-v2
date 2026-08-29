@@ -1,5 +1,5 @@
-import { useEffect, useMemo } from 'react';
-import { Button, Checkbox, DatePicker, Empty, Form, Input, Modal, Radio, Select, Tag } from 'antd';
+import { useEffect, useMemo, useState } from 'react';
+import { Button, DatePicker, Empty, Form, Input, Modal, Radio, Select, Tag } from 'antd';
 import dayjs from 'dayjs';
 import {
   ArrowLeftOutlined,
@@ -9,6 +9,7 @@ import {
   SaveOutlined,
   SearchOutlined,
   SendOutlined,
+  TeamOutlined,
 } from '@ant-design/icons';
 import './SupervisionTaskModal.css';
 
@@ -58,6 +59,15 @@ const SCHOOL_RECORDS = [
   { id: 'school_sz_nanshan_voc', name: '深圳市南山区职业技术学校', province: '广东省', city: '深圳市', district: '南山区', nature: '中职学校' },
   { id: 'school_sz_nanshan_digital', name: '深圳南山信息技术学校', province: '广东省', city: '深圳市', district: '南山区', nature: '中职学校' },
   { id: 'school_gz_tianhe_college', name: '广州天河职业学院', province: '广东省', city: '广州市', district: '天河区', nature: '高职院校' },
+];
+
+const SUPERVISION_TASK_ASSIGNMENT_PEOPLE = [
+  { value: 'inspector_chen_lijun', label: '陈立军', role: '督导组长' },
+  { value: 'inspector_zhao_yan', label: '赵妍', role: '课堂观察' },
+  { value: 'inspector_wang_xiaomin', label: '王晓敏', role: '材料核验' },
+  { value: 'inspector_li_ming', label: '李明', role: '数据复核' },
+  { value: 'inspector_zhou_yuqing', label: '周雨晴', role: '整改跟进' },
+  { value: 'inspector_sun_haoran', label: '孙浩然', role: '综合协调' },
 ];
 
 function uniqueOptions(values) {
@@ -113,10 +123,51 @@ function parseDateValue(value) {
   return parsed.isValid() ? parsed : null;
 }
 
+function formatCurrentDateTimeText() {
+  return new Date()
+    .toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
+    .replace(/\//g, '-');
+}
+
 function getTaskDescription(resource) {
   const paragraphs = Array.isArray(resource?.meta?.paragraphs) ? resource.meta.paragraphs : [];
   const descriptionParagraph = paragraphs.find((paragraph) => String(paragraph || '').startsWith('任务描述：'));
   return descriptionParagraph ? descriptionParagraph.replace(/^任务描述：/, '') : '';
+}
+
+function getStoredTaskAssigneeIds(resource) {
+  const task = resource?.meta?.supervisionTask || {};
+  if (Array.isArray(task.assignedPersonIds)) return task.assignedPersonIds.filter(Boolean);
+  if (Array.isArray(task.assignedPeople)) {
+    return task.assignedPeople
+      .map((person) => person?.id || person?.value || person?.name)
+      .filter(Boolean);
+  }
+  return [];
+}
+
+function resolveTaskAssignedPeople(ids = [], storedPeople = []) {
+  const peopleMap = new Map(SUPERVISION_TASK_ASSIGNMENT_PEOPLE.map((person) => [
+    person.value,
+    { id: person.value, name: person.label, role: person.role },
+  ]));
+  storedPeople.forEach((person) => {
+    const id = person?.id || person?.value || person?.name;
+    if (!id || peopleMap.has(id)) return;
+    peopleMap.set(id, {
+      id,
+      name: person.name || person.label || id,
+      role: person.role || '督导人员',
+    });
+  });
+  return ids.map((id) => peopleMap.get(id)).filter(Boolean);
 }
 
 function getStoredTaskSchools(resource) {
@@ -202,6 +253,7 @@ function buildSupervisionTaskFormValues({ resource = null, templates = [], initi
     schoolNature: task.schoolFilter?.nature || firstSchool?.nature,
     schoolKeyword: '',
     targetSchoolIds: selectedSchools.map((school) => school.id).filter(Boolean),
+    assignedPersonIds: getStoredTaskAssigneeIds(resource),
     startDate: parseDateValue(task.startDate || resource?.lastEdit?.split(' ')[0]),
     endDate: parseDateValue(task.endDate || task.dueDate),
     description: getTaskDescription(resource),
@@ -221,6 +273,13 @@ function buildSupervisionTaskResource(values, templates = [], resource = null) {
   const taskModeLabel = getTaskModeLabel(values.taskMode);
   const taskTemplateCategoryLabel = getCategoryLabel(values.templateCategory);
   const schoolNames = selectedSchools.map((school) => school.name);
+  const storedAssignedPeople = Array.isArray(resource?.meta?.supervisionTask?.assignedPeople)
+    ? resource.meta.supervisionTask.assignedPeople
+    : [];
+  const assignedPersonIds = Array.isArray(values.assignedPersonIds)
+    ? values.assignedPersonIds.filter(Boolean)
+    : getStoredTaskAssigneeIds(resource);
+  const assignedPeople = resolveTaskAssignedPeople(assignedPersonIds, storedAssignedPeople);
   const name = String(values.name || '').trim();
   const summary = values.taskMode === 'school'
     ? `${taskTemplateCategoryLabel} · ${selectedTemplate?.name || '未选择模板'} · ${schoolNames.length} 所学校 · ${startDate} 至 ${endDate}`
@@ -261,6 +320,11 @@ function buildSupervisionTaskResource(values, templates = [], resource = null) {
         },
         targetSchools: selectedSchools,
         schoolCount: selectedSchools.length,
+        assignedPersonIds,
+        assignedPeople,
+        assignmentUpdatedAt: values.assignmentUpdatedAt
+          || resource?.meta?.supervisionTask?.assignmentUpdatedAt
+          || '',
       },
       paragraphs: [
         `任务模式：${taskModeLabel}。`,
@@ -283,6 +347,8 @@ export function SupervisionTaskInlineForm({
   onSubmitTask,
 }) {
   const [form] = Form.useForm();
+  const [assignmentOpen, setAssignmentOpen] = useState(false);
+  const [assignmentDraft, setAssignmentDraft] = useState([]);
 
   const taskMode = Form.useWatch('taskMode', form) || 'school';
   const templateCategory = Form.useWatch('templateCategory', form) || 'special';
@@ -300,6 +366,23 @@ export function SupervisionTaskInlineForm({
   const initialValues = useMemo(() => (
     buildSupervisionTaskFormValues({ resource: item, templates })
   ), [item, templates]);
+  const taskMeta = item?.meta?.supervisionTask || {};
+  const assignedPeople = useMemo(() => (
+    resolveTaskAssignedPeople(
+      getStoredTaskAssigneeIds(item),
+      Array.isArray(taskMeta.assignedPeople) ? taskMeta.assignedPeople : [],
+    )
+  ), [item, taskMeta.assignedPeople]);
+  const assignmentOptions = useMemo(() => SUPERVISION_TASK_ASSIGNMENT_PEOPLE.map((person) => ({
+    value: person.value,
+    label: (
+      <span className="supervision-assignment-option">
+        <span>{person.label}</span>
+        <span>{person.role}</span>
+      </span>
+    ),
+    searchText: `${person.label}${person.role}`.toLowerCase(),
+  })), []);
   const storedSchools = useMemo(() => getStoredTaskSchools(item), [item]);
   const templateCategoryCounts = useMemo(() => (
     new Map(TASK_TEMPLATE_CATEGORY_OPTIONS.map((option) => [
@@ -369,9 +452,15 @@ export function SupervisionTaskInlineForm({
     selectedSchoolIds,
     storedSchools,
   ]);
+  const schoolSelectOptions = useMemo(() => visibleSchools.map((school) => ({
+    value: school.id,
+    label: school.name,
+    searchText: `${school.name}${school.province}${school.city}${school.district}${school.nature}`.toLowerCase(),
+  })), [visibleSchools]);
 
   useEffect(() => {
     form.setFieldsValue(initialValues);
+    setAssignmentDraft(initialValues.assignedPersonIds || []);
   }, [form, initialValues]);
 
   const handleTemplateCategoryChange = (event) => {
@@ -406,14 +495,43 @@ export function SupervisionTaskInlineForm({
     form.setFieldsValue(resetValues);
   };
 
+  const buildValuesWithAssignment = (values, nextAssignmentDraft = assignmentDraft, assignmentUpdatedAt = '') => ({
+    ...values,
+    assignedPersonIds: nextAssignmentDraft,
+    assignmentUpdatedAt,
+  });
+
+  const handleOpenAssignment = () => {
+    setAssignmentDraft(getStoredTaskAssigneeIds(item));
+    setAssignmentOpen(true);
+  };
+
+  const handleCancelAssignment = () => {
+    setAssignmentDraft(getStoredTaskAssigneeIds(item));
+    setAssignmentOpen(false);
+  };
+
+  const handleSaveAssignment = () => {
+    const values = {
+      ...initialValues,
+      ...form.getFieldsValue(true),
+    };
+    onSubmit?.(buildSupervisionTaskResource(
+      buildValuesWithAssignment(values, assignmentDraft, formatCurrentDateTimeText()),
+      availableTemplates,
+      item,
+    ));
+    setAssignmentOpen(false);
+  };
+
   const handleFinish = (values) => {
-    onSubmit?.(buildSupervisionTaskResource(values, availableTemplates, item));
+    onSubmit?.(buildSupervisionTaskResource(buildValuesWithAssignment(values), availableTemplates, item));
   };
 
   const handleSubmitTask = async () => {
     try {
       const values = await form.validateFields();
-      onSubmitTask?.(buildSupervisionTaskResource(values, availableTemplates, item));
+      onSubmitTask?.(buildSupervisionTaskResource(buildValuesWithAssignment(values), availableTemplates, item));
     } catch {
       // 表单项会显示具体校验提示。
     }
@@ -428,26 +546,20 @@ export function SupervisionTaskInlineForm({
       requiredMark={false}
       className="supervision-task-inline-form"
     >
-      <div className="supervision-task-inline-shell">
-        <div className="supervision-task-inline-head">
-          <div>
-            <div className="supervision-task-inline-kicker">督导任务</div>
-            <div className="supervision-task-title">{item?.name || '督学任务表单'}</div>
-            <div className="supervision-task-inline-meta">
-              <span>督学任务表单</span>
-              <span>{item?.owner || '--'}</span>
-              <span>{item?.lastEdit || '--'}</span>
-            </div>
-            <div className="supervision-task-subtitle">维护任务模板、检查对象、任务周期和执行说明</div>
-          </div>
-          <div className="supervision-task-inline-actions">
-            <Tag color={(item?.meta?.supervisionTask?.status || '待发布') === '待发布' ? 'blue' : 'success'}>
-              {item?.meta?.supervisionTask?.status || '待发布'}
-            </Tag>
-            <Button icon={<SaveOutlined />} htmlType="submit" disabled={!canEdit}>保存任务</Button>
-            <Button type="primary" icon={<SendOutlined />} onClick={handleSubmitTask} disabled={!canEdit}>提交任务</Button>
-          </div>
-        </div>
+	      <div className="supervision-task-inline-shell">
+	        <div className="supervision-task-inline-head">
+	          <div>
+	            <div className="supervision-task-title">{item?.name || '督学任务表单'}</div>
+	          </div>
+	          <div className="supervision-task-inline-actions">
+	            <Tag color={(item?.meta?.supervisionTask?.status || '待发布') === '待发布' ? 'blue' : 'success'}>
+	              {item?.meta?.supervisionTask?.status || '待发布'}
+	            </Tag>
+	            <Button icon={<TeamOutlined />} onClick={handleOpenAssignment} disabled={!canEdit}>任务分配</Button>
+	            <Button icon={<SaveOutlined />} htmlType="submit" disabled={!canEdit}>保存任务</Button>
+	            <Button type="primary" icon={<SendOutlined />} onClick={handleSubmitTask} disabled={!canEdit}>提交任务</Button>
+	          </div>
+	        </div>
 
         <section className="supervision-task-card supervision-task-inline-card">
           <div className="supervision-task-section-title">选择评估模板</div>
@@ -537,12 +649,11 @@ export function SupervisionTaskInlineForm({
             </Form.Item>
           </div>
 
-          <div className={`supervision-task-school-section ${isSchoolTask ? '' : 'is-disabled'}`}>
-            <div className="supervision-task-school-head">
-              <span className="supervision-task-required-label">被评估学校</span>
-              <span>已选择 {selectedSchoolIds.length} 所学校</span>
-            </div>
-            <div className="supervision-task-school-toolbar">
+	          <div className={`supervision-task-school-section ${isSchoolTask ? '' : 'is-disabled'}`}>
+	            <div className="supervision-task-school-head">
+	              <span className="supervision-task-required-label">被评估学校</span>
+	            </div>
+	            <div className="supervision-task-school-toolbar">
               <Form.Item name="province" noStyle>
                 <Select
                   allowClear
@@ -605,27 +716,27 @@ export function SupervisionTaskInlineForm({
                   },
                 },
               ]}
-            >
-              <Checkbox.Group className="supervision-task-school-list" disabled={!isSchoolTask || !canEdit}>
-                {isSchoolTask && visibleSchools.length ? visibleSchools.map((school) => (
-                  <Checkbox key={school.id} value={school.id} className="supervision-task-school-row">
-                    <span className="supervision-task-school-name">{school.name}</span>
-                    <span className="supervision-task-school-meta">
-                      {[school.province, school.city, school.district].filter(Boolean).join(' / ') || '未设置区域'}
-                    </span>
-                    <Tag>{school.nature || '检查对象'}</Tag>
-                  </Checkbox>
-                )) : (
-                  <div className="supervision-task-school-empty">
-                    <Empty
-                      image={Empty.PRESENTED_IMAGE_SIMPLE}
-                      description={isSchoolTask ? '请先选择省、市、区县以加载学校列表' : '数据型任务不关联学校'}
-                    />
-                  </div>
-                )}
-              </Checkbox.Group>
-            </Form.Item>
-          </div>
+	            >
+	              <Select
+	                mode="multiple"
+	                allowClear
+	                showSearch
+	                disabled={!isSchoolTask || !canEdit}
+	                placeholder={isSchoolTask ? '请选择被评估学校（可多选）' : '数据型任务不关联学校'}
+	                options={schoolSelectOptions}
+	                optionFilterProp="searchText"
+	                filterOption={(input, option) => (option?.searchText || '').includes(input.trim().toLowerCase())}
+	                maxTagCount="responsive"
+	                className="supervision-task-school-select"
+	                notFoundContent={(
+	                  <Empty
+	                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+	                    description={isSchoolTask ? '请先选择省、市、区县以加载学校列表' : '数据型任务不关联学校'}
+	                  />
+	                )}
+	              />
+	            </Form.Item>
+	          </div>
 
           <div className="supervision-task-form-grid">
             <Form.Item
@@ -658,8 +769,45 @@ export function SupervisionTaskInlineForm({
             <TextArea rows={3} placeholder="请输入任务描述（可选）" />
           </Form.Item>
         </section>
-
       </div>
+      <Modal
+        title="任务分配"
+        open={assignmentOpen}
+        onCancel={handleCancelAssignment}
+        onOk={handleSaveAssignment}
+        okText="保存分配"
+        cancelText="取消"
+        destroyOnHidden
+        okButtonProps={{ disabled: !canEdit }}
+      >
+        <div className="supervision-assignment-modal">
+          <div className="supervision-assignment-context">
+            <span>{item?.name || '督导任务'}</span>
+            <span>
+              {assignedPeople.length
+                ? `当前执行人：${assignedPeople.map((person) => person.name).join('、')}`
+                : '当前执行人：未分配'}
+            </span>
+          </div>
+          <div className="supervision-assignment-label">选择督导人员</div>
+          <Select
+            mode="multiple"
+            allowClear
+            showSearch
+            placeholder="请选择一个或多个执行人"
+            value={assignmentDraft}
+            onChange={setAssignmentDraft}
+            options={assignmentOptions}
+            optionFilterProp="searchText"
+            filterOption={(input, option) => (option?.searchText || '').includes(input.trim().toLowerCase())}
+            className="supervision-assignment-select"
+            maxTagCount="responsive"
+          />
+          <div className="supervision-assignment-hint">
+            分配的是当前督导任务的执行人员，可选择多人协同完成学校检查、材料核验和整改跟进。
+          </div>
+        </div>
+      </Modal>
     </Form>
   );
 }
@@ -737,8 +885,13 @@ export default function SupervisionTaskModal({
     selectedDistrict,
     selectedNature,
     selectedProvince,
-    selectedSchoolIds,
-  ]);
+      selectedSchoolIds,
+    ]);
+  const schoolSelectOptions = useMemo(() => visibleSchools.map((school) => ({
+    value: school.id,
+    label: school.name,
+    searchText: `${school.name}${school.province}${school.city}${school.district}${school.nature}`.toLowerCase(),
+  })), [visibleSchools]);
 
   useEffect(() => {
     if (!open) return;
@@ -970,11 +1123,10 @@ export default function SupervisionTaskModal({
               </Form.Item>
             </div>
 
-            <div className={`supervision-task-school-section ${isSchoolTask ? '' : 'is-disabled'}`}>
-              <div className="supervision-task-school-head">
-                <span className="supervision-task-required-label">被评估学校</span>
-                <span>已选择 {selectedSchoolIds.length} 所学校</span>
-              </div>
+	            <div className={`supervision-task-school-section ${isSchoolTask ? '' : 'is-disabled'}`}>
+	              <div className="supervision-task-school-head">
+	                <span className="supervision-task-required-label">被评估学校</span>
+	              </div>
               <div className="supervision-task-school-toolbar">
                 <Form.Item name="province" noStyle>
                   <Select
@@ -1038,27 +1190,27 @@ export default function SupervisionTaskModal({
                     },
                   },
                 ]}
-              >
-                <Checkbox.Group className="supervision-task-school-list" disabled={!isSchoolTask}>
-                  {isSchoolTask && visibleSchools.length ? visibleSchools.map((school) => (
-                    <Checkbox key={school.id} value={school.id} className="supervision-task-school-row">
-                      <span className="supervision-task-school-name">{school.name}</span>
-                      <span className="supervision-task-school-meta">
-                        {school.province} / {school.city} / {school.district}
-                      </span>
-                      <Tag>{school.nature}</Tag>
-                    </Checkbox>
-                  )) : (
-                    <div className="supervision-task-school-empty">
-                      <Empty
-                        image={Empty.PRESENTED_IMAGE_SIMPLE}
-                        description={isSchoolTask ? '请先选择省、市、区县以加载学校列表' : '数据型任务不关联学校'}
-                      />
-                    </div>
-                  )}
-                </Checkbox.Group>
-              </Form.Item>
-            </div>
+	              >
+	                <Select
+	                  mode="multiple"
+	                  allowClear
+	                  showSearch
+	                  disabled={!isSchoolTask}
+	                  placeholder={isSchoolTask ? '请选择被评估学校（可多选）' : '数据型任务不关联学校'}
+	                  options={schoolSelectOptions}
+	                  optionFilterProp="searchText"
+	                  filterOption={(input, option) => (option?.searchText || '').includes(input.trim().toLowerCase())}
+	                  maxTagCount="responsive"
+	                  className="supervision-task-school-select"
+	                  notFoundContent={(
+	                    <Empty
+	                      image={Empty.PRESENTED_IMAGE_SIMPLE}
+	                      description={isSchoolTask ? '请先选择省、市、区县以加载学校列表' : '数据型任务不关联学校'}
+	                    />
+	                  )}
+	                />
+	              </Form.Item>
+	            </div>
 
             <div className="supervision-task-form-grid">
               <Form.Item

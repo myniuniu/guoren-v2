@@ -55,7 +55,10 @@ import {
 } from '@ant-design/icons';
 import AddResourceModal from './AddResourceModal';
 import SupervisionTaskModal, { SupervisionTaskInlineForm } from './supervisionTask/SupervisionTaskModal.jsx';
-import SupervisionSchoolTaskForm, { SupervisionRectificationChecklist } from './supervisionTask/SupervisionSchoolTaskForm.jsx';
+import SupervisionSchoolTaskForm, {
+  SupervisionRectificationChecklist,
+  SupervisionSchoolReport,
+} from './supervisionTask/SupervisionSchoolTaskForm.jsx';
 import AssessmentConfig from './AssessmentConfig';
 import LearnerAssessmentProgressView from './LearnerAssessmentProgressView';
 import {
@@ -399,9 +402,14 @@ const SUPERVISION_HIDDEN_ROOT_FOLDER_NAMES = new Set(['佐证材料', '归档材
 const SUPERVISION_FEEDBACK_FOLDER_KEYS = new Set(['feedback_rectification']);
 const SUPERVISION_FEEDBACK_FOLDER_NAMES = new Set(['整改反馈']);
 const SUPERVISION_LEGACY_FEEDBACK_NAMES = new Set(['整改问题清单']);
+const SUPERVISION_SCHOOL_DIRECTORY_RESOURCE_TYPE = 'supervisionSchoolDirectory';
 const SUPERVISION_RECTIFICATION_RESOURCE_TYPE = 'supervisionRectificationSchool';
 const SUPERVISION_RECTIFICATION_RESULT_PATTERN = /需改进|需整改|待整改|未达成|部分达成|不达标|不合格|低|异常|缺失|隐患|逾期/;
 const SUPERVISION_RECTIFICATION_NOTE_PATTERN = /需改进|需整改|待整改|未达成|不达标|不合格|异常|缺失|隐患|逾期/;
+
+function getSupervisionSchoolDirectoryKey(taskKey) {
+  return `supervision_school_directory_${encodeURIComponent(taskKey || 'unknown_task')}`;
+}
 
 function isSupervisionFeedbackFolder(resource) {
   return Boolean(
@@ -415,7 +423,8 @@ function isSupervisionFeedbackFolder(resource) {
 }
 
 function isGeneratedSupervisionResource(resource) {
-  return resource?.type === SUPERVISION_RECTIFICATION_RESOURCE_TYPE
+  return resource?.type === SUPERVISION_SCHOOL_DIRECTORY_RESOURCE_TYPE
+    || resource?.type === SUPERVISION_RECTIFICATION_RESOURCE_TYPE
     || resource?.meta?.supervisionGenerated === true;
 }
 
@@ -536,12 +545,154 @@ function buildSupervisionIndicatorMap(indicators = []) {
   return map;
 }
 
+function normalizeSupervisionIndicators(indicators = []) {
+  return indicators.map((indicator, index) => {
+    const code = normalizeSupervisionText(indicator?.code || indicator?.indicatorCode);
+    const name = normalizeSupervisionText(indicator?.name || indicator?.indicatorName || indicator?.title);
+    const id = normalizeSupervisionText(indicator?.id || indicator?.key || indicator?.indicatorId || code || name || `indicator_${index + 1}`);
+    return {
+      ...indicator,
+      id,
+      code,
+      name,
+      dimensionId: normalizeSupervisionText(
+        indicator?.dimensionId
+        || indicator?.dimensionKey
+        || indicator?.dimensionCode
+        || indicator?.dimensionName
+        || indicator?.parentDimensionId
+        || indicator?.parentId,
+      ),
+      required: Boolean(indicator?.required),
+    };
+  });
+}
+
+function hasSupervisionInspectionValue(entry = {}) {
+  const record = entry && typeof entry === 'object' ? entry : {};
+  return Boolean(
+    normalizeSupervisionText(record.result)
+    || normalizeSupervisionText(record.value)
+    || normalizeSupervisionText(record.remark)
+    || normalizeSupervisionText(record.evidenceNote),
+  );
+}
+
+function getSupervisionSchoolTaskParentTaskKey(schoolTask, resourceMap) {
+  if (!schoolTask || schoolTask.type !== 'supervisionSchoolTask') return '';
+  const schoolTaskMeta = schoolTask.meta?.supervisionSchoolTask || {};
+  if (schoolTaskMeta.parentTaskKey && resourceMap?.get(schoolTaskMeta.parentTaskKey)?.type === 'supervisionTask') {
+    return schoolTaskMeta.parentTaskKey;
+  }
+  const directParent = schoolTask.parentKey ? resourceMap?.get(schoolTask.parentKey) : null;
+  if (directParent?.type === 'supervisionTask') return directParent.key;
+  if (directParent?.type === SUPERVISION_SCHOOL_DIRECTORY_RESOURCE_TYPE) {
+    return directParent.meta?.supervisionSchoolDirectory?.taskKey || schoolTaskMeta.parentTaskKey || '';
+  }
+  return schoolTaskMeta.parentTaskKey || schoolTask.parentKey || '';
+}
+
+function getSupervisionSchoolTaskParentTask(schoolTask, resourceMap) {
+  const parentTaskKey = getSupervisionSchoolTaskParentTaskKey(schoolTask, resourceMap);
+  return parentTaskKey ? resourceMap?.get(parentTaskKey) || null : null;
+}
+
+function getSupervisionSchoolTaskSchool(schoolTask) {
+  const schoolTaskMeta = schoolTask?.meta?.supervisionSchoolTask || {};
+  const school = schoolTaskMeta.school || {};
+  return {
+    id: schoolTaskMeta.schoolId || school.id || schoolTask?.key || '',
+    name: schoolTaskMeta.schoolName || school.name || schoolTask?.name || '被评估学校',
+    province: school.province || '',
+    city: school.city || '',
+    district: school.district || '',
+    nature: school.nature || '检查对象',
+  };
+}
+
+function getSupervisionAssignedPeopleFromMeta(meta = {}) {
+  const storedPeople = Array.isArray(meta.assignedPeople) ? meta.assignedPeople : [];
+  if (storedPeople.length) {
+    return storedPeople.map((person) => {
+      const id = normalizeSupervisionText(person?.id || person?.value || person?.name);
+      const name = normalizeSupervisionText(person?.name || person?.label || id);
+      const role = normalizeSupervisionText(person?.role || '督导人员');
+      return id || name ? { id: id || name, name: name || id, role } : null;
+    }).filter(Boolean);
+  }
+  const assignedIds = Array.isArray(meta.assignedPersonIds) ? meta.assignedPersonIds : [];
+  return assignedIds
+    .map((id) => normalizeSupervisionText(id))
+    .filter(Boolean)
+    .map((id) => ({ id, name: id, role: '督导人员' }));
+}
+
+function getSupervisionSchoolTaskOverview(schoolTask, resourceMap) {
+  const parentTask = getSupervisionSchoolTaskParentTask(schoolTask, resourceMap);
+  const schoolTaskMeta = schoolTask?.meta?.supervisionSchoolTask || {};
+  const parentTaskMeta = parentTask?.meta?.supervisionTask || {};
+  const templateSnapshot = schoolTaskMeta.templateSnapshot || parentTaskMeta.templateSnapshot || {};
+  const dimensions = normalizeSupervisionDimensions(Array.isArray(templateSnapshot.dimensions) ? templateSnapshot.dimensions : []);
+  const indicators = normalizeSupervisionIndicators(Array.isArray(templateSnapshot.indicators) ? templateSnapshot.indicators : []);
+  const indicatorValues = schoolTaskMeta.indicatorValues || {};
+  const filledIndicatorCount = indicators.filter((indicator) => {
+    const entry = indicatorValues[indicator.id]
+      || indicatorValues[indicator.code]
+      || indicatorValues[indicator.name]
+      || null;
+    return hasSupervisionInspectionValue(entry);
+  }).length;
+  const requiredIndicators = indicators.filter((indicator) => indicator.required);
+  const requiredFilledCount = requiredIndicators.filter((indicator) => {
+    const entry = indicatorValues[indicator.id]
+      || indicatorValues[indicator.code]
+      || indicatorValues[indicator.name]
+      || null;
+    return hasSupervisionInspectionValue(entry);
+  }).length;
+  const issues = buildSupervisionRectificationIssues(schoolTask, parentTask);
+  const confirmedCount = issues.filter((issue) => issue.status === '已整改').length;
+  const pendingCount = Math.max(issues.length - confirmedCount, 0);
+  const pendingDimensionNames = new Set(
+    issues
+      .filter((issue) => issue.status !== '已整改')
+      .map((issue) => normalizeSupervisionText(issue.dimensionPath) || '未分组')
+      .filter(Boolean),
+  );
+  const school = getSupervisionSchoolTaskSchool(schoolTask);
+  const status = schoolTaskMeta.status || (filledIndicatorCount > 0 ? '填写中' : '待检查');
+  const schoolAssignedPeople = getSupervisionAssignedPeopleFromMeta(schoolTaskMeta);
+  const taskAssignedPeople = getSupervisionAssignedPeopleFromMeta(parentTaskMeta);
+  const assignedPeople = schoolAssignedPeople.length ? schoolAssignedPeople : taskAssignedPeople;
+
+  return {
+    school,
+    parentTask,
+    templateName: schoolTaskMeta.templateName || parentTaskMeta.templateName || templateSnapshot.name || '未选择模板',
+    status,
+    lastEdit: schoolTaskMeta.updatedAt || schoolTask.lastEdit || parentTask?.lastEdit || '--',
+    dueDate: schoolTaskMeta.endDate || parentTaskMeta.endDate || parentTaskMeta.dueDate || '',
+    dimensionCount: dimensions.length,
+    indicatorCount: indicators.length,
+    filledIndicatorCount,
+    requiredIndicatorCount: requiredIndicators.length,
+    requiredFilledCount,
+    issueCount: issues.length,
+    pendingCount,
+    confirmedCount,
+    pendingDimensionCount: pendingDimensionNames.size,
+    assignedPeople,
+    assignmentScope: schoolAssignedPeople.length ? 'school' : taskAssignedPeople.length ? 'task' : '',
+  };
+}
+
 function isRectificationEntry(entry = {}) {
-  const resultText = normalizeSupervisionText(entry.result);
+  const record = entry && typeof entry === 'object' ? entry : {};
+  const resultText = normalizeSupervisionText(record.result);
   const noteText = [
-    entry.remark,
-    entry.evidenceNote,
-    entry.issueDescription,
+    record.remark,
+    record.evidenceNote,
+    record.issueDescription,
   ].map(normalizeSupervisionText).filter(Boolean).join(' ');
   return SUPERVISION_RECTIFICATION_RESULT_PATTERN.test(resultText)
     || SUPERVISION_RECTIFICATION_NOTE_PATTERN.test(noteText);
@@ -564,7 +715,8 @@ function buildSupervisionRectificationIssues(schoolTask, parentTask) {
   const rectificationStatuses = schoolTaskMeta.rectificationStatuses || {};
 
   return Object.entries(indicatorValues)
-    .map(([entryKey, entry]) => {
+    .map(([entryKey, rawEntry]) => {
+      const entry = rawEntry && typeof rawEntry === 'object' ? rawEntry : {};
       if (!isRectificationEntry(entry)) return null;
       const indicator = indicatorMap.get(normalizeSupervisionText(entry.indicatorId))
         || indicatorMap.get(normalizeSupervisionText(entry.indicatorCode))
@@ -606,13 +758,77 @@ function buildSupervisionDisplayResources(resources = [], activeSceneType) {
     const parent = baseResourceMap.get(resource.parentKey);
     return !(parent && isSupervisionFeedbackFolder(parent) && SUPERVISION_LEGACY_FEEDBACK_NAMES.has(resource.name));
   });
-  if (!feedbackFolder) return visibleBaseResources;
+  const visibleResourceMap = new Map(visibleBaseResources.map((resource) => [resource.key, resource]));
+  const schoolTasksByTaskKey = new Map();
+
+  visibleBaseResources
+    .filter((resource) => resource.type === 'supervisionSchoolTask')
+    .forEach((schoolTask) => {
+      const taskKey = getSupervisionSchoolTaskParentTaskKey(schoolTask, visibleResourceMap);
+      const parentTask = taskKey ? visibleResourceMap.get(taskKey) : null;
+      if (parentTask?.type !== 'supervisionTask') return;
+      const schoolTasks = schoolTasksByTaskKey.get(taskKey) || [];
+      schoolTasks.push(schoolTask);
+      schoolTasksByTaskKey.set(taskKey, schoolTasks);
+    });
+
+  const schoolDirectoryNodes = Array.from(schoolTasksByTaskKey.entries()).map(([taskKey, schoolTasks]) => {
+    const parentTask = visibleResourceMap.get(taskKey) || {};
+    const overviews = schoolTasks.map((schoolTask) => getSupervisionSchoolTaskOverview(schoolTask, visibleResourceMap));
+    const pendingSchoolCount = overviews.filter((overview) => overview.pendingCount > 0).length;
+    const pendingIssueCount = overviews.reduce((sum, overview) => sum + overview.pendingCount, 0);
+    const filledCount = overviews.reduce((sum, overview) => sum + overview.filledIndicatorCount, 0);
+    const indicatorCount = overviews.reduce((sum, overview) => sum + overview.indicatorCount, 0);
+    const latestEdit = schoolTasks
+      .map((schoolTask) => schoolTask.meta?.supervisionSchoolTask?.updatedAt || schoolTask.lastEdit)
+      .filter(Boolean)
+      .sort()
+      .at(-1);
+
+    return {
+      key: getSupervisionSchoolDirectoryKey(taskKey),
+      name: '被评估学校',
+      type: SUPERVISION_SCHOOL_DIRECTORY_RESOURCE_TYPE,
+      fileType: 'folder',
+      isFolder: true,
+      parentKey: taskKey,
+      owner: parentTask.owner || '督导负责人',
+      lastEdit: latestEdit || parentTask.lastEdit || '',
+      comment: `${schoolTasks.length} 所学校 · ${filledCount}/${indicatorCount} 项已填写`,
+      meta: {
+        supervisionGenerated: true,
+        summary: `${parentTask.name || '督导任务'} · ${schoolTasks.length} 所学校`,
+        supervisionSchoolDirectory: {
+          taskKey,
+          taskName: parentTask.name || '督导任务',
+          schoolCount: schoolTasks.length,
+          pendingSchoolCount,
+          pendingIssueCount,
+          filledCount,
+          indicatorCount,
+          templateName: parentTask.meta?.supervisionTask?.templateName || '',
+        },
+      },
+    };
+  });
+
+  const resourcesWithSchoolDirectories = visibleBaseResources.map((resource) => {
+    if (resource.type !== 'supervisionSchoolTask') return resource;
+    const taskKey = getSupervisionSchoolTaskParentTaskKey(resource, visibleResourceMap);
+    if (!schoolTasksByTaskKey.has(taskKey)) return resource;
+    return {
+      ...resource,
+      parentKey: getSupervisionSchoolDirectoryKey(taskKey),
+    };
+  });
+
+  if (!feedbackFolder) return [...resourcesWithSchoolDirectories, ...schoolDirectoryNodes];
 
   const schoolRectificationGroups = new Map();
   baseResources
     .filter((resource) => resource.type === 'supervisionSchoolTask')
     .forEach((schoolTask) => {
-      const parentTask = baseResourceMap.get(schoolTask.parentKey) || null;
+      const parentTask = getSupervisionSchoolTaskParentTask(schoolTask, baseResourceMap);
       const issues = buildSupervisionRectificationIssues(schoolTask, parentTask);
       const confirmedCount = issues.filter((issue) => issue.status === '已整改').length;
       const pendingCount = Math.max(issues.length - confirmedCount, 0);
@@ -686,24 +902,7 @@ function buildSupervisionDisplayResources(resources = [], activeSceneType) {
     })
     .sort((left, right) => String(left.name || '').localeCompare(String(right.name || ''), 'zh-CN'));
 
-  return [...visibleBaseResources, ...generatedRectificationNodes];
-}
-
-function getSupervisionSchoolTaskRectificationMeta(schoolTask, resourceMap) {
-  if (schoolTask?.type !== 'supervisionSchoolTask') return null;
-  const parentTask = schoolTask.parentKey ? resourceMap.get(schoolTask.parentKey) || null : null;
-  const issues = buildSupervisionRectificationIssues(schoolTask, parentTask);
-  if (!issues.length) return null;
-  const pendingIssues = issues.filter((issue) => issue.status !== '已整改');
-  const dimensionNames = new Set(
-    pendingIssues.map((issue) => normalizeSupervisionText(issue.dimensionPath) || '未分组').filter(Boolean),
-  );
-  return {
-    issueCount: issues.length,
-    pendingCount: pendingIssues.length,
-    confirmedCount: issues.length - pendingIssues.length,
-    dimensionCount: dimensionNames.size,
-  };
+  return [...resourcesWithSchoolDirectories, ...schoolDirectoryNodes, ...generatedRectificationNodes];
 }
 
 function getResourceIcon(resource) {
@@ -719,6 +918,8 @@ function getResourceIcon(resource) {
       return <AppstoreOutlined style={{ color: '#f59e0b' }} />;
     case 'supervisionTask':
       return <CheckCircleOutlined style={{ color: '#0f766e' }} />;
+    case 'supervisionSchoolDirectory':
+      return <BankOutlined style={{ color: '#3b82f6' }} />;
     case 'supervisionSchoolTask':
       return <BankOutlined style={{ color: '#3b82f6' }} />;
     case 'supervisionRectificationSchool':
@@ -1061,6 +1262,9 @@ const RICH_TRAINING_SAMPLE_KEYS = Object.freeze([
   'training_s5_survey',
 ]);
 
+const SUPERVISION_QUESTIONNAIRE_FOLDER_TYPE_KEY = 'survey_questionnaire';
+const SUPERVISION_QUESTIONNAIRE_FOLDER_NAMES = new Set(['调查问卷', '问卷调查']);
+
 const TRAINING_NESTED_SAMPLE_RESOURCES = Object.freeze([
   { key: 'training_s2_vod_casepack', parentKey: 'training_s2_vod', name: '课后案例拆解', isFolder: true },
   { key: 'training_s2_vod_casepack_r1', parentKey: 'training_s2_vod_casepack', name: '生成式AI课堂案例拆解.mp4', type: 'video' },
@@ -1090,6 +1294,10 @@ const LEGACY_TRAINING_RULE_KEYS = Object.freeze([
 
 function isTrainingSceneConfig(sceneConfig) {
   return (sceneConfig?.sceneType || sceneConfig?.templateSnapshot?.sceneType) === 'TRAINING';
+}
+
+function isSupervisionSceneConfig(sceneConfig) {
+  return (sceneConfig?.sceneType || sceneConfig?.templateSnapshot?.sceneType) === 'SUPERVISION';
 }
 
 function hasRichTrainingSample(version) {
@@ -1280,6 +1488,81 @@ function refreshTrainingSampleDataIfNeeded(versionData, sceneConfig) {
   return refreshTrainingNestedSampleIfNeeded(refreshedData, sceneConfig);
 }
 
+function hasSupervisionQuestionnaireFolder(resources = []) {
+  return resources.some((resource) => (
+    resource?.isFolder
+    && (resource.parentKey ?? null) === null
+    && (
+      resource.folderTypeKey === SUPERVISION_QUESTIONNAIRE_FOLDER_TYPE_KEY
+      || SUPERVISION_QUESTIONNAIRE_FOLDER_NAMES.has(resource.name)
+    )
+  ));
+}
+
+function buildSupervisionQuestionnaireFolderResource(resources = [], sceneConfig = null) {
+  const templateFolder = (sceneConfig?.templateSnapshot?.folderTypes || sceneConfig?.folderTypes || [])
+    .find((folder) => folder?.key === SUPERVISION_QUESTIONNAIRE_FOLDER_TYPE_KEY || SUPERVISION_QUESTIONNAIRE_FOLDER_NAMES.has(folder?.name));
+  const key = resources.some((resource) => resource?.key === 'supervision_folder_questionnaire')
+    ? createTopicResourceKey('supervision_folder_questionnaire')
+    : 'supervision_folder_questionnaire';
+  return {
+    key,
+    name: templateFolder?.name || '调查问卷',
+    isFolder: true,
+    folderTypeKey: templateFolder?.key || SUPERVISION_QUESTIONNAIRE_FOLDER_TYPE_KEY,
+    iconKey: templateFolder?.iconKey || 'FORM',
+    parentKey: null,
+    owner: sceneConfig?.roles?.[0]?.name || '督导负责人',
+    lastEdit: formatNowText(),
+    meta: {
+      summary: templateFolder?.description || '收集师生问卷反馈、满意度和补充调查信息。',
+    },
+  };
+}
+
+function refreshSupervisionQuestionnaireFolderIfNeeded(versionData, sceneConfig) {
+  if (!isSupervisionSceneConfig(sceneConfig)) return versionData;
+  let changed = false;
+  const versions = (versionData.versions || []).map((version) => {
+    const resources = Array.isArray(version.resources) ? version.resources : [];
+    if (hasSupervisionQuestionnaireFolder(resources)) return version;
+
+    const questionnaireFolder = buildSupervisionQuestionnaireFolderResource(resources, sceneConfig);
+    const seminarIndex = resources.findIndex((resource) => (
+      resource?.isFolder
+      && (resource.parentKey ?? null) === null
+      && (resource.folderTypeKey === 'seminar' || resource.name === '研讨会')
+    ));
+    const feedbackIndex = resources.findIndex((resource) => (
+      resource?.isFolder
+      && (resource.parentKey ?? null) === null
+      && (resource.folderTypeKey === 'feedback_rectification' || resource.name === '整改反馈')
+    ));
+    const insertIndex = seminarIndex >= 0
+      ? seminarIndex + 1
+      : feedbackIndex >= 0
+        ? feedbackIndex + 1
+        : resources.length;
+    changed = true;
+    return {
+      ...version,
+      resources: [
+        ...resources.slice(0, insertIndex),
+        questionnaireFolder,
+        ...resources.slice(insertIndex),
+      ],
+    };
+  });
+
+  if (!changed) return versionData;
+  const refreshedData = {
+    ...versionData,
+    versions,
+  };
+  saveToStorage(refreshedData);
+  return refreshedData;
+}
+
 function getResourceProgressTone(statusKey, percent = 0) {
   if (statusKey === 'failed') return 'failed';
   if (statusKey === 'pending') return 'pending';
@@ -1368,7 +1651,8 @@ function loadTopicVersionData(topicConfig, sceneConfig, storageScopeKey) {
       scopeKey: storageScopeKey || 'default',
       initialData: () => buildSceneInitialVersionData(sceneConfig),
     });
-    return refreshTrainingSampleDataIfNeeded(loadedData, sceneConfig);
+    const refreshedTrainingData = refreshTrainingSampleDataIfNeeded(loadedData, sceneConfig);
+    return refreshSupervisionQuestionnaireFolderIfNeeded(refreshedTrainingData, sceneConfig);
   }
   if (topicConfig) {
     return loadFromStorage({
@@ -1408,6 +1692,7 @@ function TopicDetail({
   const [supervisionTaskParentKey, setSupervisionTaskParentKey] = useState(null);
   const [supervisionTaskTemplates, setSupervisionTaskTemplates] = useState([]);
   const [supervisionTaskInitialName, setSupervisionTaskInitialName] = useState('');
+  const [supervisionReportItemKey, setSupervisionReportItemKey] = useState(null);
   const [resourceImportOpen, setResourceImportOpen] = useState(false);
   const [resourceImportParentKey, setResourceImportParentKey] = useState(null);
   const [inlineRenameItemKey, setInlineRenameItemKey] = useState(null);
@@ -1908,6 +2193,10 @@ function TopicDetail({
   const fileCount = resources.filter((r) => !r.isFolder).length;
   const currentListItems = selectedFolder ? folderChildren : rootItems;
   const currentListParentKey = selectedFolderKey || null;
+  const isSupervisionSchoolDirectorySelected = selectedFolder?.type === SUPERVISION_SCHOOL_DIRECTORY_RESOURCE_TYPE;
+  const selectedSupervisionSchoolDirectoryMeta = isSupervisionSchoolDirectorySelected
+    ? selectedFolder?.meta?.supervisionSchoolDirectory || {}
+    : null;
   const supervisionFeedbackFolderKey = useMemo(
     () => (activeSceneType === 'SUPERVISION' ? resources.find(isSupervisionFeedbackFolder)?.key || null : null),
     [activeSceneType, resources],
@@ -1920,6 +2209,20 @@ function TopicDetail({
     () => new Map(resources.map((resource) => [resource.key, resource])),
     [resources],
   );
+  const supervisionReportItem = useMemo(() => {
+    if (!supervisionReportItemKey) return null;
+    return resources.find((resource) => resource.key === supervisionReportItemKey)
+      || sourceResources.find((resource) => resource.key === supervisionReportItemKey)
+      || null;
+  }, [resources, sourceResources, supervisionReportItemKey]);
+  const supervisionReportParentTask = useMemo(
+    () => getSupervisionSchoolTaskParentTask(supervisionReportItem, resourceMap),
+    [resourceMap, supervisionReportItem],
+  );
+  const handleOpenSupervisionReport = useCallback((schoolTask) => {
+    if (!schoolTask?.key) return;
+    setSupervisionReportItemKey(schoolTask.key);
+  }, []);
   const selectedResourceKeySet = useMemo(
     () => new Set(selectedResourceKeys),
     [selectedResourceKeys],
@@ -1969,13 +2272,20 @@ function TopicDetail({
   const shouldShowAiSuggestions = aiPromptValue.trim().length === 0 && aiSuggestedQuestions.length > 0;
   const canAddResourceAtParent = useCallback((parentKey) => {
     if (!canEditDisplayedResources) return false;
+    const parentResource = parentKey ? resourceMap.get(parentKey) : null;
+    if (parentResource && isGeneratedSupervisionResource(parentResource)) return false;
     return allowRootResources || (parentKey ?? null) !== null;
-  }, [allowRootResources, canEditDisplayedResources]);
+  }, [allowRootResources, canEditDisplayedResources, resourceMap]);
   const ensureResourceParentAllowed = useCallback((parentKey, actionLabel = '添加资料') => {
+    const parentResource = parentKey ? resourceMap.get(parentKey) : null;
+    if (parentResource && isGeneratedSupervisionResource(parentResource)) {
+      message.warning('该目录由系统生成，请在上级督导任务中维护学校');
+      return false;
+    }
     if (allowRootResources || (parentKey ?? null) !== null) return true;
     message.warning(`当前模板要求先进入资料目录后再${actionLabel}`);
     return false;
-  }, [allowRootResources]);
+  }, [allowRootResources, resourceMap]);
   const canAddResourceAtCurrentLocation = canAddResourceAtParent(currentListParentKey);
   const canAddResourceAtRoot = canAddResourceAtParent(null);
   const rootEmptyStateText = allowRootResources
@@ -2871,13 +3181,15 @@ function TopicDetail({
           learnerProgressTab,
           ...normalizedTabs.slice(learnerInsertIndex),
         ];
-      }
-      return normalizedTabs.map((item, index) => ({
-        key: item.key,
-        label: item.label || item.key || `模式 ${index + 1}`,
-        icon: resolveDetailTabIcon(item),
-        iconColor: resolveDetailTabIconColor(item),
-      }));
+	      }
+	      return normalizedTabs.map((item, index) => ({
+	        key: item.key,
+	        label: activeSceneType === 'SUPERVISION' && item.key === 'knowledge'
+	          ? '项目'
+	          : item.label || item.key || `模式 ${index + 1}`,
+	        icon: resolveDetailTabIcon(item),
+	        iconColor: resolveDetailTabIconColor(item),
+	      }));
     }
     return [
       {
@@ -3495,7 +3807,7 @@ function TopicDetail({
 
     while (parentKey && !visited.has(parentKey)) {
       visited.add(parentKey);
-      const parent = resources.find((item) => item.key === parentKey && item.isFolder) || null;
+      const parent = resources.find((item) => item.key === parentKey && canResourceNestChildren(item)) || null;
       if (!parent) break;
       folderKeys.push(parent.key);
       parentKey = parent.parentKey || null;
@@ -4359,7 +4671,10 @@ function TopicDetail({
     }
     if (!resourceKey || !currentVersion?.id) return;
 
-    const currentTask = resources.find((item) => item.key === resourceKey) || previewItem || {};
+    const currentTask = sourceResources.find((item) => item.key === resourceKey)
+      || resources.find((item) => item.key === resourceKey)
+      || previewItem
+      || {};
     const selectedSchools = Array.isArray(resource?.meta?.supervisionTask?.targetSchools)
       ? resource.meta.supervisionTask.targetSchools
       : [];
@@ -4387,8 +4702,14 @@ function TopicDetail({
       },
     };
     const existingSchoolKeys = new Set(
-      resources
-        .filter((item) => (item.parentKey ?? null) === resourceKey && item.type === 'supervisionSchoolTask')
+      sourceResources
+        .filter((item) => (
+          item.type === 'supervisionSchoolTask'
+          && (
+            (item.parentKey ?? null) === resourceKey
+            || item.meta?.supervisionSchoolTask?.parentTaskKey === resourceKey
+          )
+        ))
         .map((item) => (
           item.meta?.supervisionSchoolTask?.schoolId
           || item.meta?.supervisionSchoolTask?.school?.id
@@ -4423,6 +4744,7 @@ function TopicDetail({
     setExpandedFolders((prev) => {
       const next = new Set(prev);
       next.add(resourceKey);
+      next.add(getSupervisionSchoolDirectoryKey(resourceKey));
       if (currentTask.parentKey) next.add(currentTask.parentKey);
       return next;
     });
@@ -5486,6 +5808,8 @@ function TopicDetail({
     const isMultiSelected = selectedResourceKeySet.has(item.key);
     const isContextOpen = contextMenuItemKey === item.key;
     const isInlineRenaming = inlineRenameItemKey === item.key && inlineRenameSurface === 'tree';
+    const isGeneratedItem = isGeneratedSupervisionResource(item);
+    const isSupervisionSchoolDirectory = item.type === SUPERVISION_SCHOOL_DIRECTORY_RESOURCE_TYPE;
     const isDragOverFolder = dragOverFolderKey === item.key;
     const isDragging = draggingItemKey === item.key;
     const treeDropPosition = dropIndicator?.itemKey === item.key && dropIndicator?.surface === 'tree'
@@ -5495,12 +5819,6 @@ function TopicDetail({
     const treeProgressSource = treeProgressMeta?.source || '';
     const treeAssessmentClass = treeProgressSource ? `project-item-assessment-${treeProgressSource}` : '';
     const treeAssessmentToneClass = treeProgressMeta?.tone ? `project-item-assessment-tone-${treeProgressMeta.tone}` : '';
-    const supervisionSchoolRectificationMeta = activeSceneType === 'SUPERVISION'
-      ? getSupervisionSchoolTaskRectificationMeta(item, resourceMap)
-      : null;
-    const treeSupervisionRectificationClass = supervisionSchoolRectificationMeta?.pendingCount
-      ? 'project-item-supervision-rectification'
-      : '';
     const isTreeParentItem = canResourceNestChildren(item);
 
     if (isTreeParentItem) {
@@ -5521,8 +5839,8 @@ function TopicDetail({
           >
             <div
               ref={(node) => setProjectItemNode(item.key, node)}
-              className={`project-item ${item.isFolder ? 'project-item-folder' : 'project-item-child project-item-parent-resource'} ${isResourceMultiSelectMode ? 'project-item-multi-mode' : ''} ${treeAssessmentClass} ${treeAssessmentToneClass} ${treeSupervisionRectificationClass} ${isInlineRenaming ? 'project-item-inline-renaming' : ''} ${isSelected && !isResourceMultiSelectMode ? 'project-item-selected' : ''} ${isMultiSelected ? 'project-item-multi-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''} ${isDragOverFolder ? 'project-item-dragover' : ''} ${isDragging ? 'project-item-dragging' : ''} ${treeDropPosition === 'before' ? 'project-item-drop-before' : ''} ${treeDropPosition === 'after' ? 'project-item-drop-after' : ''}`}
-              draggable={!isGeneratedSupervisionResource(item) && !isResourceMultiSelectMode && !isInlineRenaming && canEditDisplayedResources}
+              className={`project-item ${item.isFolder ? 'project-item-folder' : 'project-item-child project-item-parent-resource'} ${isSupervisionSchoolDirectory ? 'project-item-school-directory' : ''} ${isResourceMultiSelectMode ? 'project-item-multi-mode' : ''} ${treeAssessmentClass} ${treeAssessmentToneClass} ${isInlineRenaming ? 'project-item-inline-renaming' : ''} ${isSelected && !isResourceMultiSelectMode ? 'project-item-selected' : ''} ${isMultiSelected ? 'project-item-multi-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''} ${isDragOverFolder ? 'project-item-dragover' : ''} ${isDragging ? 'project-item-dragging' : ''} ${treeDropPosition === 'before' ? 'project-item-drop-before' : ''} ${treeDropPosition === 'after' ? 'project-item-drop-after' : ''}`}
+              draggable={!isGeneratedItem && !isResourceMultiSelectMode && !isInlineRenaming && canEditDisplayedResources}
               onDragStart={(event) => startResourceDrag(event, item)}
               onDragEnd={finishResourceDrag}
               onDragOver={(event) => handleTreeFolderDragOver(event, item)}
@@ -5548,7 +5866,9 @@ function TopicDetail({
                 <span className="project-item-arrow project-item-arrow-placeholder" aria-hidden="true" />
               )}
               <span className="project-item-icon">
-                {item.isFolder
+                {isSupervisionSchoolDirectory
+                  ? getResourceIcon(item)
+                  : item.isFolder
                   ? renderFolderTypeIcon(item, {
                       size: 16,
                       expanded: isExpanded,
@@ -5557,25 +5877,16 @@ function TopicDetail({
                   : getResourceIcon(item)}
               </span>
               {isInlineRenaming ? renderInlineRenameInput('tree') : (
-                <span className="project-item-title-stack">
-                  <span className="project-item-title">{item.name}</span>
-                  {supervisionSchoolRectificationMeta?.pendingCount ? (
-                    <span
-                      className="project-item-supervision-risk"
-                      title={`${supervisionSchoolRectificationMeta.dimensionCount} 个维度、${supervisionSchoolRectificationMeta.pendingCount} 项指标需要整改`}
-                    >
-                      <span className="project-item-supervision-risk-dot" />
-                      {supervisionSchoolRectificationMeta.dimensionCount}维度 · {supervisionSchoolRectificationMeta.pendingCount}项整改
-                    </span>
-                  ) : null}
-                  {renderResourceAssessmentProgressMeter(item.key, 'tree')}
-                </span>
+	                <span className="project-item-title-stack">
+	                  <span className="project-item-title">{item.name}</span>
+	                  {renderResourceAssessmentProgressMeter(item.key, 'tree')}
+	                </span>
               )}
               {!isInlineRenaming ? renderResourceTagDots(item) : null}
               {!isLearnerProgressMode && !isInlineRenaming ? (
                 <span className="topic-tree-item-actions" onClick={(event) => event.stopPropagation()}>
                   {canEditDisplayedResources ? (
-                    item.isFolder ? (
+                    item.isFolder && !isGeneratedItem ? (
                       <button
                         type="button"
                         className="topic-action-btn"
@@ -5625,7 +5936,7 @@ function TopicDetail({
       >
         <div
           ref={(node) => setProjectItemNode(item.key, node)}
-          className={`project-item project-item-child ${isResourceMultiSelectMode ? 'project-item-multi-mode' : ''} ${treeAssessmentClass} ${treeAssessmentToneClass} ${treeSupervisionRectificationClass} ${isInlineRenaming ? 'project-item-inline-renaming' : ''} ${isSelected && !isResourceMultiSelectMode ? 'project-item-selected' : ''} ${isMultiSelected ? 'project-item-multi-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''} ${isDragging ? 'project-item-dragging' : ''} ${treeDropPosition === 'before' ? 'project-item-drop-before' : ''} ${treeDropPosition === 'after' ? 'project-item-drop-after' : ''}`}
+          className={`project-item project-item-child ${isResourceMultiSelectMode ? 'project-item-multi-mode' : ''} ${treeAssessmentClass} ${treeAssessmentToneClass} ${isInlineRenaming ? 'project-item-inline-renaming' : ''} ${isSelected && !isResourceMultiSelectMode ? 'project-item-selected' : ''} ${isMultiSelected ? 'project-item-multi-selected' : ''} ${isContextOpen ? 'project-item-context-open' : ''} ${isDragging ? 'project-item-dragging' : ''} ${treeDropPosition === 'before' ? 'project-item-drop-before' : ''} ${treeDropPosition === 'after' ? 'project-item-drop-after' : ''}`}
           draggable={!isGeneratedSupervisionResource(item) && !isResourceMultiSelectMode && !isInlineRenaming && canEditDisplayedResources}
           onDragStart={(event) => startResourceDrag(event, item)}
           onDragEnd={finishResourceDrag}
@@ -5643,15 +5954,6 @@ function TopicDetail({
           {isInlineRenaming ? renderInlineRenameInput('tree') : (
             <span className="project-item-title-stack">
               <span className="project-item-title">{item.name}</span>
-              {supervisionSchoolRectificationMeta?.pendingCount ? (
-                <span
-                  className="project-item-supervision-risk"
-                  title={`${supervisionSchoolRectificationMeta.dimensionCount} 个维度、${supervisionSchoolRectificationMeta.pendingCount} 项指标需要整改`}
-                >
-                  <span className="project-item-supervision-risk-dot" />
-                  {supervisionSchoolRectificationMeta.dimensionCount}维度 · {supervisionSchoolRectificationMeta.pendingCount}项整改
-                </span>
-              ) : null}
               {renderResourceAssessmentProgressMeter(item.key, 'tree')}
             </span>
           )}
@@ -5686,6 +5988,8 @@ function TopicDetail({
     const isMultiSelected = selectedResourceKeySet.has(item.key);
     const isContextOpen = contextMenuItemKey === item.key;
     const isInlineRenaming = inlineRenameItemKey === item.key && inlineRenameSurface === 'list';
+    const isGeneratedItem = isGeneratedSupervisionResource(item);
+    const isSupervisionSchoolDirectory = item.type === SUPERVISION_SCHOOL_DIRECTORY_RESOURCE_TYPE;
     const isDragOverFolder = dragOverFolderKey === item.key;
     const isDragging = draggingItemKey === item.key;
     const dropPosition = dropIndicator?.itemKey === item.key && dropIndicator?.surface === 'list'
@@ -5702,7 +6006,7 @@ function TopicDetail({
       >
         <div
           className={`topic-file-row ${isResourceMultiSelectMode ? 'topic-file-row-multi-mode' : ''} ${isSelected && !isResourceMultiSelectMode ? 'topic-file-row-selected' : ''} ${isMultiSelected ? 'topic-file-row-multi-selected' : ''} ${isContextOpen ? 'topic-file-row-context-open' : ''} ${isDragOverFolder ? 'topic-file-row-dragover' : ''} ${isDragging ? 'topic-file-row-dragging' : ''} ${dropPosition === 'before' ? 'topic-file-row-drop-before' : ''} ${dropPosition === 'after' ? 'topic-file-row-drop-after' : ''}`}
-          draggable={!isGeneratedSupervisionResource(item) && !isResourceMultiSelectMode && !isInlineRenaming && canEditDisplayedResources}
+          draggable={!isGeneratedItem && !isResourceMultiSelectMode && !isInlineRenaming && canEditDisplayedResources}
           onDragStart={(event) => startResourceDrag(event, item)}
           onDragEnd={finishResourceDrag}
           onDragOver={(event) => handleListRowDragOver(event, item)}
@@ -5720,7 +6024,9 @@ function TopicDetail({
           <div className={`topic-file-col topic-file-col-name ${isInlineRenaming ? 'topic-file-col-name-inline-renaming' : ''}`}>
             {renderResourceSelectionCheckbox(item, 'list')}
             <span className="topic-file-icon">
-              {item.isFolder
+              {isSupervisionSchoolDirectory
+                ? getResourceIcon(item)
+                : item.isFolder
                 ? renderFolderTypeIcon(item, {
                     size: 16,
                     color: 'inherit',
@@ -5735,7 +6041,7 @@ function TopicDetail({
             )}
             {!isLearnerProgressMode && !isInlineRenaming ? (
               <span className="topic-file-row-actions" onClick={(event) => event.stopPropagation()}>
-                {item.isFolder && canEditDisplayedResources ? (
+                {item.isFolder && canEditDisplayedResources && !isGeneratedItem ? (
                   <button
                     type="button"
                     className="topic-action-btn"
@@ -5776,6 +6082,142 @@ function TopicDetail({
     );
   };
 
+  const renderSupervisionSchoolDirectoryList = () => {
+    const schoolRows = currentListItems
+      .filter((item) => item.type === 'supervisionSchoolTask')
+      .map((item) => ({
+        item,
+        overview: getSupervisionSchoolTaskOverview(item, resourceMap),
+      }));
+    const pendingSchoolCount = schoolRows.filter(({ overview }) => overview.pendingCount > 0).length;
+    const filledCount = schoolRows.reduce((sum, { overview }) => sum + overview.filledIndicatorCount, 0);
+    const indicatorCount = schoolRows.reduce((sum, { overview }) => sum + overview.indicatorCount, 0);
+
+    return (
+      <div className="supervision-school-directory-view">
+        <div className="supervision-school-directory-summary">
+          <div>
+            <div className="supervision-school-directory-summary-title">学校列表</div>
+            <div className="supervision-school-directory-summary-desc">
+              所属任务：{selectedSupervisionSchoolDirectoryMeta?.taskName || '督导任务'}
+            </div>
+          </div>
+          <div className="supervision-school-directory-summary-tags">
+            <Tag>{schoolRows.length} 所学校</Tag>
+            <Tag color={indicatorCount && filledCount === indicatorCount ? 'success' : 'processing'}>
+              {filledCount}/{indicatorCount} 已填写
+            </Tag>
+            {pendingSchoolCount ? <Tag color="error">{pendingSchoolCount} 所需整改</Tag> : null}
+          </div>
+        </div>
+
+        <div className="supervision-school-directory-table-wrap">
+          <div className="supervision-school-directory-table">
+	            <div className="supervision-school-directory-row supervision-school-directory-row-head">
+	              <div>学校名称</div>
+	              <div>检查状态</div>
+	              <div>任务模板</div>
+              <div>指标进度</div>
+              <div>整改情况</div>
+              <div>更新时间</div>
+              <div className="supervision-school-directory-action-col">操作</div>
+            </div>
+
+	            {schoolRows.length ? (
+	              schoolRows.map(({ item, overview }) => {
+	                const statusColor = overview.status === '已完成'
+	                  ? 'success'
+	                  : overview.status === '填写中'
+	                    ? 'processing'
+	                    : 'warning';
+	                const progressText = overview.indicatorCount
+	                  ? `${overview.filledIndicatorCount}/${overview.indicatorCount}`
+	                  : '无指标';
+	                const assignmentTitle = overview.assignedPeople.length
+	                  ? `${overview.assignmentScope === 'school' ? '学校分配' : '任务分配'}：${overview.assignedPeople.map((person) => `${person.name}${person.role ? `（${person.role}）` : ''}`).join('、')}`
+	                  : '暂未分配督导人员';
+	                return (
+	                  <div
+	                    key={item.key}
+	                    className={`supervision-school-directory-row ${selectedItemKey === item.key ? 'is-selected' : ''} ${overview.pendingCount ? 'has-rectification' : ''}`}
+	                    onClick={() => handleOpenPreview(item)}
+                  >
+                    <div className="supervision-school-directory-name-cell">
+                      <span className="supervision-school-directory-school-icon">
+                        <BankOutlined />
+                      </span>
+                      <span className="supervision-school-directory-name-copy">
+                        <strong title={overview.school.name}>{overview.school.name}</strong>
+	                        <span>{overview.parentTask?.name || selectedSupervisionSchoolDirectoryMeta?.taskName || '督导任务'}</span>
+	                      </span>
+	                    </div>
+	                    <div>
+	                      <span className="supervision-school-directory-status-stack">
+	                        <Tag color={statusColor}>{overview.status}</Tag>
+	                        <Tag color={overview.assignedPeople.length ? 'blue' : 'default'} title={assignmentTitle}>
+	                          {overview.assignedPeople.length ? `已分配 ${overview.assignedPeople.length} 人` : '未分配'}
+	                        </Tag>
+	                      </span>
+	                    </div>
+	                    <div title={overview.templateName}>{overview.templateName}</div>
+                    <div>
+                      <span className="supervision-school-directory-progress">
+                        <span>{progressText}</span>
+                        {overview.requiredIndicatorCount ? (
+                          <span>必填 {overview.requiredFilledCount}/{overview.requiredIndicatorCount}</span>
+                        ) : null}
+                      </span>
+                    </div>
+                    <div>
+                      {overview.pendingCount ? (
+                        <Tag color="error">{overview.pendingDimensionCount} 维度 · {overview.pendingCount} 项</Tag>
+                      ) : overview.confirmedCount ? (
+                        <Tag color="success">{overview.confirmedCount} 项已整改</Tag>
+                      ) : (
+                        <Tag>暂无整改</Tag>
+                      )}
+                    </div>
+                    <div>{overview.lastEdit || '--'}</div>
+                    <div className="supervision-school-directory-action-col">
+                      <div className="supervision-school-directory-actions">
+                        <Button
+                          type="link"
+                          size="small"
+                          icon={<EyeOutlined />}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleOpenPreview(item);
+                          }}
+                        >
+                          检查
+                        </Button>
+                        <Button
+                          type="link"
+                          size="small"
+                          icon={<FileTextOutlined />}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleOpenSupervisionReport(item);
+                          }}
+                        >
+                          报告
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="supervision-school-directory-empty">
+                <Empty description="当前任务还没有生成学校节点" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderSupervisionTaskPreview = (item) => {
     return (
       <SupervisionTaskInlineForm
@@ -5789,9 +6231,7 @@ function TopicDetail({
   };
 
   const renderSupervisionSchoolTaskPreview = (item) => {
-    const parentTask = item?.parentKey
-      ? resources.find((resource) => resource.key === item.parentKey && resource.type === 'supervisionTask') || null
-      : null;
+    const parentTask = getSupervisionSchoolTaskParentTask(item, resourceMap);
     return (
       <SupervisionSchoolTaskForm
         item={item}
@@ -5799,6 +6239,7 @@ function TopicDetail({
         templates={supervisionTaskTemplates}
         canEdit={canEditDisplayedResources}
         onSubmit={(resource) => handleUpdateSupervisionSchoolTask(item.key, resource)}
+        onOpenReport={handleOpenSupervisionReport}
       />
     );
   };
@@ -7743,13 +8184,19 @@ function TopicDetail({
                     <>
                       <div className="folder-info">
                         <div className="folder-info-left">
-                          <div className="folder-big-icon">{renderFolderTypeIcon(selectedFolder, { size: 30 })}</div>
+                          <div className="folder-big-icon">
+                            {isSupervisionSchoolDirectorySelected
+                              ? getResourceIcon(selectedFolder)
+                              : renderFolderTypeIcon(selectedFolder, { size: 30 })}
+                          </div>
                           <div className="folder-meta">
                             <div className="folder-name">{selectedFolder.name}</div>
                             <div className="folder-desc">
-                              {folderChildren.filter((child) => !child.isFolder).length} 个文件 {folderChildren.filter((child) => child.isFolder).length} 个文件夹
+                              {isSupervisionSchoolDirectorySelected
+                                ? `${selectedSupervisionSchoolDirectoryMeta?.schoolCount || 0} 所学校${selectedSupervisionSchoolDirectoryMeta?.pendingIssueCount ? ` · ${selectedSupervisionSchoolDirectoryMeta.pendingIssueCount} 项待整改` : ''}`
+                                : `${folderChildren.filter((child) => !child.isFolder).length} 个文件 ${folderChildren.filter((child) => child.isFolder).length} 个文件夹`}
                             </div>
-                            {tagConfig ? (
+                            {tagConfig && !isSupervisionSchoolDirectorySelected ? (
                               <div className="folder-tag-section">
                                 <div className="folder-tag-row">
                                   <span className="folder-tag-label">标签</span>
@@ -7765,7 +8212,9 @@ function TopicDetail({
                           </div>
                         </div>
                         <div className="folder-info-right">
-                          <Button className="topic-add-resource-btn" icon={<PlusOutlined />} disabled={!canAddResourceAtCurrentLocation} onClick={() => openAddResourceModal(currentListParentKey)}>{addResourceLabel}</Button>
+                          {!isSupervisionSchoolDirectorySelected ? (
+                            <Button className="topic-add-resource-btn" icon={<PlusOutlined />} disabled={!canAddResourceAtCurrentLocation} onClick={() => openAddResourceModal(currentListParentKey)}>{addResourceLabel}</Button>
+                          ) : null}
                         </div>
                       </div>
                     </>
@@ -7787,32 +8236,36 @@ function TopicDetail({
                   )}
 
                   <div className="topic-right-content">
-                    <div className="topic-file-list-wrap">
-                      <div
-                        className={`topic-file-list ${tagConfig ? 'topic-file-list-with-tags' : 'topic-file-list-no-tags'} ${dragOverSurface === 'list' ? 'topic-file-list-dragover' : ''}`}
-                        onContextMenu={(event) => handleBgContextMenu(event, 'list')}
-                        onDragOver={handleListDragOver}
-                        onDragLeave={handleListDragLeave}
-                        onDrop={handleListDrop}
-                      >
-                        <div className="topic-file-list-header">
-                          <div className="topic-file-col topic-file-col-name">名称</div>
-                          {tagConfig ? <div className="topic-file-col topic-file-col-tags">标签</div> : null}
-                          <div className="topic-file-col topic-file-col-owner">所有者</div>
-                          <div className="topic-file-col topic-file-col-edit">最近编辑</div>
-                        </div>
-                        {currentListItems.length === 0 ? (
-                          <div className="topic-file-empty">
-                            <Empty
-                              image={Empty.PRESENTED_IMAGE_SIMPLE}
-                              description={selectedFolder ? `此${resourcePanelTitle}目录为空，可继续添加内容` : rootEmptyStateText}
-                            />
+                    {isSupervisionSchoolDirectorySelected ? (
+                      renderSupervisionSchoolDirectoryList()
+                    ) : (
+                      <div className="topic-file-list-wrap">
+                        <div
+                          className={`topic-file-list ${tagConfig ? 'topic-file-list-with-tags' : 'topic-file-list-no-tags'} ${dragOverSurface === 'list' ? 'topic-file-list-dragover' : ''}`}
+                          onContextMenu={(event) => handleBgContextMenu(event, 'list')}
+                          onDragOver={handleListDragOver}
+                          onDragLeave={handleListDragLeave}
+                          onDrop={handleListDrop}
+                        >
+                          <div className="topic-file-list-header">
+                            <div className="topic-file-col topic-file-col-name">名称</div>
+                            {tagConfig ? <div className="topic-file-col topic-file-col-tags">标签</div> : null}
+                            <div className="topic-file-col topic-file-col-owner">所有者</div>
+                            <div className="topic-file-col topic-file-col-edit">最近编辑</div>
                           </div>
-                        ) : (
-                          currentListItems.map((item) => renderListRow(item))
-                        )}
+                          {currentListItems.length === 0 ? (
+                            <div className="topic-file-empty">
+                              <Empty
+                                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                description={selectedFolder ? `此${resourcePanelTitle}目录为空，可继续添加内容` : rootEmptyStateText}
+                              />
+                            </div>
+                          ) : (
+                            currentListItems.map((item) => renderListRow(item))
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </>
               )
@@ -8066,6 +8519,24 @@ function TopicDetail({
         onCancel={closeSupervisionTaskModal}
         onSubmit={handleSubmitSupervisionTask}
       />
+
+      <Modal
+        open={!!supervisionReportItem}
+        title={null}
+        footer={null}
+        width={920}
+        destroyOnHidden
+        className="supervision-report-modal"
+        onCancel={() => setSupervisionReportItemKey(null)}
+      >
+        {supervisionReportItem ? (
+          <SupervisionSchoolReport
+            item={supervisionReportItem}
+            parentTask={supervisionReportParentTask}
+            templates={supervisionTaskTemplates}
+          />
+        ) : null}
+      </Modal>
 
       <SpaceResourceImportModal
         open={resourceImportOpen}

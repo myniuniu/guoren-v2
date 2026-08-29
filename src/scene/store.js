@@ -1991,11 +1991,11 @@ function buildPresetTemplates() {
         appLabel: '督导工具',
         emptyStateText: '暂无项目资料，可先创建督导任务或上传佐证材料',
         allowRootResources: true,
-        modeTabs: createModeTabs({
-          knowledge: '项目资料',
-          ai: 'AI督导助手',
-          assessment: '整改复核',
-        }, {
+	        modeTabs: createModeTabs({
+	          knowledge: '项目',
+	          ai: 'AI督导助手',
+	          assessment: '整改复核',
+	        }, {
           practice: {
             enabled: false,
           },
@@ -2027,7 +2027,7 @@ function buildPresetTemplates() {
           permissionSummary: '添加督导任务、记录检查结果并提交反馈',
           dataAccessScope: 'ASSIGNED',
           assignedAccessRuleType: 'RESOURCE_TYPE',
-          dataAccessAreas: ['FOLDER::inspection_tasks', 'FOLDER::evidence_materials', 'FOLDER::feedback_rectification', 'SUPERVISION_TASK'],
+          dataAccessAreas: ['FOLDER::inspection_tasks', 'FOLDER::evidence_materials', 'FOLDER::feedback_rectification', 'FOLDER::seminar', 'FOLDER::survey_questionnaire', 'SUPERVISION_TASK'],
           scopeSummary: '可访问分配到的任务、佐证与反馈材料',
           description: '负责现场检查、材料核验和问题记录。',
         },
@@ -2039,7 +2039,7 @@ function buildPresetTemplates() {
           permissionSummary: '提交佐证材料、整改说明和复核补充',
           dataAccessScope: 'ASSIGNED',
           assignedAccessRuleType: 'RESOURCE_TYPE',
-          dataAccessAreas: ['FOLDER::evidence_materials', 'FOLDER::feedback_rectification', 'SUPERVISION_TASK'],
+          dataAccessAreas: ['FOLDER::evidence_materials', 'FOLDER::feedback_rectification', 'FOLDER::survey_questionnaire', 'SUPERVISION_TASK'],
           scopeSummary: '仅访问本校相关任务与整改材料',
           description: '负责对接检查安排并提交整改材料。',
         },
@@ -2064,6 +2064,8 @@ function buildPresetTemplates() {
       folderTypes: [
         { key: 'inspection_tasks', name: '督导任务', required: true, iconKey: 'AUDIT', allowedTools: ['SUPERVISION_TASK', 'ONLINE_DOC'], roleIds: ['director', 'inspector'], description: '按检查事项维护任务、对象、责任人、截止时间和结果。' },
         { key: 'feedback_rectification', name: '整改反馈', required: true, iconKey: 'EXAM', allowedTools: ['SUPERVISION_TASK', 'ONLINE_DOC', 'SURVEY'], roleIds: ['director', 'inspector', 'school_contact'], description: '维护问题清单、整改措施、复核结论和反馈记录。' },
+        { key: 'seminar', name: '研讨会', required: false, iconKey: 'CHAT', allowedTools: ['FORUM', 'ONLINE_DOC', 'URL'], roleIds: ['director', 'inspector', 'school_contact'], description: '沉淀督导研讨、协同讨论和会议纪要。' },
+        { key: 'survey_questionnaire', name: '调查问卷', required: false, iconKey: 'FORM', allowedTools: ['SURVEY', 'ONLINE_DOC'], roleIds: ['director', 'inspector', 'school_contact'], description: '收集师生问卷反馈、满意度和补充调查信息。' },
       ],
       agents: [
         { name: '督导统筹助手', roleIds: ['director'], knowledgeSource: '项目资料与督导任务', prompt: '辅助拆解检查任务、汇总问题清单并生成督导报告。', avatar: '📋' },
@@ -3490,6 +3492,8 @@ function buildSupervisionInitialVersionData(template) {
     : [
       { key: 'inspection_tasks', name: '督导任务', description: '按检查事项维护任务、对象、责任人、截止时间和结果。' },
       { key: 'feedback_rectification', name: '整改反馈', description: '维护问题清单、整改措施、复核结论和反馈记录。' },
+      { key: 'seminar', name: '研讨会', description: '沉淀督导研讨、协同讨论和会议纪要。' },
+      { key: 'survey_questionnaire', name: '调查问卷', description: '收集师生问卷反馈、满意度和补充调查信息。' },
     ];
   const resources = [];
   const folderKeyMap = new Map();

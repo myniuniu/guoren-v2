@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Collapse, Empty, Form, Input, InputNumber, Radio, Tabs, Tag } from 'antd';
+import { Button, Collapse, Empty, Form, Input, InputNumber, Modal, Radio, Select, Tabs, Tag } from 'antd';
 import {
   AppstoreOutlined,
   BankOutlined,
@@ -8,7 +8,9 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   DownloadOutlined,
+  FileTextOutlined,
   SaveOutlined,
+  TeamOutlined,
   ToolOutlined,
   UploadOutlined,
   WarningOutlined,
@@ -27,6 +29,15 @@ const LEGACY_TASK_TEMPLATE_NAMES = new Set([
   '应急督学检查模板',
   '其他督学任务模板',
 ]);
+
+const SUPERVISION_ASSIGNMENT_PEOPLE = [
+  { value: 'inspector_chen_lijun', label: '陈立军', role: '督导组长' },
+  { value: 'inspector_zhao_yan', label: '赵妍', role: '课堂观察' },
+  { value: 'inspector_wang_xiaomin', label: '王晓敏', role: '材料核验' },
+  { value: 'inspector_li_ming', label: '李明', role: '数据复核' },
+  { value: 'inspector_zhou_yuqing', label: '周雨晴', role: '整改跟进' },
+  { value: 'inspector_sun_haoran', label: '孙浩然', role: '综合协调' },
+];
 
 function getStatusColor(status) {
   if (status === '已完成') return 'success';
@@ -302,24 +313,47 @@ function isNumericIndicator(indicator) {
 }
 
 function hasInspectionValue(record = {}) {
-  const numericValue = record.value;
+  const safeRecord = record && typeof record === 'object' ? record : {};
+  const numericValue = safeRecord.value;
   return Boolean(
-    String(record.result || '').trim()
+    String(safeRecord.result || '').trim()
     || (numericValue !== undefined && numericValue !== null && String(numericValue).trim())
-    || String(record.remark || '').trim()
-    || String(record.evidenceNote || '').trim(),
+    || String(safeRecord.remark || '').trim()
+    || String(safeRecord.evidenceNote || '').trim(),
   );
 }
 
 function isRectificationEntry(record = {}) {
-  const resultText = normalizeText(record.result);
+  const safeRecord = record && typeof record === 'object' ? record : {};
+  const resultText = normalizeText(safeRecord.result);
   const noteText = [
-    record.remark,
-    record.evidenceNote,
-    record.issueDescription,
+    safeRecord.remark,
+    safeRecord.evidenceNote,
+    safeRecord.issueDescription,
   ].map(normalizeText).filter(Boolean).join(' ');
   return RECTIFICATION_RESULT_PATTERN.test(resultText)
     || RECTIFICATION_NOTE_PATTERN.test(noteText);
+}
+
+function getStoredIndicatorRecord(indicatorValues = {}, indicator = {}) {
+  const record = indicatorValues[indicator.id]
+    ?? indicatorValues[indicator.code]
+    ?? indicatorValues[indicator.name]
+    ?? {};
+  return record && typeof record === 'object' ? record : {};
+}
+
+function formatCurrentDateTimeText() {
+  return new Date()
+    .toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
+    .replace(/\//g, '-');
 }
 
 function buildInitialValues(item, indicators) {
@@ -337,6 +371,223 @@ function buildInitialValues(item, indicators) {
   };
 }
 
+function buildReportParagraphs({
+  school,
+  parentTask,
+  template,
+  totalCount,
+  passedCount,
+  failedCount,
+  unfilledCount,
+  achieveRate,
+  failedRows,
+}) {
+  const schoolName = school.name || '被评估学校';
+  const taskName = parentTask?.name || '督导任务';
+  const templateName = template.name || '督导模板';
+  const issueNames = failedRows.slice(0, 4).map((row) => row.name).join('、');
+
+  return [
+    {
+      title: `# ${schoolName}综合督导报告`,
+      body: '',
+    },
+    {
+      title: '## 一、基本情况',
+      body: `${schoolName}本次纳入“${taskName}”，采用“${templateName}”开展评估。报告覆盖 ${totalCount} 项指标，其中 ${passedCount} 项已达标，${failedCount} 项需整改，${unfilledCount} 项尚未填写，当前达成率为 ${achieveRate}%。`,
+    },
+    {
+      title: '## 二、主要做法与成效',
+      body: failedCount === 0 && totalCount > 0
+        ? '学校整体执行情况较好，已填写指标未发现明显风险项，相关制度、过程记录和现场管理能够支撑本轮督导要求。'
+        : '学校已完成部分指标填报，能够反映课堂组织、过程管理和资料留痕等方面的基础情况，为后续整改闭环提供了依据。',
+    },
+    {
+      title: '## 三、存在的主要问题',
+      body: failedCount
+        ? `当前发现 ${failedCount} 项指标需要整改，主要集中在${issueNames || '相关检查指标'}等方面，需进一步补齐佐证材料、明确责任人和整改时限。`
+        : '当前未发现明确不合格指标，建议继续保持过程资料更新，待全部指标填写后完成最终定稿。',
+    },
+    {
+      title: '## 四、督导意见与建议',
+      body: failedCount
+        ? '建议学校围绕问题指标建立整改清单，逐项明确整改措施、完成时间和佐证材料；督导负责人可在整改反馈中跟踪确认整改结果。'
+        : '建议学校持续沉淀优秀做法，完善常态化质量监测机制，并在后续督导中持续补充过程性材料。',
+    },
+  ];
+}
+
+export function SupervisionSchoolReport({
+  item,
+  parentTask,
+  templates = [],
+}) {
+  const school = useMemo(() => resolveSchoolMeta(item), [item]);
+  const template = useMemo(() => resolveTaskTemplate(parentTask, templates, item), [item, parentTask, templates]);
+  const dimensionFramework = useMemo(() => buildDimensionFramework(template), [template]);
+  const indicatorValues = item?.meta?.supervisionSchoolTask?.indicatorValues || {};
+  const rows = useMemo(() => dimensionFramework.indicators.map((indicator) => {
+    const record = getStoredIndicatorRecord(indicatorValues, indicator);
+    const filled = hasInspectionValue(record);
+    const failed = isRectificationEntry(record);
+    const dimension = dimensionFramework.dimensionMap.get(indicator.dimensionId) || null;
+    return {
+      id: indicator.id,
+      code: indicator.code,
+      name: indicator.name,
+      dimensionPath: getDimensionPath(dimension, dimensionFramework.dimensionMap),
+      indicatorType: indicator.indicatorType || '检查项',
+      scoringMethod: indicator.scoringMethod || '人工评分',
+      required: Boolean(indicator.required),
+      result: normalizeText(record.result || record.value),
+      remark: normalizeText(record.remark || record.evidenceNote),
+      filled,
+      failed,
+      status: failed ? '需整改' : filled ? '通过' : '未填写',
+    };
+  }), [dimensionFramework, indicatorValues]);
+  const totalCount = rows.length;
+  const passedRows = rows.filter((row) => row.filled && !row.failed);
+  const failedRows = rows.filter((row) => row.failed);
+  const unfilledRows = rows.filter((row) => !row.filled);
+  const passedCount = passedRows.length;
+  const failedCount = failedRows.length;
+  const unfilledCount = unfilledRows.length;
+  const achieveRate = totalCount ? Math.round((passedCount / totalCount) * 100) : 0;
+  const reportStatus = totalCount && unfilledCount === 0 ? '已完成' : '待完善';
+  const reportLevel = failedCount ? '需整改' : reportStatus === '已完成' ? '优秀' : '待完善';
+  const generatedAt = item?.meta?.supervisionSchoolTask?.updatedAt || item?.lastEdit || parentTask?.lastEdit || '待生成';
+  const groups = rows.reduce((acc, row) => {
+    const key = row.dimensionPath || '其他';
+    if (!acc.has(key)) acc.set(key, []);
+    acc.get(key).push(row);
+    return acc;
+  }, new Map());
+  const paragraphs = buildReportParagraphs({
+    school,
+    parentTask,
+    template,
+    totalCount,
+    passedCount,
+    failedCount,
+    unfilledCount,
+    achieveRate,
+    failedRows,
+  });
+
+  return (
+    <div className="supervision-report-view">
+      <div className="supervision-report-titlebar">
+        <div className="supervision-report-title-main">
+          <FileTextOutlined className="supervision-report-title-icon" />
+          <div>
+            <div className="supervision-report-title">{school.name}督导报告</div>
+            <div className="supervision-report-meta">
+              <Tag color={reportStatus === '已完成' ? 'success' : 'processing'}>{reportStatus}</Tag>
+              <Tag color={reportLevel === '优秀' ? 'blue' : reportLevel === '需整改' ? 'error' : 'default'}>{reportLevel}</Tag>
+              <Tag>已定稿</Tag>
+              <span>生成时间：{generatedAt}</span>
+              <span>生成方：AI自动生成</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section className="supervision-report-card">
+        <div className="supervision-report-section-title">整体评估概况</div>
+        <div className="supervision-report-metrics">
+          <div>
+            <span>总指标数</span>
+            <strong>{totalCount}</strong>
+          </div>
+          <div>
+            <span>达标指标</span>
+            <strong className="is-success">{passedCount}</strong>
+          </div>
+          <div>
+            <span>未达标</span>
+            <strong className={failedCount ? 'is-danger' : ''}>{failedCount}</strong>
+          </div>
+          <div>
+            <span>达标情况</span>
+            <strong>{achieveRate}%</strong>
+          </div>
+        </div>
+        <div className="supervision-report-opinion">
+          <span>检查意见</span>
+          <p>
+            {failedCount
+              ? `学校存在 ${failedCount} 项需整改指标，建议按指标要求补充佐证材料并形成闭环。`
+              : unfilledCount
+                ? `学校尚有 ${unfilledCount} 项指标未填写，建议补齐后再完成报告定稿。`
+                : '学校办学行为规范，各项指标整体达标，具有示范价值。'}
+          </p>
+        </div>
+      </section>
+
+      <section className="supervision-report-card">
+        <div className="supervision-report-section-title">指标明细</div>
+        <div className="supervision-report-indicator-groups">
+          {Array.from(groups.entries()).map(([groupName, groupRows]) => (
+            <div className="supervision-report-indicator-group" key={groupName}>
+              <div className="supervision-report-group-name">{groupName}</div>
+              {groupRows.map((row) => (
+                <div className="supervision-report-indicator-row" key={row.id}>
+                  <span className={`supervision-report-row-icon ${row.failed ? 'is-danger' : row.filled ? 'is-success' : ''}`}>
+                    {row.failed ? <WarningOutlined /> : <CheckCircleOutlined />}
+                  </span>
+                  <div className="supervision-report-row-copy">
+                    <strong>{row.code ? `${row.code} ` : ''}{row.name}</strong>
+                    <span>
+                      {row.indicatorType} · {row.scoringMethod}
+                      {row.required ? ' · 必填' : ''}
+                      {row.result ? ` · ${row.result}` : ''}
+                    </span>
+                  </div>
+                  <Tag color={row.failed ? 'error' : row.filled ? 'success' : 'default'}>{row.status}</Tag>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="supervision-report-card">
+        <div className="supervision-report-section-title">报告内容</div>
+        <div className="supervision-report-article">
+          {paragraphs.map((paragraph) => (
+            <div key={paragraph.title} className="supervision-report-paragraph">
+              <div>{paragraph.title}</div>
+              {paragraph.body ? <p>{paragraph.body}</p> : null}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="supervision-report-card">
+        <div className="supervision-report-section-title">报告附件</div>
+        <div className="supervision-report-empty-line">暂无附件</div>
+      </section>
+
+      <section className="supervision-report-card">
+        <div className="supervision-report-sign-head">
+          <div className="supervision-report-section-title">督学签名</div>
+          <Tag color="warning">0/2 已签</Tag>
+        </div>
+        <div className="supervision-report-sign-list">
+          <Tag color="gold">陈立军</Tag>
+          <Tag color="gold">赵辅导</Tag>
+        </div>
+      </section>
+
+      <div className="supervision-report-actions">
+        <Button icon={<SaveOutlined />}>解除定稿</Button>
+        <Button icon={<DownloadOutlined />}>导出 Word</Button>
+      </div>
+    </div>
+  );
+}
+
 function buildSchoolTaskResource({
   item,
   parentTask,
@@ -345,16 +596,7 @@ function buildSchoolTaskResource({
   indicators,
   school,
 }) {
-  const nowText = new Date()
-    .toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    })
-    .replace(/\//g, '-');
+  const nowText = formatCurrentDateTimeText();
   const rawEntries = values?.entries || {};
   const indicatorValues = Object.fromEntries(indicators.map((indicator) => {
     const entry = rawEntries[indicator.id] || {};
@@ -524,7 +766,6 @@ export function SupervisionRectificationChecklist({
   const [activeDimensionKey, setActiveDimensionKey] = useState('');
   const [collapsedDimensionIds, setCollapsedDimensionIds] = useState(() => new Set());
   const rectification = item?.meta?.supervisionRectification || {};
-  const school = rectification.school || {};
   const taskGroups = Array.isArray(rectification.tasks) && rectification.tasks.length
     ? rectification.tasks
     : [{
@@ -577,7 +818,6 @@ export function SupervisionRectificationChecklist({
     : null;
   const selectedIssues = selectedDimensionNode?.allIssues || selectedTask?.issues || [];
   const selectedPendingIssueCount = selectedIssues.filter((issue) => issue.status !== '已整改').length;
-  const schoolMeta = [school.province, school.city, school.district, school.nature].filter(Boolean).join(' · ');
   const taskMeta = [
     '整改反馈',
     item?.owner || '督导负责人',
@@ -689,13 +929,9 @@ export function SupervisionRectificationChecklist({
         <div className="supervision-rectification-school">
           <span className="supervision-rectification-school-icon"><BankOutlined /></span>
           <div>
-            <div className="supervision-rectification-kicker">整改反馈</div>
             <div className="supervision-rectification-school-name">{rectification.schoolName || item?.name || '被评估学校'}</div>
             <div className="supervision-rectification-school-meta">
               {taskMeta}
-            </div>
-            <div className="supervision-rectification-school-region">
-              {schoolMeta || rectification.parentTaskName || '未设置学校范围'}
             </div>
           </div>
         </div>
@@ -791,10 +1027,13 @@ export default function SupervisionSchoolTaskForm({
   templates = [],
   canEdit = true,
   onSubmit,
+  onOpenReport,
 }) {
   const [form] = Form.useForm();
   const [activeDimensionKey, setActiveDimensionKey] = useState('');
   const [collapsedDimensionIds, setCollapsedDimensionIds] = useState(() => new Set());
+  const [assignmentOpen, setAssignmentOpen] = useState(false);
+  const [assignmentDraft, setAssignmentDraft] = useState([]);
   const school = useMemo(() => resolveSchoolMeta(item), [item]);
   const template = useMemo(() => resolveTaskTemplate(parentTask, templates, item), [item, parentTask, templates]);
   const dimensionFramework = useMemo(() => buildDimensionFramework(template), [template]);
@@ -815,6 +1054,30 @@ export default function SupervisionSchoolTaskForm({
   const initialValues = useMemo(() => buildInitialValues(item, indicators), [indicators, item]);
   const watchedEntries = Form.useWatch('entries', form) || initialValues.entries || {};
   const schoolTaskMeta = item?.meta?.supervisionSchoolTask || {};
+  const assignedPeople = useMemo(() => {
+    const storedPeople = Array.isArray(schoolTaskMeta.assignedPeople) ? schoolTaskMeta.assignedPeople : [];
+    if (storedPeople.length) {
+      return storedPeople.map((person) => ({
+        id: person.id || person.value || person.name,
+        name: person.name || person.label || '督导人员',
+        role: person.role || '督导人员',
+      })).filter((person) => person.id);
+    }
+    const assignedIds = Array.isArray(schoolTaskMeta.assignedPersonIds) ? schoolTaskMeta.assignedPersonIds : [];
+    return SUPERVISION_ASSIGNMENT_PEOPLE
+      .filter((person) => assignedIds.includes(person.value))
+      .map((person) => ({ id: person.value, name: person.label, role: person.role }));
+  }, [schoolTaskMeta.assignedPeople, schoolTaskMeta.assignedPersonIds]);
+  const assignmentOptions = useMemo(() => SUPERVISION_ASSIGNMENT_PEOPLE.map((person) => ({
+    value: person.value,
+    label: (
+      <span className="supervision-assignment-option">
+        <span>{person.label}</span>
+        <span>{person.role}</span>
+      </span>
+    ),
+    searchText: `${person.label}${person.role}`,
+  })), []);
   const rectificationStatuses = schoolTaskMeta.rectificationStatuses || {};
   const rectificationMetaByIndicatorId = new Map();
   indicators.forEach((indicator) => {
@@ -847,6 +1110,10 @@ export default function SupervisionSchoolTaskForm({
     form.setFieldsValue(initialValues);
   }, [form, initialValues]);
 
+  useEffect(() => {
+    setAssignmentDraft(assignedPeople.map((person) => person.id).filter(Boolean));
+  }, [assignedPeople, item?.key]);
+
   const handleSave = () => {
     const values = form.getFieldsValue(true);
     onSubmit?.(buildSchoolTaskResource({
@@ -857,6 +1124,44 @@ export default function SupervisionSchoolTaskForm({
       indicators,
       school,
     }));
+  };
+
+  const handleOpenAssignment = () => {
+    setAssignmentDraft(assignedPeople.map((person) => person.id).filter(Boolean));
+    setAssignmentOpen(true);
+  };
+
+  const handleCancelAssignment = () => {
+    setAssignmentDraft(assignedPeople.map((person) => person.id).filter(Boolean));
+    setAssignmentOpen(false);
+  };
+
+  const handleSaveAssignment = () => {
+    const selectedPeople = SUPERVISION_ASSIGNMENT_PEOPLE
+      .filter((person) => assignmentDraft.includes(person.value))
+      .map((person) => ({ id: person.value, name: person.label, role: person.role }));
+    const baseResource = buildSchoolTaskResource({
+      item,
+      parentTask,
+      template,
+      values: form.getFieldsValue(true),
+      indicators,
+      school,
+    });
+    const assignmentUpdatedAt = formatCurrentDateTimeText();
+    onSubmit?.({
+      ...baseResource,
+      meta: {
+        ...(baseResource.meta || {}),
+        supervisionSchoolTask: {
+          ...(baseResource.meta?.supervisionSchoolTask || {}),
+          assignedPeople: selectedPeople,
+          assignedPersonIds: selectedPeople.map((person) => person.id),
+          assignmentUpdatedAt,
+        },
+      },
+    });
+    setAssignmentOpen(false);
   };
 
   const handleToggleDimensionCollapse = (dimensionId) => {
@@ -1009,126 +1314,170 @@ export default function SupervisionSchoolTaskForm({
   }
 
   return (
-    <Form
-      form={form}
-      layout="vertical"
-      disabled={!canEdit}
-      className="supervision-school-check-form"
-    >
-      <div className="supervision-school-check-head">
-        <div className="supervision-school-check-title-block">
-          <div className="supervision-school-check-title">{parentTask.name}</div>
-          <div className="supervision-school-check-meta">
-            <Tag color={getStatusColor(currentStatus)}>{currentStatus}</Tag>
-            <span>截止：{parentTaskMeta.endDate || '--'}</span>
-            <span>{template.name}</span>
+    <>
+      <Form
+        form={form}
+        layout="vertical"
+        disabled={!canEdit}
+        className="supervision-school-check-form"
+      >
+        <div className="supervision-school-check-head">
+          <div className="supervision-school-check-title-block">
+            <div className="supervision-school-check-title">{parentTask.name}</div>
+            <div className="supervision-school-check-meta">
+              <Tag color={getStatusColor(currentStatus)}>{currentStatus}</Tag>
+              <span>截止：{parentTaskMeta.endDate || '--'}</span>
+              <span>{template.name}</span>
+              <span>
+                执行人：
+                {assignedPeople.length
+                  ? assignedPeople.map((person) => person.name).join('、')
+                  : '未分配'}
+              </span>
+            </div>
+          </div>
+          <div className="supervision-school-check-actions">
+            <Button icon={<TeamOutlined />} onClick={handleOpenAssignment}>任务分配</Button>
+            <Button icon={<FileTextOutlined />} onClick={() => onOpenReport?.(item)}>督导报告</Button>
+            <Button icon={<DownloadOutlined />}>材料打包下载</Button>
           </div>
         </div>
-        <Button icon={<DownloadOutlined />}>材料打包下载</Button>
-      </div>
 
-      <div className="supervision-school-check-schoolbar">
-        <span className="supervision-school-check-school-icon"><BankOutlined /></span>
-        <div>
-          <div className="supervision-school-check-school-name">{school.name}</div>
-          <div className="supervision-school-check-school-meta">
-            {[school.province, school.city, school.district, school.nature].filter(Boolean).join(' · ')}
+        <div className="supervision-school-check-schoolbar">
+          <span className="supervision-school-check-school-icon"><BankOutlined /></span>
+          <div>
+            <div className="supervision-school-check-school-name">{school.name}</div>
+          </div>
+          <div className="supervision-school-check-stats">
+            <Tag>{indicators.length} 项指标</Tag>
+            {pendingRectificationCount ? (
+              <Tag color="error">{pendingRectificationDimensionCount} 个维度 · {pendingRectificationCount} 项需整改</Tag>
+            ) : null}
+            {!pendingRectificationCount && rectifiedIndicatorCount ? (
+              <Tag color="success">{rectifiedIndicatorCount} 项已整改</Tag>
+            ) : null}
+            <Tag color={filledIndicatorCount === indicators.length && indicators.length ? 'success' : 'processing'}>
+              {filledIndicatorCount}/{indicators.length} 已填写
+            </Tag>
           </div>
         </div>
-        <div className="supervision-school-check-stats">
-          <Tag>{indicators.length} 项指标</Tag>
-          {pendingRectificationCount ? (
-            <Tag color="error">{pendingRectificationDimensionCount} 个维度 · {pendingRectificationCount} 项需整改</Tag>
-          ) : null}
-          {!pendingRectificationCount && rectifiedIndicatorCount ? (
-            <Tag color="success">{rectifiedIndicatorCount} 项已整改</Tag>
-          ) : null}
-          <Tag color={filledIndicatorCount === indicators.length && indicators.length ? 'success' : 'processing'}>
-            {filledIndicatorCount}/{indicators.length} 已填写
-          </Tag>
-        </div>
-      </div>
 
-      <div className="supervision-school-check-switch">
-        <button type="button" className="supervision-school-check-mode">
-          <ClockCircleOutlined />
-          AI评估 ({aiFilledCount}/{aiIndicators.length})
-        </button>
-        <button type="button" className="supervision-school-check-mode is-active">
-          <CheckCircleOutlined />
-          人工评估 ({manualFilledCount}/{manualIndicators.length})
-        </button>
-      </div>
-
-      {indicators.length === 0 ? (
-        <div className="supervision-school-check-empty">
-          <Empty description="上级任务尚未关联有效督导模板，暂无可填写指标" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        <div className="supervision-school-check-switch">
+          <button type="button" className="supervision-school-check-mode">
+            <ClockCircleOutlined />
+            AI评估 ({aiFilledCount}/{aiIndicators.length})
+          </button>
+          <button type="button" className="supervision-school-check-mode is-active">
+            <CheckCircleOutlined />
+            人工评估 ({manualFilledCount}/{manualIndicators.length})
+          </button>
         </div>
-      ) : (
-        <div className="supervision-school-framework">
-          <aside className="supervision-school-framework-tree-panel">
-            <div className="supervision-school-framework-tree-head">
-              <div>
-                <div className="supervision-school-framework-tree-title">维度结构</div>
-                <div className="supervision-school-framework-tree-desc">
-                  {dimensionFramework.flatNodes.length} 个维度 · {indicators.length} 项指标
+
+        {indicators.length === 0 ? (
+          <div className="supervision-school-check-empty">
+            <Empty description="上级任务尚未关联有效督导模板，暂无可填写指标" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          </div>
+        ) : (
+          <div className="supervision-school-framework">
+            <aside className="supervision-school-framework-tree-panel">
+              <div className="supervision-school-framework-tree-head">
+                <div>
+                  <div className="supervision-school-framework-tree-title">维度结构</div>
+                  <div className="supervision-school-framework-tree-desc">
+                    {dimensionFramework.flatNodes.length} 个维度 · {indicators.length} 项指标
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="supervision-school-framework-tree-list">
-              {visibleDimensionNodes.map(renderDimensionNode)}
-            </div>
-          </aside>
+              <div className="supervision-school-framework-tree-list">
+                {visibleDimensionNodes.map(renderDimensionNode)}
+              </div>
+            </aside>
 
-          <section className="supervision-school-framework-main">
-            <div className="supervision-school-framework-panel-head">
-              <div>
-                <div className="supervision-school-framework-panel-title">指标填写</div>
-                <div className="supervision-school-framework-panel-desc">
-                  当前维度：{selectedDimension
-                    ? getDimensionPath(
-                      selectedDimension.id === UNGROUPED_DIMENSION_ID ? null : selectedDimension,
-                      dimensionFramework.dimensionMap,
-                    )
-                    : '未选择维度'}
+            <section className="supervision-school-framework-main">
+              <div className="supervision-school-framework-panel-head">
+                <div>
+                  <div className="supervision-school-framework-panel-title">指标填写</div>
+                  <div className="supervision-school-framework-panel-desc">
+                    当前维度：{selectedDimension
+                      ? getDimensionPath(
+                        selectedDimension.id === UNGROUPED_DIMENSION_ID ? null : selectedDimension,
+                        dimensionFramework.dimensionMap,
+                      )
+                      : '未选择维度'}
+                  </div>
+                </div>
+                <div className="supervision-school-framework-panel-tags">
+                  <Tag>{selectedIndicators.length} 项指标</Tag>
+                  {selectedPendingRectificationCount ? (
+                    <Tag color="error">{selectedPendingRectificationCount} 项需整改</Tag>
+                  ) : null}
                 </div>
               </div>
-              <div className="supervision-school-framework-panel-tags">
-                <Tag>{selectedIndicators.length} 项指标</Tag>
-                {selectedPendingRectificationCount ? (
-                  <Tag color="error">{selectedPendingRectificationCount} 项需整改</Tag>
-                ) : null}
-              </div>
-            </div>
 
-            {selectedIndicators.length ? (
-              <Collapse
-                key={`${selectedDimensionKey}-${selectedIndicators.map((indicator) => indicator.id).join('_')}`}
-                ghost
-                defaultActiveKey={[]}
-                className="supervision-school-indicator-collapse"
-                items={selectedIndicators.map((indicator) => {
-                  const rectificationMeta = rectificationMetaByIndicatorId.get(indicator.id) || {};
-                  return {
-                    key: indicator.id,
-                    className: rectificationMeta.pending
-                      ? 'is-rectification-needed'
-                      : rectificationMeta.confirmed
-                        ? 'is-rectification-done'
-                        : '',
-                    label: renderIndicatorHeader(indicator),
-                    children: renderIndicatorForm(indicator),
-                  };
-                })}
-              />
-            ) : (
-              <div className="supervision-school-framework-empty">
-                <Empty description="当前维度暂无指标" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-              </div>
-            )}
-          </section>
+              {selectedIndicators.length ? (
+                <Collapse
+                  key={`${selectedDimensionKey}-${selectedIndicators.map((indicator) => indicator.id).join('_')}`}
+                  ghost
+                  defaultActiveKey={[]}
+                  className="supervision-school-indicator-collapse"
+                  items={selectedIndicators.map((indicator) => {
+                    const rectificationMeta = rectificationMetaByIndicatorId.get(indicator.id) || {};
+                    return {
+                      key: indicator.id,
+                      className: rectificationMeta.pending
+                        ? 'is-rectification-needed'
+                        : rectificationMeta.confirmed
+                          ? 'is-rectification-done'
+                          : '',
+                      label: renderIndicatorHeader(indicator),
+                      children: renderIndicatorForm(indicator),
+                    };
+                  })}
+                />
+              ) : (
+                <div className="supervision-school-framework-empty">
+                  <Empty description="当前维度暂无指标" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                </div>
+              )}
+            </section>
+          </div>
+        )}
+      </Form>
+
+      <Modal
+        title="任务分配"
+        open={assignmentOpen}
+        onCancel={handleCancelAssignment}
+        onOk={handleSaveAssignment}
+        okText="保存分配"
+        cancelText="取消"
+        destroyOnHidden
+        okButtonProps={{ disabled: !canEdit }}
+      >
+        <div className="supervision-assignment-modal">
+          <div className="supervision-assignment-context">
+            <span>{school.name}</span>
+            <span>{parentTask.name}</span>
+          </div>
+          <div className="supervision-assignment-label">选择督导人员</div>
+          <Select
+            mode="multiple"
+            allowClear
+            showSearch
+            placeholder="请选择一个或多个执行人"
+            value={assignmentDraft}
+            onChange={setAssignmentDraft}
+            options={assignmentOptions}
+            optionFilterProp="searchText"
+            filterOption={(input, option) => (option?.searchText || '').includes(input.trim())}
+            className="supervision-assignment-select"
+            maxTagCount="responsive"
+          />
+          <div className="supervision-assignment-hint">
+            可将同一学校的检查任务分给多人协同处理，分配信息会随当前学校任务保存。
+          </div>
         </div>
-      )}
-    </Form>
+      </Modal>
+    </>
   );
 }
