@@ -94,6 +94,7 @@ import TeacherDevelopmentModule from './teacherDevelopment/TeacherDevelopmentMod
 import TeacherPortraitModule from './teacherPortrait/TeacherPortraitModule';
 import ResourceRecommendationModule from './resourceRecommendation/ResourceRecommendationModule';
 import LuckyModule from './lucky/LuckyModule';
+import TdWorkModule from './tdWork/TdWorkModule';
 import TasksModule from './tasks/TasksModule';
 import PointsUserModule from './points/PointsUserModule';
 import PointsAdminModule from './points/PointsAdminModule';
@@ -503,6 +504,7 @@ function App({ onLogout }) {
   const [messageEntryConversationId, setMessageEntryConversationId] = useState(null);
   const [messageUnreadCount, setMessageUnreadCount] = useState(() => getInitialMessagesUnreadCount());
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [modeTransition, setModeTransition] = useState(null);
   const [accountSwitchModalOpen, setAccountSwitchModalOpen] = useState(false);
   const [knowledgeGraphEntry, setKnowledgeGraphEntry] = useState(() => {
     const route = getInitialHashRoute();
@@ -1211,6 +1213,13 @@ function App({ onLogout }) {
   }, [capabilityModelEntry, currentPage, knowledgeGraphEntry]);
 
   useEffect(() => {
+    if (!modeTransition) return undefined;
+
+    const timer = window.setTimeout(() => setModeTransition(null), 960);
+    return () => window.clearTimeout(timer);
+  }, [modeTransition]);
+
+  useEffect(() => {
     const pageId = currentPage === 'detail' && selectedScene ? 'space_detail' : currentPage;
     const pageName = currentPage === 'detail' && selectedScene ? selectedScene.name : currentPage;
     const module = currentPage === 'home' || currentPage === 'detail'
@@ -1592,6 +1601,30 @@ function App({ onLogout }) {
     }
   };
 
+  const isLuckyShell = currentPage === 'lucky' || currentPage === 'lucky-backend';
+  const isAiMode = currentPage === 'td-work';
+
+  const openAiMode = useCallback(() => {
+    setAccountMenuOpen(false);
+    setModeTransition('ai');
+    window.setTimeout(() => {
+      setSelectedScene(null);
+      setActiveIconKey('lucky');
+      setCurrentPage('td-work');
+    }, 120);
+  }, []);
+
+  const openStandardMode = useCallback(() => {
+    setAccountMenuOpen(false);
+    setModeTransition('standard');
+    window.setTimeout(() => {
+      setActiveIconKey('my-space');
+      setSelectedKeys(['home']);
+      setSelectedScene(null);
+      setCurrentPage('home');
+    }, 120);
+  }, []);
+
   const accountProfileMenu = (
     <div className="account-profile-menu" onClick={(event) => event.stopPropagation()}>
       <div className="account-profile-head">
@@ -1628,6 +1661,24 @@ function App({ onLogout }) {
         onClick={() => handleAccountMenuPlaceholder('个性签名')}
       >
         输入你的个性签名...
+      </button>
+
+      <button
+        type="button"
+        className={`account-mode-switch-card ${isAiMode ? 'is-standard' : 'is-ai'}`}
+        onClick={isAiMode ? openStandardMode : openAiMode}
+      >
+        <span className="account-mode-switch-icon">
+          {isAiMode ? <AppstoreOutlined /> : <RobotOutlined />}
+        </span>
+        <span className="account-mode-switch-copy">
+          <span className="account-mode-switch-kicker">模式切换</span>
+          <strong>{isAiMode ? '切换到完整模式' : '切换到AI模式'}</strong>
+          <span className="account-mode-switch-hint">
+            {isAiMode ? '返回完整工作台和所有管理功能' : '进入通达工作学习界面'}
+          </span>
+        </span>
+        <RightOutlined className="account-mode-switch-arrow" />
       </button>
 
       <div
@@ -1727,6 +1778,20 @@ function App({ onLogout }) {
     </div>
   );
 
+  const modeTransitionNode = modeTransition ? (
+    <div className={`app-mode-transition app-mode-transition-${modeTransition}`} aria-hidden="true">
+      <div className="app-mode-transition-card">
+        <span className="app-mode-transition-icon">
+          {modeTransition === 'ai' ? <RobotOutlined /> : <AppstoreOutlined />}
+        </span>
+        <span className="app-mode-transition-copy">
+          <span>正在切换到</span>
+          <strong>{modeTransition === 'ai' ? 'AI模式' : '完整模式'}</strong>
+        </span>
+      </div>
+    </div>
+  ) : null;
+
   // 开发者文档页面（独立全屏，不带侧边图标栏）
   if (currentPage === 'dev-docs') {
     return <DevDocsPage />;
@@ -1761,28 +1826,42 @@ function App({ onLogout }) {
     );
   }
 
-  const isLuckyShell = currentPage === 'lucky' || currentPage === 'lucky-backend';
+  if (isAiMode) {
+    return (
+      <>
+        <TdWorkModule
+          key="td-work"
+          mode="workspace"
+          accountMenu={accountProfileMenu}
+          accountMenuOpen={accountMenuOpen}
+          onAccountMenuOpenChange={setAccountMenuOpen}
+        />
+        {modeTransitionNode}
+      </>
+    );
+  }
 
   return (
-    <Layout className={`app-layout ${isLuckyShell ? 'app-layout-lucky' : ''}`}>
-      {/* Far-left Icon Bar */}
-      <div className="icon-bar" style={{ width: iconBarWidth, minWidth: iconBarWidth, maxWidth: iconBarWidth }}>
-        <div className="icon-bar-avatar">
-          <Dropdown
-            trigger={['click']}
-            open={accountMenuOpen}
-            onOpenChange={(open) => setAccountMenuOpen(open)}
-            placement="bottomLeft"
-            popupRender={() => accountProfileMenu}
-            classNames={{ root: 'account-profile-dropdown' }}
-            destroyOnHidden
-          >
-            <button type="button" className="avatar-circle" aria-label="打开账号菜单">
-              <UserOutlined />
-            </button>
-          </Dropdown>
-        </div>
-        <div className="icon-bar-list" ref={iconBarListRef}>
+    <>
+      <Layout className={`app-layout ${isLuckyShell ? 'app-layout-lucky' : ''}`}>
+        {/* Far-left Icon Bar */}
+        <div className="icon-bar" style={{ width: iconBarWidth, minWidth: iconBarWidth, maxWidth: iconBarWidth }}>
+          <div className="icon-bar-avatar">
+            <Dropdown
+              trigger={['click']}
+              open={accountMenuOpen}
+              onOpenChange={(open) => setAccountMenuOpen(open)}
+              placement="bottomLeft"
+              popupRender={() => accountProfileMenu}
+              classNames={{ root: 'account-profile-dropdown' }}
+              destroyOnHidden
+            >
+              <button type="button" className="avatar-circle" aria-label="打开账号菜单">
+                <UserOutlined />
+              </button>
+            </Dropdown>
+          </div>
+          <div className="icon-bar-list" ref={iconBarListRef}>
           <div
             className={`icon-bar-liquid-indicator ${iconBarIndicatorStyle.opacity ? 'is-visible' : ''}`}
             style={{
@@ -2263,7 +2342,9 @@ function App({ onLogout }) {
         }}
         onSubmit={handleSceneSave}
       />
-    </Layout>
+      </Layout>
+      {modeTransitionNode}
+    </>
   );
 }
 
