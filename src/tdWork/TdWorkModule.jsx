@@ -41,8 +41,10 @@ import './TdWorkModule.css';
 const NAV_ITEMS = [
   { key: 'new-task', label: '新工作任务', icon: <EditOutlined /> },
   { key: 'scheduled', label: '定时任务', icon: <ClockCircleOutlined /> },
-  { key: 'skills', label: '技能 · 连接器 · 伙伴', icon: <RobotOutlined /> },
-  { key: 'dialog', label: '伙伴对话', icon: <MessageOutlined /> },
+  { key: 'project', label: '项目', icon: <ProjectOutlined /> },
+  { key: 'space', label: '空间', icon: <AppstoreOutlined /> },
+  { key: 'skills', label: '技能 · 连接器 · 智能体', icon: <RobotOutlined /> },
+  { key: 'dialog', label: '智能体对话', icon: <MessageOutlined /> },
   { key: 'cloud', label: '资料', icon: <FolderOutlined /> },
 ];
 
@@ -299,6 +301,84 @@ const SCHEDULED_TASK_TEMPLATES = [
   },
 ];
 
+const PROJECT_LIST_ITEMS = [
+  {
+    key: 'teacher-training',
+    name: '教师研修项目',
+    desc: '同步培训计划、学员任务、课程资源与成果材料',
+    updatedAt: '添加于 1 小时前',
+    members: 12,
+  },
+];
+
+const PROJECT_TEMPLATES = [
+  {
+    key: 'training-flow',
+    name: '教师研修全流程',
+    desc: '从需求规划、报名签到到成果沉淀一站式推进',
+  },
+  {
+    key: 'course-research',
+    name: '教研活动与听评课',
+    desc: '沉淀课堂观察、评课记录、改进建议和复盘材料',
+  },
+  {
+    key: 'resource-base',
+    name: '校本资源共建',
+    desc: '持续沉淀 SOP、经验知识、课例和常见问答',
+  },
+  {
+    key: 'project-delivery',
+    name: '培训项目交付',
+    desc: '管理培训需求、计划、风险和周报',
+  },
+  {
+    key: 'learner-growth',
+    name: '学员成长跟进',
+    desc: '跟踪作业提交、学习反馈和个别辅导记录',
+  },
+];
+
+const PROJECT_WORK_TABS = [
+  { key: 'activity', label: '动态' },
+  { key: 'plan', label: '计划' },
+  { key: 'tasks', label: '任务' },
+  { key: 'assets', label: '资产' },
+];
+
+const PROJECT_CONFIG_ITEMS = [
+  {
+    key: 'instruction',
+    title: '指令',
+    desc: '设定项目背景与规范，让 AI 与你高效协作',
+    icon: <FileTextOutlined />,
+  },
+  {
+    key: 'connector',
+    title: '连接器',
+    desc: '连接外部服务，扩展 AI 能力',
+    icon: <LinkOutlined />,
+  },
+  {
+    key: 'expert',
+    title: '专家',
+    desc: '配置项目专家，为成员提供专业服务',
+    icon: <TeamOutlined />,
+  },
+  {
+    key: 'skill',
+    title: '技能',
+    desc: '配置项目技能，让 AI 精准执行任务',
+    icon: <RobotOutlined />,
+  },
+  {
+    key: 'automation',
+    title: '自动化',
+    desc: '让 AI 按计划自动执行任务',
+    icon: <ClockCircleOutlined />,
+  },
+];
+
 const SKILL_CATEGORIES = [
   '精选',
   '办公协作',
@@ -344,7 +424,7 @@ const MY_SKILL_TABS = [
 ];
 
 const MY_SKILLS = [
-  { key: 'td-work-workbench', name: 'Lucky 工作助手', desc: '连接 guoren-v2 的任务、伙伴与连接器能力', logo: 'L', tone: 'blue', enabled: true },
+  { key: 'td-work-workbench', name: 'Lucky 工作助手', desc: '连接 guoren-v2 的任务、智能体与连接器能力', logo: 'L', tone: 'blue', enabled: true },
   { key: 'resource-library', name: '资源库', desc: '管理课程资源、文件解析、标签与共享权限', logo: '资', tone: 'cyan', enabled: true },
   { key: 'knowledge-space', name: '知识空间', desc: '建设校本知识空间，组织资源与主题内容', logo: '知', tone: 'green', enabled: true },
   { key: 'knowledge-graph', name: '知识图谱', desc: '梳理知识点、能力目标和课程关系图谱', logo: '图', tone: 'indigo', enabled: true },
@@ -358,7 +438,7 @@ const MY_SKILLS = [
   { key: 'scene-template', name: '场景模板', desc: '维护教学、培训、督导等空间模板', logo: '模', tone: 'indigo', enabled: true },
   { key: 'scene-space', name: '场景空间', desc: '创建教研、培训、课程建设协作空间', logo: '场', tone: 'cyan', enabled: true },
   { key: 'tasks', name: '任务中心', desc: '管理待办、协作任务和推进状态', logo: '任', tone: 'orange', enabled: true },
-  { key: 'messages', name: '消息中心', desc: '查看系统通知、伙伴推送和未读提醒', logo: '息', tone: 'green', enabled: true },
+  { key: 'messages', name: '消息中心', desc: '查看系统通知、智能体推送和未读提醒', logo: '息', tone: 'green', enabled: true },
   { key: 'archive', name: '档案提交', desc: '提交教师成长档案、成果材料和审批记录', logo: '档', tone: 'purple', enabled: true },
   { key: 'certificate', name: '证书管理', desc: '维护培训结业、荣誉证书和模板发放', logo: '证', tone: 'orange', enabled: true },
   { key: 'points-admin', name: '积分管理', desc: '管理学习积分、兑换规则和组织运营', logo: '分', tone: 'red', enabled: true },
@@ -397,7 +477,7 @@ const MY_SKILLS = [
 const PARTNER_CARDS = [
   {
     key: 'teaching-research',
-    name: '教研备课伙伴',
+    name: '教研备课智能体',
     desc: '协助教师梳理课标要求、学情信息和教学资源，生成备课提纲与课堂活动建议。',
     avatar: 'zhang',
     tone: 'pink',
@@ -580,7 +660,7 @@ const PARTNER_MANAGE_TASKS = [
     key: 'research-minutes-task',
     title: '解答今日教研任务问题',
     desc: '从会议记录中提炼共识、问题清单和后续分工。',
-    owner: '教研备课伙伴',
+    owner: '教研备课智能体',
     avatar: 'zhang',
     avatarTone: 'pink',
     status: '进行中',
@@ -930,8 +1010,8 @@ function PartnerMarketPage({
   });
 
   return (
-    <section className="td-work-partner-market-page" aria-label="工作伙伴小队">
-      <div className="td-work-partner-market-categories" aria-label="伙伴分类">
+    <section className="td-work-partner-market-page" aria-label="智能体小队">
+      <div className="td-work-partner-market-categories" aria-label="智能体分类">
         {PARTNER_MARKET_CATEGORIES.map((category) => (
           <button
             key={category}
@@ -944,7 +1024,7 @@ function PartnerMarketPage({
         ))}
       </div>
 
-      <div className="td-work-partner-market-grid" aria-label="伙伴列表">
+      <div className="td-work-partner-market-grid" aria-label="智能体列表">
         {visibleItems.map((item, index) => (
           <article key={item.key} className={`td-work-partner-market-card ${index === 0 ? 'is-featured' : ''}`}>
             <PartnerMarketAvatar item={item} index={index} />
@@ -972,7 +1052,7 @@ function PartnerMarketPage({
 
       {visibleItems.length === 0 ? (
         <div className="td-work-connector-empty">
-          没有找到与“{searchText}”匹配的工作伙伴
+          没有找到与“{searchText}”匹配的智能体
         </div>
       ) : null}
     </section>
@@ -1510,24 +1590,24 @@ function MaterialsPage({
 
 function PartnerDialogPage({ onOpenPartner, onCreatePartner }) {
   return (
-    <section className="td-work-partner-page" aria-label="伙伴对话">
+    <section className="td-work-partner-page" aria-label="智能体对话">
       <div className="td-work-partner-content">
         <div className="td-work-partner-section-head">
-          <div className="td-work-partner-page-title">伙伴 · 小队</div>
+          <div className="td-work-partner-page-title">智能体 · 小队</div>
           <div className="td-work-partner-page-actions">
-            <button type="button" onClick={() => onCreatePartner('创建伙伴')}>
+            <button type="button" onClick={() => onCreatePartner('创建智能体')}>
               <PlusOutlined />
               创建
             </button>
             <span />
-            <button type="button" onClick={() => onCreatePartner('全部伙伴')}>
+            <button type="button" onClick={() => onCreatePartner('全部智能体')}>
               全部
               <span>›</span>
             </button>
           </div>
         </div>
 
-        <div className="td-work-partner-grid" aria-label="伙伴小队">
+        <div className="td-work-partner-grid" aria-label="智能体小队">
           {PARTNER_CARDS.map((item) => (
             <article
               key={item.key}
@@ -1623,14 +1703,14 @@ function PartnerManagePage({
   const [createMenuOpen, setCreateMenuOpen] = useState(false);
   const createMenuRef = useRef(null);
   const tabs = [
-    { key: 'agents', label: '伙伴', count: WORK_PARTNERS.length },
+    { key: 'agents', label: '智能体', count: WORK_PARTNERS.length },
     { key: 'teams', label: '小队', count: WORK_TEAMS.length },
     { key: 'tasks', label: '任务', count: PARTNER_MANAGE_TASKS.length },
     { key: 'automation', label: '自动化', count: PARTNER_MANAGE_AUTOMATIONS.length },
   ];
   const normalizedSearch = searchText.trim().toLowerCase();
   const createLabel = {
-    agents: '创建工作伙伴',
+    agents: '创建智能体',
     teams: '创建工作小队',
     tasks: '创建任务',
     automation: '创建自动化',
@@ -1656,7 +1736,7 @@ function PartnerManagePage({
   }, [createMenuOpen]);
 
   return (
-    <section className="td-work-partner-manage-page" aria-label="伙伴管理">
+    <section className="td-work-partner-manage-page" aria-label="智能体管理">
       <div className="td-work-partner-manage-inner">
         <div className="td-work-partner-manage-toolbar">
           <div className="td-work-partner-manage-tabs" role="tablist" aria-label="管理分类">
@@ -1955,10 +2035,10 @@ function PartnerWorkspacePage({
             </button>
 
             {pickerOpen ? (
-              <div className="td-work-partner-switch-menu" role="menu" aria-label="切换伙伴">
+              <div className="td-work-partner-switch-menu" role="menu" aria-label="切换智能体">
                 <header className="td-work-partner-switch-head">
-                  <span>工作伙伴</span>
-                  <button type="button" title="创建工作伙伴" aria-label="创建工作伙伴" onClick={() => onCreatePartner('创建工作伙伴')}>
+                  <span>智能体</span>
+                  <button type="button" title="创建智能体" aria-label="创建智能体" onClick={() => onCreatePartner('创建智能体')}>
                     <PlusOutlined />
                   </button>
                 </header>
@@ -2021,12 +2101,12 @@ function PartnerWorkspacePage({
           </div>
 
           <button type="button" className="td-work-partner-detail-link" onClick={onOpenDetail}>
-            伙伴详情
+            智能体详情
             <span>›</span>
           </button>
         </div>
 
-        <section className="td-work-partner-goal-box" aria-label="输入伙伴任务">
+        <section className="td-work-partner-goal-box" aria-label="输入智能体任务">
           <textarea
             value={prompt}
             rows={2}
@@ -2060,7 +2140,7 @@ function PartnerWorkspacePage({
           </div>
         </section>
 
-        <section className="td-work-partner-work-list" aria-label="伙伴工作记录">
+        <section className="td-work-partner-work-list" aria-label="智能体工作记录">
           <header className="td-work-partner-work-head">
             <div className="td-work-partner-work-tabs" role="tablist" aria-label="工作记录分类">
               {PARTNER_WORK_TABS.map((tab) => (
@@ -2140,11 +2220,11 @@ function PartnerDetailPage({
           <PartnerAvatar avatar={partner.avatar} tone={partner.tone} />
           <h1>
             {partner.name}
-            <span>{isTeam ? '团队' : '伙伴'}</span>
+            <span>{isTeam ? '团队' : '智能体'}</span>
           </h1>
           <p>{partner.desc}</p>
 
-          <div className="td-work-partner-detail-stats" aria-label="伙伴统计">
+          <div className="td-work-partner-detail-stats" aria-label="智能体统计">
             <span>
               <strong>{stats.days}</strong>
               <em>陪伴天数</em>
@@ -2168,7 +2248,7 @@ function PartnerDetailPage({
 
           <section className="td-work-partner-group-box" aria-label="已加入的飞书群组">
             <h2>已加入的飞书群组</h2>
-            <p>以下群组的上下文默认可被工作伙伴解读使用</p>
+            <p>以下群组的上下文默认可被智能体解读使用</p>
             <div className="td-work-partner-group-empty">
               <FileTextOutlined />
               <span>暂未加入飞书群组</span>
@@ -2176,7 +2256,7 @@ function PartnerDetailPage({
           </section>
         </aside>
 
-        <section className="td-work-partner-detail-panel" aria-label="伙伴资料">
+        <section className="td-work-partner-detail-panel" aria-label="智能体资料">
           <div className="td-work-partner-detail-tabs" role="tablist" aria-label="详情分类">
             {PARTNER_DETAIL_TABS.map((tab) => (
               <button
@@ -2258,7 +2338,7 @@ function PartnerDetailPage({
                 </header>
                 <div className="td-work-partner-knowledge-empty">
                   <FileTextOutlined />
-                  <p>添加企业知识，为工作伙伴提供更丰富的上下文</p>
+                  <p>添加企业知识，为智能体提供更丰富的上下文</p>
                   <button type="button" onClick={onAddKnowledge}>
                     <PlusOutlined />
                     添加知识
@@ -2271,10 +2351,10 @@ function PartnerDetailPage({
               <h2>{PARTNER_DETAIL_TABS.find((tab) => tab.key === activeTab)?.label}</h2>
               <p>
                 {activeTab === 'skills'
-                  ? '管理该伙伴可调用的教学、教研、培训与资料处理技能。'
+                  ? '管理该智能体可调用的教学、教研、培训与资料处理技能。'
                   : activeTab === 'knowledge'
-                    ? '为伙伴添加校本制度、课程资源、培训资料和教研案例。'
-                    : '配置伙伴可见范围、群组权限和自动化运行规则。'}
+                    ? '为智能体添加校本制度、课程资源、培训资料和教研案例。'
+                    : '配置智能体可见范围、群组权限和自动化运行规则。'}
               </p>
             </div>
           )}
@@ -2599,6 +2679,316 @@ function ScheduledTasksPage({
   );
 }
 
+function ProjectListIllustration() {
+  return (
+    <div className="td-work-project-illustration" aria-hidden="true">
+      <span className="td-work-project-illustration-line is-top" />
+      <span className="td-work-project-illustration-line is-bottom" />
+      <span className="td-work-project-person is-left">
+        <UserOutlined />
+        <i />
+      </span>
+      <span className="td-work-project-person is-mid">
+        <RobotOutlined />
+        <i />
+      </span>
+      <span className="td-work-project-person is-right">
+        <FileTextOutlined />
+        <i />
+      </span>
+      <span className="td-work-project-bubble is-one"><MessageOutlined /></span>
+      <span className="td-work-project-bubble is-two"><FolderOutlined /></span>
+      <span className="td-work-project-bubble is-three"><CheckCircleOutlined /></span>
+    </div>
+  );
+}
+
+function ProjectCardIcon() {
+  return (
+    <span className="td-work-project-card-icon" aria-hidden="true">
+      <ProjectOutlined />
+    </span>
+  );
+}
+
+function ProjectListPage({ onOpenProject, onCreateProject, onTemplateCreate }) {
+  return (
+    <section className="td-work-project-list-page" aria-label="项目列表">
+      <div className="td-work-project-list-inner">
+        <div className="td-work-project-list-hero">
+          <div className="td-work-project-list-copy">
+            <h1>项目</h1>
+            <p>多人协同，打造超级团队</p>
+            <button type="button" className="td-work-project-new-btn" onClick={onCreateProject}>
+              <PlusOutlined />
+              新建项目
+            </button>
+          </div>
+          <ProjectListIllustration />
+        </div>
+
+        <div className="td-work-project-section-head">
+          <h2>我的项目</h2>
+          <label className="td-work-project-search" htmlFor="td-work-project-search">
+            <SearchOutlined />
+            <input id="td-work-project-search" placeholder="搜索项目" />
+          </label>
+        </div>
+
+        <div className="td-work-project-card-grid is-owned">
+          {PROJECT_LIST_ITEMS.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              className="td-work-project-list-card"
+              onClick={() => onOpenProject(item)}
+            >
+              <ProjectCardIcon />
+              <span className="td-work-project-list-card-copy">
+                <strong>{item.name}</strong>
+                <em>{item.desc} · {item.updatedAt}</em>
+              </span>
+              <span className="td-work-project-card-more" aria-hidden="true">
+                <MoreOutlined />
+              </span>
+            </button>
+          ))}
+        </div>
+
+        <div className="td-work-project-section-head is-template">
+          <h2>从模板创建</h2>
+        </div>
+
+        <div className="td-work-project-card-grid is-template">
+          {PROJECT_TEMPLATES.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              className="td-work-project-list-card"
+              onClick={() => onTemplateCreate(item)}
+            >
+              <ProjectCardIcon />
+              <span className="td-work-project-list-card-copy">
+                <strong>{item.name}</strong>
+                <em>{item.desc}</em>
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ProjectDetailBody({ activeTab }) {
+  if (activeTab === 'activity') {
+    return (
+      <article className="td-work-project-activity-card">
+        <header>
+          <span className="td-work-project-bot-avatar" aria-hidden="true">
+            <RobotOutlined />
+          </span>
+          <div>
+            <strong>通达项目助手</strong>
+            <span>1 小时前</span>
+          </div>
+          <button type="button" title="更多" aria-label="更多">
+            <MoreOutlined />
+          </button>
+        </header>
+        <h2>欢迎来到「教师研修项目」——这里是团队和 AI 共同协作的工作台</h2>
+        <p>来帮你认识项目空间的核心功能：</p>
+        <p>
+          <strong>资料与项目配置：</strong>
+          团队资源、培训方案、课程进度与学员反馈都可以统一沉淀，成员共享使用。
+        </p>
+        <p>
+          <strong>计划看板：</strong>
+          分阶段管理研修安排、负责人和截止时间，把教研活动、作业提交、证书申报都排清楚。
+        </p>
+        <p>
+          <strong>任务协同：</strong>
+          面向教师培训、听评课和资料整理分配任务，跟进进度并自动沉淀过程记录。
+        </p>
+        <p>
+          <strong>自动化：</strong>
+          定时收集学习反馈、提醒作业提交、生成项目周报，让重复事项自动推进。
+        </p>
+        <footer>
+          <span>项目已经创建，可以开始推进。</span>
+          <button type="button">收起</button>
+        </footer>
+      </article>
+    );
+  }
+
+  const tabContent = {
+    plan: [
+      ['研修启动会', '确认培训目标、讲师安排和参训名单'],
+      ['课程学习阶段', '发布课程任务，跟踪学习进度与讨论反馈'],
+      ['成果复盘阶段', '收集作业、案例与证书申报材料'],
+    ],
+    tasks: [
+      ['整理参训教师名单', '负责人：教务老师 · 今天 18:00 前'],
+      ['生成培训通知初稿', '负责人：研修规划师 · 明天上午'],
+      ['汇总课后反馈问卷', '负责人：数据分析师 · 本周五'],
+    ],
+    assets: [
+      ['培训实施方案.docx', '项目说明、流程安排和职责分工'],
+      ['教师研修任务清单.xlsx', '签到、学习任务、作业和证书字段'],
+      ['示范课案例包', '课堂实录、听评课记录和改进建议'],
+    ],
+  };
+
+  const titleMap = {
+    plan: '计划看板',
+    tasks: '任务列表',
+    assets: '项目资产',
+  };
+
+  return (
+    <section className="td-work-project-tab-panel" aria-label={titleMap[activeTab]}>
+      <h2>{titleMap[activeTab]}</h2>
+      <div className="td-work-project-simple-list">
+        {(tabContent[activeTab] || []).map(([title, desc]) => (
+          <button key={title} type="button">
+            <span><CheckCircleOutlined /></span>
+            <strong>{title}</strong>
+            <em>{desc}</em>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ProjectDetailComposer({ onSend }) {
+  return (
+    <section className="td-work-project-detail-composer" aria-label="项目对话输入">
+      <textarea placeholder="今天帮你做些什么？@引用资产文件、项目待办或调用技能" />
+      <div className="td-work-project-detail-composer-row">
+        <button type="button" className="td-work-project-detail-plus" title="添加" aria-label="添加">
+          <PlusOutlined />
+        </button>
+        <div className="td-work-project-detail-meta">
+          <button type="button">
+            本地任务
+            <DownOutlined />
+          </button>
+          <button type="button">
+            选择工作空间
+            <DownOutlined />
+          </button>
+          <button type="button">
+            默认权限
+            <DownOutlined />
+          </button>
+        </div>
+        <div className="td-work-project-detail-submit">
+          <button type="button">
+            Auto
+            <DownOutlined />
+          </button>
+          <button type="button" title="语音输入" aria-label="语音输入">
+            <AudioOutlined />
+          </button>
+          <button type="button" className="td-work-project-detail-send" title="发送" aria-label="发送" onClick={onSend}>
+            <ArrowUpOutlined />
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ProjectDetailPage({ project, onToast }) {
+  const [activeTab, setActiveTab] = useState('activity');
+
+  return (
+    <section className="td-work-project-detail-page" aria-label={`${project.name}详情`}>
+      <div className="td-work-project-detail-shell">
+        <main className="td-work-project-detail-main">
+          <div className="td-work-project-detail-tabs" role="tablist" aria-label="项目工作区">
+            {PROJECT_WORK_TABS.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === tab.key}
+                className={activeTab === tab.key ? 'is-active' : ''}
+                onClick={() => setActiveTab(tab.key)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="td-work-project-feed-actions">
+            <button type="button" className="td-work-project-publish-btn" onClick={() => onToast('已进入发布留言')}>
+              <PlusOutlined />
+              发布留言
+            </button>
+            <span />
+            <button type="button" className="is-active" onClick={() => onToast('已筛选与我相关')}>
+              与我相关
+            </button>
+            <button type="button" onClick={() => onToast('已查看成员动态')}>
+              成员动态
+            </button>
+          </div>
+
+          <div className="td-work-project-feed">
+            <ProjectDetailBody activeTab={activeTab} />
+            <div className="td-work-project-feed-end">没有更多了</div>
+          </div>
+
+          <ProjectDetailComposer onSend={() => onToast('已发送到项目对话')} />
+        </main>
+
+        <aside className="td-work-project-config" aria-label="项目配置">
+          <div className="td-work-project-config-head">
+            <h2>项目配置</h2>
+            <button type="button" title="收起配置" aria-label="收起配置" onClick={() => onToast('已收起项目配置')}>
+              <SidebarToggleIcon />
+            </button>
+          </div>
+          <div className="td-work-project-config-list">
+            {PROJECT_CONFIG_ITEMS.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                className="td-work-project-config-card"
+                onClick={() => onToast(`已进入项目配置：${item.title}`)}
+              >
+                <span className="td-work-project-config-icon" aria-hidden="true">{item.icon}</span>
+                <span>
+                  <strong>{item.title}</strong>
+                  <em>{item.desc}</em>
+                </span>
+                <PlusOutlined />
+              </button>
+            ))}
+          </div>
+        </aside>
+      </div>
+    </section>
+  );
+}
+
+function ProjectsPage({ activeProject, onOpenProject, onCreateProject, onTemplateCreate, onToast }) {
+  if (activeProject) {
+    return <ProjectDetailPage project={activeProject} onToast={onToast} />;
+  }
+
+  return (
+    <ProjectListPage
+      onOpenProject={onOpenProject}
+      onCreateProject={onCreateProject}
+      onTemplateCreate={onTemplateCreate}
+    />
+  );
+}
+
 function WorkBrowserPanel({ onClose }) {
   return (
     <aside className="td-work-browser-panel" aria-label="右侧工作面板">
@@ -2680,7 +3070,12 @@ function FileQueryConversation() {
   );
 }
 
-export default function TdWorkModule({ accountMenu, accountMenuOpen, onAccountMenuOpenChange }) {
+export default function TdWorkModule({
+  accountMenu,
+  accountMenuOpen,
+  onAccountMenuOpenChange,
+  onOpenSpaceModule,
+}) {
   const [activeNav, setActiveNav] = useState('new-task');
   const [activeSideItem, setActiveSideItem] = useState('main-dialog');
   const [prompt, setPrompt] = useState('');
@@ -2696,6 +3091,7 @@ export default function TdWorkModule({ accountMenu, accountMenuOpen, onAccountMe
   const [modeKey, setModeKey] = useState('auto');
   const [taskTargetKey, setTaskTargetKey] = useState('local');
   const [projectKey, setProjectKey] = useState('company-local');
+  const [activeProject, setActiveProject] = useState(null);
   const [activeCategory, setActiveCategory] = useState('精选');
   const [connectorSearch, setConnectorSearch] = useState('');
   const [skillView, setSkillView] = useState('market');
@@ -3121,7 +3517,18 @@ export default function TdWorkModule({ accountMenu, accountMenuOpen, onAccountMe
                 setActiveSideItem('');
                 setCreateMenuOpen(false);
                 setPartnerPickerOpen(false);
+                if (item.key === 'project') {
+                  setActiveProject(null);
+                }
                 closeSidePanel(true);
+                if (item.key === 'space') {
+                  if (onOpenSpaceModule) {
+                    onOpenSpaceModule();
+                  } else {
+                    setToast('已打开：空间');
+                  }
+                  return;
+                }
                 if (item.key === 'dialog') {
                   setActivePartner(null);
                   setPartnerView('workspace');
@@ -3192,7 +3599,7 @@ export default function TdWorkModule({ accountMenu, accountMenuOpen, onAccountMe
         style={{ '--td-work-primary-size': `${sidePanelPrimaryRatio}%` }}
       >
         <section className="td-work-primary-pane" aria-label="主工作区">
-        <header className={`td-work-topbar ${activeNav === 'skills' ? 'is-skill-topbar' : ''} ${activeNav === 'skills' && skillView === 'mine' ? 'is-my-skill-topbar' : ''} ${activeNav === 'dialog' ? 'is-partner-topbar' : ''} ${activeNav === 'dialog' && activePartner ? 'is-partner-workspace-topbar' : ''} ${activeNav === 'dialog' && partnerView === 'manage' ? 'is-partner-manage-topbar' : ''} ${activeNav === 'scheduled' ? 'is-schedule-topbar' : ''} ${activeNav === 'cloud' ? 'is-material-topbar' : ''}`}>
+        <header className={`td-work-topbar ${activeNav === 'skills' ? 'is-skill-topbar' : ''} ${activeNav === 'skills' && skillView === 'mine' ? 'is-my-skill-topbar' : ''} ${activeNav === 'dialog' ? 'is-partner-topbar' : ''} ${activeNav === 'dialog' && activePartner ? 'is-partner-workspace-topbar' : ''} ${activeNav === 'dialog' && partnerView === 'manage' ? 'is-partner-manage-topbar' : ''} ${activeNav === 'scheduled' ? 'is-schedule-topbar' : ''} ${activeNav === 'project' ? 'is-project-topbar' : ''} ${activeNav === 'cloud' ? 'is-material-topbar' : ''}`}>
           {activeNav === 'dialog' && partnerView === 'manage' ? (
             <>
               <button
@@ -3212,7 +3619,7 @@ export default function TdWorkModule({ accountMenu, accountMenuOpen, onAccountMe
                     setPartnerManageSearch('');
                   }}
                 >
-                  伙伴对话
+                  智能体对话
                 </button>
                 <span>›</span>
                 <strong>管理</strong>
@@ -3238,7 +3645,7 @@ export default function TdWorkModule({ accountMenu, accountMenuOpen, onAccountMe
                     setPartnerPickerOpen(false);
                   }}
                 >
-                  伙伴对话
+                  智能体对话
                 </button>
                 <span>›</span>
                 {partnerView === 'detail' ? (
@@ -3265,7 +3672,7 @@ export default function TdWorkModule({ accountMenu, accountMenuOpen, onAccountMe
                   className="td-work-partner-detail-more"
                   title="更多"
                   aria-label="更多"
-                  onClick={() => setToast('已打开伙伴详情更多操作')}
+                  onClick={() => setToast('已打开智能体详情更多操作')}
                 >
                   <MoreOutlined />
                 </button>
@@ -3283,7 +3690,7 @@ export default function TdWorkModule({ accountMenu, accountMenuOpen, onAccountMe
                 <SidebarToggleIcon />
               </button>
               <div className="td-work-dialog-titlebar-copy">
-                <strong>伙伴对话</strong>
+                <strong>智能体对话</strong>
                 <span>内容由豆包 AI 生成</span>
               </div>
               <button
@@ -3347,6 +3754,41 @@ export default function TdWorkModule({ accountMenu, accountMenuOpen, onAccountMe
                 <PlusOutlined />
                 新建
               </button>
+            </>
+          ) : activeNav === 'project' ? (
+            <>
+              <button
+                type="button"
+                className="td-work-top-icon"
+                title={sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
+                aria-label={sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
+                onClick={() => setSidebarCollapsed((value) => !value)}
+              >
+                <SidebarToggleIcon />
+              </button>
+              {activeProject ? (
+                <>
+                  <div className="td-work-project-top-breadcrumb" aria-label="当前位置">
+                    <button type="button" onClick={() => setActiveProject(null)}>
+                      项目
+                    </button>
+                    <span>›</span>
+                    <strong>{activeProject.name}</strong>
+                  </div>
+                  <button type="button" className="td-work-project-invite-btn" onClick={() => setToast('已打开项目邀请')}>
+                    邀请
+                  </button>
+                </>
+              ) : (
+                <div className="td-work-project-top-tools">
+                  <button type="button" className="td-work-top-icon" title="搜索项目" aria-label="搜索项目" onClick={() => setToast('已聚焦项目搜索')}>
+                    <SearchOutlined />
+                  </button>
+                  <button type="button" className="td-work-top-icon" title="筛选项目" aria-label="筛选项目" onClick={() => setToast('已打开项目筛选')}>
+                    <FilterOutlined />
+                  </button>
+                </div>
+              )}
             </>
           ) : activeNav === 'skills' && skillView === 'mine' ? (
             <>
@@ -3424,7 +3866,7 @@ export default function TdWorkModule({ accountMenu, accountMenuOpen, onAccountMe
                   技能 · 连接器
                 </button>
                 <button type="button" className="is-active" role="tab" aria-selected="true">
-                  工作伙伴 · 小队
+                  智能体 · 小队
                 </button>
               </div>
 
@@ -3450,7 +3892,7 @@ export default function TdWorkModule({ accountMenu, accountMenuOpen, onAccountMe
                   }}
                 >
                   <TeamOutlined />
-                  我的伙伴
+                  我的智能体
                 </button>
               </div>
             </>
@@ -3479,7 +3921,7 @@ export default function TdWorkModule({ accountMenu, accountMenuOpen, onAccountMe
                     setPartnerMarketSearch('');
                   }}
                 >
-                  工作伙伴 · 小队
+                  智能体 · 小队
                 </button>
               </div>
 
@@ -3555,7 +3997,15 @@ export default function TdWorkModule({ accountMenu, accountMenuOpen, onAccountMe
           )}
         </header>
 
-        {activeNav === 'skills' && skillView === 'mine' ? (
+        {activeNav === 'project' ? (
+          <ProjectsPage
+            activeProject={activeProject}
+            onOpenProject={(item) => setActiveProject(item)}
+            onCreateProject={() => setToast('已进入新建项目')}
+            onTemplateCreate={(item) => setToast(`已使用模板：${item.name}`)}
+            onToast={setToast}
+          />
+        ) : activeNav === 'skills' && skillView === 'mine' ? (
           <MySkillsPage
             activeTab={mySkillTab}
             searchText={mySkillSearch}
@@ -3571,7 +4021,7 @@ export default function TdWorkModule({ accountMenu, accountMenuOpen, onAccountMe
             activeCategory={partnerMarketCategory}
             searchText={partnerMarketSearch}
             onCategoryChange={setPartnerMarketCategory}
-            onAddPartner={(item) => setToast(`已添加工作伙伴：${item.name}`)}
+            onAddPartner={(item) => setToast(`已添加智能体：${item.name}`)}
           />
         ) : activeNav === 'skills' ? (
           <SkillsConnectorsPage

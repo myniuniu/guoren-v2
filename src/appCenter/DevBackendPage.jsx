@@ -81,7 +81,7 @@ const myApps = [
   },
   {
     key: 'product-partner',
-    name: '云舒产品思维伙伴',
+    name: '云舒产品思维智能体',
     owner: '张洪磊',
     role: '所有者',
     status: '已启用',

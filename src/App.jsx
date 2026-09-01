@@ -1835,6 +1835,7 @@ function App({ onLogout }) {
           accountMenu={accountProfileMenu}
           accountMenuOpen={accountMenuOpen}
           onAccountMenuOpenChange={setAccountMenuOpen}
+          onOpenSpaceModule={openStandardMode}
         />
         {modeTransitionNode}
       </>

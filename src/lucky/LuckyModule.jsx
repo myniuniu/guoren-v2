@@ -295,7 +295,7 @@ const TEAM_QUICK_ACTIONS = {
 };
 
 const COMPOSER_CONTEXTS = [
-  { key: 'agent', label: '张洪磊的智能伙伴', icon: <RobotOutlined /> },
+  { key: 'agent', label: '张洪磊的智能体', icon: <RobotOutlined /> },
   { key: 'project', label: '进入项目工作', icon: <FolderOutlined /> },
   { key: 'browser', label: '云端浏览器', icon: <CloudServerOutlined />, hasNotice: true },
 ];
@@ -1188,7 +1188,7 @@ const MARKET_BEST_PRACTICES = [
     key: 'agent-workbench-screen',
     title: '智能体工作台首屏信息架构',
     category: '产品原型',
-    agent: '工作伙伴',
+    agent: '智能体',
     visual: 'dashboard',
     size: 'medium',
     color: '#3b82f6',
@@ -1292,7 +1292,7 @@ const INITIAL_AGENT_DATA = [
   },
   {
     key: 'class-teacher-helper',
-    name: '班主任智能体“班小助”——全场景智慧教育伙伴',
+    name: '班主任智能体“班小助”——全场景智慧教育智能体',
     desc: '服务班主任家校沟通、班级管理、学生成长和事务提醒。',
   },
   {
@@ -1522,8 +1522,8 @@ const DEFAULT_PROJECTS = [
 const CREATE_AGENT_OPTIONS = [
   {
     key: 'team',
-    title: '团队智能伙伴',
-    desc: '团队专属智能伙伴，聚焦多人协作场景，高效沉淀团队知识，跨群共享上下文',
+    title: '团队智能体',
+    desc: '团队专属智能体，聚焦多人协作场景，高效沉淀团队知识，跨群共享上下文',
     action: '添加',
     image: 'team',
     primary: true,
@@ -1553,7 +1553,7 @@ const AGENT_EDITOR_TABS = ['档案', '技能', '知识', '模型', '管理'];
 const AGENT_EDITOR_SKILLS = ['飞书卡片生成', '用户工作画像', '技能调试优化', 'AI生成技能'];
 const BUILT_IN_AGENT_KEY = 'personal';
 const BUILT_IN_AGENT_TABS = ['人设', '产物', '技能', '模型', '安全'];
-const BUILT_IN_AGENT_ARCHIVE_TABS = ['伙伴档案', '用户档案', '行为准则'];
+const BUILT_IN_AGENT_ARCHIVE_TABS = ['智能体档案', '用户档案', '行为准则'];
 const DEFAULT_AGENT_INSTRUCTION_MARKDOWN = `## 角色定位
 
 - 你是团队协作场景下的通用协作角色，可响应团队成员的各类常规咨询与协作需求，交付清晰明确的反馈结果。
@@ -1743,7 +1743,7 @@ const SECTION_COPY = {
   },
   partners: {
     title: '智能体',
-    description: '管理可协作的智能伙伴，按任务选择最合适的角色。',
+    description: '管理可协作的智能体，按任务选择最合适的角色。',
     cards: [
       { title: '教案协作者', desc: '辅助梳理目标、活动和板书设计。', accent: 'blue' },
       { title: '资源整理员', desc: '负责筛选、命名与结构化归档资料。', accent: 'green' },
@@ -2423,7 +2423,7 @@ function AutomationManualModal({ open, onClose }) {
                 <span>指派给</span>
                 <button type="button" className="lucky-automation-select-button">
                   <span className="lucky-automation-user-avatar" aria-hidden="true">张</span>
-                  张洪磊的智能伙伴
+                  张洪磊的智能体
                   <DownOutlined />
                 </button>
               </label>
@@ -2711,7 +2711,7 @@ function TaskDetailPage({ onSendReply }) {
                 <span className="lucky-task-mini-avatar">
                   <AgentAvatar type="personal" />
                 </span>
-                张洪磊的智能伙伴
+                张洪磊的智能体
               </dd>
             </div>
             <div>
@@ -4069,7 +4069,7 @@ function ProjectDetailPage({ project, onBackToProjects }) {
             <div className="lucky-project-context-row">
               <button type="button" onClick={() => message.info('选择智能体')}>
                 <RobotOutlined />
-                张洪磊的智能伙伴
+                张洪磊的智能体
                 <DownOutlined />
               </button>
               <button type="button" onClick={() => message.info('选择项目')}>
@@ -4577,7 +4577,7 @@ function TeamAgentModal({ open, onClose, onCreate }) {
         onClick={(event) => event.stopPropagation()}
       >
         <div className="lucky-team-agent-head">
-          <h2 id="lucky-team-agent-title">新建团队智能伙伴</h2>
+          <h2 id="lucky-team-agent-title">新建团队智能体</h2>
           <button
             type="button"
             className="lucky-create-agent-close"
@@ -5008,14 +5008,14 @@ function BuiltInAgentEditorPage({ agent, skills, onOpenSkillMarket, onBack, onSt
 
                 <div className="lucky-builtin-file-meta">
                   <h3>IDENTITY.md</h3>
-                  <p>智能伙伴的名字、性格和身份定义</p>
+                  <p>智能体的名字、性格和身份定义</p>
                 </div>
 
                 <article className="lucky-builtin-identity-doc">
                   <h2>IDENTITY.md - 你的名片</h2>
                   <p>第一次对话时填写。开始成为你自己。</p>
                   <ul>
-                    <li><strong>名字：</strong>张洪磊的智能伙伴</li>
+                    <li><strong>名字：</strong>张洪磊的智能体</li>
                     <li><strong>身份：</strong>（管家、搭档、影子幕僚、数字分身……什么都行，别急着定义）</li>
                     <li><strong>风格：</strong>（冷静精确，先给答案再解释 / 温暖周到，想得比你多但说得比你少 / 话不多，句句有用 / 毒舌但中肯，越吵越明白。或者，用自己的话描述）</li>
                     <li><strong>签名：</strong>（一句话，写给还不认识你的人）</li>
@@ -5483,7 +5483,7 @@ function AgentSquadEditorPage({ squad, agents, onBack, onStartNewTask, onSaveRul
               onBack();
             }}
           >
-            工作伙伴
+            智能体
           </button>
           <span aria-hidden="true">/</span>
           <strong>智能体小队详情</strong>
