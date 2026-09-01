@@ -27,6 +27,7 @@
   min-width: 0;
   height: 100vh;
   display: flex;
+  position: relative;
   color: var(--lucky-text);
   font-size: 14px;
   background: var(--lucky-bg-layer);
@@ -55,6 +56,20 @@
     1px 0 8px rgba(148, 163, 184, 0.1);
   backdrop-filter: var(--lucky-glass-blur);
   -webkit-backdrop-filter: var(--lucky-glass-blur);
+  overflow: hidden;
+  transition:
+    width 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    min-width 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    max-width 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    padding 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 180ms ease;
+}
+
+.lucky-sidebar.is-collapsed {
+  padding-right: 0;
+  padding-left: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .lucky-sidebar::before {
@@ -83,6 +98,31 @@
 .lucky-sidebar > * {
   position: relative;
   z-index: 1;
+}
+
+.lucky-sidebar-topbar {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 4px 8px;
+}
+
+.lucky-window-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding-left: 2px;
+}
+
+.lucky-window-dots span {
+  width: 10px;
+  height: 10px;
+  border: 1px solid rgba(159, 166, 176, 0.62);
+  border-radius: 999px;
+  background: #d8dce1;
 }
 
 .lucky-sidebar-profile {
@@ -151,9 +191,154 @@
   cursor: pointer;
 }
 
-.lucky-sidebar-tool:hover {
+.lucky-sidebar-tool:hover,
+.lucky-sidebar-tool.is-active {
   background: rgba(255, 255, 255, 0.72);
   color: #2f3640;
+}
+
+.lucky-sidebar-topbar .lucky-sidebar-tools {
+  gap: 14px;
+  margin-left: auto;
+}
+
+.lucky-sidebar-topbar .lucky-sidebar-tool {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  color: #32373f;
+  font-size: 20px;
+}
+
+.lucky-sidebar-floating-toggle {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 10;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid rgba(214, 220, 228, 0.9);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.86);
+  color: #343a43;
+  font-size: 19px;
+  box-shadow: 0 8px 18px rgba(31, 41, 55, 0.08);
+  cursor: pointer;
+  animation: lucky-sidebar-toggle-in 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.lucky-sidebar-floating-toggle:hover {
+  background: #ffffff;
+  border-color: rgba(190, 199, 211, 0.95);
+}
+
+.lucky-task-filter-dropdown {
+  padding-top: 8px;
+}
+
+.lucky-task-filter-menu {
+  width: 258px;
+  padding: 14px 12px;
+  border: 1px solid rgba(227, 230, 235, 0.9);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow:
+    0 18px 42px rgba(31, 41, 55, 0.1),
+    0 3px 10px rgba(31, 41, 55, 0.05);
+  color: #20242b;
+}
+
+.lucky-task-filter-label {
+  padding: 4px 10px 8px;
+  color: #8c939d;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.lucky-task-filter-options {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lucky-task-filter-option {
+  width: 100%;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #20242b;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lucky-task-filter-option:hover {
+  background: rgba(238, 240, 242, 0.7);
+}
+
+.lucky-task-filter-option.is-selected {
+  background: #ebedef;
+  color: #171a20;
+  font-weight: 700;
+}
+
+.lucky-task-filter-option .anticon {
+  color: #0fc593;
+  font-size: 16px;
+}
+
+.lucky-task-filter-divider {
+  height: 1px;
+  margin: 10px 0;
+  background: #edf0f3;
+}
+
+.lucky-task-filter-reset {
+  width: 100%;
+  height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #9ca2aa;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lucky-task-filter-reset:disabled {
+  color: #bdc2c9;
+  cursor: default;
+}
+
+.lucky-task-filter-reset:not(:disabled):hover {
+  background: rgba(238, 240, 242, 0.7);
+  color: #59616d;
+}
+
+@keyframes lucky-sidebar-toggle-in {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .lucky-work-mode-switch {
@@ -10833,6 +11018,14 @@
     max-width: none !important;
     border-right: 0;
     border-bottom: 1px solid rgba(228, 231, 235, 0.9);
+  }
+
+  .lucky-sidebar.is-collapsed {
+    width: 0 !important;
+    max-width: 0 !important;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-bottom: 0;
   }
 
   .lucky-sidebar-resize-handle {

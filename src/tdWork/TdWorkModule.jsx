@@ -14,7 +14,6 @@ import {
   ControlOutlined,
   CloseOutlined,
   DatabaseOutlined,
-  DeleteOutlined,
   DesktopOutlined,
   DownOutlined,
   EditOutlined,
@@ -38,6 +37,7 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import TopicDetail from '../TopicDetail';
+import ResourceLibrary from '../resourceLib/ResourceLibrary';
 import { getSceneTypeLabel, getSceneVisibilityLabel, normalizeTopicCardConfig, sceneApi } from '../scene/api';
 import SceneCreateModal from '../scene/SceneCreateModal';
 import { getSceneThemeCoverStyle } from '../scene/themeCovers';
@@ -48,9 +48,9 @@ const NAV_ITEMS = [
   { key: 'scheduled', label: '定时任务', icon: <ClockCircleOutlined /> },
   { key: 'project', label: '项目', icon: <ProjectOutlined /> },
   { key: 'space', label: '空间', icon: <AppstoreOutlined /> },
-  { key: 'skills', label: '技能 · 连接器 · 智能体', icon: <RobotOutlined /> },
+  { key: 'skills', label: '智能体 · 技能 · 连接器', icon: <RobotOutlined /> },
   { key: 'dialog', label: '智能体对话', icon: <MessageOutlined /> },
-  { key: 'cloud', label: '资料', icon: <FolderOutlined /> },
+  { key: 'cloud', label: '资料库', icon: <FolderOutlined /> },
 ];
 
 const PINNED_ITEMS = [
@@ -720,146 +720,6 @@ const PARTNER_MANAGE_TASKS = [
 
 const PARTNER_MANAGE_AUTOMATIONS = [];
 
-const MATERIAL_VIEWS = [
-  { key: 'recent', label: '最近' },
-  { key: 'mine', label: '我的' },
-  { key: 'shared', label: '共享' },
-  { key: 'favorite', label: '收藏' },
-];
-
-const MATERIAL_FILES = [
-  {
-    key: 'training-project',
-    title: '教师研修项目管理',
-    type: 'space',
-    badges: ['外部'],
-    owner: '李伶',
-    ownerTone: 'pink',
-    createdAt: '8月17日 11:33',
-    updatedAt: '8月25日 13:28',
-  },
-  {
-    key: 'agent-platform-plan',
-    title: '教师培训申请-智能体建设平台-张洪磊',
-    type: 'doc',
-    badges: [],
-    owner: '李伶',
-    ownerTone: 'pink',
-    createdAt: '8月11日 15:17',
-    updatedAt: '8月20日 17:20',
-  },
-  {
-    key: 'course-optimization',
-    title: '教师培训申请-优化定稿版-田宇(1)',
-    type: 'doc',
-    badges: [],
-    owner: '李伶',
-    ownerTone: 'pink',
-    createdAt: '8月11日 14:44',
-    updatedAt: '8月11日 14:44',
-  },
-  {
-    key: 'feedback-bug',
-    title: '培训平台 Bug 管理',
-    type: 'space',
-    badges: [],
-    owner: '杨金玮',
-    ownerTone: 'green',
-    createdAt: '8月10日 16:55',
-    updatedAt: '8月14日 08:48',
-  },
-  {
-    key: 'topic-resource',
-    title: '资料库与主题资料类型说明',
-    type: 'doc',
-    badges: [],
-    owner: '王海鸥',
-    ownerTone: 'orange',
-    createdAt: '8月10日 09:10',
-    updatedAt: '8月10日 09:53',
-  },
-  {
-    key: 'ai-product-plan',
-    title: 'AI原生产品底座-产品架构规划蓝图V2',
-    type: 'doc',
-    badges: [],
-    owner: '张洪磊',
-    ownerTone: 'orange',
-    createdAt: '8月7日 05:27',
-    updatedAt: '8月7日 05:28',
-  },
-  {
-    key: 'thinking',
-    title: '一些思考',
-    type: 'doc',
-    badges: [],
-    owner: '张洪磊',
-    ownerTone: 'orange',
-    createdAt: '8月6日 19:33',
-    updatedAt: '8月7日 10:16',
-  },
-  {
-    key: 'home',
-    title: '首页',
-    type: 'doc',
-    badges: [],
-    owner: '张洪磊',
-    ownerTone: 'orange',
-    createdAt: '8月6日 19:33',
-    updatedAt: '8月6日 19:33',
-  },
-  {
-    key: 'efficiency-upgrade-copy',
-    title: '你的首个效率升级包 Copy',
-    type: 'space',
-    badges: [],
-    owner: '多维表格助手',
-    ownerTone: 'purple',
-    createdAt: '8月2日 18:41',
-    updatedAt: '8月2日 18:41',
-  },
-  {
-    key: 'efficiency-upgrade',
-    title: '你的首个效率升级包',
-    type: 'sheet',
-    badges: [],
-    owner: '多维表格助手',
-    ownerTone: 'purple',
-    createdAt: '8月2日 18:41',
-    updatedAt: '8月2日 18:41',
-  },
-  {
-    key: 'training-notice',
-    title: '培训通知与签到表',
-    type: 'doc',
-    badges: [],
-    owner: '何佳',
-    ownerTone: 'sky',
-    createdAt: '7月31日 13:17',
-    updatedAt: '7月31日 13:17',
-  },
-  {
-    key: 'smart-edu-cloud-doc',
-    title: '国家智慧教育平台资源文档',
-    type: 'doc',
-    badges: [],
-    owner: '云文档助手',
-    ownerTone: 'blue',
-    createdAt: '7月30日 15:27',
-    updatedAt: '7月30日 15:27',
-  },
-  {
-    key: 'teacher-growth-template',
-    title: '教师成长档案模板',
-    type: 'sheet',
-    badges: ['模板', '外部'],
-    owner: '李天天',
-    ownerTone: 'mono',
-    createdAt: '3月13日 11:18',
-    updatedAt: '3月13日 19:19',
-  },
-];
-
 function SidebarSection({ title, children }) {
   return (
     <section className="td-work-side-section" aria-label={title}>
@@ -1341,266 +1201,6 @@ function PartnerAvatar({ avatar, tone }) {
     <span className={`td-work-partner-avatar td-work-partner-avatar-${tone}`} aria-hidden="true">
       <span>{avatar === 'squad' ? <RobotOutlined /> : avatar === 'guide' ? <UserOutlined /> : avatar === 'mentor' ? '学' : avatar === 'designer' ? '演' : avatar === 'forest' ? '1' : '张'}</span>
     </span>
-  );
-}
-
-function MaterialFileIcon({ type }) {
-  const icon = type === 'space'
-    ? <AppstoreOutlined />
-    : type === 'sheet'
-      ? <DatabaseOutlined />
-      : <FileTextOutlined />;
-
-  return (
-    <span className={`td-work-material-file-icon is-${type}`} aria-hidden="true">
-      {icon}
-    </span>
-  );
-}
-
-function MaterialOwnerAvatar({ name, tone }) {
-  return (
-    <span className="td-work-material-owner">
-      <span className={`td-work-material-owner-avatar is-${tone}`} aria-hidden="true">
-        {name.slice(0, 1)}
-      </span>
-      <span>{name}</span>
-    </span>
-  );
-}
-
-function MaterialsPage({
-  views,
-  activeView,
-  filterOpen,
-  viewMenuKey,
-  renamingKey,
-  renameValue,
-  onViewChange,
-  onAddView,
-  onFilterOpenChange,
-  onOpenViewMenu,
-  onCloseViewMenu,
-  onStartRenameView,
-  onCommitRenameView,
-  onCancelRenameView,
-  onRenameValueChange,
-  onDeleteView,
-  onToast,
-}) {
-  const filterRef = useRef(null);
-  const viewMenuRef = useRef(null);
-  const visibleFiles = MATERIAL_FILES.filter((item) => {
-    if (activeView === 'mine') return item.owner === '张洪磊';
-    if (activeView === 'shared') return item.badges.includes('外部');
-    if (activeView === 'favorite') return item.key === 'teacher-growth-template' || item.key === 'training-project';
-    return true;
-  });
-
-  useEffect(() => {
-    if (!filterOpen) return undefined;
-    const handlePointerDown = (event) => {
-      if (!filterRef.current?.contains(event.target)) {
-        onFilterOpenChange(false);
-      }
-    };
-    document.addEventListener('pointerdown', handlePointerDown);
-    return () => document.removeEventListener('pointerdown', handlePointerDown);
-  }, [filterOpen, onFilterOpenChange]);
-
-  useEffect(() => {
-    if (!viewMenuKey) return undefined;
-    const handlePointerDown = (event) => {
-      if (!viewMenuRef.current?.contains(event.target)) {
-        onCloseViewMenu();
-      }
-    };
-    document.addEventListener('pointerdown', handlePointerDown);
-    return () => document.removeEventListener('pointerdown', handlePointerDown);
-  }, [viewMenuKey, onCloseViewMenu]);
-
-  return (
-    <section className="td-work-material-page" aria-label="资料">
-      <div className="td-work-material-inner">
-        <div className="td-work-material-viewbar">
-          <div className="td-work-material-tabs" role="tablist" aria-label="资料视图">
-            {views.map((item, index) => {
-              const isActive = activeView === item.key;
-              const isRenaming = renamingKey === item.key;
-              const isMenuOpen = viewMenuKey === item.key;
-
-              return (
-                <span
-                  key={item.key}
-                  ref={isMenuOpen ? viewMenuRef : null}
-                  className={`td-work-material-tab-wrap ${isActive ? 'is-active' : ''} ${item.isCustom ? 'is-custom' : ''} ${item.isCustom && !views[index - 1]?.isCustom ? 'has-divider' : ''}`}
-                >
-                  {isRenaming ? (
-                    <input
-                      className="td-work-material-view-rename-input"
-                      value={renameValue}
-                      autoFocus
-                      aria-label="重命名视图"
-                      onChange={(event) => onRenameValueChange(event.target.value)}
-                      onBlur={(event) => {
-                        if (event.currentTarget.dataset.cancelRename === 'true') return;
-                        onCommitRenameView();
-                      }}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter') {
-                          event.preventDefault();
-                          onCommitRenameView();
-                        }
-                        if (event.key === 'Escape') {
-                          event.preventDefault();
-                          event.currentTarget.dataset.cancelRename = 'true';
-                          onCancelRenameView();
-                        }
-                      }}
-                    />
-                  ) : (
-                    <button
-                      type="button"
-                      className="td-work-material-tab-button"
-                      role="tab"
-                      aria-selected={isActive}
-                      onClick={() => onViewChange(item.key)}
-                    >
-                      {item.label}
-                    </button>
-                  )}
-
-                  {item.isCustom && isActive && !isRenaming ? (
-                    <button
-                      type="button"
-                      className={`td-work-material-view-more ${isMenuOpen ? 'is-open' : ''}`}
-                      title="视图操作"
-                      aria-label="视图操作"
-                      aria-haspopup="menu"
-                      aria-expanded={isMenuOpen}
-                      onClick={() => onOpenViewMenu(item.key)}
-                    >
-                      <MoreOutlined />
-                    </button>
-                  ) : null}
-
-                  {item.isCustom && isMenuOpen ? (
-                    <div className="td-work-material-view-menu" role="menu" aria-label={`${item.label}操作菜单`}>
-                      <button type="button" role="menuitem" onClick={() => onStartRenameView(item)}>
-                        <EditOutlined />
-                        <span>重命名</span>
-                      </button>
-                      <button type="button" role="menuitem" onClick={() => onDeleteView(item.key)}>
-                        <DeleteOutlined />
-                        <span>删除</span>
-                      </button>
-                    </div>
-                  ) : null}
-                </span>
-              );
-            })}
-            <button type="button" className="td-work-material-add-view" title="添加视图" aria-label="添加视图" onClick={onAddView}>
-              <PlusOutlined />
-            </button>
-          </div>
-
-          <div className="td-work-material-view-tools" aria-label="资料视图工具" ref={filterRef}>
-            <button
-              type="button"
-              className={filterOpen ? 'is-active' : ''}
-              title="筛选"
-              aria-label="筛选"
-              aria-haspopup="dialog"
-              aria-expanded={filterOpen}
-              onClick={() => {
-                onCloseViewMenu();
-                onFilterOpenChange(!filterOpen);
-              }}
-            >
-              <FilterOutlined />
-            </button>
-            <button type="button" title="排序" aria-label="排序" onClick={() => onToast('已打开资料排序')}>
-              <ControlOutlined />
-            </button>
-            <button type="button" className="is-active" title="列表视图" aria-label="列表视图">
-              <FileTextOutlined />
-            </button>
-            <button type="button" title="宫格视图" aria-label="宫格视图" onClick={() => onToast('已切换宫格视图')}>
-              <AppstoreOutlined />
-            </button>
-            {filterOpen ? (
-              <section className="td-work-material-filter-menu" role="dialog" aria-label="设置筛选条件">
-                <h2>设置筛选条件</h2>
-                <label>
-                  <span>文件标题</span>
-                  <input placeholder="请输入筛选关键词" />
-                </label>
-                <label>
-                  <span>类型</span>
-                  <span className="td-work-material-filter-select">
-                    <input placeholder="请选择文档类型" readOnly />
-                    <DownOutlined />
-                  </span>
-                </label>
-                <label>
-                  <span>所有者</span>
-                  <input placeholder="请输入用户名" />
-                </label>
-                <label>
-                  <span>共享者</span>
-                  <input placeholder="请输入用户名" />
-                </label>
-                <label>
-                  <span>所在对话</span>
-                  <input placeholder="请输入会话名称" />
-                </label>
-              </section>
-            ) : null}
-          </div>
-        </div>
-
-        <section className="td-work-material-table" aria-label="资料列表">
-          <header className="td-work-material-table-head">
-            <span>标题</span>
-            <span>所有者</span>
-            <button type="button" onClick={() => onToast('已按创建时间排序')}>
-              创建时间
-              <DownOutlined />
-            </button>
-            <button type="button" onClick={() => onToast('已按修改时间排序')}>
-              修改时间
-              <DownOutlined />
-            </button>
-            <span />
-          </header>
-
-          <div className="td-work-material-rows">
-            {visibleFiles.map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                className="td-work-material-row"
-                onClick={() => onToast(`已打开资料：${item.title}`)}
-              >
-                <span className="td-work-material-title">
-                  <MaterialFileIcon type={item.type} />
-                  <strong>{item.title}</strong>
-                  {item.badges.map((badge) => (
-                    <em key={badge}>{badge}</em>
-                  ))}
-                </span>
-                <MaterialOwnerAvatar name={item.owner} tone={item.ownerTone} />
-                <time>{item.createdAt}</time>
-                <time>{item.updatedAt}</time>
-                <span className="td-work-material-more" title="更多操作" aria-label="更多操作">
-                  <MoreOutlined />
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
-      </div>
-    </section>
   );
 }
 
@@ -3439,12 +3039,6 @@ export default function TdWorkModule({
   const [partnerManageTab, setPartnerManageTab] = useState('agents');
   const [partnerManageSearch, setPartnerManageSearch] = useState('');
   const [partnerPickerOpen, setPartnerPickerOpen] = useState(false);
-  const [materialViews, setMaterialViews] = useState(MATERIAL_VIEWS);
-  const [materialView, setMaterialView] = useState('recent');
-  const [materialFilterOpen, setMaterialFilterOpen] = useState(false);
-  const [materialViewMenuKey, setMaterialViewMenuKey] = useState(null);
-  const [materialRenamingKey, setMaterialRenamingKey] = useState(null);
-  const [materialRenameValue, setMaterialRenameValue] = useState('');
   const [enabledSkillKeys, setEnabledSkillKeys] = useState(
     () => new Set([
       ...MY_SKILLS.filter((item) => item.enabled).map((item) => item.key),
@@ -3973,82 +3567,6 @@ export default function TdWorkModule({
     setToast(`已保存自定义连接器：${connector.name}`);
   };
 
-  const handleSelectMaterialView = (key) => {
-    setMaterialView(key);
-    setMaterialFilterOpen(false);
-    setMaterialViewMenuKey(null);
-    setMaterialRenamingKey(null);
-  };
-
-  const handleAddMaterialView = () => {
-    const key = `untitled-${Date.now()}`;
-    setMaterialViews((current) => [
-      ...current,
-      { key, label: '未命名视图', isCustom: true },
-    ]);
-    setMaterialView(key);
-    setMaterialFilterOpen(true);
-    setMaterialViewMenuKey(null);
-    setMaterialRenamingKey(null);
-    setMaterialRenameValue('');
-  };
-
-  const handleOpenMaterialViewMenu = (key) => {
-    setMaterialView(key);
-    setMaterialFilterOpen(false);
-    setMaterialRenamingKey(null);
-    setMaterialViewMenuKey((current) => (current === key ? null : key));
-  };
-
-  const handleCloseMaterialViewMenu = () => {
-    setMaterialViewMenuKey(null);
-  };
-
-  const handleStartRenameMaterialView = (view) => {
-    setMaterialViewMenuKey(null);
-    setMaterialRenamingKey(view.key);
-    setMaterialRenameValue(view.label);
-  };
-
-  const handleCommitRenameMaterialView = () => {
-    if (!materialRenamingKey) return;
-    const nextLabel = materialRenameValue.trim() || '未命名视图';
-    setMaterialViews((current) => current.map((view) => (
-      view.key === materialRenamingKey ? { ...view, label: nextLabel } : view
-    )));
-    setMaterialRenamingKey(null);
-    setMaterialRenameValue('');
-  };
-
-  const handleCancelRenameMaterialView = () => {
-    setMaterialRenamingKey(null);
-    setMaterialRenameValue('');
-  };
-
-  const deleteMaterialView = (key) => {
-    setMaterialViews((current) => current.filter((view) => view.key !== key));
-    setMaterialView((current) => (current === key ? 'recent' : current));
-    setMaterialFilterOpen(false);
-    setMaterialViewMenuKey(null);
-    setMaterialRenamingKey(null);
-    setMaterialRenameValue('');
-  };
-
-  const handleDeleteMaterialView = (key) => {
-    const targetView = materialViews.find((view) => view.key === key);
-    setMaterialViewMenuKey(null);
-
-    Modal.confirm({
-      title: '确认删除这个视图？',
-      content: `删除「${targetView?.label || '未命名视图'}」后不可恢复。`,
-      okText: '删除',
-      cancelText: '取消',
-      okButtonProps: { danger: true },
-      centered: true,
-      onOk: () => deleteMaterialView(key),
-    });
-  };
-
   return (
     <div className={`td-work-module ${sidebarCollapsed ? 'is-sidebar-collapsed' : ''}`}>
       <aside className="td-work-sidebar" aria-label="工作导航">
@@ -4152,7 +3670,7 @@ export default function TdWorkModule({
         style={{ '--td-work-primary-size': `${sidePanelPrimaryRatio}%` }}
       >
         <section className="td-work-primary-pane" aria-label="主工作区">
-        <header className={`td-work-topbar ${activeNav === 'skills' ? 'is-skill-topbar' : ''} ${activeNav === 'skills' && skillView === 'mine' ? 'is-my-skill-topbar' : ''} ${activeNav === 'dialog' ? 'is-partner-topbar' : ''} ${activeNav === 'dialog' && activePartner ? 'is-partner-workspace-topbar' : ''} ${activeNav === 'dialog' && partnerView === 'manage' ? 'is-partner-manage-topbar' : ''} ${activeNav === 'scheduled' ? 'is-schedule-topbar' : ''} ${activeNav === 'project' ? 'is-project-topbar' : ''} ${activeNav === 'space' ? 'is-space-topbar' : ''} ${activeNav === 'space' && activeSpace ? 'is-space-detail-topbar' : ''} ${activeNav === 'cloud' ? 'is-material-topbar' : ''}`}>
+        <header className={`td-work-topbar ${activeNav === 'skills' ? 'is-skill-topbar' : ''} ${activeNav === 'skills' && skillView === 'mine' ? 'is-my-skill-topbar' : ''} ${activeNav === 'dialog' ? 'is-partner-topbar' : ''} ${activeNav === 'dialog' && activePartner ? 'is-partner-workspace-topbar' : ''} ${activeNav === 'dialog' && partnerView === 'manage' ? 'is-partner-manage-topbar' : ''} ${activeNav === 'scheduled' ? 'is-schedule-topbar' : ''} ${activeNav === 'project' ? 'is-project-topbar' : ''} ${activeNav === 'space' ? 'is-space-topbar' : ''} ${activeNav === 'space' && activeSpace ? 'is-space-detail-topbar' : ''} ${activeNav === 'cloud' ? 'is-resource-library-topbar' : ''}`}>
           {activeNav === 'dialog' && partnerView === 'manage' ? (
             <>
               <button
@@ -4260,39 +3778,7 @@ export default function TdWorkModule({
                 管理
               </button>
             </>
-          ) : activeNav === 'cloud' ? (
-            <>
-              <button
-                type="button"
-                className="td-work-top-icon"
-                title={sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
-                aria-label={sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
-                onClick={() => setSidebarCollapsed((value) => !value)}
-              >
-                <SidebarToggleIcon />
-              </button>
-              <div className="td-work-material-top-actions">
-                <button type="button" className="td-work-material-new-btn" onClick={() => setToast('已进入新建资料')}>
-                  <PlusOutlined />
-                  新建
-                </button>
-                <button type="button" className="td-work-material-top-btn" onClick={() => setToast('已进入上传资料')}>
-                  <UploadOutlined />
-                  上传
-                </button>
-                <button type="button" className="td-work-material-top-btn" onClick={() => setToast('已打开资料搜索')}>
-                  <SearchOutlined />
-                  搜索
-                </button>
-              </div>
-              <div className="td-work-material-top-right">
-                <button type="button" className="td-work-material-more-btn" title="更多" aria-label="更多" onClick={() => setToast('已打开资料更多操作')}>
-                  <MoreOutlined />
-                </button>
-                <span className="td-work-material-storage">已使用 916KB</span>
-              </div>
-            </>
-          ) : activeNav === 'scheduled' ? (
+          ) : activeNav === 'cloud' ? null : activeNav === 'scheduled' ? (
             <>
               <button
                 type="button"
@@ -4753,25 +4239,9 @@ export default function TdWorkModule({
             />
           )
         ) : activeNav === 'cloud' ? (
-          <MaterialsPage
-            views={materialViews}
-            activeView={materialView}
-            filterOpen={materialFilterOpen}
-            viewMenuKey={materialViewMenuKey}
-            renamingKey={materialRenamingKey}
-            renameValue={materialRenameValue}
-            onViewChange={handleSelectMaterialView}
-            onAddView={handleAddMaterialView}
-            onFilterOpenChange={setMaterialFilterOpen}
-            onOpenViewMenu={handleOpenMaterialViewMenu}
-            onCloseViewMenu={handleCloseMaterialViewMenu}
-            onStartRenameView={handleStartRenameMaterialView}
-            onCommitRenameView={handleCommitRenameMaterialView}
-            onCancelRenameView={handleCancelRenameMaterialView}
-            onRenameValueChange={setMaterialRenameValue}
-            onDeleteView={handleDeleteMaterialView}
-            onToast={setToast}
-          />
+          <section className="td-work-resource-library-page" aria-label="资料库">
+            <ResourceLibrary />
+          </section>
         ) : activeNav === 'scheduled' ? (
           <ScheduledTasksPage
             prompt={prompt}

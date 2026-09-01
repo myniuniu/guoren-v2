@@ -25,14 +25,8 @@
     radial-gradient(circle at 14% 8%, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0) 32%),
     radial-gradient(circle at 84% 82%, rgba(212, 216, 223, 0.1) 0%, rgba(255, 255, 255, 0) 40%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 100%);
-  --finder-preview-surface-bg:
-    linear-gradient(180deg, rgba(249, 250, 251, 0.992) 0%, rgba(245, 246, 247, 0.982) 52%, rgba(240, 242, 244, 0.972) 100%),
-    radial-gradient(circle at 16% 10%, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0) 30%),
-    radial-gradient(circle at 84% 84%, rgba(212, 217, 223, 0.14) 0%, rgba(255, 255, 255, 0) 36%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(242, 244, 247, 0.08) 100%);
-  --finder-preview-surface-overlay:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 24%),
-    linear-gradient(90deg, rgba(226, 230, 235, 0.12) 0%, rgba(255, 255, 255, 0.08) 14%, rgba(255, 255, 255, 0) 28%);
+  --finder-preview-surface-bg: #ffffff;
+  --finder-preview-surface-overlay: none;
   --finder-footer-border: rgba(211, 219, 228, 0.54);
   --finder-footer-bg:
     linear-gradient(180deg, rgba(248, 249, 250, 0.95) 0%, rgba(244, 246, 247, 0.92) 100%),
@@ -2818,7 +2812,7 @@
   isolation: isolate;
   min-height: 0;
   overflow-y: auto;
-  background: var(--finder-preview-surface-bg);
+  background: #ffffff;
   display: flex;
   flex-direction: column;
   border-left: none;
@@ -2835,10 +2829,10 @@
 
 .finder-preview-panel::before,
 .finder-column-preview::before {
-  content: '';
+  content: none;
   position: absolute;
   inset: 0;
-  background: var(--finder-preview-surface-overlay);
+  background: transparent;
   pointer-events: none;
   z-index: 0;
 }
@@ -2852,6 +2846,7 @@
   padding: 40px 28px;
   position: relative;
   z-index: 1;
+  background: #ffffff;
 }
 
 .finder-preview-empty-add-btn.ant-btn {
@@ -3217,13 +3212,15 @@
   justify-content: center;
   width: min(100%, 420px);
   gap: 18px;
+  background: transparent;
+  box-shadow: none;
   text-align: center;
 }
 
 .finder-preview-folder-icon {
   font-size: 92px;
   color: #4b8fdb;
-  filter: drop-shadow(0 10px 18px rgba(75, 143, 219, 0.14));
+  filter: none;
 }
 
 .finder-preview-folder-hint {

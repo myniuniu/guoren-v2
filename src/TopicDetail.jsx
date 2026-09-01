@@ -238,6 +238,34 @@ const AI_SUPERVISION_SUGGESTION_TEMPLATES = Object.freeze([
   (scopeLabel) => `请梳理「${scopeLabel}」的指标口径、证据要求和风险提醒`,
   (scopeLabel) => `请根据「${scopeLabel}」生成问题反馈、整改建议和报告摘要`,
 ]);
+const SPACE_CONFIG_ITEMS = Object.freeze([
+  {
+    key: 'instruction',
+    title: '指令',
+    desc: '设定项目背景与规范，让 AI 与你高效协作',
+  },
+  {
+    key: 'connector',
+    title: '连接器',
+    desc: '连接外部服务，扩展 AI 能力',
+  },
+  {
+    key: 'expert',
+    title: '专家',
+    count: 1,
+    avatars: [{ key: 'expert-1', label: '督' }],
+  },
+  {
+    key: 'skill',
+    title: '技能',
+    desc: '配置项目技能，让 AI 精准执行任务',
+  },
+  {
+    key: 'automation',
+    title: '自动化',
+    desc: '让 AI 按计划自动执行任务',
+  },
+]);
 const COURSE_AI_GENERATION_SKILLS = Object.freeze([
   { key: 'course', label: '课程生成', description: '生成课程蓝图、目标、活动与课时安排。' },
   { key: 'courseware', label: '课件生成', description: '生成适合授课展示的课件内容与页面结构。' },
@@ -1761,7 +1789,8 @@ function TopicDetail({
   const [aiSelectedTools, setAiSelectedTools] = useState([]);
   const [aiInternetSearchEnabled, setAiInternetSearchEnabled] = useState(true);
   const [aiPromptValue, setAiPromptValue] = useState('');
-  const [aiLibraryCollapsed, setAiLibraryCollapsed] = useState(false);
+  const [aiLibraryCollapsed, setAiLibraryCollapsed] = useState(true);
+  const [aiRightPanelView, setAiRightPanelView] = useState('library');
   const [aiFloatingPanelOffset, setAiFloatingPanelOffset] = useState(0);
   const [aiVisibleSkillCount, setAiVisibleSkillCount] = useState(4);
   const [aiSuggestionOpen, setAiSuggestionOpen] = useState(false);
@@ -1871,7 +1900,7 @@ function TopicDetail({
     setAiSelectedTools([]);
     setAiInternetSearchEnabled(true);
     setAiPromptValue('');
-    setAiLibraryCollapsed(false);
+    setAiLibraryCollapsed(true);
     setAiSuggestionOpen(false);
     setSelectedPracticeLabKey(PRACTICE_LAB_OPTIONS[0]?.value || null);
     setResourcePanelView(loadTopicPanelView(topicStorageScopeKey));
@@ -7429,6 +7458,16 @@ function TopicDetail({
           ) : null}
           <UserOutlined className="header-icon" />
           <CommentOutlined className="header-icon" />
+          {activeTab === 'ai' ? (
+            <button
+              type="button"
+              className={`header-icon topic-ai-header-panel-toggle ${!aiLibraryCollapsed ? 'is-active' : ''}`}
+              aria-label={aiLibraryCollapsed ? '展开侧栏' : '收起侧栏'}
+              onClick={() => setAiLibraryCollapsed((prev) => !prev)}
+            >
+              {aiLibraryCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -7652,7 +7691,7 @@ function TopicDetail({
                 {renderKnowledgeGraphPreviewPane()}
               </>
             ) : activeTab === 'ai' ? (
-              <div className="topic-ai-shell">
+              <div className={`topic-ai-shell ${aiLibraryCollapsed ? 'topic-ai-shell-panel-collapsed' : 'topic-ai-shell-panel-open'}`}>
                 <div className="topic-ai-main">
                   <div className="topic-ai-workbench">
                     <div className="topic-ai-toolbar">
@@ -7663,14 +7702,34 @@ function TopicDetail({
                         <span>{aiAgentLabel}</span>
                       </div>
                       <div className="topic-ai-toolbar-actions">
+                        <button
+                          type="button"
+                          className={`topic-ai-toolbar-action topic-ai-config-trigger ${aiRightPanelView === 'config' && !aiLibraryCollapsed ? 'is-active' : ''}`}
+                          aria-pressed={aiRightPanelView === 'config' && !aiLibraryCollapsed}
+                          onClick={() => {
+                            setAiRightPanelView('config');
+                            setAiLibraryCollapsed((prev) => (aiRightPanelView === 'config' ? !prev : false));
+                          }}
+                        >
+                          <SettingOutlined />
+                          <span>配置</span>
+                        </button>
                         <span className="topic-ai-toolbar-action">
                           <CommentOutlined />
                           <span>新会话</span>
                         </span>
-                        <span className="topic-ai-toolbar-action">
+                        <button
+                          type="button"
+                          className={`topic-ai-toolbar-action topic-ai-record-trigger ${aiRightPanelView === 'library' && !aiLibraryCollapsed ? 'is-active' : ''}`}
+                          aria-pressed={aiRightPanelView === 'library' && !aiLibraryCollapsed}
+                          onClick={() => {
+                            setAiRightPanelView('library');
+                            setAiLibraryCollapsed((prev) => (aiRightPanelView === 'library' ? !prev : false));
+                          }}
+                        >
                           <EyeOutlined />
                           <span>共创记录</span>
-                        </span>
+                        </button>
                       </div>
                     </div>
 
@@ -8054,35 +8113,61 @@ function TopicDetail({
                   </div>
                 </div>
 
-                <aside className={`topic-ai-library ${aiLibraryCollapsed ? 'topic-ai-library-collapsed' : ''}`}>
-                  <div className="topic-ai-library-head">
-                    <span className="topic-ai-library-title">库</span>
-                    <button
-                      type="button"
-                      className="topic-ai-library-toggle"
-                      aria-label={aiLibraryCollapsed ? '展开库' : '收起库'}
-                      onClick={() => setAiLibraryCollapsed((prev) => !prev)}
-                    >
-                      {aiLibraryCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-                    </button>
+                <aside
+                  className={`topic-ai-library ${aiRightPanelView === 'config' ? 'topic-ai-config-panel' : ''} ${aiLibraryCollapsed ? 'topic-ai-library-collapsed' : ''}`}
+                  aria-hidden={aiLibraryCollapsed ? 'true' : undefined}
+                >
+                  <div className="topic-ai-library-inner">
+                    <div className="topic-ai-library-head">
+                      <span className="topic-ai-library-title">{aiRightPanelView === 'config' ? '空间配置' : '库'}</span>
+                    </div>
+                    {aiRightPanelView === 'config' ? (
+                      <div className="topic-ai-config-list">
+                        {SPACE_CONFIG_ITEMS.map((item) => (
+                          <button
+                            key={item.key}
+                            type="button"
+                            className="topic-ai-config-card"
+                            onClick={() => message.info(`已进入空间配置：${item.title}`)}
+                          >
+                            <span className="topic-ai-config-card-copy">
+                              <strong>
+                                {item.title}
+                                {item.count ? <span>{item.count}</span> : null}
+                              </strong>
+                              {item.desc ? <em>{item.desc}</em> : null}
+                              {item.avatars?.length ? (
+                                <span className="topic-ai-config-avatars" aria-label={`${item.title}列表`}>
+                                  {item.avatars.map((avatar) => (
+                                    <span key={avatar.key} className="topic-ai-config-avatar">
+                                      {avatar.label}
+                                    </span>
+                                  ))}
+                                </span>
+                              ) : null}
+                            </span>
+                            <PlusOutlined className="topic-ai-config-card-add" />
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <>
+                        <div className="topic-ai-library-body">
+                          <Empty
+                            image={Empty.PRESENTED_IMAGE_SIMPLE}
+                            description="暂无数据"
+                            className="topic-ai-library-empty"
+                          />
+                        </div>
+                        <div className="topic-ai-library-footer">
+                          <button type="button" className="topic-ai-library-create">
+                            <PlusOutlined />
+                            <span>新建笔记</span>
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
-                  {!aiLibraryCollapsed ? (
-                    <>
-                      <div className="topic-ai-library-body">
-                        <Empty
-                          image={Empty.PRESENTED_IMAGE_SIMPLE}
-                          description="暂无数据"
-                          className="topic-ai-library-empty"
-                        />
-                      </div>
-                      <div className="topic-ai-library-footer">
-                        <button type="button" className="topic-ai-library-create">
-                          <PlusOutlined />
-                          <span>新建笔记</span>
-                        </button>
-                      </div>
-                    </>
-                  ) : null}
                 </aside>
               </div>
             ) : isPracticeLabMode ? (

@@ -18,13 +18,16 @@ import {
   EditOutlined,
   EllipsisOutlined,
   FireOutlined,
+  FilterOutlined,
   FileImageOutlined,
   FilePptOutlined,
   FileTextOutlined,
   FolderOutlined,
   HomeOutlined,
   LockOutlined,
+  MenuFoldOutlined,
   MenuOutlined,
+  MenuUnfoldOutlined,
   MinusOutlined,
   PlusOutlined,
   ProductOutlined,
@@ -48,6 +51,22 @@ const MIN_LUCKY_SIDEBAR_WIDTH = 188;
 const MAX_LUCKY_SIDEBAR_WIDTH = 320;
 const INTRO_TASK_SECTION_KEY = 'task-intro-guide';
 const INTRO_TASK_KEY = 'intro-guide';
+
+const TASK_STATUS_FILTERS = [
+  { key: 'all', label: '全部状态' },
+  { key: 'in-progress', label: '进行中' },
+  { key: 'completed', label: '已完成' },
+  { key: 'failed', label: '失败' },
+  { key: 'pending', label: '待处理' },
+  { key: 'planned', label: '规划中' },
+];
+
+const TASK_TIME_FILTERS = [
+  { key: 'all', label: '全部时间' },
+  { key: 'today', label: '今天' },
+  { key: 'last-7-days', label: '最近 7 天' },
+  { key: 'last-30-days', label: '最近 30 天' },
+];
 
 function getBoundedLuckySidebarWidth(value) {
   const width = Number(value);
@@ -5817,6 +5836,10 @@ function LuckyModule() {
   const [createProjectOpen, setCreateProjectOpen] = useState(false);
   const [skillMarketOpen, setSkillMarketOpen] = useState(false);
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [taskFilterOpen, setTaskFilterOpen] = useState(false);
+  const [taskStatusFilter, setTaskStatusFilter] = useState('all');
+  const [taskTimeFilter, setTaskTimeFilter] = useState('all');
   const sidebarWidthRef = useRef(sidebarWidth);
 
   useEffect(() => {
@@ -5887,6 +5910,7 @@ function LuckyModule() {
   const activeCodeApp = activeCodeAppKey ? CODE_APP_DETAILS[activeCodeAppKey] : null;
   const showCodeAppDetail = isCodeMode && Boolean(activeCodeApp);
   const activeNavIndex = Math.max(0, NAV_ITEMS.findIndex((item) => item.key === activeSection));
+  const hasTaskFilter = taskStatusFilter !== 'all' || taskTimeFilter !== 'all';
   const mineAgents = useMemo(
     () => [...AGENT_CARDS, ...createdAgents].filter((agent) => !deletedAgentKeys.includes(agent.key)),
     [createdAgents, deletedAgentKeys],
@@ -6041,32 +6065,125 @@ function LuckyModule() {
     setEditingSquad(null);
   };
 
+  const renderTaskFilterOption = (item, activeKey, onSelect) => {
+    const selected = activeKey === item.key;
+    return (
+      <button
+        key={item.key}
+        type="button"
+        className={`lucky-task-filter-option ${selected ? 'is-selected' : ''}`}
+        role="menuitemradio"
+        aria-checked={selected}
+        onClick={() => onSelect(item.key)}
+      >
+        <span>{item.label}</span>
+        {selected ? <CheckOutlined /> : null}
+      </button>
+    );
+  };
+
+  const taskFilterPanel = (
+    <div className="lucky-task-filter-menu" role="menu" aria-label="任务筛选">
+      <div className="lucky-task-filter-label">筛选状态</div>
+      <div className="lucky-task-filter-options">
+        {TASK_STATUS_FILTERS.map((item) => renderTaskFilterOption(item, taskStatusFilter, setTaskStatusFilter))}
+      </div>
+      <div className="lucky-task-filter-divider" />
+      <div className="lucky-task-filter-label">筛选时间</div>
+      <div className="lucky-task-filter-options">
+        {TASK_TIME_FILTERS.map((item) => renderTaskFilterOption(item, taskTimeFilter, setTaskTimeFilter))}
+      </div>
+      <div className="lucky-task-filter-divider" />
+      <button
+        type="button"
+        className="lucky-task-filter-reset"
+        disabled={!hasTaskFilter}
+        onClick={() => {
+          setTaskStatusFilter('all');
+          setTaskTimeFilter('all');
+        }}
+      >
+        重置筛选条件
+      </button>
+    </div>
+  );
+
   return (
-    <div className="lucky-module">
+    <div className={`lucky-module ${sidebarCollapsed ? 'is-sidebar-collapsed' : ''}`}>
       {!showCodeAppDetail ? (
         <>
+          {sidebarCollapsed ? (
+            <button
+              type="button"
+              className="lucky-sidebar-floating-toggle"
+              title="展开侧栏"
+              aria-label="展开侧栏"
+              onClick={() => setSidebarCollapsed(false)}
+            >
+              <MenuUnfoldOutlined />
+            </button>
+          ) : null}
           <aside
-            className={`lucky-sidebar ${isCodeMode ? 'is-code-mode' : ''}`}
-            style={{ width: sidebarWidth, minWidth: sidebarWidth, maxWidth: sidebarWidth }}
+            className={`lucky-sidebar ${isCodeMode ? 'is-code-mode' : ''} ${sidebarCollapsed ? 'is-collapsed' : ''}`}
+            style={
+              sidebarCollapsed
+                ? { width: 0, minWidth: 0, maxWidth: 0 }
+                : { width: sidebarWidth, minWidth: sidebarWidth, maxWidth: sidebarWidth }
+            }
           >
-            <div className="lucky-sidebar-profile">
-              <div className="lucky-sidebar-brand">
-                <span className="lucky-brand-logo" aria-hidden="true" />
-                <span className="lucky-sidebar-name">lucky</span>
+            <div className="lucky-sidebar-topbar">
+              <div className="lucky-window-dots" aria-hidden="true">
+                <span />
+                <span />
+                <span />
               </div>
               <div className="lucky-sidebar-tools">
                 <button
                   type="button"
                   className="lucky-sidebar-tool"
-                  title="搜索"
-                  aria-label="搜索"
+                  title="收起侧栏"
+                  aria-label="收起侧栏"
+                  onClick={() => {
+                    setTaskFilterOpen(false);
+                    setSidebarCollapsed(true);
+                  }}
+                >
+                  <MenuFoldOutlined />
+                </button>
+                <button
+                  type="button"
+                  className="lucky-sidebar-tool"
+                  title="搜索任务"
+                  aria-label="搜索任务"
                   onClick={() => setGlobalSearchOpen(true)}
                 >
                   <SearchOutlined />
                 </button>
-                <button type="button" className="lucky-sidebar-tool" title="收起侧栏" aria-label="收起侧栏">
-                  <ControlOutlined />
-                </button>
+                <Dropdown
+                  trigger={['click']}
+                  open={taskFilterOpen}
+                  onOpenChange={setTaskFilterOpen}
+                  popupRender={() => taskFilterPanel}
+                  placement="bottomRight"
+                  classNames={{ root: 'lucky-task-filter-dropdown' }}
+                  destroyOnHidden
+                >
+                  <button
+                    type="button"
+                    className={`lucky-sidebar-tool ${taskFilterOpen || hasTaskFilter ? 'is-active' : ''}`}
+                    title="筛选任务"
+                    aria-label="筛选任务"
+                  >
+                    <FilterOutlined />
+                  </button>
+                </Dropdown>
+              </div>
+            </div>
+
+            <div className="lucky-sidebar-profile">
+              <div className="lucky-sidebar-brand">
+                <span className="lucky-brand-logo" aria-hidden="true" />
+                <span className="lucky-sidebar-name">lucky</span>
               </div>
             </div>
 
@@ -6131,13 +6248,15 @@ function LuckyModule() {
               </>
             )}
           </aside>
-          <div
-            className="lucky-sidebar-resize-handle"
-            role="separator"
-            aria-orientation="vertical"
-            aria-label="调整侧栏宽度"
-            onPointerDown={handleSidebarResizeStart}
-          />
+          {!sidebarCollapsed ? (
+            <div
+              className="lucky-sidebar-resize-handle"
+              role="separator"
+              aria-orientation="vertical"
+              aria-label="调整侧栏宽度"
+              onPointerDown={handleSidebarResizeStart}
+            />
+          ) : null}
         </>
       ) : null}
 
