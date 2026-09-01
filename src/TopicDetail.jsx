@@ -1672,6 +1672,7 @@ function TopicDetail({
   sceneTypeLabel,
   sceneId = null,
   sceneType = null,
+  headerLeftContent = null,
 }) {
   const topicAdminConfig = sceneConfig ? null : getTopicAdminConfig(topicTitle);
   const topicStorageScopeKey = storageScopeKey || topicAdminConfig?.storageScopeKey || 'default';
@@ -7268,27 +7269,31 @@ function TopicDetail({
     <div className={`topic-detail ${sceneConfig ? 'topic-detail-scene-theme' : ''}`} style={detailThemeStyle}>
       <div className="detail-header">
         <div className="detail-header-left">
-          <HomeOutlined className="detail-home-icon" onClick={onBack} />
-          <span className="detail-title" title={sceneDescription || topicTitle}>{topicTitle}</span>
-          {sceneConfig ? (
-            <Tag
-              style={{
-                marginLeft: 10,
-                borderRadius: 999,
-                padding: '0 10px',
-                color: sceneTheme?.accentColor || '#1677ff',
-                borderColor: hexToRgba(sceneTheme?.accentColor || '#1677ff', 0.24),
-                background: hexToRgba(sceneTheme?.accentColor || '#1677ff', 0.12),
-              }}
-            >
-              {sceneTheme?.badgeText || sceneTypeLabel || '场景模板'}
-            </Tag>
-          ) : null}
-          {topicAdminConfig ? (
-            <Tag color="blue" style={{ marginLeft: 10, borderRadius: 999, padding: '0 10px' }}>
-              研习社频道后台
-            </Tag>
-          ) : null}
+          {headerLeftContent || (
+            <>
+              <HomeOutlined className="detail-home-icon" onClick={onBack} />
+              <span className="detail-title" title={sceneDescription || topicTitle}>{topicTitle}</span>
+              {sceneConfig ? (
+                <Tag
+                  style={{
+                    marginLeft: 10,
+                    borderRadius: 999,
+                    padding: '0 10px',
+                    color: sceneTheme?.accentColor || '#1677ff',
+                    borderColor: hexToRgba(sceneTheme?.accentColor || '#1677ff', 0.24),
+                    background: hexToRgba(sceneTheme?.accentColor || '#1677ff', 0.12),
+                  }}
+                >
+                  {sceneTheme?.badgeText || sceneTypeLabel || '场景模板'}
+                </Tag>
+              ) : null}
+              {topicAdminConfig ? (
+                <Tag color="blue" style={{ marginLeft: 10, borderRadius: 999, padding: '0 10px' }}>
+                  研习社频道后台
+                </Tag>
+              ) : null}
+            </>
+          )}
         </div>
         <div className="detail-header-center">
           <div className={`detail-tabs ${tabs.length === 1 ? 'detail-tabs-single' : ''}`} ref={detailTabsRef}>

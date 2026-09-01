@@ -45,6 +45,7 @@ export default function SceneCreateModal({
   defaultMenuKey,
   defaultSceneGroupName,
   mode = 'scene',
+  className = '',
   onCancel,
   onSubmit,
 }) {
@@ -331,7 +332,7 @@ export default function SceneCreateModal({
       width={modalWidth}
       centered
       destroyOnClose
-      className="scene-create-modal"
+      className={`scene-create-modal ${className}`.trim()}
     >
       <Form form={form} layout="vertical">
         <Form.Item name="id" hidden>

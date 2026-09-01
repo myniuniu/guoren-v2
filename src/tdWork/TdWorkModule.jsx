@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Dropdown, Modal } from 'antd';
+import { Button, Card, Dropdown, Empty, Input, Modal, Segmented, Tag, message } from 'antd';
 import {
   AppstoreOutlined,
   ArrowUpOutlined,
@@ -18,6 +18,7 @@ import {
   DesktopOutlined,
   DownOutlined,
   EditOutlined,
+  EllipsisOutlined,
   FileTextOutlined,
   FilterOutlined,
   FolderAddOutlined,
@@ -36,6 +37,10 @@ import {
   UploadOutlined,
   UserOutlined,
 } from '@ant-design/icons';
+import TopicDetail from '../TopicDetail';
+import { getSceneTypeLabel, getSceneVisibilityLabel, normalizeTopicCardConfig, sceneApi } from '../scene/api';
+import SceneCreateModal from '../scene/SceneCreateModal';
+import { getSceneThemeCoverStyle } from '../scene/themeCovers';
 import './TdWorkModule.css';
 
 const NAV_ITEMS = [
@@ -63,6 +68,17 @@ const RECENT_ITEMS = [
   { key: 'lesson-feedback', label: '课堂观察反馈整理', tone: 'pink', icon: <RobotOutlined /> },
   { key: 'course-polish', label: '研修课程文案润色', tone: 'purple', icon: <EditOutlined /> },
 ];
+
+const DEFAULT_SPACE_SCENE_GROUP_NAME = '人工智能通识体系';
+
+const AI_SPACE_DETAIL_THEME = {
+  coverSource: 'COLOR',
+  coverPresetId: null,
+  coverStart: '#f4f5f7',
+  coverEnd: '#ffffff',
+  accentColor: '#606977',
+  topicThemeMode: 'SCENE',
+};
 
 const RECOMMENDATIONS = [
   { key: 'routine', label: '处理日常工作', icon: <FileTextOutlined />, tone: 'blue', prompt: '帮我整理今天需要处理的工作任务，并按优先级排序。' },
@@ -2989,6 +3005,309 @@ function ProjectsPage({ activeProject, onOpenProject, onCreateProject, onTemplat
   );
 }
 
+const SPACE_HOME_OWNERSHIP_TABS = Object.freeze([
+  { key: 'created', label: '我创建的' },
+  { key: 'joined', label: '我加入的' },
+]);
+
+const JOINED_SPACE_ID_SET = new Set([
+  'scene_research_seed_1',
+  'scene_training_seed_1',
+  'scene_training_seed_2',
+  'scene_community_seed_1',
+]);
+
+function resolveSpaceOwnershipTab(scene = {}) {
+  const membershipType = String(scene.membershipType || '').trim().toUpperCase();
+  if (membershipType === 'JOINED') return 'joined';
+  if (membershipType === 'CREATED') return 'created';
+  if (JOINED_SPACE_ID_SET.has(scene.id)) return 'joined';
+  return 'created';
+}
+
+function getSpaceOwnershipTabLabel(tabKey = 'created') {
+  return SPACE_HOME_OWNERSHIP_TABS.find((item) => item.key === tabKey)?.label || SPACE_HOME_OWNERSHIP_TABS[0].label;
+}
+
+function getSpaceObjectLabel(scene) {
+  return scene?.sceneType === 'SUPERVISION' ? '项目' : '空间';
+}
+
+function getSpaceGroupObjectLabel(group) {
+  const spaces = Array.isArray(group?.spaces) ? group.spaces : [];
+  return spaces.length > 0 && spaces.every((scene) => scene?.sceneType === 'SUPERVISION') ? '项目' : '空间';
+}
+
+function getSpaceContentCountText(scene) {
+  const unit = scene?.sceneType === 'SUPERVISION' ? '任务' : '主题';
+  return `${scene?.topicCount || 0} 个${unit}`;
+}
+
+function getSpaceTheme(scene) {
+  return {
+    ...(scene?.templateSnapshot?.theme || {}),
+    ...AI_SPACE_DETAIL_THEME,
+  };
+}
+
+function AiSpaceCard({ scene, onOpen, onEdit, onDelete, onToggleShortcut }) {
+  const sceneObjectLabel = getSpaceObjectLabel(scene);
+  const theme = getSpaceTheme(scene);
+  const topicCardConfig = normalizeTopicCardConfig(scene.templateSnapshot?.topicCard);
+  const roleList = (scene.templateSnapshot?.roles || []).slice(0, 3);
+  const memberCount = Number.isFinite(Number(scene.memberCount)) && Number(scene.memberCount) > 0
+    ? Number(scene.memberCount)
+    : ((scene.templateSnapshot?.roles || []).length || 0);
+  const sceneCardClassName = [
+    'scene-card',
+    `scene-card-size-${String(topicCardConfig.size || 'MEDIUM').toLowerCase()}`,
+    topicCardConfig.showCover ? '' : 'scene-card-no-cover',
+  ].filter(Boolean).join(' ');
+  const cardMenu = {
+    items: [
+      {
+        key: 'toggle-shortcut',
+        label: scene.menuShortcutEnabled ? '从菜单移除快捷方式' : '添加到菜单快捷方式',
+      },
+      { key: 'edit', label: `编辑${sceneObjectLabel}` },
+      { key: 'delete', label: `删除${sceneObjectLabel}`, danger: true },
+    ],
+    onClick: ({ key, domEvent }) => {
+      domEvent.stopPropagation();
+      if (key === 'toggle-shortcut') {
+        onToggleShortcut(scene, !scene.menuShortcutEnabled);
+      } else if (key === 'edit') {
+        onEdit(scene);
+      } else if (key === 'delete') {
+        onDelete(scene);
+      }
+    },
+  };
+
+  return (
+    <Card
+      className={sceneCardClassName}
+      hoverable
+      variant="borderless"
+      styles={{ body: { padding: 0 } }}
+      onClick={() => onOpen(scene)}
+    >
+      {topicCardConfig.showCover ? (
+        <div className="card-cover">
+          <div
+            className="wave-bg"
+            style={getSceneThemeCoverStyle(theme, {
+              overlayStart: 'rgba(15, 23, 42, 0.12)',
+              overlayEnd: 'rgba(15, 23, 42, 0.02)',
+            })}
+          >
+            {topicCardConfig.showTitle ? (
+              <div className="card-cover-copy">
+                <div className="card-cover-title">{theme.heroTitle || scene.templateName}</div>
+                <div className="card-cover-hint">{theme.surfaceHint || scene.templateName}</div>
+              </div>
+            ) : null}
+            <svg className="wave-svg" viewBox="0 0 400 120" preserveAspectRatio="none">
+              <path d="M0,60 C100,20 150,100 250,50 C300,30 350,80 400,40 L400,120 L0,120 Z" fill="rgba(255,255,255,0.18)" />
+              <path d="M0,80 C80,50 160,100 240,70 C320,40 360,90 400,60 L400,120 L0,120 Z" fill="rgba(255,255,255,0.12)" />
+              <path d="M0,95 C60,75 120,110 200,88 C280,66 340,98 400,82 L400,120 L0,120 Z" fill="rgba(255,255,255,0.08)" />
+            </svg>
+          </div>
+          <Dropdown menu={cardMenu} placement="bottomRight">
+            <Button
+              type="text"
+              className="card-more-btn"
+              icon={<EllipsisOutlined />}
+              onClick={(event) => event.stopPropagation()}
+            />
+          </Dropdown>
+        </div>
+      ) : (
+        <div className="scene-card-inline-actions">
+          <Dropdown menu={cardMenu} placement="bottomRight">
+            <Button
+              type="text"
+              className="card-more-btn"
+              icon={<EllipsisOutlined />}
+              onClick={(event) => event.stopPropagation()}
+            />
+          </Dropdown>
+        </div>
+      )}
+      <div className="card-body">
+        {topicCardConfig.showTitle ? (
+          <div className="card-title" title={scene.name}>{scene.name}</div>
+        ) : null}
+        <div className="card-subtitle">{scene.description || theme.heroSubtitle || '未填写空间描述'}</div>
+        <div className="scene-card-meta-line">
+          <span>{scene.templateName}</span>
+          {topicCardConfig.showSceneType ? (
+            <span>{getSceneTypeLabel(scene.sceneType)}</span>
+          ) : null}
+          {topicCardConfig.showMemberCount ? (
+            <span>{`${memberCount} 名成员`}</span>
+          ) : null}
+        </div>
+        {roleList.length > 0 ? (
+          <div className="scene-role-list">
+            {roleList.map((role) => (
+              <span key={role.id} className="scene-role-pill">{role.name}</span>
+            ))}
+          </div>
+        ) : null}
+        <div className="card-footer">
+          {topicCardConfig.showTags && theme.badgeText ? (
+            <Tag className="scene-theme-tag">{theme.badgeText}</Tag>
+          ) : null}
+          <Tag className="visibility-tag">{getSceneVisibilityLabel(scene.visibility)}</Tag>
+          {scene.menuShortcutEnabled ? (
+            <Tag className="scene-shortcut-tag">菜单快捷方式</Tag>
+          ) : null}
+          <span className="card-count">{getSpaceContentCountText(scene)}</span>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function AiSpaceTopicPage({ scene, onBack }) {
+  const sceneConfig = useMemo(() => {
+    const templateSnapshot = scene?.templateSnapshot || {};
+    return {
+      ...templateSnapshot,
+      theme: {
+        ...(templateSnapshot.theme || {}),
+        ...AI_SPACE_DETAIL_THEME,
+        badgeText: templateSnapshot.theme?.badgeText || getSceneTypeLabel(scene?.sceneType),
+      },
+    };
+  }, [scene]);
+
+  return (
+    <section className="td-work-space-topic-page" aria-label={`${scene.name}空间`}>
+      <TopicDetail
+        topicTitle={scene.name}
+        onBack={onBack}
+        sceneConfig={sceneConfig}
+        sceneId={scene.id}
+        sceneType={scene.sceneType}
+        storageScopeKey={scene.storageScopeKey}
+        sceneDescription={scene.description}
+        sceneTypeLabel={getSceneTypeLabel(scene.sceneType)}
+        headerLeftContent={(
+          <div className="td-work-space-detail-breadcrumb" aria-label="当前位置">
+            <button type="button" onClick={onBack}>
+              空间
+            </button>
+            <span>›</span>
+            <strong title={scene.name}>{scene.name}</strong>
+          </div>
+        )}
+      />
+    </section>
+  );
+}
+
+function SpacesPage({
+  currentGroups,
+  visibleGroups,
+  loading,
+  searchText,
+  activeSpace,
+  ownershipTab,
+  ownershipOptions,
+  summary,
+  emptyDescription,
+  title,
+  onSearchChange,
+  onOwnershipChange,
+  onOpenSpace,
+  onBack,
+  onCreateSpace,
+  onEditSpace,
+  onDeleteSpace,
+  onToggleShortcut,
+}) {
+  if (activeSpace) {
+    return <AiSpaceTopicPage scene={activeSpace} onBack={onBack} />;
+  }
+
+  return (
+    <section className="td-work-space-page td-work-space-standard-skin" aria-label="空间">
+      <div className="app-header td-work-space-standard-header">
+        <div className="header-title">{title}</div>
+        <div className="header-actions">
+          <Input
+            placeholder="搜索空间名称..."
+            prefix={<SearchOutlined style={{ color: '#bbb' }} />}
+            className="search-input"
+            value={searchText}
+            onChange={(event) => onSearchChange(event.target.value)}
+            allowClear
+          />
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            className="new-topic-btn"
+            onClick={onCreateSpace}
+          >
+            新建空间
+          </Button>
+        </div>
+      </div>
+
+      <div className="app-content td-work-space-standard-content">
+        {!loading ? (
+          <div className="scene-home-toolbar">
+            <Segmented
+              value={ownershipTab}
+              onChange={onOwnershipChange}
+              options={ownershipOptions}
+              className="scene-home-segmented"
+            />
+            <div className="scene-home-toolbar-meta">{summary}</div>
+          </div>
+        ) : null}
+        {loading ? (
+          <div className="scene-empty-state">空间加载中...</div>
+        ) : visibleGroups.length === 0 ? (
+          <div className="scene-empty-state">
+            <Empty description={emptyDescription} />
+          </div>
+        ) : (
+          <div className="scene-group-list">
+            {visibleGroups.map((group) => (
+              <section key={group.key} className="scene-group-section">
+                {currentGroups.length > 1 ? (
+                  <div className="scene-group-header">
+                    <div>
+                      <div className="scene-group-title">{group.name}</div>
+                      <div className="scene-group-subtitle">一个场景下可承载多个{getSpaceGroupObjectLabel(group)}。</div>
+                    </div>
+                    <div className="scene-group-count">{group.spaces.length} 个{getSpaceGroupObjectLabel(group)}</div>
+                  </div>
+                ) : null}
+                <div className="card-grid">
+                  {group.spaces.map((scene) => (
+                    <AiSpaceCard
+                      key={scene.id}
+                      scene={scene}
+                      onOpen={onOpenSpace}
+                      onEdit={onEditSpace}
+                      onDelete={onDeleteSpace}
+                      onToggleShortcut={onToggleShortcut}
+                    />
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function WorkBrowserPanel({ onClose }) {
   return (
     <aside className="td-work-browser-panel" aria-label="右侧工作面板">
@@ -3074,7 +3393,6 @@ export default function TdWorkModule({
   accountMenu,
   accountMenuOpen,
   onAccountMenuOpenChange,
-  onOpenSpaceModule,
 }) {
   const [activeNav, setActiveNav] = useState('new-task');
   const [activeSideItem, setActiveSideItem] = useState('main-dialog');
@@ -3092,6 +3410,15 @@ export default function TdWorkModule({
   const [taskTargetKey, setTaskTargetKey] = useState('local');
   const [projectKey, setProjectKey] = useState('company-local');
   const [activeProject, setActiveProject] = useState(null);
+  const [spaceTemplates, setSpaceTemplates] = useState([]);
+  const [spaceScenes, setSpaceScenes] = useState([]);
+  const [spaceLoading, setSpaceLoading] = useState(false);
+  const [spaceSearch, setSpaceSearch] = useState('');
+  const [spaceOwnershipTab, setSpaceOwnershipTab] = useState('created');
+  const [activeSpace, setActiveSpace] = useState(null);
+  const [spaceCreateOpen, setSpaceCreateOpen] = useState(false);
+  const [spaceEditing, setSpaceEditing] = useState(null);
+  const [spaceCreateDefaultMenuKey, setSpaceCreateDefaultMenuKey] = useState(null);
   const [activeCategory, setActiveCategory] = useState('精选');
   const [connectorSearch, setConnectorSearch] = useState('');
   const [skillView, setSkillView] = useState('market');
@@ -3201,6 +3528,209 @@ export default function TdWorkModule({
     setSidePanelPrimaryRatio((current) => clampSidePanelRatio(current + (event.key === 'ArrowLeft' ? -4 : 4)));
   }, [clampSidePanelRatio, sidePanelMounted]);
 
+  const loadAiSpaceData = useCallback(async (withLoading = true) => {
+    if (withLoading) setSpaceLoading(true);
+    try {
+      await sceneApi.seed();
+      const [nextTemplates, nextScenes] = await Promise.all([
+        sceneApi.listTemplates(),
+        sceneApi.listScenes(),
+      ]);
+      setSpaceTemplates(nextTemplates);
+      setSpaceScenes(nextScenes);
+      setActiveSpace((current) => (
+        current ? nextScenes.find((scene) => scene.id === current.id) || null : current
+      ));
+    } catch {
+      setToast('加载空间数据失败');
+    } finally {
+      if (withLoading) setSpaceLoading(false);
+    }
+  }, []);
+
+  const buildAiSpaceGroups = useCallback((sceneList) => {
+    const groupMap = new Map();
+    sceneList.forEach((scene) => {
+      const groupName = scene.sceneGroupName || DEFAULT_SPACE_SCENE_GROUP_NAME;
+      const currentGroup = groupMap.get(groupName) || {
+        key: groupName,
+        name: groupName,
+        spaces: [],
+      };
+      currentGroup.spaces.push(scene);
+      groupMap.set(groupName, currentGroup);
+    });
+    return Array.from(groupMap.values());
+  }, []);
+
+  const spaceOwnershipCounts = useMemo(() => {
+    return spaceScenes.reduce((acc, scene) => {
+      const key = resolveSpaceOwnershipTab(scene);
+      acc[key] += 1;
+      return acc;
+    }, { created: 0, joined: 0 });
+  }, [spaceScenes]);
+
+  const effectiveSpaceOwnershipTab = useMemo(() => {
+    if (spaceScenes.length === 0 || (spaceOwnershipCounts[spaceOwnershipTab] || 0) > 0) {
+      return spaceOwnershipTab;
+    }
+    const fallbackTab = spaceOwnershipTab === 'created' ? 'joined' : 'created';
+    return (spaceOwnershipCounts[fallbackTab] || 0) > 0 ? fallbackTab : spaceOwnershipTab;
+  }, [spaceOwnershipCounts, spaceOwnershipTab, spaceScenes.length]);
+
+  const ownershipFilteredSpaceScenes = useMemo(() => {
+    return spaceScenes.filter((scene) => resolveSpaceOwnershipTab(scene) === effectiveSpaceOwnershipTab);
+  }, [effectiveSpaceOwnershipTab, spaceScenes]);
+
+  const visibleSpaceScenes = useMemo(() => {
+    const normalizedKeyword = spaceSearch.trim().toLowerCase();
+    return ownershipFilteredSpaceScenes.filter((scene) => {
+      if (!normalizedKeyword) return true;
+      const haystack = `${scene.name} ${scene.sceneGroupName || ''} ${scene.templateName} ${scene.description || ''}`.toLowerCase();
+      return haystack.includes(normalizedKeyword);
+    });
+  }, [ownershipFilteredSpaceScenes, spaceSearch]);
+
+  const currentSpaceGroups = useMemo(
+    () => buildAiSpaceGroups(spaceScenes),
+    [buildAiSpaceGroups, spaceScenes],
+  );
+
+  const visibleSpaceGroups = useMemo(
+    () => buildAiSpaceGroups(visibleSpaceScenes),
+    [buildAiSpaceGroups, visibleSpaceScenes],
+  );
+
+  const aiSpaceHomeTitle = useMemo(() => {
+    if (currentSpaceGroups.length === 1) {
+      return currentSpaceGroups[0].name;
+    }
+    return '全部空间';
+  }, [currentSpaceGroups]);
+
+  const spaceOwnershipSegmentOptions = useMemo(() => {
+    return SPACE_HOME_OWNERSHIP_TABS.map((item) => ({
+      value: item.key,
+      label: (
+        <span className="scene-home-segment-label">
+          <span>{item.label}</span>
+          <span className="scene-home-segment-count">{spaceOwnershipCounts[item.key]}</span>
+        </span>
+      ),
+    }));
+  }, [spaceOwnershipCounts]);
+
+  const spaceOwnershipSummary = useMemo(() => {
+    const activeCount = spaceOwnershipCounts[effectiveSpaceOwnershipTab] || 0;
+    if (spaceScenes.length === 0) {
+      return `${aiSpaceHomeTitle}当前分类下还没有空间`;
+    }
+    return `${aiSpaceHomeTitle} · ${getSpaceOwnershipTabLabel(effectiveSpaceOwnershipTab)} ${activeCount} 个，当前分类共 ${spaceScenes.length} 个空间`;
+  }, [aiSpaceHomeTitle, effectiveSpaceOwnershipTab, spaceOwnershipCounts, spaceScenes.length]);
+
+  const spaceEmptyDescription = useMemo(() => {
+    const normalizedKeyword = spaceSearch.trim();
+    if (normalizedKeyword) {
+      return `没有找到符合条件的${getSpaceOwnershipTabLabel(effectiveSpaceOwnershipTab)}空间`;
+    }
+    if (spaceScenes.length === 0) {
+      return '暂无空间，先创建一个模板化空间。';
+    }
+    if ((spaceOwnershipCounts[effectiveSpaceOwnershipTab] || 0) === 0) {
+      return `${getSpaceOwnershipTabLabel(effectiveSpaceOwnershipTab)}暂无空间`;
+    }
+    return '当前筛选下暂无空间';
+  }, [effectiveSpaceOwnershipTab, spaceOwnershipCounts, spaceScenes.length, spaceSearch]);
+
+  const spaceSceneGroupOptions = useMemo(() => {
+    const groupNames = currentSpaceGroups.map((group) => group.name).filter(Boolean);
+    return (groupNames.length ? groupNames : [DEFAULT_SPACE_SCENE_GROUP_NAME]).map((name) => ({
+      label: name,
+      value: name,
+    }));
+  }, [currentSpaceGroups]);
+
+  const handleOpenAiSpace = useCallback(async (scene) => {
+    if (!scene?.id) return;
+    try {
+      const detail = await sceneApi.detailScene(scene.id);
+      setActiveSpace(detail || scene);
+    } catch {
+      setActiveSpace(scene);
+    }
+  }, []);
+
+  const handleOpenAiSpaceCreate = useCallback(async () => {
+    if (!spaceTemplates.length) {
+      await loadAiSpaceData();
+    }
+    setSpaceEditing(null);
+    setSpaceCreateDefaultMenuKey(null);
+    setSpaceCreateOpen(true);
+  }, [loadAiSpaceData, spaceTemplates.length]);
+
+  const handleEditAiSpace = useCallback((scene) => {
+    setSpaceEditing(scene);
+    setSpaceCreateDefaultMenuKey(null);
+    setSpaceCreateOpen(true);
+  }, []);
+
+  const handleCancelAiSpaceCreate = useCallback(() => {
+    setSpaceCreateOpen(false);
+    setSpaceEditing(null);
+    setSpaceCreateDefaultMenuKey(null);
+  }, []);
+
+  const handleSaveAiSpace = useCallback(async (values) => {
+    try {
+      const saved = await sceneApi.saveScene(values);
+      setSpaceCreateOpen(false);
+      setSpaceEditing(null);
+      setSpaceCreateDefaultMenuKey(null);
+      await loadAiSpaceData(false);
+      setActiveSpace((current) => (current?.id === saved.id ? saved : current));
+      const objectLabel = getSpaceObjectLabel(saved);
+      message.success(values.id ? `${objectLabel}已更新` : `${objectLabel}已创建`);
+    } catch (error) {
+      message.error(error?.message || '保存空间失败');
+    }
+  }, [loadAiSpaceData]);
+
+  const handleToggleAiSpaceShortcut = useCallback(async (scene, enabled) => {
+    if (!scene?.id) return;
+    try {
+      const saved = await sceneApi.toggleSceneMenuShortcut(scene.id, enabled);
+      setActiveSpace((current) => (current?.id === saved.id ? saved : current));
+      await loadAiSpaceData(false);
+      message.success(enabled ? '已添加到菜单快捷方式' : '已从菜单快捷方式移除');
+    } catch (error) {
+      message.error(error?.message || '更新菜单快捷方式失败');
+    }
+  }, [loadAiSpaceData]);
+
+  const handleDeleteAiSpace = useCallback((scene) => {
+    if (!scene?.id) return;
+    const objectLabel = getSpaceObjectLabel(scene);
+    Modal.confirm({
+      title: `删除${objectLabel}`,
+      content: `确定删除“${scene.name}”吗？该${objectLabel}下的本地内容数据也会一并清除。`,
+      okText: '删除',
+      okButtonProps: { danger: true },
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          await sceneApi.removeScene(scene.id);
+          setActiveSpace((current) => (current?.id === scene.id ? null : current));
+          await loadAiSpaceData(false);
+          message.success(`${objectLabel}已删除`);
+        } catch (error) {
+          message.error(error?.message || `删除${objectLabel}失败`);
+        }
+      },
+    });
+  }, [loadAiSpaceData]);
+
   const visibleConnectors = useMemo(() => {
     const normalizedSearch = connectorSearch.trim().toLowerCase();
     return CONNECTORS.filter((item) => {
@@ -3241,6 +3771,32 @@ export default function TdWorkModule({
     const timer = window.setTimeout(() => setToast(''), 1800);
     return () => window.clearTimeout(timer);
   }, [toast]);
+
+  useEffect(() => {
+    if (activeNav !== 'space') return undefined;
+    const loadTimer = window.setTimeout(() => {
+      loadAiSpaceData();
+    }, 0);
+    const eventName = sceneApi.getStoreEventName?.();
+    if (!eventName) {
+      return () => window.clearTimeout(loadTimer);
+    }
+    const handleStoreChange = () => loadAiSpaceData(false);
+    window.addEventListener(eventName, handleStoreChange);
+    return () => {
+      window.clearTimeout(loadTimer);
+      window.removeEventListener(eventName, handleStoreChange);
+    };
+  }, [activeNav, loadAiSpaceData]);
+
+  useEffect(() => {
+    if (activeNav !== 'space' || !activeSpace) return undefined;
+    const frameId = window.requestAnimationFrame(() => {
+      document.getElementById('root')?.scrollTo({ top: 0, left: 0 });
+      mainRef.current?.scrollTo({ top: 0, left: 0 });
+    });
+    return () => window.cancelAnimationFrame(frameId);
+  }, [activeNav, activeSpace]);
 
   useEffect(() => () => {
     if (sidePanelTimerRef.current) {
@@ -3520,15 +4076,12 @@ export default function TdWorkModule({
                 if (item.key === 'project') {
                   setActiveProject(null);
                 }
-                closeSidePanel(true);
                 if (item.key === 'space') {
-                  if (onOpenSpaceModule) {
-                    onOpenSpaceModule();
-                  } else {
-                    setToast('已打开：空间');
-                  }
-                  return;
+                  setActiveSpace(null);
+                  setSpaceSearch('');
+                  setSpaceOwnershipTab('created');
                 }
+                closeSidePanel(true);
                 if (item.key === 'dialog') {
                   setActivePartner(null);
                   setPartnerView('workspace');
@@ -3599,7 +4152,7 @@ export default function TdWorkModule({
         style={{ '--td-work-primary-size': `${sidePanelPrimaryRatio}%` }}
       >
         <section className="td-work-primary-pane" aria-label="主工作区">
-        <header className={`td-work-topbar ${activeNav === 'skills' ? 'is-skill-topbar' : ''} ${activeNav === 'skills' && skillView === 'mine' ? 'is-my-skill-topbar' : ''} ${activeNav === 'dialog' ? 'is-partner-topbar' : ''} ${activeNav === 'dialog' && activePartner ? 'is-partner-workspace-topbar' : ''} ${activeNav === 'dialog' && partnerView === 'manage' ? 'is-partner-manage-topbar' : ''} ${activeNav === 'scheduled' ? 'is-schedule-topbar' : ''} ${activeNav === 'project' ? 'is-project-topbar' : ''} ${activeNav === 'cloud' ? 'is-material-topbar' : ''}`}>
+        <header className={`td-work-topbar ${activeNav === 'skills' ? 'is-skill-topbar' : ''} ${activeNav === 'skills' && skillView === 'mine' ? 'is-my-skill-topbar' : ''} ${activeNav === 'dialog' ? 'is-partner-topbar' : ''} ${activeNav === 'dialog' && activePartner ? 'is-partner-workspace-topbar' : ''} ${activeNav === 'dialog' && partnerView === 'manage' ? 'is-partner-manage-topbar' : ''} ${activeNav === 'scheduled' ? 'is-schedule-topbar' : ''} ${activeNav === 'project' ? 'is-project-topbar' : ''} ${activeNav === 'space' ? 'is-space-topbar' : ''} ${activeNav === 'space' && activeSpace ? 'is-space-detail-topbar' : ''} ${activeNav === 'cloud' ? 'is-material-topbar' : ''}`}>
           {activeNav === 'dialog' && partnerView === 'manage' ? (
             <>
               <button
@@ -3788,6 +4341,32 @@ export default function TdWorkModule({
                     <FilterOutlined />
                   </button>
                 </div>
+              )}
+            </>
+          ) : activeNav === 'space' ? (
+            <>
+              {activeSpace ? (
+                null
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="td-work-top-icon"
+                    title={sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
+                    aria-label={sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
+                    onClick={() => setSidebarCollapsed((value) => !value)}
+                  >
+                    <SidebarToggleIcon />
+                  </button>
+                  <div className="td-work-space-top-tools">
+                    <button type="button" className="td-work-top-icon" title="搜索空间" aria-label="搜索空间" onClick={() => setToast('已聚焦空间搜索')}>
+                      <SearchOutlined />
+                    </button>
+                    <button type="button" className="td-work-top-icon" title="筛选空间" aria-label="筛选空间" onClick={() => setToast('已打开空间筛选')}>
+                      <FilterOutlined />
+                    </button>
+                  </div>
+                </>
               )}
             </>
           ) : activeNav === 'skills' && skillView === 'mine' ? (
@@ -4004,6 +4583,27 @@ export default function TdWorkModule({
             onCreateProject={() => setToast('已进入新建项目')}
             onTemplateCreate={(item) => setToast(`已使用模板：${item.name}`)}
             onToast={setToast}
+          />
+        ) : activeNav === 'space' ? (
+          <SpacesPage
+            currentGroups={currentSpaceGroups}
+            visibleGroups={visibleSpaceGroups}
+            loading={spaceLoading}
+            searchText={spaceSearch}
+            activeSpace={activeSpace}
+            ownershipTab={effectiveSpaceOwnershipTab}
+            ownershipOptions={spaceOwnershipSegmentOptions}
+            summary={spaceOwnershipSummary}
+            emptyDescription={spaceEmptyDescription}
+            title={aiSpaceHomeTitle}
+            onSearchChange={setSpaceSearch}
+            onOwnershipChange={setSpaceOwnershipTab}
+            onOpenSpace={handleOpenAiSpace}
+            onBack={() => setActiveSpace(null)}
+            onCreateSpace={handleOpenAiSpaceCreate}
+            onEditSpace={handleEditAiSpace}
+            onDeleteSpace={handleDeleteAiSpace}
+            onToggleShortcut={handleToggleAiSpaceShortcut}
           />
         ) : activeNav === 'skills' && skillView === 'mine' ? (
           <MySkillsPage
@@ -4392,6 +4992,19 @@ export default function TdWorkModule({
           onSave={handleSaveCustomConnector}
         />
       ) : null}
+
+      <SceneCreateModal
+        open={spaceCreateOpen}
+        templates={spaceTemplates}
+        sceneGroupOptions={spaceSceneGroupOptions}
+        initialValues={spaceEditing}
+        defaultMenuKey={spaceCreateDefaultMenuKey || undefined}
+        defaultSceneGroupName={spaceSceneGroupOptions.length === 1 ? spaceSceneGroupOptions[0].value : undefined}
+        mode="space"
+        className="td-work-space-create-modal"
+        onCancel={handleCancelAiSpaceCreate}
+        onSubmit={handleSaveAiSpace}
+      />
 
       <Toast text={toast} />
     </div>
