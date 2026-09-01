@@ -69,6 +69,22 @@ const RECENT_ITEMS = [
   { key: 'course-polish', label: '研修课程文案润色', tone: 'purple', icon: <EditOutlined /> },
 ];
 
+const SIDEBAR_TASK_STATUS_FILTERS = [
+  { key: 'all', label: '全部状态' },
+  { key: 'in-progress', label: '进行中' },
+  { key: 'completed', label: '已完成' },
+  { key: 'failed', label: '失败' },
+  { key: 'pending', label: '待处理' },
+  { key: 'planned', label: '规划中' },
+];
+
+const SIDEBAR_TASK_TIME_FILTERS = [
+  { key: 'all', label: '全部时间' },
+  { key: 'today', label: '今天' },
+  { key: 'last-7-days', label: '最近 7 天' },
+  { key: 'last-30-days', label: '最近 30 天' },
+];
+
 const DEFAULT_SPACE_SCENE_GROUP_NAME = '人工智能通识体系';
 
 const AI_SPACE_DETAIL_THEME = {
@@ -3000,6 +3016,11 @@ export default function TdWorkModule({
   const [selectedComposerSkillKeys, setSelectedComposerSkillKeys] = useState([]);
   const [toast, setToast] = useState('');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarSearchOpen, setSidebarSearchOpen] = useState(false);
+  const [sidebarTaskSearch, setSidebarTaskSearch] = useState('');
+  const [sidebarFilterOpen, setSidebarFilterOpen] = useState(false);
+  const [sidebarTaskStatusFilter, setSidebarTaskStatusFilter] = useState('all');
+  const [sidebarTaskTimeFilter, setSidebarTaskTimeFilter] = useState('all');
   const [sidePanelOpen, setSidePanelOpen] = useState(false);
   const [sidePanelExpanded, setSidePanelExpanded] = useState(false);
   const [sidePanelClosing, setSidePanelClosing] = useState(false);
@@ -3358,6 +3379,19 @@ export default function TdWorkModule({
     const allSideItems = [...PINNED_ITEMS, ...PROJECT_ITEMS, ...RECENT_ITEMS];
     return allSideItems.find((item) => item.key === activeSideItem)?.label || '';
   }, [activeSideItem]);
+  const sidebarSearchItems = useMemo(() => {
+    const normalizedKeyword = sidebarTaskSearch.trim().toLowerCase();
+    const allSideItems = [
+      ...PINNED_ITEMS.map((item) => ({ ...item, group: '置顶' })),
+      ...PROJECT_ITEMS.map((item) => ({ ...item, group: '项目' })),
+      ...RECENT_ITEMS.map((item) => ({ ...item, group: '最近' })),
+    ];
+    if (!normalizedKeyword) return allSideItems;
+    return allSideItems.filter((item) => (
+      `${item.label} ${item.group}`.toLowerCase().includes(normalizedKeyword)
+    ));
+  }, [sidebarTaskSearch]);
+  const hasSidebarTaskFilter = sidebarTaskStatusFilter !== 'all' || sidebarTaskTimeFilter !== 'all';
   const isFileQueryConversation = activeNav === 'new-task' && activeSideItem === 'file-types';
 
   useEffect(() => {
@@ -3567,17 +3601,207 @@ export default function TdWorkModule({
     setToast(`已保存自定义连接器：${connector.name}`);
   };
 
+  const handleSidebarSearchOpenChange = (open) => {
+    setSidebarSearchOpen(open);
+    if (open) setSidebarFilterOpen(false);
+  };
+
+  const handleSidebarFilterOpenChange = (open) => {
+    setSidebarFilterOpen(open);
+    if (open) setSidebarSearchOpen(false);
+  };
+
+  const handleOpenSidebarSearchItem = (item) => {
+    setActiveSideItem(item.key);
+    setActiveNav('new-task');
+    setSidebarSearchOpen(false);
+    setSidebarTaskSearch('');
+  };
+
+  const renderSidebarFilterOption = (item, activeKey, onSelect) => {
+    const selected = activeKey === item.key;
+    return (
+      <button
+        key={item.key}
+        type="button"
+        className={`td-work-sidebar-filter-option ${selected ? 'is-selected' : ''}`}
+        role="menuitemradio"
+        aria-checked={selected}
+        onClick={() => onSelect(item.key)}
+      >
+        <span>{item.label}</span>
+        {selected ? <CheckOutlined /> : null}
+      </button>
+    );
+  };
+
+  const sidebarSearchPanel = (
+    <div className="td-work-sidebar-search-menu" role="dialog" aria-label="搜索任务">
+      <Input
+        autoFocus
+        allowClear
+        value={sidebarTaskSearch}
+        prefix={<SearchOutlined />}
+        placeholder="搜索任务"
+        onChange={(event) => setSidebarTaskSearch(event.target.value)}
+      />
+      <div className="td-work-sidebar-search-list">
+        {sidebarSearchItems.length ? (
+          sidebarSearchItems.map((item) => (
+            <button
+              key={`${item.group}-${item.key}`}
+              type="button"
+              className="td-work-sidebar-search-row"
+              onClick={() => handleOpenSidebarSearchItem(item)}
+            >
+              <span className={`td-work-small-icon td-work-small-icon-${item.tone}`}>{item.icon}</span>
+              <span>
+                <strong>{item.label}</strong>
+                <em>{item.group}</em>
+              </span>
+            </button>
+          ))
+        ) : (
+          <div className="td-work-sidebar-search-empty">没有找到匹配任务</div>
+        )}
+      </div>
+    </div>
+  );
+
+  const sidebarFilterPanel = (
+    <div className="td-work-sidebar-filter-menu" role="menu" aria-label="任务筛选">
+      <div className="td-work-sidebar-filter-title">筛选状态</div>
+      <div className="td-work-sidebar-filter-options">
+        {SIDEBAR_TASK_STATUS_FILTERS.map((item) => (
+          renderSidebarFilterOption(item, sidebarTaskStatusFilter, setSidebarTaskStatusFilter)
+        ))}
+      </div>
+      <div className="td-work-sidebar-filter-divider" />
+      <div className="td-work-sidebar-filter-title">筛选时间</div>
+      <div className="td-work-sidebar-filter-options">
+        {SIDEBAR_TASK_TIME_FILTERS.map((item) => (
+          renderSidebarFilterOption(item, sidebarTaskTimeFilter, setSidebarTaskTimeFilter)
+        ))}
+      </div>
+      <div className="td-work-sidebar-filter-divider" />
+      <button
+        type="button"
+        className="td-work-sidebar-filter-reset"
+        disabled={!hasSidebarTaskFilter}
+        onClick={() => {
+          setSidebarTaskStatusFilter('all');
+          setSidebarTaskTimeFilter('all');
+        }}
+      >
+        重置筛选条件
+      </button>
+    </div>
+  );
+
+  const handleOpenNewTaskFromCollapsedTopbar = () => {
+    setActiveNav('new-task');
+    setActiveSideItem('');
+    setPrompt('');
+    setActiveProject(null);
+    setActiveSpace(null);
+    setActivePartner(null);
+    setPartnerView('workspace');
+    setCreateMenuOpen(false);
+    setPartnerPickerOpen(false);
+    closeSidePanel(true);
+  };
+
+  const topbarSidebarCollapsedTools = sidebarCollapsed ? (
+    <div className="td-work-collapsed-top-tools" aria-label="侧栏已收起工具">
+      <button
+        type="button"
+        className="td-work-top-icon"
+        title="展开侧栏"
+        aria-label="展开侧栏"
+        onClick={() => setSidebarCollapsed(false)}
+      >
+        <SidebarToggleIcon />
+      </button>
+      <button
+        type="button"
+        className="td-work-top-icon"
+        title="新工作任务"
+        aria-label="新工作任务"
+        onClick={handleOpenNewTaskFromCollapsedTopbar}
+      >
+        <PlusOutlined />
+      </button>
+    </div>
+  ) : null;
+  const hideSpaceListTopbar = activeNav === 'space' && !activeSpace && !sidebarCollapsed;
+
   return (
     <div className={`td-work-module ${sidebarCollapsed ? 'is-sidebar-collapsed' : ''}`}>
       <aside className="td-work-sidebar" aria-label="工作导航">
+        <div className="td-work-sidebar-toolbar" aria-label="侧栏工具">
+          <div className="td-work-sidebar-window-dots" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </div>
+          <div className="td-work-sidebar-tool-actions">
+            <button
+              type="button"
+              className="td-work-side-icon-btn"
+              title="收起左侧边栏"
+              aria-label="收起左侧边栏"
+              onClick={() => {
+                setSidebarSearchOpen(false);
+                setSidebarFilterOpen(false);
+                setSidebarCollapsed(true);
+              }}
+            >
+              <SidebarToggleIcon />
+            </button>
+            <Dropdown
+              trigger={['click']}
+              open={sidebarSearchOpen}
+              onOpenChange={handleSidebarSearchOpenChange}
+              popupRender={() => sidebarSearchPanel}
+              placement="bottomRight"
+              classNames={{ root: 'td-work-sidebar-search-dropdown' }}
+              destroyOnHidden
+            >
+              <button
+                type="button"
+                className={`td-work-side-icon-btn ${sidebarSearchOpen ? 'is-active' : ''}`}
+                title="搜索任务"
+                aria-label="搜索任务"
+              >
+                <SearchOutlined />
+              </button>
+            </Dropdown>
+            <Dropdown
+              trigger={['click']}
+              open={sidebarFilterOpen}
+              onOpenChange={handleSidebarFilterOpenChange}
+              popupRender={() => sidebarFilterPanel}
+              placement="bottomRight"
+              classNames={{ root: 'td-work-sidebar-filter-dropdown' }}
+              destroyOnHidden
+            >
+              <button
+                type="button"
+                className={`td-work-side-icon-btn ${sidebarFilterOpen || hasSidebarTaskFilter ? 'is-active' : ''}`}
+                title="筛选任务"
+                aria-label="筛选任务"
+              >
+                <FilterOutlined />
+              </button>
+            </Dropdown>
+          </div>
+        </div>
+
         <div className="td-work-sidebar-head">
           <div className="td-work-app-name">
             <strong>通达</strong>
             <span>工作学习</span>
           </div>
-          <button type="button" className="td-work-side-icon-btn" title="搜索" aria-label="搜索">
-            <SearchOutlined />
-          </button>
         </div>
 
         <nav className="td-work-nav" aria-label="主导航">
@@ -3670,18 +3894,10 @@ export default function TdWorkModule({
         style={{ '--td-work-primary-size': `${sidePanelPrimaryRatio}%` }}
       >
         <section className="td-work-primary-pane" aria-label="主工作区">
-        <header className={`td-work-topbar ${activeNav === 'skills' ? 'is-skill-topbar' : ''} ${activeNav === 'skills' && skillView === 'mine' ? 'is-my-skill-topbar' : ''} ${activeNav === 'dialog' ? 'is-partner-topbar' : ''} ${activeNav === 'dialog' && activePartner ? 'is-partner-workspace-topbar' : ''} ${activeNav === 'dialog' && partnerView === 'manage' ? 'is-partner-manage-topbar' : ''} ${activeNav === 'scheduled' ? 'is-schedule-topbar' : ''} ${activeNav === 'project' ? 'is-project-topbar' : ''} ${activeNav === 'space' ? 'is-space-topbar' : ''} ${activeNav === 'space' && activeSpace ? 'is-space-detail-topbar' : ''} ${activeNav === 'cloud' ? 'is-resource-library-topbar' : ''}`}>
+        <header className={`td-work-topbar ${hideSpaceListTopbar ? 'is-hidden' : ''} ${activeNav === 'skills' ? 'is-skill-topbar' : ''} ${activeNav === 'skills' && skillView === 'mine' ? 'is-my-skill-topbar' : ''} ${activeNav === 'dialog' ? 'is-partner-topbar' : ''} ${activeNav === 'dialog' && activePartner ? 'is-partner-workspace-topbar' : ''} ${activeNav === 'dialog' && partnerView === 'manage' ? 'is-partner-manage-topbar' : ''} ${activeNav === 'scheduled' ? 'is-schedule-topbar' : ''} ${activeNav === 'project' ? 'is-project-topbar' : ''} ${activeNav === 'space' ? 'is-space-topbar' : ''} ${activeNav === 'space' && activeSpace ? 'is-space-detail-topbar' : ''} ${activeNav === 'cloud' ? 'is-resource-library-topbar' : ''}`}>
           {activeNav === 'dialog' && partnerView === 'manage' ? (
             <>
-              <button
-                type="button"
-                className="td-work-top-icon"
-                title={sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
-                aria-label={sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
-                onClick={() => setSidebarCollapsed((value) => !value)}
-              >
-                <SidebarToggleIcon />
-              </button>
+              {topbarSidebarCollapsedTools}
               <div className="td-work-partner-workspace-breadcrumb" aria-label="当前位置">
                 <button
                   type="button"
@@ -3698,15 +3914,7 @@ export default function TdWorkModule({
             </>
           ) : activeNav === 'dialog' && activePartner ? (
             <>
-              <button
-                type="button"
-                className="td-work-top-icon"
-                title={sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
-                aria-label={sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
-                onClick={() => setSidebarCollapsed((value) => !value)}
-              >
-                <SidebarToggleIcon />
-              </button>
+              {topbarSidebarCollapsedTools}
               <div className="td-work-partner-workspace-breadcrumb" aria-label="当前位置">
                 <button
                   type="button"
@@ -3751,15 +3959,7 @@ export default function TdWorkModule({
             </>
           ) : activeNav === 'dialog' ? (
             <>
-              <button
-                type="button"
-                className="td-work-top-icon"
-                title={sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
-                aria-label={sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
-                onClick={() => setSidebarCollapsed((value) => !value)}
-              >
-                <SidebarToggleIcon />
-              </button>
+              {topbarSidebarCollapsedTools}
               <div className="td-work-dialog-titlebar-copy">
                 <strong>智能体对话</strong>
                 <span>内容由豆包 AI 生成</span>
@@ -3780,15 +3980,7 @@ export default function TdWorkModule({
             </>
           ) : activeNav === 'cloud' ? null : activeNav === 'scheduled' ? (
             <>
-              <button
-                type="button"
-                className="td-work-top-icon"
-                title={sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
-                aria-label={sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
-                onClick={() => setSidebarCollapsed((value) => !value)}
-              >
-                <SidebarToggleIcon />
-              </button>
+              {topbarSidebarCollapsedTools}
               <button type="button" className="td-work-schedule-new-btn" onClick={() => setToast('已进入新建定时任务')}>
                 <PlusOutlined />
                 新建
@@ -3796,15 +3988,7 @@ export default function TdWorkModule({
             </>
           ) : activeNav === 'project' ? (
             <>
-              <button
-                type="button"
-                className="td-work-top-icon"
-                title={sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
-                aria-label={sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
-                onClick={() => setSidebarCollapsed((value) => !value)}
-              >
-                <SidebarToggleIcon />
-              </button>
+              {topbarSidebarCollapsedTools}
               {activeProject ? (
                 <>
                   <div className="td-work-project-top-breadcrumb" aria-label="当前位置">
@@ -3831,41 +4015,11 @@ export default function TdWorkModule({
             </>
           ) : activeNav === 'space' ? (
             <>
-              {activeSpace ? (
-                null
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    className="td-work-top-icon"
-                    title={sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
-                    aria-label={sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
-                    onClick={() => setSidebarCollapsed((value) => !value)}
-                  >
-                    <SidebarToggleIcon />
-                  </button>
-                  <div className="td-work-space-top-tools">
-                    <button type="button" className="td-work-top-icon" title="搜索空间" aria-label="搜索空间" onClick={() => setToast('已聚焦空间搜索')}>
-                      <SearchOutlined />
-                    </button>
-                    <button type="button" className="td-work-top-icon" title="筛选空间" aria-label="筛选空间" onClick={() => setToast('已打开空间筛选')}>
-                      <FilterOutlined />
-                    </button>
-                  </div>
-                </>
-              )}
+              {activeSpace ? null : topbarSidebarCollapsedTools}
             </>
           ) : activeNav === 'skills' && skillView === 'mine' ? (
             <>
-              <button
-                type="button"
-                className="td-work-top-icon"
-                title={sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
-                aria-label={sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
-                onClick={() => setSidebarCollapsed((value) => !value)}
-              >
-                <SidebarToggleIcon />
-              </button>
+              {topbarSidebarCollapsedTools}
               <div className="td-work-skill-breadcrumb" aria-label="当前位置">
                 <button type="button" onClick={() => setSkillView('market')}>技能 · 连接器</button>
                 <span>›</span>
@@ -3909,15 +4063,7 @@ export default function TdWorkModule({
             </>
           ) : activeNav === 'skills' && skillView === 'partners' ? (
             <>
-              <button
-                type="button"
-                className="td-work-top-icon"
-                title={sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
-                aria-label={sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
-                onClick={() => setSidebarCollapsed((value) => !value)}
-              >
-                <SidebarToggleIcon />
-              </button>
+              {topbarSidebarCollapsedTools}
               <div className="td-work-skill-tabs" role="tablist" aria-label="技能页面">
                 <button
                   type="button"
@@ -3963,15 +4109,7 @@ export default function TdWorkModule({
             </>
           ) : activeNav === 'skills' ? (
             <>
-              <button
-                type="button"
-                className="td-work-top-icon"
-                title={sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
-                aria-label={sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
-                onClick={() => setSidebarCollapsed((value) => !value)}
-              >
-                <SidebarToggleIcon />
-              </button>
+              {topbarSidebarCollapsedTools}
               <div className="td-work-skill-tabs" role="tablist" aria-label="技能页面">
                 <button type="button" className="is-active" role="tab" aria-selected="true" onClick={() => setSkillView('market')}>
                   技能 · 连接器
@@ -4029,15 +4167,7 @@ export default function TdWorkModule({
             </>
           ) : (
             <>
-              <button
-                type="button"
-                className="td-work-top-icon"
-                title={sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
-                aria-label={sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
-                onClick={() => setSidebarCollapsed((value) => !value)}
-              >
-                <SidebarToggleIcon />
-              </button>
+              {topbarSidebarCollapsedTools}
               {activeSideLabel && activeSideItem !== 'main-dialog' ? (
                 <div className="td-work-task-titlebar">
                   <strong>{activeSideLabel}</strong>

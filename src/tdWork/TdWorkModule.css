@@ -71,12 +71,44 @@
   transform: translateX(-10px);
 }
 
-.td-work-sidebar-head {
-  height: 56px;
+.td-work-sidebar-toolbar {
+  height: 48px;
+  flex: 0 0 48px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 12px;
+  gap: 10px;
+  padding: 12px 14px 4px;
+}
+
+.td-work-sidebar-window-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.td-work-sidebar-window-dots span {
+  width: 11px;
+  height: 11px;
+  border: 1px solid #c9ced5;
+  border-radius: 999px;
+  background: #d9dde2;
+}
+
+.td-work-sidebar-tool-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  margin-left: auto;
+}
+
+.td-work-sidebar-head {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px 2px;
 }
 
 .td-work-side-icon-btn,
@@ -92,6 +124,20 @@
   padding: 0;
   border-radius: 8px;
   color: #59616b;
+}
+
+.td-work-sidebar-toolbar .td-work-side-icon-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 10px;
+  color: #2e333a;
+  font-size: 19px;
+}
+
+.td-work-sidebar-toolbar .td-work-sidebar-toggle-icon {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
 }
 
 .td-work-sidebar-toggle-icon {
@@ -117,11 +163,171 @@
 }
 
 .td-work-side-icon-btn:hover,
+.td-work-side-icon-btn.is-active,
 .td-work-top-icon:hover,
 .td-work-add-btn:hover,
 .td-work-voice-btn:hover {
   background: #eef1f5;
   color: #1f242c;
+}
+
+.td-work-sidebar-search-dropdown,
+.td-work-sidebar-filter-dropdown {
+  padding-top: 8px;
+}
+
+.td-work-sidebar-search-menu,
+.td-work-sidebar-filter-menu {
+  width: 286px;
+  padding: 14px 12px;
+  border: 1px solid rgba(226, 229, 234, 0.92);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow:
+    0 18px 42px rgba(25, 30, 38, 0.11),
+    0 3px 10px rgba(25, 30, 38, 0.05);
+}
+
+.td-work-sidebar-search-menu .ant-input-affix-wrapper {
+  height: 36px;
+  border-color: #e2e6ec;
+  border-radius: 10px;
+  background: #f7f8fa;
+  box-shadow: none;
+}
+
+.td-work-sidebar-search-menu .ant-input-affix-wrapper-focused {
+  border-color: #cfd6df;
+  background: #ffffff;
+}
+
+.td-work-sidebar-search-list {
+  max-height: 268px;
+  margin-top: 10px;
+  overflow: auto;
+}
+
+.td-work-sidebar-search-row {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  border-radius: 10px;
+  color: #20242b;
+  text-align: left;
+}
+
+.td-work-sidebar-search-row:hover {
+  background: #f2f4f7;
+}
+
+.td-work-sidebar-search-row > span:last-child {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.td-work-sidebar-search-row strong,
+.td-work-sidebar-search-row em {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.td-work-sidebar-search-row strong {
+  color: #20242b;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.td-work-sidebar-search-row em {
+  color: #9aa1ab;
+  font-size: 12px;
+  font-style: normal;
+}
+
+.td-work-sidebar-search-empty {
+  padding: 18px 8px 8px;
+  color: #9aa1ab;
+  font-size: 13px;
+  text-align: center;
+}
+
+.td-work-sidebar-filter-menu {
+  width: 258px;
+}
+
+.td-work-sidebar-filter-title {
+  padding: 4px 10px 8px;
+  color: #8b929c;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.td-work-sidebar-filter-options {
+  display: grid;
+  gap: 2px;
+}
+
+.td-work-sidebar-filter-option {
+  width: 100%;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 10px;
+  border-radius: 9px;
+  color: #20242b;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1;
+  text-align: left;
+}
+
+.td-work-sidebar-filter-option:hover {
+  background: rgba(238, 240, 242, 0.72);
+}
+
+.td-work-sidebar-filter-option.is-selected {
+  background: #ebedef;
+  color: #171a20;
+  font-weight: 740;
+}
+
+.td-work-sidebar-filter-option .anticon {
+  color: #0fc593;
+  font-size: 16px;
+}
+
+.td-work-sidebar-filter-divider {
+  height: 1px;
+  margin: 10px 0;
+  background: #edf0f3;
+}
+
+.td-work-sidebar-filter-reset {
+  width: 100%;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 9px;
+  color: #9da3ac;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.td-work-sidebar-filter-reset:disabled {
+  color: #bdc2c9;
+  cursor: default;
+}
+
+.td-work-sidebar-filter-reset:not(:disabled):hover {
+  background: rgba(238, 240, 242, 0.72);
+  color: #59616d;
 }
 
 .td-work-module.is-sidebar-collapsed .td-work-topbar > .td-work-top-icon:first-child {
@@ -396,11 +602,26 @@
   border-bottom: 1px solid #f0f1f4;
 }
 
+.td-work-topbar.is-hidden {
+  height: 0;
+  flex-basis: 0;
+  padding: 0;
+  border-bottom: 0;
+  overflow: hidden;
+}
+
 .td-work-top-actions {
   margin-left: auto;
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+.td-work-collapsed-top-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
 }
 
 .td-work-task-titlebar {
