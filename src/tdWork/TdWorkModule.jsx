@@ -22,6 +22,7 @@ import {
   FilterOutlined,
   FolderAddOutlined,
   FolderOutlined,
+  HomeOutlined,
   InfoCircleOutlined,
   LaptopOutlined,
   LinkOutlined,
@@ -46,7 +47,6 @@ import './TdWorkModule.css';
 const NAV_ITEMS = [
   { key: 'new-task', label: '新工作任务', icon: <EditOutlined /> },
   { key: 'scheduled', label: '定时任务', icon: <ClockCircleOutlined /> },
-  { key: 'project', label: '项目', icon: <ProjectOutlined /> },
   { key: 'space', label: '空间', icon: <AppstoreOutlined /> },
   { key: 'skills', label: '智能体 · 技能 · 连接器', icon: <RobotOutlined /> },
   { key: 'dialog', label: '智能体对话', icon: <MessageOutlined /> },
@@ -2830,12 +2830,14 @@ function SpacesPage({
   loading,
   searchText,
   activeSpace,
+  activeGroupKey,
   ownershipTab,
   ownershipOptions,
   summary,
   emptyDescription,
   title,
   onSearchChange,
+  onGroupChange,
   onOwnershipChange,
   onOpenSpace,
   onBack,
@@ -2850,75 +2852,113 @@ function SpacesPage({
 
   return (
     <section className="td-work-space-page td-work-space-standard-skin" aria-label="空间">
-      <div className="app-header td-work-space-standard-header">
-        <div className="header-title">{title}</div>
-        <div className="header-actions">
-          <Input
-            placeholder="搜索空间名称..."
-            prefix={<SearchOutlined style={{ color: '#bbb' }} />}
-            className="search-input"
-            value={searchText}
-            onChange={(event) => onSearchChange(event.target.value)}
-            allowClear
-          />
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            className="new-topic-btn"
-            onClick={onCreateSpace}
-          >
-            新建空间
-          </Button>
+      <aside className="td-work-space-rail" aria-label="空间导航">
+        <button type="button" className="td-work-space-rail-create" onClick={onCreateSpace}>
+          <span className="td-work-space-rail-create-icon"><PlusOutlined /></span>
+          <span>新建场景</span>
+        </button>
+        <button
+          type="button"
+          className={`td-work-space-rail-item ${!activeGroupKey ? 'is-active' : ''}`}
+          onClick={() => onGroupChange(null)}
+        >
+          <HomeOutlined />
+          <span>首页</span>
+        </button>
+        <div className="td-work-space-rail-section">
+          <div className="td-work-space-rail-title">我的场景</div>
+          <div className="td-work-space-rail-list">
+            {currentGroups.length ? (
+              currentGroups.map((group) => (
+                <button
+                  key={group.key}
+                  type="button"
+                  className={`td-work-space-rail-item ${activeGroupKey === group.key ? 'is-active' : ''}`}
+                  onClick={() => onGroupChange(group.key)}
+                  title={group.name}
+                >
+                  <CloudOutlined />
+                  <span>{group.name}</span>
+                </button>
+              ))
+            ) : (
+              <div className="td-work-space-rail-empty">暂无场景</div>
+            )}
+          </div>
         </div>
-      </div>
+      </aside>
 
-      <div className="app-content td-work-space-standard-content">
-        {!loading ? (
-          <div className="scene-home-toolbar">
-            <Segmented
-              value={ownershipTab}
-              onChange={onOwnershipChange}
-              options={ownershipOptions}
-              className="scene-home-segmented"
+      <div className="td-work-space-main">
+        <div className="app-header td-work-space-standard-header">
+          <div className="header-title">{title}</div>
+          <div className="header-actions">
+            <Input
+              placeholder="搜索空间名称..."
+              prefix={<SearchOutlined style={{ color: '#bbb' }} />}
+              className="search-input"
+              value={searchText}
+              onChange={(event) => onSearchChange(event.target.value)}
+              allowClear
             />
-            <div className="scene-home-toolbar-meta">{summary}</div>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              className="new-topic-btn"
+              onClick={onCreateSpace}
+            >
+              新建空间
+            </Button>
           </div>
-        ) : null}
-        {loading ? (
-          <div className="scene-empty-state">空间加载中...</div>
-        ) : visibleGroups.length === 0 ? (
-          <div className="scene-empty-state">
-            <Empty description={emptyDescription} />
-          </div>
-        ) : (
-          <div className="scene-group-list">
-            {visibleGroups.map((group) => (
-              <section key={group.key} className="scene-group-section">
-                {currentGroups.length > 1 ? (
-                  <div className="scene-group-header">
-                    <div>
-                      <div className="scene-group-title">{group.name}</div>
-                      <div className="scene-group-subtitle">一个场景下可承载多个{getSpaceGroupObjectLabel(group)}。</div>
+        </div>
+
+        <div className="app-content td-work-space-standard-content">
+          {!loading ? (
+            <div className="scene-home-toolbar">
+              <Segmented
+                value={ownershipTab}
+                onChange={onOwnershipChange}
+                options={ownershipOptions}
+                className="scene-home-segmented"
+              />
+              <div className="scene-home-toolbar-meta">{summary}</div>
+            </div>
+          ) : null}
+          {loading ? (
+            <div className="scene-empty-state">空间加载中...</div>
+          ) : visibleGroups.length === 0 ? (
+            <div className="scene-empty-state">
+              <Empty description={emptyDescription} />
+            </div>
+          ) : (
+            <div className="scene-group-list">
+              {visibleGroups.map((group) => (
+                <section key={group.key} className="scene-group-section">
+                  {currentGroups.length > 1 ? (
+                    <div className="scene-group-header">
+                      <div>
+                        <div className="scene-group-title">{group.name}</div>
+                        <div className="scene-group-subtitle">一个场景下可承载多个{getSpaceGroupObjectLabel(group)}。</div>
+                      </div>
+                      <div className="scene-group-count">{group.spaces.length} 个{getSpaceGroupObjectLabel(group)}</div>
                     </div>
-                    <div className="scene-group-count">{group.spaces.length} 个{getSpaceGroupObjectLabel(group)}</div>
+                  ) : null}
+                  <div className="card-grid">
+                    {group.spaces.map((scene) => (
+                      <AiSpaceCard
+                        key={scene.id}
+                        scene={scene}
+                        onOpen={onOpenSpace}
+                        onEdit={onEditSpace}
+                        onDelete={onDeleteSpace}
+                        onToggleShortcut={onToggleShortcut}
+                      />
+                    ))}
                   </div>
-                ) : null}
-                <div className="card-grid">
-                  {group.spaces.map((scene) => (
-                    <AiSpaceCard
-                      key={scene.id}
-                      scene={scene}
-                      onOpen={onOpenSpace}
-                      onEdit={onEditSpace}
-                      onDelete={onDeleteSpace}
-                      onToggleShortcut={onToggleShortcut}
-                    />
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
-        )}
+                </section>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );
@@ -3035,6 +3075,7 @@ export default function TdWorkModule({
   const [spaceScenes, setSpaceScenes] = useState([]);
   const [spaceLoading, setSpaceLoading] = useState(false);
   const [spaceSearch, setSpaceSearch] = useState('');
+  const [spaceGroupFilter, setSpaceGroupFilter] = useState(null);
   const [spaceOwnershipTab, setSpaceOwnershipTab] = useState('created');
   const [activeSpace, setActiveSpace] = useState(null);
   const [spaceCreateOpen, setSpaceCreateOpen] = useState(false);
@@ -3201,11 +3242,13 @@ export default function TdWorkModule({
   const visibleSpaceScenes = useMemo(() => {
     const normalizedKeyword = spaceSearch.trim().toLowerCase();
     return ownershipFilteredSpaceScenes.filter((scene) => {
+      const sceneGroupName = scene.sceneGroupName || DEFAULT_SPACE_SCENE_GROUP_NAME;
+      if (spaceGroupFilter && sceneGroupName !== spaceGroupFilter) return false;
       if (!normalizedKeyword) return true;
       const haystack = `${scene.name} ${scene.sceneGroupName || ''} ${scene.templateName} ${scene.description || ''}`.toLowerCase();
       return haystack.includes(normalizedKeyword);
     });
-  }, [ownershipFilteredSpaceScenes, spaceSearch]);
+  }, [ownershipFilteredSpaceScenes, spaceGroupFilter, spaceSearch]);
 
   const currentSpaceGroups = useMemo(
     () => buildAiSpaceGroups(spaceScenes),
@@ -3218,11 +3261,12 @@ export default function TdWorkModule({
   );
 
   const aiSpaceHomeTitle = useMemo(() => {
+    if (spaceGroupFilter) return spaceGroupFilter;
     if (currentSpaceGroups.length === 1) {
       return currentSpaceGroups[0].name;
     }
     return '全部空间';
-  }, [currentSpaceGroups]);
+  }, [currentSpaceGroups, spaceGroupFilter]);
 
   const spaceOwnershipSegmentOptions = useMemo(() => {
     return SPACE_HOME_OWNERSHIP_TABS.map((item) => ({
@@ -3821,6 +3865,7 @@ export default function TdWorkModule({
                 if (item.key === 'space') {
                   setActiveSpace(null);
                   setSpaceSearch('');
+                  setSpaceGroupFilter(null);
                   setSpaceOwnershipTab('created');
                 }
                 closeSidePanel(true);
@@ -4207,12 +4252,14 @@ export default function TdWorkModule({
             loading={spaceLoading}
             searchText={spaceSearch}
             activeSpace={activeSpace}
+            activeGroupKey={spaceGroupFilter}
             ownershipTab={effectiveSpaceOwnershipTab}
             ownershipOptions={spaceOwnershipSegmentOptions}
             summary={spaceOwnershipSummary}
             emptyDescription={spaceEmptyDescription}
             title={aiSpaceHomeTitle}
             onSearchChange={setSpaceSearch}
+            onGroupChange={setSpaceGroupFilter}
             onOwnershipChange={setSpaceOwnershipTab}
             onOpenSpace={handleOpenAiSpace}
             onBack={() => setActiveSpace(null)}

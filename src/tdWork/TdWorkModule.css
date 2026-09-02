@@ -5578,6 +5578,139 @@
   background: #f7f8fa;
 }
 
+.td-work-space-page.td-work-space-standard-skin {
+  display: grid;
+  grid-template-columns: 168px minmax(0, 1fr);
+  background: #f7f8fa;
+}
+
+.td-work-space-rail {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 8px 12px;
+  border-right: 1px solid #e7ebf0;
+  background: #f3f5f7;
+  overflow: auto;
+}
+
+.td-work-space-rail::-webkit-scrollbar {
+  width: 0;
+}
+
+.td-work-space-main {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #f7f8fa;
+}
+
+.td-work-space-rail-create,
+.td-work-space-rail-item {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  text-align: left;
+  cursor: pointer;
+}
+
+.td-work-space-rail-create {
+  height: 34px;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid #dfe4eb;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #20242b;
+  font-size: 13px;
+  font-weight: 720;
+  box-shadow: 0 1px 2px rgba(20, 28, 42, 0.03);
+}
+
+.td-work-space-rail-create:hover,
+.td-work-space-rail-create:focus-visible {
+  border-color: #d4dae3;
+  background: #ffffff;
+  color: #11151b;
+}
+
+.td-work-space-rail-create-icon {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #c9d0da;
+  border-radius: 999px;
+  color: #353b45;
+  font-size: 10px;
+}
+
+.td-work-space-rail-item {
+  height: 32px;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #3f4650;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.td-work-space-rail-item:hover,
+.td-work-space-rail-item.is-active {
+  border-color: #dfe4eb;
+  background: #ffffff;
+  color: #20242b;
+  box-shadow: 0 1px 2px rgba(20, 28, 42, 0.03);
+}
+
+.td-work-space-rail-item .anticon {
+  width: 15px;
+  flex: 0 0 15px;
+  color: #66707d;
+  font-size: 13px;
+}
+
+.td-work-space-rail-item span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.td-work-space-rail-section {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.td-work-space-rail-title {
+  padding: 6px 4px 2px;
+  color: #8e96a2;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.td-work-space-rail-list {
+  display: grid;
+  gap: 3px;
+}
+
+.td-work-space-rail-empty {
+  padding: 8px 10px;
+  color: #a0a7b1;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .td-work-space-standard-skin .td-work-space-standard-header {
   flex: 0 0 56px;
   border-bottom: 1px solid #eef0f3;
