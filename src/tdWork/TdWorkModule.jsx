@@ -11,6 +11,7 @@ import {
   ClockCircleOutlined,
   CloudOutlined,
   CloudServerOutlined,
+  CodeOutlined,
   ControlOutlined,
   CloseOutlined,
   DatabaseOutlined,
@@ -101,6 +102,11 @@ const RECOMMENDATIONS = [
   { key: 'content', label: '内容创作', icon: <EditOutlined />, tone: 'green', prompt: '帮我起草一篇面向老师的产品更新说明。' },
   { key: 'research', label: '完成调研分析', icon: <BarChartOutlined />, tone: 'purple', prompt: '帮我调研教育智能体在校内工作台中的使用场景。' },
   { key: 'design', label: '设计与创意', icon: <AppstoreOutlined />, tone: 'pink', prompt: '帮我设计一个智能体工作台的首屏交互方案。' },
+];
+
+const WORK_CONTENT_TABS = [
+  { key: 'daily-study', label: '日常学习', icon: <BookOutlined /> },
+  { key: 'code-dev', label: '代码开发', icon: <CodeOutlined /> },
 ];
 
 const CONTEXT_TOOLS = [
@@ -3054,6 +3060,7 @@ export default function TdWorkModule({
   const [activeSideItem, setActiveSideItem] = useState('main-dialog');
   const [prompt, setPrompt] = useState('');
   const [selectedComposerSkillKeys, setSelectedComposerSkillKeys] = useState([]);
+  const [workContentTab, setWorkContentTab] = useState('daily-study');
   const [toast, setToast] = useState('');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarSearchOpen, setSidebarSearchOpen] = useState(false);
@@ -3281,12 +3288,12 @@ export default function TdWorkModule({
   }, [spaceOwnershipCounts]);
 
   const spaceOwnershipSummary = useMemo(() => {
-    const activeCount = spaceOwnershipCounts[effectiveSpaceOwnershipTab] || 0;
+    const activeCount = visibleSpaceScenes.length;
     if (spaceScenes.length === 0) {
       return `${aiSpaceHomeTitle}当前分类下还没有空间`;
     }
     return `${aiSpaceHomeTitle} · ${getSpaceOwnershipTabLabel(effectiveSpaceOwnershipTab)} ${activeCount} 个，当前分类共 ${spaceScenes.length} 个空间`;
-  }, [aiSpaceHomeTitle, effectiveSpaceOwnershipTab, spaceOwnershipCounts, spaceScenes.length]);
+  }, [aiSpaceHomeTitle, effectiveSpaceOwnershipTab, spaceScenes.length, visibleSpaceScenes.length]);
 
   const spaceEmptyDescription = useMemo(() => {
     const normalizedKeyword = spaceSearch.trim();
@@ -4453,6 +4460,21 @@ export default function TdWorkModule({
               <div className="td-work-center">
                 <LuckyMark />
                 <h1>{title}</h1>
+                <div className="td-work-content-tabs" role="tablist" aria-label="工作内容模式">
+                  {WORK_CONTENT_TABS.map((item) => (
+                    <button
+                      key={item.key}
+                      type="button"
+                      className={`td-work-content-tab ${workContentTab === item.key ? 'is-active' : ''}`}
+                      role="tab"
+                      aria-selected={workContentTab === item.key}
+                      onClick={() => setWorkContentTab(item.key)}
+                    >
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="td-work-recommend">
