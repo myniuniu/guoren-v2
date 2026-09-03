@@ -580,6 +580,7 @@ const WORK_TEAMS = PARTNER_CARDS.filter((item) => item.tag === '小队');
 
 const PARTNER_MARKET_CATEGORIES = [
   '全部',
+  '组织培训',
   '教学备课',
   '教研培训',
   '学员管理',
@@ -595,6 +596,8 @@ const PARTNER_MARKET_CATEGORIES = [
 ];
 
 const PARTNER_MARKET_ITEMS = [
+  { key: 'training-research-planner', name: '教研员', desc: '针对用户提出的组织培训需求，完成培训项目策划、目标设计与实施方案。', category: '组织培训', tags: ['项目策划', '培训方案'], logo: '研', tone: 'sage' },
+  { key: 'training-admin-operator', name: '教务', desc: '根据教研员的策划内容，在平台配置培训项目、组织培训并跟进执行。', category: '组织培训', tags: ['项目配置', '培训组织'], logo: '务', tone: 'blue' },
   { key: 'learning-data-analyst', name: '学情数据分析师', desc: '擅长分析学员成绩、出勤与学习表现，输出改进建议。', category: '数据分析', tags: ['学情诊断', '质量分析'], logo: '数', tone: 'sky' },
   { key: 'ppt-lesson-expert', name: '课件制作专家', desc: '帮你把培训方案、教案和汇报材料转成清晰课件。', category: '资源内容', tags: ['课件生成', '汇报美化'], logo: 'P', tone: 'green' },
   { key: 'lesson-ui-designer', name: '课程活动设计师', desc: '专注课堂活动、学习任务单和互动环节设计。', category: '教学备课', tags: ['活动设计', '任务单'], logo: '设', tone: 'purple' },
@@ -1226,7 +1229,44 @@ function PartnerAvatar({ avatar, tone }) {
   );
 }
 
-function PartnerDialogPage({ onOpenPartner, onCreatePartner }) {
+function PartnerCardMoreMenu({ item, onOpen, onDelete }) {
+  const isTeam = item.tag === '小队';
+  const menuItems = [
+    { key: 'view', label: isTeam ? '查看小队' : '查看详情' },
+    { key: 'delete', label: '删除', danger: true },
+  ];
+
+  return (
+    <Dropdown
+      trigger={['click']}
+      placement="bottomRight"
+      overlayClassName="td-work-partner-more-dropdown"
+      menu={{
+        items: menuItems,
+        onClick: ({ key, domEvent }) => {
+          domEvent?.stopPropagation();
+          if (key === 'view') {
+            onOpen(item);
+            return;
+          }
+          onDelete(item);
+        },
+      }}
+    >
+      <button
+        type="button"
+        className="td-work-partner-message-btn td-work-partner-more-btn"
+        title="更多操作"
+        aria-label={`${item.name}更多操作`}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <MoreOutlined />
+      </button>
+    </Dropdown>
+  );
+}
+
+function PartnerDialogPage({ cards, onOpenPartner, onOpenPartnerMore, onDeletePartner, onCreatePartner }) {
   return (
     <section className="td-work-partner-page" aria-label="智能体对话">
       <div className="td-work-partner-content">
@@ -1246,7 +1286,7 @@ function PartnerDialogPage({ onOpenPartner, onCreatePartner }) {
         </div>
 
         <div className="td-work-partner-grid" aria-label="智能体小队">
-          {PARTNER_CARDS.map((item) => (
+          {cards.map((item) => (
             <article
               key={item.key}
               className="td-work-partner-card"
@@ -1265,18 +1305,21 @@ function PartnerDialogPage({ onOpenPartner, onCreatePartner }) {
                   <PartnerAvatar avatar={item.avatar} tone={item.tone} />
                   <strong>{item.name}</strong>
                 </div>
-                <button
-                  type="button"
-                  className="td-work-partner-message-btn"
-                  title={`打开${item.name}对话`}
-                  aria-label={`打开${item.name}对话`}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onOpenPartner(item);
-                  }}
-                >
-                  <MessageOutlined />
-                </button>
+                <span className="td-work-partner-card-actions">
+                  <PartnerCardMoreMenu item={item} onOpen={onOpenPartnerMore} onDelete={onDeletePartner} />
+                  <button
+                    type="button"
+                    className="td-work-partner-message-btn"
+                    title={`打开${item.name}对话`}
+                    aria-label={`打开${item.name}对话`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onOpenPartner(item);
+                    }}
+                  >
+                    <MessageOutlined />
+                  </button>
+                </span>
               </header>
 
               <p>{item.desc}</p>
@@ -1330,19 +1373,23 @@ function PartnerDialogPage({ onOpenPartner, onCreatePartner }) {
 function PartnerManagePage({
   activeTab,
   searchText,
+  partners,
+  teams,
   onTabChange,
   onSearchChange,
   onCreate,
   onCreateTask,
   onCreateAutomation,
   onOpenPartner,
+  onOpenPartnerMore,
+  onDeletePartner,
   onOpenTask,
 }) {
   const [createMenuOpen, setCreateMenuOpen] = useState(false);
   const createMenuRef = useRef(null);
   const tabs = [
-    { key: 'agents', label: '智能体', count: WORK_PARTNERS.length },
-    { key: 'teams', label: '小队', count: WORK_TEAMS.length },
+    { key: 'agents', label: '智能体', count: partners.length },
+    { key: 'teams', label: '小队', count: teams.length },
     { key: 'tasks', label: '任务', count: PARTNER_MANAGE_TASKS.length },
     { key: 'automation', label: '自动化', count: PARTNER_MANAGE_AUTOMATIONS.length },
   ];
@@ -1355,8 +1402,8 @@ function PartnerManagePage({
   }[activeTab];
   const matchesSearch = (item) => !normalizedSearch
     || `${item.name || item.title} ${item.desc || ''} ${item.owner || ''} ${item.tag || ''}`.toLowerCase().includes(normalizedSearch);
-  const visibleAgents = WORK_PARTNERS.filter(matchesSearch);
-  const visibleTeams = WORK_TEAMS.filter(matchesSearch);
+  const visibleAgents = partners.filter(matchesSearch);
+  const visibleTeams = teams.filter(matchesSearch);
   const visibleTasks = PARTNER_MANAGE_TASKS.filter(matchesSearch);
   const visibleAutomations = PARTNER_MANAGE_AUTOMATIONS.filter(matchesSearch);
   const emptyLabel = activeTab === 'automation' ? '暂无自动化' : '没有找到相关内容';
@@ -1480,21 +1527,8 @@ function PartnerManagePage({
                     <PartnerAvatar avatar={item.avatar} tone={item.tone} />
                     <strong>{item.name}</strong>
                   </div>
-                  <span className="td-work-partner-manage-card-actions">
-                    {index === 1 ? (
-                      <button
-                        type="button"
-                        className="td-work-partner-message-btn"
-                        title="更多操作"
-                        aria-label="更多操作"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onCreate(`${item.name}更多操作`);
-                        }}
-                      >
-                        <MoreOutlined />
-                      </button>
-                    ) : null}
+                  <span className="td-work-partner-card-actions td-work-partner-manage-card-actions">
+                    <PartnerCardMoreMenu item={item} onOpen={onOpenPartnerMore} onDelete={onDeletePartner} />
                     <button
                       type="button"
                       className="td-work-partner-message-btn"
@@ -1549,18 +1583,21 @@ function PartnerManagePage({
                     <PartnerAvatar avatar={item.avatar} tone={item.tone} />
                     <strong>{item.name}</strong>
                   </div>
-                  <button
-                    type="button"
-                    className="td-work-partner-message-btn"
-                    title={`打开${item.name}`}
-                    aria-label={`打开${item.name}`}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onOpenPartner(item);
-                    }}
-                  >
-                    <MessageOutlined />
-                  </button>
+                  <span className="td-work-partner-card-actions td-work-partner-manage-card-actions">
+                    <PartnerCardMoreMenu item={item} onOpen={onOpenPartnerMore} onDelete={onDeletePartner} />
+                    <button
+                      type="button"
+                      className="td-work-partner-message-btn"
+                      title={`打开${item.name}`}
+                      aria-label={`打开${item.name}`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onOpenPartner(item);
+                      }}
+                    >
+                      <MessageOutlined />
+                    </button>
+                  </span>
                 </header>
                 <p>{item.desc}</p>
                 <footer className="td-work-partner-card-foot">
@@ -1615,6 +1652,157 @@ function PartnerManagePage({
             </div>
           ) : null}
       </div>
+    </section>
+  );
+}
+
+const PARTNER_SQUAD_MEMBERS = {
+  'training-squad': [
+    {
+      key: 'training-research-planner',
+      name: '教研员',
+      desc: '针对组织培训需求完成项目策划、目标设计与实施方案。',
+      avatar: 'mentor',
+      tone: 'sage',
+      leader: true,
+    },
+    {
+      key: 'training-admin-operator',
+      name: '教务',
+      desc: '根据策划内容完成平台项目配置、报名组织与执行跟进。',
+      avatar: 'guide',
+      tone: 'sky',
+    },
+    {
+      key: 'hr-training-assistant',
+      name: '培训项目助手',
+      desc: '跟进培训通知、签到、作业、资料与证书发放等协作事项。',
+      avatar: 'designer',
+      tone: 'orange',
+    },
+  ],
+};
+
+function getSquadMembers(squad) {
+  return PARTNER_SQUAD_MEMBERS[squad.key] || [
+    {
+      key: `${squad.key}-planner`,
+      name: '任务规划员',
+      desc: '拆解任务目标，明确协作流程与阶段产出。',
+      avatar: 'mentor',
+      tone: 'purple',
+      leader: true,
+    },
+    {
+      key: `${squad.key}-operator`,
+      name: '执行协同员',
+      desc: '承接执行动作，跟进节点、资料和结果整理。',
+      avatar: 'guide',
+      tone: 'sky',
+    },
+    {
+      key: `${squad.key}-reviewer`,
+      name: '质量复核员',
+      desc: '检查交付质量，补充风险提示与优化建议。',
+      avatar: 'forest',
+      tone: 'sage',
+    },
+  ];
+}
+
+function PartnerSquadDetailPage({ squad, onBack, onAddPartner, onCreateTask }) {
+  const [activeTab, setActiveTab] = useState('members');
+  const members = useMemo(() => getSquadMembers(squad), [squad]);
+
+  return (
+    <section className="td-work-squad-detail-page" aria-label={`${squad.name}详情`}>
+      <header className="td-work-squad-detail-head">
+        <div className="td-work-squad-detail-titlebar">
+          <PartnerAvatar avatar={squad.avatar} tone={squad.tone} />
+          <div>
+            <h1>
+              {squad.name}
+              <span>
+                <TeamOutlined />
+                {members.length}
+              </span>
+            </h1>
+            <p>{squad.desc}</p>
+          </div>
+        </div>
+
+        <div className="td-work-squad-detail-actions">
+          <button type="button" onClick={onAddPartner}>
+            <UserOutlined />
+            添加智能体
+          </button>
+          <button type="button" onClick={onCreateTask}>
+            <PlusOutlined />
+            新任务
+          </button>
+        </div>
+      </header>
+
+      <nav className="td-work-squad-detail-tabs" aria-label="小队详情">
+        <button
+          type="button"
+          className={activeTab === 'members' ? 'is-active' : ''}
+          onClick={() => setActiveTab('members')}
+        >
+          小队成员
+        </button>
+        <button
+          type="button"
+          className={activeTab === 'guide' ? 'is-active' : ''}
+          onClick={() => setActiveTab('guide')}
+        >
+          协作指引
+        </button>
+      </nav>
+
+      {activeTab === 'members' ? (
+        <div className="td-work-squad-canvas">
+          <div className="td-work-squad-flow" aria-label="小队成员协作流">
+            {members.map((member, index) => (
+              <div key={member.key} className="td-work-squad-flow-item">
+                <article className={`td-work-squad-member-node ${member.leader ? 'is-leader' : ''}`}>
+                  <PartnerAvatar avatar={member.avatar} tone={member.tone} />
+                  <div className="td-work-squad-member-copy">
+                    <div className="td-work-squad-member-title">
+                      <strong>{member.name}</strong>
+                      {member.leader ? <CheckCircleOutlined /> : null}
+                    </div>
+                    <p>{member.desc}</p>
+                  </div>
+                  <button type="button" title="成员操作" aria-label={`${member.name}操作`}>
+                    <MoreOutlined />
+                  </button>
+                </article>
+                {index < members.length - 1 ? <span className="td-work-squad-connector" aria-hidden="true" /> : null}
+              </div>
+            ))}
+          </div>
+
+          <div className="td-work-squad-zoom" aria-label="画布缩放">
+            <button type="button" aria-label="缩小">−</button>
+            <span>100%</span>
+            <button type="button" aria-label="放大">+</button>
+          </div>
+        </div>
+      ) : (
+        <div className="td-work-squad-canvas td-work-squad-guide-canvas">
+          <section className="td-work-squad-guide-panel">
+            <h2>协作指引</h2>
+            <p>
+              教研员先明确培训目标、对象与实施路径，教务依据策划内容完成平台配置、通知组织与过程跟进，
+              小队成员共同沉淀资料、记录问题并汇总交付结果。
+            </p>
+            <button type="button" onClick={onBack}>
+              返回智能体对话
+            </button>
+          </section>
+        </div>
+      )}
     </section>
   );
 }
@@ -3100,6 +3288,7 @@ export default function TdWorkModule({
   const [customConnectorForm, setCustomConnectorForm] = useState(createCustomConnectorForm);
   const [customConnectors, setCustomConnectors] = useState([]);
   const [activePartner, setActivePartner] = useState(null);
+  const [deletedPartnerKeys, setDeletedPartnerKeys] = useState(() => new Set());
   const [partnerView, setPartnerView] = useState('workspace');
   const [partnerPrompt, setPartnerPrompt] = useState('');
   const [partnerWorkTab, setPartnerWorkTab] = useState('tasks');
@@ -3418,6 +3607,56 @@ export default function TdWorkModule({
     },
     ...customConnectors,
   ], [customConnectors]);
+
+  const availablePartnerCards = useMemo(
+    () => PARTNER_CARDS.filter((item) => !deletedPartnerKeys.has(item.key)),
+    [deletedPartnerKeys],
+  );
+
+  const availableWorkPartners = useMemo(
+    () => availablePartnerCards.filter((item) => item.tag !== '小队'),
+    [availablePartnerCards],
+  );
+
+  const availableWorkTeams = useMemo(
+    () => availablePartnerCards.filter((item) => item.tag === '小队'),
+    [availablePartnerCards],
+  );
+
+  const openPartnerWorkspace = useCallback((item) => {
+    setActivePartner(item);
+    setPartnerView('workspace');
+    setPartnerWorkTab('tasks');
+    setPartnerWorkSearch('');
+    setPartnerPrompt('');
+    setPartnerPickerOpen(false);
+    setPartnerDetailTab('profile');
+  }, []);
+
+  const openPartnerMore = useCallback((item) => {
+    setActivePartner(item);
+    setPartnerWorkTab('tasks');
+    setPartnerWorkSearch('');
+    setPartnerPrompt('');
+    setPartnerPickerOpen(false);
+    setPartnerDetailTab('profile');
+    setPartnerView(item.tag === '小队' ? 'squad-detail' : 'detail');
+  }, []);
+
+  const deletePartner = useCallback((item) => {
+    setDeletedPartnerKeys((current) => {
+      if (current.has(item.key)) return current;
+      const next = new Set(current);
+      next.add(item.key);
+      return next;
+    });
+    if (activePartner?.key === item.key) {
+      setActivePartner(null);
+      setPartnerView('workspace');
+      setPartnerPickerOpen(false);
+    }
+    setToast(`已删除：${item.name}`);
+  }, [activePartner?.key]);
 
   const canSaveCustomConnector = Boolean(
     customConnectorForm.name.trim() && customConnectorForm.url.trim(),
@@ -3979,7 +4218,7 @@ export default function TdWorkModule({
                   智能体对话
                 </button>
                 <span>›</span>
-                {partnerView === 'detail' ? (
+                {partnerView === 'detail' || partnerView === 'squad-detail' ? (
                   <>
                     <button
                       type="button"
@@ -3991,7 +4230,7 @@ export default function TdWorkModule({
                       {activePartner.name}
                     </button>
                     <span>›</span>
-                    <strong>详情</strong>
+                    <strong>{partnerView === 'squad-detail' ? '小队详情' : '详情'}</strong>
                   </>
                 ) : (
                   <strong>{activePartner.name}</strong>
@@ -4307,11 +4546,13 @@ export default function TdWorkModule({
             <PartnerManagePage
               activeTab={partnerManageTab}
               searchText={partnerManageSearch}
+              partners={availableWorkPartners}
+              teams={availableWorkTeams}
               onTabChange={setPartnerManageTab}
               onSearchChange={setPartnerManageSearch}
               onCreate={(label) => setToast(`已进入：${label}`)}
               onCreateTask={() => {
-                const partner = WORK_PARTNERS[0];
+                const partner = availableWorkPartners[0] || WORK_PARTNERS[0];
                 setActivePartner(partner);
                 setPartnerView('workspace');
                 setPartnerWorkTab('tasks');
@@ -4323,7 +4564,7 @@ export default function TdWorkModule({
               }}
               onCreateAutomation={(mode) => {
                 if (mode === 'chat') {
-                  const partner = WORK_PARTNERS[0];
+                  const partner = availableWorkPartners[0] || WORK_PARTNERS[0];
                   setActivePartner(partner);
                   setPartnerView('workspace');
                   setPartnerWorkTab('automation');
@@ -4336,16 +4577,27 @@ export default function TdWorkModule({
                 }
                 setToast('已进入手动创建自动化');
               }}
-              onOpenPartner={(item) => {
-                setActivePartner(item);
+              onOpenPartner={openPartnerWorkspace}
+              onOpenPartnerMore={openPartnerMore}
+              onDeletePartner={deletePartner}
+              onOpenTask={(item) => setToast(`已打开任务：${item.title}`)}
+            />
+          ) : activePartner && partnerView === 'squad-detail' ? (
+            <PartnerSquadDetailPage
+              squad={activePartner}
+              onBack={() => {
+                setActivePartner(null);
+                setPartnerView('workspace');
+              }}
+              onAddPartner={() => setToast(`已进入添加智能体：${activePartner.name}`)}
+              onCreateTask={() => {
                 setPartnerView('workspace');
                 setPartnerWorkTab('tasks');
                 setPartnerWorkSearch('');
                 setPartnerPrompt('');
                 setPartnerPickerOpen(false);
-                setPartnerDetailTab('profile');
+                setToast(`已进入${activePartner.name}新任务`);
               }}
-              onOpenTask={(item) => setToast(`已打开任务：${item.title}`)}
             />
           ) : activePartner && partnerView === 'detail' ? (
             <PartnerDetailPage
@@ -4363,8 +4615,8 @@ export default function TdWorkModule({
           ) : activePartner ? (
             <PartnerWorkspacePage
               partner={activePartner}
-              partners={WORK_PARTNERS}
-              teams={WORK_TEAMS}
+              partners={availableWorkPartners}
+              teams={availableWorkTeams}
               activeTab={partnerWorkTab}
               searchText={partnerWorkSearch}
               prompt={partnerPrompt}
@@ -4404,21 +4656,16 @@ export default function TdWorkModule({
             />
           ) : (
             <PartnerDialogPage
-              onOpenPartner={(item) => {
-                setActivePartner(item.name ? item : {
-                  ...PARTNER_CARDS[0],
-                  name: item.title,
-                  key: item.key,
-                  avatar: item.avatar,
-                  tone: item.tone,
-                });
-                setPartnerWorkTab('tasks');
-                setPartnerWorkSearch('');
-                setPartnerPrompt('');
-                setPartnerPickerOpen(false);
-                setPartnerDetailTab('profile');
-                setPartnerView('workspace');
-              }}
+              cards={availablePartnerCards}
+              onOpenPartner={(item) => openPartnerWorkspace(item.name ? item : {
+                ...(availablePartnerCards[0] || PARTNER_CARDS[0]),
+                name: item.title,
+                key: item.key,
+                avatar: item.avatar,
+                tone: item.tone,
+              })}
+              onOpenPartnerMore={openPartnerMore}
+              onDeletePartner={deletePartner}
               onCreatePartner={(label) => setToast(`已进入：${label}`)}
             />
           )
