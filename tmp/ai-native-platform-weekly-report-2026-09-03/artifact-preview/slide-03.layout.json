@@ -1,0 +1,1362 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/42lbb8",
+    "id": "42lbb8",
+    "slide": 3,
+    "layoutId": "cacaa296-4433-41ea-9e58-00cc58bfd4b5",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "f1b5b6c3-c31a-4d4e-a00f-68a5c968c918",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "Helvetica Neue"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "cacaa296-4433-41ea-9e58-00cc58bfd4b5",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "f1b5b6c3-c31a-4d4e-a00f-68a5c968c918",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "f1b5b6c3-c31a-4d4e-a00f-68a5c968c918",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/sbedwfip",
+      "id": "1",
+      "bbox": [
+        56,
+        44,
+        1120,
+        74
+      ],
+      "geometry": "rect",
+      "text": "方案管场景，套餐管资源边界",
+      "textPreview": "方案管场景，套餐管资源边界",
+      "resolvedFontSize": 47,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 47,
+        "typeface": "Helvetica Neue",
+        "color": "#0F172A",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "方案管场景，套餐管资源边界"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "方案管场景，套餐管资源边界",
+          "resolvedTextStyle": {
+            "fontSize": 47,
+            "typeface": "Helvetica Neue",
+            "color": "#0F172A",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "方案管场景，套餐管资源边界",
+              "fontSize": 47,
+              "typeface": "Helvetica Neue",
+              "color": "#0F172A",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ra5wna14",
+      "id": "2",
+      "bbox": [
+        56,
+        112,
+        1070,
+        38
+      ],
+      "geometry": "rect",
+      "text": "本周把试用开通和后续销售的基础口径整理成可配置对象。",
+      "textPreview": "本周把试用开通和后续销售的基础口径整理成可配置对象。",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 22,
+        "typeface": "Helvetica Neue",
+        "color": "#5B6472",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "本周把试用开通和后续销售的基础口径整理成可配置对象。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "本周把试用开通和后续销售的基础口径整理成可配置对象。",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Helvetica Neue",
+            "color": "#5B6472",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "本周把试用开通和后续销售的基础口径整理成可配置对象。",
+              "fontSize": 22,
+              "typeface": "Helvetica Neue",
+              "color": "#5B6472",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/q9wvu50z",
+      "id": "3",
+      "bbox": [
+        56,
+        668,
+        360,
+        28
+      ],
+      "geometry": "rect",
+      "text": "内部周会 | 2026-09-03",
+      "textPreview": "内部周会 | 2026-09-03",
+      "resolvedFontSize": 15,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 15,
+        "typeface": "Helvetica Neue",
+        "color": "#5B6472",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "内部周会 | 2026-09-03"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "内部周会 | 2026-09-03",
+          "resolvedTextStyle": {
+            "fontSize": 15,
+            "typeface": "Helvetica Neue",
+            "color": "#5B6472",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "内部周会 | 2026-09-03",
+              "fontSize": 15,
+              "typeface": "Helvetica Neue",
+              "color": "#5B6472",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/583el0je",
+      "id": "4",
+      "bbox": [
+        1180,
+        668,
+        44,
+        28
+      ],
+      "geometry": "rect",
+      "text": "3",
+      "textPreview": "3",
+      "resolvedFontSize": 15,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 15,
+        "typeface": "Helvetica Neue",
+        "color": "#5B6472",
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "3"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "3",
+          "resolvedTextStyle": {
+            "fontSize": 15,
+            "typeface": "Helvetica Neue",
+            "color": "#5B6472",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "3",
+              "fontSize": 15,
+              "typeface": "Helvetica Neue",
+              "color": "#5B6472",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "table",
+      "scope": "slide",
+      "aid": "tb/1kru94fe",
+      "id": "5",
+      "bbox": [
+        56,
+        174,
+        1168,
+        238
+      ],
+      "text": "对象 | 回答的问题 | 本周沉淀口径\n解决方案 | 客户试用什么业务场景 | 方案名称、适用场景、模块能力、应用清单和交付范围\n套餐 | 这个场景按什么额度试用 | 用户、空间、存储、AI 调用、视频播放、研讨会和证书等权益边界\n租户 | 给哪个客户实际开通 | 客户主体、绑定套餐、服务周期、状态和客户成功负责人",
+      "textPreview": "对象 | 回答的问题 | 本周沉淀口径 | 解决方案 | 客户试用什么业务场景 | 方案名称、适用场景、模块能力、应用清单和交付范围 | 套餐 | 这个场景按什么额度试用 | 用户、空间、存储、AI 调用、视频播放、研讨会和证书等权益边界 | 租户 | 给哪个客户实际开通 ...",
+      "rows": 4,
+      "cols": 3,
+      "cells": [
+        {
+          "index": 1,
+          "row": 1,
+          "column": 1,
+          "bbox": [
+            56,
+            174,
+            389.33,
+            59.5
+          ],
+          "text": "对象",
+          "textPreview": "对象",
+          "fillColor": "#0F172A",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "对象",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "对象"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "row": 1,
+          "column": 2,
+          "bbox": [
+            445.33,
+            174,
+            389.33,
+            59.5
+          ],
+          "text": "回答的问题",
+          "textPreview": "回答的问题",
+          "fillColor": "#0F172A",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "回答的问题",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "回答的问题"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "row": 1,
+          "column": 3,
+          "bbox": [
+            834.67,
+            174,
+            389.33,
+            59.5
+          ],
+          "text": "本周沉淀口径",
+          "textPreview": "本周沉淀口径",
+          "fillColor": "#0F172A",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "本周沉淀口径",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "本周沉淀口径"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "row": 2,
+          "column": 1,
+          "bbox": [
+            56,
+            233.5,
+            389.33,
+            59.5
+          ],
+          "text": "解决方案",
+          "textPreview": "解决方案",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "解决方案",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "解决方案"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "row": 2,
+          "column": 2,
+          "bbox": [
+            445.33,
+            233.5,
+            389.33,
+            59.5
+          ],
+          "text": "客户试用什么业务场景",
+          "textPreview": "客户试用什么业务场景",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "客户试用什么业务场景",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "客户试用什么业务场景"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "row": 2,
+          "column": 3,
+          "bbox": [
+            834.67,
+            233.5,
+            389.33,
+            59.5
+          ],
+          "text": "方案名称、适用场景、模块能力、应用清单和交付范围",
+          "textPreview": "方案名称、适用场景、模块能力、应用清单和交付范围",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "方案名称、适用场景、模块能力、应用清单和交付范围",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "方案名称、适用场景、模块能力、应用清单和交付范围"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "row": 3,
+          "column": 1,
+          "bbox": [
+            56,
+            293,
+            389.33,
+            59.5
+          ],
+          "text": "套餐",
+          "textPreview": "套餐",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "套餐",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "套餐"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "row": 3,
+          "column": 2,
+          "bbox": [
+            445.33,
+            293,
+            389.33,
+            59.5
+          ],
+          "text": "这个场景按什么额度试用",
+          "textPreview": "这个场景按什么额度试用",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "这个场景按什么额度试用",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "这个场景按什么额度试用"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 9,
+          "row": 3,
+          "column": 3,
+          "bbox": [
+            834.67,
+            293,
+            389.33,
+            59.5
+          ],
+          "text": "用户、空间、存储、AI 调用、视频播放、研讨会和证书等权益边界",
+          "textPreview": "用户、空间、存储、AI 调用、视频播放、研讨会和证书等权益边界",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "用户、空间、存储、AI 调用、视频播放、研讨会和证书等权益边界",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "用户、空间、存储、AI 调用、视频播放、研讨会和证书等权益边界"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 10,
+          "row": 4,
+          "column": 1,
+          "bbox": [
+            56,
+            352.5,
+            389.33,
+            59.5
+          ],
+          "text": "租户",
+          "textPreview": "租户",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "租户",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "租户"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 11,
+          "row": 4,
+          "column": 2,
+          "bbox": [
+            445.33,
+            352.5,
+            389.33,
+            59.5
+          ],
+          "text": "给哪个客户实际开通",
+          "textPreview": "给哪个客户实际开通",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "给哪个客户实际开通",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "给哪个客户实际开通"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 12,
+          "row": 4,
+          "column": 3,
+          "bbox": [
+            834.67,
+            352.5,
+            389.33,
+            59.5
+          ],
+          "text": "客户主体、绑定套餐、服务周期、状态和客户成功负责人",
+          "textPreview": "客户主体、绑定套餐、服务周期、状态和客户成功负责人",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "客户主体、绑定套餐、服务周期、状态和客户成功负责人",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "客户主体、绑定套餐、服务周期、状态和客户成功负责人"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/36lwjq18",
+      "id": "6",
+      "bbox": [
+        56,
+        452,
+        260,
+        34
+      ],
+      "geometry": "rect",
+      "text": "套餐定位",
+      "textPreview": "套餐定位",
+      "resolvedFontSize": 28,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 28,
+        "typeface": "Helvetica Neue",
+        "color": "#0F172A",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "套餐定位"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "套餐定位",
+          "resolvedTextStyle": {
+            "fontSize": 28,
+            "typeface": "Helvetica Neue",
+            "color": "#0F172A",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "套餐定位",
+              "fontSize": 28,
+              "typeface": "Helvetica Neue",
+              "color": "#0F172A",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/i5cvq50n",
+      "id": "7",
+      "bbox": [
+        56,
+        500,
+        360,
+        118
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#F2F4F7",
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/p47ex4zi",
+      "id": "8",
+      "bbox": [
+        78,
+        518,
+        120,
+        28
+      ],
+      "geometry": "rect",
+      "text": "标准版",
+      "textPreview": "标准版",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 24,
+        "typeface": "Helvetica Neue",
+        "color": "#0F172A",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "标准版"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "标准版",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "typeface": "Helvetica Neue",
+            "color": "#0F172A",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "标准版",
+              "fontSize": 24,
+              "typeface": "Helvetica Neue",
+              "color": "#0F172A",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/o3yx4zix",
+      "id": "9",
+      "bbox": [
+        78,
+        554,
+        300,
+        26
+      ],
+      "geometry": "rect",
+      "text": "中小规模培训项目、单校教研团队",
+      "textPreview": "中小规模培训项目、单校教研团队",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 17,
+        "typeface": "Helvetica Neue",
+        "color": "#0F172A",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "中小规模培训项目、单校教研团队"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "中小规模培训项目、单校教研团队",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "typeface": "Helvetica Neue",
+            "color": "#0F172A",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "中小规模培训项目、单校教研团队",
+              "fontSize": 17,
+              "typeface": "Helvetica Neue",
+              "color": "#0F172A",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/qtg7qd8n",
+      "id": "10",
+      "bbox": [
+        78,
+        584,
+        310,
+        46
+      ],
+      "geometry": "rect",
+      "text": "开箱即用，覆盖空间、资料、研讨、问卷和证书基础流程。",
+      "textPreview": "开箱即用，覆盖空间、资料、研讨、问卷和证书基础流程。",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 16,
+        "typeface": "Helvetica Neue",
+        "color": "#5B6472",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "开箱即用，覆盖空间、资料、研讨、问"
+          },
+          {
+            "index": 2,
+            "text": "卷和证书基础流程。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "开箱即用，覆盖空间、资料、研讨、问卷和证书基础流程。",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "typeface": "Helvetica Neue",
+            "color": "#5B6472",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "开箱即用，覆盖空间、资料、研讨、问卷和证书基础流程。",
+              "fontSize": 16,
+              "typeface": "Helvetica Neue",
+              "color": "#5B6472",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/rupoji98",
+      "id": "11",
+      "bbox": [
+        448,
+        500,
+        360,
+        118
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#EAF5FB",
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/cvypsnqd",
+      "id": "12",
+      "bbox": [
+        470,
+        518,
+        120,
+        28
+      ],
+      "geometry": "rect",
+      "text": "专业版",
+      "textPreview": "专业版",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 24,
+        "typeface": "Helvetica Neue",
+        "color": "#3D8DFF",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "专业版"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "专业版",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "typeface": "Helvetica Neue",
+            "color": "#3D8DFF",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "专业版",
+              "fontSize": 24,
+              "typeface": "Helvetica Neue",
+              "color": "#3D8DFF",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/dw7qlsry",
+      "id": "13",
+      "bbox": [
+        470,
+        554,
+        300,
+        26
+      ],
+      "geometry": "rect",
+      "text": "区域培训、教研共同体、集团校",
+      "textPreview": "区域培训、教研共同体、集团校",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 17,
+        "typeface": "Helvetica Neue",
+        "color": "#0F172A",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "区域培训、教研共同体、集团校"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "区域培训、教研共同体、集团校",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "typeface": "Helvetica Neue",
+            "color": "#0F172A",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "区域培训、教研共同体、集团校",
+              "fontSize": 17,
+              "typeface": "Helvetica Neue",
+              "color": "#0F172A",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/25g7mdsb",
+      "id": "14",
+      "bbox": [
+        470,
+        584,
+        310,
+        46
+      ],
+      "geometry": "rect",
+      "text": "支持多方案组合、主题定制和高级统计。",
+      "textPreview": "支持多方案组合、主题定制和高级统计。",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 16,
+        "typeface": "Helvetica Neue",
+        "color": "#5B6472",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "支持多方案组合、主题定制和高级统计"
+          },
+          {
+            "index": 2,
+            "text": "。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "支持多方案组合、主题定制和高级统计。",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "typeface": "Helvetica Neue",
+            "color": "#5B6472",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "支持多方案组合、主题定制和高级统计。",
+              "fontSize": 16,
+              "typeface": "Helvetica Neue",
+              "color": "#5B6472",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/36pofi9w",
+      "id": "15",
+      "bbox": [
+        840,
+        500,
+        360,
+        118
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#F2F4F7",
+      "lineWidth": 0
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/4ryponqh",
+      "id": "16",
+      "bbox": [
+        862,
+        518,
+        120,
+        28
+      ],
+      "geometry": "rect",
+      "text": "旗舰版",
+      "textPreview": "旗舰版",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 24,
+        "typeface": "Helvetica Neue",
+        "color": "#0F172A",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "旗舰版"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "旗舰版",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "typeface": "Helvetica Neue",
+            "color": "#0F172A",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "旗舰版",
+              "fontSize": 24,
+              "typeface": "Helvetica Neue",
+              "color": "#0F172A",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ps76h8r2",
+      "id": "17",
+      "bbox": [
+        862,
+        554,
+        300,
+        26
+      ],
+      "geometry": "rect",
+      "text": "大型区域项目、综合数字化建设项目",
+      "textPreview": "大型区域项目、综合数字化建设项目",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 17,
+        "typeface": "Helvetica Neue",
+        "color": "#0F172A",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "大型区域项目、综合数字化建设项目"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "大型区域项目、综合数字化建设项目",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "typeface": "Helvetica Neue",
+            "color": "#0F172A",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "大型区域项目、综合数字化建设项目",
+              "fontSize": 17,
+              "typeface": "Helvetica Neue",
+              "color": "#0F172A",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 18,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/m107yx8v",
+      "id": "18",
+      "bbox": [
+        862,
+        584,
+        310,
+        46
+      ],
+      "geometry": "rect",
+      "text": "完整开放 AI、知识空间和成果认证能力，按项目确认交付范围。",
+      "textPreview": "完整开放 AI、知识空间和成果认证能力，按项目确认交付范围。",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 16,
+        "typeface": "Helvetica Neue",
+        "color": "#5B6472",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "完整开放"
+          },
+          {
+            "index": 2,
+            "text": "AI、知识空间和成果认证能力，按项目"
+          },
+          {
+            "index": 3,
+            "text": "确认交付范围。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "完整开放 AI、知识空间和成果认证能力，按项目确认交付范围。",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "typeface": "Helvetica Neue",
+            "color": "#5B6472",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "完整开放 AI、知识空间和成果认证能力，按项目确认交付范围。",
+              "fontSize": 16,
+              "typeface": "Helvetica Neue",
+              "color": "#5B6472",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

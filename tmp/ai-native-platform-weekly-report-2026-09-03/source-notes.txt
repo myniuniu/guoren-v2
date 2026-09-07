@@ -1,0 +1,16 @@
+Sources used for the weekly report deck:
+
+- User-approved plan in this conversation.
+- /Users/zhanghl/Documents/GitHub/guoren-v2/docs/market-trial-application-process.md
+- /Users/zhanghl/Documents/GitHub/guoren-v2/docs/teacher-development-competitive-strategy-report.md
+- /Users/zhanghl/Documents/GitHub/guoren-v2/src/solutionPrototype/SolutionPrototypeModule.jsx
+- /Users/zhanghl/Documents/GitHub/guoren-v2/src/packagePrototype/PackagePrototypeModule.jsx
+- /Users/zhanghl/Documents/GitHub/guoren-v2/src/resourceLib/ResourceLibrary.jsx
+- /Users/zhanghl/Documents/GitHub/guoren-v2/src/resourceLib/resourceLibStore.js
+- /Users/zhanghl/Documents/GitHub/guoren-v2/src/lucky/LuckyModule.jsx
+- /Users/zhanghl/Documents/GitHub/guoren-v2/src/quickBuild/QuickBuildModule.jsx
+- /Users/zhanghl/Documents/GitHub/guoren-v2/src/tdWork/TdWorkModule.jsx
+- /Users/zhanghl/Documents/GitHub/guoren-v2/src/assets/hero.png
+- /var/folders/b1/n7l3tg6951bg2fxcv64856x00000gn/T/codex-clipboard-50b6485a-eb17-4ac3-bdb8-119e552ab5e1.png
+
+No external web sources or third-party visual assets were used.

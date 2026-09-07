@@ -15,13 +15,11 @@ import {
   ControlOutlined,
   CloseOutlined,
   DatabaseOutlined,
-  DesktopOutlined,
   DownOutlined,
   EditOutlined,
   EllipsisOutlined,
   FileTextOutlined,
   FilterOutlined,
-  FolderAddOutlined,
   FolderOutlined,
   HomeOutlined,
   InfoCircleOutlined,
@@ -47,7 +45,7 @@ import './TdWorkModule.css';
 
 const NAV_ITEMS = [
   { key: 'new-task', label: '新工作任务', icon: <EditOutlined /> },
-  { key: 'scheduled', label: '定时任务', icon: <ClockCircleOutlined /> },
+  { key: 'scheduled', label: '自动化', icon: <ClockCircleOutlined /> },
   { key: 'space', label: '空间', icon: <AppstoreOutlined /> },
   { key: 'skills', label: '智能体 · 技能 · 连接器', icon: <RobotOutlined /> },
   { key: 'dialog', label: '智能体对话', icon: <MessageOutlined /> },
@@ -58,9 +56,29 @@ const PINNED_ITEMS = [
   { key: 'main-dialog', label: '主对话', tone: 'blue', icon: <MessageOutlined /> },
 ];
 
-const PROJECT_ITEMS = [
-  { key: 'local-files', label: '公司本地资料', tone: 'gray', icon: <FolderOutlined /> },
-  { key: 'file-types', label: '询问文件种类', tone: 'blue', icon: <FileTextOutlined /> },
+const SIDEBAR_SPACE_PRIORITY = [
+  'scene_supervision_seed_1',
+  'scene_training_seed_1',
+  'scene_course_studio_seed_1',
+];
+
+const SPACE_CONVERSATION_ITEMS = [
+  {
+    key: 'space-session-class-quality',
+    label: '课堂教学质量专项督导会话',
+    tone: 'blue',
+    icon: <MessageOutlined />,
+    kind: 'space-session',
+    sceneId: 'scene_supervision_seed_1',
+  },
+  {
+    key: 'space-session-new-teacher',
+    label: '新教师岗前培训组织会话',
+    tone: 'purple',
+    icon: <MessageOutlined />,
+    kind: 'space-session',
+    sceneId: 'scene_training_seed_1',
+  },
 ];
 
 const RECENT_ITEMS = [
@@ -105,53 +123,25 @@ const RECOMMENDATIONS = [
 ];
 
 const WORK_CONTENT_TABS = [
-  { key: 'daily-study', label: '日常学习', icon: <BookOutlined /> },
+  { key: 'work-task', label: '工作任务', icon: <ProjectOutlined /> },
   { key: 'code-dev', label: '代码开发', icon: <CodeOutlined /> },
 ];
 
 const CONTEXT_TOOLS = [
   { key: 'task', label: '工作任务', icon: <ProjectOutlined />, active: true },
-  { key: 'project', label: '项目', icon: <FolderOutlined /> },
+  { key: 'space', label: '空间', icon: <AppstoreOutlined /> },
+  { key: 'agent', label: '智能体', icon: <RobotOutlined /> },
   { key: 'confirm', label: '按需确认', icon: <CheckCircleOutlined /> },
-  { key: 'knowledge', label: '企业知识', icon: <BookOutlined /> },
-  { key: 'skills', label: '更多技能', icon: <MoreOutlined /> },
-  { key: 'connectors', label: '连接器', icon: <LinkOutlined />, sparkle: true },
 ];
 
 const PANEL_CONTENT = {
   task: ['新建待办', '拆分步骤', '生成执行清单'],
-  project: ['公司本地资料', '询问文件种类', '产品会议项目'],
   confirm: ['发送前确认', '关键节点确认', '自动推进'],
-  knowledge: ['制度文档', '产品资料', '课程素材'],
-  skills: ['PPT 生成', '调研分析', '表格处理'],
-  connectors: ['本地浏览器', '企业网盘', '飞书消息'],
 };
 
 const WORK_TASK_TARGETS = [
   { key: 'local', label: '工作任务', place: '本地电脑', tone: 'blue', icon: <LaptopOutlined /> },
   { key: 'cloud', label: '工作任务', place: '云电脑', tone: 'green', icon: <CloudOutlined /> },
-];
-
-const PROJECT_MENU_ITEMS = [
-  {
-    key: 'company-local',
-    label: '公司本地资料',
-    shortcut: '⌘ 1',
-    icon: <FolderOutlined />,
-    suffixIcon: <DesktopOutlined />,
-  },
-  {
-    key: 'create-project',
-    label: '创建新项目',
-    shortcut: '⌘ 2',
-    icon: <PlusOutlined />,
-  },
-  {
-    key: 'add-local-folder',
-    label: '添加本地文件夹',
-    shortcut: '⌘ 3',
-    icon: <FolderAddOutlined />,
-  },
 ];
 
 const COMPOSER_SKILLS = [
@@ -2313,32 +2303,94 @@ function WorkTaskTargetMenu({ value, onChange }) {
   );
 }
 
-function ProjectMenu({ value, onChange }) {
+function SpaceMenu({ value, spaces, loading, onChange }) {
   return (
-    <div className="td-work-composer-project-menu" role="menu" aria-label="项目菜单">
-      {PROJECT_MENU_ITEMS.map((item, index) => {
-        const selected = value === item.key;
+    <div className="td-work-composer-project-menu td-work-composer-space-menu" role="menu" aria-label="空间菜单">
+      <div className="td-work-composer-space-head">
+        <strong>选择空间</strong>
+        <span>单选</span>
+      </div>
 
-        return (
-          <button
-            key={item.key}
-            type="button"
-            className={`td-work-composer-project-option ${selected ? 'is-selected' : ''} ${index === 0 ? 'has-divider' : ''}`}
-            role="menuitemradio"
-            aria-checked={selected}
-            onClick={() => onChange(item)}
-          >
-            <span className="td-work-composer-project-icon" aria-hidden="true">{item.icon}</span>
-            <span className="td-work-composer-project-label">
-              <span>{item.label}</span>
-              {item.suffixIcon ? (
-                <span className="td-work-composer-project-suffix" aria-hidden="true">{item.suffixIcon}</span>
-              ) : null}
-            </span>
-            <span className="td-work-composer-project-shortcut">{item.shortcut}</span>
-          </button>
-        );
-      })}
+      {loading ? (
+        <div className="td-work-composer-space-empty">正在加载空间...</div>
+      ) : spaces.length ? (
+        spaces.map((scene) => {
+          const selected = value === scene.id;
+
+          return (
+            <button
+              key={scene.id}
+              type="button"
+              className={`td-work-composer-project-option td-work-composer-space-option ${selected ? 'is-selected' : ''}`}
+              role="menuitemradio"
+              aria-checked={selected}
+              onClick={() => onChange(scene)}
+            >
+              <span className="td-work-composer-project-icon" aria-hidden="true">
+                <AppstoreOutlined />
+              </span>
+              <span className="td-work-composer-project-label td-work-composer-space-label">
+                <span>{scene.name}</span>
+                <em>
+                  {scene.sceneGroupName || '默认空间'}
+                  {scene.visibility ? ` · ${getSceneVisibilityLabel(scene.visibility)}` : ''}
+                </em>
+              </span>
+              <span className="td-work-composer-project-shortcut td-work-composer-space-check">
+                {selected ? <CheckOutlined /> : `${scene.topicCount || 0} 主题`}
+              </span>
+            </button>
+          );
+        })
+      ) : (
+        <div className="td-work-composer-space-empty">暂无可选择空间</div>
+      )}
+    </div>
+  );
+}
+
+function ComposerAgentMenu({ value, agents, onChange }) {
+  return (
+    <div className="td-work-composer-project-menu td-work-composer-agent-menu" role="menu" aria-label="智能体菜单">
+      <div className="td-work-composer-space-head td-work-composer-agent-head">
+        <strong>选择智能体</strong>
+        <span>单选</span>
+      </div>
+
+      {agents.length ? (
+        agents.map((agent, index) => {
+          const selected = value === agent.selectionKey;
+          const isMarketAgent = agent.source === 'market';
+
+          return (
+            <button
+              key={agent.selectionKey}
+              type="button"
+              className={`td-work-composer-agent-option ${selected ? 'is-selected' : ''}`}
+              role="menuitemradio"
+              aria-checked={selected}
+              onClick={() => onChange(agent)}
+            >
+              <span className="td-work-composer-agent-avatar" aria-hidden="true">
+                {isMarketAgent ? (
+                  <PartnerMarketAvatar item={agent} index={agent.marketIndex ?? index} />
+                ) : (
+                  <PartnerAvatar avatar={agent.avatar} tone={agent.tone} />
+                )}
+              </span>
+              <span className="td-work-composer-agent-copy">
+                <strong>{agent.name}</strong>
+                <em>{agent.desc}</em>
+              </span>
+              <span className="td-work-composer-agent-meta">
+                {selected ? <CheckOutlined /> : (agent.meta || agent.category || agent.tag)}
+              </span>
+            </button>
+          );
+        })
+      ) : (
+        <div className="td-work-composer-space-empty">暂无可选择智能体</div>
+      )}
     </div>
   );
 }
@@ -2349,7 +2401,13 @@ function ScheduledTasksPage({
   activeMode,
   modeKey,
   taskTargetKey,
-  projectKey,
+  selectedSpaceId,
+  selectedSpace,
+  selectedAgent,
+  selectedAgentKey,
+  agents,
+  spaces,
+  spacesLoading,
   selectedSkills,
   selectedSkillKeys,
   composerRef,
@@ -2360,12 +2418,13 @@ function ScheduledTasksPage({
   onOpenPanelChange,
   onModeChange,
   onTaskTargetChange,
-  onProjectChange,
+  onSpaceChange,
+  onAgentChange,
   onToggleSkill,
   onToast,
 }) {
   return (
-    <section className="td-work-schedule-page" aria-label="定时任务">
+    <section className="td-work-schedule-page" aria-label="自动化">
       <div className="td-work-schedule-content">
         <div className="td-work-schedule-label">为你推荐</div>
         <div className="td-work-schedule-grid">
@@ -2388,7 +2447,7 @@ function ScheduledTasksPage({
 
       <section
         className={`td-work-composer-shell td-work-schedule-composer-shell ${openPanel === 'skills' ? 'is-skill-menu-open' : ''}`}
-        aria-label="安排定时任务"
+        aria-label="安排自动化"
         ref={composerRef}
       >
         <div className={`td-work-composer ${openPanel === 'skills' ? 'is-skill-menu-open' : ''}`}>
@@ -2399,17 +2458,27 @@ function ScheduledTasksPage({
             />
           ) : null}
 
-          {openPanel === 'project' ? (
-            <ProjectMenu
-              value={projectKey}
-              onChange={onProjectChange}
+          {openPanel === 'space' ? (
+            <SpaceMenu
+              value={selectedSpaceId}
+              spaces={spaces}
+              loading={spacesLoading}
+              onChange={onSpaceChange}
+            />
+          ) : null}
+
+          {openPanel === 'agent' ? (
+            <ComposerAgentMenu
+              value={selectedAgentKey}
+              agents={agents}
+              onChange={onAgentChange}
             />
           ) : null}
 
           <ComposerPromptArea
             selectedSkills={selectedSkills}
             prompt={prompt}
-            placeholder="给通达安排任务"
+            placeholder="给通达安排自动化任务"
             onPromptChange={onPromptChange}
             onSend={onSend}
             onToggleSkill={onToggleSkill}
@@ -2425,12 +2494,19 @@ function ScheduledTasksPage({
                 <button
                   key={item.key}
                   type="button"
-                  className={`td-work-tool-chip ${item.active ? 'is-active' : ''} ${openPanel === item.key ? 'is-open' : ''}`}
+                  className={`td-work-tool-chip ${item.active ? 'is-active' : ''} ${openPanel === item.key ? 'is-open' : ''} ${item.key === 'space' && selectedSpace ? 'has-selected-space' : ''} ${item.key === 'agent' && selectedAgent ? 'has-selected-agent' : ''}`}
+                  title={item.key === 'space' && selectedSpace ? selectedSpace.name : item.key === 'agent' && selectedAgent ? selectedAgent.name : item.label}
                   onClick={() => onSelectTool(item)}
                 >
                   <span className={item.sparkle ? 'td-work-spark-icon' : ''}>{item.icon}</span>
-                  <span>{item.label}</span>
-                  {item.key === 'task' || item.key === 'connectors' ? <DownOutlined /> : null}
+                  <span className="td-work-tool-label">
+                    {item.key === 'space' && selectedSpace
+                      ? selectedSpace.name
+                      : item.key === 'agent' && selectedAgent
+                        ? selectedAgent.name
+                        : item.label}
+                  </span>
+                  {item.key === 'task' || item.key === 'space' || item.key === 'agent' ? <DownOutlined /> : null}
                 </button>
               ))}
             </div>
@@ -2462,14 +2538,14 @@ function ScheduledTasksPage({
             />
           ) : null}
 
-          {openPanel && openPanel !== 'mode' && openPanel !== 'skills' && openPanel !== 'task' && openPanel !== 'project' ? (
+          {openPanel && openPanel !== 'mode' && openPanel !== 'skills' && openPanel !== 'task' && openPanel !== 'space' && openPanel !== 'agent' ? (
             <div className="td-work-popover" role="menu">
               {(PANEL_CONTENT[openPanel] || []).map((label) => (
                 <button
                   key={label}
                   type="button"
                   onClick={() => {
-                    onPromptChange(`定时提醒我处理：${label}`);
+                    onPromptChange(`自动化提醒我处理：${label}`);
                     onOpenPanelChange(null);
                   }}
                 >
@@ -2638,7 +2714,7 @@ function ProjectDetailBody({ activeTab }) {
         </p>
         <p>
           <strong>自动化：</strong>
-          定时收集学习反馈、提醒作业提交、生成项目周报，让重复事项自动推进。
+          自动收集学习反馈、提醒作业提交、生成项目周报，让重复事项自动推进。
         </p>
         <footer>
           <span>项目已经创建，可以开始推进。</span>
@@ -3159,17 +3235,74 @@ function SpacesPage({
 }
 
 function WorkBrowserPanel({ onClose }) {
+  const [tabs, setTabs] = useState([{ id: 'browser-tab-1', title: '新标签页' }]);
+  const [activeTabId, setActiveTabId] = useState('browser-tab-1');
+  const nextTabNumberRef = useRef(2);
+
+  const handleCreateTab = () => {
+    const nextNumber = nextTabNumberRef.current;
+    nextTabNumberRef.current += 1;
+    const nextTab = {
+      id: `browser-tab-${nextNumber}`,
+      title: `新标签页 ${nextNumber}`,
+    };
+    setTabs((current) => [...current, nextTab]);
+    setActiveTabId(nextTab.id);
+  };
+
+  const handleCloseTab = (tabId, event) => {
+    event.stopPropagation();
+    if (tabs.length <= 1) {
+      onClose();
+      return;
+    }
+    const closingIndex = tabs.findIndex((tab) => tab.id === tabId);
+    const nextTabs = tabs.filter((tab) => tab.id !== tabId);
+    if (activeTabId === tabId) {
+      const nextActiveTab = tabs[closingIndex + 1] || tabs[closingIndex - 1] || nextTabs[0];
+      setActiveTabId(nextActiveTab.id);
+    }
+    setTabs(nextTabs);
+  };
+
   return (
     <aside className="td-work-browser-panel" aria-label="右侧工作面板">
       <header className="td-work-browser-tabs">
-        <div className="td-work-browser-tab is-active">
-          <span className="td-work-browser-tab-dot" />
-          <span>新标签页</span>
-          <button type="button" aria-label="关闭标签" onClick={() => onClose()}>
-            <CloseOutlined />
-          </button>
+        <div className="td-work-browser-tab-list" role="tablist" aria-label="工作面板标签页">
+          {tabs.map((tab) => {
+            const active = activeTabId === tab.id;
+
+            return (
+              <div
+                key={tab.id}
+                className={`td-work-browser-tab ${active ? 'is-active' : ''}`}
+                role="tab"
+                aria-selected={active}
+                tabIndex={active ? 0 : -1}
+                onClick={() => setActiveTabId(tab.id)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    setActiveTabId(tab.id);
+                  }
+                }}
+              >
+                <span className="td-work-browser-tab-dot" />
+                <span>{tab.title}</span>
+                <button type="button" aria-label={`关闭${tab.title}`} onClick={(event) => handleCloseTab(tab.id, event)}>
+                  <CloseOutlined />
+                </button>
+              </div>
+            );
+          })}
         </div>
-        <button type="button" className="td-work-browser-new-tab" title="新建标签" aria-label="新建标签">
+        <button
+          type="button"
+          className="td-work-browser-new-tab"
+          title="新建标签"
+          aria-label="新建标签"
+          onClick={handleCreateTab}
+        >
           <PlusOutlined />
         </button>
         <div className="td-work-browser-top-actions">
@@ -3245,10 +3378,10 @@ export default function TdWorkModule({
   onAccountMenuOpenChange,
 }) {
   const [activeNav, setActiveNav] = useState('new-task');
-  const [activeSideItem, setActiveSideItem] = useState('main-dialog');
+  const [activeSideItem, setActiveSideItem] = useState('');
   const [prompt, setPrompt] = useState('');
   const [selectedComposerSkillKeys, setSelectedComposerSkillKeys] = useState([]);
-  const [workContentTab, setWorkContentTab] = useState('daily-study');
+  const [workContentTab, setWorkContentTab] = useState('work-task');
   const [toast, setToast] = useState('');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarSearchOpen, setSidebarSearchOpen] = useState(false);
@@ -3264,7 +3397,8 @@ export default function TdWorkModule({
   const [openPanel, setOpenPanel] = useState(null);
   const [modeKey, setModeKey] = useState('auto');
   const [taskTargetKey, setTaskTargetKey] = useState('local');
-  const [projectKey, setProjectKey] = useState('company-local');
+  const [selectedComposerSpaceId, setSelectedComposerSpaceId] = useState('');
+  const [selectedComposerAgentKey, setSelectedComposerAgentKey] = useState('');
   const [activeProject, setActiveProject] = useState(null);
   const [spaceTemplates, setSpaceTemplates] = useState([]);
   const [spaceScenes, setSpaceScenes] = useState([]);
@@ -3307,6 +3441,7 @@ export default function TdWorkModule({
   const createMenuRef = useRef(null);
   const mainRef = useRef(null);
   const sidePanelTimerRef = useRef(null);
+  const spaceSidebarLoadedRef = useRef(false);
 
   const activeMode = useMemo(
     () => MODE_OPTIONS.find((item) => item.key === modeKey) || MODE_OPTIONS[0],
@@ -3327,7 +3462,6 @@ export default function TdWorkModule({
       window.clearTimeout(sidePanelTimerRef.current);
       sidePanelTimerRef.current = null;
     }
-    setSidebarCollapsed(true);
     setSidePanelClosing(false);
     setSidePanelOpen(true);
     setSidePanelExpanded(false);
@@ -3454,6 +3588,31 @@ export default function TdWorkModule({
   const visibleSpaceGroups = useMemo(
     () => buildAiSpaceGroups(visibleSpaceScenes),
     [buildAiSpaceGroups, visibleSpaceScenes],
+  );
+
+  const sidebarSpaceItems = useMemo(() => {
+    const priorityMap = new Map(SIDEBAR_SPACE_PRIORITY.map((id, index) => [id, index]));
+    return [...spaceScenes]
+      .sort((a, b) => {
+        const aPriority = priorityMap.has(a.id) ? priorityMap.get(a.id) : Number.POSITIVE_INFINITY;
+        const bPriority = priorityMap.has(b.id) ? priorityMap.get(b.id) : Number.POSITIVE_INFINITY;
+        if (aPriority !== bPriority) return aPriority - bPriority;
+        return String(b.updatedAt).localeCompare(String(a.updatedAt));
+      })
+      .slice(0, 3)
+      .map((scene, index) => ({
+        key: `space:${scene.id}`,
+        label: scene.name,
+        tone: index === 0 ? 'blue' : 'gray',
+        icon: <AppstoreOutlined />,
+        kind: 'space',
+        scene,
+      }));
+  }, [spaceScenes]);
+
+  const selectedComposerSpace = useMemo(
+    () => spaceScenes.find((scene) => scene.id === selectedComposerSpaceId) || null,
+    [selectedComposerSpaceId, spaceScenes],
   );
 
   const aiSpaceHomeTitle = useMemo(() => {
@@ -3623,6 +3782,29 @@ export default function TdWorkModule({
     [availablePartnerCards],
   );
 
+  const composerAgents = useMemo(() => {
+    const workspaceAgents = availableWorkPartners.map((item) => ({
+      ...item,
+      source: 'workspace',
+      selectionKey: `workspace:${item.key}`,
+      meta: item.tag,
+    }));
+    const marketAgents = PARTNER_MARKET_ITEMS.map((item, index) => ({
+      ...item,
+      source: 'market',
+      selectionKey: `market:${item.key}`,
+      marketIndex: index,
+      meta: item.category,
+    }));
+
+    return [...workspaceAgents, ...marketAgents];
+  }, [availableWorkPartners]);
+
+  const selectedComposerAgent = useMemo(
+    () => composerAgents.find((agent) => agent.selectionKey === selectedComposerAgentKey) || null,
+    [composerAgents, selectedComposerAgentKey],
+  );
+
   const openPartnerWorkspace = useCallback((item) => {
     setActivePartner(item);
     setPartnerView('workspace');
@@ -3663,24 +3845,25 @@ export default function TdWorkModule({
   );
 
   const title = activeNav === 'new-task'
-    ? '今天有什么工作要处理？'
+    ? (workContentTab === 'code-dev' ? '今天要开发什么？' : '今天有什么工作要处理？')
     : `要处理哪些${NAV_ITEMS.find((item) => item.key === activeNav)?.label || '工作'}？`;
   const activeSideLabel = useMemo(() => {
-    const allSideItems = [...PINNED_ITEMS, ...PROJECT_ITEMS, ...RECENT_ITEMS];
+    const allSideItems = [...PINNED_ITEMS, ...sidebarSpaceItems, ...SPACE_CONVERSATION_ITEMS, ...RECENT_ITEMS];
     return allSideItems.find((item) => item.key === activeSideItem)?.label || '';
-  }, [activeSideItem]);
+  }, [activeSideItem, sidebarSpaceItems]);
   const sidebarSearchItems = useMemo(() => {
     const normalizedKeyword = sidebarTaskSearch.trim().toLowerCase();
     const allSideItems = [
       ...PINNED_ITEMS.map((item) => ({ ...item, group: '置顶' })),
-      ...PROJECT_ITEMS.map((item) => ({ ...item, group: '项目' })),
+      ...sidebarSpaceItems.map((item) => ({ ...item, group: '空间' })),
+      ...SPACE_CONVERSATION_ITEMS.map((item) => ({ ...item, group: '空间会话' })),
       ...RECENT_ITEMS.map((item) => ({ ...item, group: '最近' })),
     ];
     if (!normalizedKeyword) return allSideItems;
     return allSideItems.filter((item) => (
       `${item.label} ${item.group}`.toLowerCase().includes(normalizedKeyword)
     ));
-  }, [sidebarTaskSearch]);
+  }, [sidebarSpaceItems, sidebarTaskSearch]);
   const hasSidebarTaskFilter = sidebarTaskStatusFilter !== 'all' || sidebarTaskTimeFilter !== 'all';
   const isFileQueryConversation = activeNav === 'new-task' && activeSideItem === 'file-types';
 
@@ -3689,6 +3872,15 @@ export default function TdWorkModule({
     const timer = window.setTimeout(() => setToast(''), 1800);
     return () => window.clearTimeout(timer);
   }, [toast]);
+
+  useEffect(() => {
+    if (spaceSidebarLoadedRef.current || spaceScenes.length > 0 || spaceLoading) return undefined;
+    spaceSidebarLoadedRef.current = true;
+    const loadTimer = window.setTimeout(() => {
+      loadAiSpaceData();
+    }, 0);
+    return () => window.clearTimeout(loadTimer);
+  }, [loadAiSpaceData, spaceLoading, spaceScenes.length]);
 
   useEffect(() => {
     if (activeNav !== 'space') return undefined;
@@ -3779,7 +3971,7 @@ export default function TdWorkModule({
       setToast('先输入一个问题或任务');
       return;
     }
-    setToast(activeNav === 'scheduled' ? '已安排定时任务' : '已创建工作任务');
+    setToast(activeNav === 'scheduled' ? '已创建自动化' : '已创建工作任务');
     setPrompt('');
   };
 
@@ -3790,6 +3982,9 @@ export default function TdWorkModule({
 
   const handleSelectTool = (item) => {
     setOpenPanel((current) => (current === item.key ? null : item.key));
+    if (item.key === 'space' && spaceScenes.length === 0 && !spaceLoading) {
+      loadAiSpaceData();
+    }
     if (item.key !== 'task') setToast(`已打开${item.label}`);
   };
 
@@ -3799,13 +3994,16 @@ export default function TdWorkModule({
     setToast(`工作任务已切换到${item.place}`);
   }, []);
 
-  const handleProjectChange = useCallback((item) => {
-    setProjectKey(item.key);
+  const handleComposerSpaceChange = useCallback((scene) => {
+    setSelectedComposerSpaceId(scene.id);
     setOpenPanel(null);
-    if (item.key === 'create-project') {
-      setPrompt((current) => current || '帮我创建一个新的教师研修项目。');
-    }
-    setToast(`已选择：${item.label}`);
+    setToast(`已选择空间：${scene.name}`);
+  }, []);
+
+  const handleComposerAgentChange = useCallback((agent) => {
+    setSelectedComposerAgentKey(agent.selectionKey);
+    setOpenPanel(null);
+    setToast(`已选择智能体：${agent.name}`);
   }, []);
 
   const handleToggleComposerSkill = useCallback((key) => {
@@ -3891,6 +4089,19 @@ export default function TdWorkModule({
     setToast(`已保存自定义连接器：${connector.name}`);
   };
 
+  const handleOpenNewTask = useCallback((mode = 'work-task') => {
+    setActiveNav('new-task');
+    setActiveSideItem('');
+    setWorkContentTab(mode);
+    setActiveProject(null);
+    setActiveSpace(null);
+    setActivePartner(null);
+    setPartnerView('workspace');
+    setCreateMenuOpen(false);
+    setPartnerPickerOpen(false);
+    closeSidePanel(true);
+  }, [closeSidePanel]);
+
   const handleSidebarSearchOpenChange = (open) => {
     setSidebarSearchOpen(open);
     if (open) setSidebarFilterOpen(false);
@@ -3902,10 +4113,31 @@ export default function TdWorkModule({
   };
 
   const handleOpenSidebarSearchItem = (item) => {
-    setActiveSideItem(item.key);
-    setActiveNav('new-task');
     setSidebarSearchOpen(false);
     setSidebarTaskSearch('');
+    if (item.kind === 'space') {
+      setActiveSideItem(item.key);
+      setActiveNav('space');
+      setActiveProject(null);
+      setActivePartner(null);
+      setPartnerView('workspace');
+      handleOpenAiSpace(item.scene);
+      return;
+    }
+    if (item.kind === 'space-session') {
+      const linkedScene = spaceScenes.find((scene) => scene.id === item.sceneId);
+      setActiveSideItem(item.key);
+      setActiveNav('new-task');
+      setWorkContentTab('work-task');
+      if (linkedScene) {
+        setSelectedComposerSpaceId(linkedScene.id);
+      }
+      setToast(linkedScene ? `已打开${linkedScene.name}的会话数据` : '已打开空间会话数据');
+      return;
+    }
+    setActiveSideItem(item.key);
+    setActiveNav('new-task');
+    setWorkContentTab('work-task');
   };
 
   const renderSidebarFilterOption = (item, activeKey, onSelect) => {
@@ -3989,16 +4221,8 @@ export default function TdWorkModule({
   );
 
   const handleOpenNewTaskFromCollapsedTopbar = () => {
-    setActiveNav('new-task');
-    setActiveSideItem('');
     setPrompt('');
-    setActiveProject(null);
-    setActiveSpace(null);
-    setActivePartner(null);
-    setPartnerView('workspace');
-    setCreateMenuOpen(false);
-    setPartnerPickerOpen(false);
-    closeSidePanel(true);
+    handleOpenNewTask('work-task');
   };
 
   const topbarSidebarCollapsedTools = sidebarCollapsed ? (
@@ -4096,35 +4320,57 @@ export default function TdWorkModule({
 
         <nav className="td-work-nav" aria-label="主导航">
           {NAV_ITEMS.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              className={`td-work-nav-item ${activeNav === item.key ? 'is-active' : ''}`}
-              onClick={() => {
-                setActiveNav(item.key);
-                setActiveSideItem('');
-                setCreateMenuOpen(false);
-                setPartnerPickerOpen(false);
-                if (item.key === 'project') {
-                  setActiveProject(null);
-                }
-                if (item.key === 'space') {
-                  setActiveSpace(null);
-                  setSpaceSearch('');
-                  setSpaceGroupFilter(null);
-                  setSpaceOwnershipTab('created');
-                }
-                closeSidePanel(true);
-                if (item.key === 'dialog') {
-                  setActivePartner(null);
-                  setPartnerView('workspace');
-                }
-              }}
-              title={item.label}
-            >
-              <span className="td-work-nav-icon">{item.icon}</span>
-              <span className="td-work-nav-label">{item.label}</span>
-            </button>
+            <div key={item.key} className={`td-work-nav-block ${item.key === 'new-task' && activeNav === 'new-task' && !activeSideItem ? 'has-subnav' : ''}`}>
+              <button
+                type="button"
+                className={`td-work-nav-item ${activeNav === item.key ? 'is-active' : ''}`}
+                onClick={() => {
+                  if (item.key === 'new-task') {
+                    handleOpenNewTask('work-task');
+                    return;
+                  }
+                  setActiveNav(item.key);
+                  setActiveSideItem('');
+                  setCreateMenuOpen(false);
+                  setPartnerPickerOpen(false);
+                  if (item.key === 'project') {
+                    setActiveProject(null);
+                  }
+                  if (item.key === 'space') {
+                    setActiveSpace(null);
+                    setSpaceSearch('');
+                    setSpaceGroupFilter(null);
+                    setSpaceOwnershipTab('created');
+                  }
+                  closeSidePanel(true);
+                  if (item.key === 'dialog') {
+                    setActivePartner(null);
+                    setPartnerView('workspace');
+                  }
+                }}
+                title={item.label}
+              >
+                <span className="td-work-nav-icon">{item.icon}</span>
+                <span className="td-work-nav-label">{item.label}</span>
+              </button>
+              {item.key === 'new-task' && activeNav === 'new-task' && !activeSideItem ? (
+                <div className="td-work-nav-submodes" role="tablist" aria-label="新工作任务模式">
+                  {WORK_CONTENT_TABS.map((mode) => (
+                    <button
+                      key={mode.key}
+                      type="button"
+                      className={`td-work-nav-submode ${workContentTab === mode.key ? 'is-active' : ''}`}
+                      role="tab"
+                      aria-selected={workContentTab === mode.key}
+                      onClick={() => setWorkContentTab(mode.key)}
+                    >
+                      {mode.icon}
+                      <span>{mode.label}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
           ))}
         </nav>
 
@@ -4138,21 +4384,32 @@ export default function TdWorkModule({
                 onClick={() => {
                   setActiveSideItem(item.key);
                   setActiveNav('new-task');
+                  setWorkContentTab('work-task');
                 }}
               />
             ))}
           </SidebarSection>
 
-          <SidebarSection title="项目">
-            {PROJECT_ITEMS.map((item) => (
+          <SidebarSection title="空间">
+            {sidebarSpaceItems.length ? (
+              sidebarSpaceItems.map((item) => (
+                <SmallItem
+                  key={item.key}
+                  item={item}
+                  active={activeSideItem === item.key}
+                  onClick={() => handleOpenSidebarSearchItem(item)}
+                />
+              ))
+            ) : (
+              <div className="td-work-side-empty">空间加载中...</div>
+            )}
+            <div className="td-work-side-subtitle">会话数据</div>
+            {SPACE_CONVERSATION_ITEMS.map((item) => (
               <SmallItem
                 key={item.key}
                 item={item}
                 active={activeSideItem === item.key}
-                onClick={() => {
-                  setActiveSideItem(item.key);
-                  setActiveNav('new-task');
-                }}
+                onClick={() => handleOpenSidebarSearchItem(item)}
               />
             ))}
           </SidebarSection>
@@ -4166,6 +4423,7 @@ export default function TdWorkModule({
                 onClick={() => {
                   setActiveSideItem(item.key);
                   setActiveNav('new-task');
+                  setWorkContentTab('work-task');
                 }}
               />
             ))}
@@ -4272,7 +4530,7 @@ export default function TdWorkModule({
           ) : activeNav === 'cloud' ? null : activeNav === 'scheduled' ? (
             <>
               {topbarSidebarCollapsedTools}
-              <button type="button" className="td-work-schedule-new-btn" onClick={() => setToast('已进入新建定时任务')}>
+              <button type="button" className="td-work-schedule-new-btn" onClick={() => setToast('已进入新建自动化')}>
                 <PlusOutlined />
                 新建
               </button>
@@ -4356,6 +4614,9 @@ export default function TdWorkModule({
             <>
               {topbarSidebarCollapsedTools}
               <div className="td-work-skill-tabs" role="tablist" aria-label="技能页面">
+                <button type="button" className="is-active" role="tab" aria-selected="true">
+                  智能体 · 小队
+                </button>
                 <button
                   type="button"
                   role="tab"
@@ -4366,9 +4627,6 @@ export default function TdWorkModule({
                   }}
                 >
                   技能 · 连接器
-                </button>
-                <button type="button" className="is-active" role="tab" aria-selected="true">
-                  智能体 · 小队
                 </button>
               </div>
 
@@ -4402,9 +4660,6 @@ export default function TdWorkModule({
             <>
               {topbarSidebarCollapsedTools}
               <div className="td-work-skill-tabs" role="tablist" aria-label="技能页面">
-                <button type="button" className="is-active" role="tab" aria-selected="true" onClick={() => setSkillView('market')}>
-                  技能 · 连接器
-                </button>
                 <button
                   type="button"
                   role="tab"
@@ -4416,6 +4671,9 @@ export default function TdWorkModule({
                   }}
                 >
                   智能体 · 小队
+                </button>
+                <button type="button" className="is-active" role="tab" aria-selected="true" onClick={() => setSkillView('market')}>
+                  技能 · 连接器
                 </button>
               </div>
 
@@ -4680,7 +4938,13 @@ export default function TdWorkModule({
             activeMode={activeMode}
             modeKey={modeKey}
             taskTargetKey={taskTargetKey}
-            projectKey={projectKey}
+            selectedSpaceId={selectedComposerSpaceId}
+            selectedSpace={selectedComposerSpace}
+            selectedAgent={selectedComposerAgent}
+            selectedAgentKey={selectedComposerAgentKey}
+            agents={composerAgents}
+            spaces={spaceScenes}
+            spacesLoading={spaceLoading}
             selectedSkills={selectedComposerSkills}
             selectedSkillKeys={selectedComposerSkillKeys}
             composerRef={composerRef}
@@ -4694,7 +4958,8 @@ export default function TdWorkModule({
             onOpenPanelChange={setOpenPanel}
             onModeChange={setModeKey}
             onTaskTargetChange={handleTaskTargetChange}
-            onProjectChange={handleProjectChange}
+            onSpaceChange={handleComposerSpaceChange}
+            onAgentChange={handleComposerAgentChange}
             onToggleSkill={handleToggleComposerSkill}
             onToast={setToast}
           />
@@ -4707,21 +4972,6 @@ export default function TdWorkModule({
               <div className="td-work-center">
                 <LuckyMark />
                 <h1>{title}</h1>
-                <div className="td-work-content-tabs" role="tablist" aria-label="工作内容模式">
-                  {WORK_CONTENT_TABS.map((item) => (
-                    <button
-                      key={item.key}
-                      type="button"
-                      className={`td-work-content-tab ${workContentTab === item.key ? 'is-active' : ''}`}
-                      role="tab"
-                      aria-selected={workContentTab === item.key}
-                      onClick={() => setWorkContentTab(item.key)}
-                    >
-                      {item.icon}
-                      <span>{item.label}</span>
-                    </button>
-                  ))}
-                </div>
               </div>
 
               <div className="td-work-recommend">
@@ -4752,10 +5002,20 @@ export default function TdWorkModule({
                 />
               ) : null}
 
-              {openPanel === 'project' ? (
-                <ProjectMenu
-                  value={projectKey}
-                  onChange={handleProjectChange}
+              {openPanel === 'space' ? (
+                <SpaceMenu
+                  value={selectedComposerSpaceId}
+                  spaces={spaceScenes}
+                  loading={spaceLoading}
+                  onChange={handleComposerSpaceChange}
+                />
+              ) : null}
+
+              {openPanel === 'agent' ? (
+                <ComposerAgentMenu
+                  value={selectedComposerAgentKey}
+                  agents={composerAgents}
+                  onChange={handleComposerAgentChange}
                 />
               ) : null}
 
@@ -4775,29 +5035,26 @@ export default function TdWorkModule({
                   </button>
                   <span className="td-work-divider" />
                   {CONTEXT_TOOLS
-                    .filter((item) => !sidePanelOpen || ['task', 'confirm', 'knowledge'].includes(item.key))
+                    .filter((item) => !sidePanelOpen || ['task', 'space', 'agent', 'confirm'].includes(item.key))
                     .map((item) => (
                     <button
                       key={item.key}
                       type="button"
-                      className={`td-work-tool-chip ${item.active ? 'is-active' : ''} ${openPanel === item.key ? 'is-open' : ''}`}
+                      className={`td-work-tool-chip ${item.active ? 'is-active' : ''} ${openPanel === item.key ? 'is-open' : ''} ${item.key === 'space' && selectedComposerSpace ? 'has-selected-space' : ''} ${item.key === 'agent' && selectedComposerAgent ? 'has-selected-agent' : ''}`}
+                      title={item.key === 'space' && selectedComposerSpace ? selectedComposerSpace.name : item.key === 'agent' && selectedComposerAgent ? selectedComposerAgent.name : item.label}
                       onClick={() => handleSelectTool(item)}
                     >
                       <span className={item.sparkle ? 'td-work-spark-icon' : ''}>{item.icon}</span>
-                      <span>{item.label}</span>
-                      {item.key === 'task' || item.key === 'connectors' ? <DownOutlined /> : null}
+                      <span className="td-work-tool-label">
+                        {item.key === 'space' && selectedComposerSpace
+                          ? selectedComposerSpace.name
+                          : item.key === 'agent' && selectedComposerAgent
+                            ? selectedComposerAgent.name
+                            : item.label}
+                      </span>
+                      {item.key === 'task' || item.key === 'space' || item.key === 'agent' ? <DownOutlined /> : null}
                     </button>
                   ))}
-                  {sidePanelOpen ? (
-                    <button
-                      type="button"
-                      className={`td-work-tool-chip td-work-tool-more ${openPanel === 'compact-more' ? 'is-open' : ''}`}
-                      aria-label="更多工具"
-                      onClick={() => setOpenPanel((current) => (current === 'compact-more' ? null : 'compact-more'))}
-                    >
-                      <span>...</span>
-                    </button>
-                  ) : null}
                 </div>
 
                 <div className="td-work-submit-row">
@@ -4829,19 +5086,18 @@ export default function TdWorkModule({
                 />
               ) : null}
 
-              {openPanel && openPanel !== 'mode' && openPanel !== 'skills' && openPanel !== 'task' && openPanel !== 'project' ? (
+              {openPanel && openPanel !== 'mode' && openPanel !== 'skills' && openPanel !== 'task' && openPanel !== 'space' && openPanel !== 'agent' ? (
                 <div className="td-work-popover" role="menu">
-                  {((openPanel === 'compact-more' ? ['项目', '更多技能', '连接器'] : PANEL_CONTENT[openPanel]) || []).map((label) => (
+                  {(PANEL_CONTENT[openPanel] || []).map((label) => (
                     <button
                       key={label}
                       type="button"
                       onClick={() => {
-                        if (label === '项目') {
-                          setOpenPanel('project');
-                          return;
-                        }
-                        if (label === '更多技能') {
-                          setOpenPanel('skills');
+                        if (label === '空间') {
+                          if (spaceScenes.length === 0 && !spaceLoading) {
+                            loadAiSpaceData();
+                          }
+                          setOpenPanel('space');
                           return;
                         }
                         setPrompt((current) => current || `帮我处理：${label}`);

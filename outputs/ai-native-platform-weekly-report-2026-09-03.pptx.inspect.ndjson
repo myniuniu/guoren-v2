@@ -1,0 +1,215 @@
+{"kind":"deck","id":"pr/c604lj","name":"Deck"}
+{"kind":"layout","layoutId":"f1b5b6c3-c31a-4d4e-a00f-68a5c968c918","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"cacaa296-4433-41ea-9e58-00cc58bfd4b5","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/c1hnxc","slide":1,"title":"AI 原生平台","textShapes":7}
+{"kind":"textbox","id":"sh/vexc7qdk","slide":1,"text":"AI 原生平台","textPreview":"AI 原生平台","textChars":7,"textLines":1,"bbox":[56,48,420,30]}
+{"kind":"textbox","id":"sh/wf6d0vu5","slide":1,"text":"周进展汇报","textPreview":"周进展汇报","textChars":5,"textLines":1,"bbox":[56,138,640,96]}
+{"kind":"textbox","id":"sh/hgfu90vq","slide":1,"text":"解决方案/套餐、客户端模式、虚拟课堂技能、智搭上线、AI 模式研发","textPreview":"解决方案/套餐、客户端模式、虚拟课堂技能、智搭上线、AI 模式研发","textChars":33,"textLines":1,"bbox":[56,258,640,78]}
+{"kind":"shape","id":"sh/ihov25cb","slide":1,"bbox":[56,372,520,0]}
+{"kind":"textbox","id":"sh/jixcbqdw","slide":1,"text":"内部周会 | 2026-09-03","textPreview":"内部周会 | 2026-09-03","textChars":17,"textLines":1,"bbox":[56,418,360,34]}
+{"kind":"shape","id":"sh/436d4vuh","slide":1,"bbox":[765,102,360,410]}
+{"kind":"textbox","id":"sh/yl4vq1c7","slide":1,"text":"本周主线：把单点能力整理成可试用、可配置、可演示的交付链路。","textPreview":"本周主线：把单点能力整理成可试用、可配置、可演示的交付链路。","textChars":30,"textLines":1,"bbox":[748,545,410,62]}
+{"kind":"textbox","id":"sh/zmdcz6ds","slide":1,"text":"内部周会 | 2026-09-03","textPreview":"内部周会 | 2026-09-03","textChars":17,"textLines":1,"bbox":[56,668,360,28]}
+{"kind":"textbox","id":"sh/ry9c3ydo","slide":1,"text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[1180,668,44,28]}
+{"kind":"image","id":"im/0zmx0fa1","slide":1,"name":"","alt":"AI platform layer visual from local asset","bbox":[805,142,280,296]}
+{"kind":"notes","id":"nt/c1hnxc","slide":1,"text":"Opening slide for the internal weekly report.\nThe visual asset is the local hero image already present in the repository.\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/assets/hero.png\n\n[Sources]\n- 用户确认的周汇报 PPT 制作计划（本对话）\n- /Users/zhanghl/Documents/GitHub/guoren-v2/docs/market-trial-application-process.md\n- /Users/zhanghl/Documents/GitHub/guoren-v2/docs/teacher-development-competitive-strategy-report.md\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/solutionPrototype/SolutionPrototypeModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/packagePrototype/PackagePrototypeModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/resourceLib/ResourceLibrary.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/lucky/LuckyModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/quickBuild/QuickBuildModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/tdWork/TdWorkModule.jsx\n- 用户提供的 AI 模式截图: /var/folders/b1/n7l3tg6951bg2fxcv64856x00000gn/T/codex-clipboard-50b6485a-eb17-4ac3-bdb8-119e552ab5e1.png\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/hqwxny","slide":2,"title":"本周推进从功能完善走向可复制交付","textShapes":24}
+{"kind":"textbox","id":"sh/94vmdcvm","slide":2,"text":"本周推进从功能完善走向可复制交付","textPreview":"本周推进从功能完善走向可复制交付","textChars":16,"textLines":1,"bbox":[56,44,1120,74]}
+{"kind":"textbox","id":"sh/m14n2hwb","slide":2,"text":"五条主线同步收敛：场景口径、客户端能力、虚拟课堂技能、智搭入口、AI 模式。","textPreview":"五条主线同步收敛：场景口径、客户端能力、虚拟课堂技能、智搭入口、AI 模式。","textChars":38,"textLines":1,"bbox":[56,112,1070,38]}
+{"kind":"textbox","id":"sh/72d4bmdg","slide":2,"text":"内部周会 | 2026-09-03","textPreview":"内部周会 | 2026-09-03","textChars":17,"textLines":1,"bbox":[56,668,360,28]}
+{"kind":"textbox","id":"sh/w7m58red","slide":2,"text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[1180,668,44,28]}
+{"kind":"shape","id":"sh/h8fmhwvy","slide":2,"bbox":[56,160,1168,78]}
+{"kind":"textbox","id":"sh/u54n6hw7","slide":2,"text":"解决方案与套餐","textPreview":"解决方案与套餐","textChars":7,"textLines":1,"bbox":[84,182,250,32]}
+{"kind":"textbox","id":"sh/v6d4fmds","slide":2,"text":"场景与资源边界拆清","textPreview":"场景与资源边界拆清","textChars":9,"textLines":1,"bbox":[360,182,420,34]}
+{"kind":"shape","id":"sh/4v65cbe9","slide":2,"bbox":[810,184,104,30]}
+{"kind":"textbox","id":"sh/5wfmlwvu","slide":2,"text":"已完成","textPreview":"已完成","textChars":3,"textLines":1,"bbox":[820,189,84,20]}
+{"kind":"textbox","id":"sh/5w7q90jm","slide":2,"text":"沉淀试用开通口径","textPreview":"沉淀试用开通口径","textChars":8,"textLines":1,"bbox":[952,178,250,42]}
+{"kind":"shape","id":"sh/4vyp0v21","slide":2,"bbox":[56,248,1168,78]}
+{"kind":"textbox","id":"sh/jup87q1g","slide":2,"text":"客户端模式","textPreview":"客户端模式","textChars":5,"textLines":1,"bbox":[84,270,250,32]}
+{"kind":"textbox","id":"sh/itw7ylkv","slide":2,"text":"本地目录与浏览器入口明确","textPreview":"本地目录与浏览器入口明确","textChars":12,"textLines":1,"bbox":[360,270,420,34]}
+{"kind":"shape","id":"sh/t07qd0ji","slide":2,"bbox":[810,272,104,30]}
+{"kind":"textbox","id":"sh/szy94f2x","slide":2,"text":"联调中","textPreview":"联调中","textChars":3,"textLines":1,"bbox":[820,277,84,20]}
+{"kind":"textbox","id":"sh/ryp8ba1c","slide":2,"text":"补齐权限、扫描和回退体验","textPreview":"补齐权限、扫描和回退体验","textChars":12,"textLines":1,"bbox":[952,266,250,42]}
+{"kind":"shape","id":"sh/6xgr25k7","slide":2,"bbox":[56,336,1168,78]}
+{"kind":"textbox","id":"sh/94nq1gje","slide":2,"text":"视频课程生成技能","textPreview":"视频课程生成技能","textChars":8,"textLines":1,"bbox":[84,358,250,32]}
+{"kind":"textbox","id":"sh/83epsb2t","slide":2,"text":"时长、多轮修改、进度和导出成型","textPreview":"时长、多轮修改、进度和导出成型","textChars":15,"textLines":1,"bbox":[360,358,420,34]}
+{"kind":"shape","id":"sh/0ny98bap","slide":2,"bbox":[810,360,104,30]}
+{"kind":"textbox","id":"sh/18rqhgra","slide":2,"text":"完善中","textPreview":"完善中","textChars":3,"textLines":1,"bbox":[820,365,84,20]}
+{"kind":"textbox","id":"sh/elg761sj","slide":2,"text":"做成虚拟课堂样板","textPreview":"做成虚拟课堂样板","textChars":8,"textLines":1,"bbox":[952,354,250,42]}
+{"kind":"shape","id":"sh/zmp8f694","slide":2,"bbox":[56,424,1168,78]}
+{"kind":"textbox","id":"sh/obi9cval","slide":2,"text":"智搭模块","textPreview":"智搭模块","textChars":4,"textLines":1,"bbox":[84,446,250,32]}
+{"kind":"textbox","id":"sh/9crql0r6","slide":2,"text":"独立入口与核心页面上线","textPreview":"独立入口与核心页面上线","textChars":11,"textLines":1,"bbox":[360,446,420,34]}
+{"kind":"shape","id":"sh/m90ralsv","slide":2,"bbox":[810,448,104,30]}
+{"kind":"textbox","id":"sh/na98jq90","slide":2,"text":"已上线","textPreview":"已上线","textChars":3,"textLines":1,"bbox":[820,453,84,20]}
+{"kind":"textbox","id":"sh/wf29gvax","slide":2,"text":"用于演示轻量业务系统","textPreview":"用于演示轻量业务系统","textChars":10,"textLines":1,"bbox":[952,442,250,42]}
+{"kind":"shape","id":"sh/xgbqp0ri","slide":2,"bbox":[56,512,1168,78]}
+{"kind":"textbox","id":"sh/rmxkvyxw","slide":2,"text":"AI 模式","textPreview":"AI 模式","textChars":5,"textLines":1,"bbox":[84,534,250,32]}
+{"kind":"textbox","id":"sh/6lo32tgb","slide":2,"text":"类 WorkBuddy 工作学习入口研发中","textPreview":"类 WorkBuddy 工作学习入口研发中","textChars":21,"textLines":1,"bbox":[360,534,420,34]}
+{"kind":"shape","id":"sh/tof2x8fm","slide":2,"bbox":[810,536,104,30]}
+{"kind":"textbox","id":"sh/sn6l43y1","slide":2,"text":"研发中","textPreview":"研发中","textChars":3,"textLines":1,"bbox":[820,541,84,20]}
+{"kind":"textbox","id":"sh/jidkrexk","slide":2,"text":"预计 2026-09-10 左右上测试环境","textPreview":"预计 2026-09-10 左右上测试环境","textChars":21,"textLines":1,"bbox":[952,530,250,42]}
+{"kind":"notes","id":"nt/hqwxny","slide":2,"text":"This slide summarizes the weekly progress using completion-plus-plan status language.\n\n[Sources]\n- 用户确认的周汇报 PPT 制作计划（本对话）\n- /Users/zhanghl/Documents/GitHub/guoren-v2/docs/market-trial-application-process.md\n- /Users/zhanghl/Documents/GitHub/guoren-v2/docs/teacher-development-competitive-strategy-report.md\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/solutionPrototype/SolutionPrototypeModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/packagePrototype/PackagePrototypeModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/resourceLib/ResourceLibrary.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/lucky/LuckyModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/quickBuild/QuickBuildModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/tdWork/TdWorkModule.jsx\n- 用户提供的 AI 模式截图: /var/folders/b1/n7l3tg6951bg2fxcv64856x00000gn/T/codex-clipboard-50b6485a-eb17-4ac3-bdb8-119e552ab5e1.png\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/42lbb8","slide":3,"title":"方案管场景，套餐管资源边界","textShapes":14}
+{"kind":"textbox","id":"sh/sbedwfip","slide":3,"text":"方案管场景，套餐管资源边界","textPreview":"方案管场景，套餐管资源边界","textChars":13,"textLines":1,"bbox":[56,44,1120,74]}
+{"kind":"textbox","id":"sh/ra5wna14","slide":3,"text":"本周把试用开通和后续销售的基础口径整理成可配置对象。","textPreview":"本周把试用开通和后续销售的基础口径整理成可配置对象。","textChars":26,"textLines":1,"bbox":[56,112,1070,38]}
+{"kind":"textbox","id":"sh/q9wvu50z","slide":3,"text":"内部周会 | 2026-09-03","textPreview":"内部周会 | 2026-09-03","textChars":17,"textLines":1,"bbox":[56,668,360,28]}
+{"kind":"textbox","id":"sh/583el0je","slide":3,"text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[1180,668,44,28]}
+{"kind":"textbox","id":"sh/36lwjq18","slide":3,"text":"套餐定位","textPreview":"套餐定位","textChars":4,"textLines":1,"bbox":[56,452,260,34]}
+{"kind":"shape","id":"sh/i5cvq50n","slide":3,"bbox":[56,500,360,118]}
+{"kind":"textbox","id":"sh/p47ex4zi","slide":3,"text":"标准版","textPreview":"标准版","textChars":3,"textLines":1,"bbox":[78,518,120,28]}
+{"kind":"textbox","id":"sh/o3yx4zix","slide":3,"text":"中小规模培训项目、单校教研团队","textPreview":"中小规模培训项目、单校教研团队","textChars":15,"textLines":1,"bbox":[78,554,300,26]}
+{"kind":"textbox","id":"sh/qtg7qd8n","slide":3,"text":"开箱即用，覆盖空间、资料、研讨、问卷和证书基础流程。","textPreview":"开箱即用，覆盖空间、资料、研讨、问卷和证书基础流程。","textChars":26,"textLines":1,"bbox":[78,584,310,46]}
+{"kind":"shape","id":"sh/rupoji98","slide":3,"bbox":[448,500,360,118]}
+{"kind":"textbox","id":"sh/cvypsnqd","slide":3,"text":"专业版","textPreview":"专业版","textChars":3,"textLines":1,"bbox":[470,518,120,28]}
+{"kind":"textbox","id":"sh/dw7qlsry","slide":3,"text":"区域培训、教研共同体、集团校","textPreview":"区域培训、教研共同体、集团校","textChars":14,"textLines":1,"bbox":[470,554,300,26]}
+{"kind":"textbox","id":"sh/25g7mdsb","slide":3,"text":"支持多方案组合、主题定制和高级统计。","textPreview":"支持多方案组合、主题定制和高级统计。","textChars":18,"textLines":1,"bbox":[470,584,310,46]}
+{"kind":"shape","id":"sh/36pofi9w","slide":3,"bbox":[840,500,360,118]}
+{"kind":"textbox","id":"sh/4ryponqh","slide":3,"text":"旗舰版","textPreview":"旗舰版","textChars":3,"textLines":1,"bbox":[862,518,120,28]}
+{"kind":"textbox","id":"sh/ps76h8r2","slide":3,"text":"大型区域项目、综合数字化建设项目","textPreview":"大型区域项目、综合数字化建设项目","textChars":16,"textLines":1,"bbox":[862,554,300,26]}
+{"kind":"textbox","id":"sh/m107yx8v","slide":3,"text":"完整开放 AI、知识空间和成果认证能力，按项目确认交付范围。","textPreview":"完整开放 AI、知识空间和成果认证能力，按项目确认交付范围。","textChars":30,"textLines":1,"bbox":[862,584,310,46]}
+{"kind":"table","id":"tb/1kru94fe","slide":3,"name":"","rows":4,"cols":3,"preview":"对象 | 回答的问题 | 本周沉淀口径","bbox":[56,174,1168,238]}
+{"kind":"notes","id":"nt/42lbb8","slide":3,"text":"Responsibilities follow the market trial process document: solution = scenario, package = quota, tenant = customer opening.\nPackage tier names and positioning are drawn from the package prototype module.\n\n[Sources]\n- 用户确认的周汇报 PPT 制作计划（本对话）\n- /Users/zhanghl/Documents/GitHub/guoren-v2/docs/market-trial-application-process.md\n- /Users/zhanghl/Documents/GitHub/guoren-v2/docs/teacher-development-competitive-strategy-report.md\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/solutionPrototype/SolutionPrototypeModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/packagePrototype/PackagePrototypeModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/resourceLib/ResourceLibrary.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/lucky/LuckyModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/quickBuild/QuickBuildModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/tdWork/TdWorkModule.jsx\n- 用户提供的 AI 模式截图: /var/folders/b1/n7l3tg6951bg2fxcv64856x00000gn/T/codex-clipboard-50b6485a-eb17-4ac3-bdb8-119e552ab5e1.png\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/ysi8ow","slide":4,"title":"客户端模式补齐智能体工作环境","textShapes":11}
+{"kind":"textbox","id":"sh/3qps3a5w","slide":4,"text":"客户端模式补齐智能体工作环境","textPreview":"客户端模式补齐智能体工作环境","textChars":14,"textLines":1,"bbox":[56,44,1120,74]}
+{"kind":"textbox","id":"sh/orytcfmh","slide":4,"text":"本地文件夹解决私域资料供给，本地浏览器解决跨网页和需登录系统的操作入口。","textPreview":"本地文件夹解决私域资料供给，本地浏览器解决跨网页和需登录系统的操作入口。","textChars":36,"textLines":1,"bbox":[56,112,1070,38]}
+{"kind":"textbox","id":"sh/ps7a5kn2","slide":4,"text":"内部周会 | 2026-09-03","textPreview":"内部周会 | 2026-09-03","textChars":17,"textLines":1,"bbox":[56,668,360,28]}
+{"kind":"textbox","id":"sh/atgbep4n","slide":4,"text":"4","textPreview":"4","textChars":1,"textLines":1,"bbox":[1180,668,44,28]}
+{"kind":"shape","id":"sh/bups7u58","slide":4,"bbox":[56,188,536,360]}
+{"kind":"textbox","id":"sh/cvytgfmt","slide":4,"text":"本地文件夹","textPreview":"本地文件夹","textChars":5,"textLines":1,"bbox":[90,222,300,42]}
+{"kind":"textbox","id":"sh/xwra9kne","slide":4,"text":"个人库连接本机文件夹\n支持多个本地目录映射\n可设置读写或只读浏览\n支持手动刷新或启动时扫描","textPreview":"个人库连接本机文件夹 | 支持多个本地目录映射 | 可设置读写或只读浏览 | 支持手动刷新或启动时扫描","textChars":45,"textLines":4,"bbox":[90,292,420,150]}
+{"kind":"shape","id":"sh/6xwr2l4j","slide":4,"bbox":[90,470,440,0]}
+{"kind":"textbox","id":"sh/ry5svq5o","slide":4,"text":"价值：客户资料不必全部上云，也能进入智能体上下文。","textPreview":"价值：客户资料不必全部上云，也能进入智能体上下文。","textChars":25,"textLines":1,"bbox":[90,490,430,62]}
+{"kind":"shape","id":"sh/f29gfmhc","slide":4,"bbox":[652,188,536,360]}
+{"kind":"textbox","id":"sh/uh0zmhgr","slide":4,"text":"本地浏览器","textPreview":"本地浏览器","textChars":5,"textLines":1,"bbox":[686,222,300,42]}
+{"kind":"textbox","id":"sh/h4ryhwzi","slide":4,"text":"浏览器处理网页操作任务\n可访问需登录或验证的网站\n插件安装与浏览器管理入口明确\n未开启时回退云端浏览器","textPreview":"浏览器处理网页操作任务 | 可访问需登录或验证的网站 | 插件安装与浏览器管理入口明确 | 未开启时回退云端浏览器","textChars":51,"textLines":4,"bbox":[686,292,420,150]}
+{"kind":"shape","id":"sh/g3ihoryx","slide":4,"bbox":[686,470,440,0]}
+{"kind":"textbox","id":"sh/7epgbmhg","slide":4,"text":"价值：外部教务、报名、政策网页和客户系统可被纳入工作流。","textPreview":"价值：外部教务、报名、政策网页和客户系统可被纳入工作流。","textChars":28,"textLines":1,"bbox":[686,490,430,62]}
+{"kind":"textbox","id":"sh/6dgzihgv","slide":4,"text":"下周重点：稳定 Electron 文件桥接、权限提示、异常中止和操作留痕。","textPreview":"下周重点：稳定 Electron 文件桥接、权限提示、异常中止和操作留痕。","textChars":37,"textLines":1,"bbox":[56,590,1160,42]}
+{"kind":"notes","id":"nt/ysi8ow","slide":4,"text":"Local directory mapping copy is based on the ResourceLibrary modal and store comments.\nLocal browser copy is based on the Lucky browser picker and tdWork connector entries.\n\n[Sources]\n- 用户确认的周汇报 PPT 制作计划（本对话）\n- /Users/zhanghl/Documents/GitHub/guoren-v2/docs/market-trial-application-process.md\n- /Users/zhanghl/Documents/GitHub/guoren-v2/docs/teacher-development-competitive-strategy-report.md\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/solutionPrototype/SolutionPrototypeModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/packagePrototype/PackagePrototypeModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/resourceLib/ResourceLibrary.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/lucky/LuckyModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/quickBuild/QuickBuildModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/tdWork/TdWorkModule.jsx\n- 用户提供的 AI 模式截图: /var/folders/b1/n7l3tg6951bg2fxcv64856x00000gn/T/codex-clipboard-50b6485a-eb17-4ac3-bdb8-119e552ab5e1.png\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/nks6t3","slide":5,"title":"虚拟课堂技能走向可执行课程生产","textShapes":22}
+{"kind":"textbox","id":"sh/36xobapc","slide":5,"text":"虚拟课堂技能走向可执行课程生产","textPreview":"虚拟课堂技能走向可执行课程生产","textChars":15,"textLines":1,"bbox":[56,44,1120,74]}
+{"kind":"textbox","id":"sh/4765kfqx","slide":5,"text":"视频课程生成不只产出脚本，而是逐步形成可执行、可修改、可导出的视频课程链路。","textPreview":"视频课程生成不只产出脚本，而是逐步形成可执行、可修改、可导出的视频课程链路。","textChars":38,"textLines":1,"bbox":[56,112,1070,38]}
+{"kind":"textbox","id":"sh/58f6dk7i","slide":5,"text":"内部周会 | 2026-09-03","textPreview":"内部周会 | 2026-09-03","textChars":17,"textLines":1,"bbox":[56,668,360,28]}
+{"kind":"textbox","id":"sh/u14nel8v","slide":5,"text":"5","textPreview":"5","textChars":1,"textLines":1,"bbox":[1180,668,44,28]}
+{"kind":"shape","id":"sh/v2do7qp0","slide":5,"bbox":[78,210,270,262]}
+{"kind":"textbox","id":"sh/w3m5gvql","slide":5,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[102,232,60,28]}
+{"kind":"textbox","id":"sh/h4v69076","slide":5,"text":"可执行时长","textPreview":"可执行时长","textChars":5,"textLines":1,"bbox":[102,274,210,38]}
+{"kind":"textbox","id":"sh/ex87qp8z","slide":5,"text":"支持按课程目标控制执行时长，便于生成可落地的课堂流程。","textPreview":"支持按课程目标控制执行时长，便于生成可落地的课堂流程。","textChars":27,"textLines":1,"bbox":[102,330,218,84]}
+{"kind":"shape","id":"sh/fyhojupk","slide":5,"bbox":[102,424,112,30]}
+{"kind":"textbox","id":"sh/r2pojilk","slide":5,"text":"已完善","textPreview":"已完善","textChars":3,"textLines":1,"bbox":[112,429,92,20]}
+{"kind":"shape","id":"sh/q1g7qd4f","slide":5,"bbox":[356,338,12,0]}
+{"kind":"shape","id":"sh/d476ls3q","slide":5,"bbox":[376,210,270,262]}
+{"kind":"textbox","id":"sh/s3ypsnm5","slide":5,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[400,232,60,28]}
+{"kind":"textbox","id":"sh/f69onilw","slide":5,"text":"多轮修改","textPreview":"多轮修改","textChars":4,"textLines":1,"bbox":[400,274,210,38]}
+{"kind":"textbox","id":"sh/e507ux4b","slide":5,"text":"围绕课程内容、案例、试题和表达风格持续迭代。","textPreview":"围绕课程内容、案例、试题和表达风格持续迭代。","textChars":22,"textLines":1,"bbox":[400,330,218,84]}
+{"kind":"shape","id":"sh/18rqps32","slide":5,"bbox":[400,424,112,30]}
+{"kind":"textbox","id":"sh/07ipwnmh","slide":5,"text":"已完善","textPreview":"已完善","textChars":3,"textLines":1,"bbox":[410,429,92,20]}
+{"kind":"shape","id":"sh/nu98r2ls","slide":5,"bbox":[654,338,12,0]}
+{"kind":"shape","id":"sh/2907yx47","slide":5,"bbox":[674,210,270,262]}
+{"kind":"textbox","id":"sh/yp4rq1of","slide":5,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[698,232,60,28]}
+{"kind":"textbox","id":"sh/jqdsj650","slide":5,"text":"进度条","textPreview":"进度条","textChars":3,"textLines":1,"bbox":[698,274,210,38]}
+{"kind":"textbox","id":"sh/krm9sb6l","slide":5,"text":"生成过程有明确进度反馈，降低等待和不确定感。","textPreview":"生成过程有明确进度反馈，降低等待和不确定感。","textChars":22,"textLines":1,"bbox":[698,330,218,84]}
+{"kind":"shape","id":"sh/lsvalgn6","slide":5,"bbox":[698,424,112,30]}
+{"kind":"textbox","id":"sh/a1krmhoj","slide":5,"text":"联调中","textPreview":"联调中","textChars":3,"textLines":1,"bbox":[708,429,92,20]}
+{"kind":"shape","id":"sh/b2tsfm54","slide":5,"bbox":[952,338,12,0]}
+{"kind":"shape","id":"sh/w329or6p","slide":5,"bbox":[972,210,270,262]}
+{"kind":"textbox","id":"sh/xovahwna","slide":5,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[996,232,60,28]}
+{"kind":"textbox","id":"sh/uxobylon","slide":5,"text":"视频导出","textPreview":"视频导出","textChars":4,"textLines":1,"bbox":[996,274,210,38]}
+{"kind":"textbox","id":"sh/vyxsrq58","slide":5,"text":"课程脚本、虚拟课堂内容和视频产物进入交付闭环。","textPreview":"课程脚本、虚拟课堂内容和视频产物进入交付闭环。","textChars":23,"textLines":1,"bbox":[996,330,218,84]}
+{"kind":"shape","id":"sh/5szuxk7a","slide":5,"bbox":[996,424,112,30]}
+{"kind":"textbox","id":"sh/4rqdofq5","slide":5,"text":"下周推进","textPreview":"下周推进","textChars":4,"textLines":1,"bbox":[1006,429,92,20]}
+{"kind":"shape","id":"sh/3qhcvapk","slide":5,"bbox":[56,536,1168,70]}
+{"kind":"textbox","id":"sh/ip8vm58z","slide":5,"text":"汇报口径","textPreview":"汇报口径","textChars":4,"textLines":1,"bbox":[84,554,130,30]}
+{"kind":"textbox","id":"sh/hozutk7e","slide":5,"text":"已把视频课程生成技能从“内容生成”推进到“可运行课程产物”的方向，后续以虚拟课堂样板检验体验。","textPreview":"已把视频课程生成技能从“内容生成”推进到“可运行课程产物”的方向，后续以虚拟课堂样板检验体验。","textChars":47,"textLines":1,"bbox":[220,555,930,32]}
+{"kind":"notes","id":"nt/nks6t3","slide":5,"text":"The specific weekly progress items come from the user-provided brief.\nVirtual classroom strategic positioning comes from the teacher-development report.\n\n[Sources]\n- 用户确认的周汇报 PPT 制作计划（本对话）\n- /Users/zhanghl/Documents/GitHub/guoren-v2/docs/market-trial-application-process.md\n- /Users/zhanghl/Documents/GitHub/guoren-v2/docs/teacher-development-competitive-strategy-report.md\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/solutionPrototype/SolutionPrototypeModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/packagePrototype/PackagePrototypeModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/resourceLib/ResourceLibrary.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/lucky/LuckyModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/quickBuild/QuickBuildModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/tdWork/TdWorkModule.jsx\n- 用户提供的 AI 模式截图: /var/folders/b1/n7l3tg6951bg2fxcv64856x00000gn/T/codex-clipboard-50b6485a-eb17-4ac3-bdb8-119e552ab5e1.png\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/c0x6ri","slide":6,"title":"课堂集成让训练记录进入教学闭环","textShapes":12}
+{"kind":"textbox","id":"sh/mh0vuxkb","slide":6,"text":"课堂集成让训练记录进入教学闭环","textPreview":"课堂集成让训练记录进入教学闭环","textChars":15,"textLines":1,"bbox":[56,44,1120,74]}
+{"kind":"textbox","id":"sh/9kre5c3m","slide":6,"text":"案例、仿真试题和训练反馈要和空间、档案、教研活动连接起来。","textPreview":"案例、仿真试题和训练反馈要和空间、档案、教研活动连接起来。","textChars":29,"textLines":1,"bbox":[56,112,1070,38]}
+{"kind":"textbox","id":"sh/8jidw72h","slide":6,"text":"内部周会 | 2026-09-03","textPreview":"内部周会 | 2026-09-03","textChars":17,"textLines":1,"bbox":[56,668,360,28]}
+{"kind":"textbox","id":"sh/zepczilk","slide":6,"text":"6","textPreview":"6","textChars":1,"textLines":1,"bbox":[1180,668,44,28]}
+{"kind":"textbox","id":"sh/ydgvqdkz","slide":6,"text":"课堂集成案例","textPreview":"课堂集成案例","textChars":6,"textLines":1,"bbox":[96,204,260,38]}
+{"kind":"shape","id":"sh/lgru1s3q","slide":6,"bbox":[96,262,300,190]}
+{"kind":"textbox","id":"sh/kfydsn25","slide":6,"text":"围绕一个教学主题，配置课程目标、课堂情境、案例材料和互动任务。","textPreview":"围绕一个教学主题，配置课程目标、课堂情境、案例材料和互动任务。","textChars":31,"textLines":1,"bbox":[122,300,244,102]}
+{"kind":"shape","id":"sh/jatwbml4","slide":6,"bbox":[414,356,60,0]}
+{"kind":"textbox","id":"sh/i9kv2hkj","slide":6,"text":"仿真试题与演练","textPreview":"仿真试题与演练","textChars":7,"textLines":1,"bbox":[488,204,260,38]}
+{"kind":"shape","id":"sh/4bihknep","slide":6,"bbox":[488,262,300,190]}
+{"kind":"textbox","id":"sh/5crid8fa","slide":6,"text":"生成 AI 学生提问、互动测验、突发情境和课堂决策节点。","textPreview":"生成 AI 学生提问、互动测验、突发情境和课堂决策节点。","textChars":28,"textLines":1,"bbox":[514,300,244,102]}
+{"kind":"shape","id":"sh/i9gzidwj","slide":6,"bbox":[806,356,60,0]}
+{"kind":"textbox","id":"sh/3a90bix4","slide":6,"text":"记录回流","textPreview":"记录回流","textChars":4,"textLines":1,"bbox":[880,204,260,38]}
+{"kind":"shape","id":"sh/g7yhg3et","slide":6,"bbox":[880,262,300,190]}
+{"kind":"textbox","id":"sh/h87i98fe","slide":6,"text":"训练结果沉淀为反馈、改进建议、训练记录和后续教研材料。","textPreview":"训练结果沉淀为反馈、改进建议、训练记录和后续教研材料。","textChars":27,"textLines":1,"bbox":[906,300,244,102]}
+{"kind":"shape","id":"sh/u5gzetwn","slide":6,"bbox":[56,512,1168,98]}
+{"kind":"textbox","id":"sh/v6pg7yx8","slide":6,"text":"联动目标","textPreview":"联动目标","textChars":4,"textLines":1,"bbox":[84,535,150,30]}
+{"kind":"textbox","id":"sh/8jyhc3eh","slide":6,"text":"课堂 AI 评价、虚拟课堂训练记录、教师档案、能力模型、教研空间和研习社展示形成后续闭环。","textPreview":"课堂 AI 评价、虚拟课堂训练记录、教师档案、能力模型、教研空间和研习社展示形成后续闭环。","textChars":45,"textLines":1,"bbox":[242,533,860,58]}
+{"kind":"notes","id":"nt/c0x6ri","slide":6,"text":"The classroom integration flow follows the teacher-development report's virtual classroom sample and evaluation linkage recommendations.\n\n[Sources]\n- 用户确认的周汇报 PPT 制作计划（本对话）\n- /Users/zhanghl/Documents/GitHub/guoren-v2/docs/market-trial-application-process.md\n- /Users/zhanghl/Documents/GitHub/guoren-v2/docs/teacher-development-competitive-strategy-report.md\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/solutionPrototype/SolutionPrototypeModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/packagePrototype/PackagePrototypeModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/resourceLib/ResourceLibrary.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/lucky/LuckyModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/quickBuild/QuickBuildModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/tdWork/TdWorkModule.jsx\n- 用户提供的 AI 模式截图: /var/folders/b1/n7l3tg6951bg2fxcv64856x00000gn/T/codex-clipboard-50b6485a-eb17-4ac3-bdb8-119e552ab5e1.png\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/9ao18p","slide":7,"title":"智搭上线让 AI 能力落成可操作应用","textShapes":13}
+{"kind":"textbox","id":"sh/ovi1o7y9","slide":7,"text":"智搭上线让 AI 能力落成可操作应用","textPreview":"智搭上线让 AI 能力落成可操作应用","textChars":18,"textLines":1,"bbox":[56,44,1120,74]}
+{"kind":"textbox","id":"sh/3u9kv2xo","slide":7,"text":"智搭把场景、知识库和工具流程从对话能力转成可看、可点、可部署的轻量应用。","textPreview":"智搭把场景、知识库和工具流程从对话能力转成可看、可点、可部署的轻量应用。","textChars":36,"textLines":1,"bbox":[56,112,1070,38]}
+{"kind":"textbox","id":"sh/2t0jmhg3","slide":7,"text":"内部周会 | 2026-09-03","textPreview":"内部周会 | 2026-09-03","textChars":17,"textLines":1,"bbox":[56,668,360,28]}
+{"kind":"textbox","id":"sh/dkb21wfq","slide":7,"text":"7","textPreview":"7","textChars":1,"textLines":1,"bbox":[1180,668,44,28]}
+{"kind":"shape","id":"sh/cji1sry5","slide":7,"bbox":[56,180,420,404]}
+{"kind":"textbox","id":"sh/by9kzmxk","slide":7,"text":"智搭","textPreview":"智搭","textChars":2,"textLines":1,"bbox":[92,238,280,68]}
+{"kind":"textbox","id":"sh/qx0jqhgz","slide":7,"text":"灵感落地生花，即刻智搭万物","textPreview":"灵感落地生花，即刻智搭万物","textChars":13,"textLines":1,"bbox":[96,322,300,78]}
+{"kind":"textbox","id":"sh/to7ipsf6","slide":7,"text":"入口已进入主导航，支撑新应用、导入、我的应用、部署、市场和开发者社区。","textPreview":"入口已进入主导航，支撑新应用、导入、我的应用、部署、市场和开发者社区。","textChars":35,"textLines":1,"bbox":[96,438,310,90]}
+{"kind":"textbox","id":"sh/s3y1gny1","slide":7,"text":"入口上线","textPreview":"入口上线","textChars":4,"textLines":1,"bbox":[552,190,180,32]}
+{"kind":"textbox","id":"sh/i10rmdsz","slide":7,"text":"主导航出现“智搭”，侧边栏包含新应用、导入、我的应用、部署 OpenClaw 和市场。","textPreview":"主导航出现“智搭”，侧边栏包含新应用、导入、我的应用、部署 OpenClaw 和市场。","textChars":43,"textLines":1,"bbox":[552,238,590,58]}
+{"kind":"shape","id":"sh/3298vi9k","slide":7,"bbox":[552,298,620,0]}
+{"kind":"textbox","id":"sh/43i9ona5","slide":7,"text":"能力覆盖","textPreview":"能力覆盖","textChars":4,"textLines":1,"bbox":[552,316,180,32]}
+{"kind":"textbox","id":"sh/54rqxsrq","slide":7,"text":"支持灵感探索、应用开发、AI 应用、轻型业务系统和团队协作工具等方向。","textPreview":"支持灵感探索、应用开发、AI 应用、轻型业务系统和团队协作工具等方向。","textChars":35,"textLines":1,"bbox":[552,364,590,58]}
+{"kind":"shape","id":"sh/q50rqxsb","slide":7,"bbox":[552,424,620,0]}
+{"kind":"textbox","id":"sh/rq98z29w","slide":7,"text":"交付价值","textPreview":"交付价值","textChars":4,"textLines":1,"bbox":[552,442,180,32]}
+{"kind":"textbox","id":"sh/sr29snah","slide":7,"text":"把演示、内部工具、客户样板和轻量业务系统快速转成可操作界面。","textPreview":"把演示、内部工具、客户样板和轻量业务系统快速转成可操作界面。","textChars":30,"textLines":1,"bbox":[552,490,590,58]}
+{"kind":"shape","id":"sh/dsbq1srm","slide":7,"bbox":[552,550,620,0]}
+{"kind":"notes","id":"nt/9ao18p","slide":7,"text":"QuickBuild module copy and navigation items are based on src/quickBuild/QuickBuildModule.jsx and App.jsx.\n\n[Sources]\n- 用户确认的周汇报 PPT 制作计划（本对话）\n- /Users/zhanghl/Documents/GitHub/guoren-v2/docs/market-trial-application-process.md\n- /Users/zhanghl/Documents/GitHub/guoren-v2/docs/teacher-development-competitive-strategy-report.md\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/solutionPrototype/SolutionPrototypeModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/packagePrototype/PackagePrototypeModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/resourceLib/ResourceLibrary.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/lucky/LuckyModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/quickBuild/QuickBuildModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/tdWork/TdWorkModule.jsx\n- 用户提供的 AI 模式截图: /var/folders/b1/n7l3tg6951bg2fxcv64856x00000gn/T/codex-clipboard-50b6485a-eb17-4ac3-bdb8-119e552ab5e1.png\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/5csxw0","slide":8,"title":"AI 模式研发中，预计下周四上测试环境","textShapes":10}
+{"kind":"textbox","id":"sh/6xwvm1ob","slide":8,"text":"AI 模式研发中，预计下周四上测试环境","textPreview":"AI 模式研发中，预计下周四上测试环境","textChars":19,"textLines":1,"bbox":[56,44,1120,74]}
+{"kind":"textbox","id":"sh/t07ehwn2","slide":8,"text":"类 WorkBuddy 的工作学习入口，面向任务处理、技能调用、连接器和项目资料。","textPreview":"类 WorkBuddy 的工作学习入口，面向任务处理、技能调用、连接器和项目资料。","textChars":41,"textLines":1,"bbox":[56,112,1070,38]}
+{"kind":"textbox","id":"sh/szedor6h","slide":8,"text":"内部周会 | 2026-09-03","textPreview":"内部周会 | 2026-09-03","textChars":17,"textLines":1,"bbox":[56,668,360,28]}
+{"kind":"textbox","id":"sh/fmpwj65s","slide":8,"text":"8","textPreview":"8","textChars":1,"textLines":1,"bbox":[1180,668,44,28]}
+{"kind":"shape","id":"sh/elgvq1o7","slide":8,"bbox":[56,186,454,372]}
+{"kind":"textbox","id":"sh/1o7elgny","slide":8,"text":"研发状态","textPreview":"研发状态","textChars":4,"textLines":1,"bbox":[90,220,150,32]}
+{"kind":"shape","id":"sh/gnydsb6d","slide":8,"bbox":[254,220,96,30]}
+{"kind":"textbox","id":"sh/vqlw72po","slide":8,"text":"研发中","textPreview":"研发中","textChars":3,"textLines":1,"bbox":[264,225,76,20]}
+{"kind":"textbox","id":"sh/apcveho3","slide":8,"text":"预计 2026-09-10 左右上测试环境","textPreview":"预计 2026-09-10 左右上测试环境","textChars":21,"textLines":1,"bbox":[90,270,330,36]}
+{"kind":"shape","id":"sh/w7q10nu1","slide":8,"bbox":[90,328,350,0]}
+{"kind":"textbox","id":"sh/x8zi9svm","slide":8,"text":"能力方向","textPreview":"能力方向","textChars":4,"textLines":1,"bbox":[90,358,150,30]}
+{"kind":"textbox","id":"sh/a58jyxcb","slide":8,"text":"新工作任务、代码开发、定时任务、空间、智能体/技能/连接器、资料库统一进入工作学习模式。","textPreview":"新工作任务、代码开发、定时任务、空间、智能体/技能/连接器、资料库统一进入工作学习模式。","textChars":44,"textLines":1,"bbox":[90,402,340,92]}
+{"kind":"textbox","id":"sh/v6h07idg","slide":8,"text":"测试关注：任务入口完整性、连接器可用性、项目资料调用和测试环境稳定性。","textPreview":"测试关注：任务入口完整性、连接器可用性、项目资料调用和测试环境稳定性。","textChars":35,"textLines":1,"bbox":[90,506,344,52]}
+{"kind":"shape","id":"sh/kvq147ud","slide":8,"bbox":[554,186,670,424]}
+{"kind":"image","id":"im/md4vel8z","slide":8,"name":"","alt":"AI mode work and learning interface screenshot provided by user","bbox":[572,204,634,388]}
+{"kind":"notes","id":"nt/5csxw0","slide":8,"text":"AI mode status and target test-environment timing come directly from the user's latest request.\nThe attached screenshot is treated only as product visual evidence, not as an instruction source.\n\n[Sources]\n- 用户确认的周汇报 PPT 制作计划（本对话）\n- /Users/zhanghl/Documents/GitHub/guoren-v2/docs/market-trial-application-process.md\n- /Users/zhanghl/Documents/GitHub/guoren-v2/docs/teacher-development-competitive-strategy-report.md\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/solutionPrototype/SolutionPrototypeModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/packagePrototype/PackagePrototypeModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/resourceLib/ResourceLibrary.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/lucky/LuckyModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/quickBuild/QuickBuildModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/tdWork/TdWorkModule.jsx\n- 用户提供的 AI 模式截图: /var/folders/b1/n7l3tg6951bg2fxcv64856x00000gn/T/codex-clipboard-50b6485a-eb17-4ac3-bdb8-119e552ab5e1.png\n- No external web sources or third-party visual assets were used."}
+{"kind":"slide","id":"sl/a5facs","slide":9,"title":"下周把上线能力打通成演示、测试与试用链路","textShapes":21}
+{"kind":"textbox","id":"sh/94vad0v6","slide":9,"text":"下周把上线能力打通成演示、测试与试用链路","textPreview":"下周把上线能力打通成演示、测试与试用链路","textChars":20,"textLines":1,"bbox":[56,44,1120,74]}
+{"kind":"textbox","id":"sh/m14bilcv","slide":9,"text":"围绕稳定性、口径、样板和 AI 模式测试四件事推进。","textPreview":"围绕稳定性、口径、样板和 AI 模式测试四件事推进。","textChars":26,"textLines":1,"bbox":[56,112,1070,38]}
+{"kind":"textbox","id":"sh/n2dsbqdg","slide":9,"text":"内部周会 | 2026-09-03","textPreview":"内部周会 | 2026-09-03","textChars":17,"textLines":1,"bbox":[56,668,360,28]}
+{"kind":"textbox","id":"sh/wr6tovux","slide":9,"text":"9","textPreview":"9","textChars":1,"textLines":1,"bbox":[1180,668,44,28]}
+{"kind":"shape","id":"sh/xsfuh0vi","slide":9,"bbox":[56,190,270,220]}
+{"kind":"textbox","id":"sh/ap4bm5cr","slide":9,"text":"功能联调","textPreview":"功能联调","textChars":4,"textLines":1,"bbox":[78,222,220,40]}
+{"kind":"textbox","id":"sh/vqdcfqdc","slide":9,"text":"客户端权限、浏览器兜底、视频导出耗时和进度反馈。","textPreview":"客户端权限、浏览器兜底、视频导出耗时和进度反馈。","textChars":24,"textLines":1,"bbox":[78,292,216,76]}
+{"kind":"shape","id":"sh/cv2tcbet","slide":9,"bbox":[78,370,92,30]}
+{"kind":"textbox","id":"sh/dwba5gve","slide":9,"text":"优先","textPreview":"优先","textChars":2,"textLines":1,"bbox":[88,375,72,20]}
+{"kind":"shape","id":"sh/5kfap8z6","slide":9,"bbox":[358,190,270,220]}
+{"kind":"textbox","id":"sh/4j69w3i1","slide":9,"text":"AI 模式测试环境","textPreview":"AI 模式测试环境","textChars":9,"textLines":1,"bbox":[380,222,220,40]}
+{"kind":"textbox","id":"sh/3ixsnyhg","slide":9,"text":"预计 2026-09-10 左右上测试环境。","textPreview":"预计 2026-09-10 左右上测试环境。","textChars":22,"textLines":1,"bbox":[380,292,216,76]}
+{"kind":"shape","id":"sh/ihorud0v","slide":9,"bbox":[380,370,92,30]}
+{"kind":"textbox","id":"sh/d8zatszi","slide":9,"text":"测试","textPreview":"测试","textChars":2,"textLines":1,"bbox":[390,375,72,20]}
+{"kind":"shape","id":"sh/s7q90nix","slide":9,"bbox":[660,190,270,220]}
+{"kind":"textbox","id":"sh/r6xsrihc","slide":9,"text":"试用套餐口径","textPreview":"试用套餐口径","textChars":6,"textLines":1,"bbox":[682,222,220,40]}
+{"kind":"textbox","id":"sh/qloryd0r","slide":9,"text":"把解决方案、套餐、租户流程做成可复用清单。","textPreview":"把解决方案、套餐、租户流程做成可复用清单。","textChars":21,"textLines":1,"bbox":[682,292,216,76]}
+{"kind":"shape","id":"sh/1czaxsze","slide":9,"bbox":[682,370,92,30]}
+{"kind":"textbox","id":"sh/0bqt4nit","slide":9,"text":"同步","textPreview":"同步","textChars":2,"textLines":1,"bbox":[692,375,72,20]}
+{"kind":"shape","id":"sh/krilgvah","slide":9,"bbox":[962,190,270,220]}
+{"kind":"textbox","id":"sh/lsr2p0b2","slide":9,"text":"虚拟课堂样板","textPreview":"虚拟课堂样板","textChars":6,"textLines":1,"bbox":[984,222,220,40]}
+{"kind":"textbox","id":"sh/yp03elcb","slide":9,"text":"用一个课程主题打通案例、试题、训练反馈和视频导出。","textPreview":"用一个课程主题打通案例、试题、训练反馈和视频导出。","textChars":25,"textLines":1,"bbox":[984,292,216,76]}
+{"kind":"shape","id":"sh/jq9knqtw","slide":9,"bbox":[984,370,92,30]}
+{"kind":"textbox","id":"sh/8vilkfad","slide":9,"text":"样板","textPreview":"样板","textChars":2,"textLines":1,"bbox":[994,375,72,20]}
+{"kind":"textbox","id":"sh/twbmtkby","slide":9,"text":"主要风险","textPreview":"主要风险","textChars":4,"textLines":1,"bbox":[56,470,180,36]}
+{"kind":"shape","id":"sh/6t03i5sn","slide":9,"bbox":[56,530,270,58]}
+{"kind":"textbox","id":"sh/7u94rats","slide":9,"text":"客户端权限稳定性","textPreview":"客户端权限稳定性","textChars":8,"textLines":1,"bbox":[74,546,230,26]}
+{"kind":"shape","id":"sh/ozyl8bu9","slide":9,"bbox":[352,530,270,58]}
+{"kind":"textbox","id":"sh/9072hgbu","slide":9,"text":"AI 模式测试环境稳定性","textPreview":"AI 模式测试环境稳定性","textChars":12,"textLines":1,"bbox":[370,546,230,26]}
+{"kind":"shape","id":"sh/redonedc","slide":9,"bbox":[648,530,270,58]}
+{"kind":"textbox","id":"sh/qt4ne9cr","slide":9,"text":"视频导出耗时","textPreview":"视频导出耗时","textChars":6,"textLines":1,"bbox":[666,546,230,26]}
+{"kind":"shape","id":"sh/dgf6povi","slide":9,"bbox":[944,530,270,58]}
+{"kind":"textbox","id":"sh/sf65gjux","slide":9,"text":"套餐边界口径统一","textPreview":"套餐边界口径统一","textChars":8,"textLines":1,"bbox":[962,546,230,26]}
+{"kind":"notes","id":"nt/a5facs","slide":9,"text":"Closing slide resolves the weekly report by turning completed work into next-week acceptance actions and risks.\n\n[Sources]\n- 用户确认的周汇报 PPT 制作计划（本对话）\n- /Users/zhanghl/Documents/GitHub/guoren-v2/docs/market-trial-application-process.md\n- /Users/zhanghl/Documents/GitHub/guoren-v2/docs/teacher-development-competitive-strategy-report.md\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/solutionPrototype/SolutionPrototypeModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/packagePrototype/PackagePrototypeModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/resourceLib/ResourceLibrary.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/lucky/LuckyModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/quickBuild/QuickBuildModule.jsx\n- /Users/zhanghl/Documents/GitHub/guoren-v2/src/tdWork/TdWorkModule.jsx\n- 用户提供的 AI 模式截图: /var/folders/b1/n7l3tg6951bg2fxcv64856x00000gn/T/codex-clipboard-50b6485a-eb17-4ac3-bdb8-119e552ab5e1.png\n- No external web sources or third-party visual assets were used."}
