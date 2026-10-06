@@ -116,7 +116,6 @@ const { Sider, Header, Content } = Layout;
 const EMPTY_MENU_INDICATOR = { x: 0, y: 0, width: 0, height: 0, opacity: 0 };
 const SCENE_SHORTCUT_KEY_PREFIX = 'scene-shortcut:';
 const SCENE_SYSTEM_MENU_SHORTCUT_KEY_PREFIX = 'scene-system-menu:';
-const PINNED_ICON_BAR_SCENE_MENU_KEYS = ['supervision-inspection'];
 const ICON_BAR_WIDTH_STORAGE_KEY = 'gr.icon-bar-width.v1';
 const SCENE_SIDER_WIDTH_STORAGE_KEY = 'gr.scene.sider-width.v1';
 const RESOURCE_LIBRARY_ENTRY_STORAGE_KEY = 'gr.resource-library-entry.v1';
@@ -693,23 +692,15 @@ function App({ onLogout }) {
         ? { ...item, badgeCount: messageUnreadCount }
         : item
     ));
-    const pinnedSceneCategoryItems = PINNED_ICON_BAR_SCENE_MENU_KEYS.map((menuKey) => ({
-      key: getSceneSystemMenuShortcutKey(menuKey),
-      icon: getSceneMenuIcon(menuKey),
-      label: getSceneMenuDisplayLabel(menuKey),
-    }));
-    const sceneCategoryItems = sceneSystemMenuShortcutKeys
-      .filter((menuKey) => !PINNED_ICON_BAR_SCENE_MENU_KEYS.includes(menuKey))
-      .map((menuKey) => ({
+    const sceneCategoryItems = sceneSystemMenuShortcutKeys.map((menuKey) => ({
       key: getSceneSystemMenuShortcutKey(menuKey),
       icon: getSceneMenuIcon(menuKey),
       label: getSceneMenuDisplayLabel(menuKey),
     }));
     return [
       ...decoratedBaseItems.slice(0, 1),
-      ...pinnedSceneCategoryItems,
-      supervisionTemplateIconBarItem,
       ...sceneCategoryItems,
+      supervisionTemplateIconBarItem,
       ...decoratedBaseItems.slice(1),
     ];
   }, [getSceneMenuDisplayLabel, messageUnreadCount, sceneSystemMenuShortcutKeys]);

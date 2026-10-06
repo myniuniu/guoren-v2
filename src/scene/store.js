@@ -7,12 +7,14 @@ const TEMPLATE_STORAGE_KEY = 'gr.scene.templates.v1';
 const SCENE_STORAGE_KEY = 'gr.scenes.v1';
 const SCENE_MENU_CATEGORY_STORAGE_KEY = 'gr.scene.menu-categories.v1';
 const SCENE_SYSTEM_MENU_SHORTCUT_STORAGE_KEY = 'gr.scene.system-menu-shortcuts.v1';
+const SCENE_SYSTEM_MENU_SHORTCUT_DEFAULT_SYNC_KEY = 'gr.scene.system-menu-shortcuts-default-sync.v1';
 const SEED_KEY = 'gr.scene.seeded.v1';
 const BUILT_IN_SYNC_KEY = 'gr.scene.builtin-sync.v13';
 const STORE_CHANGE_EVENT = 'gr:scene-store-change';
 const VERSION_STORAGE_KEY = 'guoren_version_data';
 const DEFAULT_SCENE_GROUP_NAME = '人工智能通识体系';
 const ORG_TRAINING_MENU_LABEL = '培训（学习公社）';
+const DEFAULT_SCENE_SYSTEM_MENU_SHORTCUT_KEYS = ['supervision-inspection'];
 
 export const SCENE_TYPE_OPTIONS = [
   { value: 'TEACHING', label: '教学场景' },
@@ -725,6 +727,38 @@ function writeList(storageKey, list) {
   localStorage.setItem(storageKey, JSON.stringify(list));
 }
 
+function hasStoredList(storageKey) {
+  try {
+    return typeof localStorage !== 'undefined' && localStorage.getItem(storageKey) !== null;
+  } catch {
+    return false;
+  }
+}
+
+function readSceneSystemMenuShortcutList() {
+  const storedList = hasStoredList(SCENE_SYSTEM_MENU_SHORTCUT_STORAGE_KEY)
+    ? readList(SCENE_SYSTEM_MENU_SHORTCUT_STORAGE_KEY)
+    : [];
+
+  if (hasStoredList(SCENE_SYSTEM_MENU_SHORTCUT_DEFAULT_SYNC_KEY)) {
+    return storedList;
+  }
+
+  const defaultedList = Array.from(new Set([
+    ...DEFAULT_SCENE_SYSTEM_MENU_SHORTCUT_KEYS,
+    ...storedList,
+  ]));
+
+  try {
+    writeList(SCENE_SYSTEM_MENU_SHORTCUT_STORAGE_KEY, defaultedList);
+    localStorage.setItem(SCENE_SYSTEM_MENU_SHORTCUT_DEFAULT_SYNC_KEY, '1');
+  } catch {
+    // ignore persistence failure
+  }
+
+  return defaultedList;
+}
+
 function emitChange() {
   if (typeof window === 'undefined') return;
   window.dispatchEvent(new CustomEvent(STORE_CHANGE_EVENT));
@@ -982,7 +1016,7 @@ export function getSceneMenuLabel(value) {
 
 export function listSceneSystemMenuShortcuts() {
   const validKeys = new Set(listSceneMenuOptions().map((item) => item.value));
-  return readList(SCENE_SYSTEM_MENU_SHORTCUT_STORAGE_KEY)
+  return readSceneSystemMenuShortcutList()
     .map((item) => trimToNull(typeof item === 'string' ? item : item?.menuKey))
     .filter((item, index, list) => item && validKeys.has(item) && list.indexOf(item) === index);
 }

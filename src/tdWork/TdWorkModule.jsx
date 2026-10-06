@@ -25,6 +25,8 @@ import {
   InfoCircleOutlined,
   LaptopOutlined,
   LinkOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
   MessageOutlined,
   MoreOutlined,
   PlusOutlined,
@@ -42,6 +44,47 @@ import { getSceneTypeLabel, getSceneVisibilityLabel, normalizeTopicCardConfig, s
 import SceneCreateModal from '../scene/SceneCreateModal';
 import { getSceneThemeCoverStyle } from '../scene/themeCovers';
 import './TdWorkModule.css';
+
+const TD_WORK_SIDEBAR_STORAGE_KEY = 'td-work.sidebar-width.v2';
+const TD_WORK_SIDEBAR_DEFAULT_WIDTH = 280;
+const TD_WORK_SIDEBAR_COMPACT_WIDTH = 228;
+const TD_WORK_SIDEBAR_MIN_WIDTH = 188;
+const TD_WORK_SIDEBAR_MAX_WIDTH = 360;
+
+function getDefaultTdWorkSidebarWidth() {
+  if (typeof window !== 'undefined' && window.innerWidth <= 860) {
+    return TD_WORK_SIDEBAR_COMPACT_WIDTH;
+  }
+  return TD_WORK_SIDEBAR_DEFAULT_WIDTH;
+}
+
+function getBoundedTdWorkSidebarWidth(value) {
+  if (value == null || value === '') return getDefaultTdWorkSidebarWidth();
+  const width = Number(value);
+  const viewportMax = typeof window === 'undefined'
+    ? TD_WORK_SIDEBAR_MAX_WIDTH
+    : Math.max(TD_WORK_SIDEBAR_MIN_WIDTH, Math.min(TD_WORK_SIDEBAR_MAX_WIDTH, window.innerWidth - 420));
+  if (!Number.isFinite(width)) return getDefaultTdWorkSidebarWidth();
+  return Math.max(TD_WORK_SIDEBAR_MIN_WIDTH, Math.min(viewportMax, Math.round(width)));
+}
+
+function loadTdWorkSidebarWidth() {
+  if (typeof window === 'undefined') return TD_WORK_SIDEBAR_DEFAULT_WIDTH;
+  try {
+    return getBoundedTdWorkSidebarWidth(window.localStorage.getItem(TD_WORK_SIDEBAR_STORAGE_KEY));
+  } catch {
+    return getDefaultTdWorkSidebarWidth();
+  }
+}
+
+function persistTdWorkSidebarWidth(width) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(TD_WORK_SIDEBAR_STORAGE_KEY, String(getBoundedTdWorkSidebarWidth(width)));
+  } catch {
+    // ignore persistence failure
+  }
+}
 
 const NAV_ITEMS = [
   { key: 'new-task', label: '新工作任务', icon: <EditOutlined /> },
@@ -417,6 +460,12 @@ const SKILL_CATEGORIES = [
   '论文科研',
   '政策法规',
   '继续教育',
+];
+
+const SKILL_HUB_TABS = [
+  { key: 'partners', label: '智能体', icon: <RobotOutlined /> },
+  { key: 'skills', label: '技能', icon: <ControlOutlined /> },
+  { key: 'market', label: '连接器', icon: <LinkOutlined /> },
 ];
 
 const CONNECTORS = [
@@ -808,6 +857,26 @@ function ConnectorLogo({ item }) {
   );
 }
 
+function SkillHubTabs({ activeView, onChange }) {
+  return (
+    <div className="td-work-skill-tabs" role="tablist" aria-label="智能体技能连接器栏目">
+      {SKILL_HUB_TABS.map((tab) => (
+        <button
+          key={tab.key}
+          type="button"
+          className={activeView === tab.key ? 'is-active' : ''}
+          role="tab"
+          aria-selected={activeView === tab.key}
+          onClick={() => onChange(tab.key)}
+        >
+          {tab.icon}
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function SkillsConnectorsPage({
   activeCategory,
   searchText,
@@ -859,6 +928,53 @@ function SkillsConnectorsPage({
       {connectors.length === 0 ? (
         <div className="td-work-connector-empty">
           没有找到与“{searchText}”匹配的连接器
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function SkillCataloguePage({
+  searchText,
+  skills,
+  onOpenSkill,
+}) {
+  const normalizedSearch = searchText.trim().toLowerCase();
+  const visibleItems = skills.filter((item) => (
+    !normalizedSearch || `${item.name} ${item.desc} ${item.key}`.toLowerCase().includes(normalizedSearch)
+  ));
+
+  return (
+    <section className="td-work-skill-page" aria-label="技能">
+      <div className="td-work-special-title">推荐技能</div>
+
+      <div className="td-work-connector-grid td-work-skill-catalog-grid" aria-label="技能列表">
+        {visibleItems.map((item) => (
+          <article key={item.key} className="td-work-connector-card">
+            <ConnectorLogo item={item} />
+            <div className="td-work-connector-copy">
+              <div className="td-work-connector-name-row">
+                <strong>{item.name}</strong>
+                <span>技能</span>
+              </div>
+              <p>{item.desc}</p>
+            </div>
+            <button
+              type="button"
+              className="td-work-connector-add"
+              title={`添加${item.name}`}
+              aria-label={`添加${item.name}`}
+              onClick={() => onOpenSkill(item)}
+            >
+              <PlusOutlined />
+            </button>
+          </article>
+        ))}
+      </div>
+
+      {visibleItems.length === 0 ? (
+        <div className="td-work-connector-empty">
+          没有找到与“{searchText}”匹配的技能
         </div>
       ) : null}
     </section>
@@ -3116,51 +3232,95 @@ function SpacesPage({
   onDeleteSpace,
   onToggleShortcut,
 }) {
+  const [railCollapsed, setRailCollapsed] = useState(false);
+
   if (activeSpace) {
     return <AiSpaceTopicPage scene={activeSpace} onBack={onBack} />;
   }
 
-  return (
-    <section className="td-work-space-page td-work-space-standard-skin" aria-label="空间">
-      <aside className="td-work-space-rail" aria-label="空间导航">
-        <button type="button" className="td-work-space-rail-create" onClick={onCreateSpace}>
-          <span className="td-work-space-rail-create-icon"><PlusOutlined /></span>
-          <span>新建场景</span>
-        </button>
-        <button
-          type="button"
-          className={`td-work-space-rail-item ${!activeGroupKey ? 'is-active' : ''}`}
-          onClick={() => onGroupChange(null)}
-        >
-          <HomeOutlined />
-          <span>首页</span>
-        </button>
-        <div className="td-work-space-rail-section">
-          <div className="td-work-space-rail-title">我的场景</div>
-          <div className="td-work-space-rail-list">
-            {currentGroups.length ? (
-              currentGroups.map((group) => (
-                <button
-                  key={group.key}
-                  type="button"
-                  className={`td-work-space-rail-item ${activeGroupKey === group.key ? 'is-active' : ''}`}
-                  onClick={() => onGroupChange(group.key)}
-                  title={group.name}
-                >
-                  <CloudOutlined />
-                  <span>{group.name}</span>
-                </button>
-              ))
-            ) : (
-              <div className="td-work-space-rail-empty">暂无场景</div>
-            )}
-          </div>
+  const railContent = (
+    <>
+      <button type="button" className="td-work-space-rail-create" onClick={onCreateSpace}>
+        <span className="td-work-space-rail-create-icon"><PlusOutlined /></span>
+        <span>新建场景</span>
+      </button>
+      <button
+        type="button"
+        className={`td-work-space-rail-item ${!activeGroupKey ? 'is-active' : ''}`}
+        onClick={() => onGroupChange(null)}
+      >
+        <HomeOutlined />
+        <span>首页</span>
+      </button>
+      <div className="td-work-space-rail-section">
+        <div className="td-work-space-rail-title">我的场景</div>
+        <div className="td-work-space-rail-list">
+          {currentGroups.length ? (
+            currentGroups.map((group) => (
+              <button
+                key={group.key}
+                type="button"
+                className={`td-work-space-rail-item ${activeGroupKey === group.key ? 'is-active' : ''}`}
+                onClick={() => onGroupChange(group.key)}
+                title={group.name}
+              >
+                <CloudOutlined />
+                <span>{group.name}</span>
+              </button>
+            ))
+          ) : (
+            <div className="td-work-space-rail-empty">暂无场景</div>
+          )}
         </div>
-      </aside>
+      </div>
+    </>
+  );
+
+  return (
+    <section className={`td-work-space-page td-work-space-standard-skin ${railCollapsed ? 'is-space-rail-collapsed' : ''}`} aria-label="空间">
+      {!railCollapsed ? (
+        <div className="td-work-space-rail-shell">
+          <aside className="td-work-space-rail" aria-label="空间导航">
+            <div className="td-work-space-rail-head">
+              <span>空间</span>
+              <button
+                type="button"
+                className="td-work-space-rail-toggle"
+                title="收起空间导航"
+                aria-label="收起空间导航"
+                onClick={() => setRailCollapsed(true)}
+              >
+                <MenuFoldOutlined />
+              </button>
+            </div>
+            {railContent}
+          </aside>
+        </div>
+      ) : null}
 
       <div className="td-work-space-main">
         <div className="app-header td-work-space-standard-header">
-          <div className="header-title">{title}</div>
+          <div className="header-title td-work-space-header-title">
+            {railCollapsed ? (
+              <div className="td-work-space-title-menu">
+                <button
+                  type="button"
+                  className="td-work-space-header-toggle"
+                  title="展开空间导航"
+                  aria-label="展开空间导航"
+                  onClick={() => setRailCollapsed(false)}
+                >
+                  <MenuUnfoldOutlined />
+                </button>
+                <div className="td-work-space-header-flyout">
+                  <aside className="td-work-space-rail td-work-space-rail-flyout-panel" aria-label="空间导航">
+                    {railContent}
+                  </aside>
+                </div>
+              </div>
+            ) : null}
+            <span>{title}</span>
+          </div>
           <div className="header-actions">
             <Input
               placeholder="搜索空间名称..."
@@ -3383,7 +3543,9 @@ export default function TdWorkModule({
   const [selectedComposerSkillKeys, setSelectedComposerSkillKeys] = useState([]);
   const [workContentTab, setWorkContentTab] = useState('work-task');
   const [toast, setToast] = useState('');
+  const [sidebarWidth, setSidebarWidth] = useState(loadTdWorkSidebarWidth);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarResizing, setSidebarResizing] = useState(false);
   const [sidebarSearchOpen, setSidebarSearchOpen] = useState(false);
   const [sidebarTaskSearch, setSidebarTaskSearch] = useState('');
   const [sidebarFilterOpen, setSidebarFilterOpen] = useState(false);
@@ -3440,6 +3602,8 @@ export default function TdWorkModule({
   const composerRef = useRef(null);
   const createMenuRef = useRef(null);
   const mainRef = useRef(null);
+  const sidebarResizeStartRef = useRef(null);
+  const sidebarWidthRef = useRef(sidebarWidth);
   const sidePanelTimerRef = useRef(null);
   const spaceSidebarLoadedRef = useRef(false);
 
@@ -3456,6 +3620,10 @@ export default function TdWorkModule({
   const sidePanelMounted = sidePanelOpen || sidePanelClosing;
   const sidePanelIsExpanded = sidePanelOpen && sidePanelExpanded && !sidePanelClosing;
   const clampSidePanelRatio = useCallback((value) => Math.min(68, Math.max(34, value)), []);
+
+  useEffect(() => {
+    sidebarWidthRef.current = sidebarWidth;
+  }, [sidebarWidth]);
 
   const openSidePanel = useCallback(() => {
     if (sidePanelTimerRef.current) {
@@ -3513,6 +3681,43 @@ export default function TdWorkModule({
     event.preventDefault();
     setSidePanelPrimaryRatio((current) => clampSidePanelRatio(current + (event.key === 'ArrowLeft' ? -4 : 4)));
   }, [clampSidePanelRatio, sidePanelMounted]);
+
+  const updateSidebarWidth = useCallback((nextWidth, options = {}) => {
+    const nextBoundedWidth = getBoundedTdWorkSidebarWidth(nextWidth);
+    sidebarWidthRef.current = nextBoundedWidth;
+    setSidebarWidth(nextBoundedWidth);
+    if (options.persist) {
+      persistTdWorkSidebarWidth(nextBoundedWidth);
+    }
+  }, []);
+
+  const handleSidebarResizeStart = useCallback((event) => {
+    if (sidebarCollapsed) return;
+    event.preventDefault();
+    sidebarResizeStartRef.current = {
+      pointerX: event.clientX,
+      width: sidebarWidthRef.current,
+    };
+    setSidebarResizing(true);
+  }, [sidebarCollapsed]);
+
+  const handleSidebarResizeKeyDown = useCallback((event) => {
+    if (sidebarCollapsed) return;
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight' && event.key !== 'Home' && event.key !== 'End') return;
+    event.preventDefault();
+    if (event.key === 'Home') {
+      updateSidebarWidth(TD_WORK_SIDEBAR_MIN_WIDTH, { persist: true });
+      return;
+    }
+    if (event.key === 'End') {
+      updateSidebarWidth(TD_WORK_SIDEBAR_MAX_WIDTH, { persist: true });
+      return;
+    }
+    updateSidebarWidth(
+      sidebarWidthRef.current + (event.key === 'ArrowLeft' ? -12 : 12),
+      { persist: true },
+    );
+  }, [sidebarCollapsed, updateSidebarWidth]);
 
   const loadAiSpaceData = useCallback(async (withLoading = true) => {
     if (withLoading) setSpaceLoading(true);
@@ -3755,6 +3960,17 @@ export default function TdWorkModule({
     });
   }, [activeCategory, connectorSearch]);
 
+  const handleSkillHubViewChange = useCallback((nextView) => {
+    setSkillView(nextView);
+    setCreateMenuOpen(false);
+    if (nextView === 'partners') {
+      setPartnerMarketCategory('全部');
+      setPartnerMarketSearch('');
+      return;
+    }
+    setConnectorSearch('');
+  }, []);
+
   const ownedConnectors = useMemo(() => [
     {
       key: 'tongda-training',
@@ -3913,6 +4129,42 @@ export default function TdWorkModule({
       window.clearTimeout(sidePanelTimerRef.current);
     }
   }, []);
+
+  useEffect(() => {
+    const handleWindowResize = () => {
+      updateSidebarWidth(sidebarWidthRef.current);
+    };
+    window.addEventListener('resize', handleWindowResize);
+    return () => window.removeEventListener('resize', handleWindowResize);
+  }, [updateSidebarWidth]);
+
+  useEffect(() => {
+    if (!sidebarResizing) return undefined;
+
+    const handlePointerMove = (event) => {
+      const resizeStart = sidebarResizeStartRef.current;
+      if (!resizeStart) return;
+      updateSidebarWidth(resizeStart.width + event.clientX - resizeStart.pointerX);
+    };
+
+    const handlePointerUp = () => {
+      setSidebarResizing(false);
+      persistTdWorkSidebarWidth(sidebarWidthRef.current);
+      sidebarResizeStartRef.current = null;
+    };
+
+    document.documentElement.classList.add('td-work-is-resizing');
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointercancel', handlePointerUp);
+
+    return () => {
+      document.documentElement.classList.remove('td-work-is-resizing');
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('pointercancel', handlePointerUp);
+    };
+  }, [sidebarResizing, updateSidebarWidth]);
 
   useEffect(() => {
     if (!sidePanelResizing) return undefined;
@@ -4250,7 +4502,10 @@ export default function TdWorkModule({
   const hideSpaceListTopbar = activeNav === 'space' && !activeSpace && !sidebarCollapsed;
 
   return (
-    <div className={`td-work-module ${sidebarCollapsed ? 'is-sidebar-collapsed' : ''}`}>
+    <div
+      className={`td-work-module ${sidebarCollapsed ? 'is-sidebar-collapsed' : ''} ${sidebarResizing ? 'is-sidebar-resizing' : ''}`}
+      style={{ '--sidebar-width': `${sidebarWidth}px` }}
+    >
       <aside className="td-work-sidebar" aria-label="工作导航">
         <div className="td-work-sidebar-toolbar" aria-label="侧栏工具">
           <div className="td-work-sidebar-window-dots" aria-hidden="true">
@@ -4320,7 +4575,7 @@ export default function TdWorkModule({
 
         <nav className="td-work-nav" aria-label="主导航">
           {NAV_ITEMS.map((item) => (
-            <div key={item.key} className={`td-work-nav-block ${item.key === 'new-task' && activeNav === 'new-task' && !activeSideItem ? 'has-subnav' : ''}`}>
+            <div key={item.key} className="td-work-nav-block">
               <button
                 type="button"
                 className={`td-work-nav-item ${activeNav === item.key ? 'is-active' : ''}`}
@@ -4353,23 +4608,6 @@ export default function TdWorkModule({
                 <span className="td-work-nav-icon">{item.icon}</span>
                 <span className="td-work-nav-label">{item.label}</span>
               </button>
-              {item.key === 'new-task' && activeNav === 'new-task' && !activeSideItem ? (
-                <div className="td-work-nav-submodes" role="tablist" aria-label="新工作任务模式">
-                  {WORK_CONTENT_TABS.map((mode) => (
-                    <button
-                      key={mode.key}
-                      type="button"
-                      className={`td-work-nav-submode ${workContentTab === mode.key ? 'is-active' : ''}`}
-                      role="tab"
-                      aria-selected={workContentTab === mode.key}
-                      onClick={() => setWorkContentTab(mode.key)}
-                    >
-                      {mode.icon}
-                      <span>{mode.label}</span>
-                    </button>
-                  ))}
-                </div>
-              ) : null}
             </div>
           ))}
         </nav>
@@ -4436,6 +4674,20 @@ export default function TdWorkModule({
           onAccountMenuOpenChange={onAccountMenuOpenChange}
         />
       </aside>
+      {!sidebarCollapsed ? (
+        <div
+          className="td-work-sidebar-resizer"
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="调整侧栏宽度"
+          aria-valuemin={TD_WORK_SIDEBAR_MIN_WIDTH}
+          aria-valuemax={TD_WORK_SIDEBAR_MAX_WIDTH}
+          aria-valuenow={sidebarWidth}
+          tabIndex={0}
+          onPointerDown={handleSidebarResizeStart}
+          onKeyDown={handleSidebarResizeKeyDown}
+        />
+      ) : null}
 
       <main
         ref={mainRef}
@@ -4570,9 +4822,11 @@ export default function TdWorkModule({
             <>
               {topbarSidebarCollapsedTools}
               <div className="td-work-skill-breadcrumb" aria-label="当前位置">
-                <button type="button" onClick={() => setSkillView('market')}>技能 · 连接器</button>
+                <button type="button" onClick={() => setSkillView(mySkillTab === 'connectors' ? 'market' : 'skills')}>
+                  {mySkillTab === 'connectors' ? '连接器' : '技能'}
+                </button>
                 <span>›</span>
-                <strong>我的技能</strong>
+                <strong>{mySkillTab === 'connectors' ? '我的连接器' : '我的技能'}</strong>
               </div>
 
               <div className="td-work-skill-actions">
@@ -4610,108 +4864,75 @@ export default function TdWorkModule({
                 </button>
               </div>
             </>
-          ) : activeNav === 'skills' && skillView === 'partners' ? (
-            <>
-              {topbarSidebarCollapsedTools}
-              <div className="td-work-skill-tabs" role="tablist" aria-label="技能页面">
-                <button type="button" className="is-active" role="tab" aria-selected="true">
-                  智能体 · 小队
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected="false"
-                  onClick={() => {
-                    setSkillView('market');
-                    setConnectorSearch('');
-                  }}
-                >
-                  技能 · 连接器
-                </button>
-              </div>
-
-              <div className="td-work-skill-actions">
-                <label className="td-work-skill-search" htmlFor="td-work-partner-market-search">
-                  <SearchOutlined />
-                  <input
-                    id="td-work-partner-market-search"
-                    value={partnerMarketSearch}
-                    placeholder="搜索"
-                    onChange={(event) => setPartnerMarketSearch(event.target.value)}
-                  />
-                </label>
-                <button
-                  type="button"
-                  className="td-work-skill-action-btn"
-                  onClick={() => {
-                    setActiveNav('dialog');
-                    setActivePartner(null);
-                    setPartnerView('manage');
-                    setPartnerManageTab('agents');
-                    setPartnerManageSearch('');
-                  }}
-                >
-                  <TeamOutlined />
-                  我的智能体
-                </button>
-              </div>
-            </>
           ) : activeNav === 'skills' ? (
             <>
               {topbarSidebarCollapsedTools}
-              <div className="td-work-skill-tabs" role="tablist" aria-label="技能页面">
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected="false"
-                  onClick={() => {
-                    setSkillView('partners');
-                    setPartnerMarketCategory('全部');
-                    setPartnerMarketSearch('');
-                  }}
-                >
-                  智能体 · 小队
-                </button>
-                <button type="button" className="is-active" role="tab" aria-selected="true" onClick={() => setSkillView('market')}>
-                  技能 · 连接器
-                </button>
-              </div>
+              <SkillHubTabs activeView={skillView} onChange={handleSkillHubViewChange} />
 
               <div className="td-work-skill-actions">
-                <label className="td-work-skill-search" htmlFor="td-work-skill-search">
+                <label
+                  className="td-work-skill-search"
+                  htmlFor={`td-work-${skillView}-search`}
+                >
                   <SearchOutlined />
                   <input
-                    id="td-work-skill-search"
-                    value={connectorSearch}
-                    placeholder="搜索技能"
-                    onChange={(event) => setConnectorSearch(event.target.value)}
+                    id={`td-work-${skillView}-search`}
+                    value={skillView === 'partners' ? partnerMarketSearch : connectorSearch}
+                    placeholder={skillView === 'partners' ? '搜索智能体' : skillView === 'skills' ? '搜索技能' : '搜索连接器'}
+                    onChange={(event) => {
+                      if (skillView === 'partners') {
+                        setPartnerMarketSearch(event.target.value);
+                        return;
+                      }
+                      setConnectorSearch(event.target.value);
+                    }}
                   />
                 </label>
-                <button
-                  type="button"
-                  className="td-work-skill-action-btn"
-                  onClick={() => {
-                    setSkillView('mine');
-                    setMySkillSearch('');
-                  }}
-                >
-                  <ControlOutlined />
-                  我的技能
-                </button>
-                <SkillCreateMenu
-                  open={createMenuOpen}
-                  menuRef={createMenuRef}
-                  onToggle={setCreateMenuOpen}
-                  onChatCreate={() => {
-                    setCreateMenuOpen(false);
-                    setToast('已进入对话新建技能');
-                  }}
-                  onUpload={() => {
-                    setCreateMenuOpen(false);
-                    setToast('已进入上传技能');
-                  }}
-                  onCustomConnector={handleOpenCustomConnector}
-                />
+                {skillView === 'partners' ? (
+                  <button
+                    type="button"
+                    className="td-work-skill-action-btn"
+                    onClick={() => {
+                      setActiveNav('dialog');
+                      setActivePartner(null);
+                      setPartnerView('manage');
+                      setPartnerManageTab('agents');
+                      setPartnerManageSearch('');
+                    }}
+                  >
+                    <TeamOutlined />
+                    我的智能体
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      className="td-work-skill-action-btn"
+                      onClick={() => {
+                        setSkillView('mine');
+                        setMySkillTab(skillView === 'market' ? 'connectors' : 'skills');
+                        setMySkillSearch('');
+                      }}
+                    >
+                      {skillView === 'market' ? <LinkOutlined /> : <ControlOutlined />}
+                      {skillView === 'market' ? '我的连接器' : '我的技能'}
+                    </button>
+                    <SkillCreateMenu
+                      open={createMenuOpen}
+                      menuRef={createMenuRef}
+                      onToggle={setCreateMenuOpen}
+                      onChatCreate={() => {
+                        setCreateMenuOpen(false);
+                        setToast('已进入对话新建技能');
+                      }}
+                      onUpload={() => {
+                        setCreateMenuOpen(false);
+                        setToast('已进入上传技能');
+                      }}
+                      onCustomConnector={handleOpenCustomConnector}
+                    />
+                  </>
+                )}
               </div>
             </>
           ) : (
@@ -4789,6 +5010,12 @@ export default function TdWorkModule({
             searchText={partnerMarketSearch}
             onCategoryChange={setPartnerMarketCategory}
             onAddPartner={(item) => setToast(`已添加智能体：${item.name}`)}
+          />
+        ) : activeNav === 'skills' && skillView === 'skills' ? (
+          <SkillCataloguePage
+            searchText={connectorSearch}
+            skills={MY_SKILLS}
+            onOpenSkill={(item) => setToast(`已添加技能：${item.name}`)}
           />
         ) : activeNav === 'skills' ? (
           <SkillsConnectorsPage
@@ -4972,6 +5199,23 @@ export default function TdWorkModule({
               <div className="td-work-center">
                 <LuckyMark />
                 <h1>{title}</h1>
+                {activeNav === 'new-task' && !activeSideItem ? (
+                  <div className="td-work-content-tabs" role="tablist" aria-label="新工作任务模式">
+                    {WORK_CONTENT_TABS.map((tab) => (
+                      <button
+                        key={tab.key}
+                        type="button"
+                        className={`td-work-content-tab ${workContentTab === tab.key ? 'is-active' : ''}`}
+                        role="tab"
+                        aria-selected={workContentTab === tab.key}
+                        onClick={() => setWorkContentTab(tab.key)}
+                      >
+                        {tab.icon}
+                        <span>{tab.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
               </div>
 
               <div className="td-work-recommend">

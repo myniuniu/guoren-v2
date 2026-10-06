@@ -1540,12 +1540,19 @@ const DEFAULT_PROJECTS = [
 
 const CREATE_AGENT_OPTIONS = [
   {
+    key: 'blank',
+    title: '空白智能体',
+    desc: '从空白开始配置名称、人设、技能、知识和模型，快速搭建一个专属智能体',
+    action: '创建',
+    image: 'blank',
+    primary: true,
+  },
+  {
     key: 'team',
     title: '团队智能体',
     desc: '团队专属智能体，聚焦多人协作场景，高效沉淀团队知识，跨群共享上下文',
     action: '添加',
     image: 'team',
-    primary: true,
   },
   {
     key: 'market',
@@ -4464,7 +4471,7 @@ function CreateAgentSquadModal({ open, agents, onClose, onCreate }) {
   );
 }
 
-function CreateAgentModal({ open, onClose, onAddTeamAgent, onOpenMarket }) {
+function CreateAgentModal({ open, onClose, onAddAgent, onOpenMarket }) {
   useEffect(() => {
     if (!open) return undefined;
 
@@ -4481,9 +4488,9 @@ function CreateAgentModal({ open, onClose, onAddTeamAgent, onOpenMarket }) {
   if (!open) return null;
 
   const handleOptionClick = (option) => {
-    if (option.key === 'team') {
+    if (option.key === 'blank' || option.key === 'team') {
       onClose();
-      onAddTeamAgent();
+      onAddAgent(option.key);
       return;
     }
     if (option.key === 'market') {
@@ -4547,10 +4554,11 @@ function CreateAgentModal({ open, onClose, onAddTeamAgent, onOpenMarket }) {
   );
 }
 
-function TeamAgentModal({ open, onClose, onCreate }) {
+function TeamAgentModal({ open, mode = 'team', onClose, onCreate }) {
   const [selectedAvatar, setSelectedAvatar] = useState(TEAM_AGENT_AVATARS[7].key);
   const [agentName, setAgentName] = useState('');
   const [selectedGroup, setSelectedGroup] = useState('');
+  const isBlankAgent = mode === 'blank';
 
   useEffect(() => {
     if (!open) return undefined;
@@ -4569,15 +4577,21 @@ function TeamAgentModal({ open, onClose, onCreate }) {
 
   const selectedAvatarType = TEAM_AGENT_AVATARS.find((avatar) => avatar.key === selectedAvatar)?.type || 'personal';
   const canCreate = agentName.trim().length > 0;
+  const shouldAddToGroup = !isBlankAgent && Boolean(selectedGroup);
+  const agentDesc = shouldAddToGroup
+    ? '已添加到群组，可协同处理团队任务'
+    : isBlankAgent
+      ? '从空白创建，可自由配置人设、技能与知识'
+      : '暂无描述';
 
   const handleCreate = () => {
     if (!canCreate) return;
     onCreate({
       key: `created-agent-${Date.now()}`,
       name: agentName.trim(),
-      desc: selectedGroup ? '已添加到群组，可协同处理团队任务' : '暂无描述',
-      tag: selectedGroup ? '团队' : '专属',
-      tagTone: selectedGroup ? 'muted' : 'purple',
+      desc: agentDesc,
+      tag: shouldAddToGroup ? '团队' : '专属',
+      tagTone: shouldAddToGroup ? 'muted' : 'purple',
       avatar: selectedAvatarType,
     });
     setAgentName('');
@@ -4596,7 +4610,7 @@ function TeamAgentModal({ open, onClose, onCreate }) {
         onClick={(event) => event.stopPropagation()}
       >
         <div className="lucky-team-agent-head">
-          <h2 id="lucky-team-agent-title">新建团队智能体</h2>
+          <h2 id="lucky-team-agent-title">{isBlankAgent ? '新建空白智能体' : '新建团队智能体'}</h2>
           <button
             type="button"
             className="lucky-create-agent-close"
@@ -4645,26 +4659,28 @@ function TeamAgentModal({ open, onClose, onCreate }) {
           />
         </div>
 
-        <div className="lucky-team-agent-field">
-          <label htmlFor="lucky-team-agent-group">添加到群组</label>
-          <div className="lucky-team-agent-helper">
-            创建后，会将智能体添加到所选群组中，并默认共享所有群内的上下文，以提升协作效率
+        {!isBlankAgent ? (
+          <div className="lucky-team-agent-field">
+            <label htmlFor="lucky-team-agent-group">添加到群组</label>
+            <div className="lucky-team-agent-helper">
+              创建后，会将智能体添加到所选群组中，并默认共享所有群内的上下文，以提升协作效率
+            </div>
+            <div className="lucky-team-agent-select-wrap">
+              <select
+                id="lucky-team-agent-group"
+                value={selectedGroup}
+                className="lucky-team-agent-select"
+                onChange={(event) => setSelectedGroup(event.target.value)}
+              >
+                <option value="">选择群组</option>
+                <option value="project">项目协作群</option>
+                <option value="teaching">教研共创群</option>
+                <option value="training">培训运营群</option>
+              </select>
+              <DownOutlined />
+            </div>
           </div>
-          <div className="lucky-team-agent-select-wrap">
-            <select
-              id="lucky-team-agent-group"
-              value={selectedGroup}
-              className="lucky-team-agent-select"
-              onChange={(event) => setSelectedGroup(event.target.value)}
-            >
-              <option value="">选择群组</option>
-              <option value="project">项目协作群</option>
-              <option value="teaching">教研共创群</option>
-              <option value="training">培训运营群</option>
-            </select>
-            <DownOutlined />
-          </div>
-        </div>
+        ) : null}
 
         <div className="lucky-team-agent-footer">
           <button type="button" className="lucky-team-agent-cancel" onClick={onClose}>
@@ -5832,6 +5848,7 @@ function LuckyModule() {
   const [savingItem, setSavingItem] = useState(null);
   const [createAgentOpen, setCreateAgentOpen] = useState(false);
   const [teamAgentOpen, setTeamAgentOpen] = useState(false);
+  const [agentCreateMode, setAgentCreateMode] = useState('team');
   const [createSquadOpen, setCreateSquadOpen] = useState(false);
   const [createProjectOpen, setCreateProjectOpen] = useState(false);
   const [skillMarketOpen, setSkillMarketOpen] = useState(false);
@@ -6540,11 +6557,15 @@ function LuckyModule() {
       <CreateAgentModal
         open={createAgentOpen}
         onClose={() => setCreateAgentOpen(false)}
-        onAddTeamAgent={() => setTeamAgentOpen(true)}
+        onAddAgent={(mode) => {
+          setAgentCreateMode(mode);
+          setTeamAgentOpen(true);
+        }}
         onOpenMarket={() => handleSelectSection('market')}
       />
       <TeamAgentModal
         open={teamAgentOpen}
+        mode={agentCreateMode}
         onClose={() => setTeamAgentOpen(false)}
         onCreate={handleCreateTeamAgent}
       />
