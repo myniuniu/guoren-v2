@@ -8,6 +8,7 @@ import {
   BarChartOutlined,
   BookOutlined,
   BookFilled,
+  CaretRightFilled,
   CheckCircleOutlined,
   CheckOutlined,
   ClockCircleOutlined,
@@ -20,6 +21,7 @@ import {
   CloseOutlined,
   DatabaseOutlined,
   DatabaseFilled,
+  DownloadOutlined,
   DownOutlined,
   EditOutlined,
   EllipsisOutlined,
@@ -28,6 +30,8 @@ import {
   FilterOutlined,
   FolderOutlined,
   FolderFilled,
+  FullscreenExitOutlined,
+  FullscreenOutlined,
   HomeOutlined,
   HomeFilled,
   HeartOutlined,
@@ -46,6 +50,7 @@ import {
   RobotOutlined,
   RobotFilled,
   SearchOutlined,
+  ShareAltOutlined,
   StarOutlined,
   TeamOutlined,
   UploadOutlined,
@@ -233,6 +238,27 @@ const AI_SPACE_DETAIL_THEME = {
   coverEnd: '#ffffff',
   accentColor: '#606977',
   topicThemeMode: 'SCENE',
+};
+
+const SPACE_CARD_COVER_IMAGES = [
+  '/assets/apps/pet-cover.jpg',
+  '/assets/apps/peach-cover.jpg',
+  '/assets/apps/island-cover.jpg',
+  '/assets/apps/circuit-cover.jpg',
+  '/assets/apps/drone-cover.jpg',
+  '/assets/apps/writing-cover.jpg',
+  '/assets/resources/geometry.jpg',
+  '/assets/resources/classification.jpg',
+  '/assets/resources/data.jpg',
+  '/assets/expert-studios/studio-cover.png',
+];
+
+const SPACE_CARD_COVER_IMAGES_BY_TYPE = {
+  SUPERVISION: ['/assets/resources/classification.jpg', '/assets/resources/circuit.jpg'],
+  TEACHING: ['/assets/apps/island-cover.jpg', '/assets/apps/pet-cover.jpg', '/assets/resources/geometry.jpg'],
+  RESEARCH: ['/assets/apps/circuit-cover.jpg', '/assets/apps/drone-cover.jpg', '/assets/resources/classification.jpg'],
+  TRAINING: ['/assets/apps/writing-cover.jpg', '/assets/apps/peach-cover.jpg', '/assets/resources/geometry.jpg'],
+  COMMUNITY: ['/assets/expert-studios/studio-cover.png', '/assets/apps/pet-cover.jpg', '/assets/apps/writing-cover.jpg'],
 };
 
 const RECOMMENDATIONS = [
@@ -530,10 +556,23 @@ const PROJECT_CONFIG_ITEMS = [
 const ACADEMY_REPLAYS = [
   { key: 'animation', title: '数理化教学动画的设计与使用', date: '2026.10.14', duration: '48:51', cover: academyReplayAnimation },
   { key: 'courseware', title: '多页课件设计与课堂交付', date: '2026.10.14', duration: '1:02:49', cover: academyReplayCourseware },
-  { key: 'evidence', title: '课堂数据回收与循证教学', date: '2026.09.30', duration: '56:18', cover: academyTipCore },
-  { key: 'workspace', title: '班级工作台从搭建到落地', date: '2026.09.23', duration: '52:06', cover: academyTipFeatures },
-  { key: 'subject', title: '学科工作台搭建复用全流程', date: '2026.09.16', duration: '45:32', cover: academyTipPrompt },
-  { key: 'practice', title: 'AI 教育创作实践分享', date: '2026.09.09', duration: '50:24', cover: academyTipGeometry },
+  { key: 'evidence', title: '课堂数据回收与循证教学', date: '2026.10.14', duration: '56:18', cover: academyTipCore },
+  { key: 'workspace', title: '班级工作台从搭建到落地', date: '2026.09.24', duration: '52:06', cover: academyTipFeatures },
+  { key: 'subject', title: '学科工作台搭建复用全流程', date: '2026.09.24', duration: '45:32', cover: academyTipPrompt },
+  { key: 'rebuild', title: '重构学科备课与教研', date: '2026.09.11', duration: '50:24', cover: academyTipGeometry },
+  { key: 'thinking', title: 'AI 课堂学生思维可视化', date: '2026.09.11', duration: '46:18', cover: academyTipEnglish },
+  { key: 'evaluation', title: 'AI 赋能教学评一体化', date: '2026.09.11', duration: '58:42', cover: academyTipPoem },
+  { key: 'math', title: '数学难点互动课件设计', date: '2026.08.29', duration: '42:16', cover: academyTipGeometry },
+  { key: 'language', title: '词汇句型情境表达训练', date: '2026.08.29', duration: '39:54', cover: academyTipEnglish },
+  { key: 'self-study', title: '全学科自学工作台搭建', date: '2026.08.29', duration: '51:22', cover: academyTipFeatures },
+  { key: 'iteration', title: '教学应用搭建与数据迭代', date: '2026.08.29', duration: '47:08', cover: academyTipCore },
+  { key: 'thinking-class', title: 'AI 辅助思考课堂设计', date: '2026.08.29', duration: '44:36', cover: academyTipPrompt },
+  { key: '3d-courseware', title: '人机分工做 3D 交互课件', date: '2026.07.23', duration: '41:15', cover: academyTipGeometry },
+  { key: 'math-game', title: '小学数学游戏化学习', date: '2026.07.23', duration: '38:48', cover: academyReplayAnimation },
+  { key: 'class-management', title: '无代码班级管理系统', date: '2026.07.23', duration: '43:20', cover: academyReplayCourseware },
+  { key: 'learning-portrait', title: '学情画像与教学偏好', date: '2026.07.23', duration: '36:52', cover: academyTipCore },
+  { key: 'role-scaffold', title: '学习系统与角色脚手架', date: '2026.07.23', duration: '49:10', cover: academyTipFeatures },
+  { key: 'open-course', title: 'AI 融合公开课课件打磨', date: '2026.07.23', duration: '54:26', cover: academyTipPoem },
 ];
 
 const ACADEMY_GUIDE_TABS = ['全部', '官方推荐', '共创共学'];
@@ -560,6 +599,33 @@ const ACADEMY_TUTORIALS = [
   { key: 'poem', title: '圈点句画实操：给古诗课件加入批注与画笔互动', category: '学科案例', feature: '互动课件', cover: academyTipPoem, duration: '02:23' },
   { key: 'geometry', title: '小学几何交互动画：拖拽操作理解图形关系', category: '学科案例', feature: '教学动画', cover: academyTipGeometry, duration: '03:15' },
 ];
+
+const ACADEMY_COURSE_DETAILS = {
+  animation: {
+    author: '陈霞',
+    purpose: '互动课件',
+    contentType: '使用技巧',
+    audience: '理科教师',
+    intro: '演示如何用好“一键改编”功能，快速改造出适合自己课堂的课件与仿真，讲解 AI 科学、合理、有边界地介入教学的方法。',
+    goals: ['掌握资源广场调用与“一键改编”的操作方法', '学会制作参数可变的学科仿真并投入课堂使用', '理解 AI 介入教学的时机边界与伦理规范'],
+  },
+  courseware: {
+    author: '陆建友',
+    purpose: '互动课件',
+    contentType: '使用技巧',
+    audience: '全学科教师',
+    intro: '围绕多页课件的结构规划、内容生成、页面优化和课堂交付，讲解如何把零散想法整理成可直接使用的教学方案。',
+    goals: ['掌握多页课件的结构设计方法', '理解页面内容与课堂活动的衔接逻辑', '完成一套可持续修改和复用的课堂课件'],
+  },
+  evidence: {
+    author: '张文',
+    purpose: '教育应用',
+    contentType: '课堂实践',
+    audience: '一线教师',
+    intro: '从课堂数据收集、结果分析到教学调整，介绍如何形成可追踪、可复盘的循证教学闭环。',
+    goals: ['搭建课堂数据回收入口', '读懂学生反馈和学习结果', '根据数据持续优化教学设计'],
+  },
+};
 
 const EXPERT_STUDIO_PROVINCES = [
   '全部', '北京市', '天津市', '河北省', '山西省', '内蒙古自治区', '辽宁省', '吉林省', '黑龙江省',
@@ -1198,32 +1264,6 @@ function ConnectorLogo({ item }) {
   );
 }
 
-function MarketplaceCard({ item, onOpen }) {
-  return (
-    <article className="td-work-market-card">
-      <button
-        type="button"
-        className={`td-work-market-card-cover is-${item.tone}`}
-        onClick={() => onOpen(item)}
-        aria-label={`打开${item.title}`}
-      >
-        <span className="td-work-market-card-badge">{item.badge}</span>
-        <strong>{item.mark}</strong>
-        <span className="td-work-market-card-views"><SearchOutlined /> {item.views}</span>
-      </button>
-      <div className="td-work-market-card-body">
-        <button type="button" className="td-work-market-card-title" onClick={() => onOpen(item)}>
-          {item.title}
-        </button>
-        <footer>
-          <span>{item.owner}</span>
-          <em><CheckCircleOutlined /> {item.likes}</em>
-        </footer>
-      </div>
-    </article>
-  );
-}
-
 function AppMarketplaceCard({ item, onOpen }) {
   return (
     <button type="button" className="td-work-app-market-card" onClick={() => onOpen(item)} aria-label={`打开${item.title}`}>
@@ -1279,13 +1319,128 @@ function ResourceMarketplaceCard({ item, onOpen }) {
   );
 }
 
-function MarketplacePage({ type, onOpen, onCreate }) {
+function ResourceDetailPage({ item, recommendations, onBack, onOpenResource, onCreate, kind = 'resource' }) {
+  const [liked, setLiked] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
+  const isApp = kind === 'app';
+  const contentLabel = isApp ? '应用' : '资源';
+
+  const visibleRecommendations = useMemo(() => {
+    const keyword = searchText.trim().toLowerCase();
+    const matched = recommendations.filter((resource) => (
+      !keyword || `${resource.title} ${resource.owner} ${resource.category}`.toLowerCase().includes(keyword)
+    ));
+    return matched.slice(0, 12);
+  }, [recommendations, searchText]);
+
+  const downloadResource = () => {
+    const anchor = document.createElement('a');
+    anchor.href = item.cover;
+    anchor.download = `${item.title}.jpg`;
+    anchor.click();
+    message.success('资源已开始下载');
+  };
+
+  return (
+    <section className={`td-work-resource-detail-page ${isApp ? 'is-app-detail' : ''} ${fullscreen ? 'is-fullscreen' : ''}`} aria-label={`${item.title}${contentLabel}预览`}>
+      <header className="td-work-resource-detail-header">
+        <button type="button" className="td-work-resource-detail-back" onClick={onBack} title={`返回${contentLabel}广场`} aria-label={`返回${contentLabel}广场`}><LeftOutlined /></button>
+        <button type="button" className="td-work-resource-detail-brand" onClick={onBack} title={`返回${contentLabel}广场`}>
+          <img src={tongdaLogo} alt="通答" />
+        </button>
+        <i aria-hidden="true" />
+        <span>tongda.work</span>
+        <form
+          className={`td-work-resource-detail-search ${searchFocused || searchText ? 'is-active' : ''}`}
+          onSubmit={(event) => {
+            event.preventDefault();
+            message.success(searchText.trim() ? `已搜索“${searchText.trim()}”` : '请输入搜索内容');
+          }}
+        >
+          <SearchOutlined />
+          <input
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => window.setTimeout(() => setSearchFocused(false), 120)}
+            placeholder={isApp ? '输入关键词搜索应用' : '输入知识点搜索资源'}
+            aria-label={isApp ? '输入关键词搜索应用' : '输入知识点搜索资源'}
+          />
+          <button type="submit">搜索</button>
+        </form>
+      </header>
+
+      <main className="td-work-resource-detail-layout">
+        <div className="td-work-resource-detail-primary">
+          <section className="td-work-resource-preview-stage" aria-label="资源内容预览">
+            <img src={item.cover} alt={item.title} />
+            <div className="td-work-resource-preview-shade" />
+            <div className="td-work-resource-preview-caption">
+              <span>{item.category}</span>
+              <strong>{item.title}</strong>
+              <button type="button" onClick={() => message.success(`${contentLabel}体验已打开`)}>打开体验 <RightOutlined /></button>
+            </div>
+            <button type="button" className="td-work-resource-preview-fullscreen" onClick={() => setFullscreen((value) => !value)}>
+              {fullscreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />}{fullscreen ? '退出全屏' : '全屏'}
+            </button>
+          </section>
+
+          <section className="td-work-resource-detail-actions" aria-label="资源操作">
+            <div className="td-work-resource-detail-author">
+              <span>{item.owner.slice(0, 1)}</span>
+              <div><strong>{item.owner}</strong><small>{isApp ? '欢迎大家体验和改编我的应用～' : '欢迎大家收藏和下载我的作品～'}</small></div>
+              <button type="button" onClick={() => message.success('已关注作者')}>+ 关注</button>
+            </div>
+            <div className="td-work-resource-detail-counts">
+              <span><EyeOutlined /> {item.views}</span>
+              <button type="button" className={liked ? 'is-liked' : ''} onClick={() => setLiked((value) => !value)}><StarOutlined /> {Number(item.likes) + (liked ? 1 : 0)}</button>
+              <button type="button" onClick={() => message.success('资源链接已复制')}><ShareAltOutlined /> 分享</button>
+            </div>
+            <div className="td-work-resource-detail-commands">
+              <button type="button" onClick={() => onCreate(`改编《${item.title}》，保留核心教学目标并适配我的课堂`)}><EditOutlined /> 一键改编</button>
+              {isApp ? (
+                <button type="button" className="is-primary" onClick={() => message.success('应用体验已打开')}>立即体验 <RightOutlined /></button>
+              ) : (
+                <button type="button" className="is-primary" onClick={downloadResource}><DownloadOutlined /> 下载</button>
+              )}
+            </div>
+          </section>
+        </div>
+
+        <aside className="td-work-resource-related" aria-label="相关推荐">
+          <h2>相关推荐</h2>
+          <div>
+            {visibleRecommendations.map((resource) => (
+              <button key={resource.key} type="button" onClick={() => onOpenResource(resource)}>
+                <span className="td-work-resource-related-cover">
+                  <img src={resource.cover} alt="" />
+                  {resource.badge ? <em>{resource.badge}</em> : null}
+                </span>
+                <span className="td-work-resource-related-copy">
+                  <strong>{resource.title}</strong>
+                  <small>{resource.owner}</small>
+                  <span><span><EyeOutlined /> {resource.views}</span><span><StarOutlined /> {resource.likes}</span></span>
+                </span>
+              </button>
+            ))}
+            {visibleRecommendations.length === 0 ? <p>没有找到相关{contentLabel}</p> : null}
+          </div>
+        </aside>
+      </main>
+    </section>
+  );
+}
+
+function MarketplacePage({ type, onCreate }) {
   const isResource = type === 'resource';
   const categories = isResource ? RESOURCE_MARKET_CATEGORIES : APP_MARKET_CATEGORIES;
   const items = isResource ? RESOURCE_MARKET_ITEMS : APP_MARKET_ITEMS;
   const [activeCategory, setActiveCategory] = useState('推荐');
   const [searchText, setSearchText] = useState('');
   const [appPrompt, setAppPrompt] = useState('');
+  const [activeItem, setActiveItem] = useState(null);
   const categoryScrollRef = useRef(null);
 
   const visibleItems = useMemo(() => {
@@ -1296,6 +1451,19 @@ function MarketplacePage({ type, onOpen, onCreate }) {
       return matchesCategory && matchesKeyword;
     });
   }, [activeCategory, items, searchText]);
+
+  if (activeItem) {
+    return (
+      <ResourceDetailPage
+        item={activeItem}
+        recommendations={items.filter((item) => item.key !== activeItem.key)}
+        onBack={() => setActiveItem(null)}
+        onOpenResource={setActiveItem}
+        onCreate={onCreate}
+        kind={isResource ? 'resource' : 'app'}
+      />
+    );
+  }
 
   if (!isResource) {
     const midpoint = Math.ceil(visibleItems.length / 2);
@@ -1335,7 +1503,7 @@ function MarketplacePage({ type, onOpen, onCreate }) {
             <div className="td-work-app-market-columns" aria-label="应用列表">
               {appColumns.map((column, index) => (
                 <div key={index} className="td-work-app-market-column">
-                  {column.map((item) => <AppMarketplaceCard key={item.key} item={item} onOpen={onOpen} />)}
+                  {column.map((item) => <AppMarketplaceCard key={item.key} item={item} onOpen={setActiveItem} />)}
                 </div>
               ))}
             </div>
@@ -1411,7 +1579,7 @@ function MarketplacePage({ type, onOpen, onCreate }) {
           <div className="td-work-resource-market-columns" aria-label="资源列表">
             {resourceColumns.map((column, index) => (
               <div key={index} className="td-work-resource-market-column">
-                {column.map((item) => <ResourceMarketplaceCard key={item.key} item={item} onOpen={onOpen} />)}
+                {column.map((item) => <ResourceMarketplaceCard key={item.key} item={item} onOpen={setActiveItem} />)}
               </div>
             ))}
           </div>
@@ -1443,7 +1611,16 @@ function AiModeHomePage({ onCreateTask, onNavigate, onOpenItem }) {
   const [activeShelf, setActiveShelf] = useState('resource');
   const homePromptRef = useRef(null);
   const activeCreationType = HOME_CREATION_TYPES.find((item) => item.key === activeCreationTypeKey) || null;
-  const shelfItems = activeShelf === 'resource' ? RESOURCE_MARKET_ITEMS.slice(0, 6) : APP_MARKET_ITEMS.slice(0, 6);
+  const shelfItems = activeShelf === 'resource'
+    ? [
+      RESOURCE_MARKET_ITEMS[0],
+      RESOURCE_MARKET_ITEMS[10],
+      RESOURCE_MARKET_ITEMS[1],
+      RESOURCE_MARKET_ITEMS[11],
+      RESOURCE_MARKET_ITEMS[2],
+      RESOURCE_MARKET_ITEMS[12],
+    ]
+    : APP_MARKET_ITEMS.slice(0, 6);
 
   const submitPrompt = () => {
     const nextPrompt = homePrompt.trim() || '帮我设计一个适合课堂使用的 AI 教学活动';
@@ -1468,7 +1645,7 @@ function AiModeHomePage({ onCreateTask, onNavigate, onOpenItem }) {
       <div className="td-work-home-hero">
         <div className="td-work-home-greeting">
           <LuckyMark size="small" />
-          <h1>Hi，我是通答 AI</h1>
+          <h1>Hi,我是通答老师</h1>
         </div>
 
         <div className="td-work-home-composer">
@@ -1504,7 +1681,7 @@ function AiModeHomePage({ onCreateTask, onNavigate, onOpenItem }) {
               role="textbox"
               aria-multiline="true"
               aria-label="输入教学创作需求"
-              data-placeholder="教学游戏｜以课程内容为故事线，生成知识闯关游戏，让学生在互动体验中主动探究。"
+              data-placeholder="教学动画｜设计初中数学勾股定理互动教学活动，引导学生主动探究，培养几何直观、逻辑推理能力。"
               onInput={(event) => setHomePrompt(event.currentTarget.innerText)}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' && !event.shiftKey) {
@@ -1534,6 +1711,7 @@ function AiModeHomePage({ onCreateTask, onNavigate, onOpenItem }) {
                 >
                   {item.icon}
                   {item.label}
+                  {item.key === 'education-app' ? <sup>NEW</sup> : null}
                 </button>
               ))}
             </div>
@@ -1571,14 +1749,13 @@ function AiModeHomePage({ onCreateTask, onNavigate, onOpenItem }) {
             应用广场
           </button>
         </div>
-        <button type="button" className="td-work-home-shelf-more" onClick={() => onNavigate(activeShelf === 'resource' ? 'resource-market' : 'app-market')}>
-          查看全部 <ArrowUpOutlined />
-        </button>
       </div>
 
-      <div className="td-work-market-grid td-work-home-market-grid">
+      <div className={`td-work-home-market-grid is-${activeShelf}`}>
         {shelfItems.map((item) => (
-          <MarketplaceCard key={item.key} item={item} onOpen={onOpenItem} />
+          activeShelf === 'resource'
+            ? <ResourceMarketplaceCard key={item.key} item={item} onOpen={onOpenItem} />
+            : <AppMarketplaceCard key={item.key} item={item} onOpen={onOpenItem} />
         ))}
       </div>
     </section>
@@ -2016,6 +2193,106 @@ function ExpertStudiosPage({ onToast }) {
   );
 }
 
+function AcademyCourseDetailPage({ course, relatedCourses, onBack, onSelectCourse, onToast }) {
+  const [playing, setPlaying] = useState(false);
+  const details = ACADEMY_COURSE_DETAILS[course.key] || {};
+  const author = details.author || course.owner || '通答学院讲师';
+  const purpose = details.purpose || course.feature || '教学实践';
+  const contentType = details.contentType || course.category || '课程教程';
+  const audience = details.audience || '一线教师';
+  const intro = details.intro || `围绕“${course.title}”梳理核心操作、课堂应用方法与可复用的实践经验，帮助教师快速完成从理解到落地。`;
+  const goals = details.goals || ['理解课程的核心方法与使用场景', '掌握可直接迁移到课堂的操作步骤', '形成可复用、可持续迭代的教学成果'];
+
+  return (
+    <div className="td-work-academy-detail">
+      <button type="button" className="td-work-academy-detail-back" onClick={onBack}>
+        <LeftOutlined /> 返回
+      </button>
+
+      <section className={`td-work-academy-player ${playing ? 'is-playing' : ''}`} aria-label={`${course.title}课程播放区`}>
+        <img src={course.cover} alt={course.title} />
+        <div className="td-work-academy-player-shade" />
+        <div className="td-work-academy-player-controls">
+          <button type="button" onClick={() => setPlaying((value) => !value)} title={playing ? '暂停' : '播放'} aria-label={playing ? '暂停课程' : '播放课程'}>
+            <CaretRightFilled />
+          </button>
+          <span>{playing ? '0:18' : '0:00'} / {course.duration || '12:00'}</span>
+          <i><b style={{ width: playing ? '18%' : '0%' }} /></i>
+          <button type="button" onClick={() => onToast('已进入全屏播放')} title="全屏" aria-label="全屏播放"><FullscreenOutlined /></button>
+          <button type="button" title="更多播放设置" aria-label="更多播放设置"><MoreOutlined /></button>
+        </div>
+      </section>
+
+      <div className="td-work-academy-detail-grid">
+        <article className="td-work-academy-detail-copy">
+          <h1>{course.title}</h1>
+          <strong>{author}</strong>
+          <dl>
+            <div><dt>用途分类</dt><dd>{purpose}</dd></div>
+            <div><dt>内容类型</dt><dd>{contentType}</dd></div>
+            <div><dt>适用对象</dt><dd>{audience}</dd></div>
+          </dl>
+          <section>
+            <h2>课程简介</h2>
+            <p>{intro}</p>
+          </section>
+          <section>
+            <h2>课程目标</h2>
+            <ul>{goals.map((goal) => <li key={goal}>{goal}</li>)}</ul>
+          </section>
+        </article>
+
+        <aside className="td-work-academy-related" aria-label="更多课程">
+          <h2>更多课程</h2>
+          <div>
+            {relatedCourses.slice(0, 8).map((item) => (
+              <button key={item.key} type="button" onClick={() => onSelectCourse(item)}>
+                <img src={item.cover} alt="" />
+                <span><strong>{item.title}</strong><small>{item.duration || item.category}</small></span>
+              </button>
+            ))}
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+function AcademyCampaignDetailPage({ onBack, onToast }) {
+  const directions = [
+    ['教学动画', '让抽象知识动起来'],
+    ['教育应用', '把课堂方法做成可使用的工具'],
+    ['教学游戏', '用故事和任务激发主动学习'],
+    ['互动课件', '让课堂讲解与学生操作相结合'],
+  ];
+
+  return (
+    <div className="td-work-academy-campaign">
+      <header>
+        <button type="button" onClick={onBack}><LeftOutlined /> 返回</button>
+        <button type="button" onClick={() => onToast('已打开我的投稿')}>我的投稿</button>
+      </header>
+      <section className="td-work-academy-campaign-hero" style={{ backgroundImage: `url(${academyCreationBanner})` }}>
+        <div>
+          <span>2026 教师 AI 教育创作</span>
+          <h1>让你的教育智慧，<br />真正运行起来</h1>
+          <p>从一个真实问题开始，把你的方法、经验和灵感，变成可以直接使用、持续改进、被更多人分享的 AI 教育作品。</p>
+          <div><button type="button" onClick={() => onToast('已进入作品提交')}>立即提交作品</button><small>征集至 2026 年 11 月 30 日 23:59</small></div>
+        </div>
+      </section>
+      <section className="td-work-academy-campaign-directions">
+        <span>01 · 创作方向</span>
+        <h2>你想把什么，做出来</h2>
+        <div>{directions.map(([title, description]) => <article key={title}><strong>{title}</strong><p>{description}</p></article>)}</div>
+      </section>
+      <div className="td-work-academy-campaign-cta">
+        <span><strong>把你的好方法做出来，让更多人真正用起来</strong><small>四大创作方向开放投稿</small></span>
+        <button type="button" onClick={() => onToast('已进入作品提交')}>选择方向，提交作品</button>
+      </div>
+    </div>
+  );
+}
+
 function TongdaAcademyPage({ onToast }) {
   const [showMoreReplays, setShowMoreReplays] = useState(false);
   const [guideTab, setGuideTab] = useState('全部');
@@ -2023,6 +2300,8 @@ function TongdaAcademyPage({ onToast }) {
   const [tipTab, setTipTab] = useState('全部');
   const [featureTab, setFeatureTab] = useState('全部');
   const [showMoreTips, setShowMoreTips] = useState(false);
+  const [activeDetail, setActiveDetail] = useState(null);
+  const academyPageRef = useRef(null);
 
   const visibleGuides = useMemo(() => {
     const matches = ACADEMY_GUIDES.filter((item) => guideTab === '全部' || item.category === guideTab);
@@ -2036,11 +2315,36 @@ function TongdaAcademyPage({ onToast }) {
   }), [featureTab, tipTab]);
 
   const visibleTips = showMoreTips ? matchingTips : matchingTips.slice(0, 6);
-  const openItem = (title) => onToast(`已打开：${title}`);
+  const openDetail = (item, source) => {
+    setActiveDetail({ type: 'course', item, source });
+    requestAnimationFrame(() => academyPageRef.current?.scrollTo({ top: 0, behavior: 'smooth' }));
+  };
+  const closeDetail = () => {
+    setActiveDetail(null);
+    requestAnimationFrame(() => academyPageRef.current?.scrollTo({ top: 0 }));
+  };
+
+  const relatedCourses = activeDetail?.source === 'guide'
+    ? ACADEMY_GUIDES
+    : activeDetail?.source === 'tutorial'
+      ? ACADEMY_TUTORIALS
+      : ACADEMY_REPLAYS;
 
   return (
-    <section className="td-work-academy-page" aria-label="通答学院">
+    <section ref={academyPageRef} className={`td-work-academy-page ${activeDetail ? 'has-detail' : ''}`} aria-label="通答学院">
       <div className="td-work-academy-shell">
+        {activeDetail?.type === 'course' ? (
+          <AcademyCourseDetailPage
+            course={activeDetail.item}
+            relatedCourses={relatedCourses.filter((item) => item.key !== activeDetail.item.key)}
+            onBack={closeDetail}
+            onSelectCourse={(item) => openDetail(item, activeDetail.source)}
+            onToast={onToast}
+          />
+        ) : activeDetail?.type === 'campaign' ? (
+          <AcademyCampaignDetailPage onBack={closeDetail} onToast={onToast} />
+        ) : (
+          <>
         <header className="td-work-academy-heading">
           <h1>通答学院</h1>
           <div className="td-work-academy-heading-actions">
@@ -2058,7 +2362,10 @@ function TongdaAcademyPage({ onToast }) {
             <span>四大创作方向开放投稿</span>
             <h2>2026 教师 AI 教育创作征集</h2>
             <p>把你的好方法做出来，让更多人真正用起来</p>
-            <button type="button" onClick={() => onToast('已进入创作征集')}>立即参与 <span aria-hidden="true">›</span></button>
+            <button type="button" onClick={() => {
+              setActiveDetail({ type: 'campaign' });
+              requestAnimationFrame(() => academyPageRef.current?.scrollTo({ top: 0, behavior: 'smooth' }));
+            }}>立即参与 <span aria-hidden="true">›</span></button>
           </div>
         </section>
 
@@ -2066,7 +2373,7 @@ function TongdaAcademyPage({ onToast }) {
           <h2 id="academy-replay-title">直播回放</h2>
           <div className="td-work-academy-content-grid">
             {(showMoreReplays ? ACADEMY_REPLAYS : ACADEMY_REPLAYS.slice(0, 2)).map((item) => (
-              <button key={item.key} type="button" className="td-work-academy-media-card" onClick={() => openItem(item.title)}>
+              <button key={item.key} type="button" className="td-work-academy-media-card" onClick={() => openDetail(item, 'replay')}>
                 <span className="td-work-academy-media">
                   <img src={item.cover} alt="" />
                   <em>{item.duration}</em>
@@ -2103,7 +2410,7 @@ function TongdaAcademyPage({ onToast }) {
           </div>
           <div className="td-work-academy-content-grid">
             {visibleGuides.map((item) => (
-              <button key={item.key} type="button" className="td-work-academy-media-card" onClick={() => openItem(item.title)}>
+              <button key={item.key} type="button" className="td-work-academy-media-card" onClick={() => openDetail(item, 'guide')}>
                 <span className="td-work-academy-media">
                   <img src={item.cover} alt="" />
                 </span>
@@ -2159,7 +2466,7 @@ function TongdaAcademyPage({ onToast }) {
           {visibleTips.length > 0 ? (
             <div className="td-work-academy-content-grid">
               {visibleTips.map((item) => (
-                <button key={item.key} type="button" className="td-work-academy-media-card" onClick={() => openItem(item.title)}>
+                <button key={item.key} type="button" className="td-work-academy-media-card" onClick={() => openDetail(item, 'tutorial')}>
                   <span className="td-work-academy-media">
                     <img src={item.cover} alt="" />
                     <em>{item.duration}</em>
@@ -2181,6 +2488,8 @@ function TongdaAcademyPage({ onToast }) {
         </section>
 
         <footer className="td-work-academy-footer">© 2026 通答 · 通答学院 —— 让好课被更多人用到</footer>
+          </>
+        )}
       </div>
     </section>
   );
@@ -4428,9 +4737,17 @@ function getSpaceContentCountText(scene) {
 }
 
 function getSpaceTheme(scene) {
+  const sceneTheme = scene?.templateSnapshot?.theme || {};
+  const coverSeed = String(scene?.id || scene?.key || scene?.name || scene?.templateName || 'space');
+  const coverImages = SPACE_CARD_COVER_IMAGES_BY_TYPE[scene?.sceneType] || SPACE_CARD_COVER_IMAGES;
+  const coverIndex = Array.from(coverSeed).reduce((total, character) => total + character.codePointAt(0), 0)
+    % coverImages.length;
+
   return {
-    ...(scene?.templateSnapshot?.theme || {}),
+    ...sceneTheme,
     ...AI_SPACE_DETAIL_THEME,
+    coverSource: 'UPLOAD',
+    coverImage: sceneTheme.coverImage || coverImages[coverIndex],
   };
 }
 
@@ -4507,8 +4824,8 @@ function AiSpaceCard({ scene, onOpen, onEdit, onDelete, onToggleShortcut }) {
           <div
             className="wave-bg"
             style={getSceneThemeCoverStyle(theme, {
-              overlayStart: 'rgba(15, 23, 42, 0.12)',
-              overlayEnd: 'rgba(15, 23, 42, 0.02)',
+              overlayStart: 'rgba(8, 18, 32, 0.58)',
+              overlayEnd: 'rgba(8, 18, 32, 0.16)',
             })}
           >
             {topicCardConfig.showTitle ? (
@@ -6631,14 +6948,12 @@ export default function TdWorkModule({
           <MarketplacePage
             key="resource-market"
             type="resource"
-            onOpen={(item) => setToast(`已打开资源：${item.title}`)}
             onCreate={handleCreateTaskFromHome}
           />
         ) : activeNav === 'app-market' ? (
           <MarketplacePage
             key="app-market"
             type="app"
-            onOpen={(item) => setToast(`已打开应用：${item.title}`)}
             onCreate={handleCreateTaskFromHome}
           />
         ) : activeNav === 'project' ? (
