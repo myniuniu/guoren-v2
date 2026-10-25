@@ -8,6 +8,7 @@ import InspireDetailPage from './studyClub/InspireDetailPage.jsx'
 import CourseDetailPage from './studyClub/CourseDetailPage.jsx'
 import ArticleDetailPage from './studyClub/ArticleDetailPage.jsx'
 import ProcessDesignerV2 from './processV2/ProcessDesignerV2.jsx'
+import SolutionShowroomPortal from './solutionShowroom/SolutionShowroomPortal.jsx'
 import { registerPwa } from './registerPwa.js'
 
 const LOGIN_STORAGE_KEY = 'gr.login.prototype.authenticated';
@@ -100,7 +101,10 @@ function RootPage() {
     setCurrentHash('#/login');
   };
 
-  if (isLoginPage || !isAuthenticated) return <LoginPage onLogin={handleLogin} />;
+  if (isLoginPage) return <LoginPage onLogin={handleLogin} />;
+  if (!isAuthenticated) {
+    return <SolutionShowroomPortal onOpenRoom={() => { window.location.hash = '/login'; }} />;
+  }
   if (!selectedTenant) return <TenantSelectPage onBack={handleBackToLogin} onSelectTenant={handleSelectTenant} />;
   if (isInspireDetail) return <InspireDetailPage />;
   if (isCourseDetail) return <CourseDetailPage />;

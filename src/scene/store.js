@@ -9,7 +9,7 @@ const SCENE_MENU_CATEGORY_STORAGE_KEY = 'gr.scene.menu-categories.v1';
 const SCENE_SYSTEM_MENU_SHORTCUT_STORAGE_KEY = 'gr.scene.system-menu-shortcuts.v1';
 const SCENE_SYSTEM_MENU_SHORTCUT_DEFAULT_SYNC_KEY = 'gr.scene.system-menu-shortcuts-default-sync.v1';
 const SEED_KEY = 'gr.scene.seeded.v1';
-const BUILT_IN_SYNC_KEY = 'gr.scene.builtin-sync.v13';
+const BUILT_IN_SYNC_KEY = 'gr.scene.builtin-sync.v18';
 const STORE_CHANGE_EVENT = 'gr:scene-store-change';
 const VERSION_STORAGE_KEY = 'guoren_version_data';
 const DEFAULT_SCENE_GROUP_NAME = '人工智能通识体系';
@@ -31,6 +31,7 @@ export const DEFAULT_SCENE_MENU_GROUPS = [
     label: '我的场景',
     children: [
       { key: 'my-learning-space', label: '我的学习空间' },
+      { key: 'online-academy-training', label: '通答学院' },
       { key: 'workshop', label: '研讨会' },
       { key: 'study-club-channel', label: '研习社-频道' },
     ],
@@ -2221,6 +2222,131 @@ function buildPresetTemplates() {
       },
     },
     {
+      id: 'tpl_online_academy_training_builtin',
+      templateCode: 'TPL-ONLINE-ACADEMY-TRAINING',
+      name: '通答学院项目场景',
+      sceneType: 'TRAINING',
+      defaultMenuKey: 'online-academy-training',
+      description: '面向教育干部、党员和骨干教师的大规模组织培训项目，承载通答学院课程、资源、应用案例和学习公社数据对接流程。',
+      builtIn: true,
+      theme: {
+        badgeText: '通答学院',
+        emoji: '🏫',
+        coverSource: 'PRESET',
+        coverPresetId: 'abstract_blue_wave',
+        coverStart: '#1d4ed8',
+        coverEnd: '#14b8a6',
+        accentColor: '#0f766e',
+        heroTitle: '通答学院：面向教育系统的 AI 学习与培训项目',
+        heroSubtitle: '支撑教育干部、党员与骨干教师的在线学习、AI 应用案例、班级运营、考核证书和学习公社数据对接。',
+        surfaceHint: '学院课程、应用案例、学情进度、考核证书',
+      },
+      homepage: {
+        templateName: '通答学院主页模板',
+        introMode: 'AI_OR_MANUAL',
+        introText: '聚合学院课程、应用案例、项目通知、学习公社同步状态、学员进度、考核结果与证书发放。',
+      },
+      topicPage: {
+        resourcePanelTitle: '学院项目资料',
+        addResourceLabel: '添加学院资料',
+        appLabel: '学院工具',
+        emptyStateText: '暂无学院项目资料，可先同步课程、导入学员或发布培训通知',
+        allowRootResources: true,
+        modeTabs: createModeTabs({
+          knowledge: '课程资源',
+          ai: 'AI助培',
+          practice: '研修任务',
+          'learner-progress': '学情进度',
+          assessment: '考核证书',
+        }),
+      },
+      roles: [
+        {
+          key: 'project_admin',
+          name: '项目管理员',
+          agentName: '学院运营助手',
+          functionalPermissions: ['TOPIC_EDIT', 'RESOURCE_CREATE', 'RESOURCE_EDIT', 'TOOL_USE', 'LIVE_ACTIVITY_MANAGE', 'ASSESSMENT_CONFIG', 'MEMBER_MANAGE', 'DATA_EXPORT'],
+          permissionSummary: '维护项目、班级、课程、学员和平台同步规则',
+          dataAccessScope: 'ALL',
+          dataAccessAreas: ['TOPIC_METADATA', 'RESOURCE_AREA', 'RESULT_AREA', 'ASSESSMENT_DATA', 'MEMBER_DATA', 'OPERATION_DATA'],
+          scopeSummary: '可管理全部培训目录、学员数据和运营报表',
+          description: '负责通答学院项目的组织、配置和过程管理。',
+        },
+        {
+          key: 'class_tutor',
+          name: '班主任',
+          agentName: '班级督学助手',
+          functionalPermissions: ['TOOL_USE', 'RESOURCE_CREATE', 'RESOURCE_EDIT', 'RESULT_REVIEW', 'COMMENT_INTERACT', 'DATA_EXPORT'],
+          permissionSummary: '跟进班级学情、催办任务并批阅研修成果',
+          dataAccessScope: 'ASSIGNED',
+          assignedAccessRuleType: 'RESOURCE_TYPE',
+          dataAccessAreas: ['FOLDER::class_operation', 'FOLDER::learning_progress', 'FOLDER::training_outcome', 'ASSESSMENT_DATA'],
+          scopeSummary: '仅访问负责班级的学员、作业和学情数据',
+          description: '负责班级运营、学习提醒和成果点评。',
+        },
+        {
+          key: 'learner',
+          name: '参训学员',
+          agentName: '学习助手',
+          functionalPermissions: ['TOOL_USE', 'RESULT_SUBMIT', 'COMMENT_INTERACT'],
+          permissionSummary: '学习课程、参加直播、提交作业并完成考核',
+          dataAccessScope: 'PARTICIPATED',
+          dataAccessAreas: ['RESOURCE_AREA', 'RESULT_AREA', 'ASSESSMENT_DATA'],
+          scopeSummary: '仅访问个人所属项目、班级和任务内容',
+          description: '教育干部、党员或骨干教师等参训对象。',
+        },
+        {
+          key: 'data_admin',
+          name: '数据管理员',
+          agentName: '数据同步助手',
+          functionalPermissions: ['TOOL_USE', 'RESOURCE_CREATE', 'RESOURCE_EDIT', 'DATA_EXPORT'],
+          permissionSummary: '同步学习公社数据、导出统计报表并核验异常',
+          dataAccessScope: 'ALL',
+          dataAccessAreas: ['MEMBER_DATA', 'OPERATION_DATA', 'ASSESSMENT_DATA', 'FOLDER::learning_square_sync'],
+          scopeSummary: '可访问同步记录、学习进度、考试与证书数据',
+          description: '负责平台数据对接、清洗和报表交付。',
+        },
+      ],
+      metadataFields: [
+        { key: 'project_name', label: '项目名称', type: 'TEXT', required: true },
+        { key: 'learning_square_project_id', label: '学习公社项目ID', type: 'TEXT', required: false },
+        { key: 'target_group', label: '培训对象', type: 'TEXT', required: true, description: '例如：教育干部、党员、骨干教师' },
+        { key: 'learner_scale', label: '预计学员规模', type: 'NUMBER', required: false },
+        { key: 'training_period', label: '培训周期', type: 'TEXT', required: false },
+        { key: 'organizer', label: '主办单位', type: 'TEXT', required: false },
+      ],
+      statusRules: buildSceneTypeStatusRules('TRAINING'),
+      toolAreas: {
+        resourceAreaTools: ['RESOURCE_LIBRARY', 'ONLINE_DOC', 'LIVE', 'ONLINE_VIDEO', 'URL', 'OFFICE_UPLOAD'],
+        resultAreaTools: ['REGISTER', 'EXAM', 'SURVEY', 'FORUM', 'ONLINE_DOC'],
+      },
+      toolConfigs: [
+        { key: 'learning_square_link', name: '学习公社入口', placement: 'RESOURCE_AREA', enabled: true, description: '对接学习公社培训平台项目入口、课程链接和同步说明。' },
+        { key: 'live', name: '直播培训', placement: 'RESOURCE_AREA', enabled: true, description: '组织开班、专题讲座和专家直播回放。' },
+        { key: 'exam', name: '考试考核', placement: 'RESULT_AREA', enabled: true, description: '支持阶段测验、结业考试和成绩归档。' },
+        { key: 'survey', name: '满意度调查', placement: 'RESULT_AREA', enabled: true, description: '采集培训反馈、课程评价和改进建议。' },
+        { key: 'register', name: '组织报名', placement: 'RESULT_AREA', enabled: true, description: '支持分单位、分班级批量报名和名单核验。' },
+      ],
+      folderTypes: [
+        { key: 'learning_square_sync', name: '学习公社同步', required: true, allowedTools: ['URL', 'ONLINE_DOC', 'OFFICE_UPLOAD'], roleIds: ['project_admin', 'data_admin'], description: '维护平台项目入口、同步规则、数据字段和异常记录。' },
+        { key: 'class_operation', name: '班级运营', required: true, allowedTools: ['ONLINE_DOC', 'FORUM', 'REGISTER'], roleIds: ['project_admin', 'class_tutor'], description: '沉淀班级名单、通知模板、督学记录和催办台账。' },
+        { key: 'course_resource', name: '课程资源', required: true, allowedTools: ['ONLINE_VIDEO', 'LIVE', 'RESOURCE_LIBRARY', 'OFFICE_UPLOAD'], roleIds: ['project_admin', 'class_tutor', 'learner'], description: '组织专题课程、直播回放、讲义和学习材料。' },
+        { key: 'learning_progress', name: '学情进度', required: true, allowedTools: ['ONLINE_DOC', 'SURVEY', 'EXAM'], roleIds: ['project_admin', 'class_tutor', 'data_admin'], description: '跟踪登录、学习时长、作业、考试和预警名单。' },
+        { key: 'training_outcome', name: '成果与证书', required: false, allowedTools: ['ONLINE_DOC', 'OFFICE_UPLOAD', 'EXAM'], roleIds: ['project_admin', 'class_tutor', 'learner'], description: '管理研修成果、结业材料、证书名单和归档报表。' },
+      ],
+      agents: [
+        { name: '学院运营助手', roleIds: ['project_admin'], knowledgeSource: '项目方案、课程安排、名单与运营规则', prompt: '辅助拆解培训批次、生成通知话术、检查项目配置并输出运营日报。', avatar: '🏫' },
+        { name: '班级督学助手', roleIds: ['class_tutor'], knowledgeSource: '班级学情、作业提交与考试结果', prompt: '识别未完成学员、生成催办清单和班主任跟进建议。', avatar: '📊' },
+        { name: '数据同步助手', roleIds: ['data_admin'], knowledgeSource: '学习公社同步日志、学情数据和证书数据', prompt: '核验同步异常、汇总学情指标并生成项目交付报表。', avatar: '🔗' },
+      ],
+      entryMethods: ['BATCH_IMPORT', 'FORM_TEMPLATE', 'INVITATION', 'LEARNING_SQUARE'],
+      recommendation: {
+        enabled: true,
+        resourceScope: '通答学院项目中的课程资源、学情进度、考核结果和学习公社同步数据',
+        description: '根据培训对象、学习阶段、进度预警和考核结果推荐课程、提醒与运营动作。',
+      },
+    },
+    {
       id: 'tpl_course_studio_builtin',
       templateCode: 'TPL-COURSE-STUDIO',
       name: '课程创作中心',
@@ -2538,6 +2664,110 @@ function buildPresetScenes(templates) {
       templateId: byCode.get('TPL-TRAINING')?.id,
     },
     {
+      id: 'scene_online_academy_training_seed_1',
+      sceneCode: 'SCN-ONLINE-ACADEMY-EDU',
+      name: '通答学院项目',
+      sceneGroupName: '通答学院',
+      description: '面向教育干部、党员与骨干教师的大规模组织培训项目，承载通答学院课程、AI 应用案例、学情、考核与证书数据。',
+      owner: '通答学院',
+      visibility: 'INTERNAL',
+      menuKey: 'online-academy-training',
+      topicCount: 18,
+      memberCount: 1280,
+      templateId: byCode.get('TPL-ONLINE-ACADEMY-TRAINING')?.id,
+    },
+    {
+      id: 'scene_online_academy_training_seed_2',
+      sceneCode: 'SCN-EDU-CADRE-DIGITAL',
+      name: '教育干部数字化领导力提升班',
+      sceneGroupName: '通答学院',
+      description: '面向教育局、学校管理干部开展数字化转型、数据治理和智慧校园建设专题培训，支持学习公社课程同步与学情统计。',
+      owner: '干部培训部',
+      visibility: 'INTERNAL',
+      menuKey: 'online-academy-training',
+      topicCount: 16,
+      memberCount: 860,
+      templateId: byCode.get('TPL-ONLINE-ACADEMY-TRAINING')?.id,
+    },
+    {
+      id: 'scene_online_academy_training_seed_3',
+      sceneCode: 'SCN-PARTY-EDU-TRAINING',
+      name: '教育系统党员专题培训班',
+      sceneGroupName: '通答学院',
+      description: '面向教育系统党员开展理论学习、案例研讨、在线测试和学习成果提交，兼容学习公社党员培训项目数据。',
+      owner: '党建培训中心',
+      visibility: 'INTERNAL',
+      menuKey: 'online-academy-training',
+      topicCount: 14,
+      memberCount: 1520,
+      templateId: byCode.get('TPL-ONLINE-ACADEMY-TRAINING')?.id,
+    },
+    {
+      id: 'scene_online_academy_training_seed_4',
+      sceneCode: 'SCN-BACKBONE-AI-TEACHER',
+      name: '骨干教师 AI 赋能研修班',
+      sceneGroupName: '通答学院',
+      description: '面向中小学骨干教师开展生成式 AI 教学应用、课堂设计、作业评价和成果展示的大规模混合式研修。',
+      owner: '教师发展中心',
+      visibility: 'INTERNAL',
+      menuKey: 'online-academy-training',
+      topicCount: 20,
+      memberCount: 1180,
+      templateId: byCode.get('TPL-ONLINE-ACADEMY-TRAINING')?.id,
+    },
+    {
+      id: 'scene_online_academy_training_seed_5',
+      sceneCode: 'SCN-HEADMASTER-GOVERNANCE',
+      name: '校长治理能力提升研修营',
+      sceneGroupName: '通答学院',
+      description: '面向中小学校长和后备干部开展学校治理、课程领导力、教师发展和风险管理专题培训。',
+      owner: '校长学院',
+      visibility: 'INTERNAL',
+      menuKey: 'online-academy-training',
+      topicCount: 12,
+      memberCount: 420,
+      templateId: byCode.get('TPL-ONLINE-ACADEMY-TRAINING')?.id,
+    },
+    {
+      id: 'scene_online_academy_training_seed_6',
+      sceneCode: 'SCN-COUNTY-TEACHING-RESEARCH',
+      name: '区县教研员专业能力培训',
+      sceneGroupName: '通答学院',
+      description: '面向区县教研员开展课程标准解读、课堂观察、质量分析和区域教研组织能力提升培训。',
+      owner: '区域教研中心',
+      visibility: 'INTERNAL',
+      menuKey: 'online-academy-training',
+      topicCount: 13,
+      memberCount: 360,
+      templateId: byCode.get('TPL-ONLINE-ACADEMY-TRAINING')?.id,
+    },
+    {
+      id: 'scene_online_academy_training_seed_7',
+      sceneCode: 'SCN-NEW-ERA-MORAL-EDU',
+      name: '新时代德育骨干专题研修',
+      sceneGroupName: '通答学院',
+      description: '面向德育干部、班主任和思政骨干教师开展德育体系建设、班级治理和育人案例研修。',
+      owner: '德育培训中心',
+      visibility: 'INTERNAL',
+      menuKey: 'online-academy-training',
+      topicCount: 11,
+      memberCount: 740,
+      templateId: byCode.get('TPL-ONLINE-ACADEMY-TRAINING')?.id,
+    },
+    {
+      id: 'scene_online_academy_training_seed_8',
+      sceneCode: 'SCN-VOCATIONAL-TEACHER-UPSKILL',
+      name: '职业教育双师型教师提升班',
+      sceneGroupName: '通答学院',
+      description: '面向职业院校骨干教师开展产教融合、课程开发、实训评价和企业实践成果沉淀。',
+      owner: '职教培训中心',
+      visibility: 'INTERNAL',
+      menuKey: 'online-academy-training',
+      topicCount: 15,
+      memberCount: 620,
+      templateId: byCode.get('TPL-ONLINE-ACADEMY-TRAINING')?.id,
+    },
+    {
       id: 'scene_course_studio_seed_1',
       sceneCode: 'SCN-COURSE-STUDIO',
       name: '课程创作中心',
@@ -2740,6 +2970,152 @@ function migrateBuiltInTrainingEntries(existingTemplates, existingScenes) {
       },
       updatedAt: nowIso(),
     };
+  });
+
+  return {
+    nextTemplates,
+    nextScenes,
+    templateChanged,
+    sceneChanged,
+  };
+}
+
+function migrateBuiltInOnlineAcademyEntries(existingTemplates, existingScenes) {
+  let templateChanged = false;
+  let sceneChanged = false;
+  const presetTemplates = buildPresetTemplates();
+  const presetTemplate = presetTemplates.find((template) => (
+    template?.id === 'tpl_online_academy_training_builtin'
+    || template?.templateCode === 'TPL-ONLINE-ACADEMY-TRAINING'
+  )) || null;
+  if (!presetTemplate) {
+    return { nextTemplates: existingTemplates, nextScenes: existingScenes, templateChanged, sceneChanged };
+  }
+
+  const presetScenes = buildPresetScenes(presetTemplates);
+  const presetSceneMap = new Map();
+  presetScenes.forEach((scene) => {
+    if (scene?.id) presetSceneMap.set(`id:${scene.id}`, scene);
+    if (scene?.sceneCode) presetSceneMap.set(`code:${scene.sceneCode}`, scene);
+  });
+
+  const nextTemplates = existingTemplates.map((template) => {
+    if (
+      template?.id !== 'tpl_online_academy_training_builtin'
+      && template?.templateCode !== 'TPL-ONLINE-ACADEMY-TRAINING'
+    ) {
+      return template;
+    }
+
+    const nextTemplate = {
+      ...template,
+      templateCode: presetTemplate.templateCode,
+      name: presetTemplate.name,
+      sceneType: presetTemplate.sceneType,
+      statusPresetSceneType: presetTemplate.statusPresetSceneType,
+      defaultMenuKey: presetTemplate.defaultMenuKey,
+      description: presetTemplate.description,
+      theme: clone(presetTemplate.theme),
+      homepage: clone(presetTemplate.homepage),
+      topicPage: clone(presetTemplate.topicPage),
+      roles: clone(presetTemplate.roles),
+      metadataFields: clone(presetTemplate.metadataFields),
+      statusRules: clone(presetTemplate.statusRules),
+      toolAreas: clone(presetTemplate.toolAreas),
+      toolConfigs: clone(presetTemplate.toolConfigs),
+      folderTypes: clone(presetTemplate.folderTypes),
+      agents: clone(presetTemplate.agents),
+      entryMethods: clone(presetTemplate.entryMethods),
+      recommendation: clone(presetTemplate.recommendation),
+      versioning: clone(presetTemplate.versioning),
+    };
+    const changed = JSON.stringify({
+      templateCode: template.templateCode,
+      name: template.name,
+      sceneType: template.sceneType,
+      statusPresetSceneType: template.statusPresetSceneType,
+      defaultMenuKey: template.defaultMenuKey,
+      description: template.description,
+      theme: template.theme,
+      homepage: template.homepage,
+      topicPage: template.topicPage,
+      roles: template.roles,
+      metadataFields: template.metadataFields,
+      statusRules: template.statusRules,
+      toolAreas: template.toolAreas,
+      toolConfigs: template.toolConfigs,
+      folderTypes: template.folderTypes,
+      agents: template.agents,
+      entryMethods: template.entryMethods,
+      recommendation: template.recommendation,
+      versioning: template.versioning,
+    }) !== JSON.stringify({
+      templateCode: nextTemplate.templateCode,
+      name: nextTemplate.name,
+      sceneType: nextTemplate.sceneType,
+      statusPresetSceneType: nextTemplate.statusPresetSceneType,
+      defaultMenuKey: nextTemplate.defaultMenuKey,
+      description: nextTemplate.description,
+      theme: nextTemplate.theme,
+      homepage: nextTemplate.homepage,
+      topicPage: nextTemplate.topicPage,
+      roles: nextTemplate.roles,
+      metadataFields: nextTemplate.metadataFields,
+      statusRules: nextTemplate.statusRules,
+      toolAreas: nextTemplate.toolAreas,
+      toolConfigs: nextTemplate.toolConfigs,
+      folderTypes: nextTemplate.folderTypes,
+      agents: nextTemplate.agents,
+      entryMethods: nextTemplate.entryMethods,
+      recommendation: nextTemplate.recommendation,
+      versioning: nextTemplate.versioning,
+    });
+    if (changed) {
+      templateChanged = true;
+      return {
+        ...nextTemplate,
+        updatedAt: nowIso(),
+      };
+    }
+    return template;
+  });
+
+  const nextScenes = existingScenes.map((scene) => {
+    const presetScene = presetSceneMap.get(`id:${scene?.id}`) || presetSceneMap.get(`code:${scene?.sceneCode}`);
+    if (!presetScene) return scene;
+
+    const nextScene = {
+      ...scene,
+      name: presetScene.name,
+      description: presetScene.description,
+      owner: presetScene.owner,
+      sceneGroupName: presetScene.sceneGroupName,
+      menuKey: presetScene.menuKey,
+      templateSnapshot: clone(presetTemplate),
+    };
+    const changed = JSON.stringify({
+      name: scene.name,
+      description: scene.description,
+      owner: scene.owner,
+      sceneGroupName: scene.sceneGroupName,
+      menuKey: scene.menuKey,
+      templateSnapshot: scene.templateSnapshot,
+    }) !== JSON.stringify({
+      name: nextScene.name,
+      description: nextScene.description,
+      owner: nextScene.owner,
+      sceneGroupName: nextScene.sceneGroupName,
+      menuKey: nextScene.menuKey,
+      templateSnapshot: nextScene.templateSnapshot,
+    });
+    if (changed) {
+      sceneChanged = true;
+      return {
+        ...nextScene,
+        updatedAt: nowIso(),
+      };
+    }
+    return scene;
   });
 
   return {
@@ -3041,18 +3417,24 @@ export function seedSceneData() {
       sceneChanged: trainingSceneChanged,
     } = migrateBuiltInTrainingEntries(migratedRootUploadTemplates, migratedRootUploadScenes);
     const {
+      nextTemplates: migratedOnlineAcademyTemplates,
+      nextScenes: migratedOnlineAcademyScenes,
+      templateChanged: onlineAcademyTemplateChanged,
+      sceneChanged: onlineAcademySceneChanged,
+    } = migrateBuiltInOnlineAcademyEntries(migratedTrainingTemplates, migratedTrainingScenes);
+    const {
       nextTemplates: migratedSupervisionTemplates,
       nextScenes: migratedSupervisionScenes,
       templateChanged: supervisionTemplateChanged,
       sceneChanged: supervisionSceneChanged,
-    } = migrateBuiltInSupervisionEntries(migratedTrainingTemplates, migratedTrainingScenes);
+    } = migrateBuiltInSupervisionEntries(migratedOnlineAcademyTemplates, migratedOnlineAcademyScenes);
     const { nextTemplates, changed: versioningChanged } = migrateTemplateVersioningPolicy(migratedSupervisionTemplates);
     const scenesToAppend = mergeMissingBuiltInScenes(migratedSupervisionScenes, nextTemplates);
 
-    if (templatesToAppend.length > 0 || templateChanged || rootUploadTemplateChanged || trainingTemplateChanged || supervisionTemplateChanged || versioningChanged) {
+    if (templatesToAppend.length > 0 || templateChanged || rootUploadTemplateChanged || trainingTemplateChanged || onlineAcademyTemplateChanged || supervisionTemplateChanged || versioningChanged) {
       writeList(TEMPLATE_STORAGE_KEY, nextTemplates);
     }
-    if (scenesToAppend.length > 0 || sceneChanged || rootUploadSceneChanged || trainingSceneChanged || supervisionSceneChanged) {
+    if (scenesToAppend.length > 0 || sceneChanged || rootUploadSceneChanged || trainingSceneChanged || onlineAcademySceneChanged || supervisionSceneChanged) {
       writeList(SCENE_STORAGE_KEY, [...migratedSupervisionScenes, ...scenesToAppend]);
     }
 
@@ -3066,6 +3448,8 @@ export function seedSceneData() {
       || rootUploadSceneChanged
       || trainingTemplateChanged
       || trainingSceneChanged
+      || onlineAcademyTemplateChanged
+      || onlineAcademySceneChanged
       || supervisionTemplateChanged
       || supervisionSceneChanged
       || versioningChanged

@@ -2806,7 +2806,6 @@
   opacity: 0.22;
 }
 
-.finder-preview-panel,
 .finder-column-preview {
   position: relative;
   isolation: isolate;
@@ -2821,13 +2820,6 @@
     -10px 0 18px rgba(15, 23, 42, 0.02);
 }
 
-.finder-preview-panel {
-  max-width: min(1120px, calc(100% - 260px));
-  min-width: 320px;
-  flex-shrink: 0;
-}
-
-.finder-preview-panel::before,
 .finder-column-preview::before {
   content: none;
   position: absolute;
@@ -2967,6 +2959,14 @@
   overflow: hidden;
 }
 
+.finder-preview-body.has-document-preview {
+  align-items: stretch;
+  justify-content: stretch;
+  padding: 0;
+  overflow: auto;
+  background: #ffffff;
+}
+
 .finder-preview-body.has-knowledge-graph {
   align-items: stretch;
   justify-content: stretch;
@@ -3007,13 +3007,284 @@
 }
 
 .finder-preview-placeholder {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 12px;
+  align-self: stretch;
   color: #8a97a8;
   font-size: 14px;
+}
+
+.finder-preview-document {
+  width: min(760px, calc(100% - 72px));
+  margin: 0 auto;
+  padding: 38px 0 52px;
+  color: #243042;
+}
+
+.finder-preview-document h1 {
+  margin: 0 0 8px;
+  color: #172033;
+  font-size: 26px;
+  font-weight: 820;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+.finder-preview-document-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+  color: #6f7b8d;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.finder-preview-document-meta span + span::before {
+  content: "·";
+  margin-right: 8px;
+  color: #a7b0bd;
+}
+
+.finder-preview-document-callout {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 24px;
+  padding: 18px 20px;
+  border: 1px solid #e1e7ef;
+  border-radius: 8px;
+  background: #fbfcfe;
+}
+
+.finder-preview-document-callout p,
+.finder-preview-document-section p {
+  margin: 0;
+  color: #2f3a4c;
+  font-size: 14px;
+  font-weight: 520;
+  line-height: 1.86;
+}
+
+.finder-preview-document-section {
+  display: grid;
+  gap: 12px;
+}
+
+.finder-preview-document-section p:first-child {
+  padding-left: 12px;
+  border-left: 3px solid #2f7df6;
+  color: #172033;
+  font-size: 17px;
+  font-weight: 780;
+}
+
+.finder-preview-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-end;
+  padding: 0;
+  background: rgba(15, 18, 24, 0.58);
+  backdrop-filter: blur(1.5px) brightness(0.86) contrast(0.92);
+  -webkit-backdrop-filter: blur(1.5px) brightness(0.86) contrast(0.92);
+  animation: finderPreviewBackdropIn 180ms ease both;
+}
+
+html.finder-preview-drawer-open .td-work-sidebar {
+  border-right-color: transparent;
+}
+
+html.finder-preview-drawer-open .td-work-sidebar-resizer::before,
+html.finder-preview-drawer-open .td-work-sidebar-resizer::after,
+html.finder-preview-drawer-open .finder-sidebar-resize-handle::before,
+html.finder-preview-drawer-open .finder-sidebar-resize-handle::after,
+html.finder-preview-drawer-open .finder-column-resize-handle::before,
+html.finder-preview-drawer-open .finder-column-resize-handle::after,
+html.finder-preview-drawer-open .finder-preview-resize-handle::before {
+  opacity: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+html.finder-preview-drawer-open .finder-sidebar,
+html.finder-preview-drawer-open .finder-sidebar::after {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.finder-preview-modal {
+  width: clamp(620px, 58vw, 1040px);
+  max-width: calc(100vw - 280px);
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 0;
+  border-left: 1px solid rgba(219, 225, 234, 0.92);
+  border-radius: 8px 0 0 8px;
+  background: #ffffff;
+  box-shadow: -30px 0 72px rgba(9, 13, 22, 0.34);
+  transform-origin: 100% 50%;
+  animation: finderPreviewDrawerIn 260ms cubic-bezier(0.2, 0.86, 0.24, 1) both;
+}
+
+.finder-preview-modal-backdrop.is-preview-fullscreen {
+  align-items: stretch;
+  justify-content: center;
+  padding: 12px;
+}
+
+.finder-preview-modal.is-preview-fullscreen {
+  width: 100%;
+  max-width: none;
+  height: auto;
+  align-self: stretch;
+  border: 1px solid rgba(219, 225, 234, 0.92);
+  border-radius: 8px;
+  box-shadow: 0 30px 78px rgba(9, 13, 22, 0.3);
+  transform-origin: 50% 50%;
+  animation: finderPreviewFullscreenIn 230ms cubic-bezier(0.2, 0.86, 0.24, 1) both;
+}
+
+.finder-preview-modal-header {
+  height: 48px;
+  flex: 0 0 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 0 14px 0 16px;
+  border-bottom: 1px solid #edf0f4;
+  background: #ffffff;
+}
+
+.finder-preview-modal-file {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #1f2733;
+  font-size: 13px;
+  font-weight: 760;
+}
+
+.finder-preview-modal-file-icon {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.finder-preview-modal-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.finder-preview-modal-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.finder-preview-modal-action {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: #5d6673;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.finder-preview-modal-action:hover,
+.finder-preview-modal-action:focus-visible {
+  border-color: #dde3eb;
+  background: #f4f6f8;
+  color: #202631;
+}
+
+.finder-preview-modal-action.is-active {
+  border-color: #dde3eb;
+  background: #eef1f5;
+  color: #111827;
+}
+
+.finder-preview-modal-close:hover,
+.finder-preview-modal-close:focus-visible {
+  color: #d92d20;
+}
+
+.finder-preview-modal-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  background: #f7f9fc;
+  overflow: hidden;
+}
+
+.finder-preview-modal-body .finder-preview-body {
+  background: #ffffff;
+}
+
+.finder-preview-modal-body .finder-preview-body.has-document-preview {
+  background: #ffffff;
+}
+
+.finder-preview-modal-body .finder-preview-iframe {
+  border-radius: 0;
+  background: #ffffff;
+}
+
+@keyframes finderPreviewBackdropIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes finderPreviewDrawerIn {
+  from {
+    opacity: 0;
+    transform: translate3d(54px, 0, 0) scaleX(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scaleX(1);
+  }
+}
+
+@keyframes finderPreviewFullscreenIn {
+  from {
+    opacity: 0.9;
+    transform: translate3d(16px, 0, 0) scale(0.992);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
 }
 
 .finder-preview-unavailable {
@@ -3683,6 +3954,55 @@
     animation: none !important;
     transition: none !important;
     transform: none !important;
+  }
+
+  .finder-preview-modal-backdrop,
+  .finder-preview-modal,
+  .finder-preview-modal-action {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .finder-preview-modal-backdrop {
+    padding: 18px 12px;
+  }
+
+  .finder-preview-modal {
+    width: calc(100vw - 24px);
+    height: calc(100vh - 36px);
+    min-height: 0;
+  }
+
+  .finder-preview-modal-backdrop.is-preview-fullscreen {
+    padding: 0;
+  }
+
+  .finder-preview-modal.is-preview-fullscreen {
+    width: 100%;
+    height: auto;
+    border-radius: 0;
+  }
+
+  .finder-preview-modal-header {
+    gap: 10px;
+    padding-inline: 12px;
+  }
+
+  .finder-preview-modal-actions {
+    gap: 2px;
+  }
+
+  .finder-preview-modal-action {
+    width: 26px;
+    height: 26px;
+  }
+
+  .finder-preview-document {
+    width: calc(100% - 32px);
+    padding: 26px 0 38px;
   }
 }
 

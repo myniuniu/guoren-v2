@@ -277,7 +277,7 @@ function getInitialActiveIconKey() {
   if (route.page === 'capability-model-full') {
     return 'capability-model';
   }
-  return route.page || 'my-space';
+  return route.page || 'lucky';
 }
 
 function resolveSceneOwnershipTab(scene = {}) {
@@ -298,6 +298,7 @@ function getSceneTheme(scene) {
 
 const sceneMenuIconMap = Object.freeze({
   'my-learning-space': <DesktopOutlined />,
+  'online-academy-training': <ReadOutlined />,
   workshop: <TeamOutlined />,
   'study-club-channel': <RocketOutlined />,
   'my-classroom': <CloudOutlined />,
@@ -310,6 +311,7 @@ const sceneMenuIconMap = Object.freeze({
 
 const sceneMenuAccentColorMap = Object.freeze({
   'my-learning-space': '#4f7cff',
+  'online-academy-training': '#0f766e',
   workshop: '#f97316',
   'study-club-channel': '#ef4444',
   'my-classroom': '#0ea5e9',
@@ -494,7 +496,7 @@ function renderAccountSwitchAvatar(account) {
 function App({ onLogout }) {
   const [selectedKeys, setSelectedKeys] = useState(['home']);
   const [activeIconKey, setActiveIconKey] = useState(() => getInitialActiveIconKey());
-  const [currentPage, setCurrentPage] = useState(() => getInitialHashRoute().page || 'home'); // 'home', 'detail', or 'workflow'
+  const [currentPage, setCurrentPage] = useState(() => getInitialHashRoute().page || 'td-work');
   const [agentQuotaEntryTab, setAgentQuotaEntryTab] = useState('plans');
   const [teacherEvaluationEntryContext, setTeacherEvaluationEntryContext] = useState(null);
   const [showroomEntry, setShowroomEntry] = useState(null);

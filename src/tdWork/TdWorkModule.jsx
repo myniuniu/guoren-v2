@@ -1,27 +1,34 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Card, Dropdown, Empty, Input, Modal, Segmented, Tag, message } from 'antd';
+import { Button, Card, Dropdown, Empty, Input, Modal, Pagination, Segmented, Tag, message } from 'antd';
 import {
   AppstoreOutlined,
+  AppstoreFilled,
   ArrowUpOutlined,
   AudioOutlined,
   BarChartOutlined,
   BookOutlined,
+  BookFilled,
   CheckCircleOutlined,
   CheckOutlined,
   ClockCircleOutlined,
+  ClockCircleFilled,
   CloudOutlined,
+  CloudFilled,
   CloudServerOutlined,
   CodeOutlined,
   ControlOutlined,
   CloseOutlined,
   DatabaseOutlined,
+  DatabaseFilled,
   DownOutlined,
   EditOutlined,
   EllipsisOutlined,
   FileTextOutlined,
   FilterOutlined,
   FolderOutlined,
+  FolderFilled,
   HomeOutlined,
+  HomeFilled,
   InfoCircleOutlined,
   LaptopOutlined,
   LinkOutlined,
@@ -33,6 +40,7 @@ import {
   ProjectOutlined,
   ReloadOutlined,
   RobotOutlined,
+  RobotFilled,
   SearchOutlined,
   TeamOutlined,
   UploadOutlined,
@@ -45,11 +53,16 @@ import SceneCreateModal from '../scene/SceneCreateModal';
 import { getSceneThemeCoverStyle } from '../scene/themeCovers';
 import './TdWorkModule.css';
 
-const TD_WORK_SIDEBAR_STORAGE_KEY = 'td-work.sidebar-width.v2';
-const TD_WORK_SIDEBAR_DEFAULT_WIDTH = 280;
-const TD_WORK_SIDEBAR_COMPACT_WIDTH = 228;
-const TD_WORK_SIDEBAR_MIN_WIDTH = 188;
-const TD_WORK_SIDEBAR_MAX_WIDTH = 360;
+const TD_WORK_SIDEBAR_STORAGE_KEY = 'td-work.sidebar-width.v3';
+const TD_WORK_SIDEBAR_DEFAULT_WIDTH = 224;
+const TD_WORK_SIDEBAR_COMPACT_WIDTH = 220;
+const TD_WORK_SIDEBAR_MIN_WIDTH = 208;
+const TD_WORK_SIDEBAR_MAX_WIDTH = 320;
+const TD_WORK_SPACE_RAIL_STORAGE_KEY = 'td-work.space-rail-width.v1';
+const TD_WORK_SPACE_RAIL_DEFAULT_WIDTH = 168;
+const TD_WORK_SPACE_RAIL_COMPACT_WIDTH = 150;
+const TD_WORK_SPACE_RAIL_MIN_WIDTH = 132;
+const TD_WORK_SPACE_RAIL_MAX_WIDTH = 320;
 
 function getDefaultTdWorkSidebarWidth() {
   if (typeof window !== 'undefined' && window.innerWidth <= 860) {
@@ -86,13 +99,50 @@ function persistTdWorkSidebarWidth(width) {
   }
 }
 
+function getDefaultTdWorkSpaceRailWidth() {
+  if (typeof window !== 'undefined' && window.innerWidth <= 860) {
+    return TD_WORK_SPACE_RAIL_COMPACT_WIDTH;
+  }
+  return TD_WORK_SPACE_RAIL_DEFAULT_WIDTH;
+}
+
+function getBoundedTdWorkSpaceRailWidth(value) {
+  if (value == null || value === '') return getDefaultTdWorkSpaceRailWidth();
+  const width = Number(value);
+  const viewportMax = typeof window === 'undefined'
+    ? TD_WORK_SPACE_RAIL_MAX_WIDTH
+    : Math.max(TD_WORK_SPACE_RAIL_MIN_WIDTH, Math.min(TD_WORK_SPACE_RAIL_MAX_WIDTH, window.innerWidth - 560));
+  if (!Number.isFinite(width)) return getDefaultTdWorkSpaceRailWidth();
+  return Math.max(TD_WORK_SPACE_RAIL_MIN_WIDTH, Math.min(viewportMax, Math.round(width)));
+}
+
+function loadTdWorkSpaceRailWidth() {
+  if (typeof window === 'undefined') return TD_WORK_SPACE_RAIL_DEFAULT_WIDTH;
+  try {
+    return getBoundedTdWorkSpaceRailWidth(window.localStorage.getItem(TD_WORK_SPACE_RAIL_STORAGE_KEY));
+  } catch {
+    return getDefaultTdWorkSpaceRailWidth();
+  }
+}
+
+function persistTdWorkSpaceRailWidth(width) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(TD_WORK_SPACE_RAIL_STORAGE_KEY, String(getBoundedTdWorkSpaceRailWidth(width)));
+  } catch {
+    // ignore persistence failure
+  }
+}
+
 const NAV_ITEMS = [
-  { key: 'new-task', label: '新工作任务', icon: <EditOutlined /> },
-  { key: 'scheduled', label: '自动化', icon: <ClockCircleOutlined /> },
-  { key: 'space', label: '空间', icon: <AppstoreOutlined /> },
-  { key: 'skills', label: '智能体 · 技能 · 连接器', icon: <RobotOutlined /> },
-  { key: 'dialog', label: '智能体对话', icon: <MessageOutlined /> },
-  { key: 'cloud', label: '资料库', icon: <FolderOutlined /> },
+  { key: 'home', label: '首页', icon: <HomeOutlined />, activeIcon: <HomeFilled /> },
+  { key: 'resource-market', label: '资源广场', icon: <CloudServerOutlined />, activeIcon: <DatabaseFilled /> },
+  { key: 'app-market', label: '应用广场', icon: <AppstoreOutlined />, activeIcon: <AppstoreFilled /> },
+  { key: 'academy', label: '通答学院', icon: <BookOutlined />, activeIcon: <BookFilled /> },
+  { key: 'space', label: '空间', icon: <CloudOutlined />, activeIcon: <CloudFilled /> },
+  { key: 'scheduled', label: '自动化', icon: <ClockCircleOutlined />, activeIcon: <ClockCircleFilled /> },
+  { key: 'skills', label: '智能体 · 技能 · 连接器', icon: <RobotOutlined />, activeIcon: <RobotFilled /> },
+  { key: 'cloud', label: '资料库', icon: <FolderOutlined />, activeIcon: <FolderFilled /> },
 ];
 
 const PINNED_ITEMS = [
@@ -100,12 +150,21 @@ const PINNED_ITEMS = [
 ];
 
 const SIDEBAR_SPACE_PRIORITY = [
+  'scene_online_academy_training_seed_1',
+  'scene_online_academy_training_seed_4',
   'scene_supervision_seed_1',
-  'scene_training_seed_1',
   'scene_course_studio_seed_1',
 ];
 
 const SPACE_CONVERSATION_ITEMS = [
+  {
+    key: 'space-session-tongda-academy',
+    label: '通答学院运营会话',
+    tone: 'green',
+    icon: <MessageOutlined />,
+    kind: 'space-session',
+    sceneId: 'scene_online_academy_training_seed_1',
+  },
   {
     key: 'space-session-class-quality',
     label: '课堂教学质量专项督导会话',
@@ -450,6 +509,125 @@ const PROJECT_CONFIG_ITEMS = [
   },
 ];
 
+const ACADEMY_CATEGORIES = [
+  '全部',
+  '新手指南',
+  'AI助教',
+  '培训运营',
+  '课程资源',
+  '案例模板',
+];
+
+const ACADEMY_TABS = [
+  { key: 'learn', label: '学院课程' },
+  { key: 'replays', label: '直播回放' },
+  { key: 'guides', label: '教程指南' },
+];
+
+const ACADEMY_FEATURES = [
+  {
+    key: 'starter',
+    title: '通答 AI 工作学习新手指南',
+    desc: '从新建任务、选择空间到调用智能体，快速跑通教师研修与项目运营流程。',
+    category: '新手指南',
+    type: '课程',
+    visits: '12.8万',
+    owner: '通答学院',
+    tone: 'blue',
+  },
+  {
+    key: 'academy-agent',
+    title: 'AI助培：一键生成培训通知、课程安排和催办清单',
+    desc: '面向通答学院项目管理员，沉淀开班、督学、结业证书发放的常用工作流。',
+    category: '培训运营',
+    type: '应用',
+    visits: '8.6万',
+    owner: '培训运营组',
+    tone: 'green',
+  },
+  {
+    key: 'lesson-assistant',
+    title: 'AI助教课堂应用案例库',
+    desc: '覆盖备课、互动课件、课堂练习和课后反馈，让老师直接复用成熟提示词。',
+    category: 'AI助教',
+    type: '资源',
+    visits: '7.9万',
+    owner: '教研共创组',
+    tone: 'purple',
+  },
+  {
+    key: 'course-package',
+    title: '人工智能通识课程资源包',
+    desc: '包含课程框架、知识图谱、课时设计和评价建议，可直接进入课程创作中心协作。',
+    category: '课程资源',
+    type: '资源',
+    visits: '6.5万',
+    owner: '课程创作中心',
+    tone: 'orange',
+  },
+  {
+    key: 'template-project',
+    title: '骨干教师 AI 赋能研修班模板',
+    desc: '内置课程资源、研修任务、学情进度和考核证书页签，适合快速创建通答学院项目。',
+    category: '案例模板',
+    type: '模板',
+    visits: '5.7万',
+    owner: '教师发展中心',
+    tone: 'sky',
+  },
+  {
+    key: 'data-sync',
+    title: '学习公社数据同步与学情看板搭建',
+    desc: '串联学习平台项目入口、学员名单、学习进度和证书数据的配置示例。',
+    category: '培训运营',
+    type: '应用',
+    visits: '4.3万',
+    owner: '数据同步助手',
+    tone: 'mint',
+  },
+];
+
+const HOME_CREATION_TYPES = [
+  { key: 'animation', label: '教学动画', icon: <LaptopOutlined />, prompt: '设计一个能帮助学生理解抽象知识的教学动画' },
+  { key: 'education-app', label: '教育应用', icon: <AppstoreOutlined />, prompt: '创建一个可收集课堂数据的教育应用' },
+  { key: 'teaching-game', label: '教学游戏', icon: <ProjectOutlined />, prompt: '设计一个有故事线和闯关机制的教学游戏' },
+  { key: 'courseware', label: '互动课件', icon: <ControlOutlined />, prompt: '制作一个支持拖拽、反馈和课堂互动的课件' },
+];
+
+const RESOURCE_MARKET_CATEGORIES = [
+  '推荐', '语文', '数学', '英语', '物理', '化学', '生物', '道德与法治',
+  '历史', '地理', '信息科技', '课堂工具', '学前教育', '高等教育', '职业教育', '其他',
+];
+
+const APP_MARKET_CATEGORIES = [
+  '推荐', '学科应用', '教师工具', '学习工具', '教学管理', '学校管理', '语言学习',
+  '阅读', '写作', '人文社科', '科学与技术', '考试与题库', '学术研究', '创意工具', '心理健康', '职业技能',
+];
+
+const RESOURCE_MARKET_ITEMS = [
+  { key: 'resource-guide', title: '通答教育应用新手指南', owner: '通答学院', category: '课堂工具', views: '17.4万', likes: '7934', badge: '热门', tone: 'green', mark: '指南' },
+  { key: 'resource-writing', title: '四季文学读写助手与仿写工具', owner: '语文教研共创组', category: '语文', views: '8.7万', likes: '6922', badge: '热门', tone: 'orange', mark: '语文' },
+  { key: 'resource-geometry', title: '观察简单组合体：空间想象训练', owner: '数学实验室', category: '数学', views: '4.6万', likes: '1848', badge: '热门', tone: 'blue', mark: '数学' },
+  { key: 'resource-miner', title: '小学数学黄金矿工计算练习', owner: '通答 AI 教研组', category: '数学', views: '26.5万', likes: '7141', badge: '热门', tone: 'yellow', mark: '游戏' },
+  { key: 'resource-vision', title: 'AI 如何“看”世界：揭秘图像识别', owner: 'AI 通识实验室', category: '信息科技', views: '10.7万', likes: '6779', badge: '精选', tone: 'purple', mark: 'AI' },
+  { key: 'resource-cylinder', title: '六年级圆柱体积互动课件', owner: '小学数学工作坊', category: '数学', views: '15.6万', likes: '6355', badge: '精选', tone: 'cyan', mark: '课件' },
+  { key: 'resource-circuit', title: '初中物理电路自由实验台', owner: '物理教研工作室', category: '物理', views: '7.5万', likes: '6576', badge: '热门', tone: 'red', mark: '实验' },
+  { key: 'resource-english', title: 'Healthy Food 情境互动第一课时', owner: '英语教师共创组', category: '英语', views: '13.5万', likes: '6784', badge: '精选', tone: 'mint', mark: '英语' },
+  { key: 'resource-history', title: '活字印刷流程互动工坊', owner: '历史学科中心', category: '历史', views: '6.2万', likes: '3180', badge: '精选', tone: 'indigo', mark: '历史' },
+];
+
+const APP_MARKET_ITEMS = [
+  { key: 'app-class-pet', title: '班级宠物乐园：一起进化吧', owner: '班级运营工作室', category: '教学管理', views: '6.5万', likes: '1979', badge: '精选', tone: 'green', mark: '班级' },
+  { key: 'app-taohuayuan', title: '古文沉浸式漫游《桃花源记》', owner: '语文数字课堂', category: '学科应用', views: '4.6万', likes: '1893', badge: '热门', tone: 'pink', mark: '3D' },
+  { key: 'app-marking', title: '试卷智能批改与学情诊断', owner: '通答 AI 助教', category: '考试与题库', views: '1.9万', likes: '1360', badge: '热门', tone: 'blue', mark: '批改' },
+  { key: 'app-errors', title: '班级错题档案', owner: '教学数据中心', category: '学习工具', views: '1.8万', likes: '1340', badge: '热门', tone: 'orange', mark: '错题' },
+  { key: 'app-certificate', title: '荣誉证书模板生成器', owner: '教师工具共创组', category: '教师工具', views: '2.2万', likes: '940', badge: '精选', tone: 'yellow', mark: '证书' },
+  { key: 'app-speaking', title: '情境口语练习 SpeakIn', owner: '语言学习实验室', category: '语言学习', views: '1.7万', likes: '1297', badge: '热门', tone: 'purple', mark: '口语' },
+  { key: 'app-lab', title: 'AI 智能 3D 电路实验室', owner: '科学教育中心', category: '科学与技术', views: '1.5万', likes: '1284', badge: '热门', tone: 'cyan', mark: '实验' },
+  { key: 'app-blackboard', title: 'AI 黑板：板书与课堂演示助手', owner: '通答课堂工具组', category: '教师工具', views: '2万', likes: '1350', badge: '热门', tone: 'dark', mark: '黑板' },
+  { key: 'app-career', title: '未来的我：职业形象创作器', owner: '生涯教育工作室', category: '职业技能', views: '1.8万', likes: '1418', badge: '精选', tone: 'red', mark: '生涯' },
+];
+
 const SKILL_CATEGORIES = [
   '精选',
   '办公协作',
@@ -502,6 +680,7 @@ const MY_SKILL_TABS = [
 
 const MY_SKILLS = [
   { key: 'td-work-workbench', name: 'Lucky 工作助手', desc: '连接 guoren-v2 的任务、智能体与连接器能力', logo: 'L', tone: 'blue', enabled: true },
+  { key: 'tongda-training', name: '通答学院', desc: '汇集新手指南、培训模板、AI 助教案例和学院项目入口', logo: '院', tone: 'green', enabled: true },
   { key: 'resource-library', name: '资源库', desc: '管理课程资源、文件解析、标签与共享权限', logo: '资', tone: 'cyan', enabled: true },
   { key: 'knowledge-space', name: '知识空间', desc: '建设校本知识空间，组织资源与主题内容', logo: '知', tone: 'green', enabled: true },
   { key: 'knowledge-graph', name: '知识图谱', desc: '梳理知识点、能力目标和课程关系图谱', logo: '图', tone: 'indigo', enabled: true },
@@ -615,7 +794,6 @@ const PARTNER_CARDS = [
 ];
 
 const WORK_PARTNERS = PARTNER_CARDS.filter((item) => item.tag !== '小队');
-const WORK_TEAMS = PARTNER_CARDS.filter((item) => item.tag === '小队');
 
 const PARTNER_MARKET_CATEGORIES = [
   '全部',
@@ -854,6 +1032,286 @@ function ConnectorLogo({ item }) {
     <span className={`td-work-connector-logo td-work-connector-logo-${item.tone}`} aria-hidden="true">
       {item.logo}
     </span>
+  );
+}
+
+function MarketplaceCard({ item, onOpen }) {
+  return (
+    <article className="td-work-market-card">
+      <button
+        type="button"
+        className={`td-work-market-card-cover is-${item.tone}`}
+        onClick={() => onOpen(item)}
+        aria-label={`打开${item.title}`}
+      >
+        <span className="td-work-market-card-badge">{item.badge}</span>
+        <strong>{item.mark}</strong>
+        <span className="td-work-market-card-views"><SearchOutlined /> {item.views}</span>
+      </button>
+      <div className="td-work-market-card-body">
+        <button type="button" className="td-work-market-card-title" onClick={() => onOpen(item)}>
+          {item.title}
+        </button>
+        <footer>
+          <span>{item.owner}</span>
+          <em><CheckCircleOutlined /> {item.likes}</em>
+        </footer>
+      </div>
+    </article>
+  );
+}
+
+function MarketplacePage({ type, onOpen }) {
+  const isResource = type === 'resource';
+  const title = isResource ? '资源广场' : '应用广场';
+  const categories = isResource ? RESOURCE_MARKET_CATEGORIES : APP_MARKET_CATEGORIES;
+  const items = isResource ? RESOURCE_MARKET_ITEMS : APP_MARKET_ITEMS;
+  const [activeCategory, setActiveCategory] = useState('推荐');
+  const [searchText, setSearchText] = useState('');
+
+  const visibleItems = useMemo(() => {
+    const keyword = searchText.trim().toLowerCase();
+    return items.filter((item) => {
+      const matchesCategory = activeCategory === '推荐' || item.category === activeCategory;
+      const matchesKeyword = !keyword || `${item.title} ${item.owner} ${item.category}`.toLowerCase().includes(keyword);
+      return matchesCategory && matchesKeyword;
+    });
+  }, [activeCategory, items, searchText]);
+
+  return (
+    <section className="td-work-market-page" aria-label={title}>
+      <header className="td-work-market-heading">
+        <div>
+          <span>{isResource ? '教学资源与共创作品' : '教育应用与效率工具'}</span>
+          <h1>{title}</h1>
+        </div>
+        <Input
+          value={searchText}
+          onChange={(event) => setSearchText(event.target.value)}
+          prefix={<SearchOutlined />}
+          allowClear
+          placeholder={`快速搜索${isResource ? '资源' : '应用'}`}
+          aria-label={`快速搜索${isResource ? '资源' : '应用'}`}
+        />
+      </header>
+
+      <div className="td-work-market-categories" aria-label={`${title}分类`}>
+        {categories.map((category) => (
+          <button
+            key={category}
+            type="button"
+            className={activeCategory === category ? 'is-active' : ''}
+            onClick={() => setActiveCategory(category)}
+          >
+            {category}
+          </button>
+        ))}
+      </div>
+
+      {visibleItems.length ? (
+        <div className="td-work-market-grid">
+          {visibleItems.map((item) => (
+            <MarketplaceCard key={item.key} item={item} onOpen={onOpen} />
+          ))}
+        </div>
+      ) : (
+        <div className="td-work-market-empty">
+          <Empty description="没有找到匹配内容" />
+        </div>
+      )}
+    </section>
+  );
+}
+
+function AiModeHomePage({ onCreateTask, onNavigate, onOpenItem }) {
+  const [homePrompt, setHomePrompt] = useState('');
+  const [activeShelf, setActiveShelf] = useState('resource');
+  const shelfItems = activeShelf === 'resource' ? RESOURCE_MARKET_ITEMS.slice(0, 6) : APP_MARKET_ITEMS.slice(0, 6);
+
+  const submitPrompt = () => {
+    const nextPrompt = homePrompt.trim() || '帮我设计一个适合课堂使用的 AI 教学活动';
+    onCreateTask(nextPrompt);
+  };
+
+  return (
+    <section className="td-work-home-page" aria-label="AI模式首页">
+      <div className="td-work-home-hero">
+        <div className="td-work-home-greeting">
+          <LuckyMark size="small" />
+          <h1>Hi，我是通答 AI</h1>
+        </div>
+
+        <div className="td-work-home-composer">
+          <textarea
+            value={homePrompt}
+            onChange={(event) => setHomePrompt(event.target.value)}
+            placeholder="教学游戏｜以课程内容为故事线，生成知识闯关游戏，让学生在互动体验中主动探究。"
+            aria-label="输入教学创作需求"
+          />
+          <div className="td-work-home-composer-actions">
+            <button type="button" className="td-work-home-add" title="添加附件" aria-label="添加附件">
+              <PlusOutlined />
+            </button>
+            <div className="td-work-home-creation-types">
+              {HOME_CREATION_TYPES.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => setHomePrompt(item.prompt)}
+                >
+                  {item.icon}
+                  {item.label}
+                </button>
+              ))}
+            </div>
+            <button type="button" className="td-work-home-more" onClick={() => onNavigate('app-market')}>
+              更多 <DownOutlined />
+            </button>
+            <button type="button" className="td-work-home-voice" title="语音输入" aria-label="语音输入">
+              <AudioOutlined />
+            </button>
+            <button type="button" className="td-work-home-send" title="开始创建" aria-label="开始创建" onClick={submitPrompt}>
+              <ArrowUpOutlined />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="td-work-home-shelf-head">
+        <div className="td-work-home-shelf-tabs" role="tablist" aria-label="首页推荐内容">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeShelf === 'resource'}
+            className={activeShelf === 'resource' ? 'is-active' : ''}
+            onClick={() => setActiveShelf('resource')}
+          >
+            资源广场
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeShelf === 'app'}
+            className={activeShelf === 'app' ? 'is-active' : ''}
+            onClick={() => setActiveShelf('app')}
+          >
+            应用广场
+          </button>
+        </div>
+        <button type="button" className="td-work-home-shelf-more" onClick={() => onNavigate(activeShelf === 'resource' ? 'resource-market' : 'app-market')}>
+          查看全部 <ArrowUpOutlined />
+        </button>
+      </div>
+
+      <div className="td-work-market-grid td-work-home-market-grid">
+        {shelfItems.map((item) => (
+          <MarketplaceCard key={item.key} item={item} onOpen={onOpenItem} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function TongdaAcademyPage({ onOpenSpace, onToast }) {
+  const [activeTab, setActiveTab] = useState('learn');
+  const [activeCategory, setActiveCategory] = useState('全部');
+
+  const visibleItems = useMemo(() => {
+    return ACADEMY_FEATURES.filter((item) => {
+      const matchesCategory = activeCategory === '全部' || item.category === activeCategory;
+      const matchesTab = activeTab === 'learn'
+        || (activeTab === 'replays' && (item.category === 'AI助教' || item.category === '课程资源'))
+        || (activeTab === 'guides' && (item.category === '新手指南' || item.category === '培训运营'));
+      return matchesCategory && matchesTab;
+    });
+  }, [activeCategory, activeTab]);
+
+  return (
+    <section className="td-work-academy-page" aria-label="通答学院">
+      <header className="td-work-academy-hero">
+        <div className="td-work-academy-hero-copy">
+          <span className="td-work-academy-kicker">通答学院</span>
+          <h1>把 AI 工作台、培训项目和教学案例放在一个学习入口</h1>
+          <p>参考飞象学院的轻量入口，把新手指南、资源广场、应用广场和项目模板收拢到 AI 模式里，方便老师边学边用。</p>
+          <div className="td-work-academy-hero-actions">
+            <button type="button" onClick={onOpenSpace}>
+              <CloudOutlined />
+              打开学院项目
+            </button>
+            <button type="button" onClick={() => onToast('已进入通答学院新手指南')}>
+              <BookOutlined />
+              新手指南
+            </button>
+          </div>
+        </div>
+        <div className="td-work-academy-brief" aria-label="学院概览">
+          <span>
+            <strong>36</strong>
+            <em>精选课程</em>
+          </span>
+          <span>
+            <strong>128</strong>
+            <em>资源模板</em>
+          </span>
+          <span>
+            <strong>18</strong>
+            <em>AI应用</em>
+          </span>
+        </div>
+      </header>
+
+      <div className="td-work-academy-tabs" role="tablist" aria-label="通答学院栏目">
+        {ACADEMY_TABS.map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            className={activeTab === tab.key ? 'is-active' : ''}
+            role="tab"
+            aria-selected={activeTab === tab.key}
+            onClick={() => setActiveTab(tab.key)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="td-work-academy-categories" aria-label="学院分类">
+        {ACADEMY_CATEGORIES.map((category) => (
+          <button
+            key={category}
+            type="button"
+            className={activeCategory === category ? 'is-active' : ''}
+            onClick={() => setActiveCategory(category)}
+          >
+            {category}
+          </button>
+        ))}
+      </div>
+
+      <div className="td-work-academy-grid" aria-label="通答学院内容">
+        {visibleItems.map((item) => (
+          <article key={item.key} className="td-work-academy-card">
+            <div className={`td-work-academy-card-cover is-${item.tone}`}>
+              <span>{item.type}</span>
+            </div>
+            <div className="td-work-academy-card-main">
+              <div className="td-work-academy-card-meta">
+                <span>{item.category}</span>
+                <em>{item.visits}</em>
+              </div>
+              <h2>{item.title}</h2>
+              <p>{item.desc}</p>
+              <footer>
+                <span>{item.owner}</span>
+                <button type="button" onClick={() => onToast(`已打开：${item.title}`)}>
+                  查看
+                </button>
+              </footer>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -3011,6 +3469,7 @@ const SPACE_HOME_OWNERSHIP_TABS = Object.freeze([
   { key: 'created', label: '我创建的' },
   { key: 'joined', label: '我加入的' },
 ]);
+const SPACE_PAGE_SIZE = 6;
 
 const JOINED_SPACE_ID_SET = new Set([
   'scene_research_seed_1',
@@ -3018,6 +3477,7 @@ const JOINED_SPACE_ID_SET = new Set([
   'scene_training_seed_2',
   'scene_community_seed_1',
 ]);
+const UNGROUPED_SPACE_MENU_KEY = '__ungrouped_spaces__';
 
 function resolveSpaceOwnershipTab(scene = {}) {
   const membershipType = String(scene.membershipType || '').trim().toUpperCase();
@@ -3040,6 +3500,57 @@ function getSpaceGroupObjectLabel(group) {
   return spaces.length > 0 && spaces.every((scene) => scene?.sceneType === 'SUPERVISION') ? '项目' : '空间';
 }
 
+function getSpaceMenuKey(scene) {
+  return scene?.menuKey || UNGROUPED_SPACE_MENU_KEY;
+}
+
+function flattenSpaceMenuGroups(menuGroups = []) {
+  return menuGroups.flatMap((group) => (
+    (Array.isArray(group?.children) ? group.children : [])
+      .map((item) => ({
+        key: item?.key,
+        name: item?.label || item?.key,
+        groupLabel: group?.label || '',
+      }))
+      .filter((item) => item.key)
+  ));
+}
+
+function buildSpaceMenuNavigationGroups(menuGroups = [], scenes = []) {
+  const scenesByMenuKey = new Map();
+  scenes.forEach((scene) => {
+    const menuKey = getSpaceMenuKey(scene);
+    const current = scenesByMenuKey.get(menuKey) || [];
+    current.push(scene);
+    scenesByMenuKey.set(menuKey, current);
+  });
+
+  const configuredMenuItems = flattenSpaceMenuGroups(menuGroups);
+  const seenMenuKeys = new Set();
+  const navigationGroups = configuredMenuItems.map((item) => {
+    seenMenuKeys.add(item.key);
+    const spaces = scenesByMenuKey.get(item.key) || [];
+    return {
+      ...item,
+      spaces,
+      sceneCount: spaces.length,
+    };
+  });
+
+  scenesByMenuKey.forEach((spaces, menuKey) => {
+    if (seenMenuKeys.has(menuKey)) return;
+    navigationGroups.push({
+      key: menuKey,
+      name: menuKey === UNGROUPED_SPACE_MENU_KEY ? '未归类空间' : sceneApi.getSceneMenuLabel(menuKey),
+      groupLabel: '',
+      spaces,
+      sceneCount: spaces.length,
+    });
+  });
+
+  return navigationGroups;
+}
+
 function getSpaceContentCountText(scene) {
   const unit = scene?.sceneType === 'SUPERVISION' ? '任务' : '主题';
   return `${scene?.topicCount || 0} 个${unit}`;
@@ -3050,6 +3561,32 @@ function getSpaceTheme(scene) {
     ...(scene?.templateSnapshot?.theme || {}),
     ...AI_SPACE_DETAIL_THEME,
   };
+}
+
+function countSpacesInGroups(groups = []) {
+  return groups.reduce((total, group) => total + (Array.isArray(group?.spaces) ? group.spaces.length : 0), 0);
+}
+
+function paginateSpaceGroups(groups = [], page = 1, pageSize = SPACE_PAGE_SIZE) {
+  const startIndex = Math.max(0, (page - 1) * pageSize);
+  const endIndex = startIndex + pageSize;
+  let cursor = 0;
+
+  return groups.reduce((result, group) => {
+    const spaces = Array.isArray(group?.spaces) ? group.spaces : [];
+    const nextCursor = cursor + spaces.length;
+    const sliceStart = Math.max(0, startIndex - cursor);
+    const sliceEnd = Math.min(spaces.length, endIndex - cursor);
+    cursor = nextCursor;
+
+    if (sliceStart >= sliceEnd) return result;
+    result.push({
+      ...group,
+      totalCount: spaces.length,
+      spaces: spaces.slice(sliceStart, sliceEnd),
+    });
+    return result;
+  }, []);
 }
 
 function AiSpaceCard({ scene, onOpen, onEdit, onDelete, onToggleShortcut }) {
@@ -3232,7 +3769,114 @@ function SpacesPage({
   onDeleteSpace,
   onToggleShortcut,
 }) {
-  const [railCollapsed, setRailCollapsed] = useState(false);
+  const [railCollapsed, setRailCollapsed] = useState(true);
+  const [spaceRailWidth, setSpaceRailWidth] = useState(loadTdWorkSpaceRailWidth);
+  const [spaceRailResizing, setSpaceRailResizing] = useState(false);
+  const [spacePage, setSpacePage] = useState(1);
+  const spaceRailResizeStartRef = useRef(null);
+  const spaceRailWidthRef = useRef(spaceRailWidth);
+  const visibleSpaceCount = useMemo(() => countSpacesInGroups(visibleGroups), [visibleGroups]);
+  const maxSpacePage = Math.max(1, Math.ceil(visibleSpaceCount / SPACE_PAGE_SIZE));
+  const safeSpacePage = Math.min(spacePage, maxSpacePage);
+  const pagedVisibleGroups = useMemo(
+    () => paginateSpaceGroups(visibleGroups, safeSpacePage, SPACE_PAGE_SIZE),
+    [safeSpacePage, visibleGroups],
+  );
+  const showPagination = visibleSpaceCount > SPACE_PAGE_SIZE;
+
+  const updateSpaceRailWidth = useCallback((nextWidth) => {
+    const nextBoundedWidth = getBoundedTdWorkSpaceRailWidth(nextWidth);
+    spaceRailWidthRef.current = nextBoundedWidth;
+    setSpaceRailWidth(nextBoundedWidth);
+  }, []);
+
+  const handleSpaceRailResizeStart = useCallback((event) => {
+    if (railCollapsed) return;
+    event.preventDefault();
+    spaceRailResizeStartRef.current = {
+      pointerX: event.clientX,
+      width: spaceRailWidthRef.current,
+    };
+    setSpaceRailResizing(true);
+  }, [railCollapsed]);
+
+  const handleSpaceRailResizeKeyDown = useCallback((event) => {
+    if (railCollapsed) return;
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight' && event.key !== 'Home' && event.key !== 'End') return;
+    event.preventDefault();
+    if (event.key === 'Home') {
+      updateSpaceRailWidth(TD_WORK_SPACE_RAIL_MIN_WIDTH);
+      persistTdWorkSpaceRailWidth(TD_WORK_SPACE_RAIL_MIN_WIDTH);
+      return;
+    }
+    if (event.key === 'End') {
+      updateSpaceRailWidth(TD_WORK_SPACE_RAIL_MAX_WIDTH);
+      persistTdWorkSpaceRailWidth(TD_WORK_SPACE_RAIL_MAX_WIDTH);
+      return;
+    }
+    const nextWidth = spaceRailWidthRef.current + (event.key === 'ArrowLeft' ? -10 : 10);
+    updateSpaceRailWidth(nextWidth);
+    persistTdWorkSpaceRailWidth(nextWidth);
+  }, [railCollapsed, updateSpaceRailWidth]);
+
+  const resetSpacePage = useCallback(() => {
+    setSpacePage(1);
+  }, []);
+
+  const handleGroupChange = useCallback((key) => {
+    resetSpacePage();
+    onGroupChange(key);
+  }, [onGroupChange, resetSpacePage]);
+
+  const handleOwnershipChange = useCallback((key) => {
+    resetSpacePage();
+    onOwnershipChange(key);
+  }, [onOwnershipChange, resetSpacePage]);
+
+  const handleSearchChange = useCallback((event) => {
+    resetSpacePage();
+    onSearchChange(event.target.value);
+  }, [onSearchChange, resetSpacePage]);
+
+  useEffect(() => {
+    spaceRailWidthRef.current = spaceRailWidth;
+  }, [spaceRailWidth]);
+
+  useEffect(() => {
+    const handleWindowResize = () => {
+      updateSpaceRailWidth(spaceRailWidthRef.current);
+    };
+    window.addEventListener('resize', handleWindowResize);
+    return () => window.removeEventListener('resize', handleWindowResize);
+  }, [updateSpaceRailWidth]);
+
+  useEffect(() => {
+    if (!spaceRailResizing) return undefined;
+
+    const handlePointerMove = (event) => {
+      const resizeStart = spaceRailResizeStartRef.current;
+      if (!resizeStart) return;
+      updateSpaceRailWidth(resizeStart.width + event.clientX - resizeStart.pointerX);
+    };
+
+    const handlePointerUp = () => {
+      setSpaceRailResizing(false);
+      persistTdWorkSpaceRailWidth(spaceRailWidthRef.current);
+      spaceRailResizeStartRef.current = null;
+    };
+
+    document.documentElement.classList.add('td-work-is-resizing');
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointercancel', handlePointerUp);
+
+    return () => {
+      document.documentElement.classList.remove('td-work-is-resizing');
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('pointercancel', handlePointerUp);
+    };
+  }, [spaceRailResizing, updateSpaceRailWidth]);
 
   if (activeSpace) {
     return <AiSpaceTopicPage scene={activeSpace} onBack={onBack} />;
@@ -3247,7 +3891,7 @@ function SpacesPage({
       <button
         type="button"
         className={`td-work-space-rail-item ${!activeGroupKey ? 'is-active' : ''}`}
-        onClick={() => onGroupChange(null)}
+        onClick={() => handleGroupChange(null)}
       >
         <HomeOutlined />
         <span>首页</span>
@@ -3261,11 +3905,14 @@ function SpacesPage({
                 key={group.key}
                 type="button"
                 className={`td-work-space-rail-item ${activeGroupKey === group.key ? 'is-active' : ''}`}
-                onClick={() => onGroupChange(group.key)}
+                onClick={() => handleGroupChange(group.key)}
                 title={group.name}
               >
                 <CloudOutlined />
                 <span>{group.name}</span>
+                {Number.isFinite(Number(group.sceneCount)) ? (
+                  <em className="td-work-space-rail-count">{group.sceneCount}</em>
+                ) : null}
               </button>
             ))
           ) : (
@@ -3277,7 +3924,11 @@ function SpacesPage({
   );
 
   return (
-    <section className={`td-work-space-page td-work-space-standard-skin ${railCollapsed ? 'is-space-rail-collapsed' : ''}`} aria-label="空间">
+    <section
+      className={`td-work-space-page td-work-space-standard-skin ${railCollapsed ? 'is-space-rail-collapsed' : ''} ${spaceRailResizing ? 'is-space-rail-resizing' : ''}`}
+      style={{ '--td-work-space-rail-width': `${spaceRailWidth}px` }}
+      aria-label="空间"
+    >
       {!railCollapsed ? (
         <div className="td-work-space-rail-shell">
           <aside className="td-work-space-rail" aria-label="空间导航">
@@ -3295,6 +3946,18 @@ function SpacesPage({
             </div>
             {railContent}
           </aside>
+          <div
+            className="td-work-space-rail-resizer"
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="调整空间导航宽度"
+            aria-valuemin={TD_WORK_SPACE_RAIL_MIN_WIDTH}
+            aria-valuemax={TD_WORK_SPACE_RAIL_MAX_WIDTH}
+            aria-valuenow={spaceRailWidth}
+            tabIndex={0}
+            onPointerDown={handleSpaceRailResizeStart}
+            onKeyDown={handleSpaceRailResizeKeyDown}
+          />
         </div>
       ) : null}
 
@@ -3327,7 +3990,7 @@ function SpacesPage({
               prefix={<SearchOutlined style={{ color: '#bbb' }} />}
               className="search-input"
               value={searchText}
-              onChange={(event) => onSearchChange(event.target.value)}
+              onChange={handleSearchChange}
               allowClear
             />
             <Button
@@ -3346,48 +4009,62 @@ function SpacesPage({
             <div className="scene-home-toolbar">
               <Segmented
                 value={ownershipTab}
-                onChange={onOwnershipChange}
+                onChange={handleOwnershipChange}
                 options={ownershipOptions}
                 className="scene-home-segmented"
               />
               <div className="scene-home-toolbar-meta">{summary}</div>
             </div>
           ) : null}
-          {loading ? (
-            <div className="scene-empty-state">空间加载中...</div>
-          ) : visibleGroups.length === 0 ? (
-            <div className="scene-empty-state">
-              <Empty description={emptyDescription} />
-            </div>
-          ) : (
-            <div className="scene-group-list">
-              {visibleGroups.map((group) => (
-                <section key={group.key} className="scene-group-section">
-                  {currentGroups.length > 1 ? (
-                    <div className="scene-group-header">
-                      <div>
-                        <div className="scene-group-title">{group.name}</div>
-                        <div className="scene-group-subtitle">一个场景下可承载多个{getSpaceGroupObjectLabel(group)}。</div>
+          <div className="td-work-space-list-frame">
+            {loading ? (
+              <div className="scene-empty-state">空间加载中...</div>
+            ) : visibleGroups.length === 0 ? (
+              <div className="scene-empty-state">
+                <Empty description={emptyDescription} />
+              </div>
+            ) : (
+              <div className="scene-group-list">
+                {pagedVisibleGroups.map((group) => (
+                  <section key={group.key} className="scene-group-section">
+                    {visibleGroups.length > 1 ? (
+                      <div className="scene-group-header">
+                        <div>
+                          <div className="scene-group-title">{group.name}</div>
+                          <div className="scene-group-subtitle">一个场景下可承载多个{getSpaceGroupObjectLabel(group)}。</div>
+                        </div>
+                        <div className="scene-group-count">{group.totalCount ?? group.spaces.length} 个{getSpaceGroupObjectLabel(group)}</div>
                       </div>
-                      <div className="scene-group-count">{group.spaces.length} 个{getSpaceGroupObjectLabel(group)}</div>
+                    ) : null}
+                    <div className="card-grid">
+                      {group.spaces.map((scene) => (
+                        <AiSpaceCard
+                          key={scene.id}
+                          scene={scene}
+                          onOpen={onOpenSpace}
+                          onEdit={onEditSpace}
+                          onDelete={onDeleteSpace}
+                          onToggleShortcut={onToggleShortcut}
+                        />
+                      ))}
                     </div>
-                  ) : null}
-                  <div className="card-grid">
-                    {group.spaces.map((scene) => (
-                      <AiSpaceCard
-                        key={scene.id}
-                        scene={scene}
-                        onOpen={onOpenSpace}
-                        onEdit={onEditSpace}
-                        onDelete={onDeleteSpace}
-                        onToggleShortcut={onToggleShortcut}
-                      />
-                    ))}
-                  </div>
-                </section>
-              ))}
+                  </section>
+                ))}
+              </div>
+            )}
+          </div>
+          {!loading && showPagination ? (
+            <div className="td-work-space-pagination">
+              <Pagination
+                current={safeSpacePage}
+                pageSize={SPACE_PAGE_SIZE}
+                total={visibleSpaceCount}
+                showSizeChanger={false}
+                showLessItems
+                onChange={setSpacePage}
+              />
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </section>
@@ -3537,7 +4214,8 @@ export default function TdWorkModule({
   accountMenuOpen,
   onAccountMenuOpenChange,
 }) {
-  const [activeNav, setActiveNav] = useState('new-task');
+  const [activeNav, setActiveNav] = useState('home');
+  const [homeSessionKey, setHomeSessionKey] = useState(0);
   const [activeSideItem, setActiveSideItem] = useState('');
   const [prompt, setPrompt] = useState('');
   const [selectedComposerSkillKeys, setSelectedComposerSkillKeys] = useState([]);
@@ -3564,9 +4242,10 @@ export default function TdWorkModule({
   const [activeProject, setActiveProject] = useState(null);
   const [spaceTemplates, setSpaceTemplates] = useState([]);
   const [spaceScenes, setSpaceScenes] = useState([]);
+  const [spaceMenuGroups, setSpaceMenuGroups] = useState([]);
   const [spaceLoading, setSpaceLoading] = useState(false);
   const [spaceSearch, setSpaceSearch] = useState('');
-  const [spaceGroupFilter, setSpaceGroupFilter] = useState(null);
+  const [spaceMenuFilter, setSpaceMenuFilter] = useState(null);
   const [spaceOwnershipTab, setSpaceOwnershipTab] = useState('created');
   const [activeSpace, setActiveSpace] = useState(null);
   const [spaceCreateOpen, setSpaceCreateOpen] = useState(false);
@@ -3723,12 +4402,14 @@ export default function TdWorkModule({
     if (withLoading) setSpaceLoading(true);
     try {
       await sceneApi.seed();
-      const [nextTemplates, nextScenes] = await Promise.all([
+      const [nextTemplates, nextScenes, nextMenuGroups] = await Promise.all([
         sceneApi.listTemplates(),
         sceneApi.listScenes(),
+        sceneApi.listSceneMenuGroups(),
       ]);
       setSpaceTemplates(nextTemplates);
       setSpaceScenes(nextScenes);
+      setSpaceMenuGroups(nextMenuGroups);
       setActiveSpace((current) => (
         current ? nextScenes.find((scene) => scene.id === current.id) || null : current
       ));
@@ -3754,40 +4435,56 @@ export default function TdWorkModule({
     return Array.from(groupMap.values());
   }, []);
 
+  const spaceMenuNavigationGroups = useMemo(
+    () => buildSpaceMenuNavigationGroups(spaceMenuGroups, spaceScenes),
+    [spaceMenuGroups, spaceScenes],
+  );
+
+  const effectiveSpaceMenuFilter = useMemo(() => {
+    if (!spaceMenuFilter) return null;
+    if (spaceMenuNavigationGroups.length === 0) return spaceMenuFilter;
+    return spaceMenuNavigationGroups.some((group) => group.key === spaceMenuFilter)
+      ? spaceMenuFilter
+      : null;
+  }, [spaceMenuFilter, spaceMenuNavigationGroups]);
+
+  const spaceMenuFilteredScenes = useMemo(() => {
+    if (!effectiveSpaceMenuFilter) return spaceScenes;
+    return spaceScenes.filter((scene) => getSpaceMenuKey(scene) === effectiveSpaceMenuFilter);
+  }, [effectiveSpaceMenuFilter, spaceScenes]);
+
   const spaceOwnershipCounts = useMemo(() => {
-    return spaceScenes.reduce((acc, scene) => {
+    return spaceMenuFilteredScenes.reduce((acc, scene) => {
       const key = resolveSpaceOwnershipTab(scene);
       acc[key] += 1;
       return acc;
     }, { created: 0, joined: 0 });
-  }, [spaceScenes]);
+  }, [spaceMenuFilteredScenes]);
 
   const effectiveSpaceOwnershipTab = useMemo(() => {
-    if (spaceScenes.length === 0 || (spaceOwnershipCounts[spaceOwnershipTab] || 0) > 0) {
+    if (spaceMenuFilteredScenes.length === 0 || (spaceOwnershipCounts[spaceOwnershipTab] || 0) > 0) {
       return spaceOwnershipTab;
     }
     const fallbackTab = spaceOwnershipTab === 'created' ? 'joined' : 'created';
     return (spaceOwnershipCounts[fallbackTab] || 0) > 0 ? fallbackTab : spaceOwnershipTab;
-  }, [spaceOwnershipCounts, spaceOwnershipTab, spaceScenes.length]);
+  }, [spaceMenuFilteredScenes.length, spaceOwnershipCounts, spaceOwnershipTab]);
 
   const ownershipFilteredSpaceScenes = useMemo(() => {
-    return spaceScenes.filter((scene) => resolveSpaceOwnershipTab(scene) === effectiveSpaceOwnershipTab);
-  }, [effectiveSpaceOwnershipTab, spaceScenes]);
+    return spaceMenuFilteredScenes.filter((scene) => resolveSpaceOwnershipTab(scene) === effectiveSpaceOwnershipTab);
+  }, [effectiveSpaceOwnershipTab, spaceMenuFilteredScenes]);
 
   const visibleSpaceScenes = useMemo(() => {
     const normalizedKeyword = spaceSearch.trim().toLowerCase();
     return ownershipFilteredSpaceScenes.filter((scene) => {
-      const sceneGroupName = scene.sceneGroupName || DEFAULT_SPACE_SCENE_GROUP_NAME;
-      if (spaceGroupFilter && sceneGroupName !== spaceGroupFilter) return false;
       if (!normalizedKeyword) return true;
       const haystack = `${scene.name} ${scene.sceneGroupName || ''} ${scene.templateName} ${scene.description || ''}`.toLowerCase();
       return haystack.includes(normalizedKeyword);
     });
-  }, [ownershipFilteredSpaceScenes, spaceGroupFilter, spaceSearch]);
+  }, [ownershipFilteredSpaceScenes, spaceSearch]);
 
   const currentSpaceGroups = useMemo(
-    () => buildAiSpaceGroups(spaceScenes),
-    [buildAiSpaceGroups, spaceScenes],
+    () => buildAiSpaceGroups(spaceMenuFilteredScenes),
+    [buildAiSpaceGroups, spaceMenuFilteredScenes],
   );
 
   const visibleSpaceGroups = useMemo(
@@ -3821,12 +4518,15 @@ export default function TdWorkModule({
   );
 
   const aiSpaceHomeTitle = useMemo(() => {
-    if (spaceGroupFilter) return spaceGroupFilter;
+    if (effectiveSpaceMenuFilter) {
+      return spaceMenuNavigationGroups.find((group) => group.key === effectiveSpaceMenuFilter)?.name
+        || sceneApi.getSceneMenuLabel(effectiveSpaceMenuFilter);
+    }
     if (currentSpaceGroups.length === 1) {
       return currentSpaceGroups[0].name;
     }
     return '全部空间';
-  }, [currentSpaceGroups, spaceGroupFilter]);
+  }, [currentSpaceGroups, effectiveSpaceMenuFilter, spaceMenuNavigationGroups]);
 
   const spaceOwnershipSegmentOptions = useMemo(() => {
     return SPACE_HOME_OWNERSHIP_TABS.map((item) => ({
@@ -3841,34 +4541,35 @@ export default function TdWorkModule({
   }, [spaceOwnershipCounts]);
 
   const spaceOwnershipSummary = useMemo(() => {
-    const activeCount = visibleSpaceScenes.length;
-    if (spaceScenes.length === 0) {
+    const activeCount = spaceOwnershipCounts[effectiveSpaceOwnershipTab] || 0;
+    if (spaceMenuFilteredScenes.length === 0) {
       return `${aiSpaceHomeTitle}当前分类下还没有空间`;
     }
-    return `${aiSpaceHomeTitle} · ${getSpaceOwnershipTabLabel(effectiveSpaceOwnershipTab)} ${activeCount} 个，当前分类共 ${spaceScenes.length} 个空间`;
-  }, [aiSpaceHomeTitle, effectiveSpaceOwnershipTab, spaceScenes.length, visibleSpaceScenes.length]);
+    return `${aiSpaceHomeTitle} · ${getSpaceOwnershipTabLabel(effectiveSpaceOwnershipTab)} ${activeCount} 个，当前分类共 ${spaceMenuFilteredScenes.length} 个空间`;
+  }, [aiSpaceHomeTitle, effectiveSpaceOwnershipTab, spaceMenuFilteredScenes.length, spaceOwnershipCounts]);
 
   const spaceEmptyDescription = useMemo(() => {
     const normalizedKeyword = spaceSearch.trim();
     if (normalizedKeyword) {
       return `没有找到符合条件的${getSpaceOwnershipTabLabel(effectiveSpaceOwnershipTab)}空间`;
     }
-    if (spaceScenes.length === 0) {
-      return '暂无空间，先创建一个模板化空间。';
+    if (spaceMenuFilteredScenes.length === 0) {
+      return effectiveSpaceMenuFilter ? '当前栏目暂无空间，先新建一个。' : '暂无空间，先创建一个模板化空间。';
     }
     if ((spaceOwnershipCounts[effectiveSpaceOwnershipTab] || 0) === 0) {
       return `${getSpaceOwnershipTabLabel(effectiveSpaceOwnershipTab)}暂无空间`;
     }
     return '当前筛选下暂无空间';
-  }, [effectiveSpaceOwnershipTab, spaceOwnershipCounts, spaceScenes.length, spaceSearch]);
+  }, [effectiveSpaceMenuFilter, effectiveSpaceOwnershipTab, spaceMenuFilteredScenes.length, spaceOwnershipCounts, spaceSearch]);
 
   const spaceSceneGroupOptions = useMemo(() => {
     const groupNames = currentSpaceGroups.map((group) => group.name).filter(Boolean);
-    return (groupNames.length ? groupNames : [DEFAULT_SPACE_SCENE_GROUP_NAME]).map((name) => ({
+    const fallbackSceneGroupName = effectiveSpaceMenuFilter ? aiSpaceHomeTitle : DEFAULT_SPACE_SCENE_GROUP_NAME;
+    return (groupNames.length ? groupNames : [fallbackSceneGroupName]).map((name) => ({
       label: name,
       value: name,
     }));
-  }, [currentSpaceGroups]);
+  }, [aiSpaceHomeTitle, currentSpaceGroups, effectiveSpaceMenuFilter]);
 
   const handleOpenAiSpace = useCallback(async (scene) => {
     if (!scene?.id) return;
@@ -3885,9 +4586,25 @@ export default function TdWorkModule({
       await loadAiSpaceData();
     }
     setSpaceEditing(null);
-    setSpaceCreateDefaultMenuKey(null);
+    setSpaceCreateDefaultMenuKey(effectiveSpaceMenuFilter || null);
     setSpaceCreateOpen(true);
-  }, [loadAiSpaceData, spaceTemplates.length]);
+  }, [effectiveSpaceMenuFilter, loadAiSpaceData, spaceTemplates.length]);
+
+  const handleOpenTongdaAcademySpaces = useCallback(() => {
+    setActiveNav('space');
+    setActiveSideItem('');
+    setActiveSpace(null);
+    setSpaceSearch('');
+    setSpaceMenuFilter('online-academy-training');
+    setSpaceOwnershipTab('created');
+    setCreateMenuOpen(false);
+    setPartnerPickerOpen(false);
+    closeSidePanel(true);
+    if (spaceScenes.length === 0 && !spaceLoading) {
+      loadAiSpaceData();
+    }
+    setToast('已打开通答学院项目');
+  }, [closeSidePanel, loadAiSpaceData, spaceLoading, spaceScenes.length]);
 
   const handleEditAiSpace = useCallback((scene) => {
     setSpaceEditing(scene);
@@ -4103,17 +4820,20 @@ export default function TdWorkModule({
     const loadTimer = window.setTimeout(() => {
       loadAiSpaceData();
     }, 0);
+    return () => window.clearTimeout(loadTimer);
+  }, [activeNav, loadAiSpaceData]);
+
+  useEffect(() => {
     const eventName = sceneApi.getStoreEventName?.();
     if (!eventName) {
-      return () => window.clearTimeout(loadTimer);
+      return undefined;
     }
     const handleStoreChange = () => loadAiSpaceData(false);
     window.addEventListener(eventName, handleStoreChange);
     return () => {
-      window.clearTimeout(loadTimer);
       window.removeEventListener(eventName, handleStoreChange);
     };
-  }, [activeNav, loadAiSpaceData]);
+  }, [loadAiSpaceData]);
 
   useEffect(() => {
     if (activeNav !== 'space' || !activeSpace) return undefined;
@@ -4354,6 +5074,25 @@ export default function TdWorkModule({
     closeSidePanel(true);
   }, [closeSidePanel]);
 
+  const handleCreateTaskFromHome = useCallback((nextPrompt) => {
+    setPrompt(nextPrompt);
+    handleOpenNewTask('work-task');
+  }, [handleOpenNewTask]);
+
+  const handleMarketplaceNavigate = useCallback((nextNav) => {
+    setActiveNav(nextNav);
+    setActiveSideItem('');
+    setCreateMenuOpen(false);
+    setPartnerPickerOpen(false);
+    closeSidePanel(true);
+  }, [closeSidePanel]);
+
+  const handleOpenHomeFromNewTask = useCallback(() => {
+    setHomeSessionKey((current) => current + 1);
+    setPrompt('');
+    handleMarketplaceNavigate('home');
+  }, [handleMarketplaceNavigate]);
+
   const handleSidebarSearchOpenChange = (open) => {
     setSidebarSearchOpen(open);
     if (open) setSidebarFilterOpen(false);
@@ -4500,6 +5239,8 @@ export default function TdWorkModule({
     </div>
   ) : null;
   const hideSpaceListTopbar = activeNav === 'space' && !activeSpace && !sidebarCollapsed;
+  const hideMarketplaceTopbar = ['home', 'resource-market', 'app-market', 'academy'].includes(activeNav);
+  const hideTopbar = hideSpaceListTopbar || hideMarketplaceTopbar;
 
   return (
     <div
@@ -4573,6 +5314,15 @@ export default function TdWorkModule({
           </div>
         </div>
 
+        <button
+          type="button"
+          className="td-work-new-task-entry"
+          onClick={handleOpenHomeFromNewTask}
+        >
+          <PlusOutlined />
+          <span>新建任务</span>
+        </button>
+
         <nav className="td-work-nav" aria-label="主导航">
           {NAV_ITEMS.map((item) => (
             <div key={item.key} className="td-work-nav-block">
@@ -4580,10 +5330,6 @@ export default function TdWorkModule({
                 type="button"
                 className={`td-work-nav-item ${activeNav === item.key ? 'is-active' : ''}`}
                 onClick={() => {
-                  if (item.key === 'new-task') {
-                    handleOpenNewTask('work-task');
-                    return;
-                  }
                   setActiveNav(item.key);
                   setActiveSideItem('');
                   setCreateMenuOpen(false);
@@ -4594,7 +5340,7 @@ export default function TdWorkModule({
                   if (item.key === 'space') {
                     setActiveSpace(null);
                     setSpaceSearch('');
-                    setSpaceGroupFilter(null);
+                    setSpaceMenuFilter(null);
                     setSpaceOwnershipTab('created');
                   }
                   closeSidePanel(true);
@@ -4605,7 +5351,7 @@ export default function TdWorkModule({
                 }}
                 title={item.label}
               >
-                <span className="td-work-nav-icon">{item.icon}</span>
+                <span className="td-work-nav-icon">{activeNav === item.key ? item.activeIcon : item.icon}</span>
                 <span className="td-work-nav-label">{item.label}</span>
               </button>
             </div>
@@ -4695,7 +5441,7 @@ export default function TdWorkModule({
         style={{ '--td-work-primary-size': `${sidePanelPrimaryRatio}%` }}
       >
         <section className="td-work-primary-pane" aria-label="主工作区">
-        <header className={`td-work-topbar ${hideSpaceListTopbar ? 'is-hidden' : ''} ${activeNav === 'skills' ? 'is-skill-topbar' : ''} ${activeNav === 'skills' && skillView === 'mine' ? 'is-my-skill-topbar' : ''} ${activeNav === 'dialog' ? 'is-partner-topbar' : ''} ${activeNav === 'dialog' && activePartner ? 'is-partner-workspace-topbar' : ''} ${activeNav === 'dialog' && partnerView === 'manage' ? 'is-partner-manage-topbar' : ''} ${activeNav === 'scheduled' ? 'is-schedule-topbar' : ''} ${activeNav === 'project' ? 'is-project-topbar' : ''} ${activeNav === 'space' ? 'is-space-topbar' : ''} ${activeNav === 'space' && activeSpace ? 'is-space-detail-topbar' : ''} ${activeNav === 'cloud' ? 'is-resource-library-topbar' : ''}`}>
+        <header className={`td-work-topbar ${hideTopbar ? 'is-hidden' : ''} ${activeNav === 'skills' ? 'is-skill-topbar' : ''} ${activeNav === 'skills' && skillView === 'mine' ? 'is-my-skill-topbar' : ''} ${activeNav === 'dialog' ? 'is-partner-topbar' : ''} ${activeNav === 'dialog' && activePartner ? 'is-partner-workspace-topbar' : ''} ${activeNav === 'dialog' && partnerView === 'manage' ? 'is-partner-manage-topbar' : ''} ${activeNav === 'scheduled' ? 'is-schedule-topbar' : ''} ${activeNav === 'project' ? 'is-project-topbar' : ''} ${activeNav === 'space' ? 'is-space-topbar' : ''} ${activeNav === 'space' && activeSpace ? 'is-space-detail-topbar' : ''} ${hideMarketplaceTopbar ? 'is-marketplace-topbar' : ''} ${activeNav === 'cloud' ? 'is-resource-library-topbar' : ''}`}>
           {activeNav === 'dialog' && partnerView === 'manage' ? (
             <>
               {topbarSidebarCollapsedTools}
@@ -4779,7 +5525,41 @@ export default function TdWorkModule({
                 管理
               </button>
             </>
-          ) : activeNav === 'cloud' ? null : activeNav === 'scheduled' ? (
+          ) : activeNav === 'cloud' ? null : ['home', 'resource-market', 'app-market'].includes(activeNav) ? (
+            <>
+              {topbarSidebarCollapsedTools}
+              <div className="td-work-dialog-titlebar-copy">
+                <strong>{activeNav === 'home' ? '首页' : activeNav === 'resource-market' ? '资源广场' : '应用广场'}</strong>
+                <span>{activeNav === 'home' ? 'AI 教学创作与精选内容' : activeNav === 'resource-market' ? '发现并复用优质教学资源' : '发现可直接使用的教育应用'}</span>
+              </div>
+              {activeNav !== 'home' ? (
+                <button
+                  type="button"
+                  className="td-work-dialog-manage-btn"
+                  onClick={() => handleMarketplaceNavigate('home')}
+                >
+                  <HomeOutlined />
+                  返回首页
+                </button>
+              ) : null}
+            </>
+          ) : activeNav === 'academy' ? (
+            <>
+              {topbarSidebarCollapsedTools}
+              <div className="td-work-dialog-titlebar-copy">
+                <strong>通答学院</strong>
+                <span>课程、资源、应用与培训项目入口</span>
+              </div>
+              <button
+                type="button"
+                className="td-work-dialog-manage-btn"
+                onClick={handleOpenTongdaAcademySpaces}
+              >
+                <CloudOutlined />
+                学院项目
+              </button>
+            </>
+          ) : activeNav === 'scheduled' ? (
             <>
               {topbarSidebarCollapsedTools}
               <button type="button" className="td-work-schedule-new-btn" onClick={() => setToast('已进入新建自动化')}>
@@ -4962,7 +5742,26 @@ export default function TdWorkModule({
           )}
         </header>
 
-        {activeNav === 'project' ? (
+        {activeNav === 'home' ? (
+          <AiModeHomePage
+            key={homeSessionKey}
+            onCreateTask={handleCreateTaskFromHome}
+            onNavigate={handleMarketplaceNavigate}
+            onOpenItem={(item) => setToast(`已打开：${item.title}`)}
+          />
+        ) : activeNav === 'resource-market' ? (
+          <MarketplacePage
+            key="resource-market"
+            type="resource"
+            onOpen={(item) => setToast(`已打开资源：${item.title}`)}
+          />
+        ) : activeNav === 'app-market' ? (
+          <MarketplacePage
+            key="app-market"
+            type="app"
+            onOpen={(item) => setToast(`已打开应用：${item.title}`)}
+          />
+        ) : activeNav === 'project' ? (
           <ProjectsPage
             activeProject={activeProject}
             onOpenProject={(item) => setActiveProject(item)}
@@ -4972,19 +5771,19 @@ export default function TdWorkModule({
           />
         ) : activeNav === 'space' ? (
           <SpacesPage
-            currentGroups={currentSpaceGroups}
+            currentGroups={spaceMenuNavigationGroups}
             visibleGroups={visibleSpaceGroups}
             loading={spaceLoading}
             searchText={spaceSearch}
             activeSpace={activeSpace}
-            activeGroupKey={spaceGroupFilter}
+            activeGroupKey={effectiveSpaceMenuFilter}
             ownershipTab={effectiveSpaceOwnershipTab}
             ownershipOptions={spaceOwnershipSegmentOptions}
             summary={spaceOwnershipSummary}
             emptyDescription={spaceEmptyDescription}
             title={aiSpaceHomeTitle}
             onSearchChange={setSpaceSearch}
-            onGroupChange={setSpaceGroupFilter}
+            onGroupChange={setSpaceMenuFilter}
             onOwnershipChange={setSpaceOwnershipTab}
             onOpenSpace={handleOpenAiSpace}
             onBack={() => setActiveSpace(null)}
@@ -4992,6 +5791,11 @@ export default function TdWorkModule({
             onEditSpace={handleEditAiSpace}
             onDeleteSpace={handleDeleteAiSpace}
             onToggleShortcut={handleToggleAiSpaceShortcut}
+          />
+        ) : activeNav === 'academy' ? (
+          <TongdaAcademyPage
+            onOpenSpace={handleOpenTongdaAcademySpaces}
+            onToast={setToast}
           />
         ) : activeNav === 'skills' && skillView === 'mine' ? (
           <MySkillsPage

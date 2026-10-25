@@ -2,12 +2,15 @@ import { message } from 'antd';
 import {
   ArrowRightOutlined,
   AppstoreOutlined,
+  AuditOutlined,
   BankOutlined,
+  BookOutlined,
   BulbOutlined,
   CalendarOutlined,
   CheckCircleOutlined,
   ClusterOutlined,
   CommentOutlined,
+  CustomerServiceOutlined,
   DatabaseOutlined,
   DesktopOutlined,
   DownloadOutlined,
@@ -31,162 +34,169 @@ import './SolutionShowroomPortal.css';
 
 const SHOWROOM_ENTRIES = SOLUTION_SHOWROOM_ROOMS;
 
+const NAV_LINKS = [
+  { href: '#products', label: '产品' },
+  { href: '#solutions', label: '解决方案' },
+  { href: '#workspace', label: 'AI 原生' },
+  { href: '#security', label: '安全服务' },
+  { href: '#resources', label: '资源' },
+];
+
 const HERO_STATS = [
-  { label: 'AI 原生底座', value: '1 套' },
-  { label: '首发方案', value: '1' },
-  { label: '服务模块', value: '30+' },
+  { label: '核心产品底座', value: '1 套' },
+  { label: '业务场景覆盖', value: '40+' },
+  { label: '可组合模块', value: '30+' },
 ];
 
-const HERO_PLATFORM_MODULES = ['资料库', '空间', '智能体', '多场景业务一体化', '创作中心', '实训实验室'];
-
-const ADVANTAGE_ITEMS = [
-  {
-    title: '技术优势',
-    desc: '统一空间、资源、智能体、任务与门户能力，为不同教育场景提供稳定、安全、可扩展的技术支撑。',
-    icon: <DesktopOutlined />,
-  },
-  {
-    title: '服务运营优势',
-    desc: '结合在线培训与项目服务经验，提供从项目启动、过程陪伴到数据复盘的完整运营支持。',
-    icon: <TeamOutlined />,
-  },
-  {
-    title: '资源优势',
-    desc: '整合课程资源、知识库、案例数据和过程材料，让方案展示更贴近真实业务需求。',
-    icon: <DatabaseOutlined />,
-  },
-  {
-    title: '教学服务与人才优势',
-    desc: '依托教研、教学服务和客户成功团队，保障平台能力能够持续转化为可感知的应用成效。',
-    icon: <SafetyCertificateOutlined />,
-  },
+const HERO_WORKSPACE_ITEMS = [
+  '资料库',
+  '空间',
+  '智能体',
+  '任务',
+  '研讨会',
+  '画像看板',
 ];
 
-const FEATURE_ITEMS = [
-  {
-    title: 'AI 原生产品底座',
-    desc: '将资料、空间、角色、流程和任务统一建模，让业务能力可以被 AI 理解、调用和持续组合。',
-    icon: <ClusterOutlined />,
-  },
+const PRODUCT_ITEMS = [
   {
     title: '通答智能体平台',
-    desc: '以智能体、技能和知识库为核心，支持咨询答疑、内容生成、方案设计和任务执行。',
+    desc: '面向学校、区域和服务团队搭建专属智能体，连接知识库、技能和任务执行。',
     icon: <ThunderboltOutlined />,
-  },
-  {
-    title: '人工智能通识教学平台',
-    desc: '面向 AI 通识课程建设，覆盖线上课堂、任务管理、实践训练和学习评价。',
-    icon: <ReadOutlined />,
-  },
-  {
-    title: 'AI 驱动敏捷交付',
-    desc: '基于标准能力与场景配置快速组合，支持教师培训、AI 实训、教研创新与智慧教学落地。',
-    icon: <RocketOutlined />,
-  },
-];
-
-const AI_NATIVE_ITEMS = [
-  {
-    title: '业务模块天然 AI 化',
-    desc: '新建教学、教研、培训、干部工作坊等模块时，可直接调用知识、智能体、任务和协作能力。',
-    icon: <ClusterOutlined />,
-  },
-  {
-    title: '用户体验智能体+',
-    desc: '教师、干部、教研员等角色不只是在使用系统，而是获得能理解场景、协助完成工作的智能助理。',
-    icon: <RobotOutlined />,
-  },
-  {
-    title: '场景持续复用扩展',
-    desc: '资料库、空间、场景模板和过程数据可被不同业务反复使用，持续放大平台价值。',
-    icon: <RocketOutlined />,
-  },
-];
-
-const AI_NATIVE_CHANGE_ITEMS = [
-  {
-    title: '入口改变',
-    before: '找菜单、填表单、推流程',
-    after: '表达目标，智能体理解意图并组织路径',
-  },
-  {
-    title: '流程改变',
-    before: '流程靠人推动，系统被动记录',
-    after: '智能体牵引执行、提醒、反馈和沉淀',
-  },
-  {
-    title: '角色改变',
-    before: '业务人员跨系统、跨部门协调信息',
-    after: '人负责判断确认，智能体承担拆解和推进',
-  },
-  {
-    title: '数据改变',
-    before: '数据主要用于事后统计和报表',
-    after: '实时支撑方案生成、过程预警和辅助决策',
-  },
-  {
-    title: '经验改变',
-    before: '经验散落在个人、文档和历史记录中',
-    after: '沉淀为可复用、可进化的组织资产',
-  },
-];
-
-const MODULE_ITEMS = [
-  {
-    title: '空间与场景',
-    desc: '把场景、主题、实例化空间组织成业务承载层，让课程、项目、培训和服务都有清晰工作场。',
-    icon: <AppstoreOutlined />,
-    tags: ['场景模板', '主题空间'],
     accent: '#2563eb',
+    tags: ['智能体', '知识库', '技能编排'],
   },
   {
-    title: '资料库',
-    desc: '沉淀课程资料、组织知识和项目文档，支持按空间复用、检索和持续更新。',
-    icon: <DatabaseOutlined />,
-    tags: ['知识沉淀', '资源复用'],
+    title: 'AI 通识教学平台',
+    desc: '覆盖课程空间、资源沉淀、AI 助教、作业任务、学习评价和证书归档。',
+    icon: <ReadOutlined />,
     accent: '#0f766e',
+    tags: ['课程空间', 'AI 助教', '学习评价'],
   },
   {
-    title: '通答智能体',
-    desc: '连接智能体、技能、知识库与任务执行入口，让 AI 从回答问题走向主动完成工作。',
-    icon: <RobotOutlined />,
-    tags: ['智能体', '技能编排'],
-    accent: '#7c3aed',
+    title: '教师发展平台',
+    desc: '以教师画像、能力模型、研修项目和成长档案支撑区域教师专业发展。',
+    icon: <TeamOutlined />,
+    accent: '#f97316',
+    tags: ['教师画像', '研修项目', '成长档案'],
   },
   {
-    title: 'AI 研讨会',
-    desc: '面向课堂、培训和教研的实时协作空间，承载讨论、共创、互动和过程记录。',
-    icon: <VideoCameraOutlined />,
-    tags: ['实时协作', '课堂互动'],
+    title: '智慧继教平台',
+    desc: '项目发布、报名学习、学时核验、问卷反馈和证书发放一体化闭环。',
+    icon: <ClusterOutlined />,
     accent: '#0891b2',
+    tags: ['继教项目', '学时管理', '证书'],
   },
   {
-    title: '任务与日程',
-    desc: '统一承接待办、项目推进、学习提醒和服务节奏，让协作过程可追踪、可复盘。',
-    icon: <CalendarOutlined />,
-    tags: ['任务流转', '学习提醒'],
-    accent: '#ea580c',
-  },
-  {
-    title: '在线文档与白板',
-    desc: '支持多人共创、批注、方案沉淀和教研记录，把零散想法转成可复用成果。',
-    icon: <FileTextOutlined />,
-    tags: ['协同创作', '方案沉淀'],
+    title: '资料库与知识空间',
+    desc: '沉淀课程、案例、制度和项目资料，让组织知识可以被检索、复用和持续进化。',
+    icon: <DatabaseOutlined />,
     accent: '#4f46e5',
+    tags: ['资源沉淀', '知识空间', '权限复用'],
   },
   {
     title: '实训实验室',
-    desc: '承载 AI 实训、云桌面、云浏览器和实验任务，让学习过程直接连接真实操作环境。',
+    desc: '连接 AI 实训任务、云端环境和过程记录，把学习过程落到真实操作。',
     icon: <ExperimentOutlined />,
-    tags: ['AI 实训', '云端环境'],
     accent: '#dc2626',
+    tags: ['AI 实训', '云端环境', '过程记录'],
+  },
+];
+
+const WORKSPACE_STEPS = [
+  {
+    title: '沉淀资料',
+    desc: '课程、文档、案例、制度进入统一资料库，按空间和角色复用。',
+    icon: <BookOutlined />,
   },
   {
-    title: '课件创作中心',
-    desc: '面向 AI 通识课程生成互动课件、实训内容和教学插件，提升课程建设效率。',
-    icon: <BulbOutlined />,
-    tags: ['课件生成', '教学插件'],
-    accent: '#ca8a04',
+    title: '生成场景',
+    desc: '通过模板快速创建课程、研修、教研、督导和服务空间。',
+    icon: <AppstoreOutlined />,
+  },
+  {
+    title: '智能体协作',
+    desc: 'AI 助教、教研助手、项目顾问理解业务目标并推动任务执行。',
+    icon: <RobotOutlined />,
+  },
+  {
+    title: '数据反馈',
+    desc: '把学习、任务、互动、评价和成果沉淀为画像与决策看板。',
+    icon: <AuditOutlined />,
+  },
+];
+
+const SOLUTION_ITEMS = [
+  {
+    title: '智慧教学',
+    desc: 'AI 备课、课堂互动、作业反馈、学习评价和资源复用一体化。',
+    metrics: ['课程建设', '课堂助学', '学习评价'],
+    icon: <DesktopOutlined />,
+  },
+  {
+    title: '教师培训研修',
+    desc: '从项目报名、学习任务、过程陪伴到证书归档，形成研修闭环。',
+    metrics: ['研修项目', '学时核验', '成长档案'],
+    icon: <VideoCameraOutlined />,
+  },
+  {
+    title: '区域教育治理',
+    desc: '面向区域教研、督导、评价和资源统筹，建立可追踪的数据底座。',
+    metrics: ['区域画像', '督导任务', '资源统筹'],
+    icon: <BankOutlined />,
+  },
+];
+
+const VALUE_ITEMS = [
+  {
+    title: '给教师',
+    desc: '少找资料、少重复整理，把更多时间留给教学设计和学生反馈。',
+    value: 'AI 助教 + 资源复用',
+  },
+  {
+    title: '给学校',
+    desc: '把课程、任务、活动、评价和档案纳入同一业务空间。',
+    value: '协同空间 + 过程管理',
+  },
+  {
+    title: '给区域',
+    desc: '形成教师发展、培训研修、教研服务和治理决策的数据闭环。',
+    value: '画像看板 + 决策支持',
+  },
+];
+
+const SECURITY_ITEMS = [
+  {
+    title: '组织与权限',
+    desc: '按区域、学校、部门和角色配置访问权限，支撑多租户管理。',
+    icon: <TeamOutlined />,
+  },
+  {
+    title: '数据安全',
+    desc: '支持私有化部署、数据分级、操作留痕和关键流程审计。',
+    icon: <SafetyCertificateOutlined />,
+  },
+  {
+    title: '交付服务',
+    desc: '从方案设计、部署配置、培训运营到复盘改进，全程陪伴落地。',
+    icon: <CustomerServiceOutlined />,
+  },
+];
+
+const RESOURCE_ITEMS = [
+  {
+    title: '方案白皮书',
+    desc: '梳理 AI 原生教育平台的建设路径、能力地图和实施节奏。',
+    icon: <FileTextOutlined />,
+  },
+  {
+    title: '产品演示',
+    desc: '通过示范空间体验课程、资料、智能体、任务和评价闭环。',
+    icon: <DesktopOutlined />,
+  },
+  {
+    title: '落地咨询',
+    desc: '结合学校或区域现状，形成产品组合与项目推进建议。',
+    icon: <CommentOutlined />,
   },
 ];
 
@@ -206,23 +216,36 @@ function handleClientDownload(item) {
   message.info(`请联系客户顾问获取${item.title}下载方式`);
 }
 
+function handleContact() {
+  message.info('已记录演示预约意向，请联系客户顾问安排专属演示');
+}
+
 function SolutionShowroomPortal({ onOpenRoom }) {
   const featuredRoom = SHOWROOM_ENTRIES[0];
+  const secondaryRooms = SHOWROOM_ENTRIES.slice(1, 4);
+
+  const handleOpenRoom = (room) => {
+    if (typeof onOpenRoom === 'function') {
+      onOpenRoom(room);
+      return;
+    }
+    message.info('请先登录后查看完整示范空间');
+  };
 
   return (
     <main className="solution-homepage" style={{ '--solution-hero-image': `url(${heroImage})` }}>
-      <nav className="solution-home-nav" aria-label="官网导航">
-        <div className="solution-home-brand">
+      <nav className="solution-home-nav" aria-label="通答官网导航">
+        <a className="solution-home-brand" href="#top" aria-label="通答官网首页">
           <span className="solution-home-brand-mark">通</span>
-          <span>国人通教育 · 通答</span>
-        </div>
+          <span>
+            <strong>通答</strong>
+            <small>AI 原生教育平台</small>
+          </span>
+        </a>
         <div className="solution-home-nav-links">
-          <a href="#advantages">服务优势</a>
-          <a href="#ai-native">AI 原生</a>
-          <a href="#products">产品能力</a>
-          <a href="#modules">核心模块</a>
-          <a href="#showrooms">解决方案</a>
-          <a href="#internal">通答交流</a>
+          {NAV_LINKS.map((item) => (
+            <a key={item.href} href={item.href}>{item.label}</a>
+          ))}
         </div>
         <div className="solution-home-nav-actions">
           <button
@@ -241,47 +264,51 @@ function SolutionShowroomPortal({ onOpenRoom }) {
         </div>
       </nav>
 
-      <section className="solution-home-hero">
+      <section className="solution-home-hero" id="top">
         <div className="solution-home-hero-copy">
-          <div className="solution-home-eyebrow">通答 AI 原生教育业务平台</div>
+          <div className="solution-home-eyebrow">
+            <span />
+            通答 AI 原生教育业务平台
+          </div>
           <h1>
-            让每个教育业务
-            <span>从一开始就具备 AI 能力</span>
+            把教学、<wbr />培训、<wbr />教研和服务
+            <span>组织成可进化的 <wbr />AI 工作平台</span>
           </h1>
           <p>
-            通答以资料库、空间、智能体和场景模板为统一底座，把教学、教研、培训、工作坊和区域服务等业务组织成可体验、可复用、可持续进化的 AI 原生场景。
+            通答以资料库、空间、智能体、任务和数据画像为统一底座，帮助学校与区域把复杂教育业务变成可体验、可复用、可运营的数字化场景。
           </p>
           <div className="solution-hero-points">
-            <span>业务天然 AI 化</span>
-            <span>智能体+体验</span>
-            <span>场景持续复用</span>
+            <span>智能体驱动</span>
+            <span>空间承载业务</span>
+            <span>资源持续沉淀</span>
+            <span>过程数据闭环</span>
           </div>
           <div className="solution-home-hero-actions">
-            <a className="solution-home-primary" href="#showrooms">
-              进入解决方案
+            <a className="solution-home-primary" href="#solutions">
+              查看解决方案
               <ArrowRightOutlined />
             </a>
-            <a className="solution-home-secondary" href="#ai-native">
-              理解 AI 原生
-            </a>
+            <button type="button" className="solution-home-secondary" onClick={handleContact}>
+              预约演示
+            </button>
           </div>
         </div>
 
-        <div className="solution-hero-visual" aria-label="通答 AI 原生平台产品视觉">
+        <div className="solution-hero-visual" aria-label="通答产品工作台示意">
           <div className="solution-hero-console">
             <div className="solution-hero-console-head">
-              <span>Tongda AI Native Platform</span>
+              <span>Tongda AI Workspace</span>
               <i />
             </div>
             <div className="solution-hero-console-main">
               <div className="solution-hero-console-copy">
-                <strong>通答 AI 原生平台</strong>
-                <span>资料沉淀、空间承载、智能体驱动</span>
+                <strong>本周教育服务中枢</strong>
+                <span>AI 助教正在整理研修成果、推送课堂任务并更新教师画像。</span>
               </div>
               <img src={heroImage} alt="" />
             </div>
             <div className="solution-hero-console-grid">
-              {HERO_PLATFORM_MODULES.map((moduleName) => (
+              {HERO_WORKSPACE_ITEMS.map((moduleName) => (
                 <span key={moduleName}>
                   <CheckCircleOutlined />
                   {moduleName}
@@ -300,103 +327,30 @@ function SolutionShowroomPortal({ onOpenRoom }) {
         </div>
       </section>
 
-      <section className="solution-advantage-band" id="advantages" aria-label="服务优势">
-        {ADVANTAGE_ITEMS.map((item) => (
-          <article key={item.title} className="solution-advantage-card">
-            <span className="solution-advantage-icon">{item.icon}</span>
-            <strong>{item.title}</strong>
-            <p>{item.desc}</p>
-          </article>
-        ))}
-      </section>
-
-      <section className="solution-home-section solution-ai-native-section" id="ai-native">
-        <div className="solution-ai-native-panel">
-          <div className="solution-ai-native-copy">
-            <span>AI 原生理念</span>
-            <h2>AI 原生，不是把 AI 加到业务上，而是让业务从一开始就具备 AI 能力</h2>
-            <p>
-              通答把资料、空间、角色、流程、任务和智能体统一建模，让每个业务模块天然接入资料库、空间和智能体体系。无论是教学、教研、培训、干部工作坊，还是后续扩展的新业务，都可以在同一个底座上快速组合、持续进化。
-            </p>
-            <div className="solution-ai-native-tags">
-              <span>资料库</span>
-              <span>空间</span>
-              <span>智能体</span>
-              <span>场景模板</span>
-              <span>业务数据</span>
-            </div>
-          </div>
-          <div className="solution-ai-native-cards">
-            {AI_NATIVE_ITEMS.map((item) => (
-              <article key={item.title} className="solution-ai-native-card">
-                <span className="solution-ai-native-icon">{item.icon}</span>
-                <strong>{item.title}</strong>
-                <p>{item.desc}</p>
-              </article>
-            ))}
-          </div>
-          <div className="solution-ai-native-change">
-            <div className="solution-ai-native-change-head">
-              <span>带来的改变</span>
-              <strong>从“人找系统”到“目标牵引，智能体执行”</strong>
-            </div>
-            <div className="solution-ai-native-change-grid">
-              {AI_NATIVE_CHANGE_ITEMS.map((item) => (
-                <article key={item.title} className="solution-ai-native-change-card">
-                  <span className="solution-ai-native-change-title">{item.title}</span>
-                  <span className="solution-ai-native-change-row">
-                    <small>过去</small>
-                    <strong>{item.before}</strong>
-                  </span>
-                  <span className="solution-ai-native-change-row is-now">
-                    <small>现在</small>
-                    <strong>{item.after}</strong>
-                  </span>
-                </article>
-              ))}
-            </div>
-          </div>
-        </div>
+      <section className="solution-home-band" aria-label="通答平台关键词">
+        <span>AI 原生底座</span>
+        <span>教学空间</span>
+        <span>教师发展</span>
+        <span>智慧继教</span>
+        <span>区域治理</span>
+        <span>服务生态</span>
       </section>
 
       <section className="solution-home-section" id="products">
         <div className="solution-section-head">
           <div>
-            <span>产品与服务</span>
-            <h2>从平台底座到场景应用的能力组合</h2>
+            <span>产品矩阵</span>
+            <h2>从平台底座到场景应用，一套能力服务多类教育业务</h2>
           </div>
-          <p>在统一 AI 原生底座上组合平台、资源、智能体和服务，让客户快速看见方案构成和应用价值。</p>
+          <p>参考成熟协作平台官网的组织方式，通答官网不只展示单点功能，而是把核心产品、模块能力和业务场景放在同一个入口中说明清楚。</p>
         </div>
-        <div className="solution-feature-grid">
-          {FEATURE_ITEMS.map((item) => (
-            <article key={item.title} className="solution-feature-card">
-              <span className="solution-feature-icon">{item.icon}</span>
+        <div className="solution-product-grid">
+          {PRODUCT_ITEMS.map((item) => (
+            <article key={item.title} className="solution-product-card" style={{ '--card-accent': item.accent }}>
+              <span className="solution-product-icon">{item.icon}</span>
               <strong>{item.title}</strong>
               <p>{item.desc}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="solution-home-section" id="modules">
-        <div className="solution-section-head">
-          <div>
-            <span>核心模块</span>
-            <h2>可组合、可体验、可落地的模块矩阵</h2>
-          </div>
-          <p>围绕空间、知识、智能体、协作和实训，将复杂教育业务拆解为清晰的产品模块。</p>
-        </div>
-        <div className="solution-module-grid">
-          {MODULE_ITEMS.map((item) => (
-            <article
-              key={item.title}
-              className="solution-module-card"
-              style={{ '--solution-module-accent': item.accent }}
-            >
-              <span className="solution-module-icon">{item.icon}</span>
-              <strong>{item.title}</strong>
-              <p>{item.desc}</p>
-              <span className="solution-module-tags">
+              <span className="solution-product-tags">
                 {item.tags.map((tag) => (
                   <span key={tag}>{tag}</span>
                 ))}
@@ -406,25 +360,60 @@ function SolutionShowroomPortal({ onOpenRoom }) {
         </div>
       </section>
 
-      <section className="solution-home-section" id="showrooms">
+      <section className="solution-home-section solution-workspace-section" id="workspace">
+        <div className="solution-workspace-copy">
+          <span>AI 原生工作方式</span>
+          <h2>不是给旧系统加一个问答框，而是让业务从资料、空间到任务都能被 AI 理解</h2>
+          <p>
+            第一版通答页面已经覆盖“教、学、训、评”和角色场景。新版官网框架把它收束成更清晰的工作流：资料沉淀、场景生成、智能体协作、数据反馈。
+          </p>
+        </div>
+        <div className="solution-workspace-flow">
+          {WORKSPACE_STEPS.map((item, index) => (
+            <article key={item.title} className="solution-workspace-step">
+              <span className="solution-workspace-index">{String(index + 1).padStart(2, '0')}</span>
+              <span className="solution-workspace-icon">{item.icon}</span>
+              <strong>{item.title}</strong>
+              <p>{item.desc}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="solution-home-section" id="solutions">
         <div className="solution-section-head">
           <div>
-            <span>首发解决方案</span>
-            <h2>通答 AI 通识教学平台</h2>
+            <span>解决方案</span>
+            <h2>围绕学校、教师和区域的核心场景组织官网入口</h2>
           </div>
-          <p>以 AI 通识教学平台作为首发样板，完整呈现课程空间、资料沉淀、AI 助教、任务评价和成果归档的落地路径。</p>
+          <p>延续第一版通答官网里的“智慧教学、教师培训研修、教育监管”主线，同时连接当前项目里的示范空间。</p>
         </div>
-        <div className="showroom-portal-layout" aria-label="解决方案入口">
+        <div className="solution-scenario-grid">
+          {SOLUTION_ITEMS.map((item) => (
+            <article key={item.title} className="solution-scenario-card">
+              <span className="solution-scenario-icon">{item.icon}</span>
+              <strong>{item.title}</strong>
+              <p>{item.desc}</p>
+              <span className="solution-scenario-tags">
+                {item.metrics.map((metric) => (
+                  <span key={metric}>{metric}</span>
+                ))}
+              </span>
+            </article>
+          ))}
+        </div>
+
+        <div className="showroom-portal-layout" aria-label="示范空间入口">
           {featuredRoom ? (
             <button
               type="button"
               className="showroom-portal-featured"
               style={{ '--showroom-card-accent': featuredRoom.accent }}
-              onClick={() => onOpenRoom?.(featuredRoom)}
+              onClick={() => handleOpenRoom(featuredRoom)}
             >
               <span className="showroom-featured-main">
                 <span className="showroom-card-icon">{getPortalIcon(featuredRoom)}</span>
-                <span className="showroom-card-kind">首发上线</span>
+                <span className="showroom-card-kind">首发示范空间</span>
                 <span className="showroom-featured-title">{featuredRoom.solutionName}</span>
                 <span className="showroom-featured-desc">{featuredRoom.description}</span>
                 <span className="showroom-featured-tags">
@@ -448,41 +437,126 @@ function SolutionShowroomPortal({ onOpenRoom }) {
                   ))}
                 </span>
                 <span className="showroom-featured-action">
-                  查看解决方案
+                  查看示范空间
                   <ArrowRightOutlined />
                 </span>
               </span>
             </button>
           ) : null}
-          <div className="showroom-coming-soon">
-            <span className="showroom-coming-soon-icon">
-              <RocketOutlined />
-            </span>
-            <span className="showroom-coming-soon-copy">
-              <strong>更多解决方案待上线</strong>
-              <small>通答将围绕教学、教研、培训、组织服务和教师成长等场景持续沉淀解决方案，按业务成熟度逐步开放体验。</small>
-            </span>
+          <div className="showroom-portal-grid">
+            {secondaryRooms.map((room) => (
+              <button
+                key={room.id}
+                type="button"
+                className="showroom-portal-card"
+                style={{ '--showroom-card-accent': room.accent }}
+                onClick={() => handleOpenRoom(room)}
+              >
+                <span className="showroom-card-top">
+                  <span className="showroom-card-icon">{getPortalIcon(room)}</span>
+                  <span className="showroom-card-kind">{room.scenario}</span>
+                </span>
+                <span className="showroom-card-body">
+                  <strong>{room.solutionName}</strong>
+                  <small>{room.description}</small>
+                </span>
+                <span className="showroom-card-action">
+                  进入体验
+                  <ArrowRightOutlined />
+                </span>
+              </button>
+            ))}
           </div>
         </div>
       </section>
 
-      <section className="solution-home-section" id="internal">
+      <section className="solution-home-section solution-value-section" id="customers">
         <div className="solution-section-head">
           <div>
-            <span>生态协同</span>
-            <h2>通答交流：服务协同与伙伴生态</h2>
+            <span>客户价值</span>
+            <h2>把不同角色关心的问题放到同一个叙事里</h2>
           </div>
-          <p>面向服务团队与合作伙伴的协同空间，承载内容发布、项目协作和服务复盘。</p>
+          <p>官网需要让教师、学校和区域管理者快速判断“这和我有什么关系”，因此保留角色价值入口，而不是只堆功能清单。</p>
         </div>
+        <div className="solution-value-grid">
+          {VALUE_ITEMS.map((item) => (
+            <article key={item.title} className="solution-value-card">
+              <span>{item.value}</span>
+              <strong>{item.title}</strong>
+              <p>{item.desc}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="solution-home-section solution-security-section" id="security">
+        <div className="solution-section-head">
+          <div>
+            <span>安全与服务</span>
+            <h2>教育业务官网必须把可信交付说清楚</h2>
+          </div>
+          <p>面向学校与区域客户，安全合规、组织权限和服务陪跑是产品价值的一部分，应当在官网主链路中前置呈现。</p>
+        </div>
+        <div className="solution-security-grid">
+          {SECURITY_ITEMS.map((item) => (
+            <article key={item.title} className="solution-security-card">
+              <span className="solution-security-icon">{item.icon}</span>
+              <strong>{item.title}</strong>
+              <p>{item.desc}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="solution-home-section solution-resource-section" id="resources">
+        <div className="solution-section-head">
+          <div>
+            <span>资源中心</span>
+            <h2>用内容与演示把访问者带到下一步</h2>
+          </div>
+          <p>官网的最后一段承担转化作用：让客户获取资料、查看演示，或进入咨询。</p>
+        </div>
+        <div className="solution-resource-grid">
+          {RESOURCE_ITEMS.map((item) => (
+            <button key={item.title} type="button" className="solution-resource-card" onClick={handleContact}>
+              <span>{item.icon}</span>
+              <strong>{item.title}</strong>
+              <small>{item.desc}</small>
+              <i>
+                获取
+                <ArrowRightOutlined />
+              </i>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="solution-home-cta">
+        <div>
+          <span>准备建设 AI 原生教育业务平台？</span>
+          <h2>从一个示范空间开始，逐步沉淀学校与区域的 AI 能力。</h2>
+        </div>
+        <div className="solution-home-cta-actions">
+          <button type="button" className="solution-home-primary is-blue" onClick={handleContact}>
+            预约演示
+            <ArrowRightOutlined />
+          </button>
+          <a className="solution-home-secondary is-light" href="#products">
+            回看产品矩阵
+          </a>
+        </div>
+      </section>
+
+      <section className="solution-home-section" id="internal">
         <button
           type="button"
           className="guoren-internal-entry"
           style={{ '--showroom-card-accent': GUOREN_INTERNAL_PORTAL_ENTRY.accent }}
-          onClick={() => onOpenRoom?.(GUOREN_INTERNAL_PORTAL_ENTRY)}
+          onClick={() => handleOpenRoom(GUOREN_INTERNAL_PORTAL_ENTRY)}
         >
           <span className="guoren-internal-icon">{getPortalIcon(GUOREN_INTERNAL_PORTAL_ENTRY)}</span>
           <span className="guoren-internal-copy">
-            <span>服务协同空间</span>
+            <span>生态协同</span>
             <strong>{GUOREN_INTERNAL_PORTAL_ENTRY.solutionName}</strong>
             <small>{GUOREN_INTERNAL_PORTAL_ENTRY.description}</small>
           </span>
@@ -494,8 +568,8 @@ function SolutionShowroomPortal({ onOpenRoom }) {
       </section>
 
       <footer className="solution-home-footer">
-        <span>国人通教育 · AI 原生解决方案</span>
-        <span>以平台能力连接教学、培训、服务与协同场景</span>
+        <span>国人通教育 · 通答 AI 原生教育平台</span>
+        <span>产品 · 解决方案 · 服务支持 · 生态协同</span>
       </footer>
     </main>
   );
