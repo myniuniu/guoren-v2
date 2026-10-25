@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Card, Dropdown, Empty, Input, Modal, Pagination, Segmented, Tag, message } from 'antd';
 import {
   AppstoreOutlined,
-  AppstoreFilled,
   ArrowUpOutlined,
   AudioOutlined,
   BarChartOutlined,
@@ -50,6 +49,7 @@ import {
   RobotOutlined,
   RobotFilled,
   SearchOutlined,
+  SaveOutlined,
   ShareAltOutlined,
   StarOutlined,
   TeamOutlined,
@@ -57,10 +57,19 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import TopicDetail from '../TopicDetail';
+import MessagesModule from '../messages/MessagesModule';
+import { getInitialMessagesUnreadCount } from '../messages/messageUnread';
 import ResourceLibrary from '../resourceLib/ResourceLibrary';
+import { addItem as addResourceLibraryItem, loadResourceLib } from '../resourceLib/resourceLibStore';
 import { getSceneTypeLabel, getSceneVisibilityLabel, normalizeTopicCardConfig, sceneApi } from '../scene/api';
 import SceneCreateModal from '../scene/SceneCreateModal';
 import { getSceneThemeCoverStyle } from '../scene/themeCovers';
+import {
+  addResource as addSpaceResource,
+  getCurrentVersion as getCurrentSpaceVersion,
+  loadFromStorage as loadSpaceVersionData,
+  saveToStorage as saveSpaceVersionData,
+} from '../versionStore';
 import tongdaLogo from '../assets/tongda-logo.jpg';
 import academyCreationBanner from '../assets/academy/creation-banner.jpg';
 import academyReplayAnimation from '../assets/academy/replay-animation.png';
@@ -158,8 +167,24 @@ function persistTdWorkSpaceRailWidth(width) {
 
 const NAV_ITEMS = [
   { key: 'home', label: '首页', icon: <HomeOutlined />, activeIcon: <HomeFilled /> },
-  { key: 'resource-market', label: '资源广场', icon: <CloudServerOutlined />, activeIcon: <DatabaseFilled /> },
-  { key: 'app-market', label: '应用广场', icon: <AppstoreOutlined />, activeIcon: <AppstoreFilled /> },
+  { key: 'messages', label: '消息', icon: <MessageOutlined />, activeIcon: <MessageOutlined /> },
+  {
+    key: 'knowledge-community',
+    label: '知识社区',
+    icon: <DatabaseOutlined />,
+    activeIcon: <DatabaseFilled />,
+    children: [
+      { key: 'resource-market', label: '资源广场' },
+      { key: 'app-market', label: '应用广场' },
+      {
+        key: 'intelligence-hub',
+        label: '智能体 · 技能 · 连接器',
+        navKey: 'skills',
+        skillView: 'market',
+        activeSkillViews: ['market', 'partners', 'skills', 'mine'],
+      },
+    ],
+  },
   { key: 'academy', label: '通答学院', icon: <BookOutlined />, activeIcon: <BookFilled /> },
   { key: 'expert-studios', label: '专家工作室', icon: <TeamOutlined />, activeIcon: <TeamOutlined /> },
   { key: 'space', label: '空间', icon: <CloudOutlined />, activeIcon: <CloudFilled /> },
@@ -167,6 +192,7 @@ const NAV_ITEMS = [
   { key: 'skills', label: '智能体 · 技能 · 连接器', icon: <RobotOutlined />, activeIcon: <RobotFilled /> },
   { key: 'cloud', label: '资料库', icon: <FolderOutlined />, activeIcon: <FolderFilled /> },
 ];
+const HIDDEN_SIDEBAR_NAV_KEYS = new Set(['skills']);
 
 const PINNED_ITEMS = [
   { key: 'main-dialog', label: '主对话', tone: 'blue', icon: <MessageOutlined /> },
@@ -175,6 +201,7 @@ const PINNED_ITEMS = [
 const SIDEBAR_SPACE_PRIORITY = [
   'scene_online_academy_training_seed_1',
   'scene_online_academy_training_seed_4',
+  'scene_online_academy_training_seed_9',
   'scene_supervision_seed_1',
   'scene_course_studio_seed_1',
 ];
@@ -1264,9 +1291,122 @@ function ConnectorLogo({ item }) {
   );
 }
 
+function MarketplaceSaveButton({ item, kind, onSave }) {
+  if (!onSave) return null;
+  const contentLabel = kind === 'app' ? '应用' : '资源';
+  const menu = {
+    items: [
+      { key: 'library', icon: <FolderOutlined />, label: '资料库' },
+      { key: 'space', icon: <CloudOutlined />, label: '空间' },
+    ],
+    onClick: ({ key, domEvent }) => {
+      domEvent?.stopPropagation();
+      onSave(item, key);
+    },
+  };
+
+  return (
+    <Dropdown menu={menu} trigger={['click']} placement="bottomRight">
+      <button
+        type="button"
+        className="td-work-market-save-btn"
+        aria-label={`将${contentLabel}《${item.title}》另存到`}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <SaveOutlined />
+        <span>另存到</span>
+        <DownOutlined />
+      </button>
+    </Dropdown>
+  );
+}
+
+function saveMarketplaceItemToLibrary(item, kind) {
+  const isApp = kind === 'app';
+  const libraryData = loadResourceLib();
+  addResourceLibraryItem(libraryData, 'personal', {
+    name: item.title,
+    fileType: isApp ? 'other' : 'image',
+    resourceKind: isApp ? 'marketplaceApp' : 'marketplaceResource',
+    contentText: `${item.title}\n来源：${item.owner}\n分类：${item.category}`,
+    comment: `从${isApp ? '应用广场' : '资源广场'}另存`,
+    previewUrl: item.cover,
+    thumbnail: item.cover,
+    sourceOwner: item.owner,
+    sourceCategory: item.category,
+  });
+}
+
+function saveMarketplaceItemToSpace(item, kind, scene) {
+  const versionData = loadSpaceVersionData({
+    scopeKey: scene.storageScopeKey,
+    initialData: () => sceneApi.buildSceneInitialVersionData(scene),
+  });
+  const currentVersion = getCurrentSpaceVersion(versionData);
+  if (!currentVersion) throw new Error('目标空间暂无可用内容');
+
+  const nextData = addSpaceResource(versionData, currentVersion.id, {
+    name: item.title,
+    type: kind === 'app' ? 'link' : 'image',
+    isFolder: false,
+    parentKey: null,
+    owner: item.owner,
+    lastEdit: new Date().toLocaleString('zh-CN', { hour12: false }),
+    meta: {
+      summary: `从${kind === 'app' ? '应用广场' : '资源广场'}另存 · ${item.category}`,
+      cover: item.cover,
+      sourceOwner: item.owner,
+    },
+  }, scene.templateSnapshot?.versioning);
+  if (nextData?.error) throw new Error(nextData.error);
+  saveSpaceVersionData(nextData);
+}
+
+function MarketplaceSpaceSaveModal({ item, kind, spaces, open, onCancel, onSelect }) {
+  return (
+    <Modal
+      open={open}
+      title={item ? `将《${item.title}》另存到空间` : '另存到空间'}
+      footer={null}
+      width={520}
+      centered
+      destroyOnHidden
+      onCancel={onCancel}
+    >
+      <div className="td-work-market-space-picker">
+        {spaces.length ? spaces.map((scene) => (
+          <button key={scene.id} type="button" onClick={() => onSelect(scene)}>
+            <span><CloudOutlined /></span>
+            <span>
+              <strong>{scene.name}</strong>
+              <small>{scene.sceneGroupName || '默认空间'} · {scene.templateName}</small>
+            </span>
+            <em>保存{kind === 'app' ? '应用' : '资源'}</em>
+          </button>
+        )) : (
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无可用空间" />
+        )}
+      </div>
+    </Modal>
+  );
+}
+
 function AppMarketplaceCard({ item, onOpen }) {
   return (
-    <button type="button" className="td-work-app-market-card" onClick={() => onOpen(item)} aria-label={`打开${item.title}`}>
+    <article
+      className="td-work-app-market-card"
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpen(item)}
+      onKeyDown={(event) => {
+        if (event.target !== event.currentTarget) return;
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onOpen(item);
+        }
+      }}
+      aria-label={`打开${item.title}`}
+    >
       <span className="td-work-app-market-cover">
         <img src={item.cover} alt="" />
         {item.badge ? (
@@ -1289,13 +1429,26 @@ function AppMarketplaceCard({ item, onOpen }) {
           </span>
         </span>
       </span>
-    </button>
+    </article>
   );
 }
 
 function ResourceMarketplaceCard({ item, onOpen }) {
   return (
-    <button type="button" className="td-work-resource-market-card" onClick={() => onOpen(item)} aria-label={`打开${item.title}`}>
+    <article
+      className="td-work-resource-market-card"
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpen(item)}
+      onKeyDown={(event) => {
+        if (event.target !== event.currentTarget) return;
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onOpen(item);
+        }
+      }}
+      aria-label={`打开${item.title}`}
+    >
       <span className="td-work-resource-market-cover">
         <img src={item.cover} alt="" />
         {item.badge ? (
@@ -1315,11 +1468,11 @@ function ResourceMarketplaceCard({ item, onOpen }) {
           <span className="td-work-app-market-likes"><StarOutlined /> {item.likes}</span>
         </span>
       </span>
-    </button>
+    </article>
   );
 }
 
-function ResourceDetailPage({ item, recommendations, onBack, onOpenResource, onCreate, kind = 'resource' }) {
+function ResourceDetailPage({ item, recommendations, onBack, onOpenResource, onCreate, onSave, kind = 'resource' }) {
   const [liked, setLiked] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [searchText, setSearchText] = useState('');
@@ -1399,6 +1552,7 @@ function ResourceDetailPage({ item, recommendations, onBack, onOpenResource, onC
               <button type="button" onClick={() => message.success('资源链接已复制')}><ShareAltOutlined /> 分享</button>
             </div>
             <div className="td-work-resource-detail-commands">
+              <MarketplaceSaveButton item={item} kind={kind} onSave={onSave} />
               <button type="button" onClick={() => onCreate(`改编《${item.title}》，保留核心教学目标并适配我的课堂`)}><EditOutlined /> 一键改编</button>
               {isApp ? (
                 <button type="button" className="is-primary" onClick={() => message.success('应用体验已打开')}>立即体验 <RightOutlined /></button>
@@ -1433,7 +1587,7 @@ function ResourceDetailPage({ item, recommendations, onBack, onOpenResource, onC
   );
 }
 
-function MarketplacePage({ type, onCreate }) {
+function MarketplacePage({ type, onCreate, spaces = [] }) {
   const isResource = type === 'resource';
   const categories = isResource ? RESOURCE_MARKET_CATEGORIES : APP_MARKET_CATEGORIES;
   const items = isResource ? RESOURCE_MARKET_ITEMS : APP_MARKET_ITEMS;
@@ -1441,7 +1595,43 @@ function MarketplacePage({ type, onCreate }) {
   const [searchText, setSearchText] = useState('');
   const [appPrompt, setAppPrompt] = useState('');
   const [activeItem, setActiveItem] = useState(null);
+  const [spaceSaveItem, setSpaceSaveItem] = useState(null);
   const categoryScrollRef = useRef(null);
+
+  const handleSave = (item, target) => {
+    if (target === 'space') {
+      setSpaceSaveItem(item);
+      return;
+    }
+    try {
+      saveMarketplaceItemToLibrary(item, isResource ? 'resource' : 'app');
+      message.success(`《${item.title}》已另存到资料库`);
+    } catch {
+      message.error('另存到资料库失败，请稍后重试');
+    }
+  };
+
+  const handleSaveToSpace = (scene) => {
+    if (!spaceSaveItem) return;
+    try {
+      saveMarketplaceItemToSpace(spaceSaveItem, isResource ? 'resource' : 'app', scene);
+      message.success(`《${spaceSaveItem.title}》已另存到“${scene.name}”`);
+      setSpaceSaveItem(null);
+    } catch (error) {
+      message.error(error?.message || '另存到空间失败，请稍后重试');
+    }
+  };
+
+  const spaceSaveModal = (
+    <MarketplaceSpaceSaveModal
+      item={spaceSaveItem}
+      kind={isResource ? 'resource' : 'app'}
+      spaces={spaces}
+      open={!!spaceSaveItem}
+      onCancel={() => setSpaceSaveItem(null)}
+      onSelect={handleSaveToSpace}
+    />
+  );
 
   const visibleItems = useMemo(() => {
     const keyword = searchText.trim().toLowerCase();
@@ -1454,14 +1644,18 @@ function MarketplacePage({ type, onCreate }) {
 
   if (activeItem) {
     return (
-      <ResourceDetailPage
-        item={activeItem}
-        recommendations={items.filter((item) => item.key !== activeItem.key)}
-        onBack={() => setActiveItem(null)}
-        onOpenResource={setActiveItem}
-        onCreate={onCreate}
-        kind={isResource ? 'resource' : 'app'}
-      />
+      <>
+        <ResourceDetailPage
+          item={activeItem}
+          recommendations={items.filter((item) => item.key !== activeItem.key)}
+          onBack={() => setActiveItem(null)}
+          onOpenResource={setActiveItem}
+          onCreate={onCreate}
+          onSave={handleSave}
+          kind={isResource ? 'resource' : 'app'}
+        />
+        {spaceSaveModal}
+      </>
     );
   }
 
@@ -1472,6 +1666,7 @@ function MarketplacePage({ type, onCreate }) {
     const submitAppPrompt = () => onCreate?.(appPrompt.trim() || samplePrompt);
 
     return (
+      <>
       <section className="td-work-market-page td-work-app-market-page" aria-label="应用广场">
         <div className="td-work-app-market-shell">
           <header className="td-work-app-market-heading">
@@ -1527,6 +1722,8 @@ function MarketplacePage({ type, onCreate }) {
           <button type="button" className="td-work-app-market-send" title="开始创建" aria-label="开始创建" onClick={submitAppPrompt}><ArrowUpOutlined /></button>
         </div>
       </section>
+      {spaceSaveModal}
+      </>
     );
   }
 
@@ -1536,6 +1733,7 @@ function MarketplacePage({ type, onCreate }) {
   const submitResourcePrompt = () => onCreate?.(appPrompt.trim() || resourceSamplePrompt);
 
   return (
+    <>
     <section className="td-work-market-page td-work-resource-market-page" aria-label="资源广场">
       <div className="td-work-resource-market-shell">
         <header className="td-work-resource-market-heading">
@@ -1602,6 +1800,8 @@ function MarketplacePage({ type, onCreate }) {
         <button type="button" className="td-work-resource-market-send" title="开始创建" aria-label="开始创建" onClick={submitResourcePrompt}><ArrowUpOutlined /></button>
       </div>
     </section>
+    {spaceSaveModal}
+    </>
   );
 }
 
@@ -2205,9 +2405,19 @@ function AcademyCourseDetailPage({ course, relatedCourses, onBack, onSelectCours
 
   return (
     <div className="td-work-academy-detail">
-      <button type="button" className="td-work-academy-detail-back" onClick={onBack}>
-        <LeftOutlined /> 返回
-      </button>
+      <div className="td-work-academy-detail-toolbar">
+        <button type="button" className="td-work-academy-detail-back" onClick={onBack}>
+          <LeftOutlined /> 返回
+        </button>
+        <button
+          type="button"
+          className="td-work-academy-training-btn"
+          onClick={() => onToast('已进入课程实训')}
+        >
+          <CaretRightFilled />
+          去实训
+        </button>
+      </div>
 
       <section className={`td-work-academy-player ${playing ? 'is-playing' : ''}`} aria-label={`${course.title}课程播放区`}>
         <img src={course.cover} alt={course.title} />
@@ -2373,14 +2583,18 @@ function TongdaAcademyPage({ onToast }) {
           <h2 id="academy-replay-title">直播回放</h2>
           <div className="td-work-academy-content-grid">
             {(showMoreReplays ? ACADEMY_REPLAYS : ACADEMY_REPLAYS.slice(0, 2)).map((item) => (
-              <button key={item.key} type="button" className="td-work-academy-media-card" onClick={() => openDetail(item, 'replay')}>
+              <article key={item.key} className="td-work-academy-media-card">
+                <button type="button" className="td-work-academy-card-open" aria-label={`查看${item.title}详情`} onClick={() => openDetail(item, 'replay')} />
                 <span className="td-work-academy-media">
                   <img src={item.cover} alt="" />
                   <em>{item.duration}</em>
                 </span>
                 <strong>{item.title}</strong>
                 <small>{item.date}</small>
-              </button>
+                <button type="button" className="td-work-academy-card-training" onClick={() => onToast(`已进入${item.title}实训`)}>
+                  <CaretRightFilled /> 去实训
+                </button>
+              </article>
             ))}
           </div>
           <button type="button" className="td-work-academy-expand" onClick={() => setShowMoreReplays((value) => !value)}>
@@ -2410,13 +2624,17 @@ function TongdaAcademyPage({ onToast }) {
           </div>
           <div className="td-work-academy-content-grid">
             {visibleGuides.map((item) => (
-              <button key={item.key} type="button" className="td-work-academy-media-card" onClick={() => openDetail(item, 'guide')}>
+              <article key={item.key} className="td-work-academy-media-card">
+                <button type="button" className="td-work-academy-card-open" aria-label={`查看${item.title}详情`} onClick={() => openDetail(item, 'guide')} />
                 <span className="td-work-academy-media">
                   <img src={item.cover} alt="" />
                 </span>
                 <strong>{item.title}</strong>
                 <small>{item.owner}<span>{item.category}</span></small>
-              </button>
+                <button type="button" className="td-work-academy-card-training" onClick={() => onToast(`已进入${item.title}实训`)}>
+                  <CaretRightFilled /> 去实训
+                </button>
+              </article>
             ))}
           </div>
           {ACADEMY_GUIDES.filter((item) => guideTab === '全部' || item.category === guideTab).length > 2 && (
@@ -2466,14 +2684,18 @@ function TongdaAcademyPage({ onToast }) {
           {visibleTips.length > 0 ? (
             <div className="td-work-academy-content-grid">
               {visibleTips.map((item) => (
-                <button key={item.key} type="button" className="td-work-academy-media-card" onClick={() => openDetail(item, 'tutorial')}>
+                <article key={item.key} className="td-work-academy-media-card">
+                  <button type="button" className="td-work-academy-card-open" aria-label={`查看${item.title}详情`} onClick={() => openDetail(item, 'tutorial')} />
                   <span className="td-work-academy-media">
                     <img src={item.cover} alt="" />
                     <em>{item.duration}</em>
                   </span>
                   <strong>{item.title}</strong>
                   <small>通答老师<span>{item.feature}</span></small>
-                </button>
+                  <button type="button" className="td-work-academy-card-training" onClick={() => onToast(`已进入${item.title}实训`)}>
+                    <CaretRightFilled /> 去实训
+                  </button>
+                </article>
               ))}
             </div>
           ) : (
@@ -2572,42 +2794,139 @@ function SkillsConnectorsPage({
   );
 }
 
+function getSkillMarketIcon(item) {
+  const identity = `${item.key} ${item.name}`.toLowerCase();
+  if (/knowledge|graph|data|stats|quota|数据|知识/.test(identity)) return <DatabaseOutlined />;
+  if (/academy|course|classroom|seminar|课程|课堂|学院/.test(identity)) return <BookOutlined />;
+  if (/resource|document|archive|file|资源|文档|档案/.test(identity)) return <FolderOutlined />;
+  if (/teacher|portrait|user|role|tenant|教师|画像|用户|组织/.test(identity)) return <UserOutlined />;
+  if (/evaluation|supervision|inspection|quality|evidence|评价|督导|质检|证据/.test(identity)) return <CheckCircleOutlined />;
+  if (/message|notification|broadcast|消息|通知/.test(identity)) return <MessageOutlined />;
+  if (/calendar|task|workflow|schedule|任务|流程|日程/.test(identity)) return <ClockCircleOutlined />;
+  if (/integration|link|connector|对接|连接/.test(identity)) return <LinkOutlined />;
+  if (/research|search|科研|检索/.test(identity)) return <SearchOutlined />;
+  if (/page|designer|prototype|scene|workspace|workbench|页面|场景|工作台/.test(identity)) return <AppstoreOutlined />;
+  if (/certificate|output|result|证书|成果/.test(identity)) return <FileTextOutlined />;
+  return <RobotOutlined />;
+}
+
+function SkillMarketIcon({ item }) {
+  return (
+    <span
+      className={`td-work-connector-logo td-work-skill-market-icon td-work-connector-logo-${item.tone}`}
+      aria-hidden="true"
+    >
+      {getSkillMarketIcon(item)}
+    </span>
+  );
+}
+
 function SkillCataloguePage({
   searchText,
   skills,
   onOpenSkill,
 }) {
+  const [catalogMode, setCatalogMode] = useState('推荐');
+  const [activeCategory, setActiveCategory] = useState('精选');
+  const [featuredOffset, setFeaturedOffset] = useState(0);
   const normalizedSearch = searchText.trim().toLowerCase();
   const visibleItems = skills.filter((item) => (
     !normalizedSearch || `${item.name} ${item.desc} ${item.key}`.toLowerCase().includes(normalizedSearch)
   ));
+  const featuredItems = visibleItems.length
+    ? Array.from({ length: Math.min(3, visibleItems.length) }, (_, index) => (
+      visibleItems[(featuredOffset + index) % visibleItems.length]
+    ))
+    : [];
+
+  const renderSkillCard = (item, featured = false) => (
+    <article
+      key={`${featured ? 'featured-' : ''}${item.key}`}
+      className={`td-work-connector-card td-work-skill-market-card ${featured ? 'is-featured' : ''}`}
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpenSkill(item)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onOpenSkill(item);
+        }
+      }}
+    >
+      <SkillMarketIcon item={item} />
+      <div className="td-work-connector-copy">
+        <div className="td-work-connector-name-row">
+          <strong>{item.name}</strong>
+          <span>技能</span>
+        </div>
+        <p>{item.desc}</p>
+      </div>
+      <button
+        type="button"
+        className="td-work-connector-add"
+        title={`添加${item.name}`}
+        aria-label={`添加${item.name}`}
+        onClick={(event) => {
+          event.stopPropagation();
+          onOpenSkill(item);
+        }}
+      >
+        <PlusOutlined />
+      </button>
+    </article>
+  );
 
   return (
-    <section className="td-work-skill-page" aria-label="技能">
-      <div className="td-work-special-title">推荐技能</div>
+    <section className="td-work-skill-page td-work-skill-market-page" aria-label="技能">
+      <div className="td-work-skill-market-featured-head">
+        <strong>精选技能</strong>
+        <button
+          type="button"
+          onClick={() => setFeaturedOffset((current) => (
+            visibleItems.length ? (current + 3) % visibleItems.length : 0
+          ))}
+        >
+          <ReloadOutlined />
+          换一批
+        </button>
+      </div>
+
+      <div className="td-work-skill-market-featured-grid" aria-label="精选技能">
+        {featuredItems.map((item) => renderSkillCard(item, true))}
+      </div>
+
+      <div className="td-work-skill-market-viewbar">
+        <div role="tablist" aria-label="技能展示方式">
+          {['推荐', '套件'].map((item) => (
+            <button
+              key={item}
+              type="button"
+              role="tab"
+              aria-selected={catalogMode === item}
+              className={catalogMode === item ? 'is-active' : ''}
+              onClick={() => setCatalogMode(item)}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="td-work-skill-market-categories" aria-label="技能分类">
+        {SKILL_CATEGORIES.map((item) => (
+          <button
+            key={item}
+            type="button"
+            className={activeCategory === item ? 'is-active' : ''}
+            onClick={() => setActiveCategory(item)}
+          >
+            {item}
+          </button>
+        ))}
+      </div>
 
       <div className="td-work-connector-grid td-work-skill-catalog-grid" aria-label="技能列表">
-        {visibleItems.map((item) => (
-          <article key={item.key} className="td-work-connector-card">
-            <ConnectorLogo item={item} />
-            <div className="td-work-connector-copy">
-              <div className="td-work-connector-name-row">
-                <strong>{item.name}</strong>
-                <span>技能</span>
-              </div>
-              <p>{item.desc}</p>
-            </div>
-            <button
-              type="button"
-              className="td-work-connector-add"
-              title={`添加${item.name}`}
-              aria-label={`添加${item.name}`}
-              onClick={() => onOpenSkill(item)}
-            >
-              <PlusOutlined />
-            </button>
-          </article>
-        ))}
+        {visibleItems.map((item) => renderSkillCard(item))}
       </div>
 
       {visibleItems.length === 0 ? (
@@ -2619,23 +2938,37 @@ function SkillCataloguePage({
   );
 }
 
+function getPartnerMarketIcon(item) {
+  const icons = {
+    '组织培训': <TeamOutlined />,
+    '教学备课': <BookOutlined />,
+    '教研培训': <ProjectOutlined />,
+    '学员管理': <UserOutlined />,
+    '资源内容': <FolderOutlined />,
+    '测评评价': <CheckCircleOutlined />,
+    '办公提效': <AppstoreOutlined />,
+    '数据分析': <BarChartOutlined />,
+    '学习教育': <BookOutlined />,
+    '家校沟通': <MessageOutlined />,
+    '课题科研': <SearchOutlined />,
+    '学校管理': <HomeOutlined />,
+    '继续教育': <ClockCircleOutlined />,
+  };
+  return icons[item.category] || <RobotOutlined />;
+}
+
 function PartnerMarketAvatar({ item, index }) {
   const avatar = PARTNER_MARKET_AVATARS[index % PARTNER_MARKET_AVATARS.length];
   return (
     <span
-      className={`td-work-partner-market-avatar is-${item.tone} is-${avatar.style}`}
+      className={`td-work-partner-market-avatar is-${item.tone}`}
       style={{
         '--avatar-bg': avatar.bg,
-        '--avatar-skin': avatar.skin,
-        '--avatar-hair': avatar.hair,
-        '--avatar-shirt': avatar.shirt,
+        '--avatar-accent': avatar.shirt,
       }}
       aria-hidden="true"
     >
-      <i className="td-work-avatar-neck" />
-      <i className="td-work-avatar-shirt" />
-      <i className="td-work-avatar-hair" />
-      <i className="td-work-avatar-face" />
+      {getPartnerMarketIcon(item)}
     </span>
   );
 }
@@ -2646,6 +2979,7 @@ function PartnerMarketPage({
   onCategoryChange,
   onAddPartner,
 }) {
+  const [sortMode, setSortMode] = useState('综合');
   const normalizedSearch = searchText.trim().toLowerCase();
   const visibleItems = PARTNER_MARKET_ITEMS.filter((item) => {
     const matchesCategory = activeCategory === '全部' || item.category === activeCategory;
@@ -2656,6 +2990,19 @@ function PartnerMarketPage({
 
   return (
     <section className="td-work-partner-market-page" aria-label="智能体小队">
+      <div className="td-work-partner-market-sort" role="group" aria-label="智能体排序">
+        {['综合', '最热', '最新'].map((item) => (
+          <button
+            key={item}
+            type="button"
+            className={sortMode === item ? 'is-active' : ''}
+            onClick={() => setSortMode(item)}
+          >
+            {item}
+          </button>
+        ))}
+      </div>
+
       <div className="td-work-partner-market-categories" aria-label="智能体分类">
         {PARTNER_MARKET_CATEGORIES.map((category) => (
           <button
@@ -2671,7 +3018,19 @@ function PartnerMarketPage({
 
       <div className="td-work-partner-market-grid" aria-label="智能体列表">
         {visibleItems.map((item, index) => (
-          <article key={item.key} className={`td-work-partner-market-card ${index === 0 ? 'is-featured' : ''}`}>
+          <article
+            key={item.key}
+            className="td-work-partner-market-card"
+            role="button"
+            tabIndex={0}
+            onClick={() => onAddPartner(item)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                onAddPartner(item);
+              }
+            }}
+          >
             <PartnerMarketAvatar item={item} index={index} />
             <div className="td-work-partner-market-copy">
               <strong>{item.name}</strong>
@@ -2687,7 +3046,10 @@ function PartnerMarketPage({
               className="td-work-partner-market-add"
               title={`添加${item.name}`}
               aria-label={`添加${item.name}`}
-              onClick={() => onAddPartner(item)}
+              onClick={(event) => {
+                event.stopPropagation();
+                onAddPartner(item);
+              }}
             >
               {item.key === 'growth-planner' ? <MessageOutlined /> : <PlusOutlined />}
             </button>
@@ -4875,7 +5237,7 @@ function AiSpaceCard({ scene, onOpen, onEdit, onDelete, onToggleShortcut }) {
             <span>{`${memberCount} 名成员`}</span>
           ) : null}
         </div>
-        {roleList.length > 0 ? (
+        {topicCardConfig.showRoles && roleList.length > 0 ? (
           <div className="scene-role-list">
             {roleList.map((role) => (
               <span key={role.id} className="scene-role-pill">{role.name}</span>
@@ -5403,6 +5765,7 @@ export default function TdWorkModule({
   onAccountMenuOpenChange,
 }) {
   const [activeNav, setActiveNav] = useState('home');
+  const [messageUnreadCount, setMessageUnreadCount] = useState(getInitialMessagesUnreadCount);
   const [homeSessionKey, setHomeSessionKey] = useState(0);
   const [activeSideItem, setActiveSideItem] = useState('');
   const [prompt, setPrompt] = useState('');
@@ -5620,7 +5983,12 @@ export default function TdWorkModule({
       currentGroup.spaces.push(scene);
       groupMap.set(groupName, currentGroup);
     });
-    return Array.from(groupMap.values());
+    return Array.from(groupMap.values()).sort((left, right) => {
+      const leftIsAcademy = ['通答学院', '通达学院'].includes(left.name);
+      const rightIsAcademy = ['通答学院', '通达学院'].includes(right.name);
+      if (leftIsAcademy === rightIsAcademy) return 0;
+      return leftIsAcademy ? -1 : 1;
+    });
   }, []);
 
   const spaceMenuNavigationGroups = useMemo(
@@ -5965,9 +6333,12 @@ export default function TdWorkModule({
     customConnectorForm.name.trim() && customConnectorForm.url.trim(),
   );
 
+  const activeNavItem = NAV_ITEMS
+    .flatMap((item) => [item, ...(item.children || [])])
+    .find((item) => item.key === activeNav);
   const title = activeNav === 'new-task'
     ? (workContentTab === 'code-dev' ? '今天要开发什么？' : '今天有什么工作要处理？')
-    : `要处理哪些${NAV_ITEMS.find((item) => item.key === activeNav)?.label || '工作'}？`;
+    : `要处理哪些${activeNavItem?.label || '工作'}？`;
   const activeSideLabel = useMemo(() => {
     const allSideItems = [...PINNED_ITEMS, ...sidebarSpaceItems, ...SPACE_CONVERSATION_ITEMS, ...RECENT_ITEMS];
     return allSideItems.find((item) => item.key === activeSideItem)?.label || '';
@@ -6428,7 +6799,7 @@ export default function TdWorkModule({
   ) : null;
   const hideSpaceListTopbar = activeNav === 'space' && !activeSpace && !sidebarCollapsed;
   const hideMarketplaceTopbar = ['home', 'resource-market', 'app-market', 'academy', 'expert-studios'].includes(activeNav);
-  const hideTopbar = hideSpaceListTopbar || hideMarketplaceTopbar;
+  const hideTopbar = hideSpaceListTopbar || hideMarketplaceTopbar || activeNav === 'messages';
 
   return (
     <div
@@ -6511,38 +6882,83 @@ export default function TdWorkModule({
         </button>
 
         <nav className="td-work-nav" aria-label="主导航">
-          {NAV_ITEMS.map((item) => (
-            <div key={item.key} className="td-work-nav-block">
-              <button
-                type="button"
-                className={`td-work-nav-item ${activeNav === item.key ? 'is-active' : ''}`}
-                onClick={() => {
-                  setActiveNav(item.key);
-                  setActiveSideItem('');
-                  setCreateMenuOpen(false);
-                  setPartnerPickerOpen(false);
-                  if (item.key === 'project') {
-                    setActiveProject(null);
-                  }
-                  if (item.key === 'space') {
-                    setActiveSpace(null);
-                    setSpaceSearch('');
-                    setSpaceMenuFilter(null);
-                    setSpaceOwnershipTab('created');
-                  }
-                  closeSidePanel(true);
-                  if (item.key === 'dialog') {
-                    setActivePartner(null);
-                    setPartnerView('workspace');
-                  }
-                }}
-                title={item.label}
-              >
-                <span className="td-work-nav-icon">{activeNav === item.key ? item.activeIcon : item.icon}</span>
-                <span className="td-work-nav-label">{item.label}</span>
-              </button>
-            </div>
-          ))}
+          {NAV_ITEMS.filter((item) => !HIDDEN_SIDEBAR_NAV_KEYS.has(item.key)).map((item) => {
+            const isChildActive = (child) => (
+              child.navKey
+                ? activeNav === child.navKey
+                  && (child.activeSkillViews?.includes(skillView) || child.skillView === skillView)
+                : activeNav === child.key
+            );
+            const childActive = item.children?.some(isChildActive);
+            const directItemActive = activeNav === item.key
+              && !(item.key === 'skills' && ['partners', 'skills'].includes(skillView));
+            const itemActive = directItemActive || childActive;
+            const selectNav = (key) => {
+              setActiveNav(key);
+              setActiveSideItem('');
+              setCreateMenuOpen(false);
+              setPartnerPickerOpen(false);
+              if (key === 'project') {
+                setActiveProject(null);
+              }
+              if (key === 'space') {
+                setActiveSpace(null);
+                setSpaceSearch('');
+                setSpaceMenuFilter(null);
+                setSpaceOwnershipTab('created');
+              }
+              closeSidePanel(true);
+              if (key === 'dialog') {
+                setActivePartner(null);
+                setPartnerView('workspace');
+              }
+            };
+
+            return (
+              <div key={item.key} className={`td-work-nav-block ${item.children ? 'has-children' : ''}`}>
+                <button
+                  type="button"
+                  className={`td-work-nav-item ${item.children ? 'is-parent' : ''} ${itemActive ? 'is-active' : ''}`}
+                  onClick={() => {
+                    if (item.key === 'skills') {
+                      handleSkillHubViewChange('market');
+                    }
+                    selectNav(item.children?.[0]?.key || item.key);
+                  }}
+                  title={item.label}
+                  aria-expanded={item.children ? true : undefined}
+                >
+                  <span className="td-work-nav-icon">{itemActive ? item.activeIcon : item.icon}</span>
+                  <span className="td-work-nav-label">{item.label}</span>
+                  {item.key === 'messages' && messageUnreadCount > 0 ? (
+                    <span className="td-work-nav-badge" aria-label={`${messageUnreadCount} 条未读消息`}>
+                      {messageUnreadCount > 99 ? '99+' : messageUnreadCount}
+                    </span>
+                  ) : null}
+                </button>
+                {item.children ? (
+                  <div className="td-work-nav-children" aria-label={`${item.label}目录`}>
+                    {item.children.map((child) => (
+                      <button
+                        key={child.key}
+                        type="button"
+                        className={`td-work-nav-subitem ${isChildActive(child) ? 'is-active' : ''}`}
+                        onClick={() => {
+                          if (child.skillView) {
+                            handleSkillHubViewChange(child.skillView);
+                          }
+                          selectNav(child.navKey || child.key);
+                        }}
+                        title={child.label}
+                      >
+                        {child.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
         </nav>
 
         <div className="td-work-sidebar-scroll">
@@ -6574,15 +6990,6 @@ export default function TdWorkModule({
             ) : (
               <div className="td-work-side-empty">空间加载中...</div>
             )}
-            <div className="td-work-side-subtitle">会话数据</div>
-            {SPACE_CONVERSATION_ITEMS.map((item) => (
-              <SmallItem
-                key={item.key}
-                item={item}
-                active={activeSideItem === item.key}
-                onClick={() => handleOpenSidebarSearchItem(item)}
-              />
-            ))}
           </SidebarSection>
 
           <SidebarSection title="最近">
@@ -6628,7 +7035,7 @@ export default function TdWorkModule({
         style={{ '--td-work-primary-size': `${sidePanelPrimaryRatio}%` }}
       >
         <section className="td-work-primary-pane" aria-label="主工作区">
-        <header className={`td-work-topbar ${hideTopbar ? 'is-hidden' : ''} ${activeNav === 'skills' ? 'is-skill-topbar' : ''} ${activeNav === 'skills' && skillView === 'mine' ? 'is-my-skill-topbar' : ''} ${activeNav === 'dialog' ? 'is-partner-topbar' : ''} ${activeNav === 'dialog' && activePartner ? 'is-partner-workspace-topbar' : ''} ${activeNav === 'dialog' && partnerView === 'manage' ? 'is-partner-manage-topbar' : ''} ${activeNav === 'scheduled' ? 'is-schedule-topbar' : ''} ${activeNav === 'project' ? 'is-project-topbar' : ''} ${activeNav === 'space' ? 'is-space-topbar' : ''} ${activeNav === 'space' && activeSpace ? 'is-space-detail-topbar' : ''} ${hideMarketplaceTopbar ? 'is-marketplace-topbar' : ''} ${activeNav === 'cloud' ? 'is-resource-library-topbar' : ''}`}>
+        <header className={`td-work-topbar ${hideTopbar ? 'is-hidden' : ''} ${activeNav === 'skills' ? 'is-skill-topbar' : ''} ${activeNav === 'skills' && skillView === 'partners' ? 'is-partner-market-topbar' : ''} ${activeNav === 'skills' && skillView === 'skills' ? 'is-skill-market-topbar' : ''} ${activeNav === 'skills' && skillView === 'mine' ? 'is-my-skill-topbar' : ''} ${activeNav === 'dialog' ? 'is-partner-topbar' : ''} ${activeNav === 'dialog' && activePartner ? 'is-partner-workspace-topbar' : ''} ${activeNav === 'dialog' && partnerView === 'manage' ? 'is-partner-manage-topbar' : ''} ${activeNav === 'scheduled' ? 'is-schedule-topbar' : ''} ${activeNav === 'project' ? 'is-project-topbar' : ''} ${activeNav === 'space' ? 'is-space-topbar' : ''} ${activeNav === 'space' && activeSpace ? 'is-space-detail-topbar' : ''} ${hideMarketplaceTopbar ? 'is-marketplace-topbar' : ''} ${activeNav === 'cloud' ? 'is-resource-library-topbar' : ''}`}>
           {activeNav === 'dialog' && partnerView === 'manage' ? (
             <>
               {topbarSidebarCollapsedTools}
@@ -6949,12 +7356,14 @@ export default function TdWorkModule({
             key="resource-market"
             type="resource"
             onCreate={handleCreateTaskFromHome}
+            spaces={spaceScenes}
           />
         ) : activeNav === 'app-market' ? (
           <MarketplacePage
             key="app-market"
             type="app"
             onCreate={handleCreateTaskFromHome}
+            spaces={spaceScenes}
           />
         ) : activeNav === 'project' ? (
           <ProjectsPage
@@ -7155,6 +7564,17 @@ export default function TdWorkModule({
               onCreatePartner={(label) => setToast(`已进入：${label}`)}
             />
           )
+        ) : activeNav === 'messages' ? (
+          <section className="td-work-messages-page" aria-label="消息">
+            <MessagesModule
+              onUnreadCountChange={setMessageUnreadCount}
+              onNavigateToResource={() => {
+                setActiveNav('cloud');
+                setActiveSideItem('');
+                closeSidePanel(true);
+              }}
+            />
+          </section>
         ) : activeNav === 'cloud' ? (
           <section className="td-work-resource-library-page" aria-label="资料库">
             <ResourceLibrary />

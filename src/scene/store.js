@@ -9,7 +9,7 @@ const SCENE_MENU_CATEGORY_STORAGE_KEY = 'gr.scene.menu-categories.v1';
 const SCENE_SYSTEM_MENU_SHORTCUT_STORAGE_KEY = 'gr.scene.system-menu-shortcuts.v1';
 const SCENE_SYSTEM_MENU_SHORTCUT_DEFAULT_SYNC_KEY = 'gr.scene.system-menu-shortcuts-default-sync.v1';
 const SEED_KEY = 'gr.scene.seeded.v1';
-const BUILT_IN_SYNC_KEY = 'gr.scene.builtin-sync.v18';
+const BUILT_IN_SYNC_KEY = 'gr.scene.builtin-sync.v23';
 const STORE_CHANGE_EVENT = 'gr:scene-store-change';
 const VERSION_STORAGE_KEY = 'guoren_version_data';
 const DEFAULT_SCENE_GROUP_NAME = '人工智能通识体系';
@@ -353,6 +353,7 @@ const DEFAULT_TOPIC_CARD_CONFIG = Object.freeze({
   size: 'MEDIUM',
   showSceneType: true,
   showMemberCount: true,
+  showRoles: true,
   showTitle: true,
   showTags: true,
   showCover: true,
@@ -1273,6 +1274,7 @@ export function normalizeTopicCardConfig(input = {}) {
       : DEFAULT_TOPIC_CARD_CONFIG.size,
     showSceneType: input?.showSceneType !== false,
     showMemberCount: input?.showMemberCount !== false,
+    showRoles: input?.showRoles !== false,
     showTitle: input?.showTitle !== false,
     showTags: input?.showTags !== false,
     showCover: input?.showCover !== false,
@@ -1638,6 +1640,9 @@ function normalizeTemplate(input = {}) {
     templateCode: trimToNull(input.templateCode) || `TPL-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
     name: trimToNull(input.name) || '未命名场景模板',
     sceneType,
+    trainingMode: sceneType === 'TRAINING'
+      ? (input.trainingMode === 'SELF_PACED' ? 'SELF_PACED' : 'ORGANIZED')
+      : null,
     statusPresetSceneType,
     defaultMenuKey: trimToNull(input.defaultMenuKey) || defaultMenuKeyByType(sceneType),
     description: trimToNull(input.description) || '',
@@ -2222,6 +2227,116 @@ function buildPresetTemplates() {
       },
     },
     {
+      id: 'tpl_ai_literacy_self_paced_builtin',
+      templateCode: 'TPL-AI-LITERACY-SELF-PACED',
+      name: '人工智能素养自主培训',
+      sceneType: 'TRAINING',
+      trainingMode: 'SELF_PACED',
+      defaultMenuKey: 'online-academy-training',
+      description: '面向教师个人自主学习的人工智能素养培训空间，不包含组织报名、班级运营、成员管理和多版本发布流程。',
+      builtIn: true,
+      theme: {
+        badgeText: '自主培训',
+        emoji: '🤖',
+        coverSource: 'PRESET',
+        coverPresetId: 'abstract_blue_wave',
+        coverStart: '#2563eb',
+        coverEnd: '#22c55e',
+        accentColor: '#1677ff',
+        heroTitle: '人工智能素养自主培训',
+        heroSubtitle: '按个人节奏学习人工智能基础、伦理安全、提示词设计与教学融合，并通过实训巩固所学。',
+        surfaceHint: '自主学习、AI伴学、实践训练、学习成果',
+      },
+      homepage: {
+        templateName: '自主学习主页模板',
+        introMode: 'AI_OR_MANUAL',
+        introText: '展示个人学习路径、课程进度、自主实训和学习成果，不涉及班级、组织运营或考核管理。',
+      },
+      topicPage: {
+        resourcePanelTitle: '学习任务',
+        addResourceLabel: '添加学习内容',
+        appLabel: '学习工具',
+        emptyStateText: '暂无学习任务，可添加任务并配置视频、文档、测验或实训内容',
+        allowRootResources: true,
+        modeTabs: createModeTabs({
+          knowledge: '学习任务',
+          ai: 'AI伴学',
+          practice: '自主实训',
+          'learner-progress': '学习进度',
+        }, {
+          assessment: { enabled: false },
+          practice: { enabled: false },
+          'learner-progress': { enabled: false },
+        }),
+      },
+      topicCard: {
+        showMemberCount: false,
+        showRoles: false,
+      },
+      roles: [
+        {
+          key: 'self_learner',
+          name: '自主学习者',
+          agentName: 'AI学习教练',
+          functionalPermissions: ['RESOURCE_CREATE', 'RESOURCE_EDIT', 'TOOL_USE', 'RESULT_SUBMIT'],
+          permissionSummary: '完成学习任务、自主实训并沉淀个人学习成果',
+          dataAccessScope: 'PARTICIPATED',
+          dataAccessAreas: ['RESOURCE_AREA', 'RESULT_AREA', 'ASSESSMENT_DATA'],
+          scopeSummary: '仅维护自己的学习资料、进度与成果',
+          description: '根据个人节奏完成课程、自测与实践训练。',
+        },
+      ],
+      metadataFields: [
+        { key: 'learning_goal', label: '学习目标', type: 'TEXTAREA', required: false },
+        { key: 'current_level', label: '当前基础', type: 'TEXT', required: false },
+        { key: 'study_plan', label: '学习计划', type: 'TEXT', required: false },
+      ],
+      statusRules: [
+        {
+          key: 'learning',
+          name: '学习中',
+          stage: 'RUNNING',
+          controlMode: 'COLLABORATIVE',
+          entryEnabled: true,
+          roleIds: ['self_learner'],
+          description: '按个人学习计划完成课程、自测和实践任务。',
+        },
+        {
+          key: 'completed',
+          name: '已完成',
+          stage: 'CLOSED',
+          controlMode: 'READ_ONLY',
+          entryEnabled: true,
+          roleIds: ['self_learner'],
+          description: '保留课程记录、实训成果和学习复盘。',
+        },
+      ],
+      toolAreas: {
+        resourceAreaTools: ['RESOURCE_LIBRARY', 'ONLINE_DOC', 'ONLINE_VIDEO', 'URL', 'OFFICE_UPLOAD'],
+        resultAreaTools: ['SURVEY', 'ONLINE_DOC'],
+      },
+      toolConfigs: [
+        { key: 'online_video', name: '自主课程', placement: 'RESOURCE_AREA', enabled: true, description: '按学习路径观看课程并记录个人进度。' },
+        { key: 'online_doc', name: '学习笔记', placement: 'RESULT_AREA', enabled: true, description: '记录学习心得、提示词案例和课堂应用设想。' },
+      ],
+      folderTypes: [
+        { key: 'learning_task', name: '学习任务', required: true, allowedTools: ['ONLINE_VIDEO', 'RESOURCE_LIBRARY', 'ONLINE_DOC', 'OFFICE_UPLOAD', 'URL', 'SURVEY'], roleIds: ['self_learner'], description: '目录使用任务名称，目录内承载视频、文档、互动练习、测验和实训成果等具体学习内容。' },
+      ],
+      agents: [
+        { name: 'AI学习教练', roleIds: ['self_learner'], knowledgeSource: '课程资料、学习进度与个人笔记', prompt: '根据学习者当前进度讲解知识、推荐下一步课程并提供自主实训反馈。', avatar: '🤖' },
+      ],
+      entryMethods: ['MANUAL'],
+      recommendation: {
+        enabled: true,
+        resourceScope: '人工智能素养课程、自主实训和个人学习成果',
+        description: '根据个人基础和学习进度推荐下一阶段课程与练习。',
+      },
+      versioning: {
+        enabled: false,
+        description: '自主培训使用单份学习内容，不显示版本管理入口。',
+      },
+    },
+    {
       id: 'tpl_online_academy_training_builtin',
       templateCode: 'TPL-ONLINE-ACADEMY-TRAINING',
       name: '通答学院项目场景',
@@ -2768,6 +2883,20 @@ function buildPresetScenes(templates) {
       templateId: byCode.get('TPL-ONLINE-ACADEMY-TRAINING')?.id,
     },
     {
+      id: 'scene_online_academy_training_seed_9',
+      sceneCode: 'SCN-TEACHER-AI-LITERACY',
+      name: '人工智能素养自主培训',
+      sceneGroupName: '通答学院',
+      description: '面向教师个人的人工智能素养自主学习空间，涵盖基础认知、伦理安全、提示词设计、教学融合与课堂实践，可按自己的节奏学习和实训。',
+      owner: '人工智能素养学习中心',
+      visibility: 'PUBLIC',
+      menuKey: 'online-academy-training',
+      topicCount: 6,
+      memberCount: 0,
+      storageScopeKey: 'scene:scene_online_academy_training_seed_9:self-paced',
+      templateId: byCode.get('TPL-AI-LITERACY-SELF-PACED')?.id,
+    },
+    {
       id: 'scene_course_studio_seed_1',
       sceneCode: 'SCN-COURSE-STUDIO',
       name: '课程创作中心',
@@ -3012,6 +3141,7 @@ function migrateBuiltInOnlineAcademyEntries(existingTemplates, existingScenes) {
       templateCode: presetTemplate.templateCode,
       name: presetTemplate.name,
       sceneType: presetTemplate.sceneType,
+      trainingMode: presetTemplate.trainingMode,
       statusPresetSceneType: presetTemplate.statusPresetSceneType,
       defaultMenuKey: presetTemplate.defaultMenuKey,
       description: presetTemplate.description,
@@ -3033,6 +3163,7 @@ function migrateBuiltInOnlineAcademyEntries(existingTemplates, existingScenes) {
       templateCode: template.templateCode,
       name: template.name,
       sceneType: template.sceneType,
+      trainingMode: template.trainingMode,
       statusPresetSceneType: template.statusPresetSceneType,
       defaultMenuKey: template.defaultMenuKey,
       description: template.description,
@@ -3053,6 +3184,7 @@ function migrateBuiltInOnlineAcademyEntries(existingTemplates, existingScenes) {
       templateCode: nextTemplate.templateCode,
       name: nextTemplate.name,
       sceneType: nextTemplate.sceneType,
+      trainingMode: nextTemplate.trainingMode,
       statusPresetSceneType: nextTemplate.statusPresetSceneType,
       defaultMenuKey: nextTemplate.defaultMenuKey,
       description: nextTemplate.description,
@@ -3082,7 +3214,10 @@ function migrateBuiltInOnlineAcademyEntries(existingTemplates, existingScenes) {
 
   const nextScenes = existingScenes.map((scene) => {
     const presetScene = presetSceneMap.get(`id:${scene?.id}`) || presetSceneMap.get(`code:${scene?.sceneCode}`);
-    if (!presetScene) return scene;
+    if (
+      !presetScene
+      || presetScene?.templateSnapshot?.templateCode !== 'TPL-ONLINE-ACADEMY-TRAINING'
+    ) return scene;
 
     const nextScene = {
       ...scene,
@@ -3091,7 +3226,12 @@ function migrateBuiltInOnlineAcademyEntries(existingTemplates, existingScenes) {
       owner: presetScene.owner,
       sceneGroupName: presetScene.sceneGroupName,
       menuKey: presetScene.menuKey,
-      templateSnapshot: clone(presetTemplate),
+      templateId: presetScene.templateId,
+      templateName: presetScene.templateName,
+      templateCode: presetScene.templateCode,
+      sceneType: presetScene.sceneType,
+      storageScopeKey: presetScene.storageScopeKey,
+      templateSnapshot: clone(presetScene.templateSnapshot),
     };
     const changed = JSON.stringify({
       name: scene.name,
@@ -3116,6 +3256,142 @@ function migrateBuiltInOnlineAcademyEntries(existingTemplates, existingScenes) {
       };
     }
     return scene;
+  });
+
+  return {
+    nextTemplates,
+    nextScenes,
+    templateChanged,
+    sceneChanged,
+  };
+}
+
+function migrateBuiltInAiLiteracySelfPacedEntries(existingTemplates, existingScenes) {
+  let templateChanged = false;
+  let sceneChanged = false;
+  const presetTemplates = buildPresetTemplates();
+  const presetTemplate = presetTemplates.find((template) => (
+    template?.id === 'tpl_ai_literacy_self_paced_builtin'
+    || template?.templateCode === 'TPL-AI-LITERACY-SELF-PACED'
+  )) || null;
+  if (!presetTemplate) {
+    return { nextTemplates: existingTemplates, nextScenes: existingScenes, templateChanged, sceneChanged };
+  }
+
+  const presetScene = buildPresetScenes(presetTemplates).find((scene) => (
+    scene?.id === 'scene_online_academy_training_seed_9'
+    || scene?.sceneCode === 'SCN-TEACHER-AI-LITERACY'
+  )) || null;
+
+  const nextTemplates = existingTemplates.map((template) => {
+    if (
+      template?.id !== 'tpl_ai_literacy_self_paced_builtin'
+      && template?.templateCode !== 'TPL-AI-LITERACY-SELF-PACED'
+    ) return template;
+
+    const nextTemplate = {
+      ...template,
+      templateCode: presetTemplate.templateCode,
+      name: presetTemplate.name,
+      sceneType: presetTemplate.sceneType,
+      trainingMode: presetTemplate.trainingMode,
+      statusPresetSceneType: presetTemplate.statusPresetSceneType,
+      defaultMenuKey: presetTemplate.defaultMenuKey,
+      description: presetTemplate.description,
+      theme: clone(presetTemplate.theme),
+      homepage: clone(presetTemplate.homepage),
+      topicPage: clone(presetTemplate.topicPage),
+      topicCard: clone(presetTemplate.topicCard),
+      roles: clone(presetTemplate.roles),
+      metadataFields: clone(presetTemplate.metadataFields),
+      statusRules: clone(presetTemplate.statusRules),
+      toolAreas: clone(presetTemplate.toolAreas),
+      toolConfigs: clone(presetTemplate.toolConfigs),
+      folderTypes: clone(presetTemplate.folderTypes),
+      agents: clone(presetTemplate.agents),
+      entryMethods: clone(presetTemplate.entryMethods),
+      recommendation: clone(presetTemplate.recommendation),
+      versioning: clone(presetTemplate.versioning),
+    };
+    const comparableFields = [
+      'templateCode', 'name', 'sceneType', 'trainingMode', 'statusPresetSceneType',
+      'defaultMenuKey', 'description', 'theme', 'homepage', 'topicPage', 'topicCard',
+      'roles', 'metadataFields', 'statusRules', 'toolAreas', 'toolConfigs',
+      'folderTypes', 'agents', 'entryMethods', 'recommendation', 'versioning',
+    ];
+    const currentComparable = Object.fromEntries(comparableFields.map((key) => [key, template[key]]));
+    const nextComparable = Object.fromEntries(comparableFields.map((key) => [key, nextTemplate[key]]));
+    if (JSON.stringify(currentComparable) === JSON.stringify(nextComparable)) return template;
+    templateChanged = true;
+    return {
+      ...nextTemplate,
+      updatedAt: nowIso(),
+    };
+  });
+
+  const nextScenes = existingScenes.map((scene) => {
+    if (
+      !presetScene
+      || (
+        scene?.id !== 'scene_online_academy_training_seed_9'
+        && scene?.sceneCode !== 'SCN-TEACHER-AI-LITERACY'
+      )
+    ) return scene;
+
+    const nextScene = {
+      ...scene,
+      name: presetScene.name,
+      description: presetScene.description,
+      owner: presetScene.owner,
+      visibility: presetScene.visibility,
+      sceneGroupName: presetScene.sceneGroupName,
+      menuKey: presetScene.menuKey,
+      topicCount: presetScene.topicCount,
+      memberCount: 0,
+      templateId: presetScene.templateId,
+      templateName: presetScene.templateName,
+      templateCode: presetScene.templateCode,
+      sceneType: presetScene.sceneType,
+      storageScopeKey: presetScene.storageScopeKey,
+      templateSnapshot: clone(presetTemplate),
+    };
+    const changed = JSON.stringify({
+      name: scene.name,
+      description: scene.description,
+      owner: scene.owner,
+      visibility: scene.visibility,
+      sceneGroupName: scene.sceneGroupName,
+      menuKey: scene.menuKey,
+      topicCount: scene.topicCount,
+      memberCount: scene.memberCount,
+      templateId: scene.templateId,
+      templateName: scene.templateName,
+      templateCode: scene.templateCode,
+      sceneType: scene.sceneType,
+      storageScopeKey: scene.storageScopeKey,
+      templateSnapshot: scene.templateSnapshot,
+    }) !== JSON.stringify({
+      name: nextScene.name,
+      description: nextScene.description,
+      owner: nextScene.owner,
+      visibility: nextScene.visibility,
+      sceneGroupName: nextScene.sceneGroupName,
+      menuKey: nextScene.menuKey,
+      topicCount: nextScene.topicCount,
+      memberCount: nextScene.memberCount,
+      templateId: nextScene.templateId,
+      templateName: nextScene.templateName,
+      templateCode: nextScene.templateCode,
+      sceneType: nextScene.sceneType,
+      storageScopeKey: nextScene.storageScopeKey,
+      templateSnapshot: nextScene.templateSnapshot,
+    });
+    if (!changed) return scene;
+    sceneChanged = true;
+    return {
+      ...nextScene,
+      updatedAt: nowIso(),
+    };
   });
 
   return {
@@ -3346,7 +3622,8 @@ function migrateBuiltInRootUploadPolicy(existingTemplates, existingScenes) {
 function migrateTemplateVersioningPolicy(existingTemplates) {
   let changed = false;
   const nextTemplates = existingTemplates.map((template) => {
-    const shouldEnableVersioning = template?.sceneType === 'TRAINING';
+    const shouldEnableVersioning = template?.sceneType === 'TRAINING'
+      && template?.trainingMode !== 'SELF_PACED';
     const normalizedVersioning = normalizeVersioningConfig(template?.versioning, template?.sceneType || 'CUSTOM');
     if (normalizedVersioning.enabled === shouldEnableVersioning) {
       return template;
@@ -3423,18 +3700,24 @@ export function seedSceneData() {
       sceneChanged: onlineAcademySceneChanged,
     } = migrateBuiltInOnlineAcademyEntries(migratedTrainingTemplates, migratedTrainingScenes);
     const {
+      nextTemplates: migratedAiLiteracyTemplates,
+      nextScenes: migratedAiLiteracyScenes,
+      templateChanged: aiLiteracyTemplateChanged,
+      sceneChanged: aiLiteracySceneChanged,
+    } = migrateBuiltInAiLiteracySelfPacedEntries(migratedOnlineAcademyTemplates, migratedOnlineAcademyScenes);
+    const {
       nextTemplates: migratedSupervisionTemplates,
       nextScenes: migratedSupervisionScenes,
       templateChanged: supervisionTemplateChanged,
       sceneChanged: supervisionSceneChanged,
-    } = migrateBuiltInSupervisionEntries(migratedOnlineAcademyTemplates, migratedOnlineAcademyScenes);
+    } = migrateBuiltInSupervisionEntries(migratedAiLiteracyTemplates, migratedAiLiteracyScenes);
     const { nextTemplates, changed: versioningChanged } = migrateTemplateVersioningPolicy(migratedSupervisionTemplates);
     const scenesToAppend = mergeMissingBuiltInScenes(migratedSupervisionScenes, nextTemplates);
 
-    if (templatesToAppend.length > 0 || templateChanged || rootUploadTemplateChanged || trainingTemplateChanged || onlineAcademyTemplateChanged || supervisionTemplateChanged || versioningChanged) {
+    if (templatesToAppend.length > 0 || templateChanged || rootUploadTemplateChanged || trainingTemplateChanged || onlineAcademyTemplateChanged || aiLiteracyTemplateChanged || supervisionTemplateChanged || versioningChanged) {
       writeList(TEMPLATE_STORAGE_KEY, nextTemplates);
     }
-    if (scenesToAppend.length > 0 || sceneChanged || rootUploadSceneChanged || trainingSceneChanged || onlineAcademySceneChanged || supervisionSceneChanged) {
+    if (scenesToAppend.length > 0 || sceneChanged || rootUploadSceneChanged || trainingSceneChanged || onlineAcademySceneChanged || aiLiteracySceneChanged || supervisionSceneChanged) {
       writeList(SCENE_STORAGE_KEY, [...migratedSupervisionScenes, ...scenesToAppend]);
     }
 
@@ -3450,6 +3733,8 @@ export function seedSceneData() {
       || trainingSceneChanged
       || onlineAcademyTemplateChanged
       || onlineAcademySceneChanged
+      || aiLiteracyTemplateChanged
+      || aiLiteracySceneChanged
       || supervisionTemplateChanged
       || supervisionSceneChanged
       || versioningChanged
@@ -3904,6 +4189,139 @@ function buildTrainingInitialVersionData(template) {
   };
 }
 
+function buildSelfPacedTrainingInitialVersionData(template) {
+  const owner = template.roles[0]?.name || '自主学习者';
+  const updatedAt = nowText();
+  const taskConfigs = [
+    {
+      key: 'self_paced_task_ai_foundation',
+      name: '任务一：认识人工智能与能力边界',
+      summary: '理解人工智能基本概念、发展脉络、大模型原理及常见能力边界。',
+      contents: [
+        { key: 'self_paced_ai_foundation_video', name: '微课｜人工智能发展与生成式AI入门.mp4', type: 'video', summary: '18分钟视频，建立人工智能基础认知。' },
+        { key: 'self_paced_ai_foundation_guide', name: '导学材料｜教师人工智能素养学习指南.pdf', type: 'file', summary: '阅读素养框架、学习目标和学习建议。' },
+        { key: 'self_paced_ai_foundation_map', name: '图解｜大模型如何生成内容.png', type: 'image', summary: '通过信息图理解预训练、上下文与概率生成。' },
+        { key: 'self_paced_ai_foundation_quiz', name: '互动测验｜AI概念与能力边界', type: 'exam', summary: '10道题即时反馈，建议得分80分以上。' },
+      ],
+    },
+    {
+      key: 'self_paced_task_data_algorithm',
+      name: '任务二：理解数据与算法',
+      summary: '认识数据来源、质量要求和常见算法任务，能够解释训练与推理过程。',
+      contents: [
+        { key: 'self_paced_data_video', name: '微课｜数据、算法与模型训练.mp4', type: 'video', summary: '从教育案例理解数据、训练、验证和推理。' },
+        { key: 'self_paced_data_handout', name: '学习讲义｜数据质量与算法偏差.pdf', type: 'file', summary: '掌握准确性、完整性、代表性与算法偏差。' },
+        { key: 'self_paced_data_sheet', name: '实践表格｜教育数据质量检查清单.xlsx', type: 'file', summary: '使用清单分析一份模拟教育数据。' },
+        { key: 'self_paced_data_case', name: '案例研判｜算法推荐是否公平.html', type: 'activity', summary: '在交互情境中判断偏差来源并选择改进方案。' },
+      ],
+    },
+    {
+      key: 'self_paced_task_prompt',
+      name: '任务三：掌握提示词与生成式AI',
+      summary: '掌握结构化提示词、多轮追问、生成结果核验和多模态内容创作。',
+      contents: [
+        { key: 'self_paced_prompt_courseware', name: '交互课件｜结构化提示词六要素.html', type: 'activity', summary: '逐步练习角色、任务、背景、约束、格式与示例。' },
+        { key: 'self_paced_prompt_template', name: '模板｜教师常用提示词工具箱.docx', type: 'file', summary: '可直接改写的备课、评价和内容创作模板。' },
+        { key: 'self_paced_prompt_demo', name: '演示视频｜从模糊需求到高质量提示词.mp4', type: 'video', summary: '观察多轮追问和迭代优化的完整过程。' },
+        { key: 'self_paced_prompt_practice', name: '随堂练习｜改写一条教学提示词', type: 'exam', summary: '提交提示词并依据结构完整性获得即时反馈。' },
+      ],
+    },
+    {
+      key: 'self_paced_task_teaching',
+      name: '任务四：设计AI赋能教学活动',
+      summary: '围绕教学目标与学情，把AI合理融入备课、课堂活动、个性化支持和评价反馈。',
+      contents: [
+        { key: 'self_paced_teaching_case', name: '案例视频｜AI支持的探究式课堂.mp4', type: 'video', summary: '分析目标、活动、工具与评价之间的对应关系。' },
+        { key: 'self_paced_teaching_slides', name: '专题课件｜人机协同教学设计.pptx', type: 'file', summary: '明确教师、学生和AI在课堂中的职责边界。' },
+        { key: 'self_paced_teaching_canvas', name: '任务模板｜AI教学活动设计画布.docx', type: 'file', summary: '填写目标、学情、活动流程、评价和风险控制。' },
+        { key: 'self_paced_teaching_simulation', name: '情境模拟｜为不同学生生成差异化支持.html', type: 'activity', summary: '根据三类模拟学情选择合适的AI支持策略。' },
+      ],
+    },
+    {
+      key: 'self_paced_task_ethics',
+      name: '任务五：落实伦理、安全与规范',
+      summary: '掌握隐私保护、版权引用、信息核验、学术诚信和未成年人保护要求。',
+      contents: [
+        { key: 'self_paced_ethics_policy', name: '政策导读｜生成式人工智能教育应用规范.pdf', type: 'file', summary: '了解教师使用AI时需要遵循的基本规范。' },
+        { key: 'self_paced_ethics_scenario', name: '情境闯关｜这些内容可以上传给AI吗.html', type: 'activity', summary: '识别学生隐私、敏感数据和不当上传行为。' },
+        { key: 'self_paced_ethics_checklist', name: '检查清单｜AI生成内容核验与引用.docx', type: 'file', summary: '从事实、来源、版权和适龄性四个方面核验。' },
+        { key: 'self_paced_ethics_quiz', name: '自测｜伦理安全与规范使用', type: 'exam', summary: '12道情境题，完成后生成薄弱知识点建议。' },
+      ],
+    },
+    {
+      key: 'self_paced_task_innovation',
+      name: '任务六：完成AI教育创新实践',
+      summary: '从真实教学问题出发，完成方案设计、原型制作、效果评价和迭代复盘。',
+      contents: [
+        { key: 'self_paced_innovation_brief', name: '实训任务书｜解决一个真实教学问题.pdf', type: 'file', summary: '选择问题并明确对象、目标、约束和成功标准。' },
+        { key: 'self_paced_innovation_lab', name: '在线实训｜创建一个教学智能体.html', type: 'activity', summary: '组合提示词、知识资料和工具完成可运行原型。' },
+        { key: 'self_paced_innovation_rubric', name: '评价量规｜AI教育应用效果评估.xlsx', type: 'file', summary: '从有效性、可用性、公平性、安全性和成本评价作品。' },
+        { key: 'self_paced_innovation_result', name: '成果模板｜个人AI教学实践报告.docx', type: 'file', summary: '记录设计过程、验证结果、反思和下一步计划。' },
+      ],
+    },
+  ];
+  const resources = [];
+
+  taskConfigs.forEach((task, taskIndex) => {
+    resources.push({
+      key: task.key,
+      name: task.name,
+      isFolder: true,
+      folderTypeKey: 'learning_task',
+      parentKey: null,
+      owner,
+      lastEdit: updatedAt,
+      meta: {
+        summary: task.summary,
+        taskOrder: taskIndex + 1,
+        contentCount: task.contents.length,
+      },
+    });
+    task.contents.forEach((content, contentIndex) => {
+      resources.push({
+        key: content.key,
+        name: content.name,
+        type: content.type,
+        isFolder: false,
+        parentKey: task.key,
+        owner,
+        lastEdit: updatedAt,
+        meta: {
+          summary: content.summary,
+          contentType: content.type,
+          taskName: task.name,
+          sortNo: contentIndex + 1,
+          paragraphs: [
+            content.summary,
+            `本学习内容属于“${task.name}”，完成后可继续学习同任务下的其他内容。`,
+          ],
+        },
+      });
+    });
+  });
+
+  return {
+    versions: [
+      {
+        id: 'v1',
+        name: '自主学习',
+        status: 'active',
+        createdAt: updatedAt,
+        publishedAt: updatedAt,
+        resources,
+        assessment: {
+          totalHours: 12,
+          passScore: 0,
+          certificate: false,
+          rules: [],
+        },
+        assessmentChat: [],
+      },
+    ],
+    currentVersionId: 'v1',
+  };
+}
+
 function buildSupervisionInitialVersionData(template) {
   const rootFolders = template.folderTypes.length > 0
     ? template.folderTypes
@@ -3982,7 +4400,10 @@ function buildSupervisionInitialVersionData(template) {
 
 export function buildSceneInitialVersionData(sceneOrTemplate) {
   const template = normalizeTemplate(sceneOrTemplate?.templateSnapshot || sceneOrTemplate);
-  if (template.sceneType === 'TRAINING') {
+  if (template.sceneType === 'TRAINING' && template.trainingMode === 'SELF_PACED') {
+    return buildSelfPacedTrainingInitialVersionData(template);
+  }
+  if (template.sceneType === 'TRAINING' && template.trainingMode !== 'SELF_PACED') {
     return buildTrainingInitialVersionData(template);
   }
   if (template.sceneType === 'SUPERVISION') {

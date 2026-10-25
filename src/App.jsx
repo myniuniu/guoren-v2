@@ -862,7 +862,12 @@ function App({ onLogout }) {
       currentGroup.spaces.push(scene);
       groupMap.set(groupName, currentGroup);
     });
-    return Array.from(groupMap.values());
+    return Array.from(groupMap.values()).sort((left, right) => {
+      const leftIsAcademy = ['通答学院', '通达学院'].includes(left.name);
+      const rightIsAcademy = ['通答学院', '通达学院'].includes(right.name);
+      if (leftIsAcademy === rightIsAcademy) return 0;
+      return leftIsAcademy ? -1 : 1;
+    });
   }, []);
 
   const currentSceneGroups = useMemo(
