@@ -23,14 +23,17 @@ import {
   DownOutlined,
   EditOutlined,
   EllipsisOutlined,
+  EyeOutlined,
   FileTextOutlined,
   FilterOutlined,
   FolderOutlined,
   FolderFilled,
   HomeOutlined,
   HomeFilled,
+  HeartOutlined,
   InfoCircleOutlined,
   LaptopOutlined,
+  LeftOutlined,
   LinkOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -39,9 +42,11 @@ import {
   PlusOutlined,
   ProjectOutlined,
   ReloadOutlined,
+  RightOutlined,
   RobotOutlined,
   RobotFilled,
   SearchOutlined,
+  StarOutlined,
   TeamOutlined,
   UploadOutlined,
   UserOutlined,
@@ -51,6 +56,18 @@ import ResourceLibrary from '../resourceLib/ResourceLibrary';
 import { getSceneTypeLabel, getSceneVisibilityLabel, normalizeTopicCardConfig, sceneApi } from '../scene/api';
 import SceneCreateModal from '../scene/SceneCreateModal';
 import { getSceneThemeCoverStyle } from '../scene/themeCovers';
+import tongdaLogo from '../assets/tongda-logo.jpg';
+import academyCreationBanner from '../assets/academy/creation-banner.jpg';
+import academyReplayAnimation from '../assets/academy/replay-animation.png';
+import academyReplayCourseware from '../assets/academy/replay-courseware.png';
+import academyGuideEnglish from '../assets/academy/guide-english.jpg';
+import academyGuideTraining from '../assets/academy/guide-training.jpg';
+import academyTipCore from '../assets/academy/tip-core.jpg';
+import academyTipEnglish from '../assets/academy/tip-english.jpg';
+import academyTipPoem from '../assets/academy/tip-poem.jpg';
+import academyTipPrompt from '../assets/academy/tip-prompt.jpg';
+import academyTipFeatures from '../assets/academy/tip-features.jpg';
+import academyTipGeometry from '../assets/academy/tip-geometry.jpg';
 import './TdWorkModule.css';
 
 const TD_WORK_SIDEBAR_STORAGE_KEY = 'td-work.sidebar-width.v3';
@@ -139,6 +156,7 @@ const NAV_ITEMS = [
   { key: 'resource-market', label: '资源广场', icon: <CloudServerOutlined />, activeIcon: <DatabaseFilled /> },
   { key: 'app-market', label: '应用广场', icon: <AppstoreOutlined />, activeIcon: <AppstoreFilled /> },
   { key: 'academy', label: '通答学院', icon: <BookOutlined />, activeIcon: <BookFilled /> },
+  { key: 'expert-studios', label: '专家工作室', icon: <TeamOutlined />, activeIcon: <TeamOutlined /> },
   { key: 'space', label: '空间', icon: <CloudOutlined />, activeIcon: <CloudFilled /> },
   { key: 'scheduled', label: '自动化', icon: <ClockCircleOutlined />, activeIcon: <ClockCircleFilled /> },
   { key: 'skills', label: '智能体 · 技能 · 连接器', icon: <RobotOutlined />, activeIcon: <RobotFilled /> },
@@ -509,82 +527,204 @@ const PROJECT_CONFIG_ITEMS = [
   },
 ];
 
-const ACADEMY_CATEGORIES = [
-  '全部',
-  '新手指南',
-  'AI助教',
-  '培训运营',
-  '课程资源',
-  '案例模板',
+const ACADEMY_REPLAYS = [
+  { key: 'animation', title: '数理化教学动画的设计与使用', date: '2026.10.14', duration: '48:51', cover: academyReplayAnimation },
+  { key: 'courseware', title: '多页课件设计与课堂交付', date: '2026.10.14', duration: '1:02:49', cover: academyReplayCourseware },
+  { key: 'evidence', title: '课堂数据回收与循证教学', date: '2026.09.30', duration: '56:18', cover: academyTipCore },
+  { key: 'workspace', title: '班级工作台从搭建到落地', date: '2026.09.23', duration: '52:06', cover: academyTipFeatures },
+  { key: 'subject', title: '学科工作台搭建复用全流程', date: '2026.09.16', duration: '45:32', cover: academyTipPrompt },
+  { key: 'practice', title: 'AI 教育创作实践分享', date: '2026.09.09', duration: '50:24', cover: academyTipGeometry },
 ];
 
-const ACADEMY_TABS = [
-  { key: 'learn', label: '学院课程' },
-  { key: 'replays', label: '直播回放' },
-  { key: 'guides', label: '教程指南' },
+const ACADEMY_GUIDE_TABS = ['全部', '官方推荐', '共创共学'];
+const ACADEMY_GUIDES = [
+  { key: 'english', title: '英语教学AI交互方法22讲', owner: '通答老师', category: '共创共学', cover: academyGuideEnglish },
+  { key: 'training', title: '中小学教师AI培训实践任务操作手册', owner: '通答老师', category: '共创共学', cover: academyGuideTraining },
+  { key: 'lesson', title: '课堂互动课件设计手册', owner: '通答老师', category: '官方推荐', cover: academyReplayCourseware },
+  { key: 'starter', title: 'AI 教学创作入门路线', owner: '通答老师', category: '官方推荐', cover: academyReplayAnimation },
 ];
 
-const ACADEMY_FEATURES = [
+const ACADEMY_TIP_TABS = ['全部', '官方产品介绍', '上手指南', '使用技巧', '学科案例'];
+const ACADEMY_FEATURE_TABS = ['全部', '教学动画', '教育应用', '教学游戏', '互动课件', 'AI命题', 'AI组题', 'AI教案·大单元'];
+const ACADEMY_TUTORIALS = [
+  { key: 'mobile', title: '网页端、手机端，随时随地开始创作', category: '上手指南', feature: '教育应用', cover: academyTipCore, duration: '01:43' },
+  { key: 'upload', title: '上传教案，让你的课堂设计如虎添翼', category: '上手指南', feature: 'AI教案·大单元', cover: academyTipFeatures, duration: '01:59' },
+  { key: 'confirm', title: '确认信息，让你的互动课件得心应手', category: '使用技巧', feature: '互动课件', cover: academyTipPrompt, duration: '01:38' },
+  { key: 'prompt', title: '提示词怎么写，才能生成你真正想要的课件', category: '使用技巧', feature: '互动课件', cover: academyTipEnglish, duration: '02:03' },
+  { key: 'resource', title: '插入资源，在课件中灵活调整资源', category: '使用技巧', feature: '互动课件', cover: academyTipPoem, duration: '02:36' },
+  { key: 'edit', title: '编辑模式，什么时候适合手动编辑', category: '使用技巧', feature: '互动课件', cover: academyTipGeometry, duration: '01:50' },
+  { key: 'optimize', title: '单页优化，快速优化你的单页课件', category: '使用技巧', feature: '互动课件', cover: academyTipCore, duration: '10:05' },
+  { key: 'practice', title: '学生练习页：给学生一个专属的练习入口', category: '使用技巧', feature: '教育应用', cover: academyTipFeatures, duration: '02:24' },
+  { key: 'points', title: '积分不够用？每天自动领，点赞下载还能赚', category: '官方产品介绍', feature: '教育应用', cover: academyTipPrompt, duration: '02:23' },
+  { key: 'animation', title: '从生成动画到组织一堂好课', category: '学科案例', feature: '教学动画', cover: academyTipGeometry, duration: '01:59' },
+  { key: 'poem', title: '圈点句画实操：给古诗课件加入批注与画笔互动', category: '学科案例', feature: '互动课件', cover: academyTipPoem, duration: '02:23' },
+  { key: 'geometry', title: '小学几何交互动画：拖拽操作理解图形关系', category: '学科案例', feature: '教学动画', cover: academyTipGeometry, duration: '03:15' },
+];
+
+const EXPERT_STUDIO_PROVINCES = [
+  '全部', '北京市', '天津市', '河北省', '山西省', '内蒙古自治区', '辽宁省', '吉林省', '黑龙江省',
+  '上海市', '江苏省', '浙江省', '安徽省', '福建省', '江西省', '山东省', '河南省', '湖北省',
+  '湖南省', '广东省', '广西壮族自治区', '海南省', '重庆市', '四川省', '贵州省', '云南省',
+  '西藏自治区', '陕西省', '甘肃省', '青海省', '宁夏回族自治区', '新疆维吾尔自治区',
+  '新疆生产建设兵团', '香港特别行政区', '澳门特别行政区',
+];
+
+const EXPERT_STUDIOS = [
   {
-    key: 'starter',
-    title: '通答 AI 工作学习新手指南',
-    desc: '从新建任务、选择空间到调用智能体，快速跑通教师研修与项目运营流程。',
-    category: '新手指南',
-    type: '课程',
-    visits: '12.8万',
-    owner: '通答学院',
-    tone: 'blue',
+    key: 'hou-qiying', name: '侯琪颖指导团队工作室', province: '福建省', cover: '/assets/expert-studios/hou-qiying.jpg', views: '822', follows: '14',
+    desc: '本着“共学、共研、共创、共育、共享、共赢”理念，聚焦AI素养、智能教研、融合应用、素养评价、资源共建五大方向。',
   },
   {
-    key: 'academy-agent',
-    title: 'AI助培：一键生成培训通知、课程安排和催办清单',
-    desc: '面向通答学院项目管理员，沉淀开班、督学、结业证书发放的常用工作流。',
-    category: '培训运营',
-    type: '应用',
-    visits: '8.6万',
-    owner: '培训运营组',
-    tone: 'green',
+    key: 'li-mingji', name: '李明姬指导团队工作室', province: '吉林省', cover: '/assets/expert-studios/li-mingji.jpg', views: '2188', follows: '40',
+    desc: '对接国家中小学智慧教育平台与吉林省云校，构建“教研员引领、骨干教师为核心、城乡教师广泛参与”的成长模式。',
   },
   {
-    key: 'lesson-assistant',
-    title: 'AI助教课堂应用案例库',
-    desc: '覆盖备课、互动课件、课堂练习和课后反馈，让老师直接复用成熟提示词。',
-    category: 'AI助教',
-    type: '资源',
-    visits: '7.9万',
-    owner: '教研共创组',
-    tone: 'purple',
+    key: 'yu-bin', name: '余斌AI素养指导团队工作室', province: '陕西省', cover: '/assets/expert-studios/yu-bin.jpg', views: '686', follows: '32',
+    desc: '立足陕西组建省级线上教师AI素养专业指导团队，聚焦教师AI素养提升、AI赋能课堂与教学资源开发。',
   },
   {
-    key: 'course-package',
-    title: '人工智能通识课程资源包',
-    desc: '包含课程框架、知识图谱、课时设计和评价建议，可直接进入课程创作中心协作。',
-    category: '课程资源',
-    type: '资源',
-    visits: '6.5万',
-    owner: '课程创作中心',
-    tone: 'orange',
+    key: 'jin-fei', name: '金菲指导团队工作室', province: '江苏省', cover: '/assets/expert-studios/jin-fei.jpg', views: '873', follows: '14',
+    desc: '由江苏省网络名师工作室领衔人主持，围绕教师人工智能素养提升，系统推进培训、教研、应用研究与技术支持。',
   },
   {
-    key: 'template-project',
-    title: '骨干教师 AI 赋能研修班模板',
-    desc: '内置课程资源、研修任务、学情进度和考核证书页签，适合快速创建通答学院项目。',
-    category: '案例模板',
-    type: '模板',
-    visits: '5.7万',
-    owner: '教师发展中心',
-    tone: 'sky',
+    key: 'zhang-lei', name: '张磊指导团队工作室', province: '四川省', cover: '/assets/expert-studios/zhang-lei.jpg', views: '6606', follows: '39',
+    desc: '团队跨高校、教师发展机构和中小学校组建，在人工智能教育应用和教师数字素养提升方面成果丰富。',
   },
   {
-    key: 'data-sync',
-    title: '学习公社数据同步与学情看板搭建',
-    desc: '串联学习平台项目入口、学员名单、学习进度和证书数据的配置示例。',
-    category: '培训运营',
-    type: '应用',
-    visits: '4.3万',
-    owner: '数据同步助手',
-    tone: 'mint',
+    key: 'yi-hong', name: '易宏指导团队工作室', province: '云南省', cover: '/assets/expert-studios/yi-hong.jpg', views: '973', follows: '25',
+    desc: '面向一线教师开展人工智能教育实践研究，通过专题研修、案例共创和课堂应用促进区域教师专业成长。',
   },
+  {
+    key: 'xing-zhihui', name: '邢至晖指导团队工作室', province: '上海市', cover: '/assets/expert-studios/xing-zhihui.jpg', views: '579', follows: '17',
+    desc: '汇聚学科专家与骨干教师，探索生成式人工智能赋能备课、教学、评价和教师专业发展的实践路径。',
+  },
+  {
+    key: 'chen-zhenzhen', name: '陈珍珍指导团队工作室', province: '河南省', cover: '/assets/expert-studios/chen-zhenzhen.jpg', views: '2751', follows: '239',
+    desc: '坚持问题导向和任务驱动，开展AI教学工具应用、数字课程建设与教师人工智能素养提升研修。',
+  },
+  {
+    key: 'wang-tao', name: '王涛指导团队工作室', province: '安徽省', cover: '/assets/expert-studios/wang-tao.jpg', views: '1276', follows: '24',
+    desc: '围绕人工智能与学科教学深度融合，建设开放共享的教师学习共同体和优质数字教育资源。',
+  },
+  {
+    key: 'cui-yong', name: '崔勇AI素养指导团队工作室', province: '四川省', cover: '/assets/expert-studios/cui-yong.jpg', views: '1035', follows: '164',
+    desc: '以课堂创新为核心开展教师AI素养培训、区域教研和应用案例孵化，推动智能技术常态化应用。',
+  },
+  {
+    key: 'meng-xianliang', name: '孟宪良指导团队工作室', province: '天津市', cover: '/assets/expert-studios/meng-xianliang.jpg', views: '4.3万', follows: '41',
+    desc: '聚焦数字化转型中的教师能力建设，协同开展专题课程、实践任务、成果展示和专业指导。',
+  },
+  {
+    key: 'han-junda', name: '韩君达指导团队工作室', province: '陕西省', cover: '/assets/expert-studios/han-junda.jpg', views: '1435', follows: '42',
+    desc: '以人工智能通识教育和学科融合为重点，共建研修资源，分享可复制、可推广的教育教学经验。',
+  },
+  {
+    key: 'zhou-wen', name: '周雯AI素养指导团队工作室', province: '浙江省', cover: '/assets/expert-studios/zhou-wen.jpg', views: '2.8万', follows: '43',
+    desc: '依托线上工作室组织跨区域教研，形成教师AI素养提升、课堂应用创新和成果辐射的研修机制。',
+  },
+];
+
+const EXPERT_STUDIO_TABS = [
+  { key: 'home', label: '首页' },
+  { key: 'discussion', label: '讨论区', count: 28 },
+  { key: 'course', label: '课程', count: 6 },
+  { key: 'article', label: '文章', count: 18 },
+  { key: 'event', label: '活动', count: 4 },
+  { key: 'more', label: '更多' },
+];
+
+const EXPERT_STUDIO_POSTS = [
+  {
+    key: 'geometry-practice', category: '文章', title: '基于智能教学环境的小学数学图形与几何教学实践研究', author: '鲤城林煜珍', date: '2026/10/24 21:42', likes: 0, comments: 0,
+    desc: '以智慧课堂平台为载体，借AI教学决策数据化、评价即时、互动立体、推送智能等优势，实施课前精准分析学情、课中高效强化、课后个性辅导。',
+  },
+  {
+    key: 'geometry-play', category: '文章', title: '从“看”到“玩”：人工智能技术优化小学低年级图形与几何课堂的实践研究', author: '鲤城林煜珍', date: '2026/10/24 21:40', likes: 0, comments: 0,
+    desc: '针对低年级几何教学依赖静态图片、学生被动观察的困境，以VR积木搭建、AI剪纸动画、智能互动游戏把抽象几何变为可操作的动态场景。',
+  },
+  {
+    key: 'virtual-lab', category: '资源', title: 'AI虚拟实验在小学“图形与几何”教学中的应用效果研究', author: '鲤城林煜珍', date: '2026/10/24 21:38', likes: 0, comments: 0,
+    desc: '以三维建模、动态演示和交互操作构建AI虚拟实验，突破时空与教具局限，深化空间观念、几何概念理解与课堂参与。',
+  },
+  {
+    key: 'unit-teaching', category: '文章', title: 'AI赋能下小学数学“图形与几何”大单元教学', author: '鲤城林煜珍', date: '2026/10/24 21:37', likes: 0, comments: 0,
+    desc: '针对图形与几何抽象难懂、教学割裂等困境，依托AI从课前诊断学情、课中创设情境、课后创新作业和评价数据贯通四维发力。',
+  },
+  {
+    key: 'thinking-visible', category: '文章', title: '人工智能支持下的小学数学思维可视化与兴趣激发研究', author: '鲤城林煜珍', date: '2026/10/24 20:32', likes: 1, comments: 0,
+    desc: '借助人工智能的逻辑建模、动态图形和错题溯源能力实现思维可视化，解决小学数学思维隐性化和技术应用脱节问题。',
+  },
+  {
+    key: 'ratio-lantern', category: '资源', title: 'AI赋能比例闹元宵——飞象老师一键链接实际生活', author: '鲤城区第五中心小学谢如月', date: '2026/10/24 17:22', likes: 1, comments: 1,
+    desc: '分享用一句话生成互动动画的方法：输入提示词、拖动滑块实时演算，让鲜活生活情境快速进入数学课堂。',
+  },
+  {
+    key: 'structured-teaching', category: '公告', title: '智慧结构化：数智，让知识更有序', author: '侯琪颖', date: '2026/10/24 15:54', likes: 1, comments: 0,
+    desc: '数智结构化教学融合数学思维、大数据分析与数字化技术，精准把握学情，优化教学过程，促进学生独立思考和问题解决。',
+  },
+  {
+    key: 'lesson-preparation', category: '资源', title: '让备课少些忙乱，让课堂多些生长——国家智慧教育平台与AI工具的教学应用', author: '侯琪颖', date: '2026/10/23 13:43', likes: 2, comments: 1,
+    desc: '立足真实教学需求，介绍国家智慧教育平台与AI工具在资源选择、协同备课和学习反馈中的应用方法。',
+  },
+];
+
+const EXPERT_STUDIO_RECOMMENDS = [
+  { key: 'human-ai', title: '以智提效 以情育人——人机协同视域下小学班主任专业发展路径探索', author: '侯琪颖', date: '2026/09/22' },
+  { key: 'erhu', title: '两弦承古韵，科技启新声——“智汇传音”智能电子二胡科教实践案例', author: '侯琪颖', date: '2026/10/07' },
+];
+
+const EXPERT_STUDIO_RANKING = [
+  ['徐晓刚AI素养指导团队工作室', '670.89'],
+  ['宋太铭指导团队工作室', '599.91'],
+  ['贾长伟指导团队工作室', '272.3'],
+  ['何毅指导团队工作室', '253.88'],
+  ['林大华指导团队工作室', '244.29'],
+  ['朱磊指导团队工作室', '240.78'],
+  ['黄启东指导团队工作室', '223.71'],
+  ['仇大成指导团队工作室', '223.41'],
+  ['孟宪良指导团队工作室', '219.64'],
+  ['张承强指导团队工作室', '204.83'],
+];
+
+const EXPERT_STUDIO_DISCUSSIONS = [
+  {
+    key: 'discussion-ai-lesson', author: '侯琪颖', role: '工作室主持人', time: '今天 09:32', likes: 26, comments: 8, pinned: true,
+    title: '大家在AI辅助备课时，最希望优先解决哪个环节？',
+    content: '本周共研想从真实问题出发。欢迎分享你在学情分析、任务设计、课堂互动或作业评价中的一个具体难点，我们会选择高频问题组织专题工作坊。',
+    tags: ['AI备课', '共研话题'],
+  },
+  {
+    key: 'discussion-geometry', author: '林煜珍', role: '骨干成员', time: '昨天 16:48', likes: 18, comments: 5,
+    title: '低年级“图形与几何”课堂如何避免为了互动而互动？',
+    content: '我尝试用动态拼摆替代静态观察，但发现学生容易被动画吸引而忽略数学表达。大家会怎样设计观察任务和交流支架？',
+    tags: ['小学数学', '课堂实践'],
+  },
+  {
+    key: 'discussion-resource', author: '谢如月', role: '工作室成员', time: '10月24日 17:22', likes: 13, comments: 3,
+    title: '分享一个把生活情境快速做成互动课件的方法',
+    content: '用一句提示词先生成元宵节比例问题，再通过滑块控制数量变化。学生能边操作边解释数量关系，课堂反馈比单纯播放动画更好。',
+    tags: ['资源分享', '互动课件'],
+  },
+  {
+    key: 'discussion-ethics', author: '王琳', role: '研修学员', time: '10月23日 20:15', likes: 9, comments: 4,
+    title: '学生使用生成式AI完成探究任务时，边界应该怎样设定？',
+    content: '想听听大家在过程记录、事实核验和成果署名方面的做法，也欢迎分享可以直接用于课堂的AI使用约定。',
+    tags: ['AI伦理', '学生指导'],
+  },
+];
+
+const EXPERT_STUDIO_COURSES = [
+  { key: 'course-ai-literacy', title: '教师AI素养：从认知到课堂实践', lessons: 8, learners: 1264, cover: academyReplayAnimation },
+  { key: 'course-smart-lesson', title: '智能教学环境下的课堂设计', lessons: 6, learners: 892, cover: academyReplayCourseware },
+  { key: 'course-resource', title: 'AI教学资源开发与评价', lessons: 5, learners: 736, cover: academyGuideEnglish },
+  { key: 'course-research', title: '数智赋能教研的行动研究方法', lessons: 7, learners: 628, cover: academyGuideTraining },
+];
+
+const EXPERT_STUDIO_EVENTS = [
+  { key: 'event-workshop', status: '报名中', date: '10月30日 19:30', title: 'AI辅助备课：从问题诊断到任务设计', mode: '线上工作坊', members: 86 },
+  { key: 'event-open-class', status: '预告', date: '11月06日 14:00', title: '图形与几何智能课堂公开课', mode: '在线直播', members: 142 },
+  { key: 'event-review', status: '回放', date: '10月18日 19:00', title: '教师AI素养提升路径共研会', mode: '直播回放', members: 318 },
+  { key: 'event-share', status: '已结束', date: '10月12日 09:00', title: '区域优质AI教学案例分享会', mode: '线上活动', members: 205 },
 ];
 
 const HOME_CREATION_TYPES = [
@@ -602,30 +742,53 @@ const RESOURCE_MARKET_CATEGORIES = [
 const APP_MARKET_CATEGORIES = [
   '推荐', '学科应用', '教师工具', '学习工具', '教学管理', '学校管理', '语言学习',
   '阅读', '写作', '人文社科', '科学与技术', '考试与题库', '学术研究', '创意工具', '心理健康', '职业技能',
+  '体育运动', '更多',
 ];
 
 const RESOURCE_MARKET_ITEMS = [
-  { key: 'resource-guide', title: '通答教育应用新手指南', owner: '通答学院', category: '课堂工具', views: '17.4万', likes: '7934', badge: '热门', tone: 'green', mark: '指南' },
-  { key: 'resource-writing', title: '四季文学读写助手与仿写工具', owner: '语文教研共创组', category: '语文', views: '8.7万', likes: '6922', badge: '热门', tone: 'orange', mark: '语文' },
-  { key: 'resource-geometry', title: '观察简单组合体：空间想象训练', owner: '数学实验室', category: '数学', views: '4.6万', likes: '1848', badge: '热门', tone: 'blue', mark: '数学' },
-  { key: 'resource-miner', title: '小学数学黄金矿工计算练习', owner: '通答 AI 教研组', category: '数学', views: '26.5万', likes: '7141', badge: '热门', tone: 'yellow', mark: '游戏' },
-  { key: 'resource-vision', title: 'AI 如何“看”世界：揭秘图像识别', owner: 'AI 通识实验室', category: '信息科技', views: '10.7万', likes: '6779', badge: '精选', tone: 'purple', mark: 'AI' },
-  { key: 'resource-cylinder', title: '六年级圆柱体积互动课件', owner: '小学数学工作坊', category: '数学', views: '15.6万', likes: '6355', badge: '精选', tone: 'cyan', mark: '课件' },
-  { key: 'resource-circuit', title: '初中物理电路自由实验台', owner: '物理教研工作室', category: '物理', views: '7.5万', likes: '6576', badge: '热门', tone: 'red', mark: '实验' },
-  { key: 'resource-english', title: 'Healthy Food 情境互动第一课时', owner: '英语教师共创组', category: '英语', views: '13.5万', likes: '6784', badge: '精选', tone: 'mint', mark: '英语' },
-  { key: 'resource-history', title: '活字印刷流程互动工坊', owner: '历史学科中心', category: '历史', views: '6.2万', likes: '3180', badge: '精选', tone: 'indigo', mark: '历史' },
+  { key: 'resource-guide', title: '通答老师“教育应用”新手指南', owner: '通答老师3.0新手指南', category: '课堂工具', views: '17.4万', likes: '7936', badge: '', tone: 'green', mark: '指南', cover: '/assets/resources/guide.jpg' },
+  { key: 'resource-data', title: '【数据回收】新手指引', owner: '叨叨老师爱讲课', category: '课堂工具', views: '8.8万', likes: '6921', badge: '热门', tone: 'mint', mark: '数据', cover: '/assets/resources/data.jpg' },
+  { key: 'resource-geometry', title: '观察简单组合体5.0', owner: '陆老师的AI数学实验室', category: '数学', views: '4.6万', likes: '1851', badge: '热门', tone: 'blue', mark: '数学', cover: '/assets/resources/geometry.jpg' },
+  { key: 'resource-miner', title: '小学数学黄金矿工计算练习', owner: '小叶老师用AI', category: '数学', views: '26.5万', likes: '7140', badge: '热门', tone: 'yellow', mark: '游戏', cover: '/assets/resources/miner.jpg' },
+  { key: 'resource-vision', title: 'AI如何“看”世界——揭秘图像识别', owner: '樗老师的AI实验室', category: '信息科技', views: '10.7万', likes: '6778', badge: '热门', tone: 'purple', mark: 'AI', cover: '/assets/resources/vision.jpg' },
+  { key: 'resource-paper', title: '一亿张纸有多高', owner: '通答用户', category: '数学', views: '1.7万', likes: '716', badge: '热门', tone: 'orange', mark: '数学', cover: '/assets/resources/paper.jpg' },
+  { key: 'resource-classification', title: 'AI图像分类训练实验室【真实模型训练】【机器学习】', owner: '宇宙大爆炸到底大不大', category: '信息科技', views: '7.8万', likes: '6577', badge: '热门', tone: 'indigo', mark: 'AI', cover: '/assets/resources/classification.jpg' },
+  { key: 'resource-cylinder', title: '【互动课件】小学数学六年级圆柱的体积', owner: '小叶老师用AI', category: '数学', views: '15.6万', likes: '6354', badge: '热门', tone: 'cyan', mark: '课件', cover: '/assets/resources/cylinder.jpg' },
+  { key: 'resource-abstract', title: '学术英语写作Abstract互动学习网页', owner: 'Cora', category: '英语', views: '6.5万', likes: '6262', badge: '精选', tone: 'mint', mark: '英语', cover: '/assets/resources/abstract.jpg' },
+  { key: 'resource-electric', title: '改编《金属棒+验电器——电荷定向移动、电流方向》', owner: '通答用户', category: '物理', views: '4.1万', likes: '3998', badge: '精选', tone: 'red', mark: '物理', cover: '/assets/resources/electric.jpg' },
+  { key: 'resource-tips', title: '【玩转互动课件】必看小技巧', owner: '叨叨老师爱讲课', category: '课堂工具', views: '13.7万', likes: '7316', badge: '热门', tone: 'yellow', mark: '技巧', cover: '/assets/resources/tips.jpg' },
+  { key: 'resource-billing', title: '《五年级分段计费3.0》', owner: '陆老师的AI数学实验室', category: '数学', views: '5.6万', likes: '4456', badge: '热门', tone: 'pink', mark: '数学', cover: '/assets/resources/billing.jpg' },
+  { key: 'resource-circuit', title: '仿真物理实验：初中物理电路实验台（自由实验+教材实验）', owner: '物理郭老师', category: '物理', views: '7.5万', likes: '6576', badge: '热门', tone: 'dark', mark: '实验', cover: '/assets/resources/circuit.jpg' },
+  { key: 'resource-food', title: 'Unit4 Healthy Food 第一课时', owner: '海淀教师勇闯AI圈', category: '英语', views: '13.5万', likes: '6783', badge: '热门', tone: 'mint', mark: '英语', cover: '/assets/resources/food.jpg' },
+  { key: 'resource-daiyu', title: '生成黛玉进贾府- 沉浸式体验', owner: '伍月', category: '语文', views: '13.8万', likes: '6737', badge: '精选', tone: 'green', mark: '语文', cover: '/assets/resources/daiyu.jpg' },
+  { key: 'resource-circle', title: '动圆系的动图', owner: '星光', category: '数学', views: '1.9万', likes: '1708', badge: '精选', tone: 'blue', mark: '数学', cover: '/assets/resources/circle.jpg' },
+  { key: 'resource-zhufu', title: '《祝福》教学游戏——《谁杀了祥林嫂》祥林嫂死因探究剧本杀', owner: '魔仙', category: '语文', views: '10.3万', likes: '6397', badge: '精选', tone: 'pink', mark: '语文', cover: '/assets/resources/zhufu.jpg' },
+  { key: 'resource-dog', title: '机灵狗去河边：垂线段最短互动课件', owner: '水哥Ai数', category: '数学', views: '7716', likes: '282', badge: '精选', tone: 'orange', mark: '数学', cover: '/assets/resources/dog.jpg' },
+  { key: 'resource-qunying', title: '《群英会蒋干中计》互动课件', owner: '巧克力麦片', category: '语文', views: '8.8万', likes: '6254', badge: '热门', tone: 'red', mark: '语文', cover: '/assets/resources/qunying.jpg' },
+  { key: 'resource-points', title: '不用编程：从0到1做出教师专属的班级积分系统', owner: '陆老师的AI数学实验室', category: '课堂工具', views: '7.5万', likes: '6160', badge: '', tone: 'green', mark: '班级', cover: '/assets/resources/points.jpg' },
 ];
 
 const APP_MARKET_ITEMS = [
-  { key: 'app-class-pet', title: '班级宠物乐园：一起进化吧', owner: '班级运营工作室', category: '教学管理', views: '6.5万', likes: '1979', badge: '精选', tone: 'green', mark: '班级' },
-  { key: 'app-taohuayuan', title: '古文沉浸式漫游《桃花源记》', owner: '语文数字课堂', category: '学科应用', views: '4.6万', likes: '1893', badge: '热门', tone: 'pink', mark: '3D' },
-  { key: 'app-marking', title: '试卷智能批改与学情诊断', owner: '通答 AI 助教', category: '考试与题库', views: '1.9万', likes: '1360', badge: '热门', tone: 'blue', mark: '批改' },
-  { key: 'app-errors', title: '班级错题档案', owner: '教学数据中心', category: '学习工具', views: '1.8万', likes: '1340', badge: '热门', tone: 'orange', mark: '错题' },
-  { key: 'app-certificate', title: '荣誉证书模板生成器', owner: '教师工具共创组', category: '教师工具', views: '2.2万', likes: '940', badge: '精选', tone: 'yellow', mark: '证书' },
-  { key: 'app-speaking', title: '情境口语练习 SpeakIn', owner: '语言学习实验室', category: '语言学习', views: '1.7万', likes: '1297', badge: '热门', tone: 'purple', mark: '口语' },
-  { key: 'app-lab', title: 'AI 智能 3D 电路实验室', owner: '科学教育中心', category: '科学与技术', views: '1.5万', likes: '1284', badge: '热门', tone: 'cyan', mark: '实验' },
-  { key: 'app-blackboard', title: 'AI 黑板：板书与课堂演示助手', owner: '通答课堂工具组', category: '教师工具', views: '2万', likes: '1350', badge: '热门', tone: 'dark', mark: '黑板' },
-  { key: 'app-career', title: '未来的我：职业形象创作器', owner: '生涯教育工作室', category: '职业技能', views: '1.8万', likes: '1418', badge: '精选', tone: 'red', mark: '生涯' },
+  { key: 'app-class-pet', title: '班级宠物乐园-一起进化吧！', owner: 'xixisimon', category: '教学管理', views: '6.5万', likes: '1981', badge: '精选', tone: 'green', mark: '班级', cover: '/assets/apps/pet-cover.jpg', icon: '/assets/apps/pet-icon.png' },
+  { key: 'app-taohuayuan', title: '古文沉浸式漫游《桃花源记》', owner: '伍月', category: '学科应用', views: '4.6万', likes: '1895', badge: '热门', tone: 'pink', mark: '3D', cover: '/assets/apps/peach-cover.jpg', icon: '/assets/apps/peach-icon.png' },
+  { key: 'app-taohuayuan-3d', title: '误入桃花源｜这一次，你就是渔人，第一人称3D体验', owner: '闪电', category: '学科应用', views: '1.5万', likes: '1424', badge: '精选', tone: 'green', mark: '3D', cover: '/assets/apps/peach-3d-cover.jpg', icon: '/assets/apps/peach-3d-icon.png' },
+  { key: 'app-vision', title: '【真实模型·可改编资源】计算机视觉参考库', owner: '卢振霄', category: '科学与技术', views: '1.6万', likes: '1377', badge: '', tone: 'blue', mark: '视觉', cover: '/assets/apps/vision-cover.jpg', icon: '/assets/apps/vision-icon.jpg' },
+  { key: 'app-marking', title: '试卷智能批改与学情诊断', owner: '通答用户', category: '考试与题库', views: '1.9万', likes: '1360', badge: '热门', tone: 'blue', mark: '批改', cover: '/assets/apps/marking-cover.jpg', icon: '/assets/apps/marking-icon.jpg' },
+  { key: 'app-errors', title: '班级错题档案', owner: '阿子冲冲冲', category: '学习工具', views: '1.8万', likes: '1341', badge: '热门', tone: 'orange', mark: '错题', cover: '/assets/apps/errors-cover.jpg', icon: '/assets/apps/errors-icon.png' },
+  { key: 'app-certificate', title: '荣誉证书模板生成器', owner: '通答用户', category: '教师工具', views: '2259', likes: '94', badge: '热门', tone: 'yellow', mark: '证书', cover: '/assets/apps/certificate-cover.jpg', icon: '/assets/apps/certificate-icon.jpg' },
+  { key: 'app-speaking', title: '入戏 SpeakIn', owner: '一只老李', category: '语言学习', views: '1.7万', likes: '1297', badge: '热门', tone: 'purple', mark: '口语', cover: '/assets/apps/speakin-cover.jpg', icon: '/assets/apps/speakin-icon.png' },
+  { key: 'app-sorting', title: '智能分拣实验室', owner: '卢振霄', category: '科学与技术', views: '1.3万', likes: '1253', badge: '热门', tone: 'cyan', mark: '实验', cover: '/assets/apps/sorting-cover.jpg', icon: '/assets/apps/sorting-icon.jpg' },
+  { key: 'app-drone', title: '无人机地形测绘', owner: 'Inspire King', category: '科学与技术', views: '1.5万', likes: '1240', badge: '热门', tone: 'green', mark: '测绘', cover: '/assets/apps/drone-cover.jpg', icon: '/assets/apps/drone-icon.png' },
+  { key: 'app-island', title: '班级岛', owner: 'Inspire King', category: '教学管理', views: '3万', likes: '1909', badge: '热门', tone: 'orange', mark: '班级', cover: '/assets/apps/island-cover.jpg', icon: '/assets/apps/island-icon.jpg' },
+  { key: 'app-writing', title: '四季文学读写助手｜文学佳句采撷与仿写工具', owner: '琨琨', category: '写作', views: '1.6万', likes: '1438', badge: '热门', tone: 'mint', mark: '写作', cover: '/assets/apps/writing-cover.jpg', icon: '/assets/apps/writing-icon.png' },
+  { key: 'app-future', title: '未来的我—职业形象创作器', owner: 'xixisimon', category: '职业技能', views: '1.8万', likes: '1418', badge: '热门', tone: 'red', mark: '生涯', cover: '/assets/apps/future-cover.jpg', icon: '/assets/apps/future-icon.png' },
+  { key: 'app-earth', title: '地球文明观察器', owner: '阿赤头很痛.', category: '人文社科', views: '1.9万', likes: '1364', badge: '热门', tone: 'blue', mark: '地球', cover: '/assets/apps/earth-cover.jpg', icon: '/assets/apps/earth-icon.png' },
+  { key: 'app-blackboard', title: 'AI 黑板', owner: 'Inspire King', category: '教师工具', views: '2万', likes: '1351', badge: '热门', tone: 'dark', mark: '黑板', cover: '/assets/apps/blackboard-cover.jpg', icon: '/assets/apps/blackboard-icon.png' },
+  { key: 'app-robot', title: '具身智能机器人', owner: 'Inspire King', category: '科学与技术', views: '1.7万', likes: '1306', badge: '热门', tone: 'cyan', mark: '机器人', cover: '/assets/apps/robot-cover.jpg', icon: '/assets/apps/robot-icon.png' },
+  { key: 'app-code', title: '码上解密-信息技术编码与二维码', owner: '卢振霄', category: '学科应用', views: '1.4万', likes: '1301', badge: '热门', tone: 'purple', mark: '编码', cover: '/assets/apps/code-cover.jpg', icon: '/assets/apps/code-icon.jpg' },
+  { key: 'app-lab', title: 'AI智能3D电路实验室', owner: '闪电', category: '科学与技术', views: '1.5万', likes: '1284', badge: '热门', tone: 'cyan', mark: '实验', cover: '/assets/apps/circuit-cover.jpg', icon: '/assets/apps/circuit-icon.png' },
+  { key: 'app-china', title: '住在中国', owner: 'Inspire King', category: '人文社科', views: '1.5万', likes: '1252', badge: '热门', tone: 'red', mark: '人文', cover: '/assets/apps/china-cover.jpg', icon: '/assets/apps/china-icon.png' },
+  { key: 'app-trust', title: '社会心理学：信任的进化', owner: '啦啦', category: '心理健康', views: '1.3万', likes: '1238', badge: '热门', tone: 'green', mark: '心理', cover: '/assets/apps/trust-cover.jpg', icon: '/assets/apps/trust-icon.png' },
 ];
 
 const SKILL_CATEGORIES = [
@@ -1061,76 +1224,243 @@ function MarketplaceCard({ item, onOpen }) {
   );
 }
 
-function MarketplacePage({ type, onOpen }) {
+function AppMarketplaceCard({ item, onOpen }) {
+  return (
+    <button type="button" className="td-work-app-market-card" onClick={() => onOpen(item)} aria-label={`打开${item.title}`}>
+      <span className="td-work-app-market-cover">
+        <img src={item.cover} alt="" />
+        {item.badge ? (
+          <span className={`td-work-app-market-badge ${item.badge === '精选' ? 'is-featured' : 'is-hot'}`}>
+            {item.badge}
+          </span>
+        ) : null}
+        <span className="td-work-app-market-views"><EyeOutlined /> {item.views}</span>
+      </span>
+      <span className="td-work-app-market-detail">
+        <span className="td-work-app-market-icon"><img src={item.icon} alt="" /></span>
+        <span className="td-work-app-market-copy">
+          <strong>{item.title}</strong>
+          <span className="td-work-app-market-meta">
+            <span className="td-work-app-market-owner">
+              <span className="td-work-app-market-avatar">{item.owner.slice(0, 1)}</span>
+              <span>{item.owner}</span>
+            </span>
+            <span className="td-work-app-market-likes"><StarOutlined /> {item.likes}</span>
+          </span>
+        </span>
+      </span>
+    </button>
+  );
+}
+
+function ResourceMarketplaceCard({ item, onOpen }) {
+  return (
+    <button type="button" className="td-work-resource-market-card" onClick={() => onOpen(item)} aria-label={`打开${item.title}`}>
+      <span className="td-work-resource-market-cover">
+        <img src={item.cover} alt="" />
+        {item.badge ? (
+          <span className={`td-work-app-market-badge ${item.badge === '精选' ? 'is-featured' : 'is-hot'}`}>
+            {item.badge}
+          </span>
+        ) : null}
+        <span className="td-work-app-market-views"><EyeOutlined /> {item.views}</span>
+      </span>
+      <span className="td-work-resource-market-detail">
+        <strong>{item.title}</strong>
+        <span className="td-work-resource-market-meta">
+          <span className="td-work-app-market-owner">
+            <span className="td-work-resource-market-avatar">{item.owner.slice(0, 1)}</span>
+            <span>{item.owner}</span>
+          </span>
+          <span className="td-work-app-market-likes"><StarOutlined /> {item.likes}</span>
+        </span>
+      </span>
+    </button>
+  );
+}
+
+function MarketplacePage({ type, onOpen, onCreate }) {
   const isResource = type === 'resource';
-  const title = isResource ? '资源广场' : '应用广场';
   const categories = isResource ? RESOURCE_MARKET_CATEGORIES : APP_MARKET_CATEGORIES;
   const items = isResource ? RESOURCE_MARKET_ITEMS : APP_MARKET_ITEMS;
   const [activeCategory, setActiveCategory] = useState('推荐');
   const [searchText, setSearchText] = useState('');
+  const [appPrompt, setAppPrompt] = useState('');
+  const categoryScrollRef = useRef(null);
 
   const visibleItems = useMemo(() => {
     const keyword = searchText.trim().toLowerCase();
     return items.filter((item) => {
-      const matchesCategory = activeCategory === '推荐' || item.category === activeCategory;
+      const matchesCategory = activeCategory === '推荐' || activeCategory === '更多' || item.category === activeCategory;
       const matchesKeyword = !keyword || `${item.title} ${item.owner} ${item.category}`.toLowerCase().includes(keyword);
       return matchesCategory && matchesKeyword;
     });
   }, [activeCategory, items, searchText]);
 
-  return (
-    <section className="td-work-market-page" aria-label={title}>
-      <header className="td-work-market-heading">
-        <div>
-          <span>{isResource ? '教学资源与共创作品' : '教育应用与效率工具'}</span>
-          <h1>{title}</h1>
-        </div>
-        <Input
-          value={searchText}
-          onChange={(event) => setSearchText(event.target.value)}
-          prefix={<SearchOutlined />}
-          allowClear
-          placeholder={`快速搜索${isResource ? '资源' : '应用'}`}
-          aria-label={`快速搜索${isResource ? '资源' : '应用'}`}
-        />
-      </header>
+  if (!isResource) {
+    const midpoint = Math.ceil(visibleItems.length / 2);
+    const appColumns = [visibleItems.slice(0, midpoint), visibleItems.slice(midpoint)];
+    const samplePrompt = '生成一个课堂小组积分应用，支持实时加分、排行榜、课堂表现记录和课后导出';
+    const submitAppPrompt = () => onCreate?.(appPrompt.trim() || samplePrompt);
 
-      <div className="td-work-market-categories" aria-label={`${title}分类`}>
-        {categories.map((category) => (
+    return (
+      <section className="td-work-market-page td-work-app-market-page" aria-label="应用广场">
+        <div className="td-work-app-market-shell">
+          <header className="td-work-app-market-heading">
+            <h1>应用广场</h1>
+            <Input
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
+              prefix={<SearchOutlined />}
+              allowClear
+              placeholder="快速搜索应用"
+              aria-label="快速搜索应用"
+            />
+          </header>
+
+          <div className="td-work-app-market-categories" aria-label="应用广场分类">
+            {categories.map((category) => (
+              <button
+                key={category}
+                type="button"
+                className={activeCategory === category ? 'is-active' : ''}
+                onClick={() => setActiveCategory(category)}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+
+          {visibleItems.length ? (
+            <div className="td-work-app-market-columns" aria-label="应用列表">
+              {appColumns.map((column, index) => (
+                <div key={index} className="td-work-app-market-column">
+                  {column.map((item) => <AppMarketplaceCard key={item.key} item={item} onOpen={onOpen} />)}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="td-work-market-empty"><Empty description="没有找到匹配应用" /></div>
+          )}
+        </div>
+
+        <div className="td-work-app-market-composer">
+          <span>教育应用</span>
+          <input
+            value={appPrompt}
+            onChange={(event) => setAppPrompt(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') submitAppPrompt();
+            }}
+            placeholder={samplePrompt}
+            aria-label="描述要生成的教育应用"
+          />
+          <button type="button" className="td-work-app-market-voice" title="语音输入" aria-label="语音输入"><AudioOutlined /></button>
+          <button type="button" className="td-work-app-market-send" title="开始创建" aria-label="开始创建" onClick={submitAppPrompt}><ArrowUpOutlined /></button>
+        </div>
+      </section>
+    );
+  }
+
+  const resourceMidpoint = Math.ceil(visibleItems.length / 2);
+  const resourceColumns = [visibleItems.slice(0, resourceMidpoint), visibleItems.slice(resourceMidpoint)];
+  const resourceSamplePrompt = '教学动画｜设计初中数学勾股定理互动教学活动，引导学生主动探究，培养几何直观、逻辑推理能力。';
+  const submitResourcePrompt = () => onCreate?.(appPrompt.trim() || resourceSamplePrompt);
+
+  return (
+    <section className="td-work-market-page td-work-resource-market-page" aria-label="资源广场">
+      <div className="td-work-resource-market-shell">
+        <header className="td-work-resource-market-heading">
+          <h1>资源广场</h1>
+          <Input
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
+            prefix={<SearchOutlined />}
+            allowClear
+            placeholder="快速搜索资源"
+            aria-label="快速搜索资源"
+          />
+        </header>
+
+        <div className="td-work-resource-category-shell">
+          <div ref={categoryScrollRef} className="td-work-resource-market-categories" aria-label="资源广场分类">
+            {categories.map((category) => (
+              <button
+                key={category}
+                type="button"
+                className={activeCategory === category ? 'is-active' : ''}
+                onClick={() => setActiveCategory(category)}
+              >
+                {category}
+                {category === '数学' ? <sup>Hot</sup> : null}
+              </button>
+            ))}
+          </div>
           <button
-            key={category}
             type="button"
-            className={activeCategory === category ? 'is-active' : ''}
-            onClick={() => setActiveCategory(category)}
+            className="td-work-resource-category-more"
+            title="查看更多分类"
+            aria-label="查看更多分类"
+            onClick={() => categoryScrollRef.current?.scrollBy({ left: 260, behavior: 'smooth' })}
           >
-            {category}
+            <RightOutlined />
           </button>
-        ))}
+        </div>
+
+        {visibleItems.length ? (
+          <div className="td-work-resource-market-columns" aria-label="资源列表">
+            {resourceColumns.map((column, index) => (
+              <div key={index} className="td-work-resource-market-column">
+                {column.map((item) => <ResourceMarketplaceCard key={item.key} item={item} onOpen={onOpen} />)}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="td-work-market-empty"><Empty description="没有找到匹配资源" /></div>
+        )}
       </div>
 
-      {visibleItems.length ? (
-        <div className="td-work-market-grid">
-          {visibleItems.map((item) => (
-            <MarketplaceCard key={item.key} item={item} onOpen={onOpen} />
-          ))}
-        </div>
-      ) : (
-        <div className="td-work-market-empty">
-          <Empty description="没有找到匹配内容" />
-        </div>
-      )}
+      <div className="td-work-resource-market-composer">
+        <input
+          value={appPrompt}
+          onChange={(event) => setAppPrompt(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') submitResourcePrompt();
+          }}
+          placeholder={resourceSamplePrompt}
+          aria-label="描述要生成的教学资源"
+        />
+        <button type="button" title="语音输入" aria-label="语音输入"><AudioOutlined /></button>
+        <button type="button" className="td-work-resource-market-send" title="开始创建" aria-label="开始创建" onClick={submitResourcePrompt}><ArrowUpOutlined /></button>
+      </div>
     </section>
   );
 }
 
 function AiModeHomePage({ onCreateTask, onNavigate, onOpenItem }) {
   const [homePrompt, setHomePrompt] = useState('');
+  const [activeCreationTypeKey, setActiveCreationTypeKey] = useState(null);
   const [activeShelf, setActiveShelf] = useState('resource');
+  const homePromptRef = useRef(null);
+  const activeCreationType = HOME_CREATION_TYPES.find((item) => item.key === activeCreationTypeKey) || null;
   const shelfItems = activeShelf === 'resource' ? RESOURCE_MARKET_ITEMS.slice(0, 6) : APP_MARKET_ITEMS.slice(0, 6);
 
   const submitPrompt = () => {
     const nextPrompt = homePrompt.trim() || '帮我设计一个适合课堂使用的 AI 教学活动';
     onCreateTask(nextPrompt);
+  };
+  const focusHomePromptAtEnd = () => {
+    requestAnimationFrame(() => {
+      const editor = homePromptRef.current;
+      if (!editor) return;
+      editor.focus();
+      const selection = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(editor);
+      range.collapse(false);
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+    });
   };
 
   return (
@@ -1142,12 +1472,50 @@ function AiModeHomePage({ onCreateTask, onNavigate, onOpenItem }) {
         </div>
 
         <div className="td-work-home-composer">
-          <textarea
-            value={homePrompt}
-            onChange={(event) => setHomePrompt(event.target.value)}
-            placeholder="教学游戏｜以课程内容为故事线，生成知识闯关游戏，让学生在互动体验中主动探究。"
-            aria-label="输入教学创作需求"
-          />
+          <div
+            className={`td-work-home-prompt-editor ${activeCreationType ? 'has-selected-skill' : ''}`}
+            onClick={(event) => {
+              if (event.target.closest('.td-work-home-selected-skill')) return;
+              homePromptRef.current?.focus();
+            }}
+          >
+            {activeCreationType ? (
+              <button
+                type="button"
+                className="td-work-home-selected-skill"
+                title={`移除 ${activeCreationType.label}`}
+                aria-label={`移除 ${activeCreationType.label}`}
+                contentEditable={false}
+                onClick={() => {
+                  setActiveCreationTypeKey(null);
+                  setHomePrompt('');
+                  focusHomePromptAtEnd();
+                }}
+              >
+                <span>{activeCreationType.label}</span>
+                <CloseOutlined />
+              </button>
+            ) : null}
+            <span
+              ref={homePromptRef}
+              className="td-work-home-prompt-text"
+              contentEditable
+              suppressContentEditableWarning
+              role="textbox"
+              aria-multiline="true"
+              aria-label="输入教学创作需求"
+              data-placeholder="教学游戏｜以课程内容为故事线，生成知识闯关游戏，让学生在互动体验中主动探究。"
+              onInput={(event) => setHomePrompt(event.currentTarget.innerText)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                  event.preventDefault();
+                  submitPrompt();
+                }
+              }}
+            >
+              {homePrompt}
+            </span>
+          </div>
           <div className="td-work-home-composer-actions">
             <button type="button" className="td-work-home-add" title="添加附件" aria-label="添加附件">
               <PlusOutlined />
@@ -1157,7 +1525,12 @@ function AiModeHomePage({ onCreateTask, onNavigate, onOpenItem }) {
                 <button
                   key={item.key}
                   type="button"
-                  onClick={() => setHomePrompt(item.prompt)}
+                  className={activeCreationTypeKey === item.key ? 'is-selected' : ''}
+                  onClick={() => {
+                    setActiveCreationTypeKey(item.key);
+                    setHomePrompt(item.prompt);
+                    focusHomePromptAtEnd();
+                  }}
                 >
                   {item.icon}
                   {item.label}
@@ -1212,104 +1585,602 @@ function AiModeHomePage({ onCreateTask, onNavigate, onOpenItem }) {
   );
 }
 
-function TongdaAcademyPage({ onOpenSpace, onToast }) {
-  const [activeTab, setActiveTab] = useState('learn');
-  const [activeCategory, setActiveCategory] = useState('全部');
+function ExpertStudioDetailPage({ studio, followed, onBack, onFollow, onToast }) {
+  const [activeTab, setActiveTab] = useState('home');
+  const [discussionSort, setDiscussionSort] = useState('hot');
+  const [discussionDraft, setDiscussionDraft] = useState('');
+  const [discussions, setDiscussions] = useState(EXPERT_STUDIO_DISCUSSIONS);
+  const [likedDiscussionKeys, setLikedDiscussionKeys] = useState(() => new Set());
+  const [replyPostKey, setReplyPostKey] = useState(null);
+  const [replyDraft, setReplyDraft] = useState('');
+  const isHouStudio = studio.key === 'hou-qiying';
+  const detailDescription = isHouStudio
+    ? '工作室本着“共学、共研、共创、共育、共享、共赢”理念，一起学习、一起研修、一起成长、一起卓越，聚焦“AI素养、智能教研、融合应用、素养评价、资源共建”五大研究方向，积极践行“AI赋能教育、智育启迪未来”主张，让教师智慧地教、学生快乐地学、师生幸福地成长。'
+    : studio.desc;
+  const sortedDiscussions = discussionSort === 'new'
+    ? discussions
+    : [...discussions].sort((a, b) => (b.likes + b.comments) - (a.likes + a.comments));
 
-  const visibleItems = useMemo(() => {
-    return ACADEMY_FEATURES.filter((item) => {
-      const matchesCategory = activeCategory === '全部' || item.category === activeCategory;
-      const matchesTab = activeTab === 'learn'
-        || (activeTab === 'replays' && (item.category === 'AI助教' || item.category === '课程资源'))
-        || (activeTab === 'guides' && (item.category === '新手指南' || item.category === '培训运营'));
-      return matchesCategory && matchesTab;
+  const publishDiscussion = () => {
+    const content = discussionDraft.trim();
+    if (!content) {
+      onToast('请先输入讨论内容');
+      return;
+    }
+    setDiscussions((current) => [{
+      key: `discussion-${Date.now()}`,
+      author: '张洪磊',
+      role: '工作室成员',
+      time: '刚刚',
+      likes: 0,
+      comments: 0,
+      title: content.length > 30 ? `${content.slice(0, 30)}…` : content,
+      content,
+      tags: ['新讨论'],
+    }, ...current]);
+    setDiscussionDraft('');
+    setActiveTab('discussion');
+    onToast('讨论发布成功');
+  };
+
+  const toggleDiscussionLike = (key) => {
+    setLikedDiscussionKeys((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
     });
-  }, [activeCategory, activeTab]);
+  };
+
+  const submitReply = (key) => {
+    if (!replyDraft.trim()) return;
+    setDiscussions((current) => current.map((item) => (
+      item.key === key ? { ...item, comments: item.comments + 1 } : item
+    )));
+    setReplyDraft('');
+    setReplyPostKey(null);
+    onToast('回复已发布');
+  };
+
+  const renderArticlePosts = (posts = EXPERT_STUDIO_POSTS) => (
+    <>
+      <div className="td-work-expert-detail-posts">
+        {posts.map((post) => (
+          <article key={post.key} className="td-work-expert-detail-post" onClick={() => onToast(`已打开：${post.title}`)}>
+            <h2>{post.title}</h2>
+            <p>{post.desc}</p>
+            <footer>
+              <span className="td-work-expert-detail-author"><img src={studio.cover} alt="" />{post.author}</span>
+              <time>{post.date}</time>
+              <span><HeartOutlined /> {post.likes}</span>
+              <span><MessageOutlined /> {post.comments}</span>
+            </footer>
+          </article>
+        ))}
+      </div>
+      <button type="button" className="td-work-expert-detail-load" onClick={() => onToast('已加载更多工作室内容')}>查看更多</button>
+    </>
+  );
+
+  const renderDiscussions = () => (
+    <>
+      <div className="td-work-expert-discussion-toolbar">
+        <div>
+          <h2>讨论区</h2>
+          <span>和工作室成员一起交流教学实践</span>
+        </div>
+        <Segmented
+          size="small"
+          value={discussionSort}
+          options={[{ label: '热门', value: 'hot' }, { label: '最新', value: 'new' }]}
+          onChange={setDiscussionSort}
+        />
+      </div>
+      <div className="td-work-expert-discussion-composer">
+        <img src={studio.cover} alt="" />
+        <div>
+          <textarea
+            value={discussionDraft}
+            placeholder="分享一个问题、教学发现或资源经验…"
+            onChange={(event) => setDiscussionDraft(event.target.value)}
+          />
+          <footer>
+            <button type="button" onClick={() => onToast('已打开图片选择')}><UploadOutlined /> 图片</button>
+            <button type="button" onClick={() => onToast('已打开资源选择')}><LinkOutlined /> 资源</button>
+            <button type="button" onClick={() => onToast('已添加话题')}><AppstoreOutlined /> 话题</button>
+            <button type="button" className="is-primary" disabled={!discussionDraft.trim()} onClick={publishDiscussion}>发布</button>
+          </footer>
+        </div>
+      </div>
+      <div className="td-work-expert-discussion-list">
+        {sortedDiscussions.map((item) => {
+          const liked = likedDiscussionKeys.has(item.key);
+          return (
+            <article key={item.key} className="td-work-expert-discussion-card">
+              <header>
+                <img src={item.author === '侯琪颖' ? studio.cover : EXPERT_STUDIOS[(item.title.length % (EXPERT_STUDIOS.length - 1)) + 1].cover} alt="" />
+                <div><strong>{item.author}</strong><span>{item.role} · {item.time}</span></div>
+                {item.pinned ? <em><StarOutlined /> 置顶</em> : null}
+                <button type="button" aria-label="更多操作"><MoreOutlined /></button>
+              </header>
+              <h3>{item.title}</h3>
+              <p>{item.content}</p>
+              <div className="td-work-expert-discussion-tags">{item.tags.map((tag) => <span key={tag}>#{tag}</span>)}</div>
+              <footer>
+                <button type="button" className={liked ? 'is-active' : ''} onClick={() => toggleDiscussionLike(item.key)}><HeartOutlined /> {item.likes + (liked ? 1 : 0)}</button>
+                <button type="button" onClick={() => setReplyPostKey((current) => current === item.key ? null : item.key)}><MessageOutlined /> {item.comments}</button>
+                <button type="button" onClick={() => onToast('已复制讨论链接')}><LinkOutlined /> 分享</button>
+              </footer>
+              {replyPostKey === item.key ? (
+                <div className="td-work-expert-discussion-reply">
+                  <Input
+                    value={replyDraft}
+                    placeholder={`回复 ${item.author}`}
+                    onChange={(event) => setReplyDraft(event.target.value)}
+                    onPressEnter={() => submitReply(item.key)}
+                  />
+                  <Button type="primary" disabled={!replyDraft.trim()} onClick={() => submitReply(item.key)}>回复</Button>
+                </div>
+              ) : null}
+            </article>
+          );
+        })}
+      </div>
+    </>
+  );
+
+  return (
+    <section className="td-work-expert-detail" aria-label={`${studio.name}空间`}>
+      <div className="td-work-expert-detail-shell">
+        <header className="td-work-expert-detail-hero">
+          <div className="td-work-expert-detail-cover">
+            <button type="button" className="td-work-expert-detail-back" onClick={onBack} aria-label="返回专家工作室">
+              <LeftOutlined />
+              <span>返回</span>
+            </button>
+          </div>
+          <div className="td-work-expert-detail-profile">
+            <img className="td-work-expert-detail-avatar" src={studio.cover} alt="" />
+            <div className="td-work-expert-detail-info">
+              <div className="td-work-expert-detail-title-row">
+                <h1>{studio.name}</h1>
+                <span>市级</span>
+                <span>{studio.province} · {isHouStudio ? '泉州市' : '教师发展中心'}</span>
+              </div>
+              <div className="td-work-expert-detail-stats">
+                <button type="button" onClick={() => onToast(`已打开${studio.name}成员列表`)}><TeamOutlined /><strong>11</strong>成员</button>
+                <span><HeartOutlined /><strong>{studio.follows}</strong>粉丝</span>
+                <span><EyeOutlined /><strong>{isHouStudio ? '836' : studio.views}</strong>浏览量</span>
+              </div>
+              <p>{detailDescription}</p>
+              <div className="td-work-expert-detail-meta">
+                <strong>研究方向：</strong>
+                <span>教师AI素养提升</span>
+                <span>人工智能赋能教学创新</span>
+                <span>教学资源开发</span>
+              </div>
+              <div className="td-work-expert-detail-project">
+                <strong>在研课题：</strong>
+                智慧教育平台乡村小学读思达教学法应用研究
+              </div>
+            </div>
+            <button type="button" className={`td-work-expert-detail-follow ${followed ? 'is-followed' : ''}`} onClick={onFollow}>
+              {followed ? <CheckOutlined /> : <PlusOutlined />}
+              {followed ? '已关注' : '关注'}
+            </button>
+          </div>
+        </header>
+
+        <nav className="td-work-expert-detail-tabs" role="tablist" aria-label="工作室空间栏目">
+          {EXPERT_STUDIO_TABS.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.key}
+              className={activeTab === tab.key ? 'is-active' : ''}
+              onClick={() => setActiveTab(tab.key)}
+            >
+              {tab.label}{tab.count ? (
+                <span>({tab.key === 'discussion' ? tab.count + discussions.length - EXPERT_STUDIO_DISCUSSIONS.length : tab.count})</span>
+              ) : null}
+            </button>
+          ))}
+        </nav>
+
+        <div className="td-work-expert-detail-layout">
+          <main className="td-work-expert-detail-feed">
+            {activeTab === 'home' ? (
+              <>
+                <section className="td-work-expert-hot-section">
+                  <header><h2>正在热议</h2><button type="button" onClick={() => setActiveTab('discussion')}>查看全部 <RightOutlined /></button></header>
+                  <div>
+                    {discussions.slice(0, 3).map((item) => (
+                      <button key={item.key} type="button" onClick={() => setActiveTab('discussion')}>
+                        <span><img src={item.author === '侯琪颖' ? studio.cover : EXPERT_STUDIOS[2].cover} alt="" /><strong>{item.author}</strong><time>{item.time}</time></span>
+                        <p>{item.title}</p>
+                        <em><MessageOutlined /> {item.comments} 条回复</em>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+                <div className="td-work-expert-section-title"><h2>最新动态</h2><span>持续更新工作室研究与实践成果</span></div>
+                {renderArticlePosts(EXPERT_STUDIO_POSTS.slice(0, 5))}
+              </>
+            ) : null}
+            {activeTab === 'discussion' ? renderDiscussions() : null}
+            {activeTab === 'article' ? (
+              <>
+                <div className="td-work-expert-section-title"><h2>精选文章</h2><span>共 18 篇</span></div>
+                {renderArticlePosts(EXPERT_STUDIO_POSTS.filter((item) => item.category === '文章'))}
+              </>
+            ) : null}
+            {activeTab === 'course' ? (
+              <>
+                <div className="td-work-expert-section-title"><h2>研修课程</h2><span>系统学习工作室核心研究成果</span></div>
+                <div className="td-work-expert-course-grid">
+                  {EXPERT_STUDIO_COURSES.map((item) => (
+                    <button key={item.key} type="button" onClick={() => onToast(`已打开课程：${item.title}`)}>
+                      <img src={item.cover} alt="" />
+                      <strong>{item.title}</strong>
+                      <span>{item.lessons}节课<em>{item.learners}人学习</em></span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : null}
+            {activeTab === 'event' ? (
+              <>
+                <div className="td-work-expert-section-title"><h2>工作室活动</h2><span>线上线下共同研修</span></div>
+                <div className="td-work-expert-event-list">
+                  {EXPERT_STUDIO_EVENTS.map((item) => (
+                    <button key={item.key} type="button" onClick={() => onToast(`已打开活动：${item.title}`)}>
+                      <time>{item.date}</time>
+                      <div><span>{item.status}</span><h3>{item.title}</h3><p>{item.mode} · {item.members}人参与</p></div>
+                      <RightOutlined />
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : null}
+            {activeTab === 'more' ? (
+              <div className="td-work-expert-about">
+                <h2>关于工作室</h2>
+                <p>{detailDescription}</p>
+                <h3>研究方向</h3>
+                <div><span>教师AI素养提升</span><span>人工智能赋能教学创新</span><span>教学资源开发</span></div>
+                <h3>运行机制</h3>
+                <p>实行双周线上例会、每月主题研讨、季度线下工作坊和年度成果展示，建立“工具推荐—使用指导—问题反馈”的闭环服务机制。</p>
+              </div>
+            ) : null}
+          </main>
+
+          <aside className="td-work-expert-detail-side">
+            {activeTab === 'discussion' ? (
+              <section className="td-work-expert-detail-panel td-work-expert-discussion-guide">
+                <header><h2>讨论区指南</h2><span>共创交流</span></header>
+                <p>围绕真实教学问题交流，描述清楚场景与目标；分享资源时请注明来源，保护学生与教师个人信息。</p>
+                <div><strong>热门话题</strong><span>#AI备课</span><span>#课堂实践</span><span>#资源分享</span><span>#AI伦理</span></div>
+              </section>
+            ) : null}
+            <section className="td-work-expert-detail-panel td-work-expert-active-members">
+              <header><h2>活跃成员</h2><button type="button" onClick={() => onToast('已打开全部成员')}>全部成员</button></header>
+              <div>
+                {EXPERT_STUDIOS.slice(0, 6).map((item) => <img key={item.key} src={item.cover} alt="" title={item.name} />)}
+              </div>
+              <p>11 位成员正在共同研究与分享</p>
+            </section>
+            <section className="td-work-expert-detail-panel">
+              <header><h2>精选推荐</h2><span>热门推荐</span></header>
+              {EXPERT_STUDIO_RECOMMENDS.map((item) => (
+                <button key={item.key} type="button" className="td-work-expert-recommend-item" onClick={() => onToast(`已打开：${item.title}`)}>
+                  <strong>{item.title}</strong>
+                  <span>{item.author}<time>{item.date}</time></span>
+                </button>
+              ))}
+              <button type="button" className="td-work-expert-detail-refresh" onClick={() => onToast('已更新精选推荐')}><ReloadOutlined /> 换一换</button>
+            </section>
+
+            {activeTab !== 'discussion' ? <section className="td-work-expert-detail-panel td-work-expert-ranking">
+              <header><h2>排行榜</h2><span>贡献值</span></header>
+              <div className="td-work-expert-ranking-stats">
+                <span><strong>4.07</strong>昨日新增</span>
+                <span><strong>37.98</strong>2026学年</span>
+                <span><strong>87</strong>排名</span>
+              </div>
+              <div className="td-work-expert-ranking-head"><span>排行</span><span>工作室名称</span><span>贡献值</span></div>
+              <ol>
+                {EXPERT_STUDIO_RANKING.map(([name, score], index) => (
+                  <li key={name}>
+                    <em className={index < 3 ? `is-top-${index + 1}` : ''}>{index + 1}</em>
+                    <span>{name}</span>
+                    <strong>{score}</strong>
+                  </li>
+                ))}
+              </ol>
+              <small>最近更新时间：2026/10/25 05:50:48</small>
+            </section> : null}
+          </aside>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ExpertStudiosPage({ onToast }) {
+  const [province, setProvince] = useState('全部');
+  const [showAll, setShowAll] = useState(false);
+  const [followedKeys, setFollowedKeys] = useState(() => new Set());
+  const [activeStudio, setActiveStudio] = useState(null);
+  const filteredItems = useMemo(
+    () => EXPERT_STUDIOS.filter((item) => province === '全部' || item.province === province),
+    [province],
+  );
+  const visibleItems = showAll ? filteredItems : filteredItems.slice(0, 8);
+
+  const toggleFollow = (event, item) => {
+    event?.stopPropagation();
+    setFollowedKeys((current) => {
+      const next = new Set(current);
+      if (next.has(item.key)) next.delete(item.key);
+      else next.add(item.key);
+      return next;
+    });
+  };
+
+  if (activeStudio) {
+    return (
+      <ExpertStudioDetailPage
+        studio={activeStudio}
+        followed={followedKeys.has(activeStudio.key)}
+        onBack={() => setActiveStudio(null)}
+        onFollow={(event) => toggleFollow(event, activeStudio)}
+        onToast={onToast}
+      />
+    );
+  }
+
+  return (
+    <section className="td-work-expert-page" aria-label="专家工作室">
+      <div className="td-work-expert-content">
+        <section className="td-work-expert-filter" aria-label="按省份筛选工作室">
+          <strong>省份</strong>
+          <div>
+            {EXPERT_STUDIO_PROVINCES.map((item) => (
+              <button
+                key={item}
+                type="button"
+                className={province === item ? 'is-active' : ''}
+                onClick={() => {
+                  setProvince(item);
+                  setShowAll(false);
+                }}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {visibleItems.length ? (
+          <div className="td-work-expert-grid">
+            {visibleItems.map((item) => {
+              const isFollowed = followedKeys.has(item.key);
+              return (
+                <article
+                  key={item.key}
+                  className="td-work-expert-card"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setActiveStudio(item)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      setActiveStudio(item);
+                    }
+                  }}
+                >
+                  <div className="td-work-expert-card-cover">
+                    <img src={item.cover} alt={item.name} />
+                    <h2>{item.name}</h2>
+                  </div>
+                  <div className="td-work-expert-card-body">
+                    <p>{item.desc}</p>
+                    <footer>
+                      <span><EyeOutlined /> {item.views}浏览</span>
+                      <button
+                        type="button"
+                        className={isFollowed ? 'is-followed' : ''}
+                        onClick={(event) => toggleFollow(event, item)}
+                      >
+                        <HeartOutlined /> {isFollowed ? '已关注' : `${item.follows}关注`}
+                      </button>
+                    </footer>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="td-work-expert-empty">该地区暂无工作室</div>
+        )}
+
+        {filteredItems.length > 8 ? (
+          <button type="button" className="td-work-expert-more" onClick={() => setShowAll((value) => !value)}>
+            {showAll ? '收起' : '查看更多'}
+            <DownOutlined className={showAll ? 'is-open' : ''} />
+          </button>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+function TongdaAcademyPage({ onToast }) {
+  const [showMoreReplays, setShowMoreReplays] = useState(false);
+  const [guideTab, setGuideTab] = useState('全部');
+  const [showMoreGuides, setShowMoreGuides] = useState(false);
+  const [tipTab, setTipTab] = useState('全部');
+  const [featureTab, setFeatureTab] = useState('全部');
+  const [showMoreTips, setShowMoreTips] = useState(false);
+
+  const visibleGuides = useMemo(() => {
+    const matches = ACADEMY_GUIDES.filter((item) => guideTab === '全部' || item.category === guideTab);
+    return showMoreGuides ? matches : matches.slice(0, 2);
+  }, [guideTab, showMoreGuides]);
+
+  const matchingTips = useMemo(() => ACADEMY_TUTORIALS.filter((item) => {
+    const matchesCategory = tipTab === '全部' || item.category === tipTab;
+    const matchesFeature = featureTab === '全部' || item.feature === featureTab;
+    return matchesCategory && matchesFeature;
+  }), [featureTab, tipTab]);
+
+  const visibleTips = showMoreTips ? matchingTips : matchingTips.slice(0, 6);
+  const openItem = (title) => onToast(`已打开：${title}`);
 
   return (
     <section className="td-work-academy-page" aria-label="通答学院">
-      <header className="td-work-academy-hero">
-        <div className="td-work-academy-hero-copy">
-          <span className="td-work-academy-kicker">通答学院</span>
-          <h1>把 AI 工作台、培训项目和教学案例放在一个学习入口</h1>
-          <p>参考飞象学院的轻量入口，把新手指南、资源广场、应用广场和项目模板收拢到 AI 模式里，方便老师边学边用。</p>
-          <div className="td-work-academy-hero-actions">
-            <button type="button" onClick={onOpenSpace}>
-              <CloudOutlined />
-              打开学院项目
-            </button>
-            <button type="button" onClick={() => onToast('已进入通答学院新手指南')}>
-              <BookOutlined />
-              新手指南
-            </button>
+      <div className="td-work-academy-shell">
+        <header className="td-work-academy-heading">
+          <h1>通答学院</h1>
+          <div className="td-work-academy-heading-actions">
+            <button type="button" className="is-primary" onClick={() => onToast('已进入作品提交')}>提交作品</button>
+            <button type="button" onClick={() => onToast('已打开联系我们')}>联系我们</button>
           </div>
-        </div>
-        <div className="td-work-academy-brief" aria-label="学院概览">
-          <span>
-            <strong>36</strong>
-            <em>精选课程</em>
-          </span>
-          <span>
-            <strong>128</strong>
-            <em>资源模板</em>
-          </span>
-          <span>
-            <strong>18</strong>
-            <em>AI应用</em>
-          </span>
-        </div>
-      </header>
+        </header>
 
-      <div className="td-work-academy-tabs" role="tablist" aria-label="通答学院栏目">
-        {ACADEMY_TABS.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            className={activeTab === tab.key ? 'is-active' : ''}
-            role="tab"
-            aria-selected={activeTab === tab.key}
-            onClick={() => setActiveTab(tab.key)}
-          >
-            {tab.label}
+        <section
+          className="td-work-academy-banner"
+          style={{ backgroundImage: `url(${academyCreationBanner})` }}
+          aria-label="2026 教师 AI 教育创作征集"
+        >
+          <div>
+            <span>四大创作方向开放投稿</span>
+            <h2>2026 教师 AI 教育创作征集</h2>
+            <p>把你的好方法做出来，让更多人真正用起来</p>
+            <button type="button" onClick={() => onToast('已进入创作征集')}>立即参与 <span aria-hidden="true">›</span></button>
+          </div>
+        </section>
+
+        <section className="td-work-academy-section" aria-labelledby="academy-replay-title">
+          <h2 id="academy-replay-title">直播回放</h2>
+          <div className="td-work-academy-content-grid">
+            {(showMoreReplays ? ACADEMY_REPLAYS : ACADEMY_REPLAYS.slice(0, 2)).map((item) => (
+              <button key={item.key} type="button" className="td-work-academy-media-card" onClick={() => openItem(item.title)}>
+                <span className="td-work-academy-media">
+                  <img src={item.cover} alt="" />
+                  <em>{item.duration}</em>
+                </span>
+                <strong>{item.title}</strong>
+                <small>{item.date}</small>
+              </button>
+            ))}
+          </div>
+          <button type="button" className="td-work-academy-expand" onClick={() => setShowMoreReplays((value) => !value)}>
+            {showMoreReplays ? '收起' : '展开更多'}
+            <DownOutlined className={showMoreReplays ? 'is-open' : ''} />
           </button>
-        ))}
-      </div>
+        </section>
 
-      <div className="td-work-academy-categories" aria-label="学院分类">
-        {ACADEMY_CATEGORIES.map((category) => (
-          <button
-            key={category}
-            type="button"
-            className={activeCategory === category ? 'is-active' : ''}
-            onClick={() => setActiveCategory(category)}
-          >
-            {category}
-          </button>
-        ))}
-      </div>
+        <section className="td-work-academy-section" aria-labelledby="academy-guide-title">
+          <h2 id="academy-guide-title">网页教程指南</h2>
+          <div className="td-work-academy-filter-tabs" role="tablist" aria-label="网页教程指南分类">
+            {ACADEMY_GUIDE_TABS.map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                role="tab"
+                aria-selected={guideTab === tab}
+                className={guideTab === tab ? 'is-active' : ''}
+                onClick={() => {
+                  setGuideTab(tab);
+                  setShowMoreGuides(false);
+                }}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+          <div className="td-work-academy-content-grid">
+            {visibleGuides.map((item) => (
+              <button key={item.key} type="button" className="td-work-academy-media-card" onClick={() => openItem(item.title)}>
+                <span className="td-work-academy-media">
+                  <img src={item.cover} alt="" />
+                </span>
+                <strong>{item.title}</strong>
+                <small>{item.owner}<span>{item.category}</span></small>
+              </button>
+            ))}
+          </div>
+          {ACADEMY_GUIDES.filter((item) => guideTab === '全部' || item.category === guideTab).length > 2 && (
+            <button type="button" className="td-work-academy-expand" onClick={() => setShowMoreGuides((value) => !value)}>
+              {showMoreGuides ? '收起' : '展开更多'}
+              <DownOutlined className={showMoreGuides ? 'is-open' : ''} />
+            </button>
+          )}
+        </section>
 
-      <div className="td-work-academy-grid" aria-label="通答学院内容">
-        {visibleItems.map((item) => (
-          <article key={item.key} className="td-work-academy-card">
-            <div className={`td-work-academy-card-cover is-${item.tone}`}>
-              <span>{item.type}</span>
-            </div>
-            <div className="td-work-academy-card-main">
-              <div className="td-work-academy-card-meta">
-                <span>{item.category}</span>
-                <em>{item.visits}</em>
-              </div>
-              <h2>{item.title}</h2>
-              <p>{item.desc}</p>
-              <footer>
-                <span>{item.owner}</span>
-                <button type="button" onClick={() => onToast(`已打开：${item.title}`)}>
-                  查看
+        <section className="td-work-academy-section td-work-academy-tips" aria-labelledby="academy-tips-title">
+          <h2 id="academy-tips-title">使用技巧攻略</h2>
+          <div className="td-work-academy-filter-tabs is-spacious" role="tablist" aria-label="使用技巧攻略分类">
+            {ACADEMY_TIP_TABS.map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                role="tab"
+                aria-selected={tipTab === tab}
+                className={tipTab === tab ? 'is-active' : ''}
+                onClick={() => {
+                  setTipTab(tab);
+                  setShowMoreTips(false);
+                }}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+          <div className="td-work-academy-feature-tabs" role="tablist" aria-label="创作功能分类">
+            {ACADEMY_FEATURE_TABS.map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                role="tab"
+                aria-selected={featureTab === tab}
+                className={featureTab === tab ? 'is-active' : ''}
+                onClick={() => {
+                  setFeatureTab(tab);
+                  setShowMoreTips(false);
+                }}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+          {visibleTips.length > 0 ? (
+            <div className="td-work-academy-content-grid">
+              {visibleTips.map((item) => (
+                <button key={item.key} type="button" className="td-work-academy-media-card" onClick={() => openItem(item.title)}>
+                  <span className="td-work-academy-media">
+                    <img src={item.cover} alt="" />
+                    <em>{item.duration}</em>
+                  </span>
+                  <strong>{item.title}</strong>
+                  <small>通答老师<span>{item.feature}</span></small>
                 </button>
-              </footer>
+              ))}
             </div>
-          </article>
-        ))}
+          ) : (
+            <div className="td-work-academy-empty">该分类内容正在更新</div>
+          )}
+          {matchingTips.length > 6 && (
+            <button type="button" className="td-work-academy-expand" onClick={() => setShowMoreTips((value) => !value)}>
+              {showMoreTips ? '收起' : '展开更多'}
+              <DownOutlined className={showMoreTips ? 'is-open' : ''} />
+            </button>
+          )}
+        </section>
+
+        <footer className="td-work-academy-footer">© 2026 通答 · 通答学院 —— 让好课被更多人用到</footer>
       </div>
     </section>
   );
@@ -5239,7 +6110,7 @@ export default function TdWorkModule({
     </div>
   ) : null;
   const hideSpaceListTopbar = activeNav === 'space' && !activeSpace && !sidebarCollapsed;
-  const hideMarketplaceTopbar = ['home', 'resource-market', 'app-market', 'academy'].includes(activeNav);
+  const hideMarketplaceTopbar = ['home', 'resource-market', 'app-market', 'academy', 'expert-studios'].includes(activeNav);
   const hideTopbar = hideSpaceListTopbar || hideMarketplaceTopbar;
 
   return (
@@ -5309,8 +6180,7 @@ export default function TdWorkModule({
 
         <div className="td-work-sidebar-head">
           <div className="td-work-app-name">
-            <strong>通达</strong>
-            <span>工作学习</span>
+            <img src={tongdaLogo} alt="通答" />
           </div>
         </div>
 
@@ -5559,6 +6429,14 @@ export default function TdWorkModule({
                 学院项目
               </button>
             </>
+          ) : activeNav === 'expert-studios' ? (
+            <>
+              {topbarSidebarCollapsedTools}
+              <div className="td-work-dialog-titlebar-copy">
+                <strong>专家工作室</strong>
+                <span>AI素养指导团队与共创教研室</span>
+              </div>
+            </>
           ) : activeNav === 'scheduled' ? (
             <>
               {topbarSidebarCollapsedTools}
@@ -5754,12 +6632,14 @@ export default function TdWorkModule({
             key="resource-market"
             type="resource"
             onOpen={(item) => setToast(`已打开资源：${item.title}`)}
+            onCreate={handleCreateTaskFromHome}
           />
         ) : activeNav === 'app-market' ? (
           <MarketplacePage
             key="app-market"
             type="app"
             onOpen={(item) => setToast(`已打开应用：${item.title}`)}
+            onCreate={handleCreateTaskFromHome}
           />
         ) : activeNav === 'project' ? (
           <ProjectsPage
@@ -5797,6 +6677,8 @@ export default function TdWorkModule({
             onOpenSpace={handleOpenTongdaAcademySpaces}
             onToast={setToast}
           />
+        ) : activeNav === 'expert-studios' ? (
+          <ExpertStudiosPage onToast={setToast} />
         ) : activeNav === 'skills' && skillView === 'mine' ? (
           <MySkillsPage
             activeTab={mySkillTab}

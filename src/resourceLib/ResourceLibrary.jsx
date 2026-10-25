@@ -8,12 +8,11 @@ import {
   LeftOutlined, RightOutlined,
   FolderAddOutlined, FileAddOutlined,
   EditOutlined, DeleteOutlined,
-  FullscreenOutlined, ArrowsAltOutlined, ShrinkOutlined,
-  CloseOutlined,
+  FullscreenOutlined,
   ReloadOutlined,
   FolderFilled, DesktopOutlined,
   DownloadOutlined, ClockCircleOutlined,
-  CloudOutlined, ShareAltOutlined, GlobalOutlined,
+  ShareAltOutlined, GlobalOutlined,
   FolderOpenOutlined, LinkOutlined, SettingOutlined,
   QuestionCircleOutlined,
   RobotOutlined,
@@ -25,7 +24,7 @@ import {
   StarOutlined, StarFilled,
   CheckSquareOutlined, SelectOutlined, MinusSquareOutlined,
   BorderOutlined,
-  ClearOutlined, BorderOuterOutlined,
+  ClearOutlined, BorderOuterOutlined, CloseOutlined,
 } from '@ant-design/icons';
 import {
   loadResourceLib, addItem, renameItem, deleteItems, saveResourceLib, setSelectedFolder, inferFileType, moveItem,
@@ -120,6 +119,10 @@ const PREVIEW_PROCESSING_STATUSES = new Set([
 ]);
 const PREVIEW_FAILED_STATUSES = new Set(['failed', 'fail', 'error', 'errored']);
 const FINDER_LIQUID_MENU_OVERLAY_CLASS = 'finder-liquid-glass-menu';
+const SOURCE_FILE_EXTENSIONS = new Set([
+  'c', 'cpp', 'css', 'go', 'h', 'html', 'java', 'js', 'jsx', 'json', 'md', 'php',
+  'py', 'rb', 'rs', 'scss', 'sh', 'sql', 'swift', 'ts', 'tsx', 'vue', 'xml', 'yaml', 'yml',
+]);
 const KNOWLEDGE_GRAPH_POINT_TYPE_LABEL_MAP = Object.fromEntries(
   KNOWLEDGE_POINT_TYPE_OPTIONS.map((item) => [item.value, item.label]),
 );
@@ -128,6 +131,30 @@ const KNOWLEDGE_GRAPH_RELATION_TYPE_LABEL_MAP = Object.fromEntries(
 );
 const getActionErrorMessage = (error, fallback) => error?.message || fallback;
 const getPreviewMediaLoadKey = (item) => `${item?.key || item?.name || 'resource'}::${item?.url || ''}`;
+
+function getResourceFileExtension(item) {
+  const name = String(item?.name || '');
+  const extension = name.includes('.') ? name.split('.').pop().trim().toLowerCase() : '';
+  return extension;
+}
+
+function isSourceResource(item) {
+  return SOURCE_FILE_EXTENSIONS.has(getResourceFileExtension(item));
+}
+
+function getStandalonePreviewTypeLabel(item) {
+  const extension = getResourceFileExtension(item);
+  if (SOURCE_FILE_EXTENSIONS.has(extension)) return `${extension.toUpperCase()} · 源文件`;
+  return getFileTypeLabel(item?.fileType) || '文件';
+}
+
+function formatResourceFileSize(size) {
+  const bytes = Number(size);
+  if (!Number.isFinite(bytes) || bytes <= 0) return '大小未知';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(bytes < 10 * 1024 ? 1 : 0)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
 
 function getResourcePreviewStatus(item) {
   const status = item?.previewStatus
@@ -257,7 +284,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
   const [currentOrgId, setCurrentOrgId] = useState(() => data?.currentOrgId || 'org_default');
   const [keyword, setKeyword] = useState('');
   const [specialView, setSpecialView] = useState('all'); // all | recent | local
-  const [searchMode, setSearchMode] = useState('name'); // name | content
+  const [searchMode, setSearchMode] = useState('name'); // name | content | all
   const [searchPanelOpen, setSearchPanelOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [addType, setAddType] = useState('file');
@@ -268,6 +295,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
   const [tagFilterContextFolderKeys, setTagFilterContextFolderKeys] = useState([]);
   const [selectedItemKeys, setSelectedItemKeys] = useState([]); // 多选
   const [mouseMultiSelectMode, setMouseMultiSelectMode] = useState(false);
+  const previewSearchInputRef = useRef(null);
   const swipeSelectionRef = useRef(null);
   const suppressClickSelectionRef = useRef(false);
   const suppressNextItemClickRef = useRef(false);
@@ -445,7 +473,6 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
   const [columnSelectedItem, setColumnSelectedItem] = useState(null); // 分栏视图中选中的文件
   const [previewMediaErrors, setPreviewMediaErrors] = useState({});
   const [previewOverlayDismissedKey, setPreviewOverlayDismissedKey] = useState(null);
-  const [previewOverlayFullscreen, setPreviewOverlayFullscreen] = useState(false);
   const pendingCapabilityModelEditKeyRef = useRef(null);
   // 侧栏宽度拖拽
   const [sidebarWidth, setSidebarWidth] = useState(216);
@@ -671,6 +698,10 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
 
   const matchesSearch = useCallback((item) => {
     if (!hasActiveSearch) return true;
+    if (searchMode === 'all') {
+      return (item.name || '').toLowerCase().includes(normalizedKeywordLower)
+        || getItemContentSearchText(item).includes(normalizedKeywordLower);
+    }
     if (searchMode === 'content') {
       return getItemContentSearchText(item).includes(normalizedKeywordLower);
     }
@@ -3288,6 +3319,10 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
     if (previewOverlayDismissedKey === previewItem.key) return null;
     return previewItem;
   }, [previewItem, previewOverlayDismissedKey, viewMode]);
+  const detailPreviewBreadcrumb = useMemo(() => {
+    if (!detailPreviewOverlayItem?.parentKey) return [];
+    return buildFolderBreadcrumb(detailPreviewOverlayItem.parentKey);
+  }, [buildFolderBreadcrumb, detailPreviewOverlayItem]);
   const closeDetailPreviewOverlay = useCallback(() => {
     if (!previewItem?.key) return;
     setPreviewOverlayDismissedKey(previewItem.key);
@@ -4467,7 +4502,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
     );
   }, [getPreviewUnavailableState, markPreviewMediaError, renderPreviewUnavailableBlock]);
 
-  const renderTextDocumentPreviewBlock = (item) => {
+  const renderTextDocumentPreviewBlock = (item, { standalone = false } = {}) => {
     const bodyText = String(item?.contentText || item?.comment || '').trim();
     const paragraphs = bodyText
       ? bodyText.split(/\n{2,}|\r?\n/).map((line) => line.trim()).filter(Boolean)
@@ -4482,14 +4517,26 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
       );
     }
 
+    if (standalone && isSourceResource(item)) {
+      return (
+        <pre className="finder-preview-source-code">
+          <code>{bodyText}</code>
+        </pre>
+      );
+    }
+
     return (
-      <article className="finder-preview-document">
-        <h1>{item.name}</h1>
-        <div className="finder-preview-document-meta">
-          <span>{getFileTypeLabel(item.fileType)}</span>
-          {item.lastEdit ? <span>{item.lastEdit}</span> : null}
-          {item.size ? <span>{`${(item.size / 1024).toFixed(1)} KB`}</span> : null}
-        </div>
+      <article className={`finder-preview-document ${standalone ? 'is-standalone-content' : ''}`}>
+        {!standalone ? (
+          <>
+            <h1>{item.name}</h1>
+            <div className="finder-preview-document-meta">
+              <span>{getFileTypeLabel(item.fileType)}</span>
+              {item.lastEdit ? <span>{item.lastEdit}</span> : null}
+              {item.size ? <span>{formatResourceFileSize(item.size)}</span> : null}
+            </div>
+          </>
+        ) : null}
         <section className="finder-preview-document-callout">
           {paragraphs.slice(0, 3).map((paragraph, index) => (
             <p key={`${item.key}-summary-${index}`}>{paragraph}</p>
@@ -4508,6 +4555,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
     folderCount = 0,
     knowledgeGraphData = null,
     capabilityModelData = null,
+    standalone = false,
   } = {}) => {
     if (!item) return null;
 
@@ -4539,6 +4587,8 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
           renderMediaPreviewBlock(item)
         ) : item.fileType === 'audio' ? (
           renderMediaPreviewBlock(item)
+        ) : standalone && isSourceResource(item) && (item.contentText || item.comment) ? (
+          renderTextDocumentPreviewBlock(item, { standalone: true })
         ) : canFrameUrl ? (
           <iframe src={item.url} className="finder-preview-iframe" title={`${item.name} 预览`} />
         ) : item.fileType === 'pptx' ? (
@@ -4548,7 +4598,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
         ) : item.fileType === 'docx' ? (
           <div className="finder-preview-placeholder"><FileWordOutlined style={{ fontSize: 80, color: '#007aff' }} /><div>Word 文档</div></div>
         ) : item.contentText || item.comment ? (
-          renderTextDocumentPreviewBlock(item)
+          renderTextDocumentPreviewBlock(item, { standalone })
         ) : (
           <div className="finder-preview-placeholder"><FileTextOutlined style={{ fontSize: 80, color: '#8e8e93' }} /><div>文件预览</div></div>
         )}
@@ -4940,19 +4990,9 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
   }, [selectedItemKey, viewMode]);
 
   useEffect(() => {
-    setPreviewOverlayFullscreen(false);
-  }, [selectedItemKey]);
-
-  useEffect(() => {
-    if (!detailPreviewOverlayItem) {
-      setPreviewOverlayFullscreen(false);
-    }
-  }, [detailPreviewOverlayItem]);
-
-  useEffect(() => {
     if (!detailPreviewOverlayItem) return undefined;
 
-    document.documentElement.classList.add('finder-preview-drawer-open');
+    document.documentElement.classList.add('finder-preview-page-open');
 
     const handlePreviewOverlayKeyDown = (event) => {
       if (event.key !== 'Escape') return;
@@ -4963,7 +5003,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
 
     document.addEventListener('keydown', handlePreviewOverlayKeyDown, true);
     return () => {
-      document.documentElement.classList.remove('finder-preview-drawer-open');
+      document.documentElement.classList.remove('finder-preview-page-open');
       document.removeEventListener('keydown', handlePreviewOverlayKeyDown, true);
     };
   }, [closeDetailPreviewOverlay, detailPreviewOverlayItem]);
@@ -4982,6 +5022,20 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
     setSearchMode(mode);
     if (normalizedKeyword) setSearchPanelOpen(false);
   };
+  const submitStandalonePreviewSearch = () => {
+    const nextKeyword = keyword.trim();
+    if (!nextKeyword) return;
+    setKeyword(nextKeyword);
+    setSearchMode('all');
+    setSearchPanelOpen(false);
+    setSelectedItemKeys([]);
+    closeDetailPreviewOverlay();
+  };
+  const clearStandalonePreviewSearch = () => {
+    setKeyword('');
+    setSearchPanelOpen(false);
+    requestAnimationFrame(() => previewSearchInputRef.current?.focus());
+  };
   const tagPickerItem = useMemo(
     () => (tagPickerTarget ? list.find((item) => item.key === tagPickerTarget) || null : null),
     [list, tagPickerTarget],
@@ -4989,7 +5043,9 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
 
   const activeSearchDescription = searchMode === 'name'
     ? `名称包含 “${normalizedKeyword}”`
-    : `内容包含 “${normalizedKeyword}”`;
+    : searchMode === 'content'
+      ? `内容包含 “${normalizedKeyword}”`
+      : `搜索 “${normalizedKeyword}”`;
   const buildMenuOverlayClassName = useCallback(
     (extraClassName = '') => [FINDER_LIQUID_MENU_OVERLAY_CLASS, extraClassName].filter(Boolean).join(' '),
     [],
@@ -5896,29 +5952,96 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
 
         {detailPreviewOverlayItem ? (
           <div
-            className={`finder-preview-modal-backdrop ${previewOverlayFullscreen ? 'is-preview-fullscreen' : ''}`}
+            className="finder-preview-modal-backdrop"
             role="presentation"
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget) closeDetailPreviewOverlay();
-            }}
           >
             <section
               key={detailPreviewOverlayItem.key}
-              className={`finder-preview-modal ${previewOverlayFullscreen ? 'is-preview-fullscreen' : ''}`}
+              className="finder-preview-modal"
               role="dialog"
               aria-modal="true"
               aria-labelledby="finder-preview-modal-title"
             >
               <header className="finder-preview-modal-header">
-                <div className="finder-preview-modal-file">
-                  <span className="finder-preview-modal-file-icon">
-                    {renderFileIcon(detailPreviewOverlayItem.fileType, { fontSize: 15 })}
-                  </span>
-                  <span className="finder-preview-modal-title" id="finder-preview-modal-title">
-                    {detailPreviewOverlayItem.name}
-                  </span>
+                <div className="finder-preview-modal-navigation" aria-label="文件路径">
+                  <button
+                    type="button"
+                    className="finder-preview-modal-back"
+                    aria-label="返回资料库"
+                    title="返回资料库"
+                    onClick={closeDetailPreviewOverlay}
+                  >
+                    <LeftOutlined />
+                  </button>
+                  <div className="finder-preview-modal-breadcrumb">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        closeDetailPreviewOverlay();
+                        setSelectedItemKeys([]);
+                        navigateTo(null);
+                      }}
+                    >
+                      {scope === 'personal' ? '我的资料库' : '组织资料库'}
+                    </button>
+                    {detailPreviewBreadcrumb.map((segment) => (
+                      <span key={segment.key} className="finder-preview-modal-breadcrumb-segment">
+                        <RightOutlined />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            closeDetailPreviewOverlay();
+                            setSelectedItemKeys([]);
+                            navigateTo(segment.key);
+                          }}
+                        >
+                          {segment.name}
+                        </button>
+                      </span>
+                    ))}
+                    <span className="finder-preview-modal-breadcrumb-segment is-current">
+                      <RightOutlined />
+                      <strong>{detailPreviewOverlayItem.name}</strong>
+                    </span>
+                  </div>
                 </div>
                 <div className="finder-preview-modal-actions">
+                  <div className="finder-preview-modal-search" role="search">
+                    <SearchOutlined className="finder-preview-modal-search-icon" aria-hidden="true" />
+                    <input
+                      ref={previewSearchInputRef}
+                      type="search"
+                      autoComplete="off"
+                      placeholder="搜索资料库"
+                      aria-label="搜索资料库"
+                      value={keyword}
+                      onChange={(event) => setKeyword(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') submitStandalonePreviewSearch();
+                      }}
+                    />
+                    <span className="finder-preview-modal-search-actions">
+                      {keyword ? (
+                        <button
+                          type="button"
+                          className="finder-preview-modal-search-clear"
+                          aria-label="清空搜索"
+                          onClick={clearStandalonePreviewSearch}
+                        >
+                          <CloseOutlined />
+                        </button>
+                      ) : null}
+                      <span className="finder-preview-modal-search-divider" aria-hidden="true" />
+                      <button
+                        type="button"
+                        className="finder-preview-modal-search-submit"
+                        aria-disabled={!keyword.trim()}
+                        onClick={submitStandalonePreviewSearch}
+                      >
+                        搜索
+                      </button>
+                    </span>
+                  </div>
                   <button
                     type="button"
                     className="finder-preview-modal-action"
@@ -5927,12 +6050,14 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
                     onClick={() => message.info('分享功能开发中')}
                   >
                     <ShareAltOutlined />
+                    <span>分享</span>
                   </button>
                   <button
                     type="button"
                     className="finder-preview-modal-action"
                     aria-label="下载"
                     title="下载"
+                    disabled={!detailPreviewOverlayItem.url}
                     onClick={() => {
                       if (detailPreviewOverlayItem.url) {
                         window.open(detailPreviewOverlayItem.url, '_blank', 'noopener,noreferrer');
@@ -5942,43 +6067,31 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
                     }}
                   >
                     <DownloadOutlined />
-                  </button>
-                  <button
-                    type="button"
-                    className="finder-preview-modal-action"
-                    aria-label="更多"
-                    title="更多"
-                    onClick={() => message.info('更多操作可在文件行右键菜单中使用')}
-                  >
-                    <MoreOutlined />
-                  </button>
-                  <button
-                    type="button"
-                    className={`finder-preview-modal-action ${previewOverlayFullscreen ? 'is-active' : ''}`}
-                    aria-label={previewOverlayFullscreen ? '还原预览窗口' : '最大化预览窗口'}
-                    title={previewOverlayFullscreen ? '还原预览窗口' : '最大化预览窗口'}
-                    onClick={() => setPreviewOverlayFullscreen((fullscreen) => !fullscreen)}
-                  >
-                    {previewOverlayFullscreen ? <ShrinkOutlined /> : <ArrowsAltOutlined />}
-                  </button>
-                  <button
-                    type="button"
-                    className="finder-preview-modal-action finder-preview-modal-close"
-                    aria-label="关闭预览"
-                    title="关闭"
-                    onClick={closeDetailPreviewOverlay}
-                  >
-                    <CloseOutlined />
+                    <span>下载</span>
                   </button>
                 </div>
               </header>
               <div className="finder-preview-modal-body">
-                <div className="finder-preview-content">
-                  {renderResourcePreviewBody(detailPreviewOverlayItem, {
-                    folderCount: previewFolderCount,
-                    knowledgeGraphData: previewKnowledgeGraphData,
-                    capabilityModelData: previewCapabilityModelData,
-                  })}
+                <div className="finder-preview-page-content">
+                  <div className="finder-preview-page-type">
+                    <span>{renderFileIcon(detailPreviewOverlayItem.fileType, { fontSize: 16 })}</span>
+                    <span>{getStandalonePreviewTypeLabel(detailPreviewOverlayItem)}</span>
+                  </div>
+                  <h1 id="finder-preview-modal-title">{detailPreviewOverlayItem.name}</h1>
+                  <div className="finder-preview-page-meta">
+                    <span>{formatResourceFileSize(detailPreviewOverlayItem.size)}</span>
+                    <span>{detailPreviewOverlayItem.lastEdit ? `更新于 ${detailPreviewOverlayItem.lastEdit}` : '最近更新'}</span>
+                  </div>
+                  <div className="finder-preview-page-canvas">
+                    <div className="finder-preview-content">
+                      {renderResourcePreviewBody(detailPreviewOverlayItem, {
+                        folderCount: previewFolderCount,
+                        knowledgeGraphData: previewKnowledgeGraphData,
+                        capabilityModelData: previewCapabilityModelData,
+                        standalone: true,
+                      })}
+                    </div>
+                  </div>
                 </div>
               </div>
             </section>
