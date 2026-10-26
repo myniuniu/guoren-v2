@@ -62,6 +62,9 @@ import SupervisionSchoolTaskForm, {
 } from './supervisionTask/SupervisionSchoolTaskForm.jsx';
 import AssessmentConfig from './AssessmentConfig';
 import LearnerAssessmentProgressView from './LearnerAssessmentProgressView';
+import SelfPacedLearningProgressView, {
+  buildSelfPacedResourceProgressMap,
+} from './SelfPacedLearningProgressView';
 import {
   buildLearnerAssessmentProgress,
   buildSampleAssessmentProgress,
@@ -2515,15 +2518,21 @@ function TopicDetail({
   );
   const resources = isKnowledgeGraphView && knowledgeGraphGraph && !isLearnerProgressMode ? knowledgeGraphMirrorResources : supervisionVisibleResources;
   const canEditDisplayedResources = canEditCurrentVersion && !isKnowledgeGraphView && !isLearnerProgressMode;
-  const resourceAssessmentProgressMap = useMemo(() => (
-    activeSceneType === 'TRAINING'
-      ? buildResourceAssessmentProgressMap(
-          sourceResources,
-          currentVersion?.assessment,
-          currentVersion?.assessmentProgress,
-        )
-      : new Map()
-  ), [activeSceneType, currentVersion?.assessment, currentVersion?.assessmentProgress, sourceResources]);
+  const resourceAssessmentProgressMap = useMemo(() => {
+    if (activeSceneType !== 'TRAINING') return new Map();
+    if (isSelfPacedTraining) return buildSelfPacedResourceProgressMap(sourceResources);
+    return buildResourceAssessmentProgressMap(
+      sourceResources,
+      currentVersion?.assessment,
+      currentVersion?.assessmentProgress,
+    );
+  }, [
+    activeSceneType,
+    currentVersion?.assessment,
+    currentVersion?.assessmentProgress,
+    isSelfPacedTraining,
+    sourceResources,
+  ]);
   const showResourceAssessmentProgress = activeSceneType === 'TRAINING'
     && activeTab === 'knowledge'
     && !isKnowledgeGraphView
@@ -3526,6 +3535,9 @@ function TopicDetail({
           ...normalizedTabs.slice(learnerInsertIndex),
         ];
 	      }
+      if (isSelfPacedTraining) {
+        normalizedTabs = normalizedTabs.filter((item) => item?.key !== 'learner-progress');
+      }
 	      return normalizedTabs.map((item, index) => ({
 	        key: item.key,
 	        label: isSelfPacedTraining && item.key === 'home'
@@ -8799,13 +8811,20 @@ function TopicDetail({
         />
       ) : activeTab === 'learner-progress' ? (
         <div className="detail-body topic-learner-progress-body">
-          <LearnerAssessmentProgressView
-            resources={resources}
-            assessment={currentVersion?.assessment}
-            assessmentProgress={currentVersion?.assessmentProgress}
-            onOpenActivity={handleOpenLearnerProgressActivity}
-            onOpenResource={handleOpenLearnerProgressResource}
-          />
+          {isSelfPacedTraining ? (
+            <SelfPacedLearningProgressView
+              resources={resources}
+              onOpenResource={handleOpenLearnerProgressResource}
+            />
+          ) : (
+            <LearnerAssessmentProgressView
+              resources={resources}
+              assessment={currentVersion?.assessment}
+              assessmentProgress={currentVersion?.assessmentProgress}
+              onOpenActivity={handleOpenLearnerProgressActivity}
+              onOpenResource={handleOpenLearnerProgressResource}
+            />
+          )}
         </div>
       ) : (
         <div className="detail-body" ref={detailBodyRef}>

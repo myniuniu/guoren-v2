@@ -5140,6 +5140,21 @@
   opacity: 1;
 }
 
+.topic-detail.is-self-paced-training .project-list-selection-indicator {
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.topic-detail.is-self-paced-training .project-list-selection-indicator::after {
+  left: 5px;
+  top: 10px;
+  bottom: 10px;
+  width: 2px;
+  background: rgba(100, 116, 139, 0.42);
+  opacity: 1;
+}
+
 .project-empty {
   display: flex;
   align-items: center;
@@ -5415,6 +5430,38 @@
   box-shadow:
     inset 2px 0 0 color-mix(in srgb, var(--tree-assessment-row-color) 54%, transparent),
     inset 0 1px 0 rgba(255, 255, 255, 0.68);
+}
+
+/* 自主学习目录的选中态保持轻量：仅用细色条与极浅底色提示当前位置。 */
+.topic-detail.is-self-paced-training .project-item-selected:not(.project-item-context-open) {
+  border-color: transparent;
+  background: transparent !important;
+  box-shadow: inset 2px 0 0 rgba(100, 116, 139, 0.3);
+}
+
+.topic-detail.is-self-paced-training .project-item-selected:not(.project-item-context-open):hover {
+  border-color: transparent;
+  background:
+    linear-gradient(90deg, rgba(100, 116, 139, 0.035) 0%, rgba(255, 255, 255, 0) 74%) !important;
+  box-shadow: inset 2px 0 0 rgba(100, 116, 139, 0.38);
+}
+
+.topic-detail.is-self-paced-training .project-item-assessment-resource.project-item-selected:not(.project-item-context-open),
+.topic-detail.is-self-paced-training .project-item-assessment-activity.project-item-selected:not(.project-item-context-open) {
+  border-color: transparent;
+  background: transparent !important;
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--tree-assessment-row-color) 42%, transparent);
+}
+
+.topic-detail.is-self-paced-training .project-item-assessment-resource.project-item-selected:not(.project-item-context-open):hover,
+.topic-detail.is-self-paced-training .project-item-assessment-activity.project-item-selected:not(.project-item-context-open):hover {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--tree-assessment-row-color) 3%, transparent) 0%, rgba(255, 255, 255, 0) 72%) !important;
+}
+
+.topic-detail.is-self-paced-training .project-item-selected:not(.project-item-context-open) .project-item-title {
+  color: #344054;
+  font-weight: 500;
 }
 
 .project-item-assessment-resource {

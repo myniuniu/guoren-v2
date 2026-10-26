@@ -172,7 +172,7 @@ const NAV_ITEMS = [
   { key: 'academy', label: '通答学院', icon: <BookOutlined />, activeIcon: <BookFilled /> },
   {
     key: 'knowledge-community',
-    label: '知识社区',
+    label: '研习社',
     icon: <DatabaseOutlined />,
     activeIcon: <DatabaseFilled />,
     children: [
@@ -6922,6 +6922,11 @@ export default function TdWorkModule({
   const hideSpaceListTopbar = activeNav === 'space' && !activeSpace && !sidebarCollapsed;
   const hideMarketplaceTopbar = ['home', 'resource-market', 'app-market', 'academy', 'expert-studios'].includes(activeNav);
   const hideTopbar = hideSpaceListTopbar || hideMarketplaceTopbar || activeNav === 'messages';
+  const showFloatingSidebarExpand = sidebarCollapsed && (
+    hideTopbar
+    || activeNav === 'cloud'
+    || (activeNav === 'space' && Boolean(activeSpace))
+  );
 
   return (
     <div
@@ -7189,6 +7194,17 @@ export default function TdWorkModule({
         style={{ '--td-work-primary-size': `${sidePanelPrimaryRatio}%` }}
       >
         <section className="td-work-primary-pane" aria-label="主工作区">
+        {showFloatingSidebarExpand ? (
+          <button
+            type="button"
+            className="td-work-floating-sidebar-expand"
+            title="展开侧栏"
+            aria-label="展开侧栏"
+            onClick={() => setSidebarCollapsed(false)}
+          >
+            <SidebarToggleIcon />
+          </button>
+        ) : null}
         <header className={`td-work-topbar ${hideTopbar ? 'is-hidden' : ''} ${activeNav === 'skills' ? 'is-skill-topbar' : ''} ${activeNav === 'skills' && skillView !== 'mine' ? 'is-unified-skill-hub-topbar' : ''} ${activeNav === 'skills' && skillView === 'partners' ? 'is-partner-market-topbar' : ''} ${activeNav === 'skills' && skillView === 'skills' ? 'is-skill-market-topbar' : ''} ${activeNav === 'skills' && skillView === 'automation' ? 'is-schedule-topbar' : ''} ${activeNav === 'skills' && skillView === 'mine' ? 'is-my-skill-topbar' : ''} ${activeNav === 'dialog' ? 'is-partner-topbar' : ''} ${activeNav === 'dialog' && activePartner ? 'is-partner-workspace-topbar' : ''} ${activeNav === 'dialog' && partnerView === 'manage' ? 'is-partner-manage-topbar' : ''} ${activeNav === 'project' ? 'is-project-topbar' : ''} ${activeNav === 'space' ? 'is-space-topbar' : ''} ${activeNav === 'space' && activeSpace ? 'is-space-detail-topbar' : ''} ${hideMarketplaceTopbar ? 'is-marketplace-topbar' : ''} ${activeNav === 'cloud' ? 'is-resource-library-topbar' : ''}`}>
           {activeNav === 'dialog' && partnerView === 'manage' ? (
             <>
