@@ -32,7 +32,7 @@ function openReference(path) {
   window.open(`https://aiteach.qq.com${path}`, '_blank', 'noopener,noreferrer');
 }
 
-export default function AiLiteracyCapabilityPage({ spaces = [], onCreateSpace, onMergeIntoSpace }) {
+export default function AiLiteracyCapabilityPage({ onOpenReportSpace }) {
   const initialReports = useMemo(() => {
     const storedReports = loadAiLiteracyReportCatalog();
     if (storedReports.length) return storedReports;
@@ -52,8 +52,6 @@ export default function AiLiteracyCapabilityPage({ spaces = [], onCreateSpace, o
   const [importOpen, setImportOpen] = useState(false);
   const [source, setSource] = useState(REPORT_SOURCES[0].value);
   const [file, setFile] = useState(null);
-  const [spacePlanReport, setSpacePlanReport] = useState(null);
-  const [selectedSpaceId, setSelectedSpaceId] = useState('');
   const latestReport = reports[0] || null;
 
   const handleImport = () => {
@@ -161,10 +159,7 @@ export default function AiLiteracyCapabilityPage({ spaces = [], onCreateSpace, o
                   {index === 0 ? <span className="ai-literacy-capability-report-status"><CheckCircleFilled /> 最新报告</span> : null}
                   <button
                     type="button"
-                    onClick={() => {
-                      setSpacePlanReport(report);
-                      setSelectedSpaceId(spaces[0]?.id || '');
-                    }}
+                    onClick={() => onOpenReportSpace?.(report)}
                   >
                     去空间完成提升计划 <ArrowRightOutlined />
                   </button>
@@ -181,59 +176,6 @@ export default function AiLiteracyCapabilityPage({ spaces = [], onCreateSpace, o
           </div>
         )}
       </section>
-
-      <Modal
-        title="将报告用于能力提升计划"
-        open={Boolean(spacePlanReport)}
-        footer={null}
-        centered
-        width={620}
-        onCancel={() => { setSpacePlanReport(null); setSelectedSpaceId(''); }}
-        destroyOnHidden
-      >
-        <div className="ai-literacy-capability-space-plan">
-          <p>报告：<strong>{spacePlanReport?.fileName}</strong></p>
-          <div className="ai-literacy-capability-space-choice-grid">
-            <article>
-              <span className="ai-literacy-capability-space-choice-icon"><ThunderboltOutlined /></span>
-              <div><strong>创建新的空间</strong><p>基于该报告新建独立的 AI 素养能力提升空间。</p></div>
-              <button
-                type="button"
-                onClick={() => {
-                  onCreateSpace?.(spacePlanReport);
-                  setSpacePlanReport(null);
-                  setSelectedSpaceId('');
-                }}
-              >
-                新建能力提升空间
-              </button>
-            </article>
-            <article>
-              <span className="ai-literacy-capability-space-choice-icon"><BookOutlined /></span>
-              <div><strong>合并到已有空间</strong><p>选择已有空间，将报告作为后续知识分析与任务创建依据。</p></div>
-              <Select
-                value={selectedSpaceId || undefined}
-                placeholder="选择已有空间"
-                options={spaces.map((space) => ({ value: space.id, label: space.name }))}
-                onChange={setSelectedSpaceId}
-                showSearch
-                optionFilterProp="label"
-              />
-              <button
-                type="button"
-                disabled={!selectedSpaceId}
-                onClick={() => {
-                  onMergeIntoSpace?.(spacePlanReport, selectedSpaceId);
-                  setSpacePlanReport(null);
-                  setSelectedSpaceId('');
-                }}
-              >
-                合并并进入空间
-              </button>
-            </article>
-          </div>
-        </div>
-      </Modal>
 
       <Modal
         title="导入 AI 素养测评报告"

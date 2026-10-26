@@ -2265,6 +2265,7 @@ function buildPresetTemplates() {
           'learner-progress': '学习进度',
         }, {
           assessment: { enabled: false },
+          ai: { enabled: false },
           practice: { enabled: false },
           'learner-progress': { enabled: false },
         }),

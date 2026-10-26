@@ -483,7 +483,7 @@
   border: 0;
   border-radius: 0;
   background: transparent;
-  color: #8a9590;
+  color: #98a2b3;
   font-size: 13px;
   font-weight: 560;
   letter-spacing: 0;
@@ -494,7 +494,7 @@
 }
 
 .topic-detail.is-self-paced-training .detail-tab-icon {
-  color: #a1aaa6;
+  color: #98a2b3;
   font-size: 13px;
   filter: none;
 }
@@ -502,24 +502,24 @@
 .topic-detail.is-self-paced-training .detail-tab:hover:not(.detail-tab-active) {
   background: transparent;
   box-shadow: none;
-  color: #405148;
+  color: #475467;
   transform: none;
 }
 
 .topic-detail.is-self-paced-training .detail-tab:hover:not(.detail-tab-active) .detail-tab-icon {
-  color: #64736c;
+  color: #667085;
   transform: none;
 }
 
 .topic-detail.is-self-paced-training .detail-tab-active {
   background: transparent;
-  color: #214c3a;
+  color: #344054;
   font-weight: 700;
   text-shadow: none;
 }
 
 .topic-detail.is-self-paced-training .detail-tab-active .detail-tab-icon {
-  color: #3c8063;
+  color: #667085;
   filter: none;
   transform: none;
 }
@@ -532,24 +532,24 @@
   left: 4px;
   height: 2px;
   border-radius: 999px;
-  background: #4f8c72;
+  background: #667085;
 }
 
 .topic-detail.is-self-paced-training .detail-tab:hover:not(.detail-tab-active) .detail-tab-icon {
-  color: #52635b;
+  color: #667085;
   transform: none;
 }
 
 .topic-detail.is-self-paced-training .detail-tab-active,
 .topic-detail.is-self-paced-training .detail-tab-active:hover {
   background: transparent;
-  color: #17231e;
+  color: #344054;
   font-weight: 720;
   text-shadow: none;
 }
 
 .topic-detail.is-self-paced-training .detail-tab-active .detail-tab-icon {
-  color: #1e5a43;
+  color: #667085;
   filter: none;
   transform: none;
 }
@@ -655,6 +655,29 @@
     0 0 0 3px rgba(148, 163, 184, 0.16);
 }
 
+.self-paced-coach-header-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 11px;
+  border: 1px solid rgba(193, 211, 202, 0.78);
+  border-radius: 999px;
+  background: rgba(250, 252, 251, 0.9);
+  color: #52655c;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 650;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+
+.self-paced-coach-header-toggle:hover,
+.self-paced-coach-header-toggle.is-active {
+  border-color: rgba(92, 139, 117, 0.44);
+  background: rgba(239, 247, 243, 0.92);
+  color: #1f6048;
+}
+
 /* ====== Detail Body ====== */
 .detail-body {
   display: flex;
@@ -663,6 +686,244 @@
   min-height: 0;
   overflow: hidden;
   background: #fff;
+}
+
+.self-paced-coach-sidebar {
+  position: relative;
+  display: flex;
+  flex: 0 0 clamp(292px, 23vw, 340px);
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border-left: 1px solid rgba(224, 230, 227, 0.9);
+  background: #fff;
+  box-shadow: -12px 0 28px rgba(16, 24, 40, 0.035);
+}
+
+.self-paced-coach-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 62px;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(226, 231, 228, 0.86);
+}
+
+.self-paced-coach-avatar,
+.self-paced-coach-message-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: #344054;
+  color: #fff;
+}
+
+.self-paced-coach-avatar {
+  width: 34px;
+  height: 34px;
+  font-size: 15px;
+}
+
+.self-paced-coach-head-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.self-paced-coach-head-copy strong {
+  color: #1f2d27;
+  font-size: 16px;
+  font-weight: 720;
+}
+
+.self-paced-coach-head-copy em {
+  margin-top: 2px;
+  overflow: hidden;
+  color: #98a19c;
+  font-size: 13px;
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.self-paced-coach-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #8b9690;
+  cursor: pointer;
+}
+
+.self-paced-coach-close:hover {
+  background: #f5f5f5;
+  color: #365c4c;
+}
+
+.self-paced-coach-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  padding: 16px 14px;
+  overflow-y: auto;
+}
+
+.self-paced-coach-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.self-paced-coach-message-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  font-size: 11px;
+}
+
+.self-paced-coach-message > div {
+  max-width: calc(100% - 32px);
+  padding: 9px 11px;
+  border-radius: 4px 13px 13px;
+  background: #f5f5f5;
+  color: #44524b;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.self-paced-coach-message p {
+  margin: 0;
+}
+
+.self-paced-coach-message p + p {
+  margin-top: 5px;
+}
+
+.self-paced-coach-message.is-user {
+  justify-content: flex-end;
+}
+
+.self-paced-coach-message.is-user > div {
+  border-radius: 13px 4px 13px 13px;
+  background: #344054;
+  color: #fff;
+}
+
+.self-paced-coach-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  flex-shrink: 0;
+  margin: 0 12px 12px;
+  max-height: 35%;
+  overflow-y: auto;
+}
+
+.self-paced-coach-suggestions > span {
+  color: #9aa49f;
+  font-size: 13px;
+}
+
+.self-paced-coach-suggestions button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  overflow: hidden;
+  border: 1px solid rgba(222, 228, 225, 0.9);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.86);
+  color: #5d6963;
+  cursor: pointer;
+  font-size: 14px;
+  text-align: left;
+}
+
+.self-paced-coach-suggestions button:hover {
+  border-color: #d0d5dd;
+  background: #fff;
+  color: #344054;
+}
+
+.self-paced-coach-suggestions button > span,
+.self-paced-coach-suggestions button {
+  text-overflow: ellipsis;
+}
+
+.self-paced-coach-composer {
+  margin: 0 12px 12px;
+  padding: 9px 10px 8px;
+  border: 1px solid rgba(208, 218, 213, 0.92);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(16, 24, 40, 0.07);
+}
+
+.self-paced-coach-composer:focus-within {
+  border-color: #98a2b3;
+  box-shadow: 0 0 0 3px rgba(16, 24, 40, 0.06), 0 8px 22px rgba(16, 24, 40, 0.06);
+}
+
+.self-paced-coach-composer textarea {
+  width: 100%;
+  min-height: 46px;
+  padding: 0;
+  resize: none;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #26362f;
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.self-paced-coach-composer textarea::placeholder {
+  color: #a1aaa5;
+}
+
+.self-paced-coach-composer-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.self-paced-coach-composer-foot > span {
+  color: #acb4b0;
+  font-size: 11px;
+}
+
+.self-paced-coach-composer-foot button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: #344054;
+  color: #fff;
+  cursor: pointer;
+}
+
+.self-paced-coach-composer-foot button:disabled {
+  background: #eeeeee;
+  color: #aab2ae;
+  cursor: default;
 }
 
 .topic-home-body {
@@ -910,8 +1171,8 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 9px;
-  min-height: 58px;
+  gap: 12px;
+  min-height: 68px;
   padding: 9px 4px 10px;
   border: 0;
   border-bottom: 2px solid transparent;
@@ -939,9 +1200,9 @@
 }
 
 .topic-home-learning-path-steps b {
-  width: 30px;
-  height: 30px;
-  flex: 0 0 30px;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -949,7 +1210,7 @@
   border-radius: 10px;
   background: #f5f7f6;
   color: #65726c;
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .topic-home-learning-path-steps > button.is-active b {
@@ -962,7 +1223,7 @@
 .topic-home-learning-path-steps span {
   min-width: 0;
   display: grid;
-  gap: 3px;
+  gap: 5px;
 }
 
 .topic-home-learning-path-steps strong,
@@ -974,12 +1235,12 @@
 
 .topic-home-learning-path-steps strong {
   color: #26342e;
-  font-size: 13px;
+  font-size: 16px;
 }
 
 .topic-home-learning-path-steps em {
   color: #8b9590;
-  font-size: 10px;
+  font-size: 13px;
   font-style: normal;
 }
 
@@ -5142,7 +5403,7 @@
 
 .topic-detail.is-self-paced-training .project-list-selection-indicator {
   border-radius: 0;
-  background: transparent;
+  background: rgba(237, 242, 239, 0.82);
   box-shadow: none;
 }
 
@@ -5432,31 +5693,29 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.68);
 }
 
-/* 自主学习目录的选中态保持轻量：仅用细色条与极浅底色提示当前位置。 */
+/* 自主学习目录的选中态保持轻量：用细色条与浅灰底色提示当前位置。 */
 .topic-detail.is-self-paced-training .project-item-selected:not(.project-item-context-open) {
   border-color: transparent;
-  background: transparent !important;
+  background: #eeeeee !important;
   box-shadow: inset 2px 0 0 rgba(100, 116, 139, 0.3);
 }
 
 .topic-detail.is-self-paced-training .project-item-selected:not(.project-item-context-open):hover {
   border-color: transparent;
-  background:
-    linear-gradient(90deg, rgba(100, 116, 139, 0.035) 0%, rgba(255, 255, 255, 0) 74%) !important;
+  background: #eeeeee !important;
   box-shadow: inset 2px 0 0 rgba(100, 116, 139, 0.38);
 }
 
 .topic-detail.is-self-paced-training .project-item-assessment-resource.project-item-selected:not(.project-item-context-open),
 .topic-detail.is-self-paced-training .project-item-assessment-activity.project-item-selected:not(.project-item-context-open) {
   border-color: transparent;
-  background: transparent !important;
+  background: #eeeeee !important;
   box-shadow: inset 2px 0 0 color-mix(in srgb, var(--tree-assessment-row-color) 42%, transparent);
 }
 
 .topic-detail.is-self-paced-training .project-item-assessment-resource.project-item-selected:not(.project-item-context-open):hover,
 .topic-detail.is-self-paced-training .project-item-assessment-activity.project-item-selected:not(.project-item-context-open):hover {
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--tree-assessment-row-color) 3%, transparent) 0%, rgba(255, 255, 255, 0) 72%) !important;
+  background: #eeeeee !important;
 }
 
 .topic-detail.is-self-paced-training .project-item-selected:not(.project-item-context-open) .project-item-title {
@@ -10332,4 +10591,175 @@ button.topic-ai-toolbar-action:focus-visible {
   .topic-home-progress-status {
     justify-self: flex-start;
   }
+}
+
+/* Match the system menu's dark, solid selected icon treatment. */
+.topic-detail.is-self-paced-training .project-item-selected .project-item-icon,
+.topic-detail.is-self-paced-training .project-item-selected .project-item-icon .anticon {
+  color: #141e1b !important;
+  opacity: 1;
+  transform: none;
+}
+
+.self-paced-coach-resize-handle {
+  position: absolute;
+  inset: 0 auto 0 -5px;
+  width: 10px;
+  z-index: 5;
+  cursor: col-resize;
+  touch-action: none;
+  user-select: none;
+}
+
+.self-paced-coach-resize-handle::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 4px;
+  width: 2px;
+  background: transparent;
+}
+
+.self-paced-coach-resize-handle:hover::after,
+.self-paced-coach-resize-handle:active::after,
+.self-paced-coach-resize-handle:focus-visible::after {
+  background: #99aaa2;
+}
+
+/* Reference-inspired AI coach welcome and composer. */
+.self-paced-coach-head {
+  justify-content: space-between;
+  min-height: 56px;
+  padding: 14px 20px;
+  border-bottom: 0;
+}
+.self-paced-coach-panel-icon { color: #171717; font-size: 18px; }
+.self-paced-coach-close { color: #171717; font-size: 18px; }
+.self-paced-coach-body.is-welcome { justify-content: center; }
+.self-paced-coach-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 30px 0;
+  text-align: center;
+}
+.self-paced-coach-welcome-logo { width: 76px; height: 76px; flex-shrink: 0; }
+.self-paced-coach-welcome h2 {
+  margin: 0;
+  color: #111;
+  font-size: clamp(20px, 1.6vw, 28px);
+  font-weight: 650;
+  line-height: 1.4;
+}
+.self-paced-coach-suggestions { margin: 0 20px 16px; gap: 10px; }
+.self-paced-coach-suggestions > span { padding-left: 4px; color: #a3a3a3; }
+.self-paced-coach-suggestions button {
+  justify-content: flex-start;
+  padding: 12px;
+  border: 1px solid #d9dce1;
+  border-radius: 14px;
+  background: #fff;
+  line-height: 1.5;
+}
+.self-paced-coach-suggestion-kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  color: #3e7bff;
+}
+.self-paced-coach-suggestion-text { min-width: 0; color: #262626; overflow-wrap: anywhere; }
+.self-paced-coach-composer {
+  flex-shrink: 0;
+  margin: 0 20px 18px;
+  padding: 16px 16px 12px;
+  border: 1px solid #d9dce1;
+  border-radius: 24px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07);
+}
+.self-paced-coach-composer textarea { min-height: 62px; font-size: 16px; color: #262626; }
+.self-paced-coach-composer textarea::placeholder { color: #aaa; }
+.self-paced-coach-scope-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 20px;
+  background: #f0f5ff;
+  color: #3e7bff !important;
+  font-size: 13px !important;
+}
+.self-paced-coach-composer-foot button { width: 34px; height: 34px; border-radius: 50%; background: #3e7bff; }
+.self-paced-coach-composer-foot button:disabled { background: #f5f5f5; color: #c6c6c6; }
+
+.topic-detail.is-self-paced-training .project-item-selected .topic-resource-progress-meter {
+  opacity: 1;
+}
+
+.topic-detail.is-self-paced-training .project-item-selected .topic-resource-progress-fill {
+  background: var(--resource-progress-color);
+  opacity: 1;
+}
+
+.topic-home-learning-path-steps > button {
+  padding: 12px 16px;
+  border: 1px solid #e4e7ec;
+  border-radius: 12px;
+  background: #f7f8fa;
+  transition: background 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.topic-home-learning-path-steps > button:hover,
+.topic-home-learning-path-steps > button:focus-visible {
+  border-color: #98a2b3;
+  background: #f0f1f3;
+}
+
+.topic-home-learning-path-steps > button.is-active {
+  border-color: #667085;
+  background: #eeeeee;
+  box-shadow: inset 0 0 0 1px #667085;
+}
+
+.topic-home-learning-path-steps > button.is-active b {
+  border-color: #667085;
+  background: #667085;
+  color: #fff;
+}
+
+.topic-home-learning-path-steps > button.is-active strong {
+  color: #344054;
+}
+
+.topic-home-learning-path-steps > button.is-active em {
+  color: #667085;
+}
+
+.topic-home-ai-knowledge-head .topic-home-knowledge-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.topic-home-knowledge-actions .topic-home-create-learning-btn.ant-btn {
+  height: 44px;
+  padding: 0 22px;
+  border: 1px solid #183f31;
+  border-radius: 10px;
+  background: #183f31;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 650;
+  box-shadow: 0 4px 10px rgba(24, 63, 49, 0.12);
+}
+.topic-home-knowledge-actions .topic-home-create-learning-btn.ant-btn:hover {
+  border-color: #245b46;
+  background: #245b46;
+  color: #fff;
+}
+
+.topic-home-ai-knowledge-head .topic-home-knowledge-actions .topic-home-create-learning-btn.ant-btn > span {
+  color: #fff;
 }

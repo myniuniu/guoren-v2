@@ -8204,7 +8204,7 @@
 .td-work-home-hero,
 .td-work-home-shelf-head,
 .td-work-home-market-grid {
-  width: min(100%, 713px);
+  width: min(100%, 1200px);
   margin-right: auto;
   margin-left: auto;
 }
@@ -8522,8 +8522,9 @@
 }
 
 .td-work-home-market-grid {
+  width: min(100%, 1200px);
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: start;
   gap: 16px 17px;
 }
@@ -14666,5 +14667,11 @@
 
   .td-work-submit-row {
     justify-content: flex-end;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1100px) {
+  .td-work-home-market-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

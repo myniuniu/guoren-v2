@@ -6,7 +6,6 @@ import {
   AudioOutlined,
   BarChartOutlined,
   BookOutlined,
-  BookFilled,
   CaretRightFilled,
   CheckCircleOutlined,
   CheckOutlined,
@@ -169,13 +168,13 @@ function persistTdWorkSpaceRailWidth(width) {
 const NAV_ITEMS = [
   { key: 'home', label: '首页', icon: <HomeOutlined />, activeIcon: <HomeFilled /> },
   { key: 'space', label: '空间', icon: <CloudOutlined />, activeIcon: <CloudFilled /> },
-  { key: 'academy', label: '通答学院', icon: <BookOutlined />, activeIcon: <BookFilled /> },
   {
     key: 'knowledge-community',
     label: '研习社',
     icon: <DatabaseOutlined />,
     activeIcon: <DatabaseFilled />,
     children: [
+      { key: 'academy', label: '通答学院' },
       { key: 'resource-market', label: '资源广场' },
       { key: 'app-market', label: '应用广场' },
       { key: 'expert-studios', label: '专家工作室' },
@@ -6231,15 +6230,22 @@ export default function TdWorkModule({
     await handleOpenAiSpaceCreate();
   }, [handleOpenAiSpaceCreate]);
 
-  const handleMergeAiLiteracyReportIntoSpace = useCallback(async (report, sceneId) => {
+  const handleOpenAiLiteracyReportSpace = useCallback(async (report) => {
     const availableScenes = spaceScenes.length ? spaceScenes : await loadAiSpaceData();
-    const targetScene = availableScenes.find((scene) => scene.id === sceneId);
-    if (!targetScene) {
-      setToast('未找到所选空间，请刷新后重试');
+    const targetScene = availableScenes.find((scene) => {
+      try {
+        const linkedReport = JSON.parse(window.localStorage.getItem(`gr:ai-literacy-report:${scene.storageScopeKey || scene.id}`) || 'null');
+        return linkedReport && (linkedReport.id === report.id || (!linkedReport.id && linkedReport.fileName === report.fileName));
+      } catch {
+        return false;
+      }
+    });
+    if (targetScene) {
+      await openAiLiteracyTargetSpace(targetScene, report);
       return;
     }
-    await openAiLiteracyTargetSpace(targetScene, report);
-  }, [loadAiSpaceData, openAiLiteracyTargetSpace, spaceScenes]);
+    await handleCreateAiLiteracySpaceFromReport(report);
+  }, [handleCreateAiLiteracySpaceFromReport, loadAiSpaceData, openAiLiteracyTargetSpace, spaceScenes]);
 
   const handleOpenTongdaAcademySpaces = useCallback(() => {
     setActiveNav('space');
@@ -6921,7 +6927,7 @@ export default function TdWorkModule({
   ) : null;
   const hideSpaceListTopbar = activeNav === 'space' && !activeSpace && !sidebarCollapsed;
   const hideMarketplaceTopbar = ['home', 'resource-market', 'app-market', 'academy', 'expert-studios'].includes(activeNav);
-  const hideTopbar = hideSpaceListTopbar || hideMarketplaceTopbar || activeNav === 'messages';
+  const hideTopbar = hideSpaceListTopbar || hideMarketplaceTopbar || activeNav === 'messages' || activeNav === 'ai-literacy-capability';
   const showFloatingSidebarExpand = sidebarCollapsed && (
     hideTopbar
     || activeNav === 'cloud'
@@ -7775,9 +7781,7 @@ export default function TdWorkModule({
           </section>
         ) : activeNav === 'ai-literacy-capability' ? (
           <AiLiteracyCapabilityPage
-            spaces={spaceScenes}
-            onCreateSpace={handleCreateAiLiteracySpaceFromReport}
-            onMergeIntoSpace={handleMergeAiLiteracyReportIntoSpace}
+            onOpenReportSpace={handleOpenAiLiteracyReportSpace}
           />
         ) : activeNav === 'skills' && skillView === 'automation' ? (
           <ScheduledTasksPage

@@ -13,6 +13,12 @@ import {
   message,
 } from 'antd';
 import {
+  BankFilled,
+  AppstoreFilled,
+  CheckCircleFilled,
+  EditFilled,
+  ExperimentFilled,
+  PlayCircleFilled,
   BankOutlined,
   BranchesOutlined,
   CaretDownOutlined,
@@ -82,7 +88,6 @@ import {
 } from './resourceLib/resourceLibStore';
 import { buildTopicResourcesFromLibrarySelection } from './resourceLib/topicResourceImport.js';
 import { renderFileIcon } from './resourceLib/resourceIcons.jsx';
-import { loadAiLiteracyReportCatalog } from './aiLiteracy/reportStore.js';
 import { getSceneThemeCoverPalette, getSceneThemeCoverStyle } from './scene/themeCovers';
 import {
   getSceneIconMeta,
@@ -1168,7 +1173,23 @@ function buildSupervisionDisplayResources(resources = [], activeSceneType) {
   return [...resourcesWithSchoolDirectories, ...schoolDirectoryNodes, ...generatedRectificationNodes];
 }
 
-function getResourceIcon(resource) {
+function getResourceIcon(resource, selected = false) {
+  if (selected) {
+    const SelectedIcon = {
+      video: PlayCircleFilled,
+      activity: AppstoreFilled,
+      supervisionTask: CheckCircleFilled,
+      supervisionSchoolDirectory: BankFilled,
+      supervisionSchoolTask: BankFilled,
+      supervisionRectificationSchool: BankFilled,
+      training: ExperimentFilled,
+      survey: EditFilled,
+      vote: EditFilled,
+      exam: EditFilled,
+      register: EditFilled,
+    }[resource?.type];
+    if (SelectedIcon) return <SelectedIcon />;
+  }
   const type = resource?.type;
   const fileType = resource?.fileType;
   if (fileType === 'knowledgeGraph' || fileType === 'capabilityModel') {
@@ -2004,7 +2025,6 @@ function TopicDetail({
   const [activeAiLiteracyKnowledgePointKey, setActiveAiLiteracyKnowledgePointKey] = useState(
     AI_LITERACY_KNOWLEDGE_GRAPH[0].points[0].key,
   );
-  const [selfPacedHomeStage, setSelfPacedHomeStage] = useState('analysis');
   const [hoveredAiLiteracyAbilityKey, setHoveredAiLiteracyAbilityKey] = useState(null);
   const [aiLiteracyDynamicLinks, setAiLiteracyDynamicLinks] = useState([]);
   const [previewItem, setPreviewItem] = useState(null);
@@ -2091,6 +2111,10 @@ function TopicDetail({
   const [aiPromptValue, setAiPromptValue] = useState('');
   const [aiLibraryCollapsed, setAiLibraryCollapsed] = useState(true);
   const [aiRightPanelView, setAiRightPanelView] = useState('library');
+  const [selfPacedCoachOpen, setSelfPacedCoachOpen] = useState(true);
+  const [selfPacedCoachWidth, setSelfPacedCoachWidth] = useState(null);
+  const selfPacedCoachResizeRef = useRef(null);
+  const [selfPacedCoachMessages, setSelfPacedCoachMessages] = useState([]);
   const [aiFloatingPanelOffset, setAiFloatingPanelOffset] = useState(0);
   const [aiVisibleSkillCount, setAiVisibleSkillCount] = useState(4);
   const [aiSuggestionOpen, setAiSuggestionOpen] = useState(false);
@@ -2679,8 +2703,14 @@ function TopicDetail({
     { key: 'training', label: 'AI训练馆', items: ['数据标注', '模型训练', '推理部署', '效果评测'] },
   ];
   const isSupervisionAiScene = activeSceneType === 'SUPERVISION';
-  const aiAgentLabel = isSupervisionAiScene ? 'AI督导助手' : '课程创作智能体';
-  const aiPromptPlaceholder = isSupervisionAiScene
+  const aiAgentLabel = isSelfPacedTraining
+    ? 'AI伴学'
+    : isSupervisionAiScene
+      ? 'AI督导助手'
+      : '课程创作智能体';
+  const aiPromptPlaceholder = isSelfPacedTraining
+    ? '针对当前学习任务提问…'
+    : isSupervisionAiScene
     ? '请描述督导任务、检查对象、模板指标或需要生成的整改报告'
     : '请描述课程主题、适用年级、课程结构与额外要求';
   const aiGenerationSkills = isSupervisionAiScene
@@ -2823,6 +2853,24 @@ function TopicDetail({
       });
     }
   }, []);
+
+  const handleSelfPacedCoachSend = useCallback(() => {
+    const question = aiPromptValue.trim();
+    if (!question) return;
+    const contextLabel = previewItem?.name || selectedFolder?.name || '当前学习任务';
+    const requestId = Date.now();
+    setSelfPacedCoachMessages((messages) => [
+      ...messages,
+      { id: `question-${requestId}`, role: 'user', text: question },
+      {
+        id: `answer-${requestId}`,
+        role: 'assistant',
+        text: `我已结合「${contextLabel}」整理要点。可以先明确核心概念，再对照案例完成练习；如果你愿意，我还能继续为你拆解步骤或生成自测题。`,
+      },
+    ]);
+    setAiPromptValue('');
+    setAiSuggestionOpen(false);
+  }, [aiPromptValue, previewItem?.name, selectedFolder?.name]);
 
   const toggleAiPanel = useCallback((panelKey) => {
     setAiSuggestionOpen(false);
@@ -3536,7 +3584,7 @@ function TopicDetail({
         ];
 	      }
       if (isSelfPacedTraining) {
-        normalizedTabs = normalizedTabs.filter((item) => item?.key !== 'learner-progress');
+        normalizedTabs = normalizedTabs.filter((item) => item?.key !== 'learner-progress' && item?.key !== 'ai');
       }
 	      return normalizedTabs.map((item, index) => ({
 	        key: item.key,
@@ -3827,7 +3875,7 @@ function TopicDetail({
       resizeObserver?.disconnect();
       window.removeEventListener('resize', updateLinks);
     };
-  }, [aiLiteracyAssessmentProfile, isHomeTab, mappedAiLiteracyAbility, selfPacedHomeStage]);
+  }, [aiLiteracyAssessmentProfile, isHomeTab, mappedAiLiteracyAbility]);
   const activeAiLiteracyKnowledgePointScore = aiLiteracyAssessmentProfile
     ?.knowledgePointScores?.[activeAiLiteracyKnowledgePoint.key];
   const activeAiLiteracyKnowledgePointMastery = aiLiteracyAssessmentProfile
@@ -3842,42 +3890,6 @@ function TopicDetail({
     });
     return counts;
   }, [aiLiteracyAssessmentProfile, aiLiteracyKnowledgePoints]);
-  const availableAiLiteracyReports = useMemo(() => {
-    const reports = [];
-    if (aiLiteracyReport) reports.push(aiLiteracyReport);
-    loadAiLiteracyReportCatalog().forEach((report) => {
-      reports.push({
-        ...report,
-        assessmentProfile: report.assessmentProfile
-          || buildAiLiteracyAssessmentProfile(`${report.source || ''}:${report.fileName || ''}`),
-      });
-    });
-    sourceResources.forEach((resource) => {
-      if (resource?.isFolder) return;
-      const reportSource = resource.meta?.reportSource;
-      const looksLikeLiteracyReport = reportSource
-        || /(?:AI|人工智能).*素养.*报告|素养.*测评.*报告/i.test(String(resource.name || ''));
-      if (!looksLikeLiteracyReport) return;
-      const sourceOption = AI_LITERACY_REPORT_SOURCE_OPTIONS.find((item) => item.label === reportSource)
-        || AI_LITERACY_REPORT_SOURCE_OPTIONS[AI_LITERACY_REPORT_SOURCE_OPTIONS.length - 1];
-      reports.push({
-        id: resource.key,
-        source: sourceOption.value,
-        sourceLabel: reportSource || sourceOption.label,
-        fileName: resource.name,
-        fileSizeLabel: resource.meta?.fileSizeLabel || '报告文件',
-        importedAt: resource.meta?.importedAt || resource.lastEdit || '已导入',
-        assessmentProfile: buildAiLiteracyAssessmentProfile(`${sourceOption.value}:${resource.name}`),
-      });
-    });
-    const seen = new Set();
-    return reports.filter((report) => {
-      const key = `${report.fileName || ''}:${report.importedAt || ''}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  }, [aiLiteracyReport, sourceResources]);
   const learningTaskRecords = useMemo(() => {
     const childCountMap = new Map();
     sourceResources.forEach((resource) => {
@@ -3931,19 +3943,6 @@ function TopicDetail({
   const handleSelectAiLiteracyRadarDomain = (domainKey) => {
     const linkedPoint = aiLiteracyKnowledgePoints.find((point) => point.domainKey === domainKey);
     if (linkedPoint) setActiveAiLiteracyKnowledgePointKey(linkedPoint.key);
-  };
-
-  const handleSelectAiLiteracyReport = (reportId) => {
-    const selectedReport = availableAiLiteracyReports.find((report) => report.id === reportId);
-    if (!selectedReport) return;
-    const normalizedReport = {
-      ...selectedReport,
-      assessmentProfile: selectedReport.assessmentProfile
-        || buildAiLiteracyAssessmentProfile(`${selectedReport.source || ''}:${selectedReport.fileName || ''}`),
-    };
-    setAiLiteracyReport(normalizedReport);
-    saveAiLiteracyReport(topicStorageScopeKey, normalizedReport);
-    message.success(`已选择报告：${normalizedReport.fileName}`);
   };
 
   const openLearningTaskCreate = () => {
@@ -6512,7 +6511,7 @@ function TopicDetail({
         className={`topic-resource-progress-meter topic-resource-progress-meter-${variant} topic-resource-progress-meter-${progressSource} topic-resource-progress-meter-${progressMeta.tone}`}
         title={`${stageStatusText || progressMeta.label || '完成进度'} · ${progressMeta.percent}%`}
       >
-        {stageStatusText ? <span className="topic-resource-progress-status">{stageStatusText}</span> : null}
+        {stageStatusText && !(isSelfPacedTraining && variant === 'tree') ? <span className="topic-resource-progress-status">{stageStatusText}</span> : null}
         <span className="topic-resource-progress-track" aria-hidden="true">
           <span
             className="topic-resource-progress-fill"
@@ -6607,14 +6606,14 @@ function TopicDetail({
               )}
               <span className="project-item-icon">
                 {isSupervisionSchoolDirectory
-                  ? getResourceIcon(item)
+                  ? getResourceIcon(item, isSelected && !isResourceMultiSelectMode)
                   : item.isFolder
                   ? renderFolderTypeIcon(item, {
                       size: 16,
                       expanded: isExpanded,
                       color: 'inherit',
                     })
-                  : getResourceIcon(item)}
+                  : getResourceIcon(item, isSelected && !isResourceMultiSelectMode)}
               </span>
               {isInlineRenaming ? renderInlineRenameInput('tree') : (
 	                <span className="project-item-title-stack">
@@ -6690,7 +6689,7 @@ function TopicDetail({
         >
           {renderResourceSelectionCheckbox(item, 'tree')}
           <span className="project-item-arrow project-item-arrow-placeholder" aria-hidden="true" />
-          <span className="project-item-icon">{getResourceIcon(item)}</span>
+          <span className="project-item-icon">{getResourceIcon(item, isSelected && !isResourceMultiSelectMode)}</span>
           {isInlineRenaming ? renderInlineRenameInput('tree') : (
             <span className="project-item-title-stack">
               <span className="project-item-title">{item.name}</span>
@@ -7816,37 +7815,7 @@ function TopicDetail({
             </>
           ) : null}
 
-          {isSelfPacedTraining && view === 'planning' ? (
-            <section className="topic-home-learning-path" aria-label="人工智能素养提升路径">
-              <div className="topic-home-learning-path-copy">
-                <span>个人成长路径</span>
-                <strong>从知识分析到任务创建</strong>
-                <p>选择能力诊断报告，分析知识点掌握情况并生成针对性的学习任务。</p>
-              </div>
-              <div className="topic-home-learning-path-steps" role="tablist" aria-label="诊断规划阶段">
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={selfPacedHomeStage === 'analysis'}
-                  className={selfPacedHomeStage === 'analysis' ? 'is-active' : ''}
-                  onClick={() => setSelfPacedHomeStage('analysis')}
-                >
-                  <b>01</b>
-                  <span><strong>知识分析</strong><em>能力 · 领域 · 知识点</em></span>
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={selfPacedHomeStage === 'learning'}
-                  className={selfPacedHomeStage === 'learning' ? 'is-active' : ''}
-                  onClick={() => setSelfPacedHomeStage('learning')}
-                >
-                  <b>02</b>
-                  <span><strong>任务创建</strong><em>知识点 · 内容 · AI生成</em></span>
-                </button>
-              </div>
-            </section>
-          ) : null}
+
 
           {isSelfPacedTraining && view === 'literacy' ? (
             <section className="topic-home-learning-hub" aria-label="人工智能素养能力诊断">
@@ -7976,7 +7945,7 @@ function TopicDetail({
             </section>
           ) : null}
 
-          {isSelfPacedTraining && view === 'planning' && selfPacedHomeStage === 'analysis' ? (
+          {isSelfPacedTraining && view === 'planning' ? (
             <section
               ref={aiLiteracyKnowledgeGraphRef}
               className="topic-home-ai-knowledge-graph"
@@ -7984,21 +7953,24 @@ function TopicDetail({
             >
               <div className="topic-home-ai-knowledge-head">
                 <div>
-                  <span className="topic-home-stage-index">02</span>
                   <span className="topic-home-ai-knowledge-head-icon"><NodeIndexOutlined /></span>
                   <div>
                     <strong>能力与知识分析</strong>
                     <span>测评结果映射至 {AI_LITERACY_KNOWLEDGE_GRAPH.length} 个知识领域 · {aiLiteracyKnowledgePointCount} 个知识点</span>
                   </div>
                 </div>
-                {aiLiteracyReport ? <Tag color="processing">已关联最新测评结果</Tag> : <Tag>导入报告后查看掌握度</Tag>}
+                <div className="topic-home-knowledge-actions">
+                  <Button className="topic-home-create-learning-btn" type="primary" size="large" icon={<PlusOutlined />} onClick={openLearningTaskCreate}>
+                    创建学习任务
+                  </Button>
+                </div>
               </div>
 
               <div className={`topic-home-stage-dependency ${aiLiteracyAssessmentProfile ? 'is-ready' : 'is-missing'}`}>
                 <div className="topic-home-stage-dependency-source">
                   <span className="topic-home-stage-dependency-icon"><DatabaseOutlined /></span>
                   <div>
-                    <em>输入依赖</em>
+                    <em>关联测评报告</em>
                     <strong>{aiLiteracyReport ? aiLiteracyReport.fileName : '能力测评结果或外部测评报告'}</strong>
                     <p>
                       {aiLiteracyReport
@@ -8007,29 +7979,7 @@ function TopicDetail({
                     </p>
                   </div>
                 </div>
-                <div className="topic-home-stage-dependency-flow" aria-label="知识分析处理流程">
-                  <span className={aiLiteracyAssessmentProfile ? 'is-complete' : ''}>诊断结果</span>
-                  <RightOutlined />
-                  <span className={aiLiteracyAssessmentProfile ? 'is-complete' : ''}>能力维度映射</span>
-                  <RightOutlined />
-                  <span className={aiLiteracyAssessmentProfile ? 'is-complete' : ''}>知识点掌握度</span>
-                </div>
-                <div className="topic-home-stage-dependency-actions">
-                  <Select
-                    className="topic-home-stage-report-select"
-                    value={aiLiteracyReport?.id}
-                    placeholder="选择能力诊断报告"
-                    options={availableAiLiteracyReports.map((report) => ({
-                      value: report.id,
-                      label: report.fileName,
-                    }))}
-                    onChange={handleSelectAiLiteracyReport}
-                    popupMatchSelectWidth={false}
-                  />
-                  <button type="button" onClick={() => onOpenAiLiteracyCapability?.()}>
-                    管理诊断报告
-                  </button>
-                </div>
+
               </div>
 
               {aiLiteracyAssessmentProfile ? (
@@ -8258,161 +8208,6 @@ function TopicDetail({
             </section>
           ) : null}
 
-          {isSelfPacedTraining && view === 'planning' && selfPacedHomeStage === 'learning' ? (
-            <section className="topic-home-learning-action-stage" aria-label="学习任务创建">
-              <div className="topic-home-stage-head">
-                <span>03</span>
-                <div>
-                  <strong>任务创建</strong>
-                  <p>根据薄弱与待巩固知识点，批量生成结构完整的专项学习任务。</p>
-                </div>
-                <em><ThunderboltOutlined /> 诊断结果驱动</em>
-              </div>
-
-              <div className={`topic-home-stage-dependency ${aiLiteracyAssessmentProfile ? 'is-ready' : 'is-missing'}`}>
-                <div className="topic-home-stage-dependency-source">
-                  <span className="topic-home-stage-dependency-icon"><NodeIndexOutlined /></span>
-                  <div>
-                    <em>输入依赖</em>
-                    <strong>知识分析与知识点掌握结果</strong>
-                    <p>
-                      {aiLiteracyAssessmentProfile
-                        ? `已获得 ${aiLiteracyKnowledgePointCount} 个知识点掌握度，其中 ${aiLiteracyMasteryCounts.weak + aiLiteracyMasteryCounts.developing} 个建议优先创建任务。`
-                        : '需要先完成能力诊断，并生成知识点掌握分析，才能批量创建针对性学习任务。'}
-                    </p>
-                  </div>
-                </div>
-                <div className="topic-home-stage-dependency-flow" aria-label="任务创建处理流程">
-                  <span className={aiLiteracyAssessmentProfile ? 'is-complete' : ''}>能力诊断</span>
-                  <RightOutlined />
-                  <span className={aiLiteracyAssessmentProfile ? 'is-complete' : ''}>知识分析</span>
-                  <RightOutlined />
-                  <span className={aiLiteracyAssessmentProfile ? 'is-complete' : ''}>任务配置</span>
-                </div>
-                <div className="topic-home-stage-dependency-actions">
-                  <button type="button" onClick={() => onOpenAiLiteracyCapability?.()}>
-                    更新诊断
-                  </button>
-                  <button type="button" className="is-primary" onClick={() => setSelfPacedHomeStage('analysis')}>
-                    查看知识分析 <RightOutlined />
-                  </button>
-                </div>
-              </div>
-
-              <div className="topic-home-task-creation-layout">
-                <div className="topic-home-learning-task-recommendation">
-                  <span className="topic-home-learning-task-recommendation-icon"><ThunderboltOutlined /></span>
-                  <div>
-                    <strong>
-                      {aiLiteracyAssessmentProfile
-                        ? `已识别 ${aiLiteracyMasteryCounts.weak + aiLiteracyMasteryCounts.developing} 个待提升知识点`
-                        : '完成诊断后，可生成专属学习任务'}
-                    </strong>
-                    <p>系统将自动选择优先级较高的知识点，并为每个知识点创建独立任务目录。</p>
-                    <span><i />创建前可增删知识点，确认后一次批量生成</span>
-                  </div>
-                  <button type="button" onClick={openLearningTaskCreate}>
-                    <PlusOutlined />
-                    <b>批量创建学习任务</b>
-                    <RightOutlined />
-                  </button>
-                </div>
-
-                <aside className="topic-home-task-creation-summary" aria-label="任务创建依据">
-                  <div>
-                    <span>本次创建依据</span>
-                    <strong>知识点掌握情况</strong>
-                  </div>
-                  <dl>
-                    <div><dt>薄弱知识点</dt><dd>{aiLiteracyMasteryCounts.weak}</dd></div>
-                    <div><dt>待巩固知识点</dt><dd>{aiLiteracyMasteryCounts.developing}</dd></div>
-                  </dl>
-                  <p><CheckCircleOutlined /> 已关联最新能力诊断结果</p>
-                </aside>
-              </div>
-
-              <div className="topic-home-task-content-plan">
-                <div className="topic-home-task-content-plan-head">
-                  <div>
-                    <strong>任务内容结构</strong>
-                    <span>每个知识点自动生成 4 类学习内容</span>
-                  </div>
-                  <em>生成后可继续编辑和补充</em>
-                </div>
-                <div className="topic-home-task-content-plan-grid">
-                  <article><span><PlayCircleOutlined /></span><div><b>微课讲解</b><p>核心概念与典型案例</p></div><em>01</em></article>
-                  <article><span><FileTextOutlined /></span><div><b>导学材料</b><p>学习目标与知识要点</p></div><em>02</em></article>
-                  <article><span><ExperimentOutlined /></span><div><b>互动练习</b><p>教学情境应用训练</p></div><em>03</em></article>
-                  <article><span><CheckSquareOutlined /></span><div><b>达标自测</b><p>检验掌握并即时反馈</p></div><em>04</em></article>
-                </div>
-              </div>
-
-              <div className="topic-home-learning-action-metrics">
-                <div>
-                  <span>已创建任务</span>
-                  <strong>{sourceResources.filter((resource) => resource?.isFolder && resource.meta?.knowledgePointKey).length}</strong>
-                  <em>按知识点组织</em>
-                </div>
-                <div>
-                  <span>建议优先学习</span>
-                  <strong>{aiLiteracyMasteryCounts.weak + aiLiteracyMasteryCounts.developing}</strong>
-                  <em>薄弱与待巩固知识点</em>
-                </div>
-                <div>
-                  <span>任务内容类型</span>
-                  <strong>4</strong>
-                  <em>微课 · 导学 · 练习 · 自测</em>
-                </div>
-                <button type="button" onClick={() => handleSelectTab('knowledge')}>
-                  查看全部学习任务 <RightOutlined />
-                </button>
-              </div>
-
-              <div className="topic-home-task-records">
-                <div className="topic-home-task-records-head">
-                  <div>
-                    <strong>任务创建记录</strong>
-                    <span>保留每次生成的任务目录、关联知识点和创建时间</span>
-                  </div>
-                  <em>{learningTaskRecords.length} 条记录</em>
-                </div>
-                {learningTaskRecords.length > 0 ? (
-                  <div className="topic-home-task-record-list">
-                    {learningTaskRecords.slice(0, 6).map((record) => (
-                      <article key={record.key}>
-                        <span className="topic-home-task-record-icon"><CheckCircleOutlined /></span>
-                        <div>
-                          <strong>{record.name}</strong>
-                          <p>{record.knowledgePointName} · {record.masteryLabel}{Number.isFinite(record.score) ? ` · 诊断 ${record.score} 分` : ''}</p>
-                        </div>
-                        <span>{record.contentCount} 项内容</span>
-                        <time>{record.createdAt}</time>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setExpandedFolders((previous) => new Set([...previous, record.key]));
-                            setSelectedFolderKey(record.key);
-                            handleSelectTab('knowledge');
-                          }}
-                        >
-                          查看任务 <RightOutlined />
-                        </button>
-                      </article>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="topic-home-task-record-empty">
-                    <span><FileAddOutlined /></span>
-                    <div>
-                      <strong>暂无任务创建记录</strong>
-                      <p>点击“批量创建学习任务”，完成后将在这里生成记录。</p>
-                    </div>
-                    <button type="button" onClick={openLearningTaskCreate}>立即创建</button>
-                  </div>
-                )}
-              </div>
-            </section>
-          ) : null}
         </section>
 
         {!isSelfPacedTraining ? (
@@ -8760,6 +8555,17 @@ function TopicDetail({
           ) : null}
           {!isSelfPacedTraining ? <UserOutlined className="header-icon" /> : null}
           <CommentOutlined className="header-icon" />
+          {isSelfPacedTraining && activeTab === 'knowledge' ? (
+            <button
+              type="button"
+              className={`self-paced-coach-header-toggle ${selfPacedCoachOpen ? 'is-active' : ''}`}
+              aria-expanded={selfPacedCoachOpen}
+              onClick={() => setSelfPacedCoachOpen((open) => !open)}
+            >
+              <ThunderboltOutlined />
+              <span>AI伴学</span>
+            </button>
+          ) : null}
           {activeTab === 'ai' ? (
             <button
               type="button"
@@ -9670,6 +9476,133 @@ function TopicDetail({
               )
             )}
           </div>
+          {isSelfPacedTraining && activeTab === 'knowledge' && selfPacedCoachOpen ? (
+            <aside
+              className="self-paced-coach-sidebar"
+              aria-label="AI伴学侧边栏"
+              style={selfPacedCoachWidth === null ? undefined : { flexBasis: selfPacedCoachWidth }}
+            >
+              <div
+                className="self-paced-coach-resize-handle"
+                role="separator"
+                aria-label="调整AI伴学侧边栏宽度"
+                aria-orientation="vertical"
+                aria-valuemin={260}
+                aria-valuenow={selfPacedCoachWidth || 320}
+                tabIndex={0}
+                onPointerDown={(event) => {
+                  if (event.button !== 0) return;
+                  event.preventDefault();
+                  event.currentTarget.setPointerCapture(event.pointerId);
+                  selfPacedCoachResizeRef.current = {
+                    startX: event.clientX,
+                    startWidth: event.currentTarget.parentElement.getBoundingClientRect().width,
+                    maxWidth: Math.max(260, Math.min(640, (detailBodyRef.current?.clientWidth || window.innerWidth) - leftPanelWidth - 320)),
+                  };
+                }}
+                onPointerMove={(event) => {
+                  const drag = selfPacedCoachResizeRef.current;
+                  if (!drag) return;
+                  setSelfPacedCoachWidth(Math.max(260, Math.min(drag.maxWidth, drag.startWidth + drag.startX - event.clientX)));
+                }}
+                onPointerUp={(event) => {
+                  selfPacedCoachResizeRef.current = null;
+                  event.currentTarget.releasePointerCapture(event.pointerId);
+                }}
+                onLostPointerCapture={() => { selfPacedCoachResizeRef.current = null; }}
+                onKeyDown={(event) => {
+                  if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+                  event.preventDefault();
+                  const width = event.currentTarget.parentElement.getBoundingClientRect().width;
+                  const maxWidth = Math.max(260, Math.min(640, (detailBodyRef.current?.clientWidth || window.innerWidth) - leftPanelWidth - 320));
+                  setSelfPacedCoachWidth(Math.max(260, Math.min(maxWidth, width + (event.key === 'ArrowLeft' ? 20 : -20))));
+                }}
+              />
+              <header className="self-paced-coach-head">
+                <span className="self-paced-coach-panel-icon" aria-hidden="true"><MenuUnfoldOutlined /></span>
+                <button
+                  type="button"
+                  className="self-paced-coach-close"
+                  aria-label="收起AI伴学"
+                  onClick={() => setSelfPacedCoachOpen(false)}
+                >
+                  <CloseOutlined />
+                </button>
+              </header>
+
+              <div className={`self-paced-coach-body ${selfPacedCoachMessages.length === 0 ? 'is-welcome' : ''}`}>
+                {selfPacedCoachMessages.length === 0 ? (
+                  <div className="self-paced-coach-welcome">
+                    <svg className="self-paced-coach-welcome-logo" viewBox="0 0 96 96" aria-hidden="true">
+                      <defs>
+                        <linearGradient id="coach-orbit-gradient" x1="0" y1="0" x2="1" y2="1">
+                          <stop offset="0%" stopColor="#a6f1ff" />
+                          <stop offset="42%" stopColor="#1476ff" />
+                          <stop offset="72%" stopColor="#67d4ff" />
+                          <stop offset="100%" stopColor="#244fff" />
+                        </linearGradient>
+                      </defs>
+                      <path fill="url(#coach-orbit-gradient)" fillRule="evenodd" d="M18 29C20 8 43 3 62 14C82 25 92 45 84 63C76 81 51 94 32 84C13 74 14 51 18 29ZM27 53C36 45 49 29 64 34C79 39 82 56 68 62C54 69 39 62 27 53Z" />
+                    </svg>
+                    <h2>今天有什么学习问题？</h2>
+                  </div>
+                ) : null}
+
+                {selfPacedCoachMessages.map((item) => (
+                  <div key={item.id} className={`self-paced-coach-message is-${item.role}`}>
+                    {item.role === 'assistant' ? (
+                      <span className="self-paced-coach-message-avatar"><ThunderboltOutlined /></span>
+                    ) : null}
+                    <div><p>{item.text}</p></div>
+                  </div>
+                ))}
+
+
+              </div>
+
+                {selfPacedCoachMessages.length === 0 ? (
+                  <div className="self-paced-coach-suggestions">
+                    <span>为你推荐</span>
+                    {aiSuggestedQuestions.slice(0, 4).map((question, index) => (
+                      <button
+                        key={question}
+                        type="button"
+                        onClick={() => handleApplyAiSuggestion(question)}
+                      >
+                        <span className="self-paced-coach-suggestion-kind"><AppstoreOutlined />{['概念解读', '重点梳理', '随堂练习', '学习帮助'][index]}</span>
+                        <span className="self-paced-coach-suggestion-text">{question}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+
+              <div className="self-paced-coach-composer">
+                <textarea
+                  ref={aiPromptInputRef}
+                  value={aiPromptValue}
+                  placeholder="发消息，问问AI伴学…"
+                  rows={2}
+                  onChange={handleAiPromptChange}
+                  onKeyDown={(event) => {
+                    if (event.key !== 'Enter' || event.shiftKey) return;
+                    event.preventDefault();
+                    handleSelfPacedCoachSend();
+                  }}
+                />
+                <div className="self-paced-coach-composer-foot">
+                  <span className="self-paced-coach-scope-chip"><ExperimentOutlined /> AI伴学</span>
+                  <button
+                    type="button"
+                    aria-label="发送问题"
+                    disabled={!aiPromptValue.trim()}
+                    onClick={handleSelfPacedCoachSend}
+                  >
+                    <UploadOutlined />
+                  </button>
+                </div>
+              </div>
+            </aside>
+          ) : null}
         </div>
       )}
 
@@ -9900,7 +9833,7 @@ function TopicDetail({
       </Modal>
 
       <Modal
-        title="按知识点批量创建学习任务"
+        title="按知识点创建学习任务"
         open={learningTaskCreateOpen}
         onCancel={() => {
           setLearningTaskCreateOpen(false);
