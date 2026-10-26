@@ -25,6 +25,7 @@ import {
   CheckSquareOutlined, SelectOutlined, MinusSquareOutlined,
   BorderOutlined,
   ClearOutlined, BorderOuterOutlined, CloseOutlined,
+  MenuFoldOutlined, MenuUnfoldOutlined,
 } from '@ant-design/icons';
 import {
   loadResourceLib, addItem, renameItem, deleteItems, saveResourceLib, setSelectedFolder, inferFileType, moveItem,
@@ -476,7 +477,10 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
   const pendingCapabilityModelEditKeyRef = useRef(null);
   // 侧栏宽度拖拽
   const [sidebarWidth, setSidebarWidth] = useState(216);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [sidebarFlyoutOpen, setSidebarFlyoutOpen] = useState(false);
   const sidebarDragRef = useRef(null);
+  const sidebarFlyoutCloseTimerRef = useRef(null);
   const tagPickerScrollTimerRef = useRef(null);
   const searchBoxRef = useRef(null);
   const folderHoverTipTimerRef = useRef(null);
@@ -518,6 +522,30 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
   }, [sidebarWidth]);
+
+  const openSidebarFlyout = useCallback(() => {
+    if (sidebarFlyoutCloseTimerRef.current) {
+      window.clearTimeout(sidebarFlyoutCloseTimerRef.current);
+      sidebarFlyoutCloseTimerRef.current = null;
+    }
+    setSidebarFlyoutOpen(true);
+  }, []);
+
+  const scheduleSidebarFlyoutClose = useCallback(() => {
+    if (sidebarFlyoutCloseTimerRef.current) {
+      window.clearTimeout(sidebarFlyoutCloseTimerRef.current);
+    }
+    sidebarFlyoutCloseTimerRef.current = window.setTimeout(() => {
+      setSidebarFlyoutOpen(false);
+      sidebarFlyoutCloseTimerRef.current = null;
+    }, 180);
+  }, []);
+
+  useEffect(() => () => {
+    if (sidebarFlyoutCloseTimerRef.current) {
+      window.clearTimeout(sidebarFlyoutCloseTimerRef.current);
+    }
+  }, []);
 
   const clearTagPickerScrollTimer = useCallback(() => {
     if (!tagPickerScrollTimerRef.current) return;
@@ -5065,25 +5093,44 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
         <span style={{ position: 'fixed', left: bgMenuPos.x, top: bgMenuPos.y, width: 1, height: 1 }} />
       </Dropdown>
     )}
-    <div className="finder-layout">
+    <div className={`finder-layout ${sidebarCollapsed ? 'finder-layout-sidebar-collapsed' : ''} ${sidebarFlyoutOpen ? 'finder-layout-sidebar-flyout-open' : ''}`}>
       {/* ===== 左侧栏（macOS Finder 侧栏） ===== */}
-      <div className="finder-sidebar" style={{ width: sidebarWidth, minWidth: sidebarWidth }}>
+      <div
+        className="finder-sidebar"
+        style={{ width: sidebarWidth, minWidth: sidebarWidth }}
+        onMouseEnter={sidebarCollapsed ? openSidebarFlyout : undefined}
+        onMouseLeave={sidebarCollapsed ? scheduleSidebarFlyoutClose : undefined}
+      >
         {/* 库类型切换 Bar */}
         <div className="finder-library-switcher">
-          <div className={`finder-library-tabs ${scope === 'organization' ? 'finder-library-tabs-organization' : 'finder-library-tabs-personal'}`}>
-            <span className="finder-library-tabs-indicator" aria-hidden="true" />
-            <span
-              className={`finder-library-tab ${scope === 'personal' ? 'finder-library-tab-active' : ''}`}
-              onClick={() => handleScopeChange('personal')}
+          <div className="finder-library-switcher-head">
+            <div className={`finder-library-tabs ${scope === 'organization' ? 'finder-library-tabs-organization' : 'finder-library-tabs-personal'}`}>
+              <span className="finder-library-tabs-indicator" aria-hidden="true" />
+              <span
+                className={`finder-library-tab ${scope === 'personal' ? 'finder-library-tab-active' : ''}`}
+                onClick={() => handleScopeChange('personal')}
+              >
+                个人库
+              </span>
+              <span
+                className={`finder-library-tab ${scope === 'organization' ? 'finder-library-tab-active' : ''}`}
+                onClick={() => handleScopeChange('organization')}
+              >
+                组织库
+              </span>
+            </div>
+            <button
+              type="button"
+              className="finder-sidebar-toggle"
+              title={sidebarCollapsed ? '固定展开资料库导航' : '收起资料库导航'}
+              aria-label={sidebarCollapsed ? '固定展开资料库导航' : '收起资料库导航'}
+              onClick={() => {
+                setSidebarCollapsed((collapsed) => !collapsed);
+                setSidebarFlyoutOpen(false);
+              }}
             >
-              个人库
-            </span>
-            <span
-              className={`finder-library-tab ${scope === 'organization' ? 'finder-library-tab-active' : ''}`}
-              onClick={() => handleScopeChange('organization')}
-            >
-              组织库
-            </span>
+              {sidebarCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+            </button>
           </div>
           {scope === 'organization' && (
             <div className="finder-library-org-select-wrap">
@@ -5288,6 +5335,24 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
       <div className="finder-main">
         {/* 工具栏 */}
         <div className="finder-toolbar">
+          {sidebarCollapsed && (
+            <button
+              type="button"
+              className="finder-toolbar-nav-btn finder-sidebar-expand-btn"
+              title="展开资料库导航"
+              aria-label="展开资料库导航"
+              onMouseEnter={openSidebarFlyout}
+              onMouseLeave={scheduleSidebarFlyoutClose}
+              onFocus={openSidebarFlyout}
+              onBlur={scheduleSidebarFlyoutClose}
+              onClick={() => {
+                setSidebarCollapsed(false);
+                setSidebarFlyoutOpen(false);
+              }}
+            >
+              <MenuUnfoldOutlined />
+            </button>
+          )}
           <div className="finder-toolbar-nav">
             <button className="finder-toolbar-nav-btn" disabled={!canNavigateBack} onClick={handleBack}>
               <LeftOutlined />

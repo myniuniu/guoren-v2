@@ -6207,12 +6207,12 @@
 
 .td-work-resource-library-page .finder-sidebar,
 .td-work-resource-library-page .finder-library-switcher {
-  background: #f4f5f7;
+  background: #fbfbfc;
 }
 
 .td-work-resource-library-page .finder-sidebar {
   padding-inline: 12px;
-  border-right-color: #e7e9e8;
+  border-right-color: #e9ebe9;
 }
 
 .td-work-resource-library-page .finder-library-switcher {
@@ -6223,7 +6223,7 @@
   min-height: 44px;
   padding: 3px;
   border-color: #e2e5e3;
-  background: #e9ebea;
+  background: #f0f2f1;
 }
 
 .td-work-resource-library-page .finder-library-tab {
@@ -6265,7 +6265,7 @@
 .td-work-resource-library-page .finder-sidebar .finder-tag-item-active,
 .td-work-resource-library-page .finder-sidebar .finder-tag-item-active:hover {
   border: 0;
-  background: #e8eae9 !important;
+  background: #f0f2f1 !important;
   color: #101b17 !important;
 }
 
@@ -6350,6 +6350,26 @@
   min-height: 42px;
   padding-inline: 20px;
   border-top-color: #e8ebe9;
+}
+
+.td-work-resource-library-page .finder-library-switcher-head {
+  gap: 6px;
+}
+
+.td-work-resource-library-page .finder-sidebar-toggle,
+.td-work-resource-library-page .finder-toolbar .finder-sidebar-expand-btn {
+  border-color: #e1e5e3;
+  background: #ffffff;
+  color: #66706b;
+  box-shadow: none;
+}
+
+.td-work-resource-library-page .finder-sidebar-toggle:hover,
+.td-work-resource-library-page .finder-toolbar .finder-sidebar-expand-btn:hover {
+  border-color: #cfd5d2;
+  background: #f5f7f6;
+  color: #101b17;
+  box-shadow: none;
 }
 
 .finder-liquid-glass-menu .ant-dropdown-menu,
