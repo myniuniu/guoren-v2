@@ -79,6 +79,7 @@ import {
 } from './resourceLib/resourceLibStore';
 import { buildTopicResourcesFromLibrarySelection } from './resourceLib/topicResourceImport.js';
 import { renderFileIcon } from './resourceLib/resourceIcons.jsx';
+import { loadAiLiteracyReportCatalog } from './aiLiteracy/reportStore.js';
 import { getSceneThemeCoverPalette, getSceneThemeCoverStyle } from './scene/themeCovers';
 import {
   getSceneIconMeta,
@@ -1981,6 +1982,7 @@ function TopicDetail({
   sceneId = null,
   sceneType = null,
   headerLeftContent = null,
+  onOpenAiLiteracyCapability = null,
 }) {
   const topicAdminConfig = sceneConfig ? null : getTopicAdminConfig(topicTitle);
   const topicStorageScopeKey = storageScopeKey || topicAdminConfig?.storageScopeKey || 'default';
@@ -1999,7 +2001,9 @@ function TopicDetail({
   const [activeAiLiteracyKnowledgePointKey, setActiveAiLiteracyKnowledgePointKey] = useState(
     AI_LITERACY_KNOWLEDGE_GRAPH[0].points[0].key,
   );
+  const [selfPacedHomeStage, setSelfPacedHomeStage] = useState('analysis');
   const [hoveredAiLiteracyAbilityKey, setHoveredAiLiteracyAbilityKey] = useState(null);
+  const [aiLiteracyDynamicLinks, setAiLiteracyDynamicLinks] = useState([]);
   const [previewItem, setPreviewItem] = useState(null);
   const [versionData, setVersionData] = useState(() => loadTopicVersionData(topicAdminConfig, sceneConfig, topicStorageScopeKey));
   const [leftPanelWidth, setLeftPanelWidth] = useState(() => getDefaultLeftPanelWidth());
@@ -2103,6 +2107,9 @@ function TopicDetail({
   const dragPayloadRef = useRef(null);
   const aiComposerRef = useRef(null);
   const aiLiteracyReportFileInputRef = useRef(null);
+  const aiLiteracyKnowledgeGraphRef = useRef(null);
+  const aiLiteracyAbilityNodeRefs = useRef(new Map());
+  const aiLiteracyDomainNodeRefs = useRef(new Map());
   const aiPromptInputRef = useRef(null);
   const aiSuggestionRef = useRef(null);
   const aiComposerToolbarRef = useRef(null);
@@ -3521,9 +3528,11 @@ function TopicDetail({
 	      }
 	      return normalizedTabs.map((item, index) => ({
 	        key: item.key,
-	        label: activeSceneType === 'SUPERVISION' && item.key === 'knowledge'
-	          ? '项目'
-	          : item.label || item.key || `模式 ${index + 1}`,
+	        label: isSelfPacedTraining && item.key === 'home'
+          ? '诊断规划'
+          : activeSceneType === 'SUPERVISION' && item.key === 'knowledge'
+            ? '项目'
+            : item.label || item.key || `模式 ${index + 1}`,
 	        icon: resolveDetailTabIcon(item),
 	        iconColor: resolveDetailTabIconColor(item),
 	      }));
@@ -3753,7 +3762,60 @@ function TopicDetail({
   ) || AI_LITERACY_ABILITY_DIMENSIONS[0];
   const mappedAiLiteracyAbility = AI_LITERACY_ABILITY_DIMENSIONS.find(
     (ability) => ability.key === hoveredAiLiteracyAbilityKey,
-  ) || activeAiLiteracyAbility;
+  ) || null;
+  useLayoutEffect(() => {
+    const graphNode = aiLiteracyKnowledgeGraphRef.current;
+    const sourceNode = mappedAiLiteracyAbility
+      ? aiLiteracyAbilityNodeRefs.current.get(mappedAiLiteracyAbility.key)
+      : null;
+    if (!graphNode || !sourceNode || !mappedAiLiteracyAbility || !aiLiteracyAssessmentProfile || !isHomeTab) {
+      setAiLiteracyDynamicLinks([]);
+      return undefined;
+    }
+
+    let frameId = 0;
+    const updateLinks = () => {
+      cancelAnimationFrame(frameId);
+      frameId = requestAnimationFrame(() => {
+        const graphRect = graphNode.getBoundingClientRect();
+        const sourceRect = sourceNode.getBoundingClientRect();
+        const overviewRect = sourceNode.closest('.topic-home-ai-assessment-overview')?.getBoundingClientRect();
+        const startX = sourceRect.left + (sourceRect.width / 2) - graphRect.left;
+        const startY = (overviewRect?.bottom || sourceRect.bottom) - graphRect.top + 2;
+        const nextLinks = mappedAiLiteracyAbility.domainKeys.map((domainKey) => {
+          const targetNode = aiLiteracyDomainNodeRefs.current.get(domainKey);
+          if (!targetNode) return null;
+          const targetRect = targetNode.getBoundingClientRect();
+          const endX = targetRect.left + (targetRect.width / 2) - graphRect.left;
+          const endY = targetRect.top - graphRect.top - 3;
+          const distance = Math.max(72, endY - startY);
+          return {
+            key: `${mappedAiLiteracyAbility.key}-${domainKey}`,
+            endX,
+            endY,
+            path: `M ${startX} ${startY} C ${startX} ${startY + (distance * 0.38)}, ${endX} ${endY - (distance * 0.38)}, ${endX} ${endY}`,
+          };
+        }).filter(Boolean);
+        setAiLiteracyDynamicLinks(nextLinks);
+      });
+    };
+
+    updateLinks();
+    const resizeObserver = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(updateLinks);
+    resizeObserver?.observe(graphNode);
+    resizeObserver?.observe(sourceNode);
+    mappedAiLiteracyAbility.domainKeys.forEach((domainKey) => {
+      const targetNode = aiLiteracyDomainNodeRefs.current.get(domainKey);
+      if (targetNode) resizeObserver?.observe(targetNode);
+    });
+    window.addEventListener('resize', updateLinks);
+
+    return () => {
+      cancelAnimationFrame(frameId);
+      resizeObserver?.disconnect();
+      window.removeEventListener('resize', updateLinks);
+    };
+  }, [aiLiteracyAssessmentProfile, isHomeTab, mappedAiLiteracyAbility, selfPacedHomeStage]);
   const activeAiLiteracyKnowledgePointScore = aiLiteracyAssessmentProfile
     ?.knowledgePointScores?.[activeAiLiteracyKnowledgePoint.key];
   const activeAiLiteracyKnowledgePointMastery = aiLiteracyAssessmentProfile
@@ -3768,6 +3830,61 @@ function TopicDetail({
     });
     return counts;
   }, [aiLiteracyAssessmentProfile, aiLiteracyKnowledgePoints]);
+  const availableAiLiteracyReports = useMemo(() => {
+    const reports = [];
+    if (aiLiteracyReport) reports.push(aiLiteracyReport);
+    loadAiLiteracyReportCatalog().forEach((report) => {
+      reports.push({
+        ...report,
+        assessmentProfile: report.assessmentProfile
+          || buildAiLiteracyAssessmentProfile(`${report.source || ''}:${report.fileName || ''}`),
+      });
+    });
+    sourceResources.forEach((resource) => {
+      if (resource?.isFolder) return;
+      const reportSource = resource.meta?.reportSource;
+      const looksLikeLiteracyReport = reportSource
+        || /(?:AI|人工智能).*素养.*报告|素养.*测评.*报告/i.test(String(resource.name || ''));
+      if (!looksLikeLiteracyReport) return;
+      const sourceOption = AI_LITERACY_REPORT_SOURCE_OPTIONS.find((item) => item.label === reportSource)
+        || AI_LITERACY_REPORT_SOURCE_OPTIONS[AI_LITERACY_REPORT_SOURCE_OPTIONS.length - 1];
+      reports.push({
+        id: resource.key,
+        source: sourceOption.value,
+        sourceLabel: reportSource || sourceOption.label,
+        fileName: resource.name,
+        fileSizeLabel: resource.meta?.fileSizeLabel || '报告文件',
+        importedAt: resource.meta?.importedAt || resource.lastEdit || '已导入',
+        assessmentProfile: buildAiLiteracyAssessmentProfile(`${sourceOption.value}:${resource.name}`),
+      });
+    });
+    const seen = new Set();
+    return reports.filter((report) => {
+      const key = `${report.fileName || ''}:${report.importedAt || ''}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [aiLiteracyReport, sourceResources]);
+  const learningTaskRecords = useMemo(() => {
+    const childCountMap = new Map();
+    sourceResources.forEach((resource) => {
+      if (!resource?.parentKey) return;
+      childCountMap.set(resource.parentKey, (childCountMap.get(resource.parentKey) || 0) + 1);
+    });
+    return sourceResources
+      .filter((resource) => resource?.isFolder && resource.meta?.knowledgePointKey)
+      .map((resource) => ({
+        key: resource.key,
+        name: resource.name,
+        knowledgePointName: resource.meta?.knowledgePointName || '关联知识点',
+        masteryLabel: resource.meta?.masteryLabel || '待学习',
+        score: resource.meta?.assessmentScore,
+        createdAt: resource.meta?.createdAt || resource.lastEdit || '历史创建',
+        contentCount: childCountMap.get(resource.key) || 0,
+      }))
+      .sort((left, right) => String(right.createdAt).localeCompare(String(left.createdAt)));
+  }, [sourceResources]);
   const aiLiteracyRadarAxes = useMemo(() => {
     if (!aiLiteracyAssessmentProfile) return [];
     return AI_LITERACY_KNOWLEDGE_GRAPH.map((domain, index, domains) => {
@@ -3804,7 +3921,25 @@ function TopicDetail({
     if (linkedPoint) setActiveAiLiteracyKnowledgePointKey(linkedPoint.key);
   };
 
+  const handleSelectAiLiteracyReport = (reportId) => {
+    const selectedReport = availableAiLiteracyReports.find((report) => report.id === reportId);
+    if (!selectedReport) return;
+    const normalizedReport = {
+      ...selectedReport,
+      assessmentProfile: selectedReport.assessmentProfile
+        || buildAiLiteracyAssessmentProfile(`${selectedReport.source || ''}:${selectedReport.fileName || ''}`),
+    };
+    setAiLiteracyReport(normalizedReport);
+    saveAiLiteracyReport(topicStorageScopeKey, normalizedReport);
+    message.success(`已选择报告：${normalizedReport.fileName}`);
+  };
+
   const openLearningTaskCreate = () => {
+    if (!aiLiteracyAssessmentProfile) {
+      message.warning('请先完成能力诊断或导入测评报告');
+      onOpenAiLiteracyCapability?.();
+      return;
+    }
     if (!canEditDisplayedResources) {
       message.warning('当前内容不可编辑');
       return;
@@ -3852,6 +3987,7 @@ function TopicDetail({
       return;
     }
     const batchSeed = Date.now();
+    const batchCreatedAt = new Date().toLocaleString('zh-CN', { hour12: false });
     const newResources = selectedPoints.flatMap((point, pointIndex) => {
       const score = aiLiteracyAssessmentProfile?.knowledgePointScores?.[point.key] ?? 0;
       const mastery = resolveAiLiteracyMastery(score);
@@ -3871,6 +4007,7 @@ function TopicDetail({
           folderTypeKey: 'learning_task',
           parentKey: null,
           owner: '自主学习者',
+          lastEdit: batchCreatedAt,
           meta: {
             summary: `${point.description} 当前测评 ${score} 分，状态为“${mastery.label}”。`,
             knowledgePointKey: point.key,
@@ -3878,6 +4015,7 @@ function TopicDetail({
             assessmentScore: score,
             masteryKey: mastery.key,
             masteryLabel: mastery.label,
+            createdAt: batchCreatedAt,
           },
         },
         ...contentEntries.map((content, contentIndex) => ({
@@ -3887,6 +4025,7 @@ function TopicDetail({
           isFolder: false,
           parentKey: taskKey,
           owner: '自主学习者',
+          lastEdit: batchCreatedAt,
           meta: {
             summary: content.summary,
             knowledgePointKey: point.key,
@@ -3915,6 +4054,10 @@ function TopicDetail({
     setAiLiteracyReportSource(aiLiteracyReport?.source || AI_LITERACY_REPORT_SOURCE_OPTIONS[0].value);
     setAiLiteracyReportFile(null);
     setAiLiteracyReportImportOpen(true);
+  };
+
+  const openAiLiteracyReferenceEntry = (path) => {
+    window.open(`https://aiteach.qq.com${path}`, '_blank', 'noopener,noreferrer');
   };
 
   const handleConfirmAiLiteracyReportImport = () => {
@@ -7622,7 +7765,7 @@ function TopicDetail({
     );
   };
 
-  const renderSceneHomePage = () => {
+  const renderSceneHomePage = (view = 'planning') => {
     if (!sceneConfig) return null;
 
     return (
@@ -7661,63 +7804,220 @@ function TopicDetail({
             </>
           ) : null}
 
-          {isSelfPacedTraining ? (
-            <div className="topic-home-learning-task-actions">
-              <div>
-                <strong>自主学习任务</strong>
-                <span>根据测评中的薄弱与待巩固知识点批量生成专项任务</span>
+          {isSelfPacedTraining && view === 'planning' ? (
+            <section className="topic-home-learning-path" aria-label="人工智能素养提升路径">
+              <div className="topic-home-learning-path-copy">
+                <span>个人成长路径</span>
+                <strong>从知识分析到任务创建</strong>
+                <p>选择能力诊断报告，分析知识点掌握情况并生成针对性的学习任务。</p>
               </div>
-              <button type="button" onClick={openLearningTaskCreate}>
-                <PlusOutlined />
-                批量创建学习任务
-              </button>
-            </div>
-          ) : null}
-
-          {isSelfPacedTraining ? (
-            <div className="topic-home-ai-report-card">
-              <div className="topic-home-ai-report-head">
-                <span className="topic-home-ai-report-icon"><FileTextOutlined /></span>
-                <div>
-                  <strong>AI素养测评报告</strong>
-                  <span>支持导入国家智慧教育教师发展平台等测评报告</span>
-                </div>
-                <button type="button" onClick={openAiLiteracyReportImport}>
-                  <UploadOutlined />
-                  {aiLiteracyReport ? '重新导入' : '导入报告'}
+              <div className="topic-home-learning-path-steps" role="tablist" aria-label="诊断规划阶段">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={selfPacedHomeStage === 'analysis'}
+                  className={selfPacedHomeStage === 'analysis' ? 'is-active' : ''}
+                  onClick={() => setSelfPacedHomeStage('analysis')}
+                >
+                  <b>01</b>
+                  <span><strong>知识分析</strong><em>能力 · 领域 · 知识点</em></span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={selfPacedHomeStage === 'learning'}
+                  className={selfPacedHomeStage === 'learning' ? 'is-active' : ''}
+                  onClick={() => setSelfPacedHomeStage('learning')}
+                >
+                  <b>02</b>
+                  <span><strong>任务创建</strong><em>知识点 · 内容 · AI生成</em></span>
                 </button>
               </div>
-              {aiLiteracyReport ? (
-                <div className="topic-home-ai-report-file">
-                  <span className="topic-home-ai-report-file-icon"><FileTextOutlined /></span>
-                  <div>
-                    <strong title={aiLiteracyReport.fileName}>{aiLiteracyReport.fileName}</strong>
-                    <span>{aiLiteracyReportSourceLabel} · {aiLiteracyReport.fileSizeLabel} · {aiLiteracyReport.importedAt}</span>
-                  </div>
-                  <Tag color="success">已导入</Tag>
-                  <button type="button" onClick={() => handleSelectTab('ai')}>
-                    进入AI伴学 <RightOutlined />
-                  </button>
-                </div>
-              ) : (
-                <div className="topic-home-ai-report-empty">
-                  导入 PDF、Word 或报告截图后，可在 AI伴学中结合测评结果生成个人学习路径。
-                </div>
-              )}
-            </div>
+            </section>
           ) : null}
 
-          {isSelfPacedTraining ? (
-            <section className="topic-home-ai-knowledge-graph" aria-label="人工智能素养知识图谱">
+          {isSelfPacedTraining && view === 'literacy' ? (
+            <section className="topic-home-learning-hub" aria-label="人工智能素养能力诊断">
+              <header className="topic-home-literacy-hero">
+                <div className="topic-home-literacy-hero-title">
+                  <span aria-hidden="true"><i /><i /><i /></span>
+                  <strong><em>AI 素养能力</em> 提升计划</strong>
+                </div>
+                <div className="topic-home-literacy-hero-features">
+                  <article>
+                    <span><NodeIndexOutlined /></span>
+                    <strong>精准能力诊断</strong>
+                    <p>多维度评估，定位能力优势与提升方向</p>
+                  </article>
+                  <article>
+                    <span><CheckSquareOutlined /></span>
+                    <strong>权威测评体系</strong>
+                    <p>基于教师人工智能能力与数字素养标准</p>
+                  </article>
+                  <article>
+                    <span><BranchesOutlined /></span>
+                    <strong>个性化成长建议</strong>
+                    <p>关联知识点并生成专属能力发展路径</p>
+                  </article>
+                </div>
+              </header>
+
+              <div className="topic-home-literacy-participation" aria-label="参与测评人数">
+                <i />
+                <p><strong>12,680</strong> 位老师已参与测评</p>
+                <i />
+                <span className={aiLiteracyReport ? 'is-linked' : ''}>
+                  {aiLiteracyReport ? '报告已关联' : '支持导入外部报告'}
+                </span>
+              </div>
+
+              <div className="topic-home-literacy-entry-grid">
+                <article className="topic-home-literacy-entry-card is-assessment">
+                  <span className="topic-home-literacy-entry-badge">已测评 1 次</span>
+                  <div className="topic-home-literacy-entry-copy">
+                    <div>
+                      <strong>AI 素养测评</strong>
+                      <p>了解当前 AI 素养水平，发现优势与不足</p>
+                    </div>
+                  </div>
+                  <div className="topic-home-literacy-preview is-assessment" aria-hidden="true">
+                    <span className="topic-home-literacy-preview-label">第一组：AI工具与能力</span>
+                    <i /><i /><i /><i /><i />
+                    <div><b>1.</b><span /></div>
+                  </div>
+                  <div className="topic-home-literacy-entry-action">
+                    <button type="button" onClick={() => openAiLiteracyReferenceEntry('/literacy/assessment')}>
+                      <span>立即开始测评</span>
+                      <RightOutlined />
+                    </button>
+                  </div>
+                </article>
+
+                <article className="topic-home-literacy-entry-card is-exam">
+                  <span className="topic-home-literacy-entry-badge">能力考试</span>
+                  <div className="topic-home-literacy-entry-copy">
+                    <div>
+                      <strong>AI 素养能力考试</strong>
+                      <p>了解当前 AI 素养水平，发现优势与不足</p>
+                    </div>
+                  </div>
+                  <div className="topic-home-literacy-preview is-exam" aria-hidden="true">
+                    <span className="topic-home-literacy-preview-label">维度一：AI教学应用</span>
+                    <div className="topic-home-literacy-answer-sheet">
+                      <strong>答题卡</strong>
+                      <span>{Array.from({ length: 12 }, (_, index) => <i key={index}>{index < 6 ? index + 1 : ''}</i>)}</span>
+                    </div>
+                    <div className="topic-home-literacy-exam-option"><b>B</b><span /></div>
+                  </div>
+                  <div className="topic-home-literacy-entry-action">
+                    <button type="button" onClick={() => openAiLiteracyReferenceEntry('/literacy/exam')}>
+                      <span>立即进入考试</span>
+                      <RightOutlined />
+                    </button>
+                  </div>
+                </article>
+
+                <article className="topic-home-literacy-entry-card is-report">
+                  <span className="topic-home-literacy-entry-badge">
+                    {aiLiteracyReport ? '报告已关联' : '支持导入'}
+                  </span>
+                  <div className="topic-home-literacy-entry-copy">
+                    <div>
+                      <strong>AI 素养报告</strong>
+                      <p>了解当前 AI 素养水平，发现优势与不足</p>
+                    </div>
+                  </div>
+                  <div className="topic-home-literacy-preview is-report" aria-hidden="true">
+                    <div className="topic-home-literacy-report-score">
+                      <strong>{aiLiteracyAssessmentProfile?.overallScore || 73}</strong>
+                      <span>综合得分</span>
+                    </div>
+                    <div className="topic-home-literacy-report-bars">
+                      <span><i style={{ width: '83%' }} /></span>
+                      <span><i style={{ width: '72%' }} /></span>
+                      <span><i style={{ width: '58%' }} /></span>
+                    </div>
+                  </div>
+                  <div className="topic-home-literacy-entry-action">
+                    <button type="button" onClick={openAiLiteracyReportImport}>
+                      <span><UploadOutlined /> {aiLiteracyReport ? '重新导入报告' : '导入测评报告'}</span>
+                      <RightOutlined />
+                    </button>
+                  </div>
+                  {aiLiteracyReport ? (
+                    <button
+                      type="button"
+                      className="topic-home-literacy-imported-file"
+                      title={aiLiteracyReport.fileName}
+                      onClick={() => handleSelectTab('ai')}
+                    >
+                      <FileTextOutlined />
+                      <span>
+                        <strong>{aiLiteracyReport.fileName}</strong>
+                        <em>{aiLiteracyReportSourceLabel} · 已导入</em>
+                      </span>
+                      <RightOutlined />
+                    </button>
+                  ) : null}
+                </article>
+              </div>
+            </section>
+          ) : null}
+
+          {isSelfPacedTraining && view === 'planning' && selfPacedHomeStage === 'analysis' ? (
+            <section
+              ref={aiLiteracyKnowledgeGraphRef}
+              className="topic-home-ai-knowledge-graph"
+              aria-label="人工智能素养知识图谱"
+            >
               <div className="topic-home-ai-knowledge-head">
                 <div>
+                  <span className="topic-home-stage-index">02</span>
                   <span className="topic-home-ai-knowledge-head-icon"><NodeIndexOutlined /></span>
                   <div>
-                    <strong>人工智能素养知识图谱</strong>
-                    <span>能力测评关联 {AI_LITERACY_KNOWLEDGE_GRAPH.length} 个知识领域 · {aiLiteracyKnowledgePointCount} 个知识点</span>
+                    <strong>能力与知识分析</strong>
+                    <span>测评结果映射至 {AI_LITERACY_KNOWLEDGE_GRAPH.length} 个知识领域 · {aiLiteracyKnowledgePointCount} 个知识点</span>
                   </div>
                 </div>
                 {aiLiteracyReport ? <Tag color="processing">已关联最新测评结果</Tag> : <Tag>导入报告后查看掌握度</Tag>}
+              </div>
+
+              <div className={`topic-home-stage-dependency ${aiLiteracyAssessmentProfile ? 'is-ready' : 'is-missing'}`}>
+                <div className="topic-home-stage-dependency-source">
+                  <span className="topic-home-stage-dependency-icon"><DatabaseOutlined /></span>
+                  <div>
+                    <em>输入依赖</em>
+                    <strong>{aiLiteracyReport ? aiLiteracyReport.fileName : '能力测评结果或外部测评报告'}</strong>
+                    <p>
+                      {aiLiteracyReport
+                        ? `${aiLiteracyReportSourceLabel} · ${aiLiteracyReport.importedAt || '已完成导入'}`
+                        : '完成在线测评、能力考试或导入已有报告后，才能生成知识点掌握分析。'}
+                    </p>
+                  </div>
+                </div>
+                <div className="topic-home-stage-dependency-flow" aria-label="知识分析处理流程">
+                  <span className={aiLiteracyAssessmentProfile ? 'is-complete' : ''}>诊断结果</span>
+                  <RightOutlined />
+                  <span className={aiLiteracyAssessmentProfile ? 'is-complete' : ''}>能力维度映射</span>
+                  <RightOutlined />
+                  <span className={aiLiteracyAssessmentProfile ? 'is-complete' : ''}>知识点掌握度</span>
+                </div>
+                <div className="topic-home-stage-dependency-actions">
+                  <Select
+                    className="topic-home-stage-report-select"
+                    value={aiLiteracyReport?.id}
+                    placeholder="选择能力诊断报告"
+                    options={availableAiLiteracyReports.map((report) => ({
+                      value: report.id,
+                      label: report.fileName,
+                    }))}
+                    onChange={handleSelectAiLiteracyReport}
+                    popupMatchSelectWidth={false}
+                  />
+                  <button type="button" onClick={() => onOpenAiLiteracyCapability?.()}>
+                    管理诊断报告
+                  </button>
+                </div>
               </div>
 
               {aiLiteracyAssessmentProfile ? (
@@ -7819,11 +8119,15 @@ function TopicDetail({
                       const linkedPointCount = aiLiteracyKnowledgePoints.filter(
                         (point) => ability.domainKeys.includes(point.domainKey),
                       ).length;
-                      const active = ability.key === mappedAiLiteracyAbility.key;
+                      const active = ability.key === mappedAiLiteracyAbility?.key;
                       const previewing = ability.key === hoveredAiLiteracyAbilityKey;
                       return (
                         <button
                           key={ability.key}
+                          ref={(node) => {
+                            if (node) aiLiteracyAbilityNodeRefs.current.set(ability.key, node);
+                            else aiLiteracyAbilityNodeRefs.current.delete(ability.key);
+                          }}
                           type="button"
                           className={`${active ? 'is-active' : ''} ${previewing ? 'is-previewing' : ''} is-${mastery.key}`}
                           aria-pressed={ability.key === activeAiLiteracyAbility.key}
@@ -7847,26 +8151,21 @@ function TopicDetail({
                 </div>
               ) : null}
 
-              {aiLiteracyAssessmentProfile ? (
-                <div className="topic-home-ai-mapping-bridge" aria-live="polite">
-                  <div>
-                    <span>当前能力</span>
-                    <strong>{mappedAiLiteracyAbility.name}</strong>
-                  </div>
-                  <span className="topic-home-ai-mapping-line">
-                    <i />
-                    <RightOutlined />
-                  </span>
-                  <div>
-                    <span>关联知识领域</span>
-                    <p>
-                      {mappedAiLiteracyAbility.domainKeys.map((domainKey) => {
-                        const domain = AI_LITERACY_KNOWLEDGE_GRAPH.find((item) => item.key === domainKey);
-                        return domain ? <em key={domain.key}>{domain.name}</em> : null;
-                      })}
-                    </p>
-                  </div>
-                </div>
+              {aiLiteracyAssessmentProfile && mappedAiLiteracyAbility ? (
+                <svg
+                  className={`topic-home-ai-dynamic-links is-${resolveAiLiteracyMastery(
+                    aiLiteracyAssessmentProfile.abilityScores?.[mappedAiLiteracyAbility.key],
+                  ).key}`}
+                  aria-hidden="true"
+                >
+                  {aiLiteracyDynamicLinks.map((link) => (
+                    <g key={link.key}>
+                      <path className="topic-home-ai-link-shadow" d={link.path} />
+                      <path className="topic-home-ai-link-flow" d={link.path} pathLength="100" />
+                      <circle cx={link.endX} cy={link.endY} r="4" />
+                    </g>
+                  ))}
+                </svg>
               ) : null}
 
               <div className="topic-home-ai-knowledge-root">
@@ -7879,13 +8178,18 @@ function TopicDetail({
                   const domainAbility = AI_LITERACY_ABILITY_DIMENSIONS.find(
                     (ability) => ability.domainKeys.includes(domain.key),
                   );
-                  const mapped = mappedAiLiteracyAbility.domainKeys.includes(domain.key);
+                  const mapped = mappedAiLiteracyAbility?.domainKeys.includes(domain.key) || false;
+                  const mappingClassName = mappedAiLiteracyAbility
+                    ? (mapped ? 'is-mapped' : 'is-unmapped')
+                    : '';
                   return (
                   <article
                     key={domain.key}
-                    className={`topic-home-ai-domain is-${domain.tone} ${mapped ? 'is-mapped' : 'is-unmapped'}`}
-                    onMouseEnter={() => domainAbility && setHoveredAiLiteracyAbilityKey(domainAbility.key)}
-                    onMouseLeave={() => setHoveredAiLiteracyAbilityKey(null)}
+                    ref={(node) => {
+                      if (node) aiLiteracyDomainNodeRefs.current.set(domain.key, node);
+                      else aiLiteracyDomainNodeRefs.current.delete(domain.key);
+                    }}
+                    className={`topic-home-ai-domain is-${domain.tone} ${mappingClassName}`}
                   >
                     <header>
                       <span>{domain.points.length}</span>
@@ -7942,22 +8246,161 @@ function TopicDetail({
             </section>
           ) : null}
 
-          <div className="topic-home-section">
-            <div className="topic-home-section-title">资源统计</div>
-            <div className="topic-home-stat-grid">
-              {homeResourceStats.map((item) => (
-                <div key={item.key} className={`topic-home-stat-card topic-home-stat-card-${item.key}`}>
-                  <div className={`topic-home-stat-icon topic-home-stat-icon-${item.key}`}>
-                    {item.icon}
-                  </div>
-                  <div className="topic-home-stat-copy">
-                    <strong>{item.value}</strong>
-                    <span>{item.label}</span>
+          {isSelfPacedTraining && view === 'planning' && selfPacedHomeStage === 'learning' ? (
+            <section className="topic-home-learning-action-stage" aria-label="学习任务创建">
+              <div className="topic-home-stage-head">
+                <span>03</span>
+                <div>
+                  <strong>任务创建</strong>
+                  <p>根据薄弱与待巩固知识点，批量生成结构完整的专项学习任务。</p>
+                </div>
+                <em><ThunderboltOutlined /> 诊断结果驱动</em>
+              </div>
+
+              <div className={`topic-home-stage-dependency ${aiLiteracyAssessmentProfile ? 'is-ready' : 'is-missing'}`}>
+                <div className="topic-home-stage-dependency-source">
+                  <span className="topic-home-stage-dependency-icon"><NodeIndexOutlined /></span>
+                  <div>
+                    <em>输入依赖</em>
+                    <strong>知识分析与知识点掌握结果</strong>
+                    <p>
+                      {aiLiteracyAssessmentProfile
+                        ? `已获得 ${aiLiteracyKnowledgePointCount} 个知识点掌握度，其中 ${aiLiteracyMasteryCounts.weak + aiLiteracyMasteryCounts.developing} 个建议优先创建任务。`
+                        : '需要先完成能力诊断，并生成知识点掌握分析，才能批量创建针对性学习任务。'}
+                    </p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
+                <div className="topic-home-stage-dependency-flow" aria-label="任务创建处理流程">
+                  <span className={aiLiteracyAssessmentProfile ? 'is-complete' : ''}>能力诊断</span>
+                  <RightOutlined />
+                  <span className={aiLiteracyAssessmentProfile ? 'is-complete' : ''}>知识分析</span>
+                  <RightOutlined />
+                  <span className={aiLiteracyAssessmentProfile ? 'is-complete' : ''}>任务配置</span>
+                </div>
+                <div className="topic-home-stage-dependency-actions">
+                  <button type="button" onClick={() => onOpenAiLiteracyCapability?.()}>
+                    更新诊断
+                  </button>
+                  <button type="button" className="is-primary" onClick={() => setSelfPacedHomeStage('analysis')}>
+                    查看知识分析 <RightOutlined />
+                  </button>
+                </div>
+              </div>
+
+              <div className="topic-home-task-creation-layout">
+                <div className="topic-home-learning-task-recommendation">
+                  <span className="topic-home-learning-task-recommendation-icon"><ThunderboltOutlined /></span>
+                  <div>
+                    <strong>
+                      {aiLiteracyAssessmentProfile
+                        ? `已识别 ${aiLiteracyMasteryCounts.weak + aiLiteracyMasteryCounts.developing} 个待提升知识点`
+                        : '完成诊断后，可生成专属学习任务'}
+                    </strong>
+                    <p>系统将自动选择优先级较高的知识点，并为每个知识点创建独立任务目录。</p>
+                    <span><i />创建前可增删知识点，确认后一次批量生成</span>
+                  </div>
+                  <button type="button" onClick={openLearningTaskCreate}>
+                    <PlusOutlined />
+                    <b>批量创建学习任务</b>
+                    <RightOutlined />
+                  </button>
+                </div>
+
+                <aside className="topic-home-task-creation-summary" aria-label="任务创建依据">
+                  <div>
+                    <span>本次创建依据</span>
+                    <strong>知识点掌握情况</strong>
+                  </div>
+                  <dl>
+                    <div><dt>薄弱知识点</dt><dd>{aiLiteracyMasteryCounts.weak}</dd></div>
+                    <div><dt>待巩固知识点</dt><dd>{aiLiteracyMasteryCounts.developing}</dd></div>
+                  </dl>
+                  <p><CheckCircleOutlined /> 已关联最新能力诊断结果</p>
+                </aside>
+              </div>
+
+              <div className="topic-home-task-content-plan">
+                <div className="topic-home-task-content-plan-head">
+                  <div>
+                    <strong>任务内容结构</strong>
+                    <span>每个知识点自动生成 4 类学习内容</span>
+                  </div>
+                  <em>生成后可继续编辑和补充</em>
+                </div>
+                <div className="topic-home-task-content-plan-grid">
+                  <article><span><PlayCircleOutlined /></span><div><b>微课讲解</b><p>核心概念与典型案例</p></div><em>01</em></article>
+                  <article><span><FileTextOutlined /></span><div><b>导学材料</b><p>学习目标与知识要点</p></div><em>02</em></article>
+                  <article><span><ExperimentOutlined /></span><div><b>互动练习</b><p>教学情境应用训练</p></div><em>03</em></article>
+                  <article><span><CheckSquareOutlined /></span><div><b>达标自测</b><p>检验掌握并即时反馈</p></div><em>04</em></article>
+                </div>
+              </div>
+
+              <div className="topic-home-learning-action-metrics">
+                <div>
+                  <span>已创建任务</span>
+                  <strong>{sourceResources.filter((resource) => resource?.isFolder && resource.meta?.knowledgePointKey).length}</strong>
+                  <em>按知识点组织</em>
+                </div>
+                <div>
+                  <span>建议优先学习</span>
+                  <strong>{aiLiteracyMasteryCounts.weak + aiLiteracyMasteryCounts.developing}</strong>
+                  <em>薄弱与待巩固知识点</em>
+                </div>
+                <div>
+                  <span>任务内容类型</span>
+                  <strong>4</strong>
+                  <em>微课 · 导学 · 练习 · 自测</em>
+                </div>
+                <button type="button" onClick={() => handleSelectTab('knowledge')}>
+                  查看全部学习任务 <RightOutlined />
+                </button>
+              </div>
+
+              <div className="topic-home-task-records">
+                <div className="topic-home-task-records-head">
+                  <div>
+                    <strong>任务创建记录</strong>
+                    <span>保留每次生成的任务目录、关联知识点和创建时间</span>
+                  </div>
+                  <em>{learningTaskRecords.length} 条记录</em>
+                </div>
+                {learningTaskRecords.length > 0 ? (
+                  <div className="topic-home-task-record-list">
+                    {learningTaskRecords.slice(0, 6).map((record) => (
+                      <article key={record.key}>
+                        <span className="topic-home-task-record-icon"><CheckCircleOutlined /></span>
+                        <div>
+                          <strong>{record.name}</strong>
+                          <p>{record.knowledgePointName} · {record.masteryLabel}{Number.isFinite(record.score) ? ` · 诊断 ${record.score} 分` : ''}</p>
+                        </div>
+                        <span>{record.contentCount} 项内容</span>
+                        <time>{record.createdAt}</time>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setExpandedFolders((previous) => new Set([...previous, record.key]));
+                            setSelectedFolderKey(record.key);
+                            handleSelectTab('knowledge');
+                          }}
+                        >
+                          查看任务 <RightOutlined />
+                        </button>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="topic-home-task-record-empty">
+                    <span><FileAddOutlined /></span>
+                    <div>
+                      <strong>暂无任务创建记录</strong>
+                      <p>点击“批量创建学习任务”，完成后将在这里生成记录。</p>
+                    </div>
+                    <button type="button" onClick={openLearningTaskCreate}>立即创建</button>
+                  </div>
+                )}
+              </div>
+            </section>
+          ) : null}
         </section>
 
         {!isSelfPacedTraining ? (
@@ -8139,7 +8582,10 @@ function TopicDetail({
   };
 
   return (
-    <div className={`topic-detail ${sceneConfig ? 'topic-detail-scene-theme' : ''}`} style={detailThemeStyle}>
+    <div
+      className={`topic-detail ${sceneConfig ? 'topic-detail-scene-theme' : ''} ${isSelfPacedTraining ? 'is-self-paced-training' : ''}`}
+      style={detailThemeStyle}
+    >
       <div className="detail-header">
         <div className="detail-header-left">
           {headerLeftContent || (
@@ -8331,7 +8777,7 @@ function TopicDetail({
 
       {isHomeTab ? (
         <div className="detail-body topic-home-body">
-          {renderSceneHomePage()}
+          {renderSceneHomePage('planning')}
         </div>
       ) : activeTab === 'assessment' ? (
         <AssessmentConfig

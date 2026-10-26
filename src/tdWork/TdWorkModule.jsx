@@ -11,7 +11,6 @@ import {
   CheckCircleOutlined,
   CheckOutlined,
   ClockCircleOutlined,
-  ClockCircleFilled,
   CloudOutlined,
   CloudFilled,
   CloudServerOutlined,
@@ -53,6 +52,7 @@ import {
   ShareAltOutlined,
   StarOutlined,
   TeamOutlined,
+  ThunderboltOutlined,
   UploadOutlined,
   UserOutlined,
 } from '@ant-design/icons';
@@ -60,6 +60,7 @@ import TopicDetail from '../TopicDetail';
 import MessagesModule from '../messages/MessagesModule';
 import { getInitialMessagesUnreadCount } from '../messages/messageUnread';
 import ResourceLibrary from '../resourceLib/ResourceLibrary';
+import AiLiteracyCapabilityPage from './AiLiteracyCapabilityPage';
 import { addItem as addResourceLibraryItem, loadResourceLib } from '../resourceLib/resourceLibStore';
 import { getSceneTypeLabel, getSceneVisibilityLabel, normalizeTopicCardConfig, sceneApi } from '../scene/api';
 import SceneCreateModal from '../scene/SceneCreateModal';
@@ -167,7 +168,8 @@ function persistTdWorkSpaceRailWidth(width) {
 
 const NAV_ITEMS = [
   { key: 'home', label: '首页', icon: <HomeOutlined />, activeIcon: <HomeFilled /> },
-  { key: 'messages', label: '消息', icon: <MessageOutlined />, activeIcon: <MessageOutlined /> },
+  { key: 'space', label: '空间', icon: <CloudOutlined />, activeIcon: <CloudFilled /> },
+  { key: 'academy', label: '通答学院', icon: <BookOutlined />, activeIcon: <BookFilled /> },
   {
     key: 'knowledge-community',
     label: '知识社区',
@@ -176,23 +178,14 @@ const NAV_ITEMS = [
     children: [
       { key: 'resource-market', label: '资源广场' },
       { key: 'app-market', label: '应用广场' },
-      {
-        key: 'intelligence-hub',
-        label: '智能体 · 技能 · 连接器',
-        navKey: 'skills',
-        skillView: 'market',
-        activeSkillViews: ['market', 'partners', 'skills', 'mine'],
-      },
+      { key: 'expert-studios', label: '专家工作室' },
     ],
   },
-  { key: 'academy', label: '通答学院', icon: <BookOutlined />, activeIcon: <BookFilled /> },
-  { key: 'expert-studios', label: '专家工作室', icon: <TeamOutlined />, activeIcon: <TeamOutlined /> },
-  { key: 'space', label: '空间', icon: <CloudOutlined />, activeIcon: <CloudFilled /> },
-  { key: 'scheduled', label: '自动化', icon: <ClockCircleOutlined />, activeIcon: <ClockCircleFilled /> },
   { key: 'skills', label: '智能体 · 技能 · 连接器', icon: <RobotOutlined />, activeIcon: <RobotFilled /> },
   { key: 'cloud', label: '资料库', icon: <FolderOutlined />, activeIcon: <FolderFilled /> },
+  { key: 'ai-literacy-capability', label: 'AI素养能力', icon: <BarChartOutlined />, activeIcon: <BarChartOutlined /> },
 ];
-const HIDDEN_SIDEBAR_NAV_KEYS = new Set(['skills']);
+const HIDDEN_SIDEBAR_NAV_KEYS = new Set();
 
 const PINNED_ITEMS = [
   { key: 'main-dialog', label: '主对话', tone: 'blue', icon: <MessageOutlined /> },
@@ -896,6 +889,21 @@ const SKILL_CATEGORIES = [
   '继续教育',
 ];
 
+const SKILL_MARKET_CATEGORIES = [
+  '全部',
+  'OPC·一人公司',
+  '办公协同',
+  '双十一',
+  '开发工具',
+  '投资理财',
+  '效率工具',
+  '内容创作',
+  '信息资讯',
+  '教育学习',
+  '数据分析',
+  '网站部署',
+];
+
 const SKILL_HUB_TABS = [
   { key: 'partners', label: '智能体', icon: <RobotOutlined /> },
   { key: 'skills', label: '技能', icon: <ControlOutlined /> },
@@ -927,11 +935,6 @@ const CONNECTORS = [
   { key: 'caocao', name: '曹操出行', desc: '支持教师培训接送、活动用车和行程确认', category: '继续教育', logo: '曹', tone: 'green' },
   { key: 'trip', name: 'Trip.com', desc: '查询培训差旅、酒店预订和行程信息', category: '继续教育', logo: 'Tr', tone: 'blue' },
   { key: 'flight-master', name: '飞常准', desc: '跟踪培训出差航班、延误和接站安排', category: '继续教育', logo: '飞', tone: 'sky' },
-];
-
-const MY_SKILL_TABS = [
-  { key: 'skills', label: '技能' },
-  { key: 'connectors', label: '连接器' },
 ];
 
 const MY_SKILLS = [
@@ -1660,8 +1663,6 @@ function MarketplacePage({ type, onCreate, spaces = [] }) {
   }
 
   if (!isResource) {
-    const midpoint = Math.ceil(visibleItems.length / 2);
-    const appColumns = [visibleItems.slice(0, midpoint), visibleItems.slice(midpoint)];
     const samplePrompt = '生成一个课堂小组积分应用，支持实时加分、排行榜、课堂表现记录和课后导出';
     const submitAppPrompt = () => onCreate?.(appPrompt.trim() || samplePrompt);
 
@@ -1696,10 +1697,8 @@ function MarketplacePage({ type, onCreate, spaces = [] }) {
 
           {visibleItems.length ? (
             <div className="td-work-app-market-columns" aria-label="应用列表">
-              {appColumns.map((column, index) => (
-                <div key={index} className="td-work-app-market-column">
-                  {column.map((item) => <AppMarketplaceCard key={item.key} item={item} onOpen={setActiveItem} />)}
-                </div>
+              {visibleItems.map((item) => (
+                <AppMarketplaceCard key={item.key} item={item} onOpen={setActiveItem} />
               ))}
             </div>
           ) : (
@@ -1727,8 +1726,6 @@ function MarketplacePage({ type, onCreate, spaces = [] }) {
     );
   }
 
-  const resourceMidpoint = Math.ceil(visibleItems.length / 2);
-  const resourceColumns = [visibleItems.slice(0, resourceMidpoint), visibleItems.slice(resourceMidpoint)];
   const resourceSamplePrompt = '教学动画｜设计初中数学勾股定理互动教学活动，引导学生主动探究，培养几何直观、逻辑推理能力。';
   const submitResourcePrompt = () => onCreate?.(appPrompt.trim() || resourceSamplePrompt);
 
@@ -1775,10 +1772,8 @@ function MarketplacePage({ type, onCreate, spaces = [] }) {
 
         {visibleItems.length ? (
           <div className="td-work-resource-market-columns" aria-label="资源列表">
-            {resourceColumns.map((column, index) => (
-              <div key={index} className="td-work-resource-market-column">
-                {column.map((item) => <ResourceMarketplaceCard key={item.key} item={item} onOpen={setActiveItem} />)}
-              </div>
+            {visibleItems.map((item) => (
+              <ResourceMarketplaceCard key={item.key} item={item} onOpen={setActiveItem} />
             ))}
           </div>
         ) : (
@@ -1805,7 +1800,17 @@ function MarketplacePage({ type, onCreate, spaces = [] }) {
   );
 }
 
-function AiModeHomePage({ onCreateTask, onNavigate, onOpenItem }) {
+function AiModeHomePage({
+  onCreateTask,
+  onNavigate,
+  onOpenItem,
+  spaces,
+  spacesLoading,
+  selectedSpace,
+  onSpaceChange,
+  onClearSpace,
+  onLoadSpaces,
+}) {
   const [homePrompt, setHomePrompt] = useState('');
   const [activeCreationTypeKey, setActiveCreationTypeKey] = useState(null);
   const [activeShelf, setActiveShelf] = useState('resource');
@@ -1831,14 +1836,19 @@ function AiModeHomePage({ onCreateTask, onNavigate, onOpenItem }) {
       const editor = homePromptRef.current;
       if (!editor) return;
       editor.focus();
-      const selection = window.getSelection();
-      const range = document.createRange();
-      range.selectNodeContents(editor);
-      range.collapse(false);
-      selection?.removeAllRanges();
-      selection?.addRange(range);
+      editor.setSelectionRange(editor.value.length, editor.value.length);
     });
   };
+
+  const spaceMenuItems = [
+    ...(selectedSpace ? [{ key: '__clear__', label: '不关联空间' }, { type: 'divider' }] : []),
+    ...spaces.map((space) => ({
+      key: space.id,
+      label: space.name,
+      icon: <CloudOutlined />,
+    })),
+    ...(!spaces.length ? [{ key: '__empty__', label: spacesLoading ? '空间加载中…' : '暂无可用空间', disabled: true }] : []),
+  ];
 
   return (
     <section className="td-work-home-page" aria-label="AI模式首页">
@@ -1873,30 +1883,55 @@ function AiModeHomePage({ onCreateTask, onNavigate, onOpenItem }) {
                 <CloseOutlined />
               </button>
             ) : null}
-            <span
+            <textarea
               ref={homePromptRef}
               className="td-work-home-prompt-text"
-              contentEditable
-              suppressContentEditableWarning
-              role="textbox"
-              aria-multiline="true"
               aria-label="输入教学创作需求"
-              data-placeholder="教学动画｜设计初中数学勾股定理互动教学活动，引导学生主动探究，培养几何直观、逻辑推理能力。"
-              onInput={(event) => setHomePrompt(event.currentTarget.innerText)}
+              placeholder="教学动画｜设计初中数学勾股定理互动教学活动，引导学生主动探究，培养几何直观、逻辑推理能力。"
+              value={homePrompt}
+              onChange={(event) => setHomePrompt(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' && !event.shiftKey) {
                   event.preventDefault();
                   submitPrompt();
                 }
               }}
-            >
-              {homePrompt}
-            </span>
+            />
           </div>
           <div className="td-work-home-composer-actions">
             <button type="button" className="td-work-home-add" title="添加附件" aria-label="添加附件">
               <PlusOutlined />
             </button>
+            <Dropdown
+              trigger={['click']}
+              placement="topLeft"
+              menu={{
+                items: spaceMenuItems,
+                selectedKeys: selectedSpace ? [selectedSpace.id] : [],
+                onClick: ({ key }) => {
+                  if (key === '__clear__') {
+                    onClearSpace();
+                    return;
+                  }
+                  const nextSpace = spaces.find((space) => space.id === key);
+                  if (nextSpace) onSpaceChange(nextSpace);
+                },
+              }}
+              onOpenChange={(open) => {
+                if (open) onLoadSpaces();
+              }}
+            >
+              <button
+                type="button"
+                className={`td-work-home-space ${selectedSpace ? 'is-selected' : ''}`}
+                title={selectedSpace?.name || '选择空间'}
+                aria-label={selectedSpace ? `当前空间：${selectedSpace.name}` : '选择空间'}
+              >
+                <CloudOutlined />
+                <span>{selectedSpace?.name || '选择空间'}</span>
+                <DownOutlined />
+              </button>
+            </Dropdown>
             <div className="td-work-home-creation-types">
               {HOME_CREATION_TYPES.map((item) => (
                 <button
@@ -2515,7 +2550,7 @@ function TongdaAcademyPage({ onToast }) {
 
   const visibleGuides = useMemo(() => {
     const matches = ACADEMY_GUIDES.filter((item) => guideTab === '全部' || item.category === guideTab);
-    return showMoreGuides ? matches : matches.slice(0, 2);
+    return showMoreGuides ? matches : matches.slice(0, 3);
   }, [guideTab, showMoreGuides]);
 
   const matchingTips = useMemo(() => ACADEMY_TUTORIALS.filter((item) => {
@@ -2582,7 +2617,7 @@ function TongdaAcademyPage({ onToast }) {
         <section className="td-work-academy-section" aria-labelledby="academy-replay-title">
           <h2 id="academy-replay-title">直播回放</h2>
           <div className="td-work-academy-content-grid">
-            {(showMoreReplays ? ACADEMY_REPLAYS : ACADEMY_REPLAYS.slice(0, 2)).map((item) => (
+            {(showMoreReplays ? ACADEMY_REPLAYS : ACADEMY_REPLAYS.slice(0, 3)).map((item) => (
               <article key={item.key} className="td-work-academy-media-card">
                 <button type="button" className="td-work-academy-card-open" aria-label={`查看${item.title}详情`} onClick={() => openDetail(item, 'replay')} />
                 <span className="td-work-academy-media">
@@ -2637,7 +2672,7 @@ function TongdaAcademyPage({ onToast }) {
               </article>
             ))}
           </div>
-          {ACADEMY_GUIDES.filter((item) => guideTab === '全部' || item.category === guideTab).length > 2 && (
+          {ACADEMY_GUIDES.filter((item) => guideTab === '全部' || item.category === guideTab).length > 3 && (
             <button type="button" className="td-work-academy-expand" onClick={() => setShowMoreGuides((value) => !value)}>
               {showMoreGuides ? '收起' : '展开更多'}
               <DownOutlined className={showMoreGuides ? 'is-open' : ''} />
@@ -2719,7 +2754,7 @@ function TongdaAcademyPage({ onToast }) {
 
 function SkillHubTabs({ activeView, onChange }) {
   return (
-    <div className="td-work-skill-tabs" role="tablist" aria-label="智能体技能连接器栏目">
+    <div className="td-work-skill-tabs" role="tablist" aria-label="智能体技能连接器与自动化栏目">
       {SKILL_HUB_TABS.map((tab) => (
         <button
           key={tab.key}
@@ -2733,56 +2768,55 @@ function SkillHubTabs({ activeView, onChange }) {
           {tab.label}
         </button>
       ))}
+      <span className="td-work-skill-tabs-divider" aria-hidden="true" />
+      <button
+        type="button"
+        className={`td-work-skill-secondary-tab ${activeView === 'automation' ? 'is-active' : ''}`}
+        role="tab"
+        aria-label="自动化"
+        aria-selected={activeView === 'automation'}
+        title="自动化"
+        onClick={() => onChange('automation')}
+      >
+        <ClockCircleOutlined />
+      </button>
     </div>
   );
 }
 
 function SkillsConnectorsPage({
-  activeCategory,
   searchText,
   connectors,
-  onCategoryChange,
+  installedConnectorKeys,
   onAddConnector,
 }) {
   return (
-    <section className="td-work-skill-page" aria-label="技能连接器">
-      <div className="td-work-category-row" aria-label="连接器分类">
-        {SKILL_CATEGORIES.map((category) => (
-          <button
-            key={category}
-            type="button"
-            className={`td-work-category-chip ${activeCategory === category ? 'is-active' : ''}`}
-            onClick={() => onCategoryChange(category)}
-          >
-            {category}
-          </button>
-        ))}
-      </div>
-
-      <div className="td-work-special-title">特别推荐</div>
-
-      <div className="td-work-connector-grid" aria-label="连接器列表">
-        {connectors.map((item) => (
-          <article key={item.key} className="td-work-connector-card">
-            <ConnectorLogo item={item} />
-            <div className="td-work-connector-copy">
-              <div className="td-work-connector-name-row">
-                <strong>{item.name}</strong>
-                <span>连接器</span>
+    <section className="td-work-skill-page td-work-connector-market-page" aria-label="连接器">
+      <div className="td-work-connector-grid td-work-connector-market-grid" aria-label="连接器列表">
+        {connectors.map((item) => {
+          const installed = installedConnectorKeys.has(item.key);
+          return (
+            <article key={item.key} className={`td-work-connector-card td-work-connector-market-card ${installed ? 'is-installed' : ''}`}>
+              <ConnectorLogo item={item} />
+              <div className="td-work-connector-copy">
+                <div className="td-work-connector-name-row">
+                  <strong>{item.name}</strong>
+                </div>
+                <p>{item.desc}</p>
               </div>
-              <p>{item.desc}</p>
-            </div>
-            <button
-              type="button"
-              className="td-work-connector-add"
-              title={`添加${item.name}`}
-              aria-label={`添加${item.name}`}
-              onClick={() => onAddConnector(item)}
-            >
-              <PlusOutlined />
-            </button>
-          </article>
-        ))}
+              <button
+                type="button"
+                className={`td-work-connector-add ${installed ? 'is-installed' : ''}`}
+                title={installed ? `${item.name}已安装` : `添加${item.name}`}
+                aria-label={installed ? `${item.name}已安装` : `添加${item.name}`}
+                disabled={installed}
+                onClick={() => onAddConnector(item)}
+              >
+                {installed ? <span className="td-work-connector-installed-dot" /> : <PlusOutlined />}
+              </button>
+            </article>
+          );
+        })}
       </div>
 
       {connectors.length === 0 ? (
@@ -2821,17 +2855,40 @@ function SkillMarketIcon({ item }) {
   );
 }
 
+function getSkillMarketCategory(item) {
+  const identity = `${item.key} ${item.name} ${item.desc}`.toLowerCase();
+  if (/research|科研|课题|论文|成果|搜索|检索/.test(identity)) return '信息资讯';
+  if (/message|broadcast|家校|消息|通知|协作/.test(identity)) return '办公协同';
+  if (/resource|document|archive|file|资源|文档|档案|证书|写作/.test(identity)) return '内容创作';
+  if (/data|stats|graph|quota|evaluation|数据|统计|图谱|评价|画像|能力/.test(identity)) return '数据分析';
+  if (/code|develop|integration|api|代码|开发|连接/.test(identity)) return '开发工具';
+  if (/page|designer|prototype|website|页面|建站|设计/.test(identity)) return '网站部署';
+  if (/course|classroom|teacher|training|seminar|supervision|learning|study|课程|课堂|教师|培训|研修|教研|督导|学习|教育/.test(identity)) return '教育学习';
+  return '效率工具';
+}
+
+function getSkillMarketUsage(item) {
+  const seed = [...item.key].reduce((total, character) => total + character.charCodeAt(0), 0);
+  return `${((seed % 860) + 42) / 10}w`;
+}
+
+function getSkillMarketDownload(item) {
+  const seed = [...`${item.name}${item.key}`].reduce((total, character) => total + character.charCodeAt(0), 0);
+  return `${((seed % 620) + 28) / 10}w`;
+}
+
 function SkillCataloguePage({
   searchText,
   skills,
   onOpenSkill,
 }) {
   const [catalogMode, setCatalogMode] = useState('推荐');
-  const [activeCategory, setActiveCategory] = useState('精选');
+  const [activeCategory, setActiveCategory] = useState('全部');
   const [featuredOffset, setFeaturedOffset] = useState(0);
   const normalizedSearch = searchText.trim().toLowerCase();
   const visibleItems = skills.filter((item) => (
-    !normalizedSearch || `${item.name} ${item.desc} ${item.key}`.toLowerCase().includes(normalizedSearch)
+    (!normalizedSearch || `${item.name} ${item.desc} ${item.key}`.toLowerCase().includes(normalizedSearch))
+      && (activeCategory === '全部' || getSkillMarketCategory(item) === activeCategory)
   ));
   const featuredItems = visibleItems.length
     ? Array.from({ length: Math.min(3, visibleItems.length) }, (_, index) => (
@@ -2853,26 +2910,31 @@ function SkillCataloguePage({
         }
       }}
     >
-      <SkillMarketIcon item={item} />
-      <div className="td-work-connector-copy">
-        <div className="td-work-connector-name-row">
-          <strong>{item.name}</strong>
-          <span>技能</span>
+      <div className="td-work-skill-market-card-main">
+        <SkillMarketIcon item={item} />
+        <div className="td-work-connector-copy">
+          <div className="td-work-connector-name-row">
+            <strong>{item.name}</strong>
+          </div>
+          <p>{item.desc}</p>
         </div>
-        <p>{item.desc}</p>
+        <button
+          type="button"
+          className="td-work-connector-add"
+          title={`添加${item.name}`}
+          aria-label={`添加${item.name}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            onOpenSkill(item);
+          }}
+        >
+          <PlusOutlined />
+        </button>
       </div>
-      <button
-        type="button"
-        className="td-work-connector-add"
-        title={`添加${item.name}`}
-        aria-label={`添加${item.name}`}
-        onClick={(event) => {
-          event.stopPropagation();
-          onOpenSkill(item);
-        }}
-      >
-        <PlusOutlined />
-      </button>
+      <div className="td-work-skill-market-card-stats">
+        <span><ThunderboltOutlined /> {getSkillMarketUsage(item)}</span>
+        <span><DownloadOutlined /> {getSkillMarketDownload(item)}</span>
+      </div>
     </article>
   );
 
@@ -2913,7 +2975,7 @@ function SkillCataloguePage({
       </div>
 
       <div className="td-work-skill-market-categories" aria-label="技能分类">
-        {SKILL_CATEGORIES.map((item) => (
+        {SKILL_MARKET_CATEGORIES.map((item) => (
           <button
             key={item}
             type="button"
@@ -3080,7 +3142,6 @@ function MySkillsPage({
   skills,
   connectors,
   enabledSkillKeys,
-  onTabChange,
   onOpenSkill,
   onToggleSkill,
 }) {
@@ -3092,22 +3153,6 @@ function MySkillsPage({
 
   return (
     <section className="td-work-my-skills-page" aria-label="我的技能">
-      <div className="td-work-my-skill-pills" role="tablist" aria-label="我的技能分类">
-        {MY_SKILL_TABS.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            className={activeTab === tab.key ? 'is-active' : ''}
-            role="tab"
-            aria-selected={activeTab === tab.key}
-            onClick={() => onTabChange(tab.key)}
-          >
-            {tab.label}
-            <span>{tab.key === 'skills' ? skills.length : connectors.length}</span>
-          </button>
-        ))}
-      </div>
-
       <div className="td-work-my-skill-section-title">通达推荐</div>
 
       <div className="td-work-my-skill-grid" aria-label={activeTab === 'skills' ? '技能列表' : '连接器列表'}>
@@ -3153,6 +3198,7 @@ function MySkillsPage({
 }
 
 function SkillCreateMenu({
+  label = '新建',
   open,
   menuRef,
   onToggle,
@@ -3170,7 +3216,7 @@ function SkillCreateMenu({
         onClick={() => onToggle((value) => !value)}
       >
         <PlusOutlined />
-        新建
+        {label}
       </button>
 
       {open ? (
@@ -5156,7 +5202,8 @@ function AiSpaceCard({ scene, onOpen, onEdit, onDelete, onToggleShortcut }) {
     items: [
       {
         key: 'toggle-shortcut',
-        label: scene.menuShortcutEnabled ? '从菜单移除快捷方式' : '添加到菜单快捷方式',
+        icon: scene.menuShortcutEnabled ? <CheckOutlined /> : <PlusOutlined />,
+        label: scene.menuShortcutEnabled ? '从菜单移除' : '添加到菜单',
       },
       { key: 'edit', label: `编辑${sceneObjectLabel}` },
       { key: 'delete', label: `删除${sceneObjectLabel}`, danger: true },
@@ -5259,7 +5306,7 @@ function AiSpaceCard({ scene, onOpen, onEdit, onDelete, onToggleShortcut }) {
   );
 }
 
-function AiSpaceTopicPage({ scene, onBack }) {
+function AiSpaceTopicPage({ scene, onBack, onOpenAiLiteracyCapability }) {
   const sceneConfig = useMemo(() => {
     const templateSnapshot = scene?.templateSnapshot || {};
     return {
@@ -5283,6 +5330,7 @@ function AiSpaceTopicPage({ scene, onBack }) {
         storageScopeKey={scene.storageScopeKey}
         sceneDescription={scene.description}
         sceneTypeLabel={getSceneTypeLabel(scene.sceneType)}
+        onOpenAiLiteracyCapability={onOpenAiLiteracyCapability}
         headerLeftContent={(
           <div className="td-work-space-detail-breadcrumb" aria-label="当前位置">
             <button type="button" onClick={onBack}>
@@ -5318,6 +5366,7 @@ function SpacesPage({
   onEditSpace,
   onDeleteSpace,
   onToggleShortcut,
+  onOpenAiLiteracyCapability,
 }) {
   const [railCollapsed, setRailCollapsed] = useState(true);
   const [spaceRailWidth, setSpaceRailWidth] = useState(loadTdWorkSpaceRailWidth);
@@ -5429,7 +5478,13 @@ function SpacesPage({
   }, [spaceRailResizing, updateSpaceRailWidth]);
 
   if (activeSpace) {
-    return <AiSpaceTopicPage scene={activeSpace} onBack={onBack} />;
+    return (
+      <AiSpaceTopicPage
+        scene={activeSpace}
+        onBack={onBack}
+        onOpenAiLiteracyCapability={onOpenAiLiteracyCapability}
+      />
+    );
   }
 
   const railContent = (
@@ -5802,7 +5857,7 @@ export default function TdWorkModule({
   const [spaceCreateOpen, setSpaceCreateOpen] = useState(false);
   const [spaceEditing, setSpaceEditing] = useState(null);
   const [spaceCreateDefaultMenuKey, setSpaceCreateDefaultMenuKey] = useState(null);
-  const [activeCategory, setActiveCategory] = useState('精选');
+  const [pendingAiLiteracyReport, setPendingAiLiteracyReport] = useState(null);
   const [connectorSearch, setConnectorSearch] = useState('');
   const [skillView, setSkillView] = useState('market');
   const [partnerMarketCategory, setPartnerMarketCategory] = useState('全部');
@@ -5813,6 +5868,9 @@ export default function TdWorkModule({
   const [customConnectorOpen, setCustomConnectorOpen] = useState(false);
   const [customConnectorForm, setCustomConnectorForm] = useState(createCustomConnectorForm);
   const [customConnectors, setCustomConnectors] = useState([]);
+  const [installedConnectorKeys, setInstalledConnectorKeys] = useState(
+    () => new Set(['wecom', 'dingtalk', 'tencent-docs', 'notion']),
+  );
   const [activePartner, setActivePartner] = useState(null);
   const [deletedPartnerKeys, setDeletedPartnerKeys] = useState(() => new Set());
   const [partnerView, setPartnerView] = useState('workspace');
@@ -5964,8 +6022,10 @@ export default function TdWorkModule({
       setActiveSpace((current) => (
         current ? nextScenes.find((scene) => scene.id === current.id) || null : current
       ));
+      return nextScenes;
     } catch {
       setToast('加载空间数据失败');
+      return [];
     } finally {
       if (withLoading) setSpaceLoading(false);
     }
@@ -6051,13 +6111,13 @@ export default function TdWorkModule({
   const sidebarSpaceItems = useMemo(() => {
     const priorityMap = new Map(SIDEBAR_SPACE_PRIORITY.map((id, index) => [id, index]));
     return [...spaceScenes]
+      .filter((scene) => scene.menuShortcutEnabled)
       .sort((a, b) => {
         const aPriority = priorityMap.has(a.id) ? priorityMap.get(a.id) : Number.POSITIVE_INFINITY;
         const bPriority = priorityMap.has(b.id) ? priorityMap.get(b.id) : Number.POSITIVE_INFINITY;
         if (aPriority !== bPriority) return aPriority - bPriority;
-        return String(b.updatedAt).localeCompare(String(a.updatedAt));
+        return String(a.menuShortcutAt || a.updatedAt).localeCompare(String(b.menuShortcutAt || b.updatedAt));
       })
-      .slice(0, 3)
       .map((scene, index) => ({
         key: `space:${scene.id}`,
         label: scene.name,
@@ -6137,6 +6197,26 @@ export default function TdWorkModule({
     }
   }, []);
 
+  const openAiLiteracyTargetSpace = useCallback(async (scene, report) => {
+    if (!scene?.id || !report) return;
+    try {
+      const scopeKey = scene.storageScopeKey || scene.id;
+      window.localStorage.setItem(`gr:ai-literacy-report:${scopeKey}`, JSON.stringify(report));
+    } catch {
+      // The report remains available from the global report catalog.
+    }
+    setActiveNav('space');
+    setActiveSideItem('');
+    setSpaceSearch('');
+    setSpaceMenuFilter(null);
+    setCreateMenuOpen(false);
+    setPartnerPickerOpen(false);
+    closeSidePanel(true);
+    setSpaceOwnershipTab(resolveSpaceOwnershipTab(scene));
+    await handleOpenAiSpace(scene);
+    setToast(`已将《${report.fileName || 'AI素养测评报告'}》合并到“${scene.name}”`);
+  }, [closeSidePanel, handleOpenAiSpace]);
+
   const handleOpenAiSpaceCreate = useCallback(async () => {
     if (!spaceTemplates.length) {
       await loadAiSpaceData();
@@ -6145,6 +6225,21 @@ export default function TdWorkModule({
     setSpaceCreateDefaultMenuKey(effectiveSpaceMenuFilter || null);
     setSpaceCreateOpen(true);
   }, [effectiveSpaceMenuFilter, loadAiSpaceData, spaceTemplates.length]);
+
+  const handleCreateAiLiteracySpaceFromReport = useCallback(async (report) => {
+    setPendingAiLiteracyReport(report);
+    await handleOpenAiSpaceCreate();
+  }, [handleOpenAiSpaceCreate]);
+
+  const handleMergeAiLiteracyReportIntoSpace = useCallback(async (report, sceneId) => {
+    const availableScenes = spaceScenes.length ? spaceScenes : await loadAiSpaceData();
+    const targetScene = availableScenes.find((scene) => scene.id === sceneId);
+    if (!targetScene) {
+      setToast('未找到所选空间，请刷新后重试');
+      return;
+    }
+    await openAiLiteracyTargetSpace(targetScene, report);
+  }, [loadAiSpaceData, openAiLiteracyTargetSpace, spaceScenes]);
 
   const handleOpenTongdaAcademySpaces = useCallback(() => {
     setActiveNav('space');
@@ -6172,6 +6267,7 @@ export default function TdWorkModule({
     setSpaceCreateOpen(false);
     setSpaceEditing(null);
     setSpaceCreateDefaultMenuKey(null);
+    setPendingAiLiteracyReport(null);
   }, []);
 
   const handleSaveAiSpace = useCallback(async (values) => {
@@ -6181,25 +6277,33 @@ export default function TdWorkModule({
       setSpaceEditing(null);
       setSpaceCreateDefaultMenuKey(null);
       await loadAiSpaceData(false);
-      setActiveSpace((current) => (current?.id === saved.id ? saved : current));
+      if (pendingAiLiteracyReport) {
+        setPendingAiLiteracyReport(null);
+        await openAiLiteracyTargetSpace(saved, pendingAiLiteracyReport);
+      } else {
+        setActiveSpace((current) => (current?.id === saved.id ? saved : current));
+      }
       const objectLabel = getSpaceObjectLabel(saved);
       message.success(values.id ? `${objectLabel}已更新` : `${objectLabel}已创建`);
     } catch (error) {
       message.error(error?.message || '保存空间失败');
     }
-  }, [loadAiSpaceData]);
+  }, [loadAiSpaceData, openAiLiteracyTargetSpace, pendingAiLiteracyReport]);
 
   const handleToggleAiSpaceShortcut = useCallback(async (scene, enabled) => {
     if (!scene?.id) return;
     try {
       const saved = await sceneApi.toggleSceneMenuShortcut(scene.id, enabled);
       setActiveSpace((current) => (current?.id === saved.id ? saved : current));
+      if (!enabled && activeSideItem === `space:${scene.id}`) {
+        setActiveSideItem('');
+      }
       await loadAiSpaceData(false);
-      message.success(enabled ? '已添加到菜单快捷方式' : '已从菜单快捷方式移除');
+      message.success(enabled ? `“${scene.name}”已添加到菜单` : `“${scene.name}”已从菜单移除`);
     } catch (error) {
       message.error(error?.message || '更新菜单快捷方式失败');
     }
-  }, [loadAiSpaceData]);
+  }, [activeSideItem, loadAiSpaceData]);
 
   const handleDeleteAiSpace = useCallback((scene) => {
     if (!scene?.id) return;
@@ -6226,12 +6330,11 @@ export default function TdWorkModule({
   const visibleConnectors = useMemo(() => {
     const normalizedSearch = connectorSearch.trim().toLowerCase();
     return CONNECTORS.filter((item) => {
-      const matchesCategory = activeCategory === '精选' || item.category === activeCategory;
       const matchesSearch = !normalizedSearch
         || `${item.name} ${item.desc} ${item.category}`.toLowerCase().includes(normalizedSearch);
-      return matchesCategory && matchesSearch;
+      return matchesSearch;
     });
-  }, [activeCategory, connectorSearch]);
+  }, [connectorSearch]);
 
   const handleSkillHubViewChange = useCallback((nextView) => {
     setSkillView(nextView);
@@ -6253,8 +6356,9 @@ export default function TdWorkModule({
       logo: '研',
       tone: 'blue',
     },
+    ...CONNECTORS.filter((item) => installedConnectorKeys.has(item.key)),
     ...customConnectors,
-  ], [customConnectors]);
+  ], [customConnectors, installedConnectorKeys]);
 
   const availablePartnerCards = useMemo(
     () => PARTNER_CARDS.filter((item) => !deletedPartnerKeys.has(item.key)),
@@ -6502,7 +6606,11 @@ export default function TdWorkModule({
       setToast('先输入一个问题或任务');
       return;
     }
-    setToast(activeNav === 'scheduled' ? '已创建自动化' : '已创建工作任务');
+    setToast(
+      selectedComposerSpace
+        ? `已在空间“${selectedComposerSpace.name}”中创建工作任务`
+        : activeNav === 'skills' && skillView === 'automation' ? '已创建自动化' : '已创建工作任务',
+    );
     setPrompt('');
   };
 
@@ -6559,6 +6667,15 @@ export default function TdWorkModule({
     setToast(`${isEnabled ? '已关闭' : '已开启'}：${item.name}`);
   };
 
+  const handleInstallConnector = (item) => {
+    setInstalledConnectorKeys((current) => {
+      const next = new Set(current);
+      next.add(item.key);
+      return next;
+    });
+    setToast(`已安装连接器：${item.name}`);
+  };
+
   const handleOpenCustomConnector = () => {
     setCreateMenuOpen(false);
     setCustomConnectorOpen(true);
@@ -6608,6 +6725,11 @@ export default function TdWorkModule({
       enabled: true,
     };
     setCustomConnectors((current) => [connector, ...current]);
+    setInstalledConnectorKeys((current) => {
+      const next = new Set(current);
+      next.add(key);
+      return next;
+    });
     setEnabledSkillKeys((current) => {
       const next = new Set(current);
       next.add(key);
@@ -6890,8 +7012,8 @@ export default function TdWorkModule({
                 : activeNav === child.key
             );
             const childActive = item.children?.some(isChildActive);
-            const directItemActive = activeNav === item.key
-              && !(item.key === 'skills' && ['partners', 'skills'].includes(skillView));
+            const hasSpaceShortcuts = item.key === 'space' && sidebarSpaceItems.length > 0;
+            const directItemActive = activeNav === item.key;
             const itemActive = directItemActive || childActive;
             const selectNav = (key) => {
               setActiveNav(key);
@@ -6915,7 +7037,7 @@ export default function TdWorkModule({
             };
 
             return (
-              <div key={item.key} className={`td-work-nav-block ${item.children ? 'has-children' : ''}`}>
+              <div key={item.key} className={`td-work-nav-block ${item.children || hasSpaceShortcuts ? 'has-children' : ''}`}>
                 <button
                   type="button"
                   className={`td-work-nav-item ${item.children ? 'is-parent' : ''} ${itemActive ? 'is-active' : ''}`}
@@ -6926,7 +7048,7 @@ export default function TdWorkModule({
                     selectNav(item.children?.[0]?.key || item.key);
                   }}
                   title={item.label}
-                  aria-expanded={item.children ? true : undefined}
+                  aria-expanded={item.children || hasSpaceShortcuts ? true : undefined}
                 >
                   <span className="td-work-nav-icon">{itemActive ? item.activeIcon : item.icon}</span>
                   <span className="td-work-nav-label">{item.label}</span>
@@ -6956,6 +7078,31 @@ export default function TdWorkModule({
                     ))}
                   </div>
                 ) : null}
+                {hasSpaceShortcuts ? (
+                  <div className="td-work-nav-children td-work-space-shortcut-menu" aria-label="空间快捷菜单">
+                    {sidebarSpaceItems.map((shortcut) => (
+                      <button
+                        key={shortcut.key}
+                        type="button"
+                        className={`td-work-nav-subitem ${activeNav === 'space' && activeSpace?.id === shortcut.scene.id ? 'is-active' : ''}`}
+                        onClick={() => {
+                          setActiveNav('space');
+                          setActiveSideItem(shortcut.key);
+                          setSpaceSearch('');
+                          setSpaceMenuFilter(null);
+                          setSpaceOwnershipTab(resolveSpaceOwnershipTab(shortcut.scene));
+                          setCreateMenuOpen(false);
+                          setPartnerPickerOpen(false);
+                          closeSidePanel(true);
+                          handleOpenAiSpace(shortcut.scene);
+                        }}
+                        title={shortcut.label}
+                      >
+                        {shortcut.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             );
           })}
@@ -6977,21 +7124,6 @@ export default function TdWorkModule({
             ))}
           </SidebarSection>
 
-          <SidebarSection title="空间">
-            {sidebarSpaceItems.length ? (
-              sidebarSpaceItems.map((item) => (
-                <SmallItem
-                  key={item.key}
-                  item={item}
-                  active={activeSideItem === item.key}
-                  onClick={() => handleOpenSidebarSearchItem(item)}
-                />
-              ))
-            ) : (
-              <div className="td-work-side-empty">空间加载中...</div>
-            )}
-          </SidebarSection>
-
           <SidebarSection title="最近">
             {RECENT_ITEMS.map((item) => (
               <SmallItem
@@ -7008,11 +7140,33 @@ export default function TdWorkModule({
           </SidebarSection>
         </div>
 
-        <LuckyUserMenuTrigger
-          accountMenu={accountMenu}
-          accountMenuOpen={accountMenuOpen}
-          onAccountMenuOpenChange={onAccountMenuOpenChange}
-        />
+        <div className="td-work-sidebar-footer" aria-label="账号与次要功能">
+          <LuckyUserMenuTrigger
+            accountMenu={accountMenu}
+            accountMenuOpen={accountMenuOpen}
+            onAccountMenuOpenChange={onAccountMenuOpenChange}
+          />
+          <button
+            type="button"
+            className={`td-work-sidebar-message-btn ${activeNav === 'messages' ? 'is-active' : ''}`}
+            title="消息"
+            aria-label={messageUnreadCount > 0 ? `消息，${messageUnreadCount} 条未读` : '消息'}
+            onClick={() => {
+              setActiveNav('messages');
+              setActiveSideItem('');
+              setCreateMenuOpen(false);
+              setPartnerPickerOpen(false);
+              closeSidePanel(true);
+            }}
+          >
+            <MessageOutlined />
+            {messageUnreadCount > 0 ? (
+              <span className="td-work-sidebar-message-badge">
+                {messageUnreadCount > 99 ? '99+' : messageUnreadCount}
+              </span>
+            ) : null}
+          </button>
+        </div>
       </aside>
       {!sidebarCollapsed ? (
         <div
@@ -7035,7 +7189,7 @@ export default function TdWorkModule({
         style={{ '--td-work-primary-size': `${sidePanelPrimaryRatio}%` }}
       >
         <section className="td-work-primary-pane" aria-label="主工作区">
-        <header className={`td-work-topbar ${hideTopbar ? 'is-hidden' : ''} ${activeNav === 'skills' ? 'is-skill-topbar' : ''} ${activeNav === 'skills' && skillView === 'partners' ? 'is-partner-market-topbar' : ''} ${activeNav === 'skills' && skillView === 'skills' ? 'is-skill-market-topbar' : ''} ${activeNav === 'skills' && skillView === 'mine' ? 'is-my-skill-topbar' : ''} ${activeNav === 'dialog' ? 'is-partner-topbar' : ''} ${activeNav === 'dialog' && activePartner ? 'is-partner-workspace-topbar' : ''} ${activeNav === 'dialog' && partnerView === 'manage' ? 'is-partner-manage-topbar' : ''} ${activeNav === 'scheduled' ? 'is-schedule-topbar' : ''} ${activeNav === 'project' ? 'is-project-topbar' : ''} ${activeNav === 'space' ? 'is-space-topbar' : ''} ${activeNav === 'space' && activeSpace ? 'is-space-detail-topbar' : ''} ${hideMarketplaceTopbar ? 'is-marketplace-topbar' : ''} ${activeNav === 'cloud' ? 'is-resource-library-topbar' : ''}`}>
+        <header className={`td-work-topbar ${hideTopbar ? 'is-hidden' : ''} ${activeNav === 'skills' ? 'is-skill-topbar' : ''} ${activeNav === 'skills' && skillView !== 'mine' ? 'is-unified-skill-hub-topbar' : ''} ${activeNav === 'skills' && skillView === 'partners' ? 'is-partner-market-topbar' : ''} ${activeNav === 'skills' && skillView === 'skills' ? 'is-skill-market-topbar' : ''} ${activeNav === 'skills' && skillView === 'automation' ? 'is-schedule-topbar' : ''} ${activeNav === 'skills' && skillView === 'mine' ? 'is-my-skill-topbar' : ''} ${activeNav === 'dialog' ? 'is-partner-topbar' : ''} ${activeNav === 'dialog' && activePartner ? 'is-partner-workspace-topbar' : ''} ${activeNav === 'dialog' && partnerView === 'manage' ? 'is-partner-manage-topbar' : ''} ${activeNav === 'project' ? 'is-project-topbar' : ''} ${activeNav === 'space' ? 'is-space-topbar' : ''} ${activeNav === 'space' && activeSpace ? 'is-space-detail-topbar' : ''} ${hideMarketplaceTopbar ? 'is-marketplace-topbar' : ''} ${activeNav === 'cloud' ? 'is-resource-library-topbar' : ''}`}>
           {activeNav === 'dialog' && partnerView === 'manage' ? (
             <>
               {topbarSidebarCollapsedTools}
@@ -7137,6 +7291,14 @@ export default function TdWorkModule({
                 </button>
               ) : null}
             </>
+          ) : activeNav === 'ai-literacy-capability' ? (
+            <>
+              {topbarSidebarCollapsedTools}
+              <div className="td-work-dialog-titlebar-copy">
+                <strong>AI素养能力</strong>
+                <span>能力测评、考试与报告导入</span>
+              </div>
+            </>
           ) : activeNav === 'academy' ? (
             <>
               {topbarSidebarCollapsedTools}
@@ -7161,9 +7323,10 @@ export default function TdWorkModule({
                 <span>AI素养指导团队与共创教研室</span>
               </div>
             </>
-          ) : activeNav === 'scheduled' ? (
+          ) : activeNav === 'skills' && skillView === 'automation' ? (
             <>
               {topbarSidebarCollapsedTools}
+              <SkillHubTabs activeView={skillView} onChange={handleSkillHubViewChange} />
               <button type="button" className="td-work-schedule-new-btn" onClick={() => setToast('已进入新建自动化')}>
                 <PlusOutlined />
                 新建
@@ -7251,7 +7414,7 @@ export default function TdWorkModule({
               {topbarSidebarCollapsedTools}
               <SkillHubTabs activeView={skillView} onChange={handleSkillHubViewChange} />
 
-              <div className="td-work-skill-actions">
+              {skillView !== 'market' ? <div className="td-work-skill-actions">
                 <label
                   className="td-work-skill-search"
                   htmlFor={`td-work-${skillView}-search`}
@@ -7289,17 +7452,18 @@ export default function TdWorkModule({
                   <>
                     <button
                       type="button"
-                      className="td-work-skill-action-btn"
+                      className={`td-work-skill-action-btn ${skillView === 'skills' ? 'td-work-skill-installed-btn' : ''}`}
                       onClick={() => {
                         setSkillView('mine');
                         setMySkillTab(skillView === 'market' ? 'connectors' : 'skills');
                         setMySkillSearch('');
                       }}
                     >
-                      {skillView === 'market' ? <LinkOutlined /> : <ControlOutlined />}
-                      {skillView === 'market' ? '我的连接器' : '我的技能'}
+                      {skillView === 'market' ? <LinkOutlined /> : <CheckCircleOutlined />}
+                      {skillView === 'market' ? '我的连接器' : '已安装'}
                     </button>
                     <SkillCreateMenu
+                      label={skillView === 'skills' ? '添加技能' : '新建'}
                       open={createMenuOpen}
                       menuRef={createMenuRef}
                       onToggle={setCreateMenuOpen}
@@ -7315,7 +7479,7 @@ export default function TdWorkModule({
                     />
                   </>
                 )}
-              </div>
+              </div> : null}
             </>
           ) : (
             <>
@@ -7350,6 +7514,17 @@ export default function TdWorkModule({
             onCreateTask={handleCreateTaskFromHome}
             onNavigate={handleMarketplaceNavigate}
             onOpenItem={(item) => setToast(`已打开：${item.title}`)}
+            spaces={spaceScenes}
+            spacesLoading={spaceLoading}
+            selectedSpace={selectedComposerSpace}
+            onSpaceChange={handleComposerSpaceChange}
+            onClearSpace={() => {
+              setSelectedComposerSpaceId('');
+              setToast('已取消关联空间');
+            }}
+            onLoadSpaces={() => {
+              if (!spaceScenes.length && !spaceLoading) loadAiSpaceData();
+            }}
           />
         ) : activeNav === 'resource-market' ? (
           <MarketplacePage
@@ -7395,6 +7570,12 @@ export default function TdWorkModule({
             onEditSpace={handleEditAiSpace}
             onDeleteSpace={handleDeleteAiSpace}
             onToggleShortcut={handleToggleAiSpaceShortcut}
+            onOpenAiLiteracyCapability={() => {
+              setActiveNav('ai-literacy-capability');
+              setActiveSpace(null);
+              setActiveSideItem('');
+              closeSidePanel(true);
+            }}
           />
         ) : activeNav === 'academy' ? (
           <TongdaAcademyPage
@@ -7410,7 +7591,6 @@ export default function TdWorkModule({
             skills={MY_SKILLS}
             connectors={ownedConnectors}
             enabledSkillKeys={enabledSkillKeys}
-            onTabChange={setMySkillTab}
             onOpenSkill={(item) => setToast(`已打开 guoren-v2：${item.name}`)}
             onToggleSkill={handleToggleSkill}
           />
@@ -7429,12 +7609,10 @@ export default function TdWorkModule({
           />
         ) : activeNav === 'skills' ? (
           <SkillsConnectorsPage
-            activeCategory={activeCategory}
             searchText={connectorSearch}
             connectors={visibleConnectors}
-            onCategoryChange={setActiveCategory}
-            onSearchChange={setConnectorSearch}
-            onAddConnector={(item) => setToast(`已添加：${item.name}`)}
+            installedConnectorKeys={installedConnectorKeys}
+            onAddConnector={handleInstallConnector}
           />
         ) : activeNav === 'dialog' ? (
           partnerView === 'manage' ? (
@@ -7579,7 +7757,13 @@ export default function TdWorkModule({
           <section className="td-work-resource-library-page" aria-label="资料库">
             <ResourceLibrary />
           </section>
-        ) : activeNav === 'scheduled' ? (
+        ) : activeNav === 'ai-literacy-capability' ? (
+          <AiLiteracyCapabilityPage
+            spaces={spaceScenes}
+            onCreateSpace={handleCreateAiLiteracySpaceFromReport}
+            onMergeIntoSpace={handleMergeAiLiteracyReportIntoSpace}
+          />
+        ) : activeNav === 'skills' && skillView === 'automation' ? (
           <ScheduledTasksPage
             prompt={prompt}
             openPanel={openPanel}

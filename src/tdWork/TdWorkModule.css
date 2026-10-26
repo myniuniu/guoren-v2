@@ -541,7 +541,7 @@
   justify-content: center;
   padding: 0 5px;
   border-radius: 999px;
-  background: #285b45;
+  background: #ff4d4f;
   color: #ffffff;
   font-size: 11px;
   font-weight: 600;
@@ -688,6 +688,52 @@
   color: #9a67ff;
 }
 
+.td-work-sidebar-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px;
+  align-items: center;
+  border-top: 1px solid #eeeeec;
+  background: #f7f8fa;
+}
+
+.td-work-sidebar-message-btn {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: #8a918d;
+  font-size: 15px;
+  justify-self: center;
+}
+
+.td-work-sidebar-message-btn:hover,
+.td-work-sidebar-message-btn.is-active {
+  background: #eceeed;
+  color: #27302c;
+}
+
+.td-work-sidebar-message-badge {
+  position: absolute;
+  top: -3px;
+  right: -5px;
+  min-width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 2px solid #f7f8fa;
+  border-radius: 999px;
+  background: #ff4d4f;
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 12px;
+}
+
 .td-work-user {
   width: 100%;
   min-height: 56px;
@@ -701,6 +747,11 @@
   background: #f7f8fa;
   text-align: left;
   cursor: pointer;
+}
+
+.td-work-sidebar-footer .td-work-user {
+  min-width: 0;
+  border-top: 0;
 }
 
 .td-work-user:hover,
@@ -2204,6 +2255,86 @@
   font-weight: 650;
 }
 
+.td-work-connector-market-page {
+  padding: 12px 22px 44px;
+}
+
+.td-work-connector-market-page .td-work-connector-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.td-work-connector-market-card {
+  min-height: 96px;
+  grid-template-columns: 48px minmax(0, 1fr) 28px;
+  gap: 14px;
+  padding: 18px 20px;
+  border: 1px solid #e5e7e6;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 4px 14px rgba(25, 31, 28, 0.035);
+}
+
+.td-work-connector-market-card:hover,
+.td-work-connector-market-card:focus-within {
+  border-color: #dde0de;
+  background: #ffffff;
+  box-shadow: 0 8px 22px rgba(25, 31, 28, 0.07);
+}
+
+.td-work-connector-market-card .td-work-connector-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  font-size: 18px;
+}
+
+.td-work-connector-market-card .td-work-connector-name-row strong {
+  color: #171b19;
+  font-size: 16px;
+  font-weight: 560;
+  line-height: 24px;
+}
+
+.td-work-connector-market-card .td-work-connector-copy {
+  gap: 2px;
+}
+
+.td-work-connector-market-card .td-work-connector-copy p {
+  color: #858b87;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 22px;
+}
+
+.td-work-connector-market-card .td-work-connector-add {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: #f2f3f2;
+  color: #202522;
+  font-size: 15px;
+}
+
+.td-work-connector-market-card .td-work-connector-add:hover {
+  background: #e7e9e7;
+}
+
+.td-work-connector-market-card .td-work-connector-add.is-installed,
+.td-work-connector-market-card .td-work-connector-add.is-installed:hover {
+  background: transparent;
+  color: #858985;
+  cursor: default;
+}
+
+.td-work-connector-installed-dot {
+  width: 8px;
+  height: 8px;
+  display: block;
+  border-radius: 50%;
+  background: #858985;
+}
+
 .td-work-partner-market-page {
   min-height: 0;
   flex: 1;
@@ -2563,7 +2694,8 @@
 }
 
 .td-work-topbar.is-partner-market-topbar,
-.td-work-topbar.is-skill-market-topbar {
+.td-work-topbar.is-skill-market-topbar,
+.td-work-topbar.is-unified-skill-hub-topbar {
   height: 64px;
   gap: 20px;
   padding: 0 22px;
@@ -2571,7 +2703,8 @@
 }
 
 .td-work-topbar.is-partner-market-topbar .td-work-skill-tabs,
-.td-work-topbar.is-skill-market-topbar .td-work-skill-tabs {
+.td-work-topbar.is-skill-market-topbar .td-work-skill-tabs,
+.td-work-topbar.is-unified-skill-hub-topbar .td-work-skill-tabs {
   gap: 6px;
   padding: 0;
   border: 0;
@@ -2580,7 +2713,8 @@
 }
 
 .td-work-topbar.is-partner-market-topbar .td-work-skill-tabs button,
-.td-work-topbar.is-skill-market-topbar .td-work-skill-tabs button {
+.td-work-topbar.is-skill-market-topbar .td-work-skill-tabs button,
+.td-work-topbar.is-unified-skill-hub-topbar .td-work-skill-tabs button {
   height: 42px;
   gap: 8px;
   padding: 0 10px;
@@ -2593,25 +2727,29 @@
 }
 
 .td-work-topbar.is-partner-market-topbar .td-work-skill-tabs button:hover,
-.td-work-topbar.is-skill-market-topbar .td-work-skill-tabs button:hover {
+.td-work-topbar.is-skill-market-topbar .td-work-skill-tabs button:hover,
+.td-work-topbar.is-unified-skill-hub-topbar .td-work-skill-tabs button:hover {
   background: #f7f7f6;
   color: #171b19;
 }
 
 .td-work-topbar.is-partner-market-topbar .td-work-skill-tabs button.is-active,
-.td-work-topbar.is-skill-market-topbar .td-work-skill-tabs button.is-active {
+.td-work-topbar.is-skill-market-topbar .td-work-skill-tabs button.is-active,
+.td-work-topbar.is-unified-skill-hub-topbar .td-work-skill-tabs button.is-active {
   background: transparent;
   color: #111513;
   font-weight: 760;
 }
 
 .td-work-topbar.is-partner-market-topbar .td-work-skill-tabs button .anticon,
-.td-work-topbar.is-skill-market-topbar .td-work-skill-tabs button .anticon {
+.td-work-topbar.is-skill-market-topbar .td-work-skill-tabs button .anticon,
+.td-work-topbar.is-unified-skill-hub-topbar .td-work-skill-tabs button .anticon {
   font-size: 18px;
 }
 
 .td-work-topbar.is-partner-market-topbar .td-work-skill-search,
-.td-work-topbar.is-skill-market-topbar .td-work-skill-search {
+.td-work-topbar.is-skill-market-topbar .td-work-skill-search,
+.td-work-topbar.is-unified-skill-hub-topbar .td-work-skill-search {
   width: 224px;
   height: 36px;
   padding: 0 12px;
@@ -2621,29 +2759,67 @@
 }
 
 .td-work-topbar.is-partner-market-topbar .td-work-skill-search input,
-.td-work-topbar.is-skill-market-topbar .td-work-skill-search input {
+.td-work-topbar.is-skill-market-topbar .td-work-skill-search input,
+.td-work-topbar.is-unified-skill-hub-topbar .td-work-skill-search input {
   font-size: 13px;
 }
 
+.td-work-topbar.is-skill-market-topbar .td-work-skill-search {
+  width: 260px;
+}
+
 .td-work-topbar.is-skill-market-topbar .td-work-skill-action-btn,
-.td-work-topbar.is-skill-market-topbar .td-work-skill-new-btn {
+.td-work-topbar.is-skill-market-topbar .td-work-skill-new-btn,
+.td-work-topbar.is-unified-skill-hub-topbar .td-work-skill-action-btn,
+.td-work-topbar.is-unified-skill-hub-topbar .td-work-skill-new-btn {
   height: 36px;
   padding: 0 13px;
   border-radius: 9px;
   font-size: 13px;
 }
 
-.td-work-topbar.is-skill-market-topbar .td-work-skill-new-btn {
+.td-work-topbar.is-skill-market-topbar .td-work-skill-new-btn,
+.td-work-topbar.is-unified-skill-hub-topbar .td-work-skill-new-btn {
   border-color: #171b19;
   background: #171b19;
   color: #ffffff;
 }
 
 .td-work-topbar.is-skill-market-topbar .td-work-skill-new-btn:hover,
-.td-work-topbar.is-skill-market-topbar .td-work-skill-new-btn.is-open {
+.td-work-topbar.is-skill-market-topbar .td-work-skill-new-btn.is-open,
+.td-work-topbar.is-unified-skill-hub-topbar .td-work-skill-new-btn:hover,
+.td-work-topbar.is-unified-skill-hub-topbar .td-work-skill-new-btn.is-open {
   border-color: #2d342f;
   background: #2d342f;
   color: #ffffff;
+}
+
+.td-work-skill-tabs-divider {
+  width: 1px;
+  height: 18px;
+  flex: 0 0 1px;
+  margin: 0 4px;
+  background: #e7e9e8;
+}
+
+.td-work-topbar.is-skill-topbar .td-work-skill-tabs .td-work-skill-secondary-tab,
+.td-work-topbar.is-unified-skill-hub-topbar .td-work-skill-tabs .td-work-skill-secondary-tab {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  justify-content: center;
+  border-radius: 8px;
+  color: #a1a6a3;
+  font-weight: 500;
+}
+
+.td-work-topbar.is-skill-topbar .td-work-skill-tabs .td-work-skill-secondary-tab:hover,
+.td-work-topbar.is-unified-skill-hub-topbar .td-work-skill-tabs .td-work-skill-secondary-tab:hover,
+.td-work-topbar.is-skill-topbar .td-work-skill-tabs .td-work-skill-secondary-tab.is-active,
+.td-work-topbar.is-unified-skill-hub-topbar .td-work-skill-tabs .td-work-skill-secondary-tab.is-active {
+  border-color: transparent;
+  background: #f1f2f1;
+  color: #59605c;
 }
 
 .td-work-partner-market-page {
@@ -2833,7 +3009,7 @@
 }
 
 .td-work-skill-market-page {
-  padding: 12px 22px 44px;
+  padding: 18px 22px 44px;
 }
 
 .td-work-skill-market-featured-head {
@@ -2847,8 +3023,8 @@
 
 .td-work-skill-market-featured-head strong {
   color: #171b19;
-  font-size: 15px;
-  font-weight: 720;
+  font-size: 16px;
+  font-weight: 500;
 }
 
 .td-work-skill-market-featured-head button {
@@ -2878,7 +3054,7 @@
 .td-work-skill-market-viewbar {
   display: flex;
   align-items: center;
-  margin-top: 28px;
+  margin: 28px 0 12px;
 }
 
 .td-work-skill-market-viewbar > div {
@@ -2888,11 +3064,10 @@
 }
 
 .td-work-skill-market-viewbar button {
-  position: relative;
-  height: 34px;
+  height: 32px;
   color: #7a807c;
-  font-size: 14px;
-  font-weight: 560;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .td-work-skill-market-viewbar button:hover,
@@ -2904,23 +3079,12 @@
   font-weight: 720;
 }
 
-.td-work-skill-market-viewbar button.is-active::after {
-  content: "";
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  height: 2px;
-  border-radius: 999px;
-  background: #171b19;
-}
-
 .td-work-skill-market-categories {
   display: flex;
   align-items: center;
   gap: 4px;
   overflow-x: auto;
-  padding: 8px 0 16px;
+  padding: 0 0 20px;
   scrollbar-width: none;
 }
 
@@ -2949,23 +3113,24 @@
 }
 
 .td-work-skill-market-card {
-  min-height: 116px;
-  grid-template-columns: 48px minmax(0, 1fr) 28px;
-  align-items: start;
+  min-height: 136px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   gap: 12px;
-  padding: 18px;
-  border: 1px solid #e8e9e8;
-  border-radius: 14px;
+  padding: 20px 20px 16px;
+  border: 1px solid #e5e7e6;
+  border-radius: 16px;
   background: #ffffff;
-  box-shadow: 0 2px 8px rgba(29, 37, 33, 0.025);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
   cursor: pointer;
 }
 
 .td-work-skill-market-card:hover,
 .td-work-skill-market-card:focus-within {
-  border-color: #d8dbd9;
-  background: #ffffff;
-  box-shadow: 0 7px 20px rgba(29, 37, 33, 0.07);
+  border-color: #e5e7e6;
+  background: #f7f7f6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
 .td-work-skill-market-card:focus-visible {
@@ -2976,7 +3141,16 @@
 .td-work-skill-market-card .td-work-connector-logo {
   width: 48px;
   height: 48px;
-  border-radius: 11px;
+  border-radius: 16px;
+}
+
+.td-work-skill-market-card-main {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 12px;
 }
 
 .td-work-skill-market-icon {
@@ -2989,14 +3163,14 @@
 }
 
 .td-work-skill-market-card .td-work-connector-copy {
-  gap: 8px;
+  gap: 0;
 }
 
 .td-work-skill-market-card .td-work-connector-name-row strong {
   color: #171b19;
-  font-size: 15px;
-  font-weight: 720;
-  line-height: 22px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
 }
 
 .td-work-skill-market-card .td-work-connector-name-row span {
@@ -3005,9 +3179,9 @@
 
 .td-work-skill-market-card .td-work-connector-copy p {
   color: #747a76;
-  font-size: 13px;
-  font-weight: 450;
-  line-height: 20px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 22px;
 }
 
 .td-work-skill-market-card .td-work-connector-add {
@@ -3023,7 +3197,26 @@
 }
 
 .td-work-skill-market-card.is-featured {
-  min-height: 120px;
+  min-height: 136px;
+}
+
+.td-work-skill-market-card-stats {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: #8a908c;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.td-work-skill-market-card-stats span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.td-work-skill-market-card-stats .anticon {
+  font-size: 14px;
 }
 
 .td-work-my-skills-page {
@@ -3042,37 +3235,6 @@
   border: 2px solid #ffffff;
   border-radius: 999px;
   background: #d7dce4;
-}
-
-.td-work-my-skill-pills {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 28px;
-}
-
-.td-work-my-skill-pills button {
-  height: 32px;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 0 12px;
-  border-radius: 10px;
-  background: #f4f5f7;
-  color: #8e96a2;
-  font-size: 14px;
-  font-weight: 760;
-}
-
-.td-work-my-skill-pills button.is-active {
-  background: #eef2f7;
-  color: #242a33;
-}
-
-.td-work-my-skill-pills span {
-  color: #a6adb6;
-  font-size: 12px;
-  font-weight: 780;
 }
 
 .td-work-my-skill-section-title {
@@ -8054,6 +8216,9 @@
   width: 100%;
   min-height: 96px;
   flex: 1 1 auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   overflow-y: auto;
   color: #202a26;
   font-size: 13px;
@@ -8064,16 +8229,24 @@
 }
 
 .td-work-home-prompt-text {
+  min-width: 0;
+  min-height: 80px;
+  flex: 1 1 auto;
+  padding: 0;
+  border: 0;
   outline: 0;
+  resize: none;
+  background: transparent;
   color: #202a26;
+  font: inherit;
+  line-height: inherit;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
-.td-work-home-prompt-text:empty::before {
-  content: attr(data-placeholder);
+.td-work-home-prompt-text::placeholder {
   color: #9ba4a1;
-  pointer-events: none;
+  opacity: 1;
 }
 
 .td-work-module .td-work-home-selected-skill {
@@ -8113,6 +8286,24 @@
   border-color: #b9d8cf;
   background: #f1f8f5;
   color: #17211d;
+}
+
+.td-work-module .td-work-home-space {
+  max-width: 150px;
+  padding: 0 10px;
+}
+
+.td-work-home-space span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.td-work-module .td-work-home-space.is-selected {
+  border-color: #b9d8cf;
+  background: #eaf5ef;
+  color: #285b45;
 }
 
 .td-work-home-composer-actions {
@@ -8521,7 +8712,7 @@
 }
 
 .td-work-app-market-shell {
-  width: min(713px, 100%);
+  width: min(1080px, 100%);
   margin: 0 auto;
 }
 
@@ -8603,7 +8794,7 @@
 
 .td-work-app-market-columns {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 17px;
 }
 
@@ -8877,7 +9068,7 @@
 }
 
 .td-work-resource-market-shell {
-  width: min(713px, 100%);
+  width: min(1080px, 100%);
   margin: 0 auto;
 }
 
@@ -8991,7 +9182,7 @@
 
 .td-work-resource-market-columns {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 17px;
 }
 
@@ -9721,26 +9912,25 @@
 
 .td-work-expert-page {
   overflow-x: hidden;
-  background: #f5f8ff;
-  color: #1e2a3a;
+  background: #ffffff;
+  color: #141f1b;
 }
 
 .td-work-expert-content {
-  width: min(100% - 72px, 1180px);
+  width: min(calc(100% - 48px), 1080px);
   margin: 0 auto;
-  padding-top: 8px;
-  padding-bottom: 64px;
+  padding: 32px 0 64px;
 }
 
 .td-work-expert-filter {
   display: grid;
   grid-template-columns: 58px minmax(0, 1fr);
   gap: 16px;
-  margin: 24px 0;
+  margin: 0 0 18px;
   padding: 18px 22px;
   border-radius: 10px;
   background: #ffffff;
-  box-shadow: 0 3px 16px rgba(50, 91, 160, 0.06);
+  box-shadow: 0 0 0 1px #ededed;
 }
 
 .td-work-expert-filter > strong {
@@ -11019,7 +11209,7 @@
 }
 
 .td-work-academy-shell {
-  width: min(714px, 100%);
+  width: min(1080px, 100%);
   margin: 0 auto;
 }
 
@@ -11146,7 +11336,7 @@
 
 .td-work-academy-content-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
 }
 
@@ -13588,6 +13778,7 @@
   }
 
   .td-work-connector-grid,
+  .td-work-connector-market-page .td-work-connector-grid,
   .td-work-my-skill-grid,
   .td-work-partner-market-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -14189,6 +14380,7 @@
   }
 
   .td-work-connector-grid,
+  .td-work-connector-market-page .td-work-connector-grid,
   .td-work-my-skill-grid,
   .td-work-partner-market-grid {
     grid-template-columns: minmax(0, 1fr);
