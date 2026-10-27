@@ -18,13 +18,19 @@ export const SELF_PACED_CONTENT_PROGRESS = [
   [72, 0, 0, 0],
 ];
 
-export function resolveSelfPacedTaskProgress(task, index) {
+export function resolveSelfPacedTaskProgress(task, index, resources = []) {
+  const contents = resources.filter((item) => !item.isFolder && item.parentKey === task.key);
+  if (contents.some((item) => item.type === 'RESULT_SUBMIT')) {
+    const baseline = resolveSelfPacedTaskProgress(task, index);
+    return Math.round(contents.reduce((sum, content, contentIndex) => sum + resolveSelfPacedContentProgress(content, index, contentIndex, baseline), 0) / contents.length);
+  }
   const explicit = Number(task?.meta?.learningProgress);
   if (Number.isFinite(explicit)) return Math.max(0, Math.min(100, explicit));
   return SELF_PACED_TASK_PROGRESS[index] ?? 0;
 }
 
 export function resolveSelfPacedContentProgress(content, taskIndex, contentIndex, taskProgress = 0) {
+  if (content?.type === 'RESULT_SUBMIT') return Number(content.meta?.learningProgress) === 100 ? 100 : 0;
   const explicit = Number(content?.meta?.learningProgress);
   if (Number.isFinite(explicit)) return Math.max(0, Math.min(100, explicit));
   const preset = SELF_PACED_CONTENT_PROGRESS[taskIndex]?.[contentIndex];
@@ -38,7 +44,7 @@ export function buildSelfPacedResourceProgressMap(resources = []) {
     .sort((a, b) => Number(a?.meta?.taskOrder || 0) - Number(b?.meta?.taskOrder || 0));
 
   return tasks.reduce((progressMap, task, index) => {
-    const percent = Math.round(resolveSelfPacedTaskProgress(task, index));
+    const percent = Math.round(resolveSelfPacedTaskProgress(task, index, resources));
     progressMap.set(task.key, {
       percent,
       statusKey: percent >= 100 ? 'passed' : percent > 0 ? 'in_progress' : 'not_started',
@@ -77,7 +83,7 @@ export default function SelfPacedLearningProgressView({ resources = [], onOpenRe
       const contents = resources
         .filter((item) => !item?.isFolder && item.parentKey === task.key)
         .sort((a, b) => Number(a?.meta?.sortNo || 0) - Number(b?.meta?.sortNo || 0));
-      const progress = resolveSelfPacedTaskProgress(task, index);
+      const progress = resolveSelfPacedTaskProgress(task, index, resources);
       const contentProgress = contents.map((content, contentIndex) => (
         resolveSelfPacedContentProgress(content, index, contentIndex, progress)
       ));

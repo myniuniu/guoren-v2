@@ -1,0 +1,27 @@
+.finder-sidebar-agent-location {
+  width: calc(100% - 20px);
+  box-sizing: border-box;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+}
+
+.lucky-resource-details {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr);
+  gap: 14px 16px;
+  margin: 24px 0 8px;
+  font-size: 14px;
+}
+
+.lucky-resource-details dt {
+  color: #8e8e93;
+}
+
+.lucky-resource-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+

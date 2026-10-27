@@ -48,6 +48,7 @@ const toolEntries = [
 ];
 
 const activityEntries = [
+  { key: 'outcome', label: '研修成果', defaultName: '研修成果', type: 'RESULT_SUBMIT', icon: <FileTextOutlined />, description: '撰写文档、上传材料或关联智能体内容', iconColor: '#1677ff', iconBackground: '#eaf3ff' },
   {
     key: 'seminar',
     icon: <DesktopOutlined />,

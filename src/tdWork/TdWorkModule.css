@@ -14675,3 +14675,167 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Agent, skill and connector catalogs share the resource plaza's layout. */
+.td-work-partner-market-page,
+.td-work-skill-market-page,
+.td-work-connector-market-page {
+  padding: 46px 24px 44px;
+  background: #fff;
+  font-size: 14px;
+}
+.td-work-market-aligned-shell {
+  width: min(1080px, 100%);
+  margin: 0 auto;
+}
+.td-work-topbar.is-unified-skill-hub-topbar {
+  padding-left: max(24px, calc((100% - 1080px) / 2));
+  padding-right: max(24px, calc((100% - 1080px) / 2));
+}
+.td-work-topbar.is-unified-skill-hub-topbar .td-work-skill-tabs button {
+  font-size: 16px;
+  font-weight: 520;
+}
+.td-work-topbar.is-unified-skill-hub-topbar .td-work-skill-tabs button.is-active {
+  font-weight: 650;
+}
+.td-work-topbar.is-unified-skill-hub-topbar .td-work-skill-search {
+  width: 260px;
+  border: 0;
+  border-radius: 18px;
+  background: #efefef;
+}
+.td-work-partner-market-categories button,
+.td-work-skill-market-categories button,
+.td-work-skill-market-viewbar button {
+  font-size: 14px;
+  font-weight: 450;
+  color: #666c69;
+}
+.td-work-partner-market-copy strong,
+.td-work-skill-market-card .td-work-connector-name-row strong,
+.td-work-connector-market-card .td-work-connector-name-row strong {
+  color: #141f1b;
+  font-size: 14px;
+  font-weight: 520;
+  line-height: 20px;
+}
+.td-work-partner-market-copy p,
+.td-work-skill-market-card .td-work-connector-copy p,
+.td-work-connector-market-card .td-work-connector-copy p {
+  color: #7a7c7c;
+  font-size: 12px;
+  line-height: 20px;
+}
+.td-work-partner-market-tags span,
+.td-work-skill-market-card-stats {
+  font-size: 12px;
+  line-height: 16px;
+}
+@media (max-width: 760px) {
+  .td-work-partner-market-page,
+  .td-work-skill-market-page,
+  .td-work-connector-market-page {
+    padding: 24px 16px 32px;
+  }
+  .td-work-topbar.is-unified-skill-hub-topbar {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+.td-work-topbar.is-community-topbar {
+  display: flex;
+  height: 64px;
+  min-height: 64px;
+  gap: 28px;
+  padding: 0 24px;
+  border-bottom: 1px solid #eef0f2;
+  background: #fff;
+}
+.td-work-community-brand { flex-shrink: 0; font-size: 18px; font-weight: 650; color: #141f1b; }
+.td-work-community-tabs {
+  display: flex;
+  align-self: stretch;
+  gap: 28px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.td-work-community-tabs button {
+  position: relative;
+  flex-shrink: 0;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: #667085;
+  font-size: 14px;
+  cursor: pointer;
+}
+.td-work-community-tabs button:hover { color: #3e7bff; }
+.td-work-community-tabs button.is-active { color: #3e7bff; font-weight: 600; }
+.td-work-community-tabs button.is-active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: #3e7bff;
+}
+@media (max-width: 760px) {
+  .td-work-topbar.is-community-topbar { padding: 0 16px; gap: 16px; }
+  .td-work-community-tabs { gap: 18px; }
+}
+
+.td-work-topbar.is-community-topbar { height: 56px; min-height: 56px; gap: 24px; }
+.td-work-community-brand { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 550; }
+.td-work-community-mark { color: #3e7bff; font-size: 20px; }
+.td-work-community-divider { color: #d0d5dd; font-weight: 400; }
+.td-work-community-toolbar { display: flex; align-items: center; gap: 16px; margin-left: auto; }
+.td-work-community-toolbar .ant-input-affix-wrapper { width: 240px; border: 1px solid #eef0f2; border-radius: 20px; box-shadow: none; font-size: 13px; }
+.td-work-community-toolbar .ant-btn { border-radius: 20px; background: #3e7bff; border-color: #3e7bff; font-size: 13px; }
+@media (max-width: 1000px) {
+  .td-work-community-toolbar .ant-input-affix-wrapper { width: 170px; }
+  .td-work-topbar.is-community-topbar { gap: 16px; }
+  .td-work-community-tabs { gap: 16px; }
+}
+@media (max-width: 760px) {
+  .td-work-community-brand { display: none; }
+  .td-work-community-toolbar .ant-input-affix-wrapper { width: 130px; }
+  .td-work-community-toolbar { gap: 8px; }
+}
+
+.td-work-community-toolbar .ant-btn-primary {
+  border-radius: 9px;
+  background: #183f31;
+  border-color: #183f31;
+  color: #fff;
+}
+.td-work-community-toolbar .td-work-community-contact.ant-btn {
+  border-radius: 9px;
+  background: #fff;
+  border-color: #e4e7ec;
+  color: #344054;
+}
+
+/* Agent and skill marketplaces share a four-card desktop layout. */
+.td-work-partner-market-grid,
+.td-work-skill-market-featured-grid,
+.td-work-skill-market-page .td-work-skill-catalog-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+@media (max-width: 1100px) {
+  .td-work-partner-market-grid,
+  .td-work-skill-market-featured-grid,
+  .td-work-skill-market-page .td-work-skill-catalog-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 680px) {
+  .td-work-partner-market-grid,
+  .td-work-skill-market-featured-grid,
+  .td-work-skill-market-page .td-work-skill-catalog-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

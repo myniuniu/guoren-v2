@@ -173,16 +173,18 @@ const NAV_ITEMS = [
     label: '研习社',
     icon: <DatabaseOutlined />,
     activeIcon: <DatabaseFilled />,
-    children: [
-      { key: 'academy', label: '通答学院' },
-      { key: 'resource-market', label: '资源广场' },
-      { key: 'app-market', label: '应用广场' },
-      { key: 'expert-studios', label: '专家工作室' },
-    ],
   },
   { key: 'skills', label: '智能体 · 技能 · 连接器', icon: <RobotOutlined />, activeIcon: <RobotFilled /> },
   { key: 'cloud', label: '资料库', icon: <FolderOutlined />, activeIcon: <FolderFilled /> },
   { key: 'ai-literacy-capability', label: 'AI素养能力', icon: <BarChartOutlined />, activeIcon: <BarChartOutlined /> },
+];
+const COMMUNITY_TABS = [
+  { key: 'community-agents', label: '智能体广场' },
+  { key: 'community-skills', label: '技能广场' },
+  { key: 'academy', label: '课程' },
+  { key: 'resource-market', label: '资源广场' },
+  { key: 'app-market', label: '应用广场' },
+  { key: 'expert-studios', label: '专家工作室' },
 ];
 const HIDDEN_SIDEBAR_NAV_KEYS = new Set();
 
@@ -1589,12 +1591,14 @@ function ResourceDetailPage({ item, recommendations, onBack, onOpenResource, onC
   );
 }
 
-function MarketplacePage({ type, onCreate, spaces = [] }) {
+function MarketplacePage({ type, onCreate, spaces = [], communitySearch, onCommunitySearch }) {
   const isResource = type === 'resource';
   const categories = isResource ? RESOURCE_MARKET_CATEGORIES : APP_MARKET_CATEGORIES;
   const items = isResource ? RESOURCE_MARKET_ITEMS : APP_MARKET_ITEMS;
   const [activeCategory, setActiveCategory] = useState('推荐');
-  const [searchText, setSearchText] = useState('');
+  const [localSearch, setLocalSearch] = useState('');
+  const searchText = communitySearch ?? localSearch;
+  const setSearchText = onCommunitySearch || setLocalSearch;
   const [appPrompt, setAppPrompt] = useState('');
   const [activeItem, setActiveItem] = useState(null);
   const [spaceSaveItem, setSpaceSaveItem] = useState(null);
@@ -2318,14 +2322,14 @@ function ExpertStudioDetailPage({ studio, followed, onBack, onFollow, onToast })
   );
 }
 
-function ExpertStudiosPage({ onToast }) {
+function ExpertStudiosPage({ onToast, communitySearch = '' }) {
   const [province, setProvince] = useState('全部');
   const [showAll, setShowAll] = useState(false);
   const [followedKeys, setFollowedKeys] = useState(() => new Set());
   const [activeStudio, setActiveStudio] = useState(null);
   const filteredItems = useMemo(
-    () => EXPERT_STUDIOS.filter((item) => province === '全部' || item.province === province),
-    [province],
+    () => EXPERT_STUDIOS.filter((item) => (province === '全部' || item.province === province) && JSON.stringify(item).toLowerCase().includes(communitySearch.trim().toLowerCase())),
+    [province, communitySearch],
   );
   const visibleItems = showAll ? filteredItems : filteredItems.slice(0, 8);
 
@@ -2537,7 +2541,7 @@ function AcademyCampaignDetailPage({ onBack, onToast }) {
   );
 }
 
-function TongdaAcademyPage({ onToast }) {
+function TongdaAcademyPage({ onToast, communitySearch = '', campaignRequest = 0 }) {
   const [showMoreReplays, setShowMoreReplays] = useState(false);
   const [guideTab, setGuideTab] = useState('全部');
   const [showMoreGuides, setShowMoreGuides] = useState(false);
@@ -2546,17 +2550,22 @@ function TongdaAcademyPage({ onToast }) {
   const [showMoreTips, setShowMoreTips] = useState(false);
   const [activeDetail, setActiveDetail] = useState(null);
   const academyPageRef = useRef(null);
+  useEffect(() => {
+    if (campaignRequest) setActiveDetail({ type: 'campaign' });
+  }, [campaignRequest]);
+  const matchesSearch = (item) => JSON.stringify(item).toLowerCase().includes(communitySearch.trim().toLowerCase());
+
 
   const visibleGuides = useMemo(() => {
-    const matches = ACADEMY_GUIDES.filter((item) => guideTab === '全部' || item.category === guideTab);
+    const matches = ACADEMY_GUIDES.filter((item) => (guideTab === '全部' || item.category === guideTab) && matchesSearch(item));
     return showMoreGuides ? matches : matches.slice(0, 3);
-  }, [guideTab, showMoreGuides]);
+  }, [guideTab, showMoreGuides, communitySearch]);
 
   const matchingTips = useMemo(() => ACADEMY_TUTORIALS.filter((item) => {
     const matchesCategory = tipTab === '全部' || item.category === tipTab;
     const matchesFeature = featureTab === '全部' || item.feature === featureTab;
-    return matchesCategory && matchesFeature;
-  }), [featureTab, tipTab]);
+    return matchesCategory && matchesFeature && matchesSearch(item);
+  }), [featureTab, tipTab, communitySearch]);
 
   const visibleTips = showMoreTips ? matchingTips : matchingTips.slice(0, 6);
   const openDetail = (item, source) => {
@@ -2590,11 +2599,8 @@ function TongdaAcademyPage({ onToast }) {
         ) : (
           <>
         <header className="td-work-academy-heading">
-          <h1>通答学院</h1>
-          <div className="td-work-academy-heading-actions">
-            <button type="button" className="is-primary" onClick={() => onToast('已进入作品提交')}>提交作品</button>
-            <button type="button" onClick={() => onToast('已打开联系我们')}>联系我们</button>
-          </div>
+          <h1>课程</h1>
+
         </header>
 
         <section
@@ -2616,7 +2622,7 @@ function TongdaAcademyPage({ onToast }) {
         <section className="td-work-academy-section" aria-labelledby="academy-replay-title">
           <h2 id="academy-replay-title">直播回放</h2>
           <div className="td-work-academy-content-grid">
-            {(showMoreReplays ? ACADEMY_REPLAYS : ACADEMY_REPLAYS.slice(0, 3)).map((item) => (
+            {(showMoreReplays ? ACADEMY_REPLAYS.filter(matchesSearch) : ACADEMY_REPLAYS.filter(matchesSearch).slice(0, 3)).map((item) => (
               <article key={item.key} className="td-work-academy-media-card">
                 <button type="button" className="td-work-academy-card-open" aria-label={`查看${item.title}详情`} onClick={() => openDetail(item, 'replay')} />
                 <span className="td-work-academy-media">
@@ -2791,6 +2797,7 @@ function SkillsConnectorsPage({
 }) {
   return (
     <section className="td-work-skill-page td-work-connector-market-page" aria-label="连接器">
+      <div className="td-work-market-aligned-shell">
       <div className="td-work-connector-grid td-work-connector-market-grid" aria-label="连接器列表">
         {connectors.map((item) => {
           const installed = installedConnectorKeys.has(item.key);
@@ -2823,6 +2830,7 @@ function SkillsConnectorsPage({
           没有找到与“{searchText}”匹配的连接器
         </div>
       ) : null}
+    </div>
     </section>
   );
 }
@@ -2939,6 +2947,7 @@ function SkillCataloguePage({
 
   return (
     <section className="td-work-skill-page td-work-skill-market-page" aria-label="技能">
+      <div className="td-work-market-aligned-shell">
       <div className="td-work-skill-market-featured-head">
         <strong>精选技能</strong>
         <button
@@ -2995,6 +3004,7 @@ function SkillCataloguePage({
           没有找到与“{searchText}”匹配的技能
         </div>
       ) : null}
+    </div>
     </section>
   );
 }
@@ -3051,6 +3061,7 @@ function PartnerMarketPage({
 
   return (
     <section className="td-work-partner-market-page" aria-label="智能体小队">
+      <div className="td-work-market-aligned-shell">
       <div className="td-work-partner-market-sort" role="group" aria-label="智能体排序">
         {['综合', '最热', '最新'].map((item) => (
           <button
@@ -3123,6 +3134,7 @@ function PartnerMarketPage({
           没有找到与“{searchText}”匹配的智能体
         </div>
       ) : null}
+    </div>
     </section>
   );
 }
@@ -5858,7 +5870,7 @@ export default function TdWorkModule({
   const [spaceCreateDefaultMenuKey, setSpaceCreateDefaultMenuKey] = useState(null);
   const [pendingAiLiteracyReport, setPendingAiLiteracyReport] = useState(null);
   const [connectorSearch, setConnectorSearch] = useState('');
-  const [skillView, setSkillView] = useState('market');
+  const [skillView, setSkillView] = useState('partners');
   const [partnerMarketCategory, setPartnerMarketCategory] = useState('全部');
   const [partnerMarketSearch, setPartnerMarketSearch] = useState('');
   const [mySkillTab, setMySkillTab] = useState('skills');
@@ -6225,27 +6237,19 @@ export default function TdWorkModule({
     setSpaceCreateOpen(true);
   }, [effectiveSpaceMenuFilter, loadAiSpaceData, spaceTemplates.length]);
 
-  const handleCreateAiLiteracySpaceFromReport = useCallback(async (report) => {
-    setPendingAiLiteracyReport(report);
-    await handleOpenAiSpaceCreate();
-  }, [handleOpenAiSpaceCreate]);
-
   const handleOpenAiLiteracyReportSpace = useCallback(async (report) => {
-    const availableScenes = spaceScenes.length ? spaceScenes : await loadAiSpaceData();
-    const targetScene = availableScenes.find((scene) => {
-      try {
-        const linkedReport = JSON.parse(window.localStorage.getItem(`gr:ai-literacy-report:${scene.storageScopeKey || scene.id}`) || 'null');
-        return linkedReport && (linkedReport.id === report.id || (!linkedReport.id && linkedReport.fileName === report.fileName));
-      } catch {
-        return false;
-      }
-    });
+    let availableScenes = spaceScenes.length ? spaceScenes : await loadAiSpaceData();
+    let targetScene = availableScenes.find((scene) => scene.name === '人工智能素养自主培训');
+    if (!targetScene && spaceScenes.length) {
+      availableScenes = await loadAiSpaceData();
+      targetScene = availableScenes.find((scene) => scene.name === '人工智能素养自主培训');
+    }
     if (targetScene) {
       await openAiLiteracyTargetSpace(targetScene, report);
       return;
     }
-    await handleCreateAiLiteracySpaceFromReport(report);
-  }, [handleCreateAiLiteracySpaceFromReport, loadAiSpaceData, openAiLiteracyTargetSpace, spaceScenes]);
+    setToast('未找到“人工智能素养自主培训”空间，请确认该空间仍可访问');
+  }, [loadAiSpaceData, openAiLiteracyTargetSpace, spaceScenes]);
 
   const handleOpenTongdaAcademySpaces = useCallback(() => {
     setActiveNav('space');
@@ -6926,7 +6930,10 @@ export default function TdWorkModule({
     </div>
   ) : null;
   const hideSpaceListTopbar = activeNav === 'space' && !activeSpace && !sidebarCollapsed;
-  const hideMarketplaceTopbar = ['home', 'resource-market', 'app-market', 'academy', 'expert-studios'].includes(activeNav);
+  const [communitySearch, setCommunitySearch] = useState('');
+  const [communityCampaignRequest, setCommunityCampaignRequest] = useState(0);
+  const isCommunityPage = COMMUNITY_TABS.some((tab) => tab.key === activeNav);
+  const hideMarketplaceTopbar = activeNav === 'home';
   const hideTopbar = hideSpaceListTopbar || hideMarketplaceTopbar || activeNav === 'messages' || activeNav === 'ai-literacy-capability';
   const showFloatingSidebarExpand = sidebarCollapsed && (
     hideTopbar
@@ -7025,7 +7032,7 @@ export default function TdWorkModule({
             const childActive = item.children?.some(isChildActive);
             const hasSpaceShortcuts = item.key === 'space' && sidebarSpaceItems.length > 0;
             const directItemActive = activeNav === item.key;
-            const itemActive = directItemActive || childActive;
+            const itemActive = directItemActive || childActive || (item.key === 'knowledge-community' && isCommunityPage);
             const selectNav = (key) => {
               setActiveNav(key);
               setActiveSideItem('');
@@ -7054,9 +7061,9 @@ export default function TdWorkModule({
                   className={`td-work-nav-item ${item.children ? 'is-parent' : ''} ${itemActive ? 'is-active' : ''}`}
                   onClick={() => {
                     if (item.key === 'skills') {
-                      handleSkillHubViewChange('market');
+                      handleSkillHubViewChange('partners');
                     }
-                    selectNav(item.children?.[0]?.key || item.key);
+                    selectNav(item.key === 'knowledge-community' ? 'academy' : (item.children?.[0]?.key || item.key));
                   }}
                   title={item.label}
                   aria-expanded={item.children || hasSpaceShortcuts ? true : undefined}
@@ -7211,8 +7218,35 @@ export default function TdWorkModule({
             <SidebarToggleIcon />
           </button>
         ) : null}
-        <header className={`td-work-topbar ${hideTopbar ? 'is-hidden' : ''} ${activeNav === 'skills' ? 'is-skill-topbar' : ''} ${activeNav === 'skills' && skillView !== 'mine' ? 'is-unified-skill-hub-topbar' : ''} ${activeNav === 'skills' && skillView === 'partners' ? 'is-partner-market-topbar' : ''} ${activeNav === 'skills' && skillView === 'skills' ? 'is-skill-market-topbar' : ''} ${activeNav === 'skills' && skillView === 'automation' ? 'is-schedule-topbar' : ''} ${activeNav === 'skills' && skillView === 'mine' ? 'is-my-skill-topbar' : ''} ${activeNav === 'dialog' ? 'is-partner-topbar' : ''} ${activeNav === 'dialog' && activePartner ? 'is-partner-workspace-topbar' : ''} ${activeNav === 'dialog' && partnerView === 'manage' ? 'is-partner-manage-topbar' : ''} ${activeNav === 'project' ? 'is-project-topbar' : ''} ${activeNav === 'space' ? 'is-space-topbar' : ''} ${activeNav === 'space' && activeSpace ? 'is-space-detail-topbar' : ''} ${hideMarketplaceTopbar ? 'is-marketplace-topbar' : ''} ${activeNav === 'cloud' ? 'is-resource-library-topbar' : ''}`}>
-          {activeNav === 'dialog' && partnerView === 'manage' ? (
+        <header className={`td-work-topbar ${hideTopbar ? 'is-hidden' : ''} ${isCommunityPage ? 'is-community-topbar' : ''} ${activeNav === 'skills' ? 'is-skill-topbar' : ''} ${activeNav === 'skills' && skillView !== 'mine' ? 'is-unified-skill-hub-topbar' : ''} ${activeNav === 'skills' && skillView === 'partners' ? 'is-partner-market-topbar' : ''} ${activeNav === 'skills' && skillView === 'skills' ? 'is-skill-market-topbar' : ''} ${activeNav === 'skills' && skillView === 'automation' ? 'is-schedule-topbar' : ''} ${activeNav === 'skills' && skillView === 'mine' ? 'is-my-skill-topbar' : ''} ${activeNav === 'dialog' ? 'is-partner-topbar' : ''} ${activeNav === 'dialog' && activePartner ? 'is-partner-workspace-topbar' : ''} ${activeNav === 'dialog' && partnerView === 'manage' ? 'is-partner-manage-topbar' : ''} ${activeNav === 'project' ? 'is-project-topbar' : ''} ${activeNav === 'space' ? 'is-space-topbar' : ''} ${activeNav === 'space' && activeSpace ? 'is-space-detail-topbar' : ''} ${hideMarketplaceTopbar ? 'is-marketplace-topbar' : ''} ${activeNav === 'cloud' ? 'is-resource-library-topbar' : ''}`}>
+          {isCommunityPage ? (
+            <>
+              {topbarSidebarCollapsedTools}
+              <span className="td-work-community-brand"><span className="td-work-community-mark"><DatabaseFilled /></span>通答<span className="td-work-community-divider">|</span>研习社</span>
+              <nav className="td-work-community-tabs" role="tablist" aria-label="研习社栏目">
+                {COMMUNITY_TABS.map((tab) => (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeNav === tab.key}
+                    className={activeNav === tab.key ? 'is-active' : ''}
+                    onClick={() => handleMarketplaceNavigate(tab.key)}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </nav>
+              <div className="td-work-community-toolbar">
+                <Input prefix={<SearchOutlined />} placeholder="请输入关键词" aria-label="搜索研习社内容" value={communitySearch} onChange={(event) => setCommunitySearch(event.target.value)} allowClear />
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => {
+                  handleMarketplaceNavigate('academy');
+                  setCommunityCampaignRequest((value) => value + 1);
+                }}>提交作品</Button>
+                <Button className="td-work-community-contact" onClick={() => setToast('已打开联系我们')}>联系我们</Button>
+              </div>
+            </>
+          ) : activeNav === 'dialog' && partnerView === 'manage' ? (
             <>
               {topbarSidebarCollapsedTools}
               <div className="td-work-partner-workspace-breadcrumb" aria-label="当前位置">
@@ -7325,7 +7359,7 @@ export default function TdWorkModule({
             <>
               {topbarSidebarCollapsedTools}
               <div className="td-work-dialog-titlebar-copy">
-                <strong>通答学院</strong>
+                <strong>课程</strong>
                 <span>课程、资源、应用与培训项目入口</span>
               </div>
               <button
@@ -7552,6 +7586,8 @@ export default function TdWorkModule({
           <MarketplacePage
             key="resource-market"
             type="resource"
+            communitySearch={communitySearch}
+            onCommunitySearch={setCommunitySearch}
             onCreate={handleCreateTaskFromHome}
             spaces={spaceScenes}
           />
@@ -7559,6 +7595,8 @@ export default function TdWorkModule({
           <MarketplacePage
             key="app-market"
             type="app"
+            communitySearch={communitySearch}
+            onCommunitySearch={setCommunitySearch}
             onCreate={handleCreateTaskFromHome}
             spaces={spaceScenes}
           />
@@ -7601,11 +7639,13 @@ export default function TdWorkModule({
           />
         ) : activeNav === 'academy' ? (
           <TongdaAcademyPage
+            communitySearch={communitySearch}
+            campaignRequest={communityCampaignRequest}
             onOpenSpace={handleOpenTongdaAcademySpaces}
             onToast={setToast}
           />
         ) : activeNav === 'expert-studios' ? (
-          <ExpertStudiosPage onToast={setToast} />
+          <ExpertStudiosPage onToast={setToast} communitySearch={communitySearch} />
         ) : activeNav === 'skills' && skillView === 'mine' ? (
           <MySkillsPage
             activeTab={mySkillTab}
@@ -7616,16 +7656,16 @@ export default function TdWorkModule({
             onOpenSkill={(item) => setToast(`已打开 guoren-v2：${item.name}`)}
             onToggleSkill={handleToggleSkill}
           />
-        ) : activeNav === 'skills' && skillView === 'partners' ? (
+        ) : activeNav === 'community-agents' || (activeNav === 'skills' && skillView === 'partners') ? (
           <PartnerMarketPage
             activeCategory={partnerMarketCategory}
-            searchText={partnerMarketSearch}
+            searchText={isCommunityPage ? communitySearch : partnerMarketSearch}
             onCategoryChange={setPartnerMarketCategory}
             onAddPartner={(item) => setToast(`已添加智能体：${item.name}`)}
           />
-        ) : activeNav === 'skills' && skillView === 'skills' ? (
+        ) : activeNav === 'community-skills' || (activeNav === 'skills' && skillView === 'skills') ? (
           <SkillCataloguePage
-            searchText={connectorSearch}
+            searchText={isCommunityPage ? communitySearch : connectorSearch}
             skills={MY_SKILLS}
             onOpenSkill={(item) => setToast(`已添加技能：${item.name}`)}
           />

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Dropdown, Input, Select, Tag, message } from 'antd';
+import { Dropdown, message } from 'antd';
 import {
   AppstoreOutlined,
   ArrowUpOutlined,
@@ -41,10 +41,9 @@ import {
   ThunderboltOutlined,
   TrophyOutlined,
 } from '@ant-design/icons';
-import ResourceLibrarySaveModal from '../resourceLib/ResourceLibrarySaveModal.jsx';
+import LuckyResourceLibrary from './LuckyResourceLibrary.jsx';
 import './LuckyModule.css';
 
-const PAGE_SIZE = 14;
 const LUCKY_SIDEBAR_WIDTH_STORAGE_KEY = 'gr.lucky.sidebar-width.v1';
 const DEFAULT_LUCKY_SIDEBAR_WIDTH = 224;
 const MIN_LUCKY_SIDEBAR_WIDTH = 188;
@@ -1795,67 +1794,6 @@ const SECTION_COPY = {
     ],
   },
 };
-
-const LIBRARY_ROW_TEMPLATES = [
-  { title: 'AI评课·动物王国开大会', source: '通用智能体', scope: '全部来源', type: '其他' },
-  { title: 'AI评课·动物王国开大会', source: '通用智能体', scope: '组织库', type: '其他' },
-  { title: 'AI评课·动物王国开大会5M', source: '通用智能体', scope: '组织库', type: '其他' },
-  { title: 'AI评课·小象危险尾巴', source: '通用智能体', scope: '个人库', type: '其他' },
-  { title: 'AI评课·专题报告：从认知到实践：赋能中小学人工智...', source: '通用智能体', scope: '共享库', type: '其他' },
-  { title: 'AI评课·小象危险尾巴', source: '学海导航者', scope: '个人库', type: '其他' },
-  { title: '大学四年规划指南.md', source: '学海导航者', scope: '个人库', type: '文档' },
-  { title: 'SKILL.md', source: '通用智能体', scope: '组织库', type: '文档' },
-  { title: 'course-ai-1hour.md', source: '通用智能体', scope: '个人库', type: '文档' },
-  { title: 'course-ai.md', source: '通用智能体', scope: '个人库', type: '文档' },
-  { title: 'course-ai-60min.md', source: '通用智能体', scope: '组织库', type: '文档' },
-  { title: 'course-ai.md', source: '通用智能体', scope: '共享库', type: '文档' },
-  { title: 'AI评课·动物王国开大会', source: '小助手', scope: '全部来源', type: '其他' },
-  { title: '模型训练指南.docx', source: '通用智能体', scope: '共享库', type: '文档' },
-  { title: 'ai_education_courseware.html', source: '通用智能体', scope: '组织库', type: '文档' },
-  { title: 'ai_education_courseware.html', source: '通用智能体', scope: '组织库', type: '文档' },
-];
-
-const SOURCE_OPTIONS = [
-  { label: '全部来源', value: 'all' },
-  { label: '通用智能体', value: '通用智能体' },
-  { label: '学海导航者', value: '学海导航者' },
-  { label: '小助手', value: '小助手' },
-];
-
-const SCOPE_OPTIONS = [
-  { label: '全部来源', value: 'all' },
-  { label: '个人库', value: '个人库' },
-  { label: '组织库', value: '组织库' },
-  { label: '共享库', value: '共享库' },
-];
-
-function buildLibraryRows() {
-  return Array.from({ length: 42 }, (_, index) => {
-    const template = LIBRARY_ROW_TEMPLATES[index % LIBRARY_ROW_TEMPLATES.length];
-    const cycle = Math.floor(index / LIBRARY_ROW_TEMPLATES.length);
-    const day = Math.max(1, 22 - cycle);
-    const hour = String((18 - (index % 9) + 24) % 24).padStart(2, '0');
-    const minute = String((5 + index * 7) % 60).padStart(2, '0');
-    const second = String((12 + index * 13) % 60).padStart(2, '0');
-    return {
-      id: `lucky-library-${index + 1}`,
-      ...template,
-      time: `2026-06-${String(day).padStart(2, '0')} ${hour}:${minute}:${second}`,
-    };
-  });
-}
-
-const LIBRARY_ROWS = buildLibraryRows();
-
-function StatCard({ title, value, hint }) {
-  return (
-    <div className="lucky-stat-card">
-      <div className="lucky-stat-title">{title}</div>
-      <div className="lucky-stat-value">{value}</div>
-      <div className="lucky-stat-hint">{hint}</div>
-    </div>
-  );
-}
 
 function ShowcaseSection({ title, description, cards }) {
   return (
@@ -5839,13 +5777,7 @@ function LuckyModule() {
   const [agentSkills, setAgentSkills] = useState({});
   const [projects, setProjects] = useState(DEFAULT_PROJECTS);
   const [activeProject, setActiveProject] = useState(null);
-  const [sourceFilter, setSourceFilter] = useState('all');
-  const [scopeFilter, setScopeFilter] = useState('all');
-  const [keyword, setKeyword] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
   const [promptText, setPromptText] = useState('');
-  const [saveModalOpen, setSaveModalOpen] = useState(false);
-  const [savingItem, setSavingItem] = useState(null);
   const [createAgentOpen, setCreateAgentOpen] = useState(false);
   const [teamAgentOpen, setTeamAgentOpen] = useState(false);
   const [agentCreateMode, setAgentCreateMode] = useState('team');
@@ -5887,33 +5819,6 @@ function LuckyModule() {
     window.addEventListener('pointerup', handlePointerUp);
   }, [sidebarWidth]);
 
-  const filteredRows = useMemo(() => {
-    const normalizedKeyword = keyword.trim().toLowerCase();
-    return LIBRARY_ROWS.filter((item) => {
-      if (sourceFilter !== 'all' && item.source !== sourceFilter) return false;
-      if (scopeFilter !== 'all' && item.scope !== scopeFilter) return false;
-      if (!normalizedKeyword) return true;
-      return `${item.title} ${item.source} ${item.type}`.toLowerCase().includes(normalizedKeyword);
-    });
-  }, [keyword, scopeFilter, sourceFilter]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
-  const activePage = Math.min(currentPage, totalPages);
-  const pagedRows = useMemo(() => {
-    const start = (activePage - 1) * PAGE_SIZE;
-    return filteredRows.slice(start, start + PAGE_SIZE);
-  }, [activePage, filteredRows]);
-
-  const stats = useMemo(() => {
-    const documentCount = filteredRows.filter((item) => item.type === '文档').length;
-    const skillCount = filteredRows.filter((item) => item.source === '学海导航者').length;
-    return {
-      total: filteredRows.length,
-      documents: documentCount,
-      skills: skillCount,
-    };
-  }, [filteredRows]);
-
   const sectionCopy = SECTION_COPY[activeSection] ?? SECTION_COPY.new;
   const showTaskDetail = activeSection === INTRO_TASK_SECTION_KEY && activeTaskKey === INTRO_TASK_KEY;
   const showHome = activeSection === 'new' && !showTaskDetail;
@@ -5953,11 +5858,6 @@ function LuckyModule() {
   const editingSquadData = editingSquad
     ? agentSquads.find((squad) => squad.key === editingSquad.key) || editingSquad
     : null;
-
-  const handleOpenSaveModal = (item) => {
-    setSavingItem(item);
-    setSaveModalOpen(true);
-  };
 
   const handleSendPrompt = () => {
     if (!promptText.trim()) {
@@ -6397,140 +6297,7 @@ function LuckyModule() {
               onOpenProject={handleOpenProject}
             />
           ) : showLibrary ? (
-            <div className="lucky-workspace-card lucky-library-view">
-              <div className="lucky-page-header">
-                <div>
-                  <div className="lucky-page-title">资源库</div>
-                </div>
-                <div className="lucky-toolbar">
-                  <Select
-                    value={sourceFilter}
-                    options={SOURCE_OPTIONS}
-                    className="lucky-select"
-                    onChange={(value) => {
-                      setSourceFilter(value);
-                      setCurrentPage(1);
-                    }}
-                  />
-                  <Select
-                    value={scopeFilter}
-                    options={SCOPE_OPTIONS}
-                    className="lucky-select"
-                    onChange={(value) => {
-                      setScopeFilter(value);
-                      setCurrentPage(1);
-                    }}
-                  />
-                  <Input
-                    allowClear
-                    value={keyword}
-                    className="lucky-search"
-                    placeholder="搜索"
-                    prefix={<SearchOutlined />}
-                    onChange={(event) => {
-                      setKeyword(event.target.value);
-                      setCurrentPage(1);
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div className="lucky-stat-grid">
-                <StatCard title="全部条目" value={stats.total} hint="当前筛选结果" />
-                <StatCard title="文档" value={stats.documents} hint="可直接查看与复用" />
-                <StatCard title="导航者资源" value={stats.skills} hint="来自学海导航者" />
-              </div>
-
-              <div className="lucky-library-table-scroll">
-                <div className="lucky-library-table">
-                  <div className="lucky-library-row lucky-library-row-header">
-                    <div className="lucky-library-cell col-name">名称</div>
-                    <div className="lucky-library-cell col-source">来源</div>
-                    <div className="lucky-library-cell col-type">类型</div>
-                    <div className="lucky-library-cell col-time">时间</div>
-                    <div className="lucky-library-cell col-view">查看</div>
-                    <div className="lucky-library-cell col-action">操作</div>
-                  </div>
-
-                  {pagedRows.map((item) => (
-                    <div key={item.id} className="lucky-library-row">
-                      <div className="lucky-library-cell col-name lucky-library-name" title={item.title}>
-                        {item.title}
-                      </div>
-                      <div className="lucky-library-cell col-source">{item.source}</div>
-                      <div className="lucky-library-cell col-type">
-                        <Tag className={`lucky-type-tag ${item.type === '文档' ? 'is-document' : ''}`}>
-                          {item.type}
-                        </Tag>
-                      </div>
-                      <div className="lucky-library-cell col-time">{item.time}</div>
-                      <div className="lucky-library-cell col-view">
-                        <button
-                          type="button"
-                          className="lucky-link-button"
-                          onClick={() => message.success(`已打开详情：${item.title}`)}
-                        >
-                          查看详情
-                        </button>
-                      </div>
-                      <div className="lucky-library-cell col-action">
-                        <Dropdown
-                          trigger={['click']}
-                          menu={{
-                            items: [
-                              {
-                                key: 'save-to-library',
-                                label: '另存为资源库',
-                              },
-                            ],
-                            onClick: ({ key }) => {
-                              if (key === 'save-to-library') handleOpenSaveModal(item);
-                            },
-                          }}
-                          placement="bottomRight"
-                        >
-                          <Button
-                            type="text"
-                            size="small"
-                            className="lucky-row-action"
-                            icon={<EllipsisOutlined />}
-                          />
-                        </Dropdown>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="lucky-table-footer">
-                <div className="lucky-table-meta">
-                  第 {activePage} / {totalPages} 页，共 {filteredRows.length} 条
-                </div>
-                <div className="lucky-pagination">
-                  {Array.from({ length: totalPages }, (_, index) => {
-                    const page = index + 1;
-                    return (
-                      <button
-                        key={page}
-                        type="button"
-                        className={`lucky-page-btn ${page === activePage ? 'is-active' : ''}`}
-                        onClick={() => setCurrentPage(page)}
-                      >
-                        {page}
-                      </button>
-                    );
-                  })}
-                  <button
-                    type="button"
-                    className="lucky-page-btn lucky-page-next"
-                    disabled={activePage >= totalPages}
-                    onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
-                  >
-                    &gt;
-                  </button>
-                </div>
-              </div>
-            </div>
+            <LuckyResourceLibrary />
           ) : showMarket ? (
             <MarketPage />
           ) : (
@@ -6543,17 +6310,6 @@ function LuckyModule() {
         </div>
       </main>
 
-      <ResourceLibrarySaveModal
-        open={saveModalOpen}
-        item={savingItem}
-        onClose={() => {
-          setSaveModalOpen(false);
-          setSavingItem(null);
-        }}
-        onSaved={({ libraryName, name }) => {
-          message.success(`已将「${name}」另存到${libraryName}`);
-        }}
-      />
       <CreateAgentModal
         open={createAgentOpen}
         onClose={() => setCreateAgentOpen(false)}

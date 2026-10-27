@@ -1,0 +1,41 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+await import('fake-indexeddb/auto');
+const { saveSubmission, loadSubmission, listSubmissions, reviewSubmission, defaultRequirements } = await import('../src/learningOutcome/store.js');
+const actor = { id: 'learner', name: '学员' };
+const base = { scope: 'test-space', outcome: 'outcome-1', task: 'task-1', actor };
+const draft = { title: '实践总结', description: '反思', materials: [{ id: 'doc', type: 'document', name: '总结', content: '第一版' }, { id: 'file', type: 'file', name: 'evidence.txt', blob: new Blob(['evidence']) }, { id: 'ai', type: 'agent', name: '教学设计', content: '生成结果', source: 'AI伴学' }] };
+test('draft, combination submission, immutable versions and repeat clicks', async () => {
+  let result = await saveSubmission({ ...base, draft });
+  assert.equal(result.status, 'draft'); assert.equal(result.versions.length, 0);
+  assert.equal((await loadSubmission(base.scope, base.outcome, actor)).draft.materials.length, 3);
+  result = await saveSubmission({ ...base, draft, submit: true });
+  assert.equal(result.status, 'passed'); assert.equal(result.versions.length, 1);
+  assert.equal(await result.versions[0].materials[1].blob.text(), 'evidence');
+  await Promise.all([saveSubmission({ ...base, draft, submit: true }), saveSubmission({ ...base, draft, submit: true })]);
+  assert.equal((await loadSubmission(base.scope, base.outcome, actor)).versions.length, 1);
+  const updated = { ...draft, materials: [{ ...draft.materials[0], content: '第二版' }] };
+  result = await saveSubmission({ ...base, draft: updated, submit: true });
+  assert.equal(result.versions.length, 2); assert.equal(result.versions[0].materials[0].content, '第一版');
+  assert.equal(await loadSubmission(base.scope, base.outcome, { id: 'another-user' }), null);
+});
+test('review, return, revised submission and overdue label', async () => {
+  const target = { ...base, outcome: 'review-outcome' };
+  const requirements = { ...defaultRequirements, reviewRequired: true, deadline: '2000-01-01T00:00' };
+  let result = await saveSubmission({ ...target, draft, submit: true, requirements });
+  assert.equal(result.status, 'pending'); assert.equal(result.versions[0].overdue, true);
+  await assert.rejects(reviewSubmission(result.key, { id: 'no-right' }, 'passed', ''));
+  await assert.rejects(reviewSubmission(result.key, { id: 'reviewer', canReview: true }, 'returned', ''));
+  result = await reviewSubmission(result.key, { id: 'reviewer', canReview: true }, 'returned', '补充反思');
+  assert.equal(result.status, 'returned');
+  result = await saveSubmission({ ...target, draft: { ...draft, description: '补充后的反思' }, submit: true, requirements });
+  assert.equal(result.status, 'pending'); assert.equal(result.versions.length, 2);
+  result = await reviewSubmission(result.key, { id: 'reviewer', canReview: true }, 'passed', '通过');
+  assert.equal(result.status, 'passed');
+  assert.equal((await listSubmissions(base.scope, target.outcome)).length, 1);
+});
+test('invalid submission and disallowed material leave saved draft intact', async () => {
+  await assert.rejects(saveSubmission({ ...base, draft: { title: '', materials: [] }, submit: true }));
+  await assert.rejects(saveSubmission({ ...base, draft, requirements: { ...defaultRequirements, allowedTypes: ['document'] } }));
+  assert.equal((await loadSubmission(base.scope, base.outcome, actor)).versions.length, 2);
+});

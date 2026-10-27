@@ -61,6 +61,8 @@ import {
   SettingOutlined,
 } from '@ant-design/icons';
 import AddResourceModal from './AddResourceModal';
+import OutcomePage from './learningOutcome/OutcomePage.jsx';
+import { defaultRequirements, getLocalActor, loadSubmission, saveSubmission } from './learningOutcome/store.js';
 import SupervisionTaskModal, { SupervisionTaskInlineForm } from './supervisionTask/SupervisionTaskModal.jsx';
 import SupervisionSchoolTaskForm, {
   SupervisionRectificationChecklist,
@@ -1174,6 +1176,7 @@ function buildSupervisionDisplayResources(resources = [], activeSceneType) {
 }
 
 function getResourceIcon(resource, selected = false) {
+  if (resource?.type === 'RESULT_SUBMIT') return selected ? <CheckCircleFilled /> : <FileTextOutlined />;
   if (selected) {
     const SelectedIcon = {
       video: PlayCircleFilled,
@@ -1221,6 +1224,7 @@ function getResourceIcon(resource, selected = false) {
 }
 
 function getTopicResourceFileType(resource) {
+  if (resource?.type === 'RESULT_SUBMIT') return 'RESULT_SUBMIT';
   if (!resource || resource.isFolder) return 'folder';
   if (resource.fileType && resource.fileType !== 'other') return resource.fileType;
   if (resource.type === 'video') return 'video';
@@ -1248,6 +1252,7 @@ function getTopicResourceFileType(resource) {
 }
 
 function getResourceTypeLabel(resource, fileType) {
+  if (resource?.type === 'RESULT_SUBMIT') return '研修成果';
   if (!resource) return '文件';
   if (resource.isFolder) return '文件夹';
   if (resource.fileType === 'knowledgeGraph' || fileType === 'knowledgeGraph') return '知识图谱';
@@ -2013,6 +2018,10 @@ function TopicDetail({
   const [activeTab, setActiveTab] = useState(() => getDefaultTopicTabKey(sceneConfig));
   const [selectedPracticeLabKey, setSelectedPracticeLabKey] = useState(() => PRACTICE_LAB_OPTIONS[0]?.value || null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [outcomeActor] = useState(() => sceneConfig?.currentUser?.id ? sceneConfig.currentUser : getLocalActor());
+  const [requireOutcome, setRequireOutcome] = useState(false);
+  const [agentOutcomeLink, setAgentOutcomeLink] = useState(null);
+  const [agentOutcomeTarget, setAgentOutcomeTarget] = useState(null);
   const [aiLiteracyReportImportOpen, setAiLiteracyReportImportOpen] = useState(false);
   const [aiLiteracyReportSource, setAiLiteracyReportSource] = useState(AI_LITERACY_REPORT_SOURCE_OPTIONS[0].value);
   const [aiLiteracyReportFile, setAiLiteracyReportFile] = useState(null);
@@ -3585,6 +3594,8 @@ function TopicDetail({
 	      }
       if (isSelfPacedTraining) {
         normalizedTabs = normalizedTabs.filter((item) => item?.key !== 'learner-progress' && item?.key !== 'ai');
+        normalizedTabs = normalizedTabs.filter((item) => item?.key !== 'assessment');
+        normalizedTabs.push({ key: 'assessment', label: '考核配置', enabled: true });
       }
 	      return normalizedTabs.map((item, index) => ({
 	        key: item.key,
@@ -3976,6 +3987,7 @@ function TopicDetail({
       if (resolveAiLiteracyMastery(point.score).key === 'developing') suggestedPointKeys.push(point.key);
     });
     setLearningTaskSelectedPointKeys(suggestedPointKeys.length ? suggestedPointKeys : rankedPoints.slice(0, 3).map((point) => point.key));
+    setRequireOutcome(false);
     setLearningTaskCreateOpen(true);
   };
 
@@ -4010,6 +4022,7 @@ function TopicDetail({
         { suffix: 'practice', name: `互动练习｜${point.name}应用训练.html`, type: 'activity', summary: `在教学情境中练习“${point.name}”并获得即时反馈。` },
         { suffix: 'quiz', name: `达标自测｜${point.name}`, type: 'exam', summary: `完成知识点自测，建议得分达到80分后结束任务。` },
       ];
+      if (requireOutcome) contentEntries.push({ suffix: 'outcome', name: `研修成果｜${point.name}`, type: 'RESULT_SUBMIT', summary: '提交实践成果与学习反思。' });
       return [
         {
           key: taskKey,
@@ -4039,6 +4052,7 @@ function TopicDetail({
           lastEdit: batchCreatedAt,
           meta: {
             summary: content.summary,
+            ...(content.type === 'RESULT_SUBMIT' ? { outcomeRequirements: structuredClone(defaultRequirements), learningProgress: 0 } : {}),
             knowledgePointKey: point.key,
             taskName,
             sortNo: contentIndex + 1,
@@ -5307,6 +5321,9 @@ function TopicDetail({
   };
 
   const handleAddResource = (resource) => {
+    if (resource?.type === 'RESULT_SUBMIT') {
+      resource = { ...resource, name: '研修成果', meta: { ...resource.meta, outcomeRequirements: structuredClone(defaultRequirements), learningProgress: 0 } };
+    }
     if (resource?.type === 'knowledgeGraphImport') {
       openKnowledgeGraphImportModal();
       return;
@@ -6368,17 +6385,6 @@ function TopicDetail({
             { type: 'divider' },
           ]
         : []),
-      ...(!item.isFolder && canArchiveSceneResource && !item.__kgMirror
-        ? [
-            {
-              key: 'archiveProfile',
-              icon: <CheckCircleOutlined />,
-              label: isSceneResourceArchived(item) ? '已归档到我的档案' : '归档到我的档案',
-              disabled: isSceneResourceArchived(item),
-            },
-            { type: 'divider' },
-          ]
-        : []),
       { key: 'rename', icon: <EditOutlined />, label: '重命名', disabled: !canEditDisplayedResources },
       { key: 'delete', icon: <DeleteOutlined />, label: '删除', danger: true, disabled: !canEditDisplayedResources },
     ];
@@ -6994,6 +7000,11 @@ function TopicDetail({
   };
 
   const renderPreviewContent = (item) => {
+    if (item.type === 'RESULT_SUBMIT') return <OutcomePage key={`${topicStorageScopeKey}:${item.key}`} item={item} scope={topicStorageScopeKey} actor={outcomeActor} resources={sourceResources.map((resource) => ({ ...resource, content: resource.content || resource.meta?.content || getPreviewBodyBlocks(resource).map((block) => block.text || block.content || '').join('\n') }))} agentResults={selfPacedCoachMessages.filter((entry) => entry.role === 'assistant')} reviewer={sceneConfig?.currentUser?.canReviewOutcomes ? { ...sceneConfig.currentUser, canReview: true } : null} canConfigure={canEditDisplayedResources} onConfigure={(configuration) => {
+      setVersionData((previous) => updateResource(previous, currentVersion.id, item.key, { name: configuration.name, meta: { ...item.meta, outcomeRequirements: configuration } }, versioningConfig));
+    }} onProgress={(percent) => {
+      setVersionData((previous) => updateResource(previous, currentVersion.id, item.key, { meta: { ...item.meta, learningProgress: percent } }, versioningConfig));
+    }} />;
     const fileType = getTopicResourceFileType(item);
     const previewSummary = getPreviewSummary(item, fileType);
     const outlineEntries = getPreviewOutlineEntries(item);
@@ -7158,7 +7169,6 @@ function TopicDetail({
                 <span>能力模型</span>
                 <span>{model?.updatedAt || model?.createdAt || previewItem.lastEdit || '--'}</span>
                 {versionText ? <span>{versionText}</span> : null}
-                {previewItemArchived ? <Tag color="success">已归档到我的档案</Tag> : null}
               </div>
               {tagConfig ? (
                 <div className="topic-preview-main-tags">
@@ -7168,17 +7178,7 @@ function TopicDetail({
             </div>
           </div>
           <div className="topic-preview-main-head-actions">
-            {canArchiveSceneResource && !previewItem.__kgMirror ? (
-              <Button
-                size="small"
-                type={previewItemArchived ? 'default' : 'primary'}
-                ghost={!previewItemArchived}
-                disabled={previewItemArchived}
-                onClick={() => handleArchiveResourceToProfile(previewItem)}
-              >
-                {previewItemArchived ? '已归档到我的档案' : '归档到我的档案'}
-              </Button>
-            ) : null}
+            
             {model ? (
               <Button
                 size="small"
@@ -9332,7 +9332,7 @@ function TopicDetail({
               previewItem ? (
                 previewItem.fileType === 'capabilityModel' ? renderCapabilityModelPreviewPane() : (
                   <div className={`topic-preview-main ${['supervisionTask', 'supervisionSchoolTask', 'supervisionRectificationSchool'].includes(previewItem.type) ? 'topic-preview-main-supervision-task' : ''}`}>
-                    {!['supervisionTask', 'supervisionSchoolTask', 'supervisionRectificationSchool'].includes(previewItem.type) ? (
+                    {!['supervisionTask', 'supervisionSchoolTask', 'supervisionRectificationSchool', 'RESULT_SUBMIT'].includes(previewItem.type) ? (
                       <div className="topic-preview-main-head">
                         <div className="topic-preview-main-head-left">
                           <span className="topic-preview-main-icon">
@@ -9347,7 +9347,6 @@ function TopicDetail({
                             <span>{getResourceTypeLabel(previewItem, getTopicResourceFileType(previewItem))}</span>
                             <span>{previewItem.owner || '--'}</span>
                             <span>{previewItem.lastEdit || '--'}</span>
-                            {previewItemArchived ? <Tag color="success">已归档到我的档案</Tag> : null}
                           </div>
                           {tagConfig ? (
                             <div className="topic-preview-main-tags">
@@ -9357,17 +9356,7 @@ function TopicDetail({
                         </div>
                       </div>
                       <div className="topic-preview-main-head-actions">
-                        {canArchiveSceneResource && !previewItem.__kgMirror ? (
-                          <Button
-                            size="small"
-                            type={previewItemArchived ? 'default' : 'primary'}
-                            ghost={!previewItemArchived}
-                            disabled={previewItemArchived}
-                            onClick={() => handleArchiveResourceToProfile(previewItem)}
-                          >
-                            {previewItemArchived ? '已归档到我的档案' : '归档到我的档案'}
-                          </Button>
-                        ) : null}
+                        
                         {previewParentFolder ? (
                           <Button size="small" onClick={() => setPreviewItem(null)}>
                             返回文件夹
@@ -9553,7 +9542,7 @@ function TopicDetail({
                     {item.role === 'assistant' ? (
                       <span className="self-paced-coach-message-avatar"><ThunderboltOutlined /></span>
                     ) : null}
-                    <div><p>{item.text}</p></div>
+                    <div><p>{item.text}</p>{item.role === 'assistant' && <Button size="small" onClick={() => { setAgentOutcomeLink(item); setAgentOutcomeTarget(null); }}>关联到研修成果</Button>}</div>
                   </div>
                 ))}
 
@@ -9847,6 +9836,7 @@ function TopicDetail({
         destroyOnHidden
       >
         <div className="topic-learning-task-batch-form">
+          <label><Switch checked={requireOutcome} onChange={setRequireOutcome} /> 要求提交研修成果</label>
           <div className="topic-learning-task-batch-summary">
             <div>
               <strong>依据最新测评结果推荐</strong>
@@ -9964,6 +9954,20 @@ function TopicDetail({
             导入后，报告会同时保存到当前自主培训空间，并可在 AI伴学中用于生成个性化学习建议。
           </div>
         </div>
+      </Modal>
+
+      <Modal title="关联到研修成果" open={Boolean(agentOutcomeLink)} onCancel={() => setAgentOutcomeLink(null)} onOk={async () => {
+        const target = sourceResources.find((entry) => entry.key === agentOutcomeTarget);
+        if (!target) return message.warning('请选择研修成果');
+        try {
+          const record = await loadSubmission(topicStorageScopeKey, target.key, outcomeActor);
+          const draft = record?.draft || { title: target.name, description: '', materials: [] };
+          await saveSubmission({ scope: topicStorageScopeKey, outcome: target.key, task: target.parentKey, actor: outcomeActor, draft: { ...draft, materials: [...draft.materials, { id: crypto.randomUUID(), type: 'agent', name: 'AI伴学生成内容', source: 'AI伴学', sourceId: agentOutcomeLink.id, content: agentOutcomeLink.text }] } });
+          setAgentOutcomeLink(null); setSelectedItemKey(target.key); message.success('已关联并保存到成果草稿');
+        } catch (error) { message.error(error.message || '关联失败，请重试'); }
+      }}>
+        <Select style={{ width: '100%' }} value={agentOutcomeTarget} placeholder="选择任务中的研修成果" options={sourceResources.filter((entry) => entry.type === 'RESULT_SUBMIT' && (entry.meta?.outcomeRequirements?.allowedTypes || defaultRequirements.allowedTypes).includes('agent')).map((entry) => ({ value: entry.key, label: `${resourceMap.get(entry.parentKey)?.name || '当前空间'} / ${entry.name}` }))} onChange={setAgentOutcomeTarget} />
+        <pre style={{ whiteSpace: 'pre-wrap' }}>{agentOutcomeLink?.text}</pre>
       </Modal>
 
       <AddResourceModal

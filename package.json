@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "scratch-lab:install": "npm install --prefix scratch-lab --legacy-peer-deps",
-    "scratch-lab:build": "npm run build --prefix scratch-lab"
+    "scratch-lab:build": "npm run build --prefix scratch-lab",
+    "test:outcomes": "node --test tests/learningOutcome.test.mjs"
   },
   "dependencies": {
     "@ant-design/icons": "6.2.3",
@@ -32,6 +33,7 @@
     "eslint": "10.4.0",
     "eslint-plugin-react-hooks": "7.1.1",
     "eslint-plugin-react-refresh": "0.5.2",
+    "fake-indexeddb": "^6.2.6",
     "globals": "17.6.0",
     "vite": "8.0.13"
   }

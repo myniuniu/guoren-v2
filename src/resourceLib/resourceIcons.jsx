@@ -24,6 +24,7 @@ import {
 // 文件类型 → 颜色 + 图标组件
 // 颜色参考截图（PDF 红、PPT 橙、白板紫、笔记黄绿、视频蓝紫、文件夹蓝、test 绿/蓝）
 const TYPE_META = {
+  RESULT_SUBMIT: { color: '#315f47', Icon: FileTextFilled },
   folder:     { color: '#4facfe', Icon: FolderFilled },
   pdf:        { color: '#ee4d4d', Icon: FilePdfFilled },
   pptx:       { color: '#f5a623', Icon: FilePptFilled },
@@ -48,6 +49,7 @@ const TYPE_META = {
 };
 
 const TYPE_LABEL_MAP = {
+  RESULT_SUBMIT: '研修成果',
   folder: '文件夹',
   pdf: 'PDF',
   pptx: 'PPT',

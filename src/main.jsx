@@ -9,6 +9,7 @@ import CourseDetailPage from './studyClub/CourseDetailPage.jsx'
 import ArticleDetailPage from './studyClub/ArticleDetailPage.jsx'
 import ProcessDesignerV2 from './processV2/ProcessDesignerV2.jsx'
 import SolutionShowroomPortal from './solutionShowroom/SolutionShowroomPortal.jsx'
+import AgentsPlaza from './agentsPlaza/AgentsPlaza.jsx'
 import { registerPwa } from './registerPwa.js'
 
 const LOGIN_STORAGE_KEY = 'gr.login.prototype.authenticated';
@@ -39,6 +40,7 @@ function RootPage() {
   const isCourseDetail = currentHash.startsWith('#/course-detail/');
   const isArticleDetail = currentHash.startsWith('#/article-detail/');
   const isProcessV2New = currentHash === '#/process-v2-new';
+  const isAgentsPlaza = currentHash === '#/agents-plaza';
   const isLoginPage = currentHash === '#/login';
 
   useEffect(() => {
@@ -110,6 +112,7 @@ function RootPage() {
   if (isCourseDetail) return <CourseDetailPage />;
   if (isArticleDetail) return <ArticleDetailPage />;
   if (isProcessV2New) return <ProcessDesignerV2 record={{ name: '新建流程', key: 'new_process_' + Date.now() }} onClose={() => window.close()} />;
+  if (isAgentsPlaza) return <AgentsPlaza />;
   return <App onLogout={handleLogout} />;
 }
 

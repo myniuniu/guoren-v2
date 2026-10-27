@@ -91,6 +91,8 @@ import StructuredKnowledgeGraphView from '../knowledgeGraph/StructuredKnowledgeG
 import ResourceLibraryOverlays from './ResourceLibraryOverlays.jsx';
 import useResourceLibraryFileImport from './useResourceLibraryFileImport';
 import { clearPendingResourceLibraryEntry, peekPendingResourceLibraryEntry } from './resourceLibraryEntry';
+import LuckyResourceLibrary from '../lucky/LuckyResourceLibrary.jsx';
+import { SOURCE_OPTIONS, SCOPE_OPTIONS } from '../lucky/luckyResourceLibraryData';
 import './ResourceLibrary.css';
 
 const ROOT_PARENT_KEY = '__resource_lib_root__';
@@ -284,7 +286,10 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
   const [scope, setScope] = useState(() => data?.currentScope || 'personal');
   const [currentOrgId, setCurrentOrgId] = useState(() => data?.currentOrgId || 'org_default');
   const [keyword, setKeyword] = useState('');
-  const [specialView, setSpecialView] = useState('all'); // all | recent | local
+  const [agentKeyword, setAgentKeyword] = useState('');
+  const [agentSourceFilter, setAgentSourceFilter] = useState('all');
+  const [agentScopeFilter, setAgentScopeFilter] = useState('all');
+  const [specialView, setSpecialView] = useState('all'); // all | recent | local | agents
   const [searchMode, setSearchMode] = useState('name'); // name | content | all
   const [searchPanelOpen, setSearchPanelOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
@@ -660,6 +665,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
   const normalizedKeywordLower = normalizedKeyword.toLowerCase();
   const isRecentView = specialView === 'recent';
   const isLocalDirectoryView = scope === 'personal' && specialView === 'local';
+  const isAgentLibraryView = specialView === 'agents';
 
   const parseDateValue = useCallback((value) => {
     if (!value) return null;
@@ -881,6 +887,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
 
   // 切换个人/组织库
   const handleScopeChange = (nextScope) => {
+    if (isAgentLibraryView) setSpecialView('all');
     if (nextScope === scope) return;
     setScope(nextScope);
     setData((d) => setCurrentScope(d, nextScope));
@@ -888,6 +895,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
 
   // 切换组织
   const handleOrgChange = (orgId) => {
+    if (isAgentLibraryView) setSpecialView('all');
     if (orgId === currentOrgId) return;
     setCurrentOrgId(orgId);
     setData((d) => setCurrentOrg(d, orgId));
@@ -1986,6 +1994,22 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
     setData((d) => setSelectedFolder(d, scope, null));
   };
 
+  const openAgentLibraryView = () => {
+    clearPendingRenameTrigger();
+    setSpecialView('agents');
+    setActiveTagFilter(null);
+    setTagFilterContextFolderKeys([]);
+    setKeyword('');
+    setAgentKeyword('');
+    setAgentSourceFilter('all');
+    setAgentScopeFilter('all');
+    setSearchPanelOpen(false);
+    setSelectedItemKeys([]);
+    setMouseMultiSelectMode(false);
+    setColumnSelectedItem(null);
+    closeDetailPreviewOverlay();
+  };
+
   const collectDeleteCascadeKeys = useCallback((keys = []) => {
     const pendingKeys = Array.from(new Set((keys || []).filter(Boolean)));
     const collected = new Set();
@@ -2375,6 +2399,10 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
   };
 
   const handleTagFilter = (tagId) => {
+    if (isAgentLibraryView) {
+      setSpecialView('all');
+      setKeyword('');
+    }
     const nextTagFilter = activeTagFilter === tagId ? null : tagId;
     if (!nextTagFilter) {
       if (isTagFilterContextActive) {
@@ -4940,6 +4968,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
 
   useEffect(() => {
     const handleKeyDown = (e) => {
+      if (isAgentLibraryView) return;
       if (detailPreviewOverlayItem) return;
       if (isEditableTarget(e.target)) return;
 
@@ -4970,6 +4999,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
     clearCurrentSelection,
     detailPreviewOverlayItem,
     handleDelete,
+    isAgentLibraryView,
     selectAllVisibleItems,
     selectedDeleteKeys,
     selectedItemCount,
@@ -5038,6 +5068,10 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
 
   const handleSearchChange = (e) => {
     const nextKeyword = e.target.value;
+    if (isAgentLibraryView) {
+      setAgentKeyword(nextKeyword);
+      return;
+    }
     setKeyword(nextKeyword);
     setSearchPanelOpen(nextKeyword.trim().length > 0);
     if (nextKeyword.trim().length === 0) {
@@ -5058,6 +5092,24 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
     setSearchPanelOpen(false);
     setSelectedItemKeys([]);
     closeDetailPreviewOverlay();
+  };
+
+  const agentToolbarMenu = {
+    selectedKeys: [`agent-source:${agentSourceFilter}`, `agent-scope:${agentScopeFilter}`],
+    items: [
+      {
+        key: 'agent-source', label: '来源智能体',
+        children: SOURCE_OPTIONS.map((item) => ({ key: `agent-source:${item.value}`, label: item.label })),
+      },
+      {
+        key: 'agent-scope', label: '所属库',
+        children: SCOPE_OPTIONS.map((item) => ({ key: `agent-scope:${item.value}`, label: item.value === 'all' ? '全部范围' : item.label })),
+      },
+    ],
+    onClick: ({ key }) => {
+      if (key.startsWith('agent-source:')) setAgentSourceFilter(key.slice('agent-source:'.length));
+      if (key.startsWith('agent-scope:')) setAgentScopeFilter(key.slice('agent-scope:'.length));
+    },
   };
   const clearStandalonePreviewSearch = () => {
     setKeyword('');
@@ -5230,6 +5282,16 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
         {/* 位置 */}
         <div className="finder-sidebar-section">
           <div className="finder-sidebar-title">位置</div>
+          <button
+            type="button"
+            className={`finder-sidebar-item finder-sidebar-agent-location ${isAgentLibraryView ? 'finder-sidebar-item-active' : ''}`}
+            onClick={openAgentLibraryView}
+            aria-pressed={isAgentLibraryView}
+            title="查看 Lucky 资源库中的智能体产物"
+          >
+            <span className="finder-sidebar-item-icon" style={{ color: '#007aff' }}><RobotOutlined /></span>
+            <span className="finder-sidebar-item-label">智能体</span>
+          </button>
           <div className="finder-sidebar-item">
             <span className="finder-sidebar-item-icon" style={{ color: '#8e8e93' }}><GlobalOutlined /></span>
             <span className="finder-sidebar-item-label">云电脑</span>
@@ -5354,16 +5416,18 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
             </button>
           )}
           <div className="finder-toolbar-nav">
-            <button className="finder-toolbar-nav-btn" disabled={!canNavigateBack} onClick={handleBack}>
+            <button className="finder-toolbar-nav-btn" disabled={!isAgentLibraryView && !canNavigateBack} onClick={isAgentLibraryView ? () => navigateTo(selectedFolderKey) : handleBack}>
               <LeftOutlined />
             </button>
-            <button className="finder-toolbar-nav-btn" disabled={!canNavigateForward} onClick={handleForward}>
+            <button className="finder-toolbar-nav-btn" disabled={isAgentLibraryView || !canNavigateForward} onClick={handleForward}>
               <RightOutlined />
             </button>
           </div>
           <div className="finder-toolbar-title">
             <span className="finder-toolbar-title-text">
-              {isLocalDirectoryView
+              {isAgentLibraryView
+                ? '智能体'
+                : isLocalDirectoryView
                 ? '本地目录'
                 : hasActiveSearch
                 ? `正在搜索“${normalizedKeyword}”`
@@ -5382,7 +5446,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
           </div>
 
           <Dropdown
-            menu={toolbarMoreMenu}
+            menu={isAgentLibraryView ? agentToolbarMenu : toolbarMoreMenu}
             trigger={['click']}
             overlayClassName={buildMenuOverlayClassName('finder-toolbar-more-dropdown')}
             placement="bottomLeft"
@@ -5411,7 +5475,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
               <button
                 type="button"
                 className={`finder-toolbar-view-btn ${viewMode === 'detail' ? 'finder-toolbar-view-btn-active' : ''}`}
-                onClick={() => handleViewModeChange('detail')}
+                onClick={() => isAgentLibraryView ? setViewMode('detail') : handleViewModeChange('detail')}
                 aria-pressed={viewMode === 'detail'}
               >
                 <span className="finder-toolbar-view-icon finder-toolbar-view-icon-list" aria-hidden="true">
@@ -5434,7 +5498,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
               <button
                 type="button"
                 className={`finder-toolbar-view-btn ${viewMode === 'column' ? 'finder-toolbar-view-btn-active' : ''}`}
-                onClick={() => handleViewModeChange('column')}
+                onClick={() => isAgentLibraryView ? setViewMode('column') : handleViewModeChange('column')}
                 aria-pressed={viewMode === 'column'}
               >
                 <span className="finder-toolbar-view-icon finder-toolbar-view-icon-columns" aria-hidden="true">
@@ -5447,7 +5511,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
           </div>
 
           {/* 操作按钮区 */}
-          <div className="finder-toolbar-actions">
+          {!isAgentLibraryView && <div className="finder-toolbar-actions">
             <button
               type="button"
               className="finder-toolbar-action-btn finder-toolbar-icon-btn"
@@ -5457,19 +5521,19 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
             >
               <RobotOutlined />
             </button>
-          </div>
+          </div>}
 
           {/* 搜索框 */}
           <div className="finder-toolbar-search" ref={searchBoxRef}>
             <Input
               allowClear
               prefix={<SearchOutlined style={{ color: '#999', fontSize: 12 }} />}
-              placeholder="按文件名或内容搜索"
-              value={keyword}
+              placeholder={isAgentLibraryView ? '搜索智能体产物' : '按文件名或内容搜索'}
+              value={isAgentLibraryView ? agentKeyword : keyword}
               disabled={isLocalDirectoryView}
               onChange={handleSearchChange}
-              onFocus={() => { if (normalizedKeyword) setSearchPanelOpen(true); }}
-              onClick={() => { if (normalizedKeyword) setSearchPanelOpen(true); }}
+              onFocus={() => { if (normalizedKeyword && !isAgentLibraryView) setSearchPanelOpen(true); }}
+              onClick={() => { if (normalizedKeyword && !isAgentLibraryView) setSearchPanelOpen(true); }}
               onPressEnter={() => setSearchPanelOpen(false)}
               size="small"
             />
@@ -5505,7 +5569,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
             overlayClassName="finder-toolbar-help-tooltip"
             title={(
               <div className="finder-toolbar-help-tip-list">
-                {RESOURCE_LIB_HELP_TIPS.map((tip) => (
+                {(isAgentLibraryView ? ['点击产物可选中，双击可查看详情。', '在操作菜单中按来源智能体或所属库筛选。', '右键或点击行内更多按钮可另存到资料库。'] : RESOURCE_LIB_HELP_TIPS).map((tip) => (
                   <div key={tip} className="finder-toolbar-help-tip-item">{tip}</div>
                 ))}
               </div>
@@ -5522,7 +5586,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
           </Tooltip>
         </div>
 
-        {hasActiveSearch && !isLocalDirectoryView && (
+        {hasActiveSearch && !isLocalDirectoryView && !isAgentLibraryView && (
           <div className="finder-search-summary-bar">
             <span className="finder-search-summary-label">搜索：</span>
             <button
@@ -5544,7 +5608,7 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
           </div>
         )}
 
-        {!hasActiveSearch && !isLocalDirectoryView && isTagFilterContextActive && (
+        {!hasActiveSearch && !isLocalDirectoryView && !isAgentLibraryView && isTagFilterContextActive && (
           <div className="finder-search-summary-bar">
             <span className="finder-search-summary-label">上下文：</span>
             <button
@@ -5563,7 +5627,33 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
 
         {/* ===== 内容区域：文件列表 + 右侧预览面板 ===== */}
         <div className="finder-content-area">
-          {isLocalDirectoryView ? (
+          {isAgentLibraryView ? (
+            <LuckyResourceLibrary
+              embedded
+              searchKeyword={agentKeyword}
+              source={agentSourceFilter}
+              libraryScope={agentScopeFilter}
+              onSaved={() => setData(loadResourceLib())}
+              finderProps={{
+                viewMode,
+                visibleCols,
+                detailColWidths,
+                nameColResized,
+                columnDefinitions: COL_DEFS,
+                sortBy,
+                sortOrder,
+                sortItems: sortLibraryItems,
+                onHeaderSort: handleHeaderSort,
+                onColumnResize: (key, event) => handleDetailColResizeStart(key, event),
+                onColumnDragStart: handleDetailColumnDragStart,
+                onColumnDragOver: handleDetailColumnDragOver,
+                onColumnDrop: handleDetailColumnDrop,
+                onColumnDragEnd: handleDetailColumnDragEnd,
+                columnVisibilityMenu: colVisibilityMenu,
+                renderCell: renderColCell,
+              }}
+            />
+          ) : isLocalDirectoryView ? (
             renderLocalDirectoryView()
           ) : (
           <div key={viewMode} className={`finder-content-view finder-content-view-${viewMode}`}>
@@ -6165,11 +6255,19 @@ export default function ResourceLibrary({ onOpenKnowledgeGraph, entryRequest = n
 
         {/* 底部路径栏 */}
         <div className="finder-pathbar">
-          <span className="finder-pathbar-segment" onClick={() => { if (viewMode === 'column') { setColumnPath([null]); setColumnSelectedItem(null); } else { navigateTo(null); } }}>
+          <span className="finder-pathbar-segment" onClick={() => { if (isAgentLibraryView) { navigateTo(null); } else if (viewMode === 'column') { setColumnPath([null]); setColumnSelectedItem(null); } else { navigateTo(null); } }}>
             <span className="finder-pathbar-segment-icon"><DesktopOutlined /></span>
             <span>{scope === 'personal' ? '个人资料库' : '组织资料库'}</span>
           </span>
-          {isLocalDirectoryView ? (
+          {isAgentLibraryView ? (
+            <>
+              <span className="finder-pathbar-sep">›</span>
+              <span className="finder-pathbar-segment finder-pathbar-segment-current">
+                <span className="finder-pathbar-segment-icon"><RobotOutlined /></span>
+                <span>智能体 · Lucky 资源库</span>
+              </span>
+            </>
+          ) : isLocalDirectoryView ? (
             <>
               <span className="finder-pathbar-sep">›</span>
               <span className="finder-pathbar-segment finder-pathbar-segment-current">
